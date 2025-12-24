@@ -10,6 +10,7 @@ from qtpy.QtCore import QTimer, QUrl, Qt
 from qtpy.QtGui import QKeySequence
 from qtpy.QtMultimedia import QAudioOutput, QMediaPlayer
 from qtpy.QtWidgets import (
+    QAction,  # pyright: ignore[reportPrivateImportUsage]
     QComboBox,
     QDoubleSpinBox,
     QFileDialog,
@@ -25,7 +26,7 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-from pykotor.resource.formats.lip import LIP, LIPShape, bytes_lip, read_lip
+from pykotor.resource.formats.lip import LIP, LIPKeyFrame, LIPShape, bytes_lip, read_lip
 from pykotor.resource.type import ResourceType
 from toolset.gui.editor import Editor
 
@@ -36,6 +37,259 @@ if TYPE_CHECKING:
     from qtpy.QtGui import _QAction
 
     from toolset.data.installation import HTInstallation
+
+
+# Command pattern for undo/redo functionality
+class Command:
+    """Base class for undoable commands."""
+
+    def execute(self) -> None:
+        """Execute the command."""
+        raise NotImplementedError
+
+    def undo(self) -> None:
+        """Undo the command."""
+        raise NotImplementedError
+
+    def redo(self) -> None:
+        """Redo the command (same as execute for most commands)."""
+        self.execute()
+
+    def description(self) -> str:
+        """Return a human-readable description of the command."""
+        return "Command"
+
+
+class AddKeyframeCommand(Command):
+    """Command for adding a keyframe."""
+
+    def __init__(
+        self,
+        lip: LIP,
+        time: float,
+        shape: LIPShape,
+    ) -> None:
+        self.lip: LIP = lip
+        self.time: float = time
+        self.shape: LIPShape = shape
+        self.removed_frame: LIPKeyFrame | None = None
+
+    def execute(self) -> None:
+        # Store any existing frame at this time for undo
+        existing_frames = [f for f in self.lip.frames if abs(f.time - self.time) <= 0.0001]
+        if existing_frames:
+            self.removed_frame = existing_frames[0]
+
+        # Add the new frame
+        self.lip.add(self.time, self.shape)
+
+    def undo(self) -> None:
+        # Remove the added frame
+        self.lip.frames = [f for f in self.lip.frames if abs(f.time - self.time) > 0.0001]
+
+        # Restore any previously removed frame
+        if self.removed_frame:
+            self.lip.frames.append(self.removed_frame)
+            self.lip.frames.sort()
+
+    def description(self) -> str:
+        return f"Add keyframe at {self.time:.3f}s ({self.shape.name})"
+
+
+class UpdateKeyframeCommand(Command):
+    """Command for updating a keyframe."""
+
+    def __init__(self, lip: LIP, old_time: float, new_time: float, new_shape: LIPShape):
+        self.lip = lip
+        self.old_time = old_time
+        self.new_time = new_time
+        self.new_shape = new_shape
+        self.old_shape: Optional[LIPShape] = None
+        self.was_replaced = False
+
+    def execute(self) -> None:
+        # Find the frame to update
+        for frame in self.lip.frames:
+            if abs(frame.time - self.old_time) <= 0.0001:
+                self.old_shape = frame.shape
+                break
+
+        # Check if we're replacing an existing frame at new_time
+        existing_frames = [f for f in self.lip.frames if abs(f.time - self.new_time) <= 0.0001]
+        if existing_frames and abs(self.old_time - self.new_time) > 0.0001:
+            self.was_replaced = True
+            # Store the frame that will be replaced
+            self.replaced_frame = existing_frames[0]
+
+        # Update the frame
+        self.lip.frames = [f for f in self.lip.frames if abs(f.time - self.old_time) > 0.0001]
+        self.lip.add(self.new_time, self.new_shape)
+
+    def undo(self) -> None:
+        # Remove the updated frame
+        self.lip.frames = [f for f in self.lip.frames if abs(f.time - self.new_time) > 0.0001]
+
+        # Restore the old frame
+        if self.old_shape is not None:
+            self.lip.add(self.old_time, self.old_shape)
+
+        # Restore any replaced frame
+        if self.was_replaced:
+            self.lip.frames.append(self.replaced_frame)
+            self.lip.frames.sort()
+
+    def description(self) -> str:
+        return f"Update keyframe from {self.old_time:.3f}s to {self.new_time:.3f}s"
+
+
+class DeleteKeyframeCommand(Command):
+    """Command for deleting a keyframe."""
+
+    def __init__(self, lip: LIP, time: float):
+        self.lip = lip
+        self.time = time
+        self.deleted_frame: Optional[LIPKeyFrame] = None
+
+    def execute(self) -> None:
+        # Find and store the frame to delete
+        for frame in self.lip.frames:
+            if abs(frame.time - self.time) <= 0.0001:
+                self.deleted_frame = LIPKeyFrame(frame.time, frame.shape)
+                break
+
+        # Remove the frame
+        self.lip.frames = [f for f in self.lip.frames if abs(f.time - self.time) > 0.0001]
+
+    def undo(self) -> None:
+        # Restore the deleted frame
+        if self.deleted_frame:
+            self.lip.frames.append(self.deleted_frame)
+            self.lip.frames.sort()
+
+    def description(self) -> str:
+        return f"Delete keyframe at {self.time:.3f}s"
+
+
+class LoadLIPCommand(Command):
+    """Command for loading a LIP file."""
+
+    def __init__(self, editor: LIPEditor, old_lip: Optional[LIP], new_lip: LIP):
+        self.editor = editor
+        self.old_lip = old_lip
+        self.new_lip = new_lip
+
+    def execute(self) -> None:
+        self.editor.lip = self.new_lip
+        self.editor.duration = self.new_lip.length
+        self.editor.duration_label.setText(f"{self.editor.duration:.3f}s")
+        self.editor.time_input.setMaximum(self.editor.duration)
+        self.editor.update_preview()
+
+    def undo(self) -> None:
+        self.editor.lip = self.old_lip
+        if self.old_lip:
+            self.editor.duration = self.old_lip.length
+            self.editor.duration_label.setText(f"{self.editor.duration:.3f}s")
+            self.editor.time_input.setMaximum(self.editor.duration)
+        else:
+            self.editor.duration = 0.0
+            self.editor.duration_label.setText("0.000s")
+            self.editor.time_input.setMaximum(999.999)
+        self.editor.update_preview()
+
+    def description(self) -> str:
+        return "Load LIP file"
+
+
+class NewLIPCommand(Command):
+    """Command for creating a new LIP file."""
+
+    def __init__(self, editor: LIPEditor, old_lip: Optional[LIP]):
+        self.editor = editor
+        self.old_lip = old_lip
+        self.new_lip = LIP()
+
+    def execute(self) -> None:
+        self.editor.lip = self.new_lip
+        self.editor.duration = 0.0
+        self.editor.duration_label.setText("0.000s")
+        self.editor.time_input.setMaximum(999.999)
+        self.editor.update_preview()
+
+    def undo(self) -> None:
+        self.editor.lip = self.old_lip
+        if self.old_lip:
+            self.editor.duration = self.old_lip.length
+            self.editor.duration_label.setText(f"{self.editor.duration:.3f}s")
+            self.editor.time_input.setMaximum(self.editor.duration)
+        self.editor.update_preview()
+
+    def description(self) -> str:
+        return "New LIP file"
+
+
+class UndoRedoManager:
+    """Manages undo/redo functionality with command stacks."""
+
+    def __init__(self):
+        self.undo_stack: list[Command] = []
+        self.redo_stack: list[Command] = []
+        self.max_stack_size = 50
+
+    def execute(self, command: Command) -> None:
+        """Execute a command and add it to the undo stack."""
+        command.execute()
+        self.undo_stack.append(command)
+        self.redo_stack.clear()  # Clear redo stack when new command is executed
+
+        # Limit stack size
+        if len(self.undo_stack) > self.max_stack_size:
+            self.undo_stack.pop(0)
+
+    def undo(self) -> Optional[Command]:
+        """Undo the last command."""
+        if not self.undo_stack:
+            return None
+
+        command = self.undo_stack.pop()
+        command.undo()
+        self.redo_stack.append(command)
+        return command
+
+    def redo(self) -> Optional[Command]:
+        """Redo the last undone command."""
+        if not self.redo_stack:
+            return None
+
+        command = self.redo_stack.pop()
+        command.redo()
+        self.undo_stack.append(command)
+        return command
+
+    def can_undo(self) -> bool:
+        """Check if undo is available."""
+        return len(self.undo_stack) > 0
+
+    def can_redo(self) -> bool:
+        """Check if redo is available."""
+        return len(self.redo_stack) > 0
+
+    def undo_description(self) -> str:
+        """Get description of the command that can be undone."""
+        if self.undo_stack:
+            return self.undo_stack[-1].description()
+        return ""
+
+    def redo_description(self) -> str:
+        """Get description of the command that can be redone."""
+        if self.redo_stack:
+            return self.redo_stack[-1].description()
+        return ""
+
+    def clear(self) -> None:
+        """Clear all undo/redo history."""
+        self.undo_stack.clear()
+        self.redo_stack.clear()
 
 
 class LIPEditor(Editor):
@@ -120,6 +374,10 @@ class LIPEditor(Editor):
         self.preview_timer.setInterval(16)  # ~60fps
         self.preview_timer.timeout.connect(self.update_preview_display)
 
+        # Initialize undo/redo actions
+        self.undo_action: Optional[QAction] = None
+        self.redo_action: Optional[QAction] = None
+
         # Current preview state
         self.current_shape: Optional[LIPShape] = None
         self.preview_label: Optional[QLabel] = None
@@ -128,6 +386,10 @@ class LIPEditor(Editor):
         self._setup_menus()
         self._add_help_action()
         self.setup_shortcuts()
+
+        # Initialize undo/redo system
+        self.undo_redo_manager = UndoRedoManager()
+
         self.lip: Optional[LIP] = None
         self.duration: float = 0.0
 
@@ -259,6 +521,54 @@ class LIPEditor(Editor):
         QShortcut(QKeySequence.StandardKey.Undo, self, self.undo)
         QShortcut(QKeySequence.StandardKey.Redo, self, self.redo)
 
+    def _setup_menus(self):
+        """Set up the edit menu with undo/redo actions."""
+        from qtpy.QtWidgets import QMenuBar
+
+        # Get the menu bar
+        menubar = self.menuBar()
+        if not menubar:
+            return
+
+        # Find or create Edit menu
+        edit_menu = menubar.findChild(QMenu, "edit_menu")
+        if not edit_menu:
+            edit_menu = menubar.addMenu("&Edit")
+
+        # Add undo/redo actions
+        self.undo_action = edit_menu.addAction("&Undo")
+        self.undo_action.setShortcut(QKeySequence.StandardKey.Undo)
+        self.undo_action.triggered.connect(self.undo)
+        self.undo_action.setEnabled(False)
+
+        self.redo_action = edit_menu.addAction("&Redo")
+        self.redo_action.setShortcut(QKeySequence.StandardKey.Redo)
+        self.redo_action.triggered.connect(self.redo)
+        self.redo_action.setEnabled(False)
+
+        # Update initial state
+        self._update_undo_redo_state()
+
+    def _update_undo_redo_state(self):
+        """Update the enabled state and text of undo/redo actions."""
+        if self.undo_action:
+            can_undo = self.undo_redo_manager.can_undo()
+            self.undo_action.setEnabled(can_undo)
+            if can_undo:
+                description = self.undo_redo_manager.undo_description()
+                self.undo_action.setText(f"&Undo {description}")
+            else:
+                self.undo_action.setText("&Undo")
+
+        if self.redo_action:
+            can_redo = self.undo_redo_manager.can_redo()
+            self.redo_action.setEnabled(can_redo)
+            if can_redo:
+                description = self.undo_redo_manager.redo_description()
+                self.redo_action.setText(f"&Redo {description}")
+            else:
+                self.redo_action.setText("&Redo")
+
     def show_preview_context_menu(self, pos: QPoint):
         """Show context menu for preview list."""
         menu = QMenu(self)
@@ -280,13 +590,23 @@ class LIPEditor(Editor):
 
     def undo(self):
         """Undo last action."""
-        # TODO: Implement undo/redo
-        QMessageBox.information(self, "Not Implemented", "Undo not yet implemented")
+        command = self.undo_redo_manager.undo()
+        if command:
+            self.update_preview()
+            # Update UI state after undo
+            self._update_undo_redo_state()
+        else:
+            QMessageBox.information(self, "Undo", "Nothing to undo")
 
     def redo(self):
         """Redo last undone action."""
-        # TODO: Implement undo/redo
-        QMessageBox.information(self, "Not Implemented", "Redo not yet implemented")
+        command = self.undo_redo_manager.redo()
+        if command:
+            self.update_preview()
+            # Update UI state after redo
+            self._update_undo_redo_state()
+        else:
+            QMessageBox.information(self, "Redo", "Nothing to redo")
 
     def load_audio(self):
         """Load an audio file."""
@@ -300,6 +620,10 @@ class LIPEditor(Editor):
                 self.duration = frames / float(rate)
                 self.duration_label.setText(f"{self.duration:.3f}s")
                 self.time_input.setMaximum(self.duration)
+
+            # Clear undo/redo history when loading new audio
+            self.undo_redo_manager.clear()
+            self._update_undo_redo_state()
 
             # Set up media player
             if qtpy.QT5:
@@ -319,8 +643,10 @@ class LIPEditor(Editor):
                 self.lip = LIP()
                 self.lip.length = self.duration
 
-            self.lip.add(time, shape)
+            command = AddKeyframeCommand(self.lip, time, shape)
+            self.undo_redo_manager.execute(command)
             self.update_preview()
+            self._update_undo_redo_state()
 
         except ValueError as e:
             QMessageBox.warning(self, "Error", str(e))
@@ -338,15 +664,18 @@ class LIPEditor(Editor):
 
         try:
             # Get current values
-            time = self.time_input.value()
-            shape = LIPShape[self.shape_select.currentText()]
+            new_time = self.time_input.value()
+            new_shape = LIPShape[self.shape_select.currentText()]
 
-            # Remove old keyframe and add updated one
+            # Get old keyframe info
             selected_idx = self.preview_list.row(selected_items[0])
-            self.lip.frames.pop(selected_idx)
-            self.lip.add(time, shape)
+            old_frame = self.lip.frames[selected_idx]
+            old_time = old_frame.time
 
+            command = UpdateKeyframeCommand(self.lip, old_time, new_time, new_shape)
+            self.undo_redo_manager.execute(command)
             self.update_preview()
+            self._update_undo_redo_state()
 
         except ValueError as e:
             QMessageBox.warning(self, "Error", str(e))
@@ -363,8 +692,12 @@ class LIPEditor(Editor):
             return
 
         selected_idx = self.preview_list.row(selected_items[0])
-        self.lip.frames.pop(selected_idx)
+        frame_to_delete = self.lip.frames[selected_idx]
+
+        command = DeleteKeyframeCommand(self.lip, frame_to_delete.time)
+        self.undo_redo_manager.execute(command)
         self.update_preview()
+        self._update_undo_redo_state()
 
     def on_keyframe_selected(self):
         """Update inputs when a keyframe is selected."""
@@ -456,11 +789,13 @@ class LIPEditor(Editor):
     ) -> None:
         """Load a LIP file."""
         super().load(filepath, resref, restype, data)
-        self.lip = read_lip(data)
-        self.duration = self.lip.length
-        self.duration_label.setText(f"{self.duration:.3f}s")
-        self.time_input.setMaximum(self.duration)
-        self.update_preview()
+
+        old_lip = self.lip
+        new_lip = read_lip(data)
+
+        command = LoadLIPCommand(self, old_lip, new_lip)
+        self.undo_redo_manager.execute(command)
+        self._update_undo_redo_state()
 
     def build(self) -> tuple[bytes, bytes]:
         """Build LIP file data."""
@@ -472,9 +807,9 @@ class LIPEditor(Editor):
     def new(self):
         """Create new LIP file."""
         super().new()
-        self.lip = LIP()
-        self.duration = 0.0
-        self.duration_label.setText("0.000s")
-        self.time_input.setMaximum(999.999)
-        self.update_preview()
+
+        old_lip = self.lip
+        command = NewLIPCommand(self, old_lip)
+        self.undo_redo_manager.execute(command)
+        self._update_undo_redo_state()
 
