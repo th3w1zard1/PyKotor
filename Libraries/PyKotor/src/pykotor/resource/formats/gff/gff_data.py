@@ -1760,7 +1760,7 @@ class GFFStruct(ComparableMixin, dict):
         return results
 
 
-class GFFList(ComparableMixin, list[GFFStruct]):
+class GFFList(ComparableMixin, list):
     """A collection of GFFStructs."""
 
     COMPARABLE_SEQUENCE_FIELDS = ("_structs",)
