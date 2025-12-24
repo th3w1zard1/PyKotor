@@ -186,189 +186,6 @@
               </layout>
              </widget>
             </item>
-            <!-- Options Section -->
-            <item>
-             <widget class="CollapsibleGroupBox" name="optionsBox">
-              <property name="checkable">
-               <bool>true</bool>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-              <property name="title">
-               <string>Options</string>
-              </property>
-              <layout class="QVBoxLayout" name="optionsLayout">
-               <item>
-                <widget class="QCheckBox" name="snapToGridCheck">
-                 <property name="text">
-                  <string>Snap to Grid (G)</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QCheckBox" name="snapToHooksCheck">
-                 <property name="text">
-                  <string>Snap to Hooks (H)</string>
-                 </property>
-                 <property name="checked">
-                  <bool>true</bool>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QCheckBox" name="showGridCheck">
-                 <property name="text">
-                  <string>Show Grid</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QCheckBox" name="showHooksCheck">
-                 <property name="text">
-                  <string>Show Hooks</string>
-                 </property>
-                 <property name="checked">
-                  <bool>true</bool>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <layout class="QHBoxLayout" name="gridSizeLayout">
-                 <item>
-                  <widget class="QLabel" name="gridSizeLabel">
-                   <property name="text">
-                    <string>Grid Size:</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QDoubleSpinBox" name="gridSizeSpin">
-                   <property name="minimum">
-                    <double>0.5</double>
-                   </property>
-                   <property name="maximum">
-                    <double>10.0</double>
-                   </property>
-                   <property name="singleStep">
-                    <double>0.5</double>
-                   </property>
-                   <property name="value">
-                    <double>1.0</double>
-                   </property>
-                  </widget>
-                 </item>
-                </layout>
-               </item>
-               <item>
-                <layout class="QHBoxLayout" name="rotSnapLayout">
-                 <item>
-                  <widget class="QLabel" name="rotSnapLabel">
-                   <property name="text">
-                    <string>Rotation Snap:</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <widget class="QSpinBox" name="rotSnapSpin">
-                   <property name="minimum">
-                    <number>1</number>
-                   </property>
-                   <property name="maximum">
-                    <number>90</number>
-                   </property>
-                   <property name="value">
-                    <number>15</number>
-                   </property>
-                   <property name="suffix">
-                    <string>°</string>
-                   </property>
-                  </widget>
-                 </item>
-                </layout>
-               </item>
-              </layout>
-             </widget>
-            </item>
-            <!-- Walkmesh Painter Section -->
-            <item>
-             <widget class="CollapsibleGroupBox" name="walkmeshBox">
-              <property name="checkable">
-               <bool>true</bool>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-              <property name="title">
-               <string>Walkmesh Painter</string>
-              </property>
-              <layout class="QVBoxLayout" name="walkmeshLayout">
-               <property name="spacing">
-                <number>4</number>
-               </property>
-               <property name="leftMargin">
-                <number>4</number>
-               </property>
-               <property name="topMargin">
-                <number>4</number>
-               </property>
-               <property name="rightMargin">
-                <number>4</number>
-               </property>
-               <property name="bottomMargin">
-                <number>4</number>
-               </property>
-               <item>
-                <widget class="QCheckBox" name="enablePaintCheck">
-                 <property name="text">
-                  <string>Enable Painting (P)</string>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QCheckBox" name="colorizeMaterialsCheck">
-                 <property name="text">
-                  <string>Colorize Materials</string>
-                 </property>
-                 <property name="checked">
-                  <bool>true</bool>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QListWidget" name="materialList">
-                 <property name="minimumHeight">
-                  <number>180</number>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <layout class="QHBoxLayout" name="walkmeshButtonsLayout">
-                 <item>
-                  <widget class="QPushButton" name="resetPaintButton">
-                   <property name="text">
-                    <string>Reset Selected</string>
-                   </property>
-                  </widget>
-                 </item>
-                 <item>
-                  <spacer name="walkmeshButtonsSpacer">
-                   <property name="orientation">
-                    <enum>Qt::Horizontal</enum>
-                   </property>
-                   <property name="sizeHint" stdset="0">
-                    <size>
-                     <width>40</width>
-                     <height>20</height>
-                    </size>
-                   </property>
-                  </spacer>
-                 </item>
-                </layout>
-               </item>
-              </layout>
-             </widget>
-            </item>
             <!-- Spacer to push everything up -->
             <item>
              <spacer name="verticalSpacer">
@@ -405,6 +222,264 @@
         <verstretch>0</verstretch>
        </sizepolicy>
       </property>
+     </widget>
+     <widget class="QWidget" name="rightContainer">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+        <horstretch>1</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <layout class="QVBoxLayout" name="rightContainerLayout">
+       <property name="spacing">
+        <number>4</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <!-- Scrollable content area -->
+       <item>
+        <widget class="QScrollArea" name="rightScrollArea">
+         <property name="widgetResizable">
+          <bool>true</bool>
+         </property>
+         <property name="horizontalScrollBarPolicy">
+          <enum>Qt::ScrollBarAlwaysOff</enum>
+         </property>
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>1</verstretch>
+          </sizepolicy>
+         </property>
+         <widget class="QWidget" name="rightScrollContents">
+          <layout class="QVBoxLayout" name="rightScrollLayout">
+           <property name="spacing">
+            <number>4</number>
+           </property>
+           <property name="leftMargin">
+            <number>0</number>
+           </property>
+           <property name="topMargin">
+            <number>0</number>
+           </property>
+           <property name="rightMargin">
+            <number>0</number>
+           </property>
+           <property name="bottomMargin">
+            <number>0</number>
+           </property>
+           <!-- Options Section -->
+           <item>
+            <widget class="CollapsibleGroupBox" name="optionsBox">
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+             <property name="title">
+              <string>Options</string>
+             </property>
+             <layout class="QVBoxLayout" name="optionsLayout">
+              <item>
+               <widget class="QCheckBox" name="snapToGridCheck">
+                <property name="text">
+                 <string>Snap to Grid (G)</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="snapToHooksCheck">
+                <property name="text">
+                 <string>Snap to Hooks (H)</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="showGridCheck">
+                <property name="text">
+                 <string>Show Grid</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="showHooksCheck">
+                <property name="text">
+                 <string>Show Hooks</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="gridSizeLayout">
+                <item>
+                 <widget class="QLabel" name="gridSizeLabel">
+                  <property name="text">
+                   <string>Grid Size:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QDoubleSpinBox" name="gridSizeSpin">
+                  <property name="minimum">
+                   <double>0.5</double>
+                  </property>
+                  <property name="maximum">
+                   <double>10.0</double>
+                  </property>
+                  <property name="singleStep">
+                   <double>0.5</double>
+                  </property>
+                  <property name="value">
+                   <double>1.0</double>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="rotSnapLayout">
+                <item>
+                 <widget class="QLabel" name="rotSnapLabel">
+                  <property name="text">
+                   <string>Rotation Snap:</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <widget class="QSpinBox" name="rotSnapSpin">
+                  <property name="minimum">
+                   <number>1</number>
+                  </property>
+                  <property name="maximum">
+                   <number>90</number>
+                  </property>
+                  <property name="value">
+                   <number>15</number>
+                  </property>
+                  <property name="suffix">
+                   <string>°</string>
+                  </property>
+                 </widget>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <!-- Walkmesh Painter Section -->
+           <item>
+            <widget class="CollapsibleGroupBox" name="walkmeshBox">
+             <property name="checkable">
+              <bool>true</bool>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+             <property name="title">
+              <string>Walkmesh Painter</string>
+             </property>
+             <layout class="QVBoxLayout" name="walkmeshLayout">
+              <property name="spacing">
+               <number>4</number>
+              </property>
+              <property name="leftMargin">
+               <number>4</number>
+              </property>
+              <property name="topMargin">
+               <number>4</number>
+              </property>
+              <property name="rightMargin">
+               <number>4</number>
+              </property>
+              <property name="bottomMargin">
+               <number>4</number>
+              </property>
+              <item>
+               <widget class="QCheckBox" name="enablePaintCheck">
+                <property name="text">
+                 <string>Enable Painting (P)</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QCheckBox" name="colorizeMaterialsCheck">
+                <property name="text">
+                 <string>Colorize Materials</string>
+                </property>
+                <property name="checked">
+                 <bool>true</bool>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QListWidget" name="materialList">
+                <property name="minimumHeight">
+                 <number>180</number>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <layout class="QHBoxLayout" name="walkmeshButtonsLayout">
+                <item>
+                 <widget class="QPushButton" name="resetPaintButton">
+                  <property name="text">
+                   <string>Reset Selected</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="walkmeshButtonsSpacer">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </item>
+             </layout>
+            </widget>
+           </item>
+           <!-- Spacer to push everything up -->
+           <item>
+            <spacer name="rightVerticalSpacer">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>20</width>
+               <height>40</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </widget>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </widget>
    </item>
