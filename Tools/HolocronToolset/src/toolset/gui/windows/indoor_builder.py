@@ -1508,7 +1508,8 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
     # =========================================================================
 
     def save(self):
-        self._map.generate_mipmap()
+        # generate_mipmap is only used when building modules, not when saving .indoor files
+        # The write() method handles serialization without needing minimap generation
         if not self._filepath:
             self.save_as()
         else:
