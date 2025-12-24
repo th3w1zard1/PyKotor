@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=67.8.0,<70", "wheel"]
+requires = ["setuptools>=67.8.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -11,42 +11,34 @@ maintainers = [{name = "th3w1zard1", email = "halomastar@gmail.com"}]
 readme = {file = "README.md", content-type = "text/markdown"}
 license = {text = "LGPL-3.0-or-later License"}
 keywords = ["kotor", "library", "holocron", "toolset", "pykotor", "editor", "holopatcher", "tslpatcher"]
-requires-python = ">=3.9,<4"
+requires-python = ">=3.8,<4"
 dependencies = [
     "pykotor>=2.0.0",
 ]
 
 [project.optional-dependencies]
 # Extension libraries (now part of pykotor package)
-font = ["pykotor[font]>=2.0.0"]
-gl = ["pykotor[gl]>=2.0.0"]
-all-extensions = ["pykotor[font,gl]>=2.0.0"]
+font = ["pykotor>=2.0.0"]
+gl = ["pykotor>=2.0.0"]
+all-extensions = ["pykotor>=2.0.0"]
 
 # Tools (lowercase PyPI names)
-holocrontoolset = ["holocrontoolset>=4.0.0a7"]
-holopatcher = ["holopatcher>=1.8.0"]
-kotor-diff = ["kotor-diff>=1.0.0"]
-batchpatcher = ["batchpatcher>=2.2.0"]
-kotorcli = ["kotorcli>=0.1.0"]
-holopazaak = ["holopazaak>=0.1.0"]
-all-tools = [
-    "holocrontoolset>=4.0.0a7",
-    "holopatcher>=1.8.0",
-    "kotor-diff>=1.0.0",
-    "batchpatcher>=2.2.0",
-    "kotorcli>=0.1.0",
-    "holopazaak>=0.1.0",
-]
+holocrontoolset = ["holocrontoolset"]
+holopatcher = ["holopatcher"]
+kotor-diff = ["kotor-diff"]
+batchpatcher = ["batchpatcher"]
+kotorcli = ["kotorcli"]
+holopazaak = ["holopazaak"]
 
 # Everything
 all = [
-    "pykotor[font,gl]>=2.0.0",
-    "holocrontoolset>=4.0.0a7",
-    "holopatcher>=1.8.0",
-    "kotor-diff>=1.0.0",
-    "batchpatcher>=2.2.0",
-    "kotorcli>=0.1.0",
-    "holopazaak>=0.1.0",
+    "pykotor>=2.0.0",
+    "holocrontoolset",
+    "holopatcher",
+    "kotor-diff",
+    "batchpatcher",
+    "kotorcli",
+    "holopazaak",
 ]
 
 # Development dependencies
@@ -97,23 +89,18 @@ flake8 = "*"
 
 [tool.poetry.extras]
 # Extension libraries (now part of pykotor package)
-font = ["pykotor[font]"]
-gl = ["pykotor[gl]"]
-all-extensions = [
-    "pykotor[font,gl]",
-]
 
 # Tools
 holocrontoolset = ["holocrontoolset"]
 holopatcher = ["holopatcher"]
-kotor-diff = ["kotor-diff"]
+kotordiff = ["kotordiff"]
 batchpatcher = ["batchpatcher"]
 kotorcli = ["kotorcli"]
 holopazaak = ["holopazaak"]
 all-tools = [
     "holocrontoolset",
     "holopatcher",
-    "kotor-diff",
+    "kotordiff",
     "batchpatcher",
     "kotorcli",
     "holopazaak",
@@ -121,10 +108,10 @@ all-tools = [
 
 # Everything
 all = [
-    "pykotor[font,gl]",
+    "pykotor>=2.0.0",
     "holocrontoolset",
     "holopatcher",
-    "kotor-diff",
+    "kotordiff",
     "batchpatcher",
     "kotorcli",
     "holopazaak",

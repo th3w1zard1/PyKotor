@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=67.8.0,<70", "wheel"]
+requires = ["setuptools>=67.8.0", "wheel"]
 build-backend = "setuptools.build_meta"
 # Note: setup.py provides custom build hook to copy wiki directory for PyPI distribution
 
@@ -22,11 +22,10 @@ toolset = [
 [project]
 name = "holocrontoolset"
 description = "A PyQt5-backed program with a collection of tools and editors that make it easy to work with kotor files"
-version = "4.0.0b5"
-requires-python = ">= 3.8"
+version = "4.0.0b6"
+requires-python = ">=3.8"
 dependencies = [
   "pykotor>=2.0.0",
-  "pykotorgl[moderngl]>=2.0.2",
   "certifi>=2021.10.8",
   "idna>=3.11",
   "jsmin>=3.0.1",
@@ -34,10 +33,19 @@ dependencies = [
   "Markdown>=3.4.4; python_version>=\"3.9\"",
   "numpy>=1.19.0,<1.25.0; python_version<\"3.9\"",
   "numpy>=1.19.0,<2; python_version>=\"3.9\"",
-  "PyQt5-Qt5>=5.15; python_implementation == 'CPython'",
-  "PyQt5-sip>=12.10; python_implementation == 'CPython'",
-  "PyQt5>=5.15; python_implementation == 'CPython'",
+  "PyQt6>=6.6.1,<6.10.1; python_version==\"3.8\"",
+  "PyQt6>=6.10.1; python_version>=\"3.9\"",
+  "PyQt6-Qt6>=6.6.1,<6.10.1; python_version==\"3.8\"",
+  "PyQt6-Qt6>=6.10.1; python_version>=\"3.9\"",
+  "PyQt6-sip>=12.10,<13.10.3; python_version<\"3.10\"",
+  "PyQt6-sip>=13.10.3; python_version>=\"3.10\"",
+  "PyQt5-Qt5>=5.15; python_version==\"3.8\"",
+  "PyQt5-sip>=12.10; python_version==\"3.8\"",
+  "PyQt5>=5.15; python_version==\"3.8\"",
   "PySide6; python_implementation == 'PyPy'",
+  "PySide6>=6.10.1; python_implementation == 'PyPy'",
+  "PySide6_Addons>=6.10.1; python_implementation == 'PyPy'",
+  "PySide6_Essentials>=6.10.1; python_implementation == 'PyPy'",
   "qtpy>=2.4.3",
   "requests>=2.25.0,<2.32.0; python_version<\"3.9\"",
   "requests>=2.25.0; python_version>=\"3.9\"",
@@ -86,6 +94,8 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Topic :: Games/Entertainment",
   "Topic :: Games/Entertainment :: Role-Playing",
   "Topic :: Multimedia :: Graphics :: 3D Modeling",
@@ -165,8 +175,8 @@ pyside6 = ["PySide6"]
 ## UV workspace configuration                         ##
 ########################################################
 
-[tool.uv]
-dev-dependencies = []
+[dependency-groups]
+dev = []
 
 ########################################################
 ## define only linter configurations below this point ##

@@ -1,12 +1,12 @@
 [build-system]
-requires = ["setuptools>=67.8.0,<70", "wheel"]
+requires = ["setuptools>=67.8.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "holopazaak"
 description = "A comprehensive PyQt6 Pazaak card game implementation for Knights of the Old Republic with multiplayer support"
 version = "2.0.0"
-requires-python = ">= 3.8"
+requires-python = ">=3.8"
 dependencies = [
   "qtpy>=2.4.3",
   "PyQt6>=6.6.1; python_implementation == 'CPython'",
@@ -20,7 +20,7 @@ keywords = [
   "kotor", "kotor1", "kotor2", "tsl",
   "star-wars", "knights-of-the-old-republic",
   "pazaak", "card-game", "minigame",
-  "pyqt6", "qt", "qtpy",
+  "pyqt", "pyside6", "qt", "qtpy",
   "game", "casino", "cards", "multiplayer",
   "pykotor", "bioware", "lucasarts", "websocket",
 ]
@@ -35,6 +35,8 @@ classifiers = [
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Topic :: Games/Entertainment",
   "Topic :: Games/Entertainment :: Board Games",
   "Environment :: X11 Applications :: Qt",
