@@ -242,7 +242,7 @@ def load_kits(  # noqa: C901, PLR0912, PLR0915
                     try:
                         position: Vector3 = Vector3(hook_json["x"], hook_json["y"], hook_json["z"])
                         rotation: float = hook_json["rotation"]
-                        door: KitDoor = kit.doors[hook_json["door"]]
+                        door = kit.doors[hook_json["door"]]
                         edge: str = hook_json["edge"]
                         hook: KitComponentHook = KitComponentHook(position, rotation, edge, door)
                         component.hooks.append(hook)

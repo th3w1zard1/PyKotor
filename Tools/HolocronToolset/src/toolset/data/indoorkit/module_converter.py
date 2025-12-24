@@ -77,7 +77,7 @@ class ModuleKit(Kit):
         """Load components from the module's LYT and resources."""
         # Load the module
         try:
-            self._module = Module(self.module_root, self._installation, use_dot_mod=True)
+            self._module = Module(self.module_root, self._installation)
         except Exception:  # noqa: BLE001
             RobustLogger().warning(f"Module '{self.module_root}' failed to load")
             return
@@ -94,12 +94,12 @@ class ModuleKit(Kit):
             return
 
         # Create a default door for hooks
-        default_door = self._create_default_door()
+        default_door: KitDoor = self._create_default_door()
         self.doors.append(default_door)
 
         # Extract rooms from LYT
         for room_idx, lyt_room in enumerate(lyt_data.rooms):
-            component = self._create_component_from_lyt_room(lyt_room, room_idx, default_door)
+            component: KitComponent | None = self._create_component_from_lyt_room(lyt_room, room_idx, default_door)
             if component is not None:
                 self.components.append(component)
 
@@ -132,7 +132,7 @@ class ModuleKit(Kit):
         model_name = lyt_room.model.lower() if lyt_room.model else f"room{room_idx}"
 
         # Try to get the walkmesh (WOK) for this room
-        bwm = self._get_room_walkmesh(model_name)
+        bwm: BWM | None = self._get_room_walkmesh(model_name)
         # Ensure we always have a usable walkmesh with at least one face for
         # collision / snapping logic. Some modules ship with empty or missing
         # WOK data; in that case we fall back to a simple placeholder quad.
@@ -154,8 +154,8 @@ class ModuleKit(Kit):
         bwm = self._recenter_bwm(bwm)
 
         # Try to get the model data
-        mdl_data = self._get_room_model(model_name)
-        mdx_data = self._get_room_model_ext(model_name)
+        mdl_data: bytes | None = self._get_room_model(model_name)
+        mdx_data: bytes | None = self._get_room_model_ext(model_name)
 
         if mdl_data is None:
             mdl_data = b""
@@ -174,11 +174,6 @@ class ModuleKit(Kit):
             display_name = f"ROOM{room_idx}"
 
         component = KitComponent(self, display_name, image, bwm, mdl_data, mdx_data)
-
-        # Extract hooks from BWM edges with transitions (after recentering!)
-        # This matches how kit.py extracts hooks in extract_kit()
-        # Reference: Libraries/PyKotor/src/pykotor/tools/kit.py:_extract_doorhooks_from_bwm
-        # Reference: Libraries/PyKotor/src/pykotor/tools/kit.py:897-898 (extract_kit)
         doorhooks = _extract_doorhooks_from_bwm(bwm, len(self.doors))
         
         # Create KitComponentHook objects from extracted doorhooks
@@ -533,3 +528,6 @@ class ModuleKitManager:
         self._cache.clear()
         self._module_names = None
 
+    def is_kit_valid(self, module_root: str) -> bool:
+        """Check if a module kit is valid."""
+        return module_root in self._cache

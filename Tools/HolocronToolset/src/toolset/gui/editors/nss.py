@@ -52,7 +52,6 @@ if __name__ == "__main__":
     update_path(Path(__file__).parent.parent.parent.parent)
 
 
-
 from pykotor.extract.file import FileResource  # pyright: ignore[reportPrivateImportUsage]
 from pykotor.resource.formats.ncs import read_ncs  # pyright: ignore[reportPrivateImportUsage]
 from pykotor.resource.type import ResourceType  # pyright: ignore[reportPrivateImportUsage]
@@ -146,6 +145,7 @@ class NSSEditor(Editor):
 
         # Setup scrollbar event filter to prevent scrollbar interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
+
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
         self._setup_signals()
@@ -194,6 +194,7 @@ class NSSEditor(Editor):
 
         # Simple debounce timer for text changes (batches rapid keystrokes)
         from qtpy.QtCore import QTimer
+
         self._analysis_debounce_timer: QTimer = QTimer(self)
         self._analysis_debounce_timer.setSingleShot(True)
         self._analysis_debounce_timer.setInterval(250)  # 250ms debounce
@@ -483,6 +484,7 @@ class NSSEditor(Editor):
         self.output_text_edit.setReadOnly(True)
         # Set proper monospace font for output using VS Code-like configuration
         from toolset.gui.common.style.vscode_style import configure_code_editor_font
+
         configure_code_editor_font(self.output_text_edit, size=11)
 
         # Initialize the terminal widget
@@ -572,6 +574,7 @@ class NSSEditor(Editor):
 
                 # Create tab widget for debug panels
                 from qtpy.QtWidgets import QTabWidget
+
                 debug_tabs = QTabWidget(self.ui.debugTab)
                 debug_tabs.addTab(self._debug_variables_widget, "Variables")
                 debug_tabs.addTab(self._debug_callstack_widget, "Call Stack")
@@ -613,7 +616,6 @@ class NSSEditor(Editor):
             {"id": "file.saveAll", "label": "Save All", "category": "File"},
             {"id": "file.close", "label": "Close", "category": "File"},
             {"id": "file.closeAll", "label": "Close All", "category": "File"},
-
             # Edit operations
             {"id": "edit.undo", "label": "Undo", "category": "Edit"},
             {"id": "edit.redo", "label": "Redo", "category": "Edit"},
@@ -627,7 +629,6 @@ class NSSEditor(Editor):
             {"id": "edit.deleteLine", "label": "Delete Line", "category": "Edit"},
             {"id": "edit.moveLineUp", "label": "Move Line Up", "category": "Edit"},
             {"id": "edit.moveLineDown", "label": "Move Line Down", "category": "Edit"},
-
             # View operations
             {"id": "view.toggleExplorer", "label": "Toggle Explorer", "category": "View"},
             {"id": "view.toggleTerminal", "label": "Toggle Terminal", "category": "View"},
@@ -636,22 +637,18 @@ class NSSEditor(Editor):
             {"id": "view.zoomOut", "label": "Zoom Out", "category": "View"},
             {"id": "view.resetZoom", "label": "Reset Zoom", "category": "View"},
             {"id": "view.toggleWordWrap", "label": "Toggle Word Wrap", "category": "View"},
-
             # Navigation
             {"id": "navigate.gotoLine", "label": "Go to Line...", "category": "Navigation"},
             {"id": "navigate.gotoDefinition", "label": "Go to Definition", "category": "Navigation"},
             {"id": "navigate.findReferences", "label": "Find All References", "category": "Navigation"},
-
             # Code operations
             {"id": "code.format", "label": "Format Document", "category": "Code"},
             {"id": "code.compile", "label": "Compile Script", "category": "Code"},
             {"id": "code.analyze", "label": "Analyze Code", "category": "Code"},
-
             # Bookmarks
             {"id": "bookmark.toggle", "label": "Toggle Bookmark", "category": "Bookmarks"},
             {"id": "bookmark.next", "label": "Next Bookmark", "category": "Bookmarks"},
             {"id": "bookmark.previous", "label": "Previous Bookmark", "category": "Bookmarks"},
-
             # Help
             {"id": "help.documentation", "label": "Show Documentation", "category": "Help"},
             {"id": "help.shortcuts", "label": "Show Keyboard Shortcuts", "category": "Help"},
@@ -699,12 +696,7 @@ class NSSEditor(Editor):
         # Register all commands
         for cmd in commands:
             callback = command_map.get(cmd["id"])
-            self._command_palette.register_command(
-                cmd["id"],
-                cmd["label"],
-                cmd.get("category", ""),
-                callback
-            )
+            self._command_palette.register_command(cmd["id"], cmd["label"], cmd.get("category", ""), callback)
 
     def _show_command_palette(self):
         """Show the command palette."""
@@ -712,16 +704,17 @@ class NSSEditor(Editor):
 
     def _detect_entry_point(self, source: str) -> str:
         """Detect the entry point type from source code.
-        
+
         Args:
         ----
             source: str: Source code to analyze
-            
+
         Returns:
         -------
             str: "main" or "StartingConditional" or "unknown"
         """
         import re
+
         # Check for void main()
         main_pattern = r"\bvoid\s+main\s*\("
         if re.search(main_pattern, source, re.IGNORECASE):
@@ -818,7 +811,7 @@ class NSSEditor(Editor):
 
     def _setup_error_reporting(self):
         """Set up error badge on output tab."""
-        self._error_count  = 0
+        self._error_count = 0
         self.error_badge = QLabel("0")
         # Use palette colors instead of hardcoded colors
         self.error_badge.setStyleSheet("""
@@ -1100,9 +1093,7 @@ class NSSEditor(Editor):
             for trigger, content in self.ui.codeEdit.snippets.items():
                 action = snippet_menu.addAction(trigger)
                 assert action is not None, "Snippet action should not be None"
-                action.triggered.connect(
-                    lambda _checked, c=content: self.ui.codeEdit.insertPlainText(c)
-                )
+                action.triggered.connect(lambda _checked, c=content: self.ui.codeEdit.insertPlainText(c))
             snippet_menu.addSeparator()
         action = snippet_menu.addAction("Insert Snippet...")
         assert action is not None, "Insert snippet action should not be None"
@@ -1216,15 +1207,13 @@ class NSSEditor(Editor):
         for line_num, line in enumerate(lines, 1):
             # Simple word boundary matching
             import re
+
             pattern = r"\b" + re.escape(word) + r"\b"
             matches = re.finditer(pattern, line, re.IGNORECASE)
             for match in matches:
-                self._find_results.append({
-                    "file": str(self._filepath) if self._filepath else "Untitled",
-                    "line": line_num,
-                    "content": line.strip()[:100],
-                    "column": match.start() + 1
-                })
+                self._find_results.append(
+                    {"file": str(self._filepath) if self._filepath else "Untitled", "line": line_num, "content": line.strip()[:100], "column": match.start() + 1}
+                )
 
         # Populate results
         self._populate_find_results()
@@ -1233,11 +1222,7 @@ class NSSEditor(Editor):
         self.ui.panelTabs.setCurrentWidget(self.ui.findResultsTab)
 
         if not self._find_results:
-            QMessageBox.information(
-                self,
-                "Find All References",
-                f"No references to '{word}' found in current file."
-            )
+            QMessageBox.information(self, "Find All References", f"No references to '{word}' found in current file.")
         else:
             self._log_to_output(f"Found {len(self._find_results)} reference(s) to '{word}'")
 
@@ -1323,7 +1308,7 @@ class NSSEditor(Editor):
                                 "Go to Definition",
                                 f"Function '{word}' is a built-in function.\n\n"
                                 f"Return type: {getattr(func, 'return_type', 'void')}\n"
-                                f"See the Constants tab for more information."
+                                f"See the Constants tab for more information.",
                             )
                             return
 
@@ -1336,19 +1321,10 @@ class NSSEditor(Editor):
                         if list_item and list_item.text().lower() == word.lower():
                             self.ui.constantList.setCurrentItem(list_item)
                             self.ui.constantList.scrollToItem(list_item)
-                            QMessageBox.information(
-                                self,
-                                "Go to Definition",
-                                f"Constant '{word}' is a built-in constant.\n"
-                                f"See the Constants tab for more information."
-                            )
+                            QMessageBox.information(self, "Go to Definition", f"Constant '{word}' is a built-in constant.\nSee the Constants tab for more information.")
                             return
 
-            QMessageBox.information(
-                self,
-                "Go to Definition",
-                f"Definition for '{word}' not found in current file."
-            )
+            QMessageBox.information(self, "Go to Definition", f"Definition for '{word}' not found in current file.")
 
     def _setup_file_explorer(self):
         """Set up the file explorer with filtering and navigation."""
@@ -1565,9 +1541,30 @@ class NSSEditor(Editor):
 
         # Also add keywords
         keywords: list[str] = [
-            "void", "int", "float", "string", "object", "vector", "location", "effect", "event",
-            "if", "else", "for", "while", "do", "switch", "case", "default", "break", "continue",
-            "return", "struct", "const", "include", "define"
+            "void",
+            "int",
+            "float",
+            "string",
+            "object",
+            "vector",
+            "location",
+            "effect",
+            "event",
+            "if",
+            "else",
+            "for",
+            "while",
+            "do",
+            "switch",
+            "case",
+            "default",
+            "break",
+            "continue",
+            "return",
+            "struct",
+            "const",
+            "include",
+            "define",
         ]
         completer_list.extend(keywords)
 
@@ -1603,12 +1600,13 @@ class NSSEditor(Editor):
 
     def _ensure_language_server(self) -> bool:
         """Ensure language server is running.
-        
+
         Returns:
             True if server is running or was started, False on failure.
         """
         if self._ls_client is None:
             from toolset.gui.common.language_server_client import LanguageServerClient
+
             self._ls_client = LanguageServerClient(
                 is_tsl=self._is_tsl,
                 functions=self.functions if self.functions else None,
@@ -1622,7 +1620,7 @@ class NSSEditor(Editor):
 
     def _on_text_changed(self):
         """Handle text changes - debounce analysis requests.
-        
+
         This is the ONLY method connected to textChanged for analysis.
         It batches rapid keystrokes and sends a single request to the
         language server after 250ms of inactivity.
@@ -1649,7 +1647,7 @@ class NSSEditor(Editor):
 
     def _on_analysis_complete(self, result: dict[str, Any]):
         """Handle analysis results from language server.
-        
+
         This is called asynchronously when the language server completes analysis.
         Updates diagnostics, outline, and breadcrumbs from the result.
         """
@@ -1762,7 +1760,7 @@ class NSSEditor(Editor):
 
     def _show_hover_documentation(self, e: QMouseEvent):
         """Show rich tooltip documentation on hover.
-        
+
         PERFORMANCE: Uses language server for hover info with debouncing.
         Only updates tooltip if the word under cursor changed.
         """
@@ -1834,26 +1832,26 @@ class NSSEditor(Editor):
 
                     # Calculate tooltip position: position to the RIGHT of cursor to avoid covering text
                     global_mouse_pos = self.ui.codeEdit.mapToGlobal(mouse_pos)
-                    
+
                     # Get screen geometry to check available space
                     screen = QApplication.primaryScreen()
                     if screen is not None:
                         screen_geometry = screen.availableGeometry()
-                        
+
                         # Estimate tooltip size (rough estimates)
                         estimated_tooltip_width = 400
                         estimated_tooltip_height = 200
-                        
+
                         # Calculate character width for horizontal offset
                         font_metrics = self.ui.codeEdit.fontMetrics()
-                        char_width = font_metrics.horizontalAdvance('M')
+                        char_width = font_metrics.horizontalAdvance("M")
                         # Offset tooltip to the right of the cursor by ~20 characters
                         horizontal_offset = char_width * 20
-                        
+
                         # Check available space to the right
                         space_right = screen_geometry.right() - global_mouse_pos.x()
                         space_left = global_mouse_pos.x() - screen_geometry.left()
-                        
+
                         # Position tooltip to the right if there's space, otherwise to the left
                         if space_right >= estimated_tooltip_width:
                             # Position to the right of cursor
@@ -1866,13 +1864,13 @@ class NSSEditor(Editor):
                             tooltip_x = global_mouse_pos.x() + horizontal_offset
                             # Clamp to screen bounds
                             tooltip_x = max(screen_geometry.left() + 10, min(tooltip_x, screen_geometry.right() - estimated_tooltip_width - 10))
-                        
+
                         # Vertical position: slightly above cursor to avoid covering text
                         # Offset upward by ~2 lines to clear the text being documented
                         line_height = font_metrics.height()
                         vertical_offset = line_height * 2
                         tooltip_y = global_mouse_pos.y() - vertical_offset
-                        
+
                         # Ensure tooltip stays within screen bounds vertically
                         if tooltip_y < screen_geometry.top():
                             # Not enough space above, position below cursor
@@ -1880,16 +1878,16 @@ class NSSEditor(Editor):
                         if tooltip_y + estimated_tooltip_height > screen_geometry.bottom():
                             # Not enough space below, position at top of screen
                             tooltip_y = screen_geometry.top() + 10
-                        
+
                         tooltip_pos = QPoint(tooltip_x, tooltip_y)
                         tooltip_rect = QRect(tooltip_pos, QSize(estimated_tooltip_width, estimated_tooltip_height))
-                        
+
                         # Show tooltip with longer timeout (10 seconds) and ensure it stays visible
                         QToolTip.showText(tooltip_pos, doc, self.ui.codeEdit, tooltip_rect, 10000)
                     else:
                         # Fallback if screen info not available - position to right with offset
                         font_metrics = self.ui.codeEdit.fontMetrics()
-                        char_width = font_metrics.horizontalAdvance('M')
+                        char_width = font_metrics.horizontalAdvance("M")
                         horizontal_offset = char_width * 20
                         line_height = font_metrics.height()
                         vertical_offset = line_height * 2
@@ -1928,26 +1926,26 @@ class NSSEditor(Editor):
 
             # Calculate tooltip position: position to the RIGHT of cursor to avoid covering text
             global_mouse_pos = self.ui.codeEdit.mapToGlobal(mouse_pos)
-            
+
             # Get screen geometry to check available space
             screen = QApplication.primaryScreen()
             if screen is not None:
                 screen_geometry = screen.availableGeometry()
-                
+
                 # Estimate tooltip size (rough estimates)
                 estimated_tooltip_width = 400
                 estimated_tooltip_height = 200
-                
+
                 # Calculate character width for horizontal offset
                 font_metrics = self.ui.codeEdit.fontMetrics()
-                char_width = font_metrics.horizontalAdvance('M')
+                char_width = font_metrics.horizontalAdvance("M")
                 # Offset tooltip to the right of the cursor by ~20 characters
                 horizontal_offset = char_width * 20
-                
+
                 # Check available space to the right
                 space_right = screen_geometry.right() - global_mouse_pos.x()
                 space_left = global_mouse_pos.x() - screen_geometry.left()
-                
+
                 # Position tooltip to the right if there's space, otherwise to the left
                 if space_right >= estimated_tooltip_width:
                     # Position to the right of cursor
@@ -1960,13 +1958,13 @@ class NSSEditor(Editor):
                     tooltip_x = global_mouse_pos.x() + horizontal_offset
                     # Clamp to screen bounds
                     tooltip_x = max(screen_geometry.left() + 10, min(tooltip_x, screen_geometry.right() - estimated_tooltip_width - 10))
-                
+
                 # Vertical position: slightly above cursor to avoid covering text
                 # Offset upward by ~2 lines to clear the text being documented
                 line_height = font_metrics.height()
                 vertical_offset = line_height * 2
                 tooltip_y = global_mouse_pos.y() - vertical_offset
-                
+
                 # Ensure tooltip stays within screen bounds vertically
                 if tooltip_y < screen_geometry.top():
                     # Not enough space above, position below cursor
@@ -1974,16 +1972,16 @@ class NSSEditor(Editor):
                 if tooltip_y + estimated_tooltip_height > screen_geometry.bottom():
                     # Not enough space below, position at top of screen
                     tooltip_y = screen_geometry.top() + 10
-                
+
                 tooltip_pos = QPoint(tooltip_x, tooltip_y)
                 tooltip_rect = QRect(tooltip_pos, QSize(estimated_tooltip_width, estimated_tooltip_height))
-                
+
                 # Show tooltip with longer timeout (10 seconds) and ensure it stays visible
                 QToolTip.showText(tooltip_pos, contents, self.ui.codeEdit, tooltip_rect, 10000)
             else:
                 # Fallback if screen info not available - position to right with offset
                 font_metrics = self.ui.codeEdit.fontMetrics()
-                char_width = font_metrics.horizontalAdvance('M')
+                char_width = font_metrics.horizontalAdvance("M")
                 horizontal_offset = char_width * 20
                 line_height = font_metrics.height()
                 vertical_offset = line_height * 2
@@ -1993,7 +1991,7 @@ class NSSEditor(Editor):
 
     def _get_documentation(self, word: str) -> str | None:
         """Get the documentation for a word with VS Code-like formatting.
-        
+
         Uses theme-aware colors that automatically adapt to light/dark themes
         for proper readability.
         """
@@ -2099,7 +2097,7 @@ class NSSEditor(Editor):
         finally:
             if context.saved_connection:
                 self.disconnect(context.saved_connection)  # type: ignore[call-arg]
-#                self.sig_saved_file.disconnect(context.saved_connection)
+            #                self.sig_saved_file.disconnect(context.saved_connection)
             # If _restype changed, unwind all the changes that may have been made.
             if self._restype != context.restype:
                 self._filepath = context.filepath
@@ -2171,6 +2169,7 @@ class NSSEditor(Editor):
 
     def _handle_user_ncs(self, data: bytes, resname: str) -> None:
         from toolset.gui.common.localization import translate as tr, trf  # noqa: PLC0415
+
         box = QMessageBox(
             QMessageBox.Icon.Question,
             tr("Decompile or Download"),
@@ -2239,7 +2238,11 @@ class NSSEditor(Editor):
         ncs_stream = io.BytesIO(ncs_data)
 
         # Decompile using DeNCS
-        result = decompile_ncs(ncs_stream, actions)
+        try:
+            result: str | None = decompile_ncs(ncs_stream, actions)
+        except Exception as e:
+            RobustLogger().exception("Decompilation failed")
+            raise ValueError("Decompilation failed") from e
 
         if result is None:
             raise ValueError("Decompilation failed: decompile_ncs returned None")
@@ -2285,7 +2288,7 @@ class NSSEditor(Editor):
         compiled_bytes: bytes | None = ht_compile_script(
             self.ui.codeEdit.toPlainText(),
             self._installation.path(),
-            tsl=self._installation.game().is_k2()  # Determine whether this is a TSL installation (K2/TSL/2)
+            tsl=self._installation.game().is_k2(),  # Determine whether this is a TSL installation (K2/TSL/2)
         )
         if compiled_bytes is None:
             self._logger.debug(f"User cancelled the compilation of '{self._resname}.{self._restype.extension}'.")
@@ -2664,7 +2667,7 @@ class NSSEditor(Editor):
 
     def _update_breadcrumbs(self):
         """Update breadcrumbs when cursor position changes.
-        
+
         PERFORMANCE: Breadcrumbs are now updated from the last analysis result
         via _update_breadcrumbs_from_symbols, not by parsing.
         """
@@ -2763,6 +2766,7 @@ class NSSEditor(Editor):
     def _reset_zoom(self):
         """Reset editor font size to default VS Code-like font."""
         from toolset.gui.common.style.vscode_style import configure_code_editor_font
+
         configure_code_editor_font(self.ui.codeEdit, size=14)
 
     def _toggle_line_numbers(self):
@@ -2798,7 +2802,7 @@ class NSSEditor(Editor):
             "Minimap",
             "Minimap feature is planned for a future release.\n\n"
             "This will show a small overview of your code on the right side of the editor, "
-            "similar to VS Code's minimap feature."
+            "similar to VS Code's minimap feature.",
         )
 
     def _indent_selection(self):
@@ -2872,11 +2876,7 @@ class NSSEditor(Editor):
 
         # Confirm before formatting
         reply: QMessageBox.StandardButton = QMessageBox.question(
-            self,
-            "Format Code",
-            "Format the entire document?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.Yes
+            self, "Format Code", "Format the entire document?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.Yes
         )
         if reply != QMessageBox.StandardButton.Yes:
             return
@@ -2998,11 +2998,13 @@ class NSSEditor(Editor):
                 lines = content.split("\n")
                 for line_num, line in enumerate(lines, 1):
                     if search_text.lower() in line.lower():
-                        self._find_results.append({
-                            "file": str(file_path),
-                            "line": line_num,
-                            "content": line.strip()[:100],  # Limit content length
-                        })
+                        self._find_results.append(
+                            {
+                                "file": str(file_path),
+                                "line": line_num,
+                                "content": line.strip()[:100],  # Limit content length
+                            }
+                        )
             except Exception:
                 continue
 
@@ -3066,11 +3068,7 @@ class NSSEditor(Editor):
 
         # Set it as a floating widget that appears above the editor
         # We'll position it dynamically when shown
-        self._find_replace_widget.setWindowFlags(
-            Qt.WindowType.FramelessWindowHint |
-            Qt.WindowType.Tool |
-            Qt.WindowType.WindowStaysOnTopHint
-        )
+        self._find_replace_widget.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.Tool | Qt.WindowType.WindowStaysOnTopHint)
         self._find_replace_widget.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating, False)
 
         # Make it look more like VS Code
@@ -3128,7 +3126,7 @@ class NSSEditor(Editor):
                 self._current_find_flags = {
                     "case_sensitive": self._find_replace_widget.case_sensitive_check.isChecked(),
                     "whole_words": self._find_replace_widget.whole_words_check.isChecked(),
-                    "regex": self._find_replace_widget.regex_check.isChecked()
+                    "regex": self._find_replace_widget.regex_check.isChecked(),
                 }
                 # Auto-find first occurrence
                 self.ui.codeEdit.find_next(
@@ -3136,7 +3134,7 @@ class NSSEditor(Editor):
                     self._current_find_flags.get("case_sensitive", False),
                     self._current_find_flags.get("whole_words", False),
                     self._current_find_flags.get("regex", False),
-                    backward=False
+                    backward=False,
                 )
 
     def _show_find(self):
@@ -3207,11 +3205,7 @@ class NSSEditor(Editor):
     ):
         """Handle find request from widget."""
         self._current_find_text = text if text and text.strip() else ""
-        self._current_find_flags = {
-            "case_sensitive": case_sensitive,
-            "whole_words": whole_words,
-            "regex": regex
-        }
+        self._current_find_flags = {"case_sensitive": case_sensitive, "whole_words": whole_words, "regex": regex}
         # The actual find is done in find_next/previous handlers
 
     def _on_find_next_requested(self):
@@ -3224,7 +3218,7 @@ class NSSEditor(Editor):
                 self._current_find_flags = {
                     "case_sensitive": self._find_replace_widget.case_sensitive_check.isChecked(),
                     "whole_words": self._find_replace_widget.whole_words_check.isChecked(),
-                    "regex": self._find_replace_widget.regex_check.isChecked()
+                    "regex": self._find_replace_widget.regex_check.isChecked(),
                 }
 
         if self._current_find_text:
@@ -3233,7 +3227,7 @@ class NSSEditor(Editor):
                 self._current_find_flags.get("case_sensitive", False),
                 self._current_find_flags.get("whole_words", False),
                 self._current_find_flags.get("regex", False),
-                backward=False
+                backward=False,
             )
             if not found:
                 # Don't show message box, just log to output
@@ -3246,7 +3240,7 @@ class NSSEditor(Editor):
                 self._current_find_text,
                 self._current_find_flags.get("case_sensitive", False),
                 self._current_find_flags.get("whole_words", False),
-                self._current_find_flags.get("regex", False)
+                self._current_find_flags.get("regex", False),
             )
             if not found:
                 QMessageBox.information(self, "Find", "No more occurrences found")
@@ -3268,6 +3262,7 @@ class NSSEditor(Editor):
             matches = False
             if regex:
                 import re
+
                 try:
                     pattern = re.compile(find_text, re.IGNORECASE if not case_sensitive else 0)
                     matches = bool(pattern.match(selected))
@@ -3305,11 +3300,7 @@ class NSSEditor(Editor):
         """Handle replace all request."""
         # Confirm before replacing all
         reply = QMessageBox.question(
-            self,
-            "Replace All",
-            f"Replace all occurrences of '{find_text}'?",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
-            QMessageBox.StandardButton.No
+            self, "Replace All", f"Replace all occurrences of '{find_text}'?", QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No
         )
         if reply == QMessageBox.StandardButton.Yes:
             count = self.ui.codeEdit.replace_all_occurrences(find_text, replace_text, case_sensitive, whole_words, regex)
@@ -3394,7 +3385,7 @@ class NSSEditor(Editor):
             "- Bookmarks and snippets\n"
             "- Find and replace\n"
             "- Outline view\n\n"
-            "For more information, visit the PyKotor documentation."
+            "For more information, visit the PyKotor documentation.",
         )
 
     def _show_keyboard_shortcuts(self):
@@ -3456,17 +3447,12 @@ Code Operations:
             "Part of Holocron Toolset\n"
             "A comprehensive editor for Knights of the Old Republic scripts.\n\n"
             "Features VS Code-like editing experience with syntax highlighting, "
-            "auto-completion, error diagnostics, and more."
+            "auto-completion, error diagnostics, and more.",
         )
 
     def _check_for_updates(self):
         """Check for updates."""
-        QMessageBox.information(
-            self,
-            "Check for Updates",
-            "Update checking is not yet implemented.\n\n"
-            "Please check the PyKotor repository for updates."
-        )
+        QMessageBox.information(self, "Check for Updates", "Update checking is not yet implemented.\n\nPlease check the PyKotor repository for updates.")
 
     def _start_debugging(self):
         """Start test run (dry-run testing with event simulation)."""
@@ -3480,15 +3466,12 @@ Code Operations:
             # Detect entry point
             entry_point = self._detect_entry_point(text)
             if entry_point == "unknown":
-                QMessageBox.warning(
-                    self,
-                    "Test Run",
-                    "Cannot detect entry point. Script must have either main() or StartingConditional() function."
-                )
+                QMessageBox.warning(self, "Test Run", "Cannot detect entry point. Script must have either main() or StartingConditional() function.")
                 return
 
             # Show test configuration dialog
             from qtpy.QtWidgets import QDialog
+
             config_dialog = TestConfigDialog(entry_point, self)
             if config_dialog.exec_() != QDialog.DialogCode.Accepted:
                 return  # User cancelled
@@ -3505,11 +3488,7 @@ Code Operations:
             try:
                 ncs = ht_compile_script(text, self._installation.path(), tsl=self._is_tsl)
             except Exception as e:
-                QMessageBox.critical(
-                    self,
-                    "Compilation Error",
-                    f"Cannot start test run: script has compilation errors.\n\n{universal_simplify_exception(e)}"
-                )
+                QMessageBox.critical(self, "Compilation Error", f"Cannot start test run: script has compilation errors.\n\n{universal_simplify_exception(e)}")
                 return
 
             if ncs is None:
@@ -3517,6 +3496,7 @@ Code Operations:
 
             # Create debugger/test runner
             from pykotor.resource.formats.ncs.compiler.interpreter import Interpreter
+
             interpreter = Interpreter(read_ncs(ncs), game)
 
             # Set up mocks based on test configuration
@@ -3563,11 +3543,7 @@ Code Operations:
             self._update_debug_widgets()
 
         except Exception as e:
-            QMessageBox.critical(
-                self,
-                "Test Run Error",
-                f"Failed to start test run:\n\n{universal_simplify_exception(e)}"
-            )
+            QMessageBox.critical(self, "Test Run Error", f"Failed to start test run:\n\n{universal_simplify_exception(e)}")
             RobustLogger().error("Failed to start test run", exc_info=True)
 
     def _stop_debugging(self):
@@ -3740,11 +3716,7 @@ Code Operations:
     def _on_debugger_error(self, error: Exception):
         """Handle debugger error."""
         self._log_to_output(f"Debugger error: {universal_simplify_exception(error)}")
-        QMessageBox.critical(
-            self,
-            "Debugger Error",
-            f"An error occurred during debugging:\n\n{universal_simplify_exception(error)}"
-        )
+        QMessageBox.critical(self, "Debugger Error", f"An error occurred during debugging:\n\n{universal_simplify_exception(error)}")
         self._stop_debugging()
 
     def _update_debug_visualization(self):

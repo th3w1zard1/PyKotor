@@ -22,14 +22,6 @@ class Kit:
         name: str,
     ):
         self.name: str = name
-        self.always: dict[Path, bytes] = {}
-        self.textures: CaseInsensitiveDict[bytes] = CaseInsensitiveDict()
-        self.txis: CaseInsensitiveDict[bytes] = CaseInsensitiveDict()
-        self.lightmaps: CaseInsensitiveDict[bytes] = CaseInsensitiveDict()
-        self.skyboxes: CaseInsensitiveDict[MDLMDXTuple] = CaseInsensitiveDict()
-        self.doors: list[KitDoor] = []
-        self.components: list[KitComponent] = []
-        self.name: str = name
         self.components: list[KitComponent] = []
         self.doors: list[KitDoor] = []
         self.textures: CaseInsensitiveDict[bytes] = CaseInsensitiveDict()
@@ -38,6 +30,7 @@ class Kit:
         self.always: dict[Path, bytes] = {}
         self.side_padding: dict[int, dict[int, MDLMDXTuple]] = {}
         self.top_padding: dict[int, dict[int, MDLMDXTuple]] = {}
+        self.skyboxes: dict[str, MDLMDXTuple] = {}
 
 
 class KitComponentHook:

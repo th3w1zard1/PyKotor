@@ -664,17 +664,18 @@ class _TrimeshHeader:
         self.uv_speed: float = 0.0
         self.mdx_data_size: int = 0
         self.mdx_data_bitmap: int = 0
-        self.mdx_vertex_offset: int = 0
-        self.mdx_normal_offset: int = 0
-        self.mdx_color_offset: int = 0xFFFFFFFF
-        self.mdx_texture1_offset: int = 0
-        self.mdx_texture2_offset: int = 0
-        self.unknown3: int = 0xFFFFFFFF  # TODO: what is this?
-        self.unknown4: int = 0xFFFFFFFF  # TODO: what is this?
-        self.unknown5: int = 0xFFFFFFFF  # TODO: what is this?
-        self.unknown6: int = 0xFFFFFFFF  # TODO: what is this?
-        self.unknown7: int = 0xFFFFFFFF  # TODO: what is this?
-        self.unknown8: int = 0xFFFFFFFF  # TODO: what is this?
+        self.mdx_vertex_offset: int = 0  # Offset to vertex data in MDX (0x0001 bitmap flag)
+        self.mdx_normal_offset: int = 0  # Offset to normal data in MDX (0x0020 bitmap flag)
+        self.mdx_color_offset: int = 0xFFFFFFFF  # Offset to color data in MDX (not used in bitmap)
+        self.mdx_texture1_offset: int = 0  # Offset to primary UV data in MDX (0x0002 bitmap flag)
+        self.mdx_texture2_offset: int = 0  # Offset to secondary UV data in MDX (0x0004 bitmap flag)
+        self.mdx_unknown_offset: int = 0xFFFFFFFF  # Offset to unknown data in MDX (always -1)
+        self.mdx_uv3_offset: int = 0xFFFFFFFF  # Offset to tertiary UV data in MDX (always -1)
+        self.mdx_uv4_offset: int = 0xFFFFFFFF  # Offset to quaternary UV data in MDX (always -1)
+        self.mdx_tangent_offset: int = 0xFFFFFFFF  # Offset to tangent/binormal data in MDX (36 bytes, weighted normals)
+        self.mdx_unused_struct1_offset: int = 0xFFFFFFFF  # Offset to unused MDX structure 1 (always -1)
+        self.mdx_unused_struct2_offset: int = 0xFFFFFFFF  # Offset to unused MDX structure 2 (always -1)
+        self.mdx_unused_struct3_offset: int = 0xFFFFFFFF  # Offset to unused MDX structure 3 (always -1)
         self.vertex_count: int = 0
         self.texture_count: int = 1
         self.has_lightmap: int = 0
@@ -686,7 +687,7 @@ class _TrimeshHeader:
         self.dirt_enabled: int = 0
         self.dirt_texture: str = ""
         self.unknown9: int = 0  # TODO: what is this?
-        self.unknown10: int = 0  # TODO: what is this?
+        self.dirt_coordinate_space: int = 0  # UV coordinate space for dirt texture overlay
         self.total_area: float = 0.0
         self.unknown11: int = 0  # TODO: what is this?
         self.unknown12: int = 0  # TODO: what is this?
@@ -741,12 +742,13 @@ class _TrimeshHeader:
         self.mdx_color_offset = reader.read_uint32()
         self.mdx_texture1_offset = reader.read_uint32()
         self.mdx_texture2_offset = reader.read_uint32()
-        self.unknown3 = reader.read_uint32()  # TODO: what is this?
-        self.unknown4 = reader.read_uint32()  # TODO: what is this?
-        self.unknown5 = reader.read_uint32()  # TODO: what is this?
-        self.unknown6 = reader.read_uint32()  # TODO: what is this?
-        self.unknown7 = reader.read_uint32()  # TODO: what is this?
-        self.unknown8 = reader.read_uint32()  # TODO: what is this?
+        self.mdx_unknown_offset = reader.read_uint32()  # Offset to unknown data in MDX (always -1)
+        self.mdx_uv3_offset = reader.read_uint32()  # Offset to tertiary UV data in MDX (always -1)
+        self.mdx_uv4_offset = reader.read_uint32()  # Offset to quaternary UV data in MDX (always -1)
+        self.mdx_tangent_offset = reader.read_uint32()  # Offset to tangent/binormal data in MDX (36 bytes, weighted normals)
+        self.mdx_unused_struct1_offset = reader.read_uint32()  # Offset to unused MDX structure 1 (always -1)
+        self.mdx_unused_struct2_offset = reader.read_uint32()  # Offset to unused MDX structure 2 (always -1)
+        self.mdx_unused_struct3_offset = reader.read_uint32()  # Offset to unused MDX structure 3 (always -1)
         self.vertex_count = reader.read_uint16()
         self.texture_count = reader.read_uint16()
         self.has_lightmap = reader.read_uint8()
@@ -755,8 +757,10 @@ class _TrimeshHeader:
         self.has_shadow = reader.read_uint8()
         self.beaming = reader.read_uint8()
         self.render = reader.read_uint8()
+        self.dirt_enabled = reader.read_uint8()  # Dirt/weathering overlay texture enabled
+        self.dirt_texture = reader.read_terminated_string("\0", 32)  # Dirt texture name
         self.unknown9 = reader.read_uint8()  # TODO: what is this?
-        self.unknown10 = reader.read_uint8()  # TODO: what is this?
+        self.dirt_coordinate_space = reader.read_uint8()  # UV coordinate space for dirt texture overlay
         self.total_area = reader.read_single()
         self.unknown11 = reader.read_uint32()  # TODO: what is this?
         if self.function_pointer0 in {
@@ -822,12 +826,13 @@ class _TrimeshHeader:
         writer.write_uint32(self.mdx_color_offset)
         writer.write_uint32(self.mdx_texture1_offset)
         writer.write_uint32(self.mdx_texture2_offset)
-        writer.write_uint32(self.unknown3)  # TODO: what is this?
-        writer.write_uint32(self.unknown4)  # TODO: what is this?
-        writer.write_uint32(self.unknown5)  # TODO: what is this?
-        writer.write_uint32(self.unknown6)  # TODO: what is this?
-        writer.write_uint32(self.unknown7)  # TODO: what is this?
-        writer.write_uint32(self.unknown8)  # TODO: what is this?
+        writer.write_uint32(self.mdx_unknown_offset)  # Offset to unknown data in MDX (always -1)
+        writer.write_uint32(self.mdx_uv3_offset)  # Offset to tertiary UV data in MDX (always -1)
+        writer.write_uint32(self.mdx_uv4_offset)  # Offset to quaternary UV data in MDX (always -1)
+        writer.write_uint32(self.mdx_tangent_offset)  # Offset to tangent/binormal data in MDX (36 bytes, weighted normals)
+        writer.write_uint32(self.mdx_unused_struct1_offset)  # Offset to unused MDX structure 1 (always -1)
+        writer.write_uint32(self.mdx_unused_struct2_offset)  # Offset to unused MDX structure 2 (always -1)
+        writer.write_uint32(self.mdx_unused_struct3_offset)  # Offset to unused MDX structure 3 (always -1)
         writer.write_uint16(self.vertex_count)
         writer.write_uint16(self.texture_count)
         writer.write_uint8(self.has_lightmap)
@@ -836,8 +841,10 @@ class _TrimeshHeader:
         writer.write_uint8(self.has_shadow)
         writer.write_uint8(self.beaming)
         writer.write_uint8(self.render)
+        writer.write_uint8(self.dirt_enabled)  # Dirt/weathering overlay texture enabled
+        writer.write_terminated_string(self.dirt_texture, "\0", 32)  # Dirt texture name
         writer.write_uint8(self.unknown9)  # TODO: what is this?
-        writer.write_uint8(self.unknown10)  # TODO: what is this?
+        writer.write_uint8(self.dirt_coordinate_space)  # UV coordinate space for dirt texture overlay
         writer.write_single(self.total_area)
         writer.write_uint32(self.unknown11)  # TODO: what is this?
         if game == Game.K2:
@@ -1697,6 +1704,9 @@ class MDLBinaryReader:
             node.mesh.background_geometry = bool(bin_node.trimesh.background)
             node.mesh.has_lightmap = bool(bin_node.trimesh.has_lightmap)
             node.mesh.beaming = bool(bin_node.trimesh.beaming)
+            node.mesh.dirt_enabled = bool(bin_node.trimesh.dirt_enabled)
+            node.mesh.dirt_texture = bin_node.trimesh.dirt_texture
+            node.mesh.dirt_coordinate_space = bin_node.trimesh.dirt_coordinate_space
             node.mesh.diffuse = Color.from_bgr_vector3(bin_node.trimesh.diffuse)
             node.mesh.ambient = Color.from_bgr_vector3(bin_node.trimesh.ambient)
             node.mesh.texture_1 = bin_node.trimesh.texture1
@@ -2030,6 +2040,7 @@ class MDLBinaryWriter:
             bin_node.trimesh.render = mdl_node.mesh.render
             bin_node.trimesh.dirt_enabled = mdl_node.mesh.dirt_enabled
             bin_node.trimesh.dirt_texture = mdl_node.mesh.dirt_texture
+            bin_node.trimesh.dirt_coordinate_space = mdl_node.mesh.dirt_coordinate_space
             bin_node.trimesh.saber_unknowns = bytes(mdl_node.mesh.saber_unknowns)
 
             bin_node.trimesh.vertex_count = len(mdl_node.mesh.vertex_positions)

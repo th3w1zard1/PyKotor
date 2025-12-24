@@ -22,7 +22,7 @@ from pykotor.resource.formats.lyt import LYT, LYTRoom, bytes_lyt
 from pykotor.resource.formats.tpc import TPC, TPCTextureFormat, bytes_tpc
 from pykotor.resource.formats.vis import VIS, bytes_vis
 from pykotor.resource.generics.are import ARE, ARENorthAxis, bytes_are
-from pykotor.resource.generics.git import GIT, GITDoor, bytes_git
+from pykotor.resource.generics.git import GIT, GITDoor, GITModuleLink, bytes_git
 from pykotor.resource.generics.ifo import IFO, bytes_ifo
 from pykotor.resource.generics.utd import bytes_utd
 from pykotor.resource.type import ResourceType
@@ -34,6 +34,7 @@ from utility.common.geometry import Vector2, Vector3
 
 if TYPE_CHECKING:
     import os
+    from toolset.gui.windows.indoor_builder import ModuleKitManager
 
 
 INDOOR_EMBED_RESREF = "indoormap"
@@ -201,13 +202,22 @@ class IndoorMap:
                 continue
             self.mod.set_data(resname, restype, data)
 
-    def process_model(self, room: IndoorMapRoom, installation: Installation, target_tsl: bool) -> tuple[bytes, bytes]:
+    def process_model(
+        self,
+        room: IndoorMapRoom,
+        installation: Installation,
+        target_tsl: bool,
+    ) -> tuple[bytes | bytearray, bytes | bytearray]:
         mdl, mdx = model.flip(room.component.mdl, room.component.mdx, flip_x=room.flip_x, flip_y=room.flip_y)
-        mdl_transformed: bytes = model.transform(mdl, Vector3.from_null(), room.rotation)
-        mdl_converted: bytes = model.convert_to_k2(mdl_transformed) if target_tsl else model.convert_to_k1(mdl_transformed)
+        mdl_transformed: bytes | bytearray = model.transform(mdl, Vector3.from_null(), room.rotation)
+        mdl_converted: bytes | bytearray = model.convert_to_k2(mdl_transformed) if target_tsl else model.convert_to_k1(mdl_transformed)
         return mdl_converted, mdx
 
-    def process_lightmaps(self, mdl_data: bytes, installation: Installation) -> bytes:
+    def process_lightmaps(
+        self,
+        mdl_data: bytes | bytearray,
+        installation: Installation,
+    ) -> bytes | bytearray:
         assert self.mod is not None
         lm_renames: dict[str, str] = {}
         for lightmap in model.iterate_lightmaps(mdl_data):
@@ -216,7 +226,7 @@ class IndoorMap:
             lm_renames[lightmap.lower()] = renamed
 
             # Prefer kit-copied lightmaps already in mod; else try installation for texture + txi.
-            tga_in_mod = self.mod.get_data(renamed, ResourceType.TGA) if self.mod.contains(renamed, ResourceType.TGA) else None
+            tga_in_mod = self.mod.get(renamed, ResourceType.TGA) if self.mod.has(renamed, ResourceType.TGA) else None
             if tga_in_mod is None:
                 tex = installation.texture(lightmap, [SearchLocation.CHITIN, SearchLocation.OVERRIDE, SearchLocation.TEXTURES_TPA, SearchLocation.TEXTURES_GUI])
                 if tex is not None:
@@ -237,11 +247,16 @@ class IndoorMap:
         bwm.translate(room.position.x, room.position.y, room.position.z)
         return bwm
 
-    def add_model_resources(self, modelname: str, mdl: bytes, mdx: bytes):
+    def add_model_resources(
+        self,
+        modelname: str,
+        mdl: bytes | bytearray,
+        mdx: bytes | bytearray,
+    ) -> None:
         assert self.mod is not None
         mdl = model.change_textures(mdl, self.tex_renames)
-        self.mod.set_data(modelname, ResourceType.MDL, mdl)
-        self.mod.set_data(modelname, ResourceType.MDX, mdx)
+        self.mod.set_data(modelname, ResourceType.MDL, bytes(mdl))
+        self.mod.set_data(modelname, ResourceType.MDX, bytes(mdx))
 
     def add_bwm_resource(self, modelname: str, bwm: BWM):
         assert self.mod is not None
@@ -257,7 +272,7 @@ class IndoorMap:
             mdl, mdx = kit.skyboxes[self.skybox].mdl, kit.skyboxes[self.skybox].mdx
             model_name = f"{self.module_id}_sky"
             mdl_converted = model.change_textures(mdl, self.tex_renames)
-            self.mod.set_data(model_name, ResourceType.MDL, mdl_converted)
+            self.mod.set_data(model_name, ResourceType.MDL, bytes(mdl_converted))
             self.mod.set_data(model_name, ResourceType.MDX, mdx)
             self.lyt.rooms.append(LYTRoom(model_name, Vector3.from_null()))
             self.vis.add_room(model_name)
@@ -337,9 +352,9 @@ class IndoorMap:
                 # Linked door
                 door.linked_to_module = ResRef(self.module_id)
                 door.linked_to = door_resname
-                door.linked_to_flags = 2
+                door.linked_to_flags = GITModuleLink.ToDoor
             else:
-                door.linked_to_flags = 0
+                door.linked_to_flags = GITModuleLink.NoLink
             self.git.doors.append(door)
 
             utd = insertion.door.utdK2 if target_tsl else insertion.door.utdK1
@@ -371,12 +386,12 @@ class IndoorMap:
         self.are = ARE()
         self.ifo = IFO()
         self.git = GIT()
-        self.room_names = {}
-        self.tex_renames = {}
+        self.room_names.clear()
+        self.tex_renames.clear()
         self.total_lm = 0
-        self.used_rooms = set()
-        self.used_kits = set()
-        self.scan_mdls = set()
+        self.used_rooms.clear()
+        self.used_kits.clear()
+        self.scan_mdls.clear()
 
         target_tsl = self._target_is_k2(installation, game_override)
 
@@ -449,16 +464,21 @@ class IndoorMap:
 
         return json.dumps(data).encode("utf-8")
 
-    def load(self, raw: bytes, kits: list[Kit]) -> list[MissingRoomInfo]:
+    def load(self, raw: bytes, kits: list[Kit], module_kit_manager: ModuleKitManager | None = None) -> list[MissingRoomInfo]:
         self.reset()
         data: dict[str, Any] = json.loads(raw)
         try:
-            return self._load_data(data, kits)
+            return self._load_data(data, kits, module_kit_manager)
         except KeyError as e:
             msg = "Map file is corrupted."
             raise ValueError(msg) from e
 
-    def _load_data(self, data: dict[str, Any], kits: list[Kit]) -> list[MissingRoomInfo]:
+    def _load_data(
+        self,
+        data: dict[str, Any],
+        kits: list[Kit],
+        module_kit_manager: ModuleKitManager | None = None,
+    ) -> list[MissingRoomInfo]:
         missing_rooms: list[MissingRoomInfo] = []
 
         self.name = LocalizedString(data["name"]["stringref"])
@@ -474,6 +494,7 @@ class IndoorMap:
         self.skybox = data.get("skybox", "")
         self.target_game_type = data.get("target_game_type", None)
 
+        room_data: dict[str, Any]
         for room_data in data.get("rooms", []):
             kit_id = room_data["kit"]
             comp_id = room_data["component"]
@@ -604,6 +625,8 @@ def extract_indoor_from_module_files(
                 cap = Capsule(container)
                 if cap.contains(INDOOR_EMBED_RESREF, INDOOR_EMBED_RESTYPE):
                     data = cap.resource(INDOOR_EMBED_RESREF, INDOOR_EMBED_RESTYPE)
+                    if data is None:
+                        raise ValueError(f"Embedded indoor data not found in {container}")
                     output_indoor_path_obj.write_bytes(data)
                     return True
         except Exception:  # noqa: BLE001
@@ -688,7 +711,7 @@ def infer_room_transform(
     if len(base_vertices) != len(instance_vertices) or not base_vertices:
         return None
 
-    base_centroid = _centroid(base_vertices)
+    _base_centroid = _centroid(base_vertices)
     inst_centroid = _centroid(instance_vertices)
 
     best: tuple[bool, bool, float, Vector3, float] | None = None
@@ -767,6 +790,7 @@ def extract_indoor_from_module_name(
     strict: bool = True,
     max_rms: float = 1e-3,
     logger: RobustLogger | None = None,
+    module_kit_manager: ModuleKitManager | None = None,
 ) -> IndoorMap:
     """Reverse-engineer a `.indoor` map from a module by matching room WOKs back to kit components.
 
@@ -788,7 +812,9 @@ def extract_indoor_from_module_name(
     lyt_res = module.layout()
     if lyt_res is None or lyt_res.resource() is None:
         raise ValueError(f"Module '{module_name}' has no LYT layout; cannot extract rooms.")
-    lyt: LYT = lyt_res.resource()
+    lyt: LYT | None = lyt_res.resource()
+    if lyt is None:
+        raise ValueError(f"Module '{module_name}' has no LYT layout; cannot extract rooms.")
 
     are_res = module.are()
     are: ARE | None = None if are_res is None else are_res.resource()
@@ -796,7 +822,7 @@ def extract_indoor_from_module_name(
     ifo: IFO | None = None if ifo_res is None else ifo_res.resource()
 
     indoor = IndoorMap()
-    indoor.module_id = module.module_id()
+    indoor.module_id = module.module_id() or "test01"
     if are is not None:
         indoor.name = are.name
         indoor.lighting = are.dynamic_light
@@ -804,7 +830,12 @@ def extract_indoor_from_module_name(
         indoor.warp_point = ifo.entry_position
 
     # Build candidate pool once; prefilter by vertex count.
-    components: list[KitComponent] = [comp for kit in kits for comp in kit.components]
+    components: list[KitComponent] = [
+        comp
+        for kit in kits
+        for comp in kit.components
+        if module_kit_manager is None or module_kit_manager.is_kit_valid(Installation.get_module_root(module_name))
+    ]
     by_vert_count: dict[int, list[KitComponent]] = {}
     for comp in components:
         vcount = len(comp.bwm.vertices())

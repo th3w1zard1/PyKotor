@@ -446,14 +446,14 @@ class Module:  # noqa: PLR0904
             # swkotor.exe: FUN_004094a0 line 136: Loads .mod, skips _s.rim
             mod_filepath = module_path.joinpath(self._root + KModuleType.MOD.value)
             if mod_filepath.is_file():
-                self._capsules[KModuleType.MOD.name] = ModuleFullOverridePiece(mod_filepath)
+                self._capsules[KModuleType.MOD.name] = ModuleFullOverridePiece(mod_filepath)  # pyright: ignore[reportGeneralTypeIssues]
             else:
                 self.dot_mod = False
                 # Fallback to rim files when .mod doesn't exist
-                self._capsules[KModuleType.MAIN.name] = ModuleLinkPiece(module_path.joinpath(self._root + KModuleType.MAIN.value))
-                self._capsules[KModuleType.DATA.name] = ModuleDataPiece(module_path.joinpath(self._root + KModuleType.DATA.value))
+                self._capsules[KModuleType.MAIN.name] = ModuleLinkPiece(module_path.joinpath(self._root + KModuleType.MAIN.value))  # pyright: ignore[reportGeneralTypeIssues]
+                self._capsules[KModuleType.DATA.name] = ModuleDataPiece(module_path.joinpath(self._root + KModuleType.DATA.value))  # pyright: ignore[reportGeneralTypeIssues]
                 if self._installation.game().is_k2():
-                    self._capsules[KModuleType.K2_DLG.name] = ModuleDLGPiece(module_path.joinpath(self._root + KModuleType.K2_DLG.value))
+                    self._capsules[KModuleType.K2_DLG.name] = ModuleDLGPiece(module_path.joinpath(self._root + KModuleType.K2_DLG.value))  # pyright: ignore[reportGeneralTypeIssues]
         else:
             # Complex mode: Check for _a.rim or _adx.rim (replaces .rim), then _s.rim and _dlg.erf
             # swkotor.exe: FUN_004094a0 line 49-216
@@ -463,28 +463,28 @@ class Module:  # noqa: PLR0904
             # Step 1: Load _a.rim if exists (REPLACES .rim)
             # swkotor.exe: FUN_004094a0 line 159
             if area_rim_path.is_file():
-                self._capsules[KModuleType.AREA.name] = ModuleLinkPiece(area_rim_path)
+                self._capsules[KModuleType.AREA.name] = ModuleLinkPiece(area_rim_path)  # pyright: ignore[reportGeneralTypeIssues]
             # Step 2: Load _adx.rim if _a.rim not found (REPLACES .rim)
             # swkotor.exe: FUN_004094a0 line 85
             elif area_extended_rim_path.is_file():
-                self._capsules[KModuleType.AREA_EXTENDED.name] = ModuleLinkPiece(area_extended_rim_path)
+                self._capsules[KModuleType.AREA_EXTENDED.name] = ModuleLinkPiece(area_extended_rim_path)  # pyright: ignore[reportGeneralTypeIssues]
             else:
                 # Simple mode: Just load .rim file directly
                 # swkotor.exe: FUN_004094a0 line 32-42
-                self._capsules[KModuleType.MAIN.name] = ModuleLinkPiece(module_path.joinpath(self._root + KModuleType.MAIN.value))
+                self._capsules[KModuleType.MAIN.name] = ModuleLinkPiece(module_path.joinpath(self._root + KModuleType.MAIN.value))  # pyright: ignore[reportGeneralTypeIssues]
             
             # Step 3: Load _s.rim if exists (ADDS to base)
             # swkotor.exe: FUN_004094a0 line 118 (only if .mod not found)
             data_rim_path = module_path.joinpath(self._root + KModuleType.DATA.value)
             if data_rim_path.is_file():
-                self._capsules[KModuleType.DATA.name] = ModuleDataPiece(data_rim_path)
+                self._capsules[KModuleType.DATA.name] = ModuleDataPiece(data_rim_path)  # pyright: ignore[reportGeneralTypeIssues]
             
             # Step 4: Load _dlg.erf if exists (K2 only, ADDS to base)
             # swkotor2.exe: FUN_004096b0 line 147 (only if .mod not found)
             if self._installation.game().is_k2():
                 dlg_erf_path = module_path.joinpath(self._root + KModuleType.K2_DLG.value)
                 if dlg_erf_path.is_file():
-                    self._capsules[KModuleType.K2_DLG.name] = ModuleDLGPiece(dlg_erf_path)
+                    self._capsules[KModuleType.K2_DLG.name] = ModuleDLGPiece(dlg_erf_path)  # pyright: ignore[reportGeneralTypeIssues]
 
         self.reload_resources()
 
@@ -512,13 +512,13 @@ class Module:  # noqa: PLR0904
         if filename.lower().endswith(".mod"):
             mod_filepath = module_path.joinpath(root + KModuleType.MOD.value)
             if mod_filepath.is_file():
-                capsules[KModuleType.MOD.name] = ModuleFullOverridePiece(mod_filepath)
+                capsules[KModuleType.MOD.name] = ModuleFullOverridePiece(mod_filepath)  # pyright: ignore[reportGeneralTypeIssues]
             else:
                 # Engine is permissive: fall back to rim files when .mod doesn't exist
-                capsules[KModuleType.MAIN.name] = ModuleLinkPiece(module_path.joinpath(root + KModuleType.MAIN.value))
-                capsules[KModuleType.DATA.name] = ModuleDataPiece(module_path.joinpath(root + KModuleType.DATA.value))
+                capsules[KModuleType.MAIN.name] = ModuleLinkPiece(module_path.joinpath(root + KModuleType.MAIN.value))  # pyright: ignore[reportGeneralTypeIssues]
+                capsules[KModuleType.DATA.name] = ModuleDataPiece(module_path.joinpath(root + KModuleType.DATA.value))  # pyright: ignore[reportGeneralTypeIssues]
                 if not isinstance(install_or_path, Installation) or install_or_path.game().is_k2():
-                    capsules[KModuleType.K2_DLG.name] = ModuleDLGPiece(module_path.joinpath(root + KModuleType.K2_DLG.value))
+                    capsules[KModuleType.K2_DLG.name] = ModuleDLGPiece(module_path.joinpath(root + KModuleType.K2_DLG.value))  # pyright: ignore[reportGeneralTypeIssues]
         else:
             # Complex mode: Check for _a.rim or _adx.rim (replaces .rim), then _s.rim and _dlg.erf
             area_rim_path = module_path.joinpath(root + KModuleType.AREA.value)
@@ -526,24 +526,24 @@ class Module:  # noqa: PLR0904
             
             # Load _a.rim if exists (REPLACES .rim)
             if area_rim_path.is_file():
-                capsules[KModuleType.AREA.name] = ModuleLinkPiece(area_rim_path)
+                capsules[KModuleType.AREA.name] = ModuleLinkPiece(area_rim_path)  # pyright: ignore[reportGeneralTypeIssues]
             # Load _adx.rim if _a.rim not found (REPLACES .rim)
             elif area_extended_rim_path.is_file():
-                capsules[KModuleType.AREA_EXTENDED.name] = ModuleLinkPiece(area_extended_rim_path)
+                capsules[KModuleType.AREA_EXTENDED.name] = ModuleLinkPiece(area_extended_rim_path)  # pyright: ignore[reportGeneralTypeIssues]
             else:
                 # Simple mode: Just .rim file
-                capsules[KModuleType.MAIN.name] = ModuleLinkPiece(module_path.joinpath(root + KModuleType.MAIN.value))
+                capsules[KModuleType.MAIN.name] = ModuleLinkPiece(module_path.joinpath(root + KModuleType.MAIN.value))  # pyright: ignore[reportGeneralTypeIssues]
             
             # Load _s.rim if exists (ADDS to base)
             data_rim_path = module_path.joinpath(root + KModuleType.DATA.value)
             if data_rim_path.is_file():
-                capsules[KModuleType.DATA.name] = ModuleDataPiece(data_rim_path)
+                capsules[KModuleType.DATA.name] = ModuleDataPiece(data_rim_path)  # pyright: ignore[reportGeneralTypeIssues]
             
             # Load _dlg.erf if exists (K2 only, ADDS to base)
             if not isinstance(install_or_path, Installation) or install_or_path.game().is_k2():
                 dlg_erf_path = module_path.joinpath(root + KModuleType.K2_DLG.value)
                 if dlg_erf_path.is_file():
-                    capsules[KModuleType.K2_DLG.name] = ModuleDLGPiece(dlg_erf_path)
+                    capsules[KModuleType.K2_DLG.name] = ModuleDLGPiece(dlg_erf_path)  # pyright: ignore[reportGeneralTypeIssues, reportUnknownReturnType]
         return capsules
 
     @classmethod
@@ -754,7 +754,7 @@ class Module:  # noqa: PLR0904
         # To be looked up elsewhere in the installation.
         main_search_results: dict[ResourceIdentifier, list[LocationResult]] = self._installation.locations(
             [lyt_query, git_query, vis_query],
-            order,
+            list(order),
             capsules=capsules_to_search,
         )
 
@@ -802,7 +802,7 @@ class Module:  # noqa: PLR0904
         # From GIT/LYT references, find them in the installation.
         search_results: dict[ResourceIdentifier, list[LocationResult]] = self._installation.locations(
             list({*git_search, *lyt_search, *vis_search}),
-            order,
+            list(order),
             capsules=capsules_to_search,
         )
         # Add locations for all found resources
@@ -887,12 +887,12 @@ class Module:  # noqa: PLR0904
         for identifier, locations in texture_search.items():
             if not locations:
                 continue
-            location_paths = [str(loc.filepath) for loc in locations]
-            if len(location_paths) <= 3:
-                paths_str = ', '.join(location_paths)
-            else:
-                paths_str = ', '.join(location_paths[:3]) + f', ... and {len(location_paths) - 3} more'
-            RobustLogger().debug(f"Adding {len(locations)} texture location(s) for '{identifier.resname}.{identifier.restype.extension}' to '{display_name}': {paths_str}")
+            #location_paths = [str(loc.filepath) for loc in locations]
+            #if len(location_paths) <= 3:
+            #    paths_str = ', '.join(location_paths)
+            #else:
+            #    paths_str = ', '.join(location_paths[:3]) + f', ... and {len(location_paths) - 3} more'
+            #RobustLogger().debug(f"Adding {len(locations)} texture location(s) for '{identifier.resname}.{identifier.restype.extension}' to '{display_name}': {paths_str}")
             self.add_locations(identifier.resname, identifier.restype, (location.filepath for location in locations)).activate()
 
         # Finally iterate through all resources we may have missed.

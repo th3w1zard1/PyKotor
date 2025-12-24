@@ -211,6 +211,20 @@ class BiowareArchive(ComparableMixin, ABC):
         resource: ArchiveResource | None = resource_dict.get(ResourceIdentifier(resname, restype), None)
         return None if resource is None else resource.data
 
+    def get_data(
+        self,
+        resname: str,
+        restype: ResourceType,
+    ) -> bytes | None:
+        return self.get(resname, restype)
+
+    def has(
+        self,
+        resname: str,
+        restype: ResourceType,
+    ) -> bool:
+        return ResourceIdentifier(resname, restype) in self._resource_dict
+
     def remove(
         self,
         resname: str,

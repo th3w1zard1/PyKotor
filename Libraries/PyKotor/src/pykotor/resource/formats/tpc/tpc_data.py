@@ -417,7 +417,7 @@ class TPCLayer:
 
             # Generate the next mipmap data by downsampling
             if w > 1 and h > 1:
-                RobustLogger().debug(f"Downsampling mipmap ({w}x{h}) to {mm_width}x{mm_height}")
+                #RobustLogger().debug(f"Downsampling mipmap ({w}x{h}) to {mm_width}x{mm_height}")
                 data = self._downsample(data, w, h, tpc_format)
             else:
                 break

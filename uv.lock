@@ -1657,7 +1657,7 @@ dependencies = [
     { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
     { name = "pillow", version = "10.4.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.9' and platform_python_implementation == 'CPython') or (python_full_version < '3.9' and platform_python_implementation == 'PyPy')" },
     { name = "pillow", version = "11.0.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.9' and platform_python_implementation == 'CPython') or (python_full_version >= '3.9' and platform_python_implementation == 'PyPy')" },
-    { name = "pykotor" },
+    { name = "pykotor", extra = ["all"] },
     { name = "pyqt5", marker = "python_full_version < '3.9'" },
     { name = "pyqt5-qt5", marker = "python_full_version < '3.9'" },
     { name = "pyqt5-sip", version = "12.15.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
@@ -1717,7 +1717,7 @@ requires-dist = [
     { name = "pillow", marker = "platform_python_implementation == 'CPython'", specifier = ">=9.5" },
     { name = "pillow", marker = "platform_python_implementation == 'PyPy'", specifier = ">10,<11.1.0" },
     { name = "pycryptodome", marker = "extra == 'updater'", specifier = ">=3.19.0" },
-    { name = "pykotor", editable = "Libraries/PyKotor" },
+    { name = "pykotor", extras = ["all"], editable = "Libraries/PyKotor" },
     { name = "pyqt5", marker = "python_full_version == '3.8.*'", specifier = ">=5.15" },
     { name = "pyqt5-qt5", marker = "python_full_version == '3.8.*'", specifier = ">=5.15" },
     { name = "pyqt5-sip", marker = "python_full_version == '3.8.*'", specifier = ">=12.10" },
@@ -3818,13 +3818,13 @@ font = [
     { name = "pillow", version = "11.0.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.9' and platform_python_implementation == 'CPython') or (python_full_version >= '3.9' and platform_python_implementation == 'PyPy')" },
 ]
 gl = [
-    { name = "moderngl" },
     { name = "numpy", version = "1.24.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
     { name = "numpy", version = "1.26.4", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
     { name = "pyglm", marker = "platform_python_implementation == 'CPython'" },
-]
-lowlevelgl = [
     { name = "pyopengl" },
+]
+newgl = [
+    { name = "moderngl" },
 ]
 secure-xml = [
     { name = "defusedxml" },
@@ -3838,7 +3838,7 @@ requires-dist = [
     { name = "defusedxml", marker = "extra == 'all'", specifier = "~=0.7" },
     { name = "defusedxml", marker = "extra == 'secure-xml'", specifier = "~=0.7" },
     { name = "moderngl", marker = "extra == 'all'", specifier = ">=5.6.0" },
-    { name = "moderngl", marker = "extra == 'gl'", specifier = ">=5.6.0" },
+    { name = "moderngl", marker = "extra == 'newgl'", specifier = ">=5.6.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.0.0" },
     { name = "numpy", marker = "extra == 'all'", specifier = ">=1.22" },
     { name = "numpy", marker = "extra == 'gl'", specifier = ">=1.22" },
@@ -3847,15 +3847,15 @@ requires-dist = [
     { name = "pillow", marker = "extra == 'all'", specifier = ">=9.5" },
     { name = "ply", specifier = ">=3.11,<4" },
     { name = "pycryptodome", specifier = ">=3.19.0" },
-    { name = "pyglm", marker = "platform_python_implementation == 'CPython' and extra == 'all'", specifier = ">=2.0,<2.8" },
+    { name = "pyglm", marker = "platform_python_implementation == 'CPython' and extra == 'all'", specifier = ">=2.0" },
     { name = "pyglm", marker = "platform_python_implementation == 'CPython' and extra == 'gl'", specifier = ">=2.0,<2.8" },
-    { name = "pyopengl", marker = "extra == 'all'", specifier = "~=3.1" },
-    { name = "pyopengl", marker = "extra == 'lowlevelgl'", specifier = "~=3.1" },
+    { name = "pyopengl", marker = "extra == 'all'", specifier = ">=3.1" },
+    { name = "pyopengl", marker = "extra == 'gl'", specifier = ">=3.1" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.0.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },
 ]
-provides-extras = ["font", "gl", "lowlevelgl", "secure-xml", "encodings", "all", "dev"]
+provides-extras = ["font", "gl", "newgl", "secure-xml", "encodings", "all", "dev"]
 
 [[package]]
 name = "pykotor-engine"
