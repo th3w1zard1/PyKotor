@@ -22,6 +22,7 @@ from qtpy.QtWidgets import (
     QWhatsThis,
 )
 
+from toolset.utils.misc import get_qsettings_organization
 from utility.ui_libraries.qt.widgets.itemviews.html_delegate import HTMLDelegate
 
 if TYPE_CHECKING:
@@ -793,8 +794,9 @@ class TreeSettings:
         self,
         settings_name: str = "RobustTreeView",
     ):
-        self.robust_tree_settings: QSettings = QSettings("HolocronToolsetV3", "RobustTreeView")
-        self.settings: QSettings = self.robust_tree_settings if settings_name == "RobustTreeView" else QSettings("HolocronToolsetV3", settings_name)
+        org_name = get_qsettings_organization("HolocronToolsetV3")
+        self.robust_tree_settings: QSettings = QSettings(org_name, "RobustTreeView")
+        self.settings: QSettings = self.robust_tree_settings if settings_name == "RobustTreeView" else QSettings(org_name, settings_name)
 
     def get(
         self,

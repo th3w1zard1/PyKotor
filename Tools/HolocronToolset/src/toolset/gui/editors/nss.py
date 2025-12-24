@@ -15,6 +15,8 @@ from typing import TYPE_CHECKING, Any, Callable, Generator, NamedTuple, cast
 from loggerplus import RobustLogger, get_log_directory  # type: ignore[import-untyped]
 from qtpy.QtCore import QDir, QPoint, QRect, QSettings, QSize, QStringListModel, Qt  # pyright: ignore[reportPrivateImportUsage]
 from qtpy.QtGui import QKeySequence, QTextCursor, QTextDocument
+
+from toolset.utils.misc import get_qsettings_organization
 from qtpy.QtWidgets import (
     QApplication,
     QCompleter,
@@ -296,7 +298,7 @@ class NSSEditor(Editor):
                     "description": item.text(1),
                 }
             )
-        settings = QSettings("HolocronToolsetV3", "NSSEditor")
+        settings = QSettings(get_qsettings_organization("HolocronToolsetV3"), "NSSEditor")
         # Save bookmarks per-file for better persistence
         file_key = f"nss_editor/bookmarks/{self._resname}" if self._resname else "nss_editor/bookmarks/untitled"
         settings.setValue(file_key, json.dumps(bookmarks))
@@ -304,7 +306,7 @@ class NSSEditor(Editor):
 
     def load_bookmarks(self):
         """Load bookmarks from QSettings, keyed by file path."""
-        settings = QSettings("HolocronToolsetV3", "NSSEditor")
+        settings = QSettings(get_qsettings_organization("HolocronToolsetV3"), "NSSEditor")
         # Load bookmarks per-file
         file_key = f"nss_editor/bookmarks/{self._resname}" if self._resname else "nss_editor/bookmarks/untitled"
         bookmarks_json = settings.value(file_key, "[]")
@@ -326,7 +328,7 @@ class NSSEditor(Editor):
 
     def load_snippets(self):
         """Load snippets from QSettings into the list widget."""
-        settings = QSettings("HolocronToolsetV3", "NSSEditor")
+        settings = QSettings(get_qsettings_organization("HolocronToolsetV3"), "NSSEditor")
         snippets_json = settings.value("nss_editor/snippets", "[]")
         if isinstance(snippets_json, str):
             try:
@@ -355,7 +357,7 @@ class NSSEditor(Editor):
                 name = item.text() or ""
                 content = item.data(Qt.ItemDataRole.UserRole) or ""
                 snippets.append({"name": name, "content": content})
-        settings = QSettings("HolocronToolsetV3", "NSSEditor")
+        settings = QSettings(get_qsettings_organization("HolocronToolsetV3"), "NSSEditor")
         settings.setValue("nss_editor/snippets", json.dumps(snippets))
 
     def on_add_snippet(self):

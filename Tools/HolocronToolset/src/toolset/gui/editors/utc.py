@@ -27,6 +27,7 @@ from toolset.gui.dialogs.inventory import InventoryEditor
 from toolset.gui.dialogs.load_from_location_result import FileSelectionWindow, ResourceItems
 from toolset.gui.editor import Editor
 from toolset.gui.widgets.settings.installations import GlobalSettings
+from toolset.utils.misc import get_qsettings_organization
 from toolset.utils.window import add_window, open_resource_editor
 
 if TYPE_CHECKING:
@@ -1162,7 +1163,7 @@ class UTCEditor(Editor):
 
 class UTCSettings:
     def __init__(self):
-        self.settings = QSettings("HolocronToolsetV3", "UTCEditor")
+        self.settings = QSettings(get_qsettings_organization("HolocronToolsetV3"), "UTCEditor")
 
     @property
     def saveUnusedFields(self) -> bool:

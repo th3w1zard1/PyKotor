@@ -27,6 +27,7 @@ from qtpy.QtGui import (
     QTextDocument,
     QTextFormat,
 )
+from toolset.utils.misc import get_qsettings_organization
 from qtpy.QtWidgets import (
     QCheckBox,
     QCompleter,
@@ -844,7 +845,7 @@ class CodeEditor(QPlainTextEdit):
             if item is None:
                 continue
             bookmarks.append({"line": item.data(0, Qt.ItemDataRole.UserRole), "description": item.text(1)})
-        QSettings().setValue("bookmarks", json.dumps(bookmarks))
+        QSettings(get_qsettings_organization("HolocronToolsetV3"), "CodeEditor").setValue("bookmarks", json.dumps(bookmarks))
 
     # Additional methods
     def show_auto_complete_menu(self):
@@ -1713,10 +1714,11 @@ class NSSCodeEditor(CodeEditor):
         self.load_settings()
 
     def load_settings(self):
-        self.restoreGeometry(QSettings().value("NSSCodeEditor/geometry", self.saveGeometry()))  # type: ignore[arg-type]
+        settings = QSettings(get_qsettings_organization("HolocronToolsetV3"), "CodeEditor")
+        self.restoreGeometry(settings.value("NSSCodeEditor/geometry", self.saveGeometry()))  # type: ignore[arg-type]
 
     def save_settings(self):
-        QSettings().setValue("NSSCodeEditor/geometry", self.saveGeometry())
+        QSettings(get_qsettings_organization("HolocronToolsetV3"), "CodeEditor").setValue("NSSCodeEditor/geometry", self.saveGeometry())
 
     def dragEnterEvent(  # pyright: ignore[reportIncompatibleMethodOverride]
         self,

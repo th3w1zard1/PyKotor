@@ -114,6 +114,30 @@ INT_TO_BUTTON: dict[int, Qt.MouseButton] = {v: k for k, v in BUTTON_TO_INT.items
 STRING_KEY_TO_INT: dict[str, int] = {k: v.value if API_NAME in ("PyQt6", "PySide6") else v for k, v in Qt.Key.__dict__.items() if k.startswith("Key_")}
 
 
+def get_qsettings_organization(organization: str) -> str:
+    """Get Qt API-specific organization name for QSettings.
+    
+    This ensures that PyQt5, PyQt6, PySide2, and PySide6 each use separate
+    settings storage locations to prevent conflicts.
+    
+    Args:
+    ----
+        organization: Base organization name (e.g., "HolocronToolsetV3")
+    
+    Returns:
+    -------
+        Organization name with Qt API suffix (e.g., "HolocronToolsetV3_PyQt6")
+    """
+    # Get the Qt API name from qtpy or environment variable
+    try:
+        api_name = API_NAME
+    except (AttributeError, NameError):
+        import os
+        api_name = os.environ.get("QT_API", "Unknown")
+    
+    return f"{organization}_{api_name}"
+
+
 def get_nums(
     string_input: str,
 ) -> list[int]:

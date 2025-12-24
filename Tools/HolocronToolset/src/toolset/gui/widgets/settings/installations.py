@@ -138,7 +138,8 @@ class InstallationConfig:
         self,
         name: str,
     ):
-        self._settings: QSettings = QSettings("HolocronToolsetV3", "Global")
+        from toolset.utils.misc import get_qsettings_organization
+        self._settings: QSettings = QSettings(get_qsettings_organization("HolocronToolsetV3"), "Global")
         self._name: str = name
 
     @property

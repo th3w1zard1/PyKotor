@@ -97,7 +97,8 @@ class KotorDiffWindow(QMainWindow):
         self._diff_thread: KotorDiffThread | None = None
         self._installations: dict[str, HTInstallation] = installations or {}
         self._active_installation: HTInstallation | None = active_installation
-        self._settings = QSettings("HolocronToolset", "KotorDiff")
+        from toolset.utils.misc import get_qsettings_organization
+        self._settings = QSettings(get_qsettings_organization("HolocronToolset"), "KotorDiff")
         self._setup_ui()
         self._load_settings()
         
