@@ -550,16 +550,32 @@ class ToolWindow(QMainWindow):
             """Open the Indoor Map Builder with the selected module."""
             assert self.active is not None
             module_data = self.ui.modulesWidget.ui.sectionCombo.currentData(Qt.ItemDataRole.UserRole)
-            module_path: Path | None = None
-            if module_data:
-                module_path = self.active.module_path() / Path(str(module_data))
+            if not module_data:
+                from toolset.gui.common.localization import translate as tr
+                from qtpy.QtWidgets import QMessageBox
+                QMessageBox.warning(
+                    self,
+                    tr("No Module Selected"),
+                    tr("Please select a module from the Modules tab before opening the Level Builder."),
+                )
+                return None
+            
+            # Get the module root name (extract_indoor_from_module_name expects module root without extension)
+            module_name = str(module_data)
+            # Remove .rim or .mod extension if present
+            if module_name.endswith(('.rim', '.mod')):
+                module_name = module_name.rsplit('.', 1)[0]
+            
             builder = IndoorMapBuilder(None, self.active)
             builder.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
             builder.show()
             builder.activateWindow()
             add_window(builder)
-            # TODO: If needed, select the module in the builder's module combobox
-            # This would require adding a method to IndoorMapBuilder to set the selected module
+            
+            # Load the selected module (use QTimer to ensure window is fully initialized)
+            QTimer.singleShot(33, lambda: builder.load_module_from_name(module_name))
+            
+            return builder
             
         self.ui.levelBuilderButton.clicked.connect(open_indoor_map_builder_with_module)
 

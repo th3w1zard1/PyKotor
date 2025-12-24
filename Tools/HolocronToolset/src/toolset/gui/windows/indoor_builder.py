@@ -56,6 +56,7 @@ else:
 from pykotor.common.misc import Color  # type: ignore[reportPrivateImportUsage]
 from pykotor.common.stream import BinaryWriter  # type: ignore[reportPrivateImportUsage]
 from pykotor.resource.formats.bwm import BWM, bytes_bwm, read_bwm  # type: ignore[reportPrivateImportUsage]
+from pykotor.tools.indoormap import extract_indoor_from_module_name
 from toolset.blender import BlenderEditorMode, ConnectionState, check_blender_and_ask, get_blender_settings
 from toolset.blender.integration import BlenderEditorMixin
 from toolset.config import get_remote_toolset_update_info, is_remote_version_newer
@@ -1688,6 +1689,114 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         loader = AsyncLoader(self, "Building Map...", task, "Failed to build map.")
         if loader.exec():
             QMessageBox(QMessageBox.Icon.Information, "Map built", msg).exec()
+
+    def load_module_from_name(self, module_name: str) -> bool:
+        """Load a module by extracting it from the installation.
+        
+        Args:
+        ----
+            module_name: The module name (e.g., "end_m01aa" or "end_m01aa.rim")
+            
+        Returns:
+        -------
+            bool: True if the module was successfully loaded, False otherwise
+        """
+        if not isinstance(self._installation, HTInstallation):
+            from loggerplus import RobustLogger  # type: ignore[import-untyped, note]  # pyright: ignore[reportMissingTypeStubs]
+            RobustLogger().error("No installation available to load module from")
+            return False
+        
+        # Check for unsaved changes
+        if not self._undo_stack.isClean():
+            from toolset.gui.common.localization import translate as tr
+            result = QMessageBox.question(
+                self,
+                tr("Unsaved Changes"),
+                tr("You have unsaved changes. Do you want to save before loading a module?"),
+                QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel,
+            )
+            if result == QMessageBox.StandardButton.Save:
+                self.save()
+            elif result == QMessageBox.StandardButton.Cancel:
+                return False
+        
+        try:
+            from loggerplus import RobustLogger  # type: ignore[import-untyped, note]  # pyright: ignore[reportMissingTypeStubs]
+            
+            # Remove .rim or .mod extension if present
+            module_root = module_name
+            if module_root.endswith(('.rim', '.mod')):
+                module_root = module_root.rsplit('.', 1)[0]
+            
+            # Get installation path and kits path
+            installation_path = self._installation.path()
+            kits_path = Path("./kits").resolve()
+            game = self._installation.game()
+            
+            # Extract the module
+            def extract_task() -> IndoorMap | None:
+                return extract_indoor_from_module_name(
+                    module_root,
+                    installation_path=installation_path,
+                    kits_path=kits_path,
+                    game=game,
+                    strict=False,  # Don't fail on unmatched rooms
+                    max_rms=1e-3,
+                    logger=RobustLogger(),
+                )
+            
+            loader = AsyncLoader(
+                self,
+                f"Extracting module '{module_root}'...",
+                extract_task,
+                f"Failed to extract module '{module_root}'",
+            )
+            
+            if not loader.exec():
+                return False
+            
+            extracted_map = loader.result()
+            if extracted_map is None:
+                return False
+            
+            # Load the extracted map into the builder
+            self._map = extracted_map
+            self._map.rebuild_room_connections()
+            self.ui.mapRenderer._cached_walkmeshes.clear()
+            self.ui.mapRenderer.set_map(self._map)
+            self._undo_stack.clear()
+            self._undo_stack.setClean()
+            self._filepath = ""  # Clear filepath since this is extracted, not loaded from file
+            self._refresh_window_title()
+            
+            # Show success message
+            room_count = len(self._map.rooms)
+            from toolset.gui.common.localization import translate as tr, trf
+            QMessageBox(
+                QMessageBox.Icon.Information,
+                tr("Module Loaded"),
+                trf("Successfully loaded module '{module}' with {count} room{plural}.",
+                    module=module_root,
+                    count=room_count,
+                    plural="s" if room_count != 1 else ""),
+            ).exec()
+            
+            return True
+            
+        except Exception as e:  # noqa: BLE001
+            from loggerplus import RobustLogger  # type: ignore[import-untyped, note]  # pyright: ignore[reportMissingTypeStubs]
+            from toolset.gui.common.localization import translate as tr, trf
+            from utility.error_handling import universal_simplify_exception
+            
+            RobustLogger().exception(f"Failed to load module '{module_name}'")
+            QMessageBox(
+                QMessageBox.Icon.Critical,
+                tr("Failed to load module"),
+                trf("Failed to load module '{module}': {error}",
+                    module=module_name,
+                    error=str(universal_simplify_exception(e))),
+            ).exec()
+            return False
 
     # =========================================================================
     # Edit operations
