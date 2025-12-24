@@ -42,10 +42,10 @@ dependencies = [
   "PyQt5-Qt5>=5.15; python_version==\"3.8\"",
   "PyQt5-sip>=12.10; python_version==\"3.8\"",
   "PyQt5>=5.15; python_version==\"3.8\"",
-  "PySide6; python_implementation == 'PyPy'",
-  "PySide6>=6.10.1; python_implementation == 'PyPy'",
-  "PySide6_Addons>=6.10.1; python_implementation == 'PyPy'",
-  "PySide6_Essentials>=6.10.1; python_implementation == 'PyPy'",
+  "PySide6; python_implementation == 'PyPy' and python_version >= '3.9'",
+  "PySide6>=6.10.1; python_implementation == 'PyPy' and python_version >= '3.9'",
+  "PySide6_Addons>=6.10.1; python_implementation == 'PyPy' and python_version >= '3.9'",
+  "PySide6_Essentials>=6.10.1; python_implementation == 'PyPy' and python_version >= '3.9'",
   "qtpy>=2.4.3",
   "requests>=2.25.0,<2.32.0; python_version<\"3.9\"",
   "requests>=2.25.0; python_version>=\"3.9\"",
@@ -132,7 +132,7 @@ Changelog = "https://github.com/th3w1zard1/PyKotor/releases"
 # Optional Poetry configuration for those who prefer it
 [tool.poetry]
 name = "holocrontoolset"
-version = "4.0.0b5"
+version = "4.0.0b6"
 description = "A PyQt5-backed program with a collection of tools and editors that make it easy to work with kotor files"
 authors = ["NickHugi", "Benjamin Auquite <halomastar@gmail.com>"]
 readme = "README.md"
@@ -152,7 +152,7 @@ send2trash = "*"
 # Optional dependencies
 pycryptodome = { version = "^3.19.0", optional = true }
 requests = { version = "^2.31.0", optional = true }
-PyQt5 = { version = "~5.15", optional = true }
+PyQt5 = { version = "^5.15", optional = true }
 PyQt6 = { version = "^6.6.1", optional = true }
 PySide2 = { version = "^5.15.2", python = ">=3.8,<3.11", optional = true }
 PySide6 = { version = "^6.6.3.1", python = ">=3.8,<3.13", optional = true }
