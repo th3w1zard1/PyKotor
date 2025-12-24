@@ -23,7 +23,7 @@ from pykotor.resource.formats.ncs.ncs_data import NCS, NCSInstructionType
 if TYPE_CHECKING:
     pass
 
-logger = RobustLogger("pykotor.resource.formats.ncs.vm_validation")
+logger: RobustLogger = RobustLogger()
 
 
 def validate_ncs_for_vm(ncs: NCS) -> None:
@@ -70,14 +70,14 @@ def _validate_instruction_sequence(ncs: NCS, issues: list[str]) -> None:
 
     for i, instr in enumerate(instructions):
         # Check for instructions that should not appear in certain contexts
-        if instr.type == NCSInstructionType.RETN and i < len(instructions) - 1:
+        if instr.ins_type == NCSInstructionType.RETN and i < len(instructions) - 1:
             # RETN in middle of script - may indicate missing control flow
             issues.append(f"RETN instruction at position {i} is not at end of script")
 
         # Check for consecutive stack operations that might cause issues
         if i > 0:
             prev_instr = instructions[i - 1]
-            if (_is_stack_operation(instr.type) and _is_stack_operation(prev_instr.type) and
+            if (_is_stack_operation(instr.ins_type) and _is_stack_operation(prev_instr.ins_type) and
                 _stack_operations_conflict(instr, prev_instr)):
                 issues.append(f"Conflicting stack operations at positions {i-1} and {i}")
 
@@ -92,15 +92,15 @@ def _validate_stack_operations(ncs: NCS, issues: list[str]) -> None:
 
     for i, instr in enumerate(ncs.instructions):
         # Track basic stack operations
-        if instr.type in (NCSInstructionType.CPDOWNSP, NCSInstructionType.CPTOPSP):
+        if instr.ins_type in (NCSInstructionType.CPDOWNSP, NCSInstructionType.CPTOPSP):
             # Stack pointer manipulation
             if hasattr(instr, 'size') and instr.size < 0:
                 stack_depth += abs(instr.size)  # Negative size means allocating stack space
-        elif instr.type in (NCSInstructionType.CONSTI, NCSInstructionType.CONSTF,
+        elif instr.ins_type in (NCSInstructionType.CONSTI, NCSInstructionType.CONSTF,
                            NCSInstructionType.CONSTS, NCSInstructionType.CONSTO):
             # Constants push values onto stack
             stack_depth += 1
-        elif instr.type == NCSInstructionType.ACTION:
+        elif instr.ins_type == NCSInstructionType.ACTION:
             # Function calls consume arguments and push return value
             # This is simplified - actual validation would need argument counts
             pass
@@ -122,7 +122,7 @@ def _validate_control_flow(ncs: NCS, issues: list[str]) -> None:
     instructions = ncs.instructions
 
     for i, instr in enumerate(instructions):
-        if instr.type in (NCSInstructionType.JMP, NCSInstructionType.JZ, NCSInstructionType.JNZ, NCSInstructionType.JSR):
+        if instr.ins_type in (NCSInstructionType.JMP, NCSInstructionType.JZ, NCSInstructionType.JNZ, NCSInstructionType.JSR):
             if instr.jump is None:
                 issues.append(f"Jump instruction at position {i} has no valid target")
                 continue
@@ -153,7 +153,7 @@ def _validate_execution_safety(ncs: NCS, issues: list[str]) -> None:
     # Check for excessive consecutive NOP-like operations
     consecutive_noops = 0
     for instr in instructions:
-        if instr.type in (NCSInstructionType.NOP,):  # Add other no-op instructions as identified
+        if instr.ins_type in (NCSInstructionType.NOP,):  # Add other no-op instructions as identified
             consecutive_noops += 1
             if consecutive_noops > 10:
                 issues.append("Excessive consecutive no-op instructions detected")
@@ -177,8 +177,8 @@ def _stack_operations_conflict(instr1: NCSInstruction, instr2: NCSInstruction) -
     # This is a simplified check - full analysis would be more complex
     # For example, CPDOWNSP followed by CPTOPSP with incompatible sizes
 
-    if (instr1.type == NCSInstructionType.CPDOWNSP and
-        instr2.type == NCSInstructionType.CPTOPSP):
+    if (instr1.ins_type == NCSInstructionType.CPDOWNSP and
+        instr2.ins_type == NCSInstructionType.CPTOPSP):
         # Check if sizes are compatible
         size1 = getattr(instr1, 'size', 0)
         size2 = getattr(instr2, 'size', 0)

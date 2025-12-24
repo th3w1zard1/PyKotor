@@ -21,7 +21,7 @@ from loggerplus import RobustLogger
 if TYPE_CHECKING:
     from pykotor.resource.formats.gff.gff_data import GFF
 
-logger = RobustLogger("pykotor.resource.formats.gff.vm_validation")
+logger: RobustLogger = RobustLogger()
 
 
 def validate_gff_for_engine(gff: GFF) -> None:
@@ -84,13 +84,13 @@ def _validate_field_data_integrity(gff: GFF, issues: list[str]) -> None:
     """Validate field data integrity."""
     # Check for empty or invalid field names
     for struct in _iterate_all_structs(gff.root):
-        for field in struct:
-            if not field.label or len(field.label.strip()) == 0:
+        for label, field_type, value in struct:
+            if not label or len(label.strip()) == 0:
                 issues.append(f"Struct {struct.struct_id} has field with empty label")
 
             # Check label length (based on 16-byte engine limit)
-            if len(field.label.encode('utf-8')) > 16:
-                issues.append(f"Field label '{field.label}' exceeds 16-byte engine limit")
+            if len(label.encode('utf-8')) > 16:
+                issues.append(f"Field label '{label}' exceeds 16-byte engine limit")
 
 
 def _validate_label_constraints(gff: GFF, issues: list[str]) -> None:
@@ -98,28 +98,28 @@ def _validate_label_constraints(gff: GFF, issues: list[str]) -> None:
     labels_seen = set()
 
     for struct in _iterate_all_structs(gff.root):
-        for field in struct:
-            label_bytes = field.label.encode('utf-8')
+        for label, field_type, value in struct:
+            label_bytes = label.encode('utf-8')
 
             # Engine uses 16-byte labels
             if len(label_bytes) > 16:
-                issues.append(f"Label '{field.label}' is {len(label_bytes)} bytes (engine limit: 16)")
+                issues.append(f"Label '{label}' is {len(label_bytes)} bytes (engine limit: 16)")
 
             # Check for null bytes in labels (engine may not handle this well)
             if b'\x00' in label_bytes:
-                issues.append(f"Label '{field.label}' contains null bytes")
+                issues.append(f"Label '{label}' contains null bytes")
 
             # Track duplicate labels (may cause lookup issues)
-            if field.label in labels_seen:
-                issues.append(f"Duplicate field label: '{field.label}'")
+            if label in labels_seen:
+                issues.append(f"Duplicate field label: '{label}'")
             else:
-                labels_seen.add(field.label)
+                labels_seen.add(label)
 
 
 def _validate_performance_constraints(gff: GFF, issues: list[str]) -> None:
     """Validate for potential performance issues."""
     total_structs = sum(1 for _ in _iterate_all_structs(gff.root))
-    total_fields = sum(len(struct) for struct in _iterate_all_structs(gff.root))
+    total_fields = sum(len(list(struct)) for struct in _iterate_all_structs(gff.root))
 
     # Check for files that might be too large for efficient loading
     if total_structs > 10000:  # Conservative limit
@@ -130,8 +130,9 @@ def _validate_performance_constraints(gff: GFF, issues: list[str]) -> None:
 
     # Check for structs with too many fields
     for struct in _iterate_all_structs(gff.root):
-        if len(struct) > 1000:  # Conservative limit
-            issues.append(f"Struct {struct.struct_id} has too many fields ({len(struct)})")
+        field_count = len(list(struct))
+        if field_count > 1000:  # Conservative limit
+            issues.append(f"Struct {struct.struct_id} has too many fields ({field_count})")
 
 
 def _calculate_max_struct_depth(struct) -> int:
