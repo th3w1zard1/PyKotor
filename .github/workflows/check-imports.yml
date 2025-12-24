@@ -29,8 +29,6 @@ jobs:
       - name: Install dependencies
         run: |
           uv pip install -e "Libraries/PyKotor[all]"
-          uv pip install -e "Libraries/PyKotorGL[moderngl]"
-          uv pip install -e Libraries/PyKotorFont
 
       - name: Check for unused imports
         run: |

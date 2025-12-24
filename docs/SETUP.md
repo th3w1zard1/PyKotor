@@ -314,7 +314,6 @@ Both files are automatically synchronized. The `setup.py` files read from `requi
 
 **PyKotor** (core library):
 
-- `loggerplus>=0.1.3` - Logging utilities
 - `ply>=3.11,<4` - Parser generator for NSS compiler
 
 **PyKotorGL** (OpenGL extension):

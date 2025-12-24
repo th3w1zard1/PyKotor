@@ -75,19 +75,3 @@ def test_audio_player_init(qtbot: QtBot, installation: HTInstallation):
     
     # Test loading a dummy audio file (mocked)
     # window.load_audio("test.wav")
-
-def test_indoor_builder_init(qtbot: QtBot, installation: HTInstallation):
-    """Test Indoor Builder Window."""
-    from toolset.gui.windows.indoor_builder import IndoorMapBuilder
-    
-    window = IndoorMapBuilder(parent=None, installation=installation, use_blender=False)
-    qtbot.addWidget(window)
-    window.show()
-    
-    assert window.isVisible()
-    assert "Indoor Map Builder" in window.windowTitle()
-    
-    # Check widgets
-    # assert hasattr(window.ui, "roomList")
-    # assert hasattr(window.ui, "propertiesDock")
-

@@ -519,9 +519,9 @@ class TwoDA(ComparableMixin):
             - Fallback to linear search only if needed
         """
         # Fast O(1) lookup by label
-        row_label = row.label()
+        row_label: str = row.label()
         if row_label in self._label_to_index:
-            index = self._label_to_index[row_label]
+            index: int = self._label_to_index[row_label]
             # Verify the row data matches (in case of hash collision or stale cache)
             if index < len(self._rows) and self._rows[index] == row._data:
                 return index

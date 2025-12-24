@@ -1423,16 +1423,28 @@ class Installation:
             for resource_list in resource_dict.values():
                 check_list(resource_list)
 
+        # Cache for expensive lookup operations to avoid rebuilding for same resource lists
+        _list_cache: dict[int, tuple[dict[ResourceIdentifier, FileResource], set[ResourceIdentifier]]] = {}
+
         def check_list(resource_list: list[FileResource]):
-            # Index resources by identifier once, then check only relevant queries
-            # This is more efficient than iterating through all queries for each resource
-            lookup_dict: dict[ResourceIdentifier, FileResource] = {resource.identifier(): resource for resource in resource_list}
-            
-            # Only check queries that might be in this resource list (intersection optimization)
-            # Build set of identifiers in this list for fast lookup
-            resource_identifiers = set(lookup_dict.keys())
+            # Use object id as cache key for resource lists
+            list_id = id(resource_list)
+
+            # Check cache first
+            if list_id not in _list_cache:
+                # Index resources by identifier once, then check only relevant queries
+                # This is more efficient than iterating through all queries for each resource
+                lookup_dict: dict[ResourceIdentifier, FileResource] = {resource.identifier(): resource for resource in resource_list}
+
+                # Only check queries that might be in this resource list (intersection optimization)
+                # Build set of identifiers in this list for fast lookup
+                resource_identifiers = set(lookup_dict.keys())
+                _list_cache[list_id] = (lookup_dict, resource_identifiers)
+            else:
+                lookup_dict, resource_identifiers = _list_cache[list_id]
+
             relevant_queries = real_queries & resource_identifiers
-            
+
             for query in relevant_queries:
                 resource = lookup_dict[query]  # Safe because we filtered to intersection
                 location = LocationResult(

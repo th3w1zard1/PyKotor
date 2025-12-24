@@ -86,7 +86,6 @@ venv*/
 !.venv_3.13/
 !.venv_3.13/Lib/
 !.venv_3.13/Lib/site-packages/
-!.venv_3.13/Lib/site-packages/loggerplus*/
 vendor/KotOR_IO
 Tools/HolocronToolset/src/toolset/gui/widgets/renderer/lyt_editor_widget.py
 Tools/HolocronToolset/src/toolset/gui/widgets/renderer/lyt_editor.py

@@ -71,6 +71,7 @@ YOU MUST:
 
 ALWAYS prefer CLI over raw Python:
 - `uv --directory="Tools/KotorCLI/src" run --module kotorcli ...`
+- `python -m Tools.KotorCLI.src.kotorcli gff2xml "path/to/some/gff.fac" --output "gff_fac_example.xml"`
 - Use `list`, `extract`, `search-archive --content`, `diff`, `validate`, etc.
 ```bash
 usage: kotorcli [--version] [-h] [--yes] [--no] [--default] [--verbose] [--debug] [--quiet] [--no-color]
