@@ -617,8 +617,8 @@ class ToolWindow(QMainWindow):
     def _open_theme_dialog(self):
         """Open the theme selector dialog (non-blocking)."""
         if self._theme_dialog is None or not self._theme_dialog.isVisible():
-            current_theme = self.settings.selectedTheme or "fusion (light)"
-            current_style = self.settings.selectedStyle or ""
+            current_theme = self.settings.selectedTheme or "sourcegraph-dark"
+            current_style = self.settings.selectedStyle or "Fusion"
             available_themes = sorted(set(self.theme_manager.get_available_themes()))
             available_styles = list(self.theme_manager.get_default_styles())
             

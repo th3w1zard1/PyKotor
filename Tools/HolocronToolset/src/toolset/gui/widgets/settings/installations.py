@@ -139,7 +139,7 @@ class InstallationConfig:
         name: str,
     ):
         from toolset.utils.misc import get_qsettings_organization
-        self._settings: QSettings = QSettings(get_qsettings_organization("HolocronToolsetV3"), "Global")
+        self._settings: QSettings = QSettings(get_qsettings_organization("HolocronToolsetV4"), "Global")
         self._name: str = name
 
     @property
@@ -300,11 +300,11 @@ class GlobalSettings(Settings):
     )
     selectedTheme: SettingsProperty[str] = Settings.addSetting(
         "selectedTheme",
-        "fusion (light)",  # Default theme
+        "sourcegraph-dark",  # Default theme
     )
     selectedStyle: SettingsProperty[str] = Settings.addSetting(
         "selectedStyle",
-        "",  # Empty means use theme's default style
+        "Fusion",  # Default style
     )
     selectedLanguage: SettingsProperty[int] = Settings.addSetting(
         "selectedLanguage",

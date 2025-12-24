@@ -2853,7 +2853,7 @@ class ThemeManager:
         
         # If not found in built-ins, try to load as VS Code theme from JSON files
         # This allows dynamic loading of all 444 VS Code themes
-        return configs.get(theme_name, configs["fusion (light)"])
+        return configs.get(theme_name, configs["sourcegraph-dark"])
 
     @Slot()
     def change_theme(
@@ -2885,7 +2885,7 @@ class ThemeManager:
         GlobalSettings().selectedStyle = style_name
 
         # Apply current theme with new style
-        current_theme = GlobalSettings().selectedTheme or "fusion (light)"
+        current_theme = GlobalSettings().selectedTheme or "sourcegraph-dark"
         self._apply_theme_and_style(current_theme, style_name)
 
     def _apply_theme_and_style(
@@ -2898,16 +2898,16 @@ class ThemeManager:
         assert isinstance(app, QApplication)
 
         if theme_name is None:
-            theme_name = GlobalSettings().selectedTheme or "fusion (light)"
+            theme_name = GlobalSettings().selectedTheme or "sourcegraph-dark"
         if style_name is None:
-            style_name = GlobalSettings().selectedStyle or ""
+            style_name = GlobalSettings().selectedStyle or "Fusion"
 
         if theme_name == "QDarkStyle":
             if not importlib.util.find_spec("qdarkstyle"):  # pyright: ignore[reportAttributeAccessIssue]
                 from toolset.gui.common.localization import translate as tr
                 QMessageBox.critical(None, tr("Theme not found"), tr("QDarkStyle is not installed in this environment."))
                 GlobalSettings().reset_setting("selectedTheme")
-                self._apply_theme_and_style(GlobalSettings().selectedTheme or "fusion (light)", style_name)
+                self._apply_theme_and_style(GlobalSettings().selectedTheme or "sourcegraph-dark", style_name)
                 return
 
             import qdarkstyle  # pyright: ignore[reportMissingImports]
@@ -2931,7 +2931,7 @@ class ThemeManager:
         else:
             # Handle None theme_name by using default
             if theme_name is None:
-                theme_name = "fusion (light)"
+                theme_name = "sourcegraph-dark"
             assert theme_name is not None, "theme_name should not be None at this point"
             config: dict[str, Any] = self._get_theme_config(theme_name)
             # Safely get sheet with default empty string if not present
@@ -2943,12 +2943,12 @@ class ThemeManager:
 
             # Determine effective style:
             # - Empty string ("") means use native/system default (self.original_style)
-            #   EXCEPT for fusion (light) theme which should use Fusion style
+            #   EXCEPT for fusion (light) and sourcegraph-dark themes which should use Fusion style
             # - None means use theme's default style from config
             # - Non-empty string means use that specific style
             if style_name == "":
-                # For fusion (light), default to Fusion style instead of native
-                if theme_name.lower() == "fusion (light)":
+                # For fusion (light) and sourcegraph-dark, default to Fusion style instead of native
+                if theme_name.lower() in ("fusion (light)", "sourcegraph-dark"):
                     effective_style = "Fusion"
                 else:
                     effective_style = self.original_style
