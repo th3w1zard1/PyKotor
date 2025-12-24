@@ -163,7 +163,7 @@ The MDL file header is 12 bytes in size and contains the following fields:
 
 ### model header
 
-The model header is 92 bytes in size and immediately follows the [geometry](MDL-MDX-File-Format#geometry-header) header. Together with the [geometry](MDL-MDX-File-Format#geometry-header) Header (80 bytes), the combined structure is 172 bytes from the start of the MDL data section (offset 12 in the file).
+The model header is 116 bytes in size and immediately follows the [geometry](MDL-MDX-File-Format#geometry-header) header. Together with the [geometry](MDL-MDX-File-Format#geometry-header) Header (80 bytes), the combined structure is 196 bytes from the start of the MDL data section (offset 12 in the file).
 
 | Name                         | type            | offset | Description                                                                 |
 | ---------------------------- | --------------- | ------ | --------------------------------------------------------------------------- |
@@ -181,15 +181,23 @@ The model header is 92 bytes in size and immediately follows the [geometry](MDL-
 | Radius                       | [float](GFF-File-Format#gff-data-types)           | 48 (0x30)    | Radius of the model's bounding sphere.                                      |
 | [animation](MDL-MDX-File-Format#animation-header) scale              | [float](GFF-File-Format#gff-data-types)           | 52 (0x34)    | scale factor for animations (typically 1.0).                                |
 | Supermodel Name              | [byte](GFF-File-Format#gff-data-types)        | 56 (0x38)    | Name of the supermodel ([null-terminated string](https://en.cppreference.com/w/c/string/byte)).                            |
+| Super Root Offset            | [uint32](GFF-File-Format#gff-data-types)          | 88 (0x58)    | offset to super root node (for model inheritance).                          |
+| Unknown                      | [uint32](GFF-File-Format#gff-data-types)          | 92 (0x5C)    | Unknown field from Names array header. Purpose unknown but preserved for format compatibility. |
+| MDX Size                     | [uint32](GFF-File-Format#gff-data-types)          | 96 (0x60)    | Size of the MDX file data.                                                  |
+| MDX Offset                   | [uint32](GFF-File-Format#gff-data-types)          | 100 (0x64)   | offset to MDX data within the MDX file.                                     |
+| Name Offsets Offset          | [uint32](GFF-File-Format#gff-data-types)          | 104 (0x68)   | offset to name offsets array.                                               |
+| Name Offsets Count           | [uint32](GFF-File-Format#gff-data-types)          | 108 (0x6C)   | Number of name offsets.                                                     |
+| Name Offsets Count (duplicate) | [uint32](GFF-File-Format#gff-data-types)        | 112 (0x70)   | Duplicate value of name offsets count.                                      |
 
-**Reference**: [`vendor/mdlops/MDLOpsM.pm:164`](https://github.com/th3w1zard1/mdlops/blob/master/MDLOpsM.pm#L164) - model header structure definition  
-**Reference**: [`vendor/mdlops/MDLOpsM.pm:786-805`](https://github.com/th3w1zard1/mdlops/blob/master/MDLOpsM.pm#L786-L805) - model header reading and parsing  
-**Reference**: [`vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:72-88`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/mdlmdxreader.cpp#L72-L88) - model header reading  
-**Reference**: [`vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:131-150`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/mdl/reader.py#L131-L150) - model header reading  
-**Reference**: [`vendor/mdlops/MDLOpsM.pm:238-240`](https://github.com/th3w1zard1/mdlops/blob/master/MDLOpsM.pm#L238-L240) - model classification constants definition  
+**Reference**: [`vendor/mdlops/MDLOpsM.pm:164`](https://github.com/th3w1zard1/mdlops/blob/master/MDLOpsM.pm#L164) - model header structure definition
+**Reference**: [`vendor/mdlops/MDLOpsM.pm:786-805`](https://github.com/th3w1zard1/mdlops/blob/master/MDLOpsM.pm#L786-L805) - model header reading and parsing
+**Reference**: [`vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:72-88`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/mdlmdxreader.cpp#L72-L88) - model header reading
+**Reference**: [`vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:131-150`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/mdl/reader.py#L131-L150) - model header reading
+**Reference**: [`vendor/mdlops/MDLOpsM.pm:238-240`](https://github.com/th3w1zard1/mdlops/blob/master/MDLOpsM.pm#L238-L240) - model classification constants definition
 **Reference**: [`vendor/xoreos-docs/specs/kotor_mdl.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/kotor_mdl.html) - model header field-by-field breakdown (88 bytes total)
+**Reference**: [`vendor/kotor/mdl_info.html`](https://web.archive.org/web/20151002081059/https://home.comcast.net/~cchargin/kotor/mdl_info.html) - Original cchargin MDL format documentation (includes Names array header fields)
 
-**Note:** The model header immediately follows the geometry header. The supermodel name field (offset 56) is used to reference parent models for inheritance. If the value is "null", it should be treated as empty.
+**Note:** The model header immediately follows the geometry header. The supermodel name field (offset 56) is used to reference parent models for inheritance. If the value is "null", it should be treated as empty. The fields from offset 88 onward constitute the "Names array header" as documented by cchargin in 2003-2004.
 
 ### geometry header
 
