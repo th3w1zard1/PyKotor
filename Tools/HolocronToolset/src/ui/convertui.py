@@ -9,7 +9,7 @@ import sys
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing_extensions import Literal
+    from typing_extensions import Literal  # pyright: ignore[reportMissingModuleSource]
 
 def update_sys_path(path: pathlib.Path):
     working_dir = str(path)
@@ -42,6 +42,33 @@ QRC_TARGET_PATH = Path("..")
 
 
 def get_available_qt_version() -> Literal["PyQt5", "PyQt6", "PySide6", "PySide2"]:
+    # Check QT_API environment variable first (takes priority)
+    qt_api_env = os.environ.get("QT_API", "").strip()
+    if qt_api_env:
+        # Normalize the environment variable value to match our version format
+        qt_api_normalized = qt_api_env.lower()
+        version_mapping = {
+            "pyqt5": "PyQt5",
+            "pyqt6": "PyQt6",
+            "pyside6": "PySide6",
+            "pyside2": "PySide2",
+            "pyqt": "PyQt6",  # Default to PyQt6 if just "pyqt" is specified
+            "pyside": "PySide6",  # Default to PySide6 if just "pyside" is specified
+        }
+        mapped_version = version_mapping.get(qt_api_normalized)
+        if mapped_version:
+            # Verify the mapped version can be imported
+            try:
+                if mapped_version.startswith("PyQt"):
+                    __import__(mapped_version)
+                else:
+                    __import__(mapped_version.replace("Side", ""))
+                return mapped_version  # pyright: ignore[reportReturnType]
+            except ImportError:
+                # If the specified version isn't available, fall through to auto-detection
+                pass
+    
+    # Fall back to auto-detection if QT_API is not set or the specified version is unavailable
     qt_versions = ["PyQt5", "PyQt6", "PySide6", "PySide2"]
     for qt_version in qt_versions:
         try:
@@ -53,7 +80,55 @@ def get_available_qt_version() -> Literal["PyQt5", "PyQt6", "PySide6", "PySide2"
             continue
         else:
             return qt_version  # pyright: ignore[reportReturnType]
-    raise RuntimeError("No supported Qt binding found. Please install PyQt6, PySide6, PyQt5, or PySide2.")
+    raise RuntimeError("No supported Qt binding found. Please install `PyQt5`, `PyQt6`, `PySide6`, or `PySide2`.")
+
+
+def compile_ui_through_python(
+    qt_version: str,
+    ui_file: Path,
+    ui_target: Path,
+    debug: bool = False,
+) -> subprocess.CompletedProcess | None:
+    # Fallback: try running as Python module (e.g., python -m PyQt5.uic.pyuic)
+    if qt_version == "PyQt5":
+        module_name = "PyQt5.uic.pyuic"
+    elif qt_version == "PyQt6":
+        module_name = "PyQt6.uic.pyuic"
+    elif qt_version == "PySide2":
+        module_name = "PySide2.uic"
+    elif qt_version == "PySide6":
+        module_name = "PySide6.uic"
+    else:
+        raise RuntimeError(f"Unknown Qt version: {qt_version}")
+    
+    args = [
+        sys.executable,
+        "-m",
+        module_name,
+        str(ui_file),
+        "-o",
+        str(ui_target),
+    ]
+    if debug:
+        args.append("-d")
+    print(f"Running: {' '.join(args)}")
+    result = subprocess.run(args, check=True, capture_output=True, text=True)
+    return result
+
+
+def compile_ui_through_subprocess(
+    ui_compiler: str,
+    ui_file: Path,
+    ui_target: Path,
+    debug: bool = False,
+) -> subprocess.CompletedProcess | None:
+    compiler_path = os.path.normpath(ui_compiler)
+    args = [compiler_path, str(ui_file), "-o", str(ui_target)]
+    if debug:
+        args.append("-d")
+    print(f"Running: {' '.join(args)}")
+    result = subprocess.run(args, check=True, capture_output=True, text=True)
+    return result
 
 
 def compile_ui(
@@ -61,7 +136,12 @@ def compile_ui(
     ignore_timestamp: bool = False,
     debug: bool = False,
 ):
-    ui_compiler: str = {"PySide2": "pyside2-uic", "PySide6": "pyside6-uic", "PyQt5": "pyuic5", "PyQt6": "pyuic6"}[qt_version]
+    compiler_mapping: dict[str, str] = {
+        "PySide2": "pyside2-uic",
+        "PySide6": "pyside6-uic",
+        "PyQt5": "pyuic5",
+        "PyQt6": "pyuic6",
+    }
     for ui_file in Path(UI_SOURCE_DIR).rglob("*.ui"):
         if ui_file.is_dir():
             print(f"Skipping {ui_file}, not a file.")
@@ -87,53 +167,30 @@ def compile_ui(
 
         # Only recompile if source file is newer than the existing target file or ignore_timestamp is set to True
         if source_timestamp > target_timestamp or ignore_timestamp:
-            # Resolve paths to absolute to avoid "Failed to canonicalize script path" errors
-            ui_file_abs = ui_file.resolve()
-            ui_target_abs = ui_target.resolve()
-            
             # Use subprocess instead of os.system for better path handling on Windows
             # Try to find the compiler executable
-            compiler_path = shutil.which(ui_compiler)
-            if compiler_path is None:
-                # Fallback: try running as Python module (e.g., python -m PyQt5.uic.pyuic)
-                if qt_version == "PyQt5":
-                    module_name = "PyQt5.uic.pyuic"
-                elif qt_version == "PyQt6":
-                    module_name = "PyQt6.uic.pyuic"
-                elif qt_version == "PySide2":
-                    module_name = "PySide2.uic"
-                elif qt_version == "PySide6":
-                    module_name = "PySide6.uic"
+            result = None
+            for compiler in compiler_mapping.values():
+                if result is False:
+                    sys.exit(1)
+                compiler_path = shutil.which(compiler)
+                try:
+                    if compiler_path is None:
+                        result = compile_ui_through_python(qt_version, ui_file, ui_target, debug)
+                    else:
+                        result = compile_ui_through_subprocess(compiler_path, ui_file, ui_target, debug)
+                except subprocess.CalledProcessError as e:
+                    print(f"Error: {e}")
+                    print(f"Error: {e.stdout}")
+                    print(f"Error: {e.stderr}")
+                    result = False
                 else:
-                    raise RuntimeError(f"Unknown Qt version: {qt_version}")
-                
-                args = [
-                    sys.executable,
-                    "-m",
-                    module_name,
-                    str(ui_file_abs),
-                    "-o",
-                    str(ui_target_abs),
-                ]
-                if debug:
-                    args.append("-d")
-                print(f"Running: {' '.join(args)}")
-                result = subprocess.run(args, check=True, capture_output=True, text=True)
+                    break
+            if result:
                 if result.stdout:
                     print(result.stdout)
                 if result.stderr:
                     print(result.stderr, file=sys.stderr)
-            else:
-                args = [compiler_path, str(ui_file_abs), "-o", str(ui_target_abs)]
-                if debug:
-                    args.append("-d")
-                print(f"Running: {' '.join(args)}")
-                result = subprocess.run(args, check=True, capture_output=True, text=True)
-                if result.stdout:
-                    print(result.stdout)
-                if result.stderr:
-                    print(result.stderr, file=sys.stderr)
-            
             filedata: str = ui_target.read_text(encoding="utf-8")
             new_filedata: str = filedata.replace(f"from {qt_version}", "from qtpy").replace(f"import {qt_version}", "import qtpy")
             if filedata != new_filedata:
@@ -163,10 +220,6 @@ def compile_qrc(
             "PySide2": "pyside2-rcc",
             "PySide6": "pyside6-rcc",
         }[qt_version]
-        # qrc_source and qrc_target are already resolved, but ensure they're absolute for the command
-        qrc_source_abs = qrc_source.resolve()
-        qrc_target_abs = qrc_target.resolve()
-        
         # Use subprocess instead of os.system for better path handling on Windows
         compiler_path = shutil.which(rc_compiler)
         if compiler_path is None:
@@ -186,20 +239,20 @@ def compile_qrc(
                 sys.executable,
                 "-m",
                 module_name,
-                str(qrc_source_abs),
+                str(qrc_source),
                 "-o",
-                str(qrc_target_abs),
+                str(qrc_target),
             ]
             print(f"Running: {' '.join(args)}")
-            result = subprocess.run(args, check=True, capture_output=True, text=True)
+            result = subprocess.run(args, check=False, capture_output=True, text=True)
             if result.stdout:
                 print(result.stdout)
             if result.stderr:
                 print(result.stderr, file=sys.stderr)
         else:
-            args = [compiler_path, str(qrc_source_abs), "-o", str(qrc_target_abs)]
+            args = [compiler_path, str(qrc_source), "-o", str(qrc_target)]
             print(f"Running: {' '.join(args)}")
-            result = subprocess.run(args, check=True, capture_output=True, text=True)
+            result = subprocess.run(args, check=False, capture_output=True, text=True)
             if result.stdout:
                 print(result.stdout)
             if result.stderr:
@@ -213,6 +266,6 @@ def compile_qrc(
 
 if __name__ == "__main__":
     qt_version = get_available_qt_version()
-    compile_ui(qt_version, ignore_timestamp=False, debug=False)
+    compile_ui(qt_version, ignore_timestamp=True, debug=True)
     compile_qrc(qt_version, ignore_timestamp=False)
     print("All ui compilations completed in", TOOLSET_DIR)
