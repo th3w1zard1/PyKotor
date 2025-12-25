@@ -153,16 +153,16 @@ The BZF format wraps a complete BIF file in LZMA compression:
 2. **LZMA Stream**: Compressed BIF file data using LZMA algorithm
 3. **Decompressed Result**: Standard BIF file structure (as described above)
 
-**[compression](BIF-File-Format#bzf-compression) Details:**
+**compression Details:**
 
 - The entire BIF file (after the 8-[byte](GFF-File-Format#gff-data-types) header) is compressed using LZMA (Lempel-Ziv-Markov chain Algorithm)
-- LZMA provides high [compression](BIF-File-Format#bzf-compression) ratios with good decompression speed
+- LZMA provides high compression ratios with good decompression speed
 - The compressed stream follows immediately after the BZF header
 - Decompression yields a standard BIF file that can be read normally
 
 **Benefits of BZF:**
 
-- Significantly reduced file sizes (typically 40-60% [compression](BIF-File-Format#bzf-compression) ratio)
+- Significantly reduced file sizes (typically 40-60% compression ratio)
 - Faster download times for mobile platforms
 - Reduced storage requirements
 - Identical resource access after decompression
@@ -178,7 +178,7 @@ The BZF format wraps a complete BIF file in LZMA compression:
 
 The BZF wrapper is completely transparent to the game engine - once decompressed in memory, the resource access patterns [ARE](GFF-File-Format#are-area) identical to standard BIF files. Tools should decompress BZF files before reading resource entries, as the variable resource table offsets [ARE](GFF-File-Format#are-area) relative to the decompressed BIF structure.
 
-**Reference**: [`vendor/xoreos/src/aurora/biffile.h:56-60`](https://github.com/xoreos/xoreos/blob/master/src/aurora/biffile.h#L56-L60) documents BZF as compressed BIF files found exclusively in Android and iOS versions. [`vendor/reone/src/libs/resource/format/bifreader.cpp:27-30`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/bifreader.cpp#L27-L30) shows BIF signature detection. [`Libraries/PyKotor/src/pykotor/resource/formats/bif/bif_data.py:45-52`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/bif/bif_data.py#L45-L52) documents BZF [compression](BIF-File-Format#bzf-compression) details.
+**Reference**: [`vendor/xoreos/src/aurora/biffile.h:56-60`](https://github.com/xoreos/xoreos/blob/master/src/aurora/biffile.h#L56-L60) documents BZF as compressed BIF files found exclusively in Android and iOS versions. [`vendor/reone/src/libs/resource/format/bifreader.cpp:27-30`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/bifreader.cpp#L27-L30) shows BIF signature detection. [`Libraries/PyKotor/src/pykotor/resource/formats/bif/bif_data.py:45-52`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/bif/bif_data.py#L45-L52) documents BZF compression details.
 
 ---
 

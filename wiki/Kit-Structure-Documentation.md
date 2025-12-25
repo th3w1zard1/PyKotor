@@ -1047,12 +1047,12 @@ The kit generation tests (`Tools/HolocronToolset/tests/data/test_kit_generation.
 **Image files** (TGA/[TPC](TPC-File-Format) - pixel-by-pixel comparison):
 
 - **Dimensions**: Must match exactly (width × height)
-- **Pixel data**: Allows tolerance for [compression](BIF-File-Format#bzf-compression) artifacts:
+- **Pixel data**: Allows tolerance for compression artifacts:
   - Up to **2 levels difference** per channel (R, G, B, A) per pixel
   - Up to **1% of pixels** can differ by more than 2 levels
-  - Accounts for DXT [compression](BIF-File-Format#bzf-compression) artifacts in [TPC files](TPC-File-Format)
+  - Accounts for DXT compression artifacts in [TPC files](TPC-File-Format)
 
-**Rationale**: [TPC files](TPC-File-Format) use DXT [compression](BIF-File-Format#bzf-compression) which can introduce small pixel differences even for identical source images.
+**Rationale**: [TPC files](TPC-File-Format) use DXT compression which can introduce small pixel differences even for identical source images.
 
 **Reference**: [`Tools/HolocronToolset/tests/data/test_kit_generation.py:972-1111`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/tests/data/test_kit_generation.py#L972-L1111)
 

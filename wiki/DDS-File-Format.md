@@ -52,7 +52,7 @@ Implementation reference:
   - Supports `DXT1`, `DXT3`, `DXT5`, and uncompressed `BGR/BGRA`.
   - Non-DDS-friendly formats [ARE](GFF-File-Format#are-area) converted (`RGB`→`BGR`, `RGBA`→`BGRA`).
   - Mipmap counts validated per layer; cubemaps set caps (`DDSCAPS2_CUBEMAP|ALLFACES`).
-- Payloads [ARE](GFF-File-Format#are-area) written in the already-compressed/uncompressed form stored in the `TPC` instance; no re-[compression](BIF-File-Format#bzf-compression) occurs.
+- Payloads [ARE](GFF-File-Format#are-area) written in the already-compressed/uncompressed form stored in the `TPC` instance; no re-compression occurs.
 
 ### Detection and routing
 
@@ -73,7 +73,7 @@ Implementation reference:
 
 ### Practical differences vs. TGA/TPC
 
-- **TGA**: uncompressed/RLE raster data; no block [compression](BIF-File-Format#bzf-compression); single [face](MDL-MDX-File-Format#face-structure) only; origin/alpha [flags](GFF-File-Format#gff-data-types) live in the header. DDS can be block-compressed (DXT1/3/5) and include cubemap [faces](MDL-MDX-File-Format#face-structure)/mip hierarchies in one container.
+- **TGA**: uncompressed/RLE raster data; no block compression; single [face](MDL-MDX-File-Format#face-structure) only; origin/alpha [flags](GFF-File-Format#gff-data-types) live in the header. DDS can be block-compressed (DXT1/3/5) and include cubemap [faces](MDL-MDX-File-Format#face-structure)/mip hierarchies in one container.
 - **TPC**: KotOR-specific container with [TXI](TXI-File-Format) embedded and different header layout; PyKotor maps DDS surfaces into `TPC` objects for unified downstream handling (conversion, [TXI](TXI-File-Format) logic, cubemap normalization).
 
 ### Notes and limits

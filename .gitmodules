@@ -332,3 +332,6 @@
 #[submodule "vendor/Pazaak-Handensaken"]
 #	path = vendor/Pazaak-Handensaken
 #	url = https://github.com/th3w1zard1/Pazaak-Handensaken.git
+[submodule "vendor/PyKotor"]
+	path = vendor/PyKotor
+	url = https://github.com/th3w1zard1/PyKotor.git
