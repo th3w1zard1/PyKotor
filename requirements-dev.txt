@@ -1,16 +1,17 @@
-#-r Tools/BatchPatcher/requirements.txt
+-r Libraries/PyKotor/requirements.txt
 -r Tools/HolocronToolset/requirements.txt
 -r Tools/HoloPatcher/requirements.txt
 -r Tools/KotorDiff/requirements.txt
--r Libraries/PyKotor/requirements.txt
+#-r Tools/BatchPatcher/requirements.txt
+autoflake
 mypy
 pylint
-snakeviz
-autoflake
 pytest
-pytest-xdist
 pytest-html
-#aqtinstall
+pytest-json-report
+pytest-xdist
+ruff
+send2trash
+snakeviz
 types-Pillow
 types-Send2Trash
-send2trash
