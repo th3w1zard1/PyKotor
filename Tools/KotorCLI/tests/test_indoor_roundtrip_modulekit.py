@@ -576,20 +576,20 @@ def test_unit_modulekit_components_have_default_position(rt: RoundtripResult):
 def test_unit_modulekit_bwm_is_room_local_via_lyt_translation(rt: RoundtripResult):
     """Validate our critical coordinate-space rule:
 
-    - The module's WOK is commonly authored in module/world space.
-    - ModuleKit must convert it to room-local space by subtracting the LYT room position.
+    - Module WOKs are commonly authored in room-local space (matching MDL coordinates).
+    - ModuleKit does NOT translate them; they're already in the correct coordinate space.
     """
     # Read original LYT+WOK from the (tiny) module in the installation.
     from pykotor.extract.capsule import Capsule
     from pykotor.resource.formats.lyt import read_lyt
 
-    module_path = rt.install_dir / "modules" / f"{rt.module_root}.mod"
+    module_path = rt.install_dir / "modules" / f"{rt.source_module_root}.mod"
     if not module_path.is_file():
-        module_path = rt.install_dir / "Modules" / f"{rt.module_root}.mod"
+        module_path = rt.install_dir / "Modules" / f"{rt.source_module_root}.mod"
     assert module_path.is_file()
 
     cap = Capsule(module_path)
-    raw_lyt = cap.resource(rt.module_root, ResourceType.LYT)
+    raw_lyt = cap.resource(rt.source_module_root, ResourceType.LYT)
     assert raw_lyt is not None
     lyt = read_lyt(raw_lyt)
     assert len(lyt.rooms) == 1
@@ -602,10 +602,10 @@ def test_unit_modulekit_bwm_is_room_local_via_lyt_translation(rt: RoundtripResul
 
     original = read_bwm(raw_wok)
 
-    # Load ModuleKit component and compare bbox shift.
+    # Load ModuleKit component and verify coordinates match (no translation applied).
     installation = Installation(CaseAwarePath(rt.install_dir))
     mk = ModuleKitManager(installation)
-    kit = mk.get_module_kit(rt.module_root)
+    kit = mk.get_module_kit(rt.source_module_root)
     assert kit.ensure_loaded()
     assert len(kit.components) == 1
     comp = kit.components[0]
@@ -623,13 +623,11 @@ def test_unit_modulekit_bwm_is_room_local_via_lyt_translation(rt: RoundtripResul
     o_minx, o_maxx, o_miny, o_maxy = bbox_xy(original)
     c_minx, c_maxx, c_miny, c_maxy = bbox_xy(comp.bwm)
 
-    # Room-local bwm should be original shifted by -room.position.
-    dx = float(room.position.x)
-    dy = float(room.position.y)
-    assert abs((o_minx - dx) - c_minx) < 1e-6
-    assert abs((o_maxx - dx) - c_maxx) < 1e-6
-    assert abs((o_miny - dy) - c_miny) < 1e-6
-    assert abs((o_maxy - dy) - c_maxy) < 1e-6
+    # BWM should match original (no translation applied; already in room-local space).
+    assert abs(o_minx - c_minx) < 1e-6
+    assert abs(o_maxx - c_maxx) < 1e-6
+    assert abs(o_miny - c_miny) < 1e-6
+    assert abs(o_maxy - c_maxy) < 1e-6
 
 
 def test_unit_modulekit_hook_edges_int(rt: RoundtripResult):
