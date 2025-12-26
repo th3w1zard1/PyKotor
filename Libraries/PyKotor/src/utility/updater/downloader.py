@@ -26,6 +26,7 @@ from loggerplus import RobustLogger
 try:
     from Crypto.Cipher import AES
     from Crypto.Util import Counter
+
     _CRYPTO_AVAILABLE = True
 except ImportError:
     _CRYPTO_AVAILABLE = False
@@ -116,9 +117,7 @@ class FileDownloader:
         # Extra headers
         self.headers: dict[str, Any] = headers or {"User-Agent": "MyAppName/1.0 (https://myappwebsite.com/)"}
         self.http_timeout = http_timeout
-        self.download_max_size: int = (
-            16 * 1024 * 1024
-        )  # Max size of download to memory, larger file will be stored to file
+        self.download_max_size: int = 16 * 1024 * 1024  # Max size of download to memory, larger file will be stored to file
         self.content_length: int | None = None  # Total length of data to download.
         self.session = requests.Session()
         self.session.headers.update(self.headers)
@@ -160,24 +159,11 @@ class FileDownloader:
 
     def _start_hooks(self, content_length):
         for hook in self.progress_hooks:
-            hook(
-                {
-                    "action": "starting",
-                    "data": {"total": content_length}
-                }
-            )
+            hook({"action": "starting", "data": {"total": content_length}})
 
     def _progress_hooks(self, just_downloaded, total):
         for hook in self.progress_hooks:
-            hook(
-                {
-                    "action": "update_progress",
-                    "data": {
-                        "downloaded": just_downloaded,
-                        "total": total
-                    }
-                }
-            )
+            hook({"action": "update_progress", "data": {"downloaded": just_downloaded, "total": total}})
 
     @staticmethod
     def _get_filename_from_cd(cd):
@@ -230,7 +216,7 @@ class FileDownloader:
                                             "status": "downloading",
                                             "percent_complete": self._calc_progress_percent(chunk_start, content_length),
                                             "time": self._calc_eta(start_time, time.time(), content_length, chunk_start),
-                                        }
+                                        },
                                     }
                                 )
                     success = self._check_hash()
@@ -317,8 +303,6 @@ class FileDownloader:
         return f"{percent:.1f}"
 
 
-
-
 def _api_request(data, sequence_num: int | None = None, **kwargs):
     if sequence_num is None:
         sequence_num = secrets.randbelow(0xFFFFFFFF)
@@ -354,10 +338,7 @@ def _download_file(
     progress_hooks: list[Callable[[dict[str, Any]], Any]] | None = None,
 ):
     if not _CRYPTO_AVAILABLE:
-        raise ImportError(
-            "pycryptodome is required for MEGA file downloads. "
-            "Install it with: pip install pycryptodome"
-        )
+        raise ImportError("pycryptodome is required for MEGA file downloads. " "Install it with: pip install pycryptodome")
     dest_path = Path(dest or Path.cwd()).absolute()
     if file is None:
         if is_public:
@@ -445,7 +426,7 @@ def _download_file(
                 "status": "downloading",
                 "percent_complete": percent,
                 "time": time_left,
-            }
+            },
         }
 
         log = RobustLogger()
