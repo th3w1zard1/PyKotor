@@ -2478,7 +2478,7 @@ class TestModuleImageWalkmeshAlignment:
         from toolset.data.indoorkit import ModuleKitManager
 
         PIXELS_PER_UNIT = 10
-        PADDING = 5.0  # Same as in kit.py and module_converter.py
+        PADDING = 5.0  # Same as in kit.py and qt_preview.py
         MIN_SIZE = 256  # Same as kit.py (NOT 100!)
 
         manager = ModuleKitManager(installation)
@@ -2507,7 +2507,7 @@ class TestModuleImageWalkmeshAlignment:
                 max_x = max(v.x for v in vertices)
                 max_y = max(v.y for v in vertices)
 
-                # Expected dimensions with padding (same calculation as module_converter.py)
+                # Expected dimensions with padding (same calculation as qt_preview.py)
                 expected_width = int((max_x - min_x + 2 * PADDING) * PIXELS_PER_UNIT)
                 expected_height = int((max_y - min_y + 2 * PADDING) * PIXELS_PER_UNIT)
 
@@ -2725,7 +2725,7 @@ class TestModuleImageWalkmeshAlignment:
         The actual mirroring is verified by the visual/hitbox alignment tests.
 
         Reference: indoorkit.py line 161: image = QImage(path).mirrored()
-        Reference: module_converter.py line 326: return image.mirrored()
+        Reference: qt_preview.py: return image.mirrored()
         """
         from toolset.data.indoorkit import ModuleKitManager
 
@@ -3294,7 +3294,7 @@ class TestModuleImageWalkmeshAlignment:
     def test_module_kit_image_generation_identical_to_kit_py(self, installation: HTInstallation):
         """CRITICAL: Verify ModuleKit image generation is EXACTLY 1:1 with kit.py.
 
-        This test ensures module_converter.py's _create_preview_image_from_bwm
+        This test ensures qt_preview.py's _create_preview_image_from_bwm
         produces IDENTICAL output to kit.py's _generate_component_minimap,
         with the only difference being that ModuleKit also applies .mirrored()
         to match the Kit loader's behavior.
@@ -3311,7 +3311,7 @@ class TestModuleImageWalkmeshAlignment:
         FLOW EQUIVALENCE:
         - kit.py: generate image -> save to disk
         - loader: load from disk -> .mirrored()
-        - module_converter: generate image -> .mirrored() (same as kit.py + loader)
+        - qt_preview: generate image -> .mirrored() (same as kit.py + loader)
         """
         from qtpy.QtGui import QImage
         from pykotor.tools.kit import _generate_component_minimap
@@ -3464,7 +3464,7 @@ class TestModuleImageWalkmeshAlignment:
     def test_module_kit_walkable_materials_match_kit_py(self, installation: HTInstallation):
         """Verify ModuleKit uses EXACTLY the same walkable material set as kit.py.
 
-        kit.py line 1560 and module_converter.py line 302 both use:
+        kit.py line 1560 and qt_preview.py both use:
         {1, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 16, 18, 20, 21, 22}
 
         This test verifies the walkable detection is identical.
@@ -3495,7 +3495,7 @@ class TestModuleImageWalkmeshAlignment:
 
                 for face in module_bwm.faces:
                     is_walkable_kit = face.material.value in KIT_PY_WALKABLE_MATERIALS
-                    # module_converter.py uses the same set
+                    # qt_preview.py uses the same set
                     is_walkable_module = face.material.value in (1, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 16, 18, 20, 21, 22)
 
                     assert is_walkable_kit == is_walkable_module, f"Walkable classification mismatch for material {face.material.value}"
@@ -7458,7 +7458,7 @@ class TestModuleKitBWMCentering:
 
     def test_module_kit_bwm_is_centered(self, installation: HTInstallation):
         """Verify that ModuleKit BWMs are re-centered around (0, 0)."""
-        from toolset.data.indoorkit.module_converter import ModuleKitManager
+        from toolset.data.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         module_roots = manager.get_module_roots()
@@ -7506,7 +7506,7 @@ class TestModuleKitBWMCentering:
         same location. If they're not congruent, users will see the room preview
         in one place but have to click in a different place to select it.
         """
-        from toolset.data.indoorkit.module_converter import ModuleKitManager
+        from toolset.data.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         module_roots = manager.get_module_roots()
@@ -7597,7 +7597,7 @@ class TestModuleKitBWMCentering:
         3. Simulate a click to place the room
         4. Move mouse to room position and verify it's detected under mouse
         """
-        from toolset.data.indoorkit.module_converter import ModuleKitManager
+        from toolset.data.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         module_roots = manager.get_module_roots()
@@ -7665,7 +7665,7 @@ class TestModuleKitBWMCentering:
         working rooms shown in the center of the Indoor Map Builder (not the broken ones
         with black buffer zones).
         """
-        from toolset.data.indoorkit.module_converter import ModuleKitManager
+        from toolset.data.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         module_roots = manager.get_module_roots()
@@ -7769,7 +7769,7 @@ class TestModuleKitBWMCentering:
         The key test is that the first room (which we know is re-centered from
         test_module_kit_bwm_is_centered) has its image and hitbox aligned.
         """
-        from toolset.data.indoorkit.module_converter import ModuleKitManager
+        from toolset.data.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         module_roots = manager.get_module_roots()
@@ -7904,7 +7904,7 @@ class TestKitModuleEquivalence:
         """
         from pathlib import Path
         from toolset.data.indoorkit.indoorkit_loader import load_kits
-        from toolset.data.indoorkit.module_converter import ModuleKitManager
+        from toolset.data.indoorkit import ModuleKitManager
 
         kits_path = Path("Tools/HolocronToolset/src/toolset/kits")
         kits, missing = load_kits(kits_path)

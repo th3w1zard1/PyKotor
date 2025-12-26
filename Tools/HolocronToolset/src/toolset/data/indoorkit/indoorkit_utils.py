@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from toolset.data.indoorkit.indoorkit_base import MDLMDXTuple
+from pykotor.common.indoorkit import MDLMDXTuple
 
 if TYPE_CHECKING:
     from pathlib import Path

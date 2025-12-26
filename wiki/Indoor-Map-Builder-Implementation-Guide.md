@@ -170,7 +170,7 @@ A connection point on a component.
 
 Defines a door type with K1/K2 variants.
 
-**Location**: `Tools/HolocronToolset/src/toolset/data/indoorkit/indoorkit_base.py`
+**Location**: `Libraries/PyKotor/src/pykotor/common/indoorkit.py`
 
 **[KEY](KEY-File-Format) Properties**:
 
@@ -183,7 +183,9 @@ Defines a door type with K1/K2 variants.
 
 The module converter allows using game modules as component sources.
 
-**Location**: `Tools/HolocronToolset/src/toolset/data/indoorkit/module_converter.py`
+**Core (headless) Location**: `Libraries/PyKotor/src/pykotor/common/modulekit.py`
+
+**Toolset Qt Preview Helper**: `Tools/HolocronToolset/src/toolset/data/indoorkit/qt_preview.py`
 
 ### ModuleKit
 
@@ -202,17 +204,18 @@ A dynamically-generated kit from a game module.
 2. Extract [LYT](LYT-File-Format) resource
 3. For each [LYT](LYT-File-Format) room:
    - Load WOK ([walkmesh](BWM-File-Format)) resource
-   - Re-center [BWM](BWM-File-Format) to origin (critical for alignment)
+   - Convert [BWM](BWM-File-Format) to room-local space by removing the LYT translation
    - Generate preview image from [BWM](BWM-File-Format)
    - Extract hooks from [BWM](BWM-File-Format) transitions
    - Create `KitComponent`
 
-**[BWM](BWM-File-Format) Re-centering**:
+**[BWM](BWM-File-Format) Coordinate Space**:
 
-- Game BWMs [ARE](GFF-File-Format#are-area) stored in world coordinates
-- Indoor Map Builder expects BWMs centered at origin
-- `_recenter_bwm()` calculates [bounding box](MDL-MDX-File-Format#model-header) and translates to origin
-- Ensures preview image and [walkmesh](BWM-File-Format) align correctly
+- Module WOK/BWM data is commonly authored in module/world coordinates (matching LYT positions).
+- The model (MDL) keeps its own local origin; the engine places it using the LYT room position.
+- To keep the visual model and physical walkmesh aligned, the converter must put the BWM in the **same local space** as the model by subtracting the LYT room position:
+  - \(bwm.translate(-lyt\_room.position.x, -lyt\_room.position.y, -lyt\_room.position.z)\)
+- Do **not** bbox-center the walkmesh, because many rooms have non-centered origins (e.g. hallways); bbox-centering shifts collision relative to visuals.
 
 **Preview Image Generation**:
 
@@ -292,6 +295,7 @@ Lightmaps [ARE](GFF-File-Format#are-area) processed per-room:
 - Renamed: `{module_id}_lm{N}`
 - Loaded from kit first, then installation if missing
 - [TXI files](TXI-File-Format) included if available
+- If falling back to an installation [TPC](TPC-File-Format), the bytes must be encoded as **TGA** before writing `ResourceType.TGA` (e.g. `bytes_tpc(tpc, ResourceType.TGA)`), not raw TPC bytes.
 
 ### [BWM](BWM-File-Format) Processing
 
@@ -582,10 +586,12 @@ Hooks can be edited per-room:
 
 ### Code Locations
 
-- **data structures**: `Tools/HolocronToolset/src/toolset/data/indoormap.py`
-- **Kit System**: `Tools/HolocronToolset/src/toolset/data/indoorkit/`
+- **data structures (headless)**: `Libraries/PyKotor/src/pykotor/common/indoormap.py`
+- **Kit System (headless)**: `Libraries/PyKotor/src/pykotor/common/indoorkit.py`
+- **Kit loader functions**: `Libraries/PyKotor/src/pykotor/tools/indoorkit.py`
 - **UI**: `Tools/HolocronToolset/src/toolset/gui/windows/indoor_builder.py`
-- **Module Converter**: `Tools/HolocronToolset/src/toolset/data/indoorkit/module_converter.py`
+- **ModuleKit (headless)**: `Libraries/PyKotor/src/pykotor/common/modulekit.py`
+- **ModuleKit preview (Toolset Qt)**: `Tools/HolocronToolset/src/toolset/data/indoorkit/qt_preview.py`
 
 ### Related Documentation
 

@@ -9,7 +9,7 @@ from qtpy.QtGui import QImage
 
 from pykotor.resource.formats.bwm import read_bwm
 from pykotor.resource.generics.utd import read_utd
-from toolset.data.indoorkit.indoorkit_base import Kit, KitComponent, KitComponentHook, KitDoor, MDLMDXTuple
+from pykotor.common.indoorkit import Kit, KitComponent, KitComponentHook, KitDoor, MDLMDXTuple
 from toolset.utils.misc import get_nums
 from utility.common.geometry import Vector3
 
@@ -70,8 +70,8 @@ def load_kits(  # noqa: C901, PLR0912, PLR0915
             continue
         
         kit_json: dict[str, Any] = kit_json_raw
-        kit = Kit(kit_json["name"])
         kit_identifier: str = kit_json["id"]
+        kit = Kit(kit_json["name"], kit_identifier)
 
         always_path: Path = kits_path / file.stem / "always"
         if always_path.is_dir():
@@ -175,18 +175,19 @@ def load_kits(  # noqa: C901, PLR0912, PLR0915
             door: KitDoor = KitDoor(utd_k1, utd_k2, width, height)
             kit.doors.append(door)
 
+        component_json: dict[str, Any]
         for component_json in kit_json.get("components", []):
-            name = component_json["name"]
-            component_identifier = component_json["id"]
+            name: str = component_json["name"]
+            component_identifier: str = component_json["id"]
 
-            component_base_path = kits_path / kit_identifier
-            png_path = component_base_path / f"{component_identifier}.png"
-            wok_path = component_base_path / f"{component_identifier}.wok"
-            mdl_path = component_base_path / f"{component_identifier}.mdl"
-            mdx_path = component_base_path / f"{component_identifier}.mdx"
+            component_base_path: Path = kits_path / kit_identifier
+            png_path: Path = component_base_path / f"{component_identifier}.png"
+            wok_path: Path = component_base_path / f"{component_identifier}.wok"
+            mdl_path: Path = component_base_path / f"{component_identifier}.mdl"
+            mdx_path: Path = component_base_path / f"{component_identifier}.mdx"
 
             # Check for missing component files
-            missing_component_files = []
+            missing_component_files: list[tuple[Path, str]] = []
             if not png_path.exists():
                 missing_component_files.append((png_path, "component image"))
             if not wok_path.exists():
@@ -236,14 +237,16 @@ def load_kits(  # noqa: C901, PLR0912, PLR0915
                 continue
 
             try:
-                component = KitComponent(kit, name, image, bwm, mdl, mdx)
+                component = KitComponent(kit, name, component_identifier, bwm, mdl, mdx)
+                # Toolset UI expects `component.image` for previews; attach dynamically.
+                component.image = image
 
                 for hook_json in component_json.get("doorhooks", []):
                     try:
                         position: Vector3 = Vector3(hook_json["x"], hook_json["y"], hook_json["z"])
                         rotation: float = hook_json["rotation"]
                         door = kit.doors[hook_json["door"]]
-                        edge: str = hook_json["edge"]
+                        edge: int = int(hook_json["edge"])
                         hook: KitComponentHook = KitComponentHook(position, rotation, edge, door)
                         component.hooks.append(hook)
                     except (IndexError, KeyError):

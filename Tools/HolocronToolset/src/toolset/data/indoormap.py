@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Any, NamedTuple
 
 from loggerplus import RobustLogger  # type: ignore[import-untyped]
 from qtpy import QtCore
-from qtpy.QtGui import QColor, QImage, QLinearGradient, QPainter, QPixmap, QTransform
+from qtpy.QtGui import QColor, QImage, QLinearGradient, QPainter, QPixmap, QTransform  # pyright: ignore[reportMissingImports]
 
 from pykotor.common.language import LocalizedString
 from pykotor.common.misc import Color, ResRef
@@ -27,7 +27,8 @@ from pykotor.resource.generics.ifo import IFO, bytes_ifo
 from pykotor.resource.generics.utd import bytes_utd
 from pykotor.resource.type import ResourceType
 from pykotor.tools import model
-from pykotor.tools.modulekit import ModuleKit
+from pykotor.common.modulekit import ModuleKit
+from toolset.data.indoorkit import ensure_component_image
 from utility.common.geometry import Vector2, Vector3, Vector4
 
 if TYPE_CHECKING:
@@ -1112,7 +1113,7 @@ class IndoorMap:
         # Draw the actual minimap
         painter = QPainter(pixmap)
         for room in self.rooms:
-            image: QImage = room.component.image
+            image: QImage = ensure_component_image(room.component)
 
             painter.save()
             painter.translate(

@@ -42,8 +42,8 @@ from pykotor.resource.formats.bwm import read_bwm
 from pykotor.resource.formats.erf import ERF, ERFType, read_erf, write_erf
 from pykotor.resource.formats.lyt import LYT, LYTRoom, bytes_lyt, read_lyt
 from pykotor.resource.type import ResourceType
-from pykotor.tools.indoormap import IndoorMap
-from pykotor.tools.modulekit import ModuleKitManager
+from pykotor.common.indoormap import IndoorMap
+from pykotor.common.modulekit import ModuleKitManager
 from pykotor.tools.path import CaseAwarePath
 
 
@@ -549,18 +549,63 @@ def test_unit_modulekit_components_have_default_position(rt: RoundtripResult):
         assert pos is not None
 
 
-def test_unit_modulekit_bwm_centered(rt: RoundtripResult):
+def test_unit_modulekit_bwm_is_room_local_via_lyt_translation(rt: RoundtripResult):
+    """Validate our critical coordinate-space rule:
+
+    - The module's WOK is commonly authored in module/world space.
+    - ModuleKit must convert it to room-local space by subtracting the LYT room position.
+    """
+    # Read original LYT+WOK from the (tiny) module in the installation.
+    from pykotor.extract.capsule import Capsule
+    from pykotor.resource.formats.lyt import read_lyt
+
+    module_path = rt.install_dir / "modules" / f"{rt.module_root}.mod"
+    if not module_path.is_file():
+        module_path = rt.install_dir / "Modules" / f"{rt.module_root}.mod"
+    assert module_path.is_file()
+
+    cap = Capsule(module_path)
+    raw_lyt = cap.resource(rt.module_root, ResourceType.LYT)
+    assert raw_lyt is not None
+    lyt = read_lyt(raw_lyt)
+    assert len(lyt.rooms) == 1
+
+    room = lyt.rooms[0]
+    model = (room.model or "").strip().lower()
+    assert model
+    raw_wok = cap.resource(model, ResourceType.WOK)
+    assert raw_wok is not None
+
+    original = read_bwm(raw_wok)
+
+    # Load ModuleKit component and compare bbox shift.
     installation = Installation(CaseAwarePath(rt.install_dir))
     mk = ModuleKitManager(installation)
     kit = mk.get_module_kit(rt.module_root)
     assert kit.ensure_loaded()
-    for comp in kit.components:
-        verts = list(comp.bwm.vertices())
+    assert len(kit.components) == 1
+    comp = kit.components[0]
+
+    def bbox_xy(bwm) -> tuple[float, float, float, float]:
+        verts = list(bwm.vertices())
         assert verts
-        cx = (min(v.x for v in verts) + max(v.x for v in verts)) / 2.0
-        cy = (min(v.y for v in verts) + max(v.y for v in verts)) / 2.0
-        assert abs(cx) < 1e-3
-        assert abs(cy) < 1e-3
+        return (
+            min(v.x for v in verts),
+            max(v.x for v in verts),
+            min(v.y for v in verts),
+            max(v.y for v in verts),
+        )
+
+    o_minx, o_maxx, o_miny, o_maxy = bbox_xy(original)
+    c_minx, c_maxx, c_miny, c_maxy = bbox_xy(comp.bwm)
+
+    # Room-local bwm should be original shifted by -room.position.
+    dx = float(room.position.x)
+    dy = float(room.position.y)
+    assert abs((o_minx - dx) - c_minx) < 1e-6
+    assert abs((o_maxx - dx) - c_maxx) < 1e-6
+    assert abs((o_miny - dy) - c_miny) < 1e-6
+    assert abs((o_maxy - dy) - c_maxy) < 1e-6
 
 
 def test_unit_modulekit_hook_edges_int(rt: RoundtripResult):

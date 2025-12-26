@@ -12,16 +12,16 @@ from argparse import Namespace
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from pykotor.common.indoormap import IndoorMap
+from pykotor.common.modulekit import ModuleKitManager
 from pykotor.extract.installation import Installation
 from pykotor.tools.indoorkit import load_kits
 from pykotor.tools.indoormap import (
-    IndoorMap,
     build_mod_from_indoor_file_modulekit,
     extract_indoor_from_module_as_modulekit,
     extract_indoor_from_module_files,
     extract_indoor_from_module_name,
 )
-from pykotor.tools.modulekit import ModuleKitManager
 from pykotor.tools.path import CaseAwarePath
 from utility.error_handling import universal_simplify_exception
 
@@ -45,7 +45,7 @@ def _resolve_context(args: Namespace, logger: RobustLogger):
     Validates installation/kits paths, resolves the game, and returns (game, installation, kits).
     """
     installation_path = Path(args.installation) if args.installation else None
-    kits_path = Path(args.kits) if getattr(args, "kits", None) else None
+    kits_path = Path(args.kits) if args.kits else None
 
     if installation_path is None:
         msg = "No installation path specified. Use --installation <path>"
@@ -62,7 +62,7 @@ def _resolve_context(args: Namespace, logger: RobustLogger):
         raise ValueError(msg)
 
     installation = Installation(CaseAwarePath(installation_path))
-    if getattr(args, "implicit_kit", False):
+    if args.implicit_kit:
         logger.debug("Implicit-kit mode enabled (ModuleKit). External kits will not be loaded.")
         return game, installation_path, kits_path, installation, []
 
@@ -106,14 +106,14 @@ def cmd_indoor_build(args: Namespace, logger: RobustLogger) -> int:  # noqa: PLR
     if not args.installation:
         logger.error("No installation path specified. Use --installation <path>")
         return 1
-    if not getattr(args, "implicit_kit", False) and not getattr(args, "kits", None):
+    if not args.implicit_kit and not args.kits:
         logger.error("No kits directory specified. Use --kits <path> (or pass --implicit-kit)")
         return 1
 
     input_path = Path(args.input)
     output_path = Path(args.output)
     installation_path = Path(args.installation)
-    kits_path = Path(args.kits) if getattr(args, "kits", None) else None
+    kits_path = Path(args.kits) if args.kits else None
 
     # Validate paths exist
     if not input_path.exists():
@@ -122,7 +122,7 @@ def cmd_indoor_build(args: Namespace, logger: RobustLogger) -> int:  # noqa: PLR
     if not installation_path.exists():
         logger.error("Installation path does not exist: %s", installation_path)
         return 1
-    if not getattr(args, "implicit_kit", False):
+    if not args.implicit_kit:
         assert kits_path is not None
         if not kits_path.exists():
             logger.error("Kits directory does not exist: %s", kits_path)
@@ -133,14 +133,14 @@ def cmd_indoor_build(args: Namespace, logger: RobustLogger) -> int:  # noqa: PLR
 
         logger.info("Building module from indoor map: %s", input_path.name)
         logger.info("Installation: %s", installation_path)
-        if getattr(args, "implicit_kit", False):
+        if args.implicit_kit:
             logger.info("Kits: (implicit ModuleKit)")
         else:
             logger.info("Kits: %s", kits_path)
         logger.info("Output: %s", output_path)
         logger.info("Game: %s", game.name)
 
-        if getattr(args, "implicit_kit", False):
+        if args.implicit_kit:
             build_mod_from_indoor_file_modulekit(
                 input_path,
                 output_mod_path=output_path,
@@ -209,14 +209,14 @@ def cmd_indoor_extract(args: Namespace, logger: RobustLogger) -> int:  # noqa: P
     module_name = args.module.lower().strip()
     output_path = Path(args.output)
     installation_path = Path(args.installation)
-    kits_path = Path(args.kits) if getattr(args, "kits", None) else None
+    kits_path = Path(args.kits) if args.kits else None
 
     try:
         game, _install_path, _kits_path, _installation, _kits = _resolve_context(args, logger)
 
         logger.info("Extracting indoor map from module: %s", module_name)
         logger.info("Installation: %s", installation_path)
-        if getattr(args, "implicit_kit", False):
+        if args.implicit_kit:
             logger.info("Kits: (implicit ModuleKit)")
         else:
             logger.info("Kits: %s", kits_path)
@@ -241,9 +241,11 @@ def cmd_indoor_extract(args: Namespace, logger: RobustLogger) -> int:  # noqa: P
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
         # Fast path: extract embedded indoor JSON if present.
-        embedded_found = extract_indoor_from_module_files([str(p) for p in candidate_files], output_indoor_path=output_path)
+        embedded_found = extract_indoor_from_module_files(
+            [str(p) for p in candidate_files], output_indoor_path=output_path
+        )
         if embedded_found:
-            if getattr(args, "implicit_kit", False):
+            if args.implicit_kit:
                 try:
                     test_map = IndoorMap()
                     mk = ModuleKitManager(_installation)
@@ -260,7 +262,7 @@ def cmd_indoor_extract(args: Namespace, logger: RobustLogger) -> int:  # noqa: P
                 logger.info("Extracted embedded indoor data to: %s", output_path)
                 return 0
 
-        if getattr(args, "implicit_kit", False):
+        if args.implicit_kit:
             indoor = extract_indoor_from_module_as_modulekit(
                 module_name,
                 installation_path=installation_path,

@@ -56,11 +56,12 @@ else:
 from pykotor.common.misc import Color  # type: ignore[reportPrivateImportUsage]
 from pykotor.common.stream import BinaryWriter  # type: ignore[reportPrivateImportUsage]
 from pykotor.resource.formats.bwm import BWM, bytes_bwm, read_bwm  # type: ignore[reportPrivateImportUsage]
-from pykotor.tools.indoormap import IndoorMap, IndoorMapRoom, extract_indoor_from_module_name
+from pykotor.common.indoormap import IndoorMap, IndoorMapRoom
+from pykotor.tools.indoormap import extract_indoor_from_module_name
 from toolset.blender import BlenderEditorMode, ConnectionState, check_blender_and_ask, get_blender_settings
 from toolset.blender.integration import BlenderEditorMixin
 from toolset.config import get_remote_toolset_update_info, is_remote_version_newer
-from toolset.data.indoorkit import Kit, KitComponent, KitComponentHook, ModuleKit, ModuleKitManager, load_kits
+from toolset.data.indoorkit import Kit, KitComponent, KitComponentHook, ModuleKit, ModuleKitManager, ensure_component_image, load_kits
 from toolset.data.installation import HTInstallation
 from toolset.gui.common.filters import NoScrollEventFilter
 from toolset.gui.dialogs.asyncloader import AsyncLoader
@@ -989,6 +990,8 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
             # Populate the list with components from the module kit
             for component in module_kit.components:
+                # ModuleKit components are headless; Toolset UI needs a QImage preview.
+                ensure_component_image(component)
                 item = QListWidgetItem(component.name)
                 item.setData(Qt.ItemDataRole.UserRole, component)
                 self.ui.moduleComponentList.addItem(item)  # pyright: ignore[reportArgumentType, reportCallIssue]
@@ -1019,7 +1022,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             return
 
         # Display component image in the preview
-        self._set_preview_image(component.image)
+        self._set_preview_image(ensure_component_image(component))
 
         # Set as current cursor component for placement
         self.ui.mapRenderer.set_cursor_component(component)
@@ -2011,7 +2014,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             self.ui.mapRenderer.set_cursor_component(None)
             return
 
-        self._set_preview_image(component.image)
+        self._set_preview_image(ensure_component_image(component))
         self.ui.mapRenderer.set_cursor_component(component)
 
     # =========================================================================

@@ -4,73 +4,16 @@ import json
 import re
 
 from pathlib import Path
-from typing import TYPE_CHECKING, NamedTuple
+from typing import TYPE_CHECKING
 
 from pykotor.common.stream import BinaryReader
+from pykotor.common.indoorkit import Kit, KitComponent, KitComponentHook, KitDoor, MDLMDXTuple
 from pykotor.resource.formats.bwm import read_bwm
 from pykotor.resource.generics.utd import read_utd
 from utility.common.geometry import Vector3
-from utility.common.more_collections import CaseInsensitiveDict
 
 if TYPE_CHECKING:
     import os
-
-    from pykotor.resource.formats.bwm import BWM
-    from pykotor.resource.generics.utd import UTD
-
-
-class Kit:
-    """Holocron indoor kit data (headless).
-
-    This is a migrated, headless version of `toolset.data.indoorkit.Kit` suitable for library/CLI use.
-    """
-
-    def __init__(self, name: str, kit_id: str):
-        self.name: str = name
-        self.id: str = kit_id
-        self.components: list[KitComponent] = []
-        self.doors: list[KitDoor] = []
-        self.textures: CaseInsensitiveDict[bytes] = CaseInsensitiveDict()
-        self.lightmaps: CaseInsensitiveDict[bytes] = CaseInsensitiveDict()
-        self.txis: CaseInsensitiveDict[bytes] = CaseInsensitiveDict()
-        self.always: dict[Path, bytes] = {}
-        self.side_padding: dict[int, dict[int, MDLMDXTuple]] = {}
-        self.top_padding: dict[int, dict[int, MDLMDXTuple]] = {}
-        self.skyboxes: dict[str, MDLMDXTuple] = {}
-
-
-class KitComponent:
-    def __init__(self, kit: Kit, name: str, component_id: str, bwm: "BWM", mdl: bytes, mdx: bytes):
-        self.kit: Kit = kit
-        self.id: str = component_id
-        self.name: str = name
-        self.hooks: list[KitComponentHook] = []
-
-        self.bwm: "BWM" = bwm
-        self.mdl: bytes = mdl
-        self.mdx: bytes = mdx
-
-
-class KitComponentHook:
-    def __init__(self, position: Vector3, rotation: float, edge: int, door: "KitDoor"):
-        self.position: Vector3 = position
-        self.rotation: float = rotation
-        self.edge: int = edge
-        self.door: KitDoor = door
-
-
-class KitDoor:
-    def __init__(self, utd_k1: "UTD", utd_k2: "UTD", width: float, height: float):
-        self.utdK1: UTD = utd_k1
-        self.utdK2: UTD = utd_k2
-        self.width: float = width
-        self.height: float = height
-
-
-class MDLMDXTuple(NamedTuple):
-    mdl: bytes
-    mdx: bytes
-
 
 _NUM_RE = re.compile(r"(\d+)")
 
