@@ -101,7 +101,7 @@ LOCAL_PROGRAM_INFO: dict[str, Any] = {
         "Black Vulkar Base": {"version": 1, "id": "blackvulkar"},
         "Endar Spire": {"version": 1, "id": "endarspire"},
         "Hidden Bek Base": {"version": 1, "id": "hiddenbek"},
-        "repository": "th3w1zard1/ToolsetData",
+        "repository": "OldRepublicDevs/ToolsetData",
         "release_tag": "latest",
     },
     "help": {"version": 3},
