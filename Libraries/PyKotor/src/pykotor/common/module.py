@@ -421,6 +421,7 @@ class Module:  # noqa: PLR0904
         installation: Installation,  # Cached installation instance.
         *,
         use_dot_mod: bool = True,  # Should this Module instance represent the .rim/_s.rim/._dlg.erf vanilla archives, or the singular `root`.mod override archive?
+        load_textures: bool = True,  # Whether to crawl model references to locate textures/lightmaps.
     ):
         self.resources: dict[ResourceIdentifier, ModuleResource] = {}  # The keys are only used for ensured uniqueness.
         self.dot_mod: bool = use_dot_mod
@@ -428,6 +429,7 @@ class Module:  # noqa: PLR0904
         self._root: str = self.name_to_root(filename_or_root.lower())
         self._cached_mod_id: ResRef | None = None
         self._cached_sort_id: str | None = None
+        self._load_textures: bool = load_textures
 
         # Build all capsules relevant to this root in the provided installation
         # Based on swkotor.exe: FUN_004094a0 and swkotor2.exe: FUN_004096b0
@@ -835,6 +837,11 @@ class Module:  # noqa: PLR0904
                 self.add_locations(resource.resname(), resource.restype(), [resource.filepath()]).activate()
 
         # Also try get paths for textures in models
+        if not self._load_textures:
+            # Fast mode: skip model texture/lightmap crawling. This is the largest bottleneck in practice
+            # and is unnecessary for workflows that only need module-local resources (e.g. IndoorMap/ModuleKit extraction).
+            return
+
         lookup_texture_queries: set[str] = set()
         lookup_lightmap_queries: set[str] = set()
         for model in self.models():
@@ -2057,6 +2064,7 @@ class ModuleResource(Generic[T]):
             ResourceType.PTH: write_pth,
             ResourceType.TPC: write_tpc,
             ResourceType.TGA: write_tpc,
+            ResourceType.UTC: write_utc,
             ResourceType.UTD: write_utd,
             ResourceType.UTE: write_ute,
             ResourceType.UTI: write_uti,
@@ -2065,7 +2073,6 @@ class ModuleResource(Generic[T]):
             ResourceType.UTS: write_uts,
             ResourceType.UTT: write_utt,
             ResourceType.UTW: write_utw,
-            ResourceType.UTC: write_utc,
             ResourceType.VIS: write_vis,
             ResourceType.WOK: write_bwm,
         }

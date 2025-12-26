@@ -609,7 +609,17 @@ def create_parser() -> ArgumentParser:  # noqa: PLR0915
         aliases=["indoormap-extract"],
         help="Extract a .indoor file from a composite module",
     )
-    indoor_extract_parser.add_argument("--module", "-m", required=True, help="Module name (e.g., danm13)")
+    indoor_extract_parser.add_argument(
+        "--module",
+        "-m",
+        required=False,
+        help="Module name (e.g., danm13). Required unless --module-file is provided.",
+    )
+    indoor_extract_parser.add_argument(
+        "--module-file",
+        required=False,
+        help="Extract embedded indoormap from a specific module container file (.mod/.rim/.erf/.sav).",
+    )
     indoor_extract_parser.add_argument("--output", "-o", required=True, help="Output .indoor file")
     indoor_extract_parser.add_argument("--installation", required=True, help="Path to KOTOR installation")
     indoor_extract_parser.add_argument(

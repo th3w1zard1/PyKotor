@@ -77,7 +77,9 @@ class ModuleKit(Kit):
         # IMPORTANT: use composite module loading (rim/_s.rim/_dlg.erf/.mod) rather than a single
         # capsule file. This matches how real installs load modules and avoids relying on resrefs
         # matching the module root.
-        self._module = Module(self.module_root, self._installation, use_dot_mod=True)
+        # Use fast composite module loading; Module.reload_resources() texture crawling is a major bottleneck
+        # and is unnecessary for ModuleKit (we only need module-local LYT/WOK/MDL/MDX).
+        self._module = Module(self.module_root, self._installation, use_dot_mod=True, load_textures=False)
 
         layout_res = self._module.layout()
         if layout_res is None:

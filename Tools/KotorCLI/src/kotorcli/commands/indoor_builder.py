@@ -195,8 +195,9 @@ def cmd_indoor_extract(args: Namespace, logger: RobustLogger) -> int:  # noqa: P
         logger.setLevel(LEVEL_MAP.get(args.log_level, logging.INFO))
 
     # Validate inputs
-    if not args.module:
-        logger.error("No module name specified. Use --module <name>")
+    module_file_arg = getattr(args, "module_file", None)
+    if not args.module and not module_file_arg:
+        logger.error("No module specified. Use --module <name> or --module-file <path>")
         return 1
     if not args.output:
         logger.error("No output .indoor file specified. Use --output <path>")
@@ -206,7 +207,7 @@ def cmd_indoor_extract(args: Namespace, logger: RobustLogger) -> int:  # noqa: P
         return 1
     # kits are optional in implicit-kit mode and for embedded indoormap extraction.
 
-    module_name = args.module.lower().strip()
+    module_name = args.module.lower().strip() if args.module else ""
     output_path = Path(args.output)
     installation_path = Path(args.installation)
     kits_path = Path(args.kits) if args.kits else None
@@ -214,7 +215,10 @@ def cmd_indoor_extract(args: Namespace, logger: RobustLogger) -> int:  # noqa: P
     try:
         game, _install_path, _kits_path, _installation, _kits = _resolve_context(args, logger)
 
-        logger.info("Extracting indoor map from module: %s", module_name)
+        if module_file_arg:
+            logger.info("Extracting embedded indoor map from module file: %s", module_file_arg)
+        else:
+            logger.info("Extracting indoor map from module: %s", module_name)
         logger.info("Installation: %s", installation_path)
         if args.implicit_kit:
             logger.info("Kits: (implicit ModuleKit)")
@@ -223,20 +227,27 @@ def cmd_indoor_extract(args: Namespace, logger: RobustLogger) -> int:  # noqa: P
         logger.info("Output: %s", output_path)
         logger.info("Game: %s", game.name)
 
-        # Locate composite module containers under the installation Modules directory.
-        modules_dir = installation_path / "modules"
-        if not modules_dir.is_dir():
-            modules_dir = installation_path / "Modules"
-
         candidate_files: list[Path] = []
-        for ext in (".mod", ".rim", "_s.rim", "_dlg.erf"):
-            p = modules_dir / f"{module_name}{ext}"
-            if p.is_file():
-                candidate_files.append(p)
+        if module_file_arg:
+            module_file = Path(module_file_arg)
+            if not module_file.is_file():
+                logger.error("Module file does not exist: %s", module_file)
+                return 1
+            candidate_files = [module_file]
+        else:
+            # Locate composite module containers under the installation Modules directory.
+            modules_dir = installation_path / "modules"
+            if not modules_dir.is_dir():
+                modules_dir = installation_path / "Modules"
 
-        if not candidate_files:
-            logger.error("No module containers found for '%s' under '%s'", module_name, modules_dir)
-            return 1
+            for ext in (".mod", ".rim", "_s.rim", "_dlg.erf"):
+                p = modules_dir / f"{module_name}{ext}"
+                if p.is_file():
+                    candidate_files.append(p)
+
+            if not candidate_files:
+                logger.error("No module containers found for '%s' under '%s'", module_name, modules_dir)
+                return 1
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -261,6 +272,11 @@ def cmd_indoor_extract(args: Namespace, logger: RobustLogger) -> int:  # noqa: P
             else:
                 logger.info("Extracted embedded indoor data to: %s", output_path)
                 return 0
+
+        # If --module-file was provided, we are strictly in "embedded extraction only" mode.
+        if module_file_arg:
+            logger.error("No embedded indoor data found in %s", candidate_files[0])
+            return 1
 
         if args.implicit_kit:
             indoor = extract_indoor_from_module_as_modulekit(
