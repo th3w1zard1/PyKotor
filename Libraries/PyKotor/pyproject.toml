@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pykotor"
-version = "2.0.0"
+version = "2.0.1"
 description = "Read, modify and write files used by KotOR's game engine."
 authors = [{name = "NickHugi"}]
 maintainers = [{name = "th3w1zard1", email = "halomastar@gmail.com"}]
@@ -85,7 +85,7 @@ Changelog = "https://github.com/th3w1zard1/PyKotor/releases"
 # Poetry configuration for those who prefer it
 [tool.poetry]
 name = "pykotor"
-version = "2.0.0"
+version = "2.0.1"
 description = "Read, modify and write files used by KotOR's game engine."
 authors = ["NickHugi", "Benjamin Auquite <halomastar@gmail.com>"]
 maintainers = ["Benjamin Auquite <halomastar@gmail.com>"]
