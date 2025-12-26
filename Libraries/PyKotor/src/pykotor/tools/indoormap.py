@@ -29,6 +29,7 @@ from pykotor.resource.type import ResourceType
 from pykotor.tools import model
 from pykotor.tools.indoorkit import Kit, KitComponent, KitComponentHook, KitDoor, load_kits
 from pykotor.tools.module import prioritize_module_files
+from pykotor.tools.modulekit import ModuleKitManager
 from pykotor.tools.path import CaseAwarePath
 from utility.common.geometry import Vector2, Vector3
 
@@ -599,6 +600,51 @@ def build_mod_from_indoor_file(
     if module_id:
         indoor_map.module_id = module_id
     indoor_map.build(installation, kits, output_mod_path, game_override=game, loadscreen_path=loadscreen_path)
+
+
+def build_mod_from_indoor_file_modulekit(
+    indoor_path: os.PathLike | str,
+    *,
+    output_mod_path: os.PathLike | str,
+    installation_path: os.PathLike | str,
+    game: Game | None,
+    module_id: str | None = None,
+    loadscreen_path: os.PathLike | str | None = None,
+) -> None:
+    installation = Installation(CaseAwarePath(installation_path))
+    module_kit_manager = ModuleKitManager(installation)
+    indoor_map = IndoorMap()
+    indoor_map.load(Path(indoor_path).read_bytes(), [], module_kit_manager)
+    if module_id:
+        indoor_map.module_id = module_id
+    # For modulekit builds, we need to create kits from the module_kit_manager
+    # Get available module roots and create kits for them
+    kits = []
+    for module_root in module_kit_manager.get_module_roots():
+        kit = module_kit_manager.get_module_kit(module_root)
+        if kit is not None:
+            kits.append(kit)
+    indoor_map.build(installation, kits, output_mod_path, game_override=game, loadscreen_path=loadscreen_path)
+
+
+def extract_indoor_from_module_as_modulekit(
+    module_name: str,
+    *,
+    installation_path: os.PathLike | str,
+    game: Game | None,
+    logger: RobustLogger | None = None,
+) -> IndoorMap:
+    """Extract indoor map using ModuleKit (implicit-kit) instead of external kits."""
+    installation = Installation(CaseAwarePath(installation_path))
+    module_kit_manager = ModuleKitManager(installation)
+    return extract_indoor_from_module_name(
+        module_name,
+        installation_path=installation_path,
+        kits_path="",  # Not used when module_kit_manager is provided
+        game=game,
+        logger=logger,
+        module_kit_manager=module_kit_manager,
+    )
 
 
 def extract_indoor_from_module_files(
