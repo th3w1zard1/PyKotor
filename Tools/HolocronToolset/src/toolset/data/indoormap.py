@@ -175,19 +175,18 @@ class IndoorMap:
                     self.scan_mdls.add(padding_model.mdl)
 
     def handle_textures(self):
-        """Rename textures to avoid conflicts.
-
-        Processing Logic:
-        ----------------
-            - Scan through all models
-            - Get textures from each model
-            - Check if texture is already renamed
-            - If not, rename it and add to renaming dictionary
-            - Check texture usage in all kits
-            - Replace texture references in kit textures and txis with new renamed texture.
-        """
+        """Rename textures to avoid conflicts."""
         for mdl in self.scan_mdls:
             for texture in (texture for texture in model.iterate_textures(mdl) if texture not in self.tex_renames):
+                found = False
+                for kit in self.used_kits:
+                    if texture in kit.textures:
+                        found = True
+                        break
+
+                if not found:
+                    continue
+
                 renamed: str = f"{self.module_id}_tex{len(self.tex_renames.keys())}"
                 self.tex_renames[texture] = renamed
                 for kit in self.used_kits:
@@ -225,18 +224,19 @@ class IndoorMap:
             # Add static resources
             self.add_static_resources(room)
 
-            # Process model
-            mdl, mdx = self.process_model(room, installation)
+        # Process model
+        mdl, mdx = self.process_model(room, installation)
+        mdl = model.change_textures(mdl, self.tex_renames)
 
-            # Process lightmaps
-            mdl = self.process_lightmaps(room, mdl, installation)
+        # Process lightmaps
+        mdl = self.process_lightmaps(room, mdl, installation)
 
-            # Add model resources
-            self.add_model_resources(modelname, mdl, mdx)
+        # Add model resources
+        self.add_model_resources(modelname, mdl, mdx)
 
-            # Process BWM
-            bwm: BWM = self.process_bwm(room)
-            self.add_bwm_resource(modelname, bwm)
+        # Process BWM
+        bwm: BWM = self.process_bwm(room)
+        self.add_bwm_resource(modelname, bwm)
 
     def add_static_resources(
         self,

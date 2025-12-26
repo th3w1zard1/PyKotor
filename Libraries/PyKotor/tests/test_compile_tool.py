@@ -4,15 +4,14 @@ from __future__ import annotations
 
 import os
 import platform
-import subprocess
-import tempfile
+
+# Import compile_tool functions for testing
+import sys
+
 from pathlib import Path
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
-
-# Import compile_tool functions for testing
-import sys
 
 # Add compile directory to path
 compile_dir = Path(__file__).resolve().parent.parent / "compile"

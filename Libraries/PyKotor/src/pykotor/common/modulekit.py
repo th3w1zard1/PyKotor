@@ -14,14 +14,12 @@ from __future__ import annotations
 import math
 
 from copy import deepcopy
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 from loggerplus import RobustLogger
 from pykotor.common.indoorkit import Kit, KitComponent, KitComponentHook, KitDoor
-from pykotor.extract.capsule import Capsule
+from pykotor.common.module import Module
 from pykotor.resource.formats.bwm import BWM, BWMEdge, BWMFace, read_bwm
-from pykotor.resource.formats.lyt import read_lyt
 from pykotor.resource.generics.utd import UTD
 from pykotor.resource.type import ResourceType
 from pykotor.tools.kit import _extract_doorhooks_from_bwm  # NOTE: shared logic (function)
@@ -53,8 +51,7 @@ class ModuleKit(Kit):
         self.module_root: str = module_root.lower()
         self._installation: Installation = installation
         self._loaded: bool = False
-        self._capsule: Capsule | None = None
-        self._capsule_path: Path | None = None
+        self._module: Module | None = None
 
         # Duck-typed marker used by Toolset/CLI to know this kit is module-backed.
         self.is_module_kit: bool = True
@@ -77,43 +74,17 @@ class ModuleKit(Kit):
 
     def _load_module_components(self) -> None:
         """Load components from the module's LYT and resources."""
-        # Try the installation's canonical Modules path first, but also support lowercase `modules`
-        # (common in test fixtures and some tooling).
-        candidates: list[Path] = [
-            self._installation.module_path() / f"{self.module_root}_a.rim",
-            self._installation.module_path() / f"{self.module_root}_adx.rim",
-            self._installation.module_path() / f"{self.module_root}_dlg.erf",
-            self._installation.module_path() / f"{self.module_root}_s.rim",
-            self._installation.module_path() / f"{self.module_root}.mod",
-            self._installation.module_path() / f"{self.module_root}.rim",
-            self._installation.path() / "Modules" / f"{self.module_root}_a.rim",
-            self._installation.path() / "modules" / f"{self.module_root}_a.rim",
-            self._installation.path() / "Modules" / f"{self.module_root}_adx.rim",
-            self._installation.path() / "modules" / f"{self.module_root}_adx.rim",
-            self._installation.path() / "Modules" / f"{self.module_root}_dlg.erf",
-            self._installation.path() / "modules" / f"{self.module_root}_dlg.erf",
-            self._installation.path() / "Modules" / f"{self.module_root}_s.rim",
-            self._installation.path() / "modules" / f"{self.module_root}_s.rim",
-            self._installation.path() / "Modules" / f"{self.module_root}.mod",
-            self._installation.path() / "modules" / f"{self.module_root}.mod",
-            self._installation.path() / "Modules" / f"{self.module_root}.rim",
-            self._installation.path() / "modules" / f"{self.module_root}.rim",
-        ]
-        mod_path = next((p for p in candidates if p.is_file()), candidates[0])
-        if not mod_path.is_file():
-            RobustLogger().warning("Module '%s' not found under installation modules.", self.module_root)
-            return
+        # IMPORTANT: use composite module loading (rim/_s.rim/_dlg.erf/.mod) rather than a single
+        # capsule file. This matches how real installs load modules and avoids relying on resrefs
+        # matching the module root.
+        self._module = Module(self.module_root, self._installation, use_dot_mod=True)
 
-        self._capsule_path = mod_path
-        self._capsule = Capsule(mod_path)
-
-        raw_lyt: bytes | None = self._capsule.resource(self.module_root, ResourceType.LYT)
-        if raw_lyt is None:
+        layout_res = self._module.layout()
+        if layout_res is None:
             RobustLogger().warning("Module '%s' has no LYT resource", self.module_root)
             return
-        try:
-            lyt_data: LYT = read_lyt(raw_lyt)
-        except Exception:  # noqa: BLE001
+        lyt_data = layout_res.resource()
+        if lyt_data is None:
             RobustLogger().warning("Failed to parse LYT data for module '%s'", self.module_root)
             return
 
@@ -215,13 +186,16 @@ class ModuleKit(Kit):
         Returns the BWM exactly as stored in the game files.
         Note: The BWM will be re-centered by _recenter_bwm() before use.
         """
-        if self._capsule is None:
+        if self._module is None:
             return None
-
-        data: bytes | None = self._capsule.resource(model_name, ResourceType.WOK)
-        if data is None:
+        res = self._module.resource(model_name, ResourceType.WOK)
+        if res is None:
             return None
-
+        data = res.data()
+        if not data:
+            return None
+        if isinstance(data, BWM):
+            return data
         try:
             return read_bwm(data)
         except Exception:  # noqa: BLE001
@@ -229,9 +203,16 @@ class ModuleKit(Kit):
             return None
 
     def _get_room_model(self, model_name: str, restype: ResourceType) -> bytes | None:
-        if self._capsule is None:
+        if self._module is None:
             return None
-        return self._capsule.resource(model_name, restype)
+        res = self._module.resource(model_name, restype)
+        if res is None:
+            return None
+        data = res.data()
+        if not data:
+            return None
+        # ModuleResource.data() returns bytes for capsule-backed files.
+        return bytes(data) if isinstance(data, (bytes, bytearray)) else None
 
     def _create_placeholder_bwm(self) -> BWM:
         """Create a placeholder BWM with a single quad."""
