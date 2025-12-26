@@ -113,6 +113,30 @@ Hooks snap together when you move rooms near each other (if **Snap to Hooks** is
 - Select room(s) and press **Ctrl+D**
 - Or right-click → **Duplicate**
 
+### Merging Rooms
+
+You can combine 2 or more rooms into a single merged room:
+
+1. **Select multiple rooms** (Shift+Click or Ctrl+A)
+2. **Right-click** on the selection → **Merge Rooms**
+3. The selected rooms will be replaced with a single new room at their average position
+
+**What happens when you merge:**
+
+- **Walkmeshes combined**: All room walkmeshes are merged into a single walkmesh (collision + pathfinding)
+- **Internal hooks removed**: Hooks that connected the merged rooms to each other are removed (no longer needed)
+- **External hooks preserved**: Hooks that connected to other rooms outside the merge are kept
+- **Visual model**: The first room's model is used for display (model merging is not yet implemented)
+- **Undo/Redo supported**: You can undo/redo the merge operation without data loss
+
+**When to use merging:**
+
+- Simplify complex layouts by combining multiple small rooms into one large room
+- Reduce room count for performance (fewer rooms = less overhead)
+- Create custom room shapes not available in existing kits
+
+**Technical note**: Merged rooms are stored as "embedded components" in the `.indoor` file, which means they persist correctly when you save and reload your map.
+
 ## Camera Controls
 
 - **Middle Mouse Button + Drag**: Pan camera
