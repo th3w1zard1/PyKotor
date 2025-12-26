@@ -525,6 +525,31 @@ Hooks can be edited per-room:
 - Base64-encoded [walkmesh](BWM-File-Format) overrides
 - Preserves all room properties
 
+### Embedded Components (Toolset Merge Rooms)
+
+The Toolset Indoor Builder supports **Merge Rooms** (context menu) which creates a *synthetic* room component
+that does not come from an on-disk kit. To make these rooms survive save/load, `.indoor` may include an
+`embedded_components` section.
+
+- **When present**: the loader materializes an in-memory kit with id `__embedded__` and injects the embedded
+  components into it before resolving `rooms[*].kit`/`rooms[*].component`.
+- **Purpose**: allow editor workflows (like merge) to create new components without requiring a kit directory.
+
+Shape (high level):
+
+- `embedded_components`: list of embedded component records
+  - `id`: component id referenced by rooms
+  - `name`: display name
+  - `bwm`: base64-encoded WOK/BWM bytes
+  - `mdl`: base64-encoded MDL bytes
+  - `mdx`: base64-encoded MDX bytes
+  - `hooks`: list of hook records (`position`, `rotation`, `edge`)
+
+Notes:
+
+- Embedded hooks use a default door blueprint for width/height; the room/door graph is still driven by hook proximity.
+- This is intentionally **optional** and only emitted when embedded components are present.
+
 ### No embedded `.indoor` inside modules
 
 Some tooling historically embedded a copy of the `.indoor` JSON into the built `.mod` as an ERF resource

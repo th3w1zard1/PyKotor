@@ -35,6 +35,7 @@ from pykotor.resource.generics.are import ARE, ARENorthAxis, bytes_are
 from pykotor.resource.generics.git import GIT, GITDoor, GITModuleLink, bytes_git
 from pykotor.resource.generics.ifo import IFO, bytes_ifo
 from pykotor.resource.generics.utd import bytes_utd
+from pykotor.resource.generics.utd import UTD
 from pykotor.resource.type import ResourceType
 from pykotor.tools import model
 from utility.common.geometry import Vector2, Vector3
@@ -71,6 +72,39 @@ class MissingRoomInfo(NamedTuple):
     kit_name: str
     component_name: str | None
     reason: str  # "kit_missing" or "component_missing"
+
+
+_EMBEDDED_KIT_ID = "__embedded__"
+
+
+class EmbeddedKit(Kit):
+    """In-memory kit whose components are embedded inside the `.indoor` JSON.
+
+    This exists to support Toolset workflows that create synthetic components at runtime
+    (e.g. merging rooms) without requiring on-disk kit assets.
+    """
+
+    def __init__(self):
+        super().__init__(name="Embedded", kit_id=_EMBEDDED_KIT_ID)
+        self.is_embedded_kit: bool = True
+        # Provide a default door so hooks remain functional (door insertion logic needs width/height).
+        utd = UTD()
+        utd.resref.set_data("sw_door")
+        utd.tag = "embedded_door"
+        self.doors.append(KitDoor(utdK1=utd, utdK2=utd, width=2.0, height=3.0))
+
+
+def _ensure_embedded_kit(kits: list[Kit]) -> EmbeddedKit:
+    existing = next((k for k in kits if getattr(k, "id", "") == _EMBEDDED_KIT_ID), None)
+    if isinstance(existing, EmbeddedKit):
+        return existing
+    # If a different Kit instance already uses the embedded id, keep it to avoid duplicates,
+    # but it cannot accept embedded components reliably. Replace it.
+    if existing is not None:
+        kits.remove(existing)
+    ek = EmbeddedKit()
+    kits.append(ek)
+    return ek
 
 
 class IndoorMap:
@@ -513,6 +547,7 @@ class IndoorMap:
             data["target_game_type"] = self.target_game_type
 
         data["rooms"] = []
+        embedded_components: dict[str, dict[str, Any]] = {}
         for room in self.rooms:
             room_data: dict[str, Any] = {
                 "position": [*room.position],
@@ -528,6 +563,30 @@ class IndoorMap:
             if room.walkmesh_override is not None:
                 room_data["walkmesh_override"] = base64.b64encode(bytes_bwm(room.walkmesh_override)).decode("ascii")
             data["rooms"].append(room_data)
+
+            # Persist embedded components (used by Toolset merge-room workflows).
+            if getattr(room.component.kit, "id", None) == _EMBEDDED_KIT_ID:
+                cid = str(room.component.id)
+                if cid not in embedded_components:
+                    embedded_components[cid] = {
+                        "id": cid,
+                        "name": str(getattr(room.component, "name", cid)),
+                        "bwm": base64.b64encode(bytes_bwm(room.component.bwm)).decode("ascii"),
+                        "mdl": base64.b64encode(bytes(room.component.mdl)).decode("ascii"),
+                        "mdx": base64.b64encode(bytes(room.component.mdx)).decode("ascii"),
+                        "hooks": [
+                            {
+                                "position": [*h.position],
+                                "rotation": h.rotation,
+                                "edge": h.edge,
+                            }
+                            for h in room.component.hooks
+                        ],
+                    }
+
+        if embedded_components:
+            # JSON-friendly list form for stable ordering.
+            data["embedded_components"] = list(embedded_components.values())
 
         return json.dumps(data).encode("utf-8")
 
@@ -565,6 +624,48 @@ class IndoorMap:
         self.module_id = data.get("warp", data.get("module_id", "test01"))
         self.skybox = data.get("skybox", "")
         self.target_game_type = data.get("target_game_type", None)
+
+        # Load any embedded components first, so room references can resolve.
+        embedded_list = data.get("embedded_components") or []
+        if embedded_list:
+            ek = _ensure_embedded_kit(kits)
+            # Replace components by id to keep the kit stable across multiple loads.
+            existing_by_id: dict[str, KitComponent] = {c.id: c for c in ek.components}
+            for comp_data in embedded_list:
+                try:
+                    comp_id = str(comp_data["id"])
+                    name = str(comp_data.get("name") or comp_id)
+                    bwm_raw = base64.b64decode(comp_data["bwm"])
+                    mdl_raw = base64.b64decode(comp_data.get("mdl", "")) if comp_data.get("mdl") else b""
+                    mdx_raw = base64.b64decode(comp_data.get("mdx", "")) if comp_data.get("mdx") else b""
+                    bwm_obj = read_bwm(bwm_raw)
+                except Exception as exc:  # noqa: BLE001
+                    RobustLogger().warning("Failed to load embedded component '%s': %s", comp_data.get("id"), exc)
+                    continue
+
+                comp = KitComponent(kit=ek, name=name, component_id=comp_id, bwm=bwm_obj, mdl=mdl_raw, mdx=mdx_raw)
+                comp.hooks.clear()
+                for h in comp_data.get("hooks", []):
+                    try:
+                        pos = h["position"]
+                        hook = KitComponentHook(
+                            position=Vector3(float(pos[0]), float(pos[1]), float(pos[2])),
+                            rotation=float(h.get("rotation", 0.0)),
+                            edge=int(h.get("edge", 0)),
+                            door=ek.doors[0],
+                        )
+                        comp.hooks.append(hook)
+                    except Exception:  # noqa: BLE001
+                        continue
+
+                if comp_id in existing_by_id:
+                    # Replace in-place to keep list order stable.
+                    idx = ek.components.index(existing_by_id[comp_id])
+                    ek.components[idx] = comp
+                    existing_by_id[comp_id] = comp
+                else:
+                    ek.components.append(comp)
+                    existing_by_id[comp_id] = comp
 
         for room_data in data.get("rooms", []):
             kit_id = room_data["kit"]
