@@ -262,7 +262,7 @@ class IndoorMap:
         self,
         room: IndoorMapRoom,
         installation: HTInstallation,
-    ) -> tuple[bytes, bytes]:
+    ) -> tuple[bytes | bytearray, bytes | bytearray]:
         """Processes a model based on room properties.
 
         Args:
@@ -283,16 +283,16 @@ class IndoorMap:
             - Return processed model and material index strings.
         """
         mdl, mdx = model.flip(room.component.mdl, room.component.mdx, flip_x=room.flip_x, flip_y=room.flip_y)
-        mdl_transformed: bytes = model.transform(mdl, Vector3.from_null(), room.rotation)
+        mdl_transformed: bytes | bytearray = model.transform(mdl, Vector3.from_null(), room.rotation)
         # Use target_game_type override if set, otherwise use installation.tsl
         target_tsl: bool = self.target_game_type if self.target_game_type is not None else installation.tsl
-        mdl_converted: bytes = model.convert_to_k2(mdl_transformed) if target_tsl else model.convert_to_k1(mdl_transformed)
+        mdl_converted: bytes | bytearray = model.convert_to_k2(mdl_transformed) if target_tsl else model.convert_to_k1(mdl_transformed)
         return mdl_converted, mdx
 
     def process_lightmaps(
         self,
         room: IndoorMapRoom,
-        mdl_data: bytes,
+        mdl_data: bytes | bytearray,
         installation: HTInstallation,
     ):
         """Processes lightmaps for a room.
@@ -358,7 +358,8 @@ class IndoorMap:
                     tpc.convert(TPCTextureFormat.RGB)
                 elif tpc.format() in (TPCTextureFormat.BGRA, TPCTextureFormat.DXT3, TPCTextureFormat.DXT5):
                     tpc.convert(TPCTextureFormat.RGBA)
-                lightmap_data = bytes_tpc(tpc)
+                # We store lightmaps as `ResourceType.TGA`, so ensure the byte payload is actually a TGA.
+                lightmap_data = bytes_tpc(tpc, ResourceType.TGA)
                 # TXI might not exist, that's okay
                 if txi_data is None:
                     txi_data = b""
@@ -372,8 +373,8 @@ class IndoorMap:
     def add_model_resources(
         self,
         modelname: str,
-        mdl_data: bytes,
-        mdx_data: bytes,
+        mdl_data: bytes | bytearray,
+        mdx_data: bytes | bytearray,
     ):
         """Adds model resources to the mod object.
 
@@ -389,8 +390,8 @@ class IndoorMap:
             - Sets the MDX file data for the given modelname using ResourceType.MDX
             - Does not return anything, just adds the resources to the mod object.
         """
-        self.mod.set_data(modelname, ResourceType.MDL, mdl_data)
-        self.mod.set_data(modelname, ResourceType.MDX, mdx_data)
+        self.mod.set_data(modelname, ResourceType.MDL, bytes(mdl_data))
+        self.mod.set_data(modelname, ResourceType.MDX, bytes(mdx_data))
 
     def process_bwm(
         self,
@@ -523,13 +524,12 @@ class IndoorMap:
                     else:
                         padding_name: str = f"{self.module_id}_tpad{padding_count}"
                         padding_count += 1
-                        pad_mdl: bytes = model.transform(
+                        pad_mdl: bytes | bytearray = model.transform(
                             kit.top_padding[door_index][padding_key].mdl,
                             Vector3.from_null(),
                             insert.rotation,
                         )
-                        pad_mdl_converted: bytes = model.convert_to_k2(pad_mdl) if target_tsl else model.convert_to_k1(pad_mdl)
-                        pad_mdl_converted = model.change_textures(pad_mdl_converted, self.tex_renames)
+                        pad_mdl_converted: bytes | bytearray = model.change_textures(model.convert_to_k2(pad_mdl) if target_tsl else model.convert_to_k1(pad_mdl), self.tex_renames)
                         lmRenames: dict[str, str] = {}
                         for lightmap in model.iterate_lightmaps(pad_mdl_converted):
                             renamed: str = f"{self.module_id}_lm{self.total_lm}"
@@ -538,7 +538,7 @@ class IndoorMap:
                             self.mod.set_data(renamed, ResourceType.TGA, kit.lightmaps[lightmap])
                             self.mod.set_data(renamed, ResourceType.TXI, kit.txis[lightmap])
                         pad_mdl = model.change_lightmaps(pad_mdl, lmRenames)
-                        self.mod.set_data(padding_name, ResourceType.MDL, pad_mdl)
+                        self.mod.set_data(padding_name, ResourceType.MDL, bytes(pad_mdl))
                         self.mod.set_data(padding_name, ResourceType.MDX, kit.top_padding[door_index][padding_key].mdx)
                         self.lyt.rooms.append(LYTRoom(padding_name, insert.position))
                         self.vis.add_room(padding_name)
@@ -609,9 +609,9 @@ class IndoorMap:
                 continue
             mdl, mdx = kit.skyboxes[self.skybox].mdl, kit.skyboxes[self.skybox].mdx
             model_name: str = f"{self.module_id}_sky"
-            mdl_converted: bytes = model.change_textures(mdl, self.tex_renames)
-            self.mod.set_data(model_name, ResourceType.MDL, mdl_converted)
-            self.mod.set_data(model_name, ResourceType.MDX, mdx)
+            mdl_converted: bytes | bytearray = model.change_textures(mdl, self.tex_renames)
+            self.mod.set_data(model_name, ResourceType.MDL, bytes(mdl_converted))
+            self.mod.set_data(model_name, ResourceType.MDX, bytes(mdx))
             self.lyt.rooms.append(LYTRoom(model_name, Vector3.from_null()))
             self.vis.add_room(model_name)
 
@@ -1003,7 +1003,8 @@ class IndoorMap:
             if sKit is None and module_kit_manager is not None and "module_root" in room_data:
                 try:
                     sKit = module_kit_manager.get_module_kit(room_data["module_root"])
-                    if not sKit.ensure_loaded():
+                    # ModuleKit has ensure_loaded(), but sKit is typed as Kit | None
+                    if hasattr(sKit, "ensure_loaded") and not sKit.ensure_loaded():
                         RobustLogger().warning(f"Failed to load module kit '{room_data['module_root']}'")
                         sKit = None
                 except Exception as exc:  # noqa: BLE001
@@ -1018,7 +1019,8 @@ class IndoorMap:
                     potential_module_root = kit_name.split(" - ")[0].lower()
                     try:
                         sKit = module_kit_manager.get_module_kit(potential_module_root)
-                        if not sKit.ensure_loaded():
+                        # ModuleKit has ensure_loaded(), but sKit is typed as Kit | None
+                        if hasattr(sKit, "ensure_loaded") and not sKit.ensure_loaded():
                             sKit = None
                     except Exception:  # noqa: BLE001
                         sKit = None
