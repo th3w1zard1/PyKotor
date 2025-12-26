@@ -1691,10 +1691,11 @@ class Installation:
         function_map: dict[SearchLocation, Callable[[], tuple[ResourceResult | None, str]]] = {
             SearchLocation.OVERRIDE: lambda: check_dict(self._override),
             SearchLocation.MODULES: lambda: check_dict(self._modules),
-            SearchLocation.TEXTURES_TPA: lambda: check_list(self._texturepacks[TexturePackNames.TPA.value]),
-            SearchLocation.TEXTURES_TPB: lambda: check_list(self._texturepacks[TexturePackNames.TPB.value]),
-            SearchLocation.TEXTURES_TPC: lambda: check_list(self._texturepacks[TexturePackNames.TPC.value]),
-            SearchLocation.TEXTURES_GUI: lambda: check_list(self._texturepacks[TexturePackNames.GUI.value]),
+            # Texturepacks may not exist in minimal/test installations; treat missing packs as empty.
+            SearchLocation.TEXTURES_TPA: lambda: check_list(self._texturepacks.get(TexturePackNames.TPA.value, [])),
+            SearchLocation.TEXTURES_TPB: lambda: check_list(self._texturepacks.get(TexturePackNames.TPB.value, [])),
+            SearchLocation.TEXTURES_TPC: lambda: check_list(self._texturepacks.get(TexturePackNames.TPC.value, [])),
+            SearchLocation.TEXTURES_GUI: lambda: check_list(self._texturepacks.get(TexturePackNames.GUI.value, [])),
             SearchLocation.CHITIN: lambda: check_list(self._chitin) or check_list(self._patch_erf),
             SearchLocation.CUSTOM_MODULES: lambda: check_capsules(capsules),
             SearchLocation.CUSTOM_FOLDERS: lambda: check_folders(folders),

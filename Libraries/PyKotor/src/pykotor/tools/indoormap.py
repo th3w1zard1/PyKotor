@@ -491,6 +491,9 @@ class IndoorMap:
                 "kit": room.component.kit.id,
                 "component": room.component.id,
             }
+            # Implicit ModuleKit support: persist the module root used to resolve the kit.
+            if getattr(room.component.kit, "is_module_kit", False):
+                room_data["module_root"] = getattr(room.component.kit, "module_root", room.component.kit.id)
             if room.walkmesh_override is not None:
                 room_data["walkmesh_override"] = base64.b64encode(bytes_bwm(room.walkmesh_override)).decode("ascii")
             data["rooms"].append(room_data)
@@ -539,7 +542,8 @@ class IndoorMap:
             s_kit: Kit | None = next((k for k in kits if k.id == kit_id), None)
             if s_kit is None:
                 if module_kit_manager is not None:
-                    mk = module_kit_manager.get_module_kit(kit_id)
+                    module_root = str(room_data.get("module_root") or kit_id)
+                    mk = module_kit_manager.get_module_kit(module_root)
                     if mk.ensure_loaded():
                         s_kit = mk
                 if s_kit is None:
@@ -656,7 +660,10 @@ def build_mod_from_indoor_file_modulekit(
     installation = Installation(CaseAwarePath(installation_path))
     module_kit_manager = ModuleKitManager(installation)
     indoor_map = IndoorMap()
-    indoor_map.load(Path(indoor_path).read_bytes(), [], module_kit_manager)
+    missing = indoor_map.load(Path(indoor_path).read_bytes(), [], module_kit_manager)
+    if missing:
+        msg = f"Indoor map references missing ModuleKit rooms/components: {missing[:5]}"
+        raise ValueError(msg)
     if module_id:
         indoor_map.module_id = module_id
     # For implicit-kit builds, just pass the kits referenced by the rooms (deduped by id).
