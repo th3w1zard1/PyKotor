@@ -37,13 +37,13 @@ _add_sys_path(UTILITY_PATH)
 
 
 from kotorcli.__main__ import cli_main
+from pykotor.common.indoormap import IndoorMap
+from pykotor.common.modulekit import ModuleKitManager
 from pykotor.extract.installation import Installation
 from pykotor.resource.formats.bwm import read_bwm
 from pykotor.resource.formats.erf import ERF, ERFType, read_erf, write_erf
 from pykotor.resource.formats.lyt import LYT, LYTRoom, bytes_lyt, read_lyt
 from pykotor.resource.type import ResourceType
-from pykotor.common.indoormap import IndoorMap
-from pykotor.common.modulekit import ModuleKitManager
 from pykotor.tools.path import CaseAwarePath
 
 
