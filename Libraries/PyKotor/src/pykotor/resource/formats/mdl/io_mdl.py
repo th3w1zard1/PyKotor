@@ -360,11 +360,12 @@ class _Node:
     def read(
         self,
         reader: BinaryReader,
+        game: Game,
     ) -> _Node:
         self.header = _NodeHeader().read(reader)
 
         if self.header.type_id & MDLNodeFlags.MESH:
-            self.trimesh = _TrimeshHeader().read(reader)
+            self.trimesh = _TrimeshHeader().read(reader, game)
 
         if self.header.type_id & MDLNodeFlags.SKIN:
             self.skin = _SkinmeshHeader().read(reader)
@@ -704,7 +705,9 @@ class _TrimeshHeader:
     def read(
         self,
         reader: BinaryReader,
+        game: Game,
     ) -> _TrimeshHeader:
+        start_pos = reader.position()
         self.function_pointer0 = reader.read_uint32()
         self.function_pointer1 = reader.read_uint32()
         self.offset_to_faces = reader.read_uint32()
@@ -746,9 +749,14 @@ class _TrimeshHeader:
         self.mdx_uv3_offset = reader.read_uint32()  # Offset to tertiary UV data in MDX (always -1)
         self.mdx_uv4_offset = reader.read_uint32()  # Offset to quaternary UV data in MDX (always -1)
         self.mdx_tangent_offset = reader.read_uint32()  # Offset to tangent/binormal data in MDX (36 bytes, weighted normals)
-        self.mdx_unused_struct1_offset = reader.read_uint32()  # Offset to unused MDX structure 1 (always -1)
-        self.mdx_unused_struct2_offset = reader.read_uint32()  # Offset to unused MDX structure 2 (always -1)
-        self.mdx_unused_struct3_offset = reader.read_uint32()  # Offset to unused MDX structure 3 (always -1)
+        # K2 adds two extra u32s here (total +8 bytes) which accounts for K2_SIZE - K1_SIZE.
+        self.mdx_unused_struct1_offset = reader.read_uint32()  # Offset to unused MDX structure 1 (often -1)
+        if game == Game.K2:
+            self.mdx_unused_struct2_offset = reader.read_uint32()  # Offset to unused MDX structure 2 (often -1)
+            self.mdx_unused_struct3_offset = reader.read_uint32()  # Offset to unused MDX structure 3 (often -1)
+        else:
+            self.mdx_unused_struct2_offset = 0xFFFFFFFF
+            self.mdx_unused_struct3_offset = 0xFFFFFFFF
         self.vertex_count = reader.read_uint16()
         self.texture_count = reader.read_uint16()
         self.has_lightmap = reader.read_uint8()
@@ -763,26 +771,50 @@ class _TrimeshHeader:
         self.dirt_coordinate_space = reader.read_uint8()  # UV coordinate space for dirt texture overlay
         self.total_area = reader.read_single()
         self.unknown11 = reader.read_uint32()  # Reserved field (part of L[3] sequence after total_area) - always 0
-        if self.function_pointer0 in {
-            _TrimeshHeader.K2_FUNCTION_POINTER0,
-            _TrimeshHeader.K2_DANGLY_FUNCTION_POINTER0,
-            _TrimeshHeader.K2_SKIN_FUNCTION_POINTER0,
-        }:
-            self.unknown12 = reader.read_uint32()  # Reserved field (K2 only, part of L[3] sequence after total_area) - always 0
-            self.unknown13 = reader.read_uint32()  # Reserved field (K2 only, part of L[3] sequence after total_area) - always 0
+        # Trimesh header size differs between K1 and K2 by +8 bytes.
+        # Use the model's game version (from the file header) rather than volatile function pointers.
+        if game == Game.K2:
+            self.unknown12 = reader.read_uint32()  # Reserved (K2 only) - usually 0
+            self.unknown13 = reader.read_uint32()  # Reserved (K2 only) - usually 0
         self.mdx_data_offset = reader.read_uint32()
         self.vertices_offset = reader.read_uint32()
+
+        # Some node types (notably K1 skin meshes) have layout quirks in the tail of the trimesh header.
+        # To keep parsing stable across real-world files, re-read the key tail fields from their fixed
+        # K1 offsets, without disturbing the caller's stream position.
+        if game == Game.K1:
+            end_pos = reader.position()
+            # K1 tail layout (K1_SIZE = 332):
+            # - vertex_count: u2 @ +304
+            # - texture_count: u2 @ +306
+            # - mdx_data_offset: u4 @ +324
+            # - vertices_offset: u4 @ +328
+            reader.seek(start_pos + 304)
+            self.vertex_count = reader.read_uint16()
+            self.texture_count = reader.read_uint16()
+            reader.seek(start_pos + 324)
+            self.mdx_data_offset = reader.read_uint32()
+            self.vertices_offset = reader.read_uint32()
+            reader.seek(end_pos)
         return self
 
     def read_extra(
         self,
         reader: BinaryReader,
     ):
-        reader.seek(self.vertices_offset)
-        self.vertices = [reader.read_vector3() for _ in range(self.vertex_count)]
+        # Vertices
+        if self.vertices_offset not in (0, 0xFFFFFFFF) and self.vertex_count > 0:
+            vertices_bytes = self.vertex_count * 12  # Vector3 of floats
+            if self.vertices_offset <= reader.size() and (self.vertices_offset + vertices_bytes) <= reader.size():
+                reader.seek(self.vertices_offset)
+                self.vertices = [reader.read_vector3() for _ in range(self.vertex_count)]
 
-        reader.seek(self.offset_to_faces)
-        self.faces = [_Face().read(reader) for _ in range(self.faces_count)]
+        # Faces
+        if self.offset_to_faces not in (0, 0xFFFFFFFF) and self.faces_count > 0:
+            faces_bytes = self.faces_count * _Face.SIZE
+            if self.offset_to_faces <= reader.size() and (self.offset_to_faces + faces_bytes) <= reader.size():
+                reader.seek(self.offset_to_faces)
+                self.faces = [_Face().read(reader) for _ in range(self.faces_count)]
 
     def write(
         self,
@@ -830,9 +862,10 @@ class _TrimeshHeader:
         writer.write_uint32(self.mdx_uv3_offset)  # Offset to tertiary UV data in MDX (always -1)
         writer.write_uint32(self.mdx_uv4_offset)  # Offset to quaternary UV data in MDX (always -1)
         writer.write_uint32(self.mdx_tangent_offset)  # Offset to tangent/binormal data in MDX (36 bytes, weighted normals)
-        writer.write_uint32(self.mdx_unused_struct1_offset)  # Offset to unused MDX structure 1 (always -1)
-        writer.write_uint32(self.mdx_unused_struct2_offset)  # Offset to unused MDX structure 2 (always -1)
-        writer.write_uint32(self.mdx_unused_struct3_offset)  # Offset to unused MDX structure 3 (always -1)
+        writer.write_uint32(self.mdx_unused_struct1_offset)  # Offset to unused MDX structure 1 (often -1)
+        if game == Game.K2:
+            writer.write_uint32(self.mdx_unused_struct2_offset)  # Offset to unused MDX structure 2 (often -1)
+            writer.write_uint32(self.mdx_unused_struct3_offset)  # Offset to unused MDX structure 3 (often -1)
         writer.write_uint16(self.vertex_count)
         writer.write_uint16(self.texture_count)
         writer.write_uint8(self.has_lightmap)
@@ -842,7 +875,8 @@ class _TrimeshHeader:
         writer.write_uint8(self.beaming)
         writer.write_uint8(self.render)
         writer.write_uint8(self.dirt_enabled)  # Dirt/weathering overlay texture enabled
-        writer.write_terminated_string(self.dirt_texture, "\0", 32)  # Dirt texture name
+        # Dirt texture name: fixed-size 32-byte char array (null-padded).
+        writer.write_string(self.dirt_texture, string_length=32, padding="\0")
         writer.write_uint8(self.unknown9)  # TODO: what is this?
         writer.write_uint8(self.dirt_coordinate_space)  # UV coordinate space for dirt texture overlay
         writer.write_single(self.total_area)
@@ -963,10 +997,26 @@ class _SkinmeshHeader:
         self,
         reader: BinaryReader,
     ):
-        reader.seek(self.offset_to_bonemap)
-        self.bonemap = [reader.read_single() for _ in range(self.bonemap_count)]
-        self.tbones = [reader.read_vector3() for _ in range(self.tbones_count)]
-        self.qbones = [reader.read_vector4() for _ in range(self.qbones_count)]
+        # All offsets in MDL are relative to the MDL data section. Some models (or partially read headers)
+        # may contain invalid offsets; guard against OOB seeks to keep parsing robust.
+        if self.offset_to_bonemap not in (0, 0xFFFFFFFF) and self.bonemap_count > 0:
+            # bonemap is stored as floats in some implementations; keep current behavior but validate bounds.
+            bonemap_bytes = self.bonemap_count * 4
+            if self.offset_to_bonemap <= reader.size() and (self.offset_to_bonemap + bonemap_bytes) <= reader.size():
+                reader.seek(self.offset_to_bonemap)
+                self.bonemap = [reader.read_single() for _ in range(self.bonemap_count)]
+
+        if self.offset_to_tbones not in (0, 0xFFFFFFFF) and self.tbones_count > 0:
+            tbones_bytes = self.tbones_count * 12
+            if self.offset_to_tbones <= reader.size() and (self.offset_to_tbones + tbones_bytes) <= reader.size():
+                reader.seek(self.offset_to_tbones)
+                self.tbones = [reader.read_vector3() for _ in range(self.tbones_count)]
+
+        if self.offset_to_qbones not in (0, 0xFFFFFFFF) and self.qbones_count > 0:
+            qbones_bytes = self.qbones_count * 16
+            if self.offset_to_qbones <= reader.size() and (self.offset_to_qbones + qbones_bytes) <= reader.size():
+                reader.seek(self.offset_to_qbones)
+                self.qbones = [reader.read_vector4() for _ in range(self.qbones_count)]
 
     def write(
         self,
@@ -1630,6 +1680,7 @@ class MDLBinaryReader:
         self._reader.set_offset(self._reader.offset() + 12)
 
         self._fast_load: bool = fast_load
+        self.game: Game = game
 
     def load(
         self,
@@ -1649,6 +1700,19 @@ class MDLBinaryReader:
         self._names: list[str] = []
 
         model_header: _ModelHeader = _ModelHeader().read(self._reader)
+
+        # Determine game version from the file header function pointers.
+        # This is more reliable than using per-node function pointer values.
+        if (
+            model_header.geometry.function_pointer0 == _GeometryHeader.K1_FUNCTION_POINTER0
+            and model_header.geometry.function_pointer1 == _GeometryHeader.K1_FUNCTION_POINTER1
+        ):
+            self.game = Game.K1
+        elif (
+            model_header.geometry.function_pointer0 == _GeometryHeader.K2_FUNCTION_POINTER0
+            and model_header.geometry.function_pointer1 == _GeometryHeader.K2_FUNCTION_POINTER1
+        ):
+            self.game = Game.K2
 
         self._mdl.name = model_header.geometry.model_name
         self._mdl.supermodel = model_header.supermodel
@@ -1688,7 +1752,7 @@ class MDLBinaryReader:
         offset: int,
     ) -> MDLNode:
         self._reader.seek(offset)
-        bin_node = _Node().read(self._reader)
+        bin_node = _Node().read(self._reader, self.game)
         assert bin_node.header is not None
 
         node = MDLNode()
@@ -1718,7 +1782,33 @@ class MDLBinaryReader:
             node.mesh.area = bin_node.trimesh.total_area
             node.mesh.saber_unknowns = cast("tuple[int, int, int, int, int, int, int, int]", bin_node.trimesh.saber_unknowns)
 
-            node.mesh.vertex_positions = bin_node.trimesh.vertices
+            # Vertex positions can be stored either in MDL (K1-style) or in MDX blocks.
+            # Preserve vertex_count even if the MDL vertex table wasn't readable.
+            vcount = bin_node.trimesh.vertex_count
+            node.mesh.vertex_positions = []
+            if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
+                mdx_offset: int = bin_node.trimesh.mdx_data_offset
+                mdx_block_size: int = bin_node.trimesh.mdx_data_size
+                for i in range(vcount):
+                    self._reader_ext.seek(mdx_offset + i * mdx_block_size + bin_node.trimesh.mdx_vertex_offset)
+                    x, y, z = (
+                        self._reader_ext.read_single(),
+                        self._reader_ext.read_single(),
+                        self._reader_ext.read_single(),
+                    )
+                    node.mesh.vertex_positions.append(Vector3(x, y, z))
+            else:
+                # Prefer the MDL vertex table if present; otherwise fall back to reading it directly.
+                if bin_node.trimesh.vertices:
+                    node.mesh.vertex_positions = bin_node.trimesh.vertices
+                elif vcount > 0 and bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
+                    # `read_extra` might have skipped vertices due to a conservative bounds check;
+                    # try again here using the advertised vertex_count.
+                    if bin_node.trimesh.vertices_offset + (vcount * 12) <= self._reader.size():
+                        self._reader.seek(bin_node.trimesh.vertices_offset)
+                        node.mesh.vertex_positions = [self._reader.read_vector3() for _ in range(vcount)]
+                if not node.mesh.vertex_positions and vcount > 0:
+                    node.mesh.vertex_positions = [Vector3.from_null() for _ in range(vcount)]
 
             if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.NORMAL) and self._reader_ext:
                 node.mesh.vertex_normals = []
@@ -1729,9 +1819,10 @@ class MDLBinaryReader:
 
             mdx_offset: int = bin_node.trimesh.mdx_data_offset
             mdx_block_size: int = bin_node.trimesh.mdx_data_size
-            assert node.mesh.vertex_normals is not None
-            for i in range(len(bin_node.trimesh.vertices)):
+            for i in range(vcount):
                 if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.NORMAL) and self._reader_ext:
+                    if node.mesh.vertex_normals is None:
+                        node.mesh.vertex_normals = []
                     self._reader_ext.seek(mdx_offset + i * mdx_block_size + bin_node.trimesh.mdx_normal_offset)
                     x, y, z = (
                         self._reader_ext.read_single(),
@@ -1760,6 +1851,10 @@ class MDLBinaryReader:
                     )
                     node.mesh.vertex_uv2.append(Vector2(u, v))
 
+            # If we couldn't load normals (no MDX or no NORMAL flag), keep a sane default.
+            if node.mesh.vertex_normals is None:
+                node.mesh.vertex_normals = [Vector3.from_null() for _ in range(vcount)]
+
             for bin_face in bin_node.trimesh.faces:
                 face = MDLFace()
                 node.mesh.faces.append(face)
@@ -1782,25 +1877,29 @@ class MDLBinaryReader:
 
             if self._reader_ext:
                 assert bin_node.trimesh is not None
-                for i in range(len(bin_node.trimesh.vertices)):
+                for i in range(bin_node.trimesh.vertex_count):
                     vertex_bone = MDLBoneVertex()
                     node.skin.vertex_bones.append(vertex_bone)
 
                     mdx_offset = bin_node.trimesh.mdx_data_offset + i * bin_node.trimesh.mdx_data_size
-                    self._reader_ext.seek(mdx_offset + bin_node.skin.offset_to_mdx_bones)
-                    t1 = self._reader_ext.read_single()
-                    t2 = self._reader_ext.read_single()
-                    t3 = self._reader_ext.read_single()
-                    t4 = self._reader_ext.read_single()
-                    vertex_bone.vertex_indices = (t1, t2, t3, t4)
+                    bones_pos = mdx_offset + bin_node.skin.offset_to_mdx_bones
+                    if bones_pos + 16 <= self._reader_ext.size():
+                        self._reader_ext.seek(bones_pos)
+                        t1 = self._reader_ext.read_single()
+                        t2 = self._reader_ext.read_single()
+                        t3 = self._reader_ext.read_single()
+                        t4 = self._reader_ext.read_single()
+                        vertex_bone.vertex_indices = (t1, t2, t3, t4)
 
                     mdx_offset = bin_node.trimesh.mdx_data_offset + i * bin_node.trimesh.mdx_data_size
-                    self._reader_ext.seek(mdx_offset + bin_node.skin.offset_to_mdx_weights)
-                    w1 = self._reader_ext.read_single()
-                    w2 = self._reader_ext.read_single()
-                    w3 = self._reader_ext.read_single()
-                    w4 = self._reader_ext.read_single()
-                    vertex_bone.vertex_weights = (w1, w2, w3, w4)
+                    weights_pos = mdx_offset + bin_node.skin.offset_to_mdx_weights
+                    if weights_pos + 16 <= self._reader_ext.size():
+                        self._reader_ext.seek(weights_pos)
+                        w1 = self._reader_ext.read_single()
+                        w2 = self._reader_ext.read_single()
+                        w3 = self._reader_ext.read_single()
+                        w4 = self._reader_ext.read_single()
+                        vertex_bone.vertex_weights = (w1, w2, w3, w4)
 
         for child_offset in bin_node.children_offsets:
             child_node: MDLNode = self._load_node(child_offset)
@@ -1923,12 +2022,12 @@ class MDLBinaryWriter:
         self,
         mdl: MDL,
         target: TARGET_TYPES,
-        target_ext: TARGET_TYPES,
+        target_ext: TARGET_TYPES | None,
     ):
         self._mdl: MDL = mdl
 
         self._target: TARGET_TYPES = target
-        self._target_ext: TARGET_TYPES = target_ext
+        self._target_ext: TARGET_TYPES | None = target_ext
         self._writer: BinaryWriterBytearray = BinaryWriter.to_bytearray()
         self._writer_ext: BinaryWriterBytearray = BinaryWriter.to_bytearray()
 
@@ -1952,7 +2051,19 @@ class MDLBinaryWriter:
         self._mdl_nodes: list[MDLNode] = self._mdl.all_nodes()
         self._bin_nodes: list[_Node] = [_Node() for _ in self._mdl_nodes]
         self._bin_anims: list[_Animation] = [_Animation() for _ in self._mdl.anims]
-        self._names: list[str] = [node.name for node in self._mdl_nodes]
+        # Name table must cover *all* nodes referenced by the file: geometry nodes + animation nodes.
+        # Some round-trip paths construct animation roots independently, so build this as a de-duped,
+        # insertion-ordered list.
+        self._names = []
+        def _add_name(n: str) -> None:
+            if n and n not in self._names:
+                self._names.append(n)
+
+        for node in self._mdl_nodes:
+            _add_name(node.name)
+        for anim in self._mdl.anims:
+            for node in anim.all_nodes():
+                _add_name(node.name)
 
         self._anim_offsets: list[int] = [0 for _ in self._bin_anims]
         self._node_offsets: list[int] = [0 for _ in self._bin_nodes]
@@ -1974,7 +2085,7 @@ class MDLBinaryWriter:
         self,
     ):
         for i, bin_node in enumerate(self._bin_nodes):
-            self._update_node(bin_node, self._mdl_nodes[i])
+            self._update_node(bin_node, self._mdl_nodes[i], node_id_override=i)
 
         for i, bin_anim in enumerate(self._bin_anims):
             self._update_anim(bin_anim, self._mdl.anims[i])
@@ -1983,14 +2094,20 @@ class MDLBinaryWriter:
         self,
         bin_node: _Node,
         mdl_node: MDLNode,
+        *,
+        node_id_override: int | None = None,
     ):
         assert bin_node.header is not None
         bin_node.header.type_id = self._node_type(mdl_node)
         bin_node.header.position = mdl_node.position
         bin_node.header.orientation = mdl_node.orientation
         bin_node.header.children_count = bin_node.header.children_count2 = len(mdl_node.children)
+        if mdl_node.name not in self._names:
+            self._names.append(mdl_node.name)
         bin_node.header.name_id = self._names.index(mdl_node.name)
-        bin_node.header.node_id = self._get_node_id(bin_node)
+        # Node IDs are positional within their node array (geometry or animation), not global by name.
+        # When writing, always prefer the caller-provided order.
+        bin_node.header.node_id = node_id_override if node_id_override is not None else 0
 
         # Determine the appropriate function pointer values to write
         if self.game == Game.K1:
@@ -2121,9 +2238,9 @@ class MDLBinaryWriter:
 
         all_nodes: list[MDLNode] = mdl_anim.all_nodes()
         bin_nodes: list[_Node] = []
-        for mdl_node in all_nodes:
+        for node_id, mdl_node in enumerate(all_nodes):
             bin_node = _Node()
-            self._update_node(bin_node, mdl_node)
+            self._update_node(bin_node, mdl_node, node_id_override=node_id)
             bin_nodes.append(bin_node)
         bin_anim.w_nodes = bin_nodes
 
@@ -2228,35 +2345,57 @@ class MDLBinaryWriter:
                 node_offsets.append(node_offset)
                 node_offset += bin_node.calc_size(self.game)
 
-            for j, _bin_node in enumerate(bin_anim.w_nodes):
-                self._calc_node_offset(j, bin_anim.w_nodes, node_offsets)
+            self._calc_node_offsets_for_context(
+                bin_nodes=bin_anim.w_nodes,
+                bin_offsets=node_offsets,
+                mdl_nodes=self._mdl.anims[i].all_nodes(),
+            )
 
-        for i, _bin_node in enumerate(self._bin_nodes):
-            self._calc_node_offset(i, self._bin_nodes, self._node_offsets)
+        self._calc_node_offsets_for_context(
+            bin_nodes=self._bin_nodes,
+            bin_offsets=self._node_offsets,
+            mdl_nodes=self._mdl_nodes,
+        )
 
-    def _calc_node_offset(
+    def _calc_node_offsets_for_context(
         self,
-        index: int,
+        *,
         bin_nodes: list[_Node],
         bin_offsets: list[int],
-    ):
-        bin_node: _Node = bin_nodes[index]
-        node_offset: int = bin_offsets[index]
+        mdl_nodes: list[MDLNode],
+    ) -> None:
+        """Populate per-node child offsets + header offsets for a single node array (geometry OR animation)."""
+        if len(bin_nodes) != len(mdl_nodes):
+            raise ValueError(f"bin_nodes and mdl_nodes length mismatch ({len(bin_nodes)} vs {len(mdl_nodes)})")
 
-        for bin_child in self._get_bin_children(bin_node, bin_nodes):
-            child_index: int = bin_nodes.index(bin_child)
-            offset: int = bin_offsets[child_index]
-            bin_node.children_offsets.append(offset)
+        idx_by_id = {id(n): i for i, n in enumerate(mdl_nodes)}
+        parent_by_idx: dict[int, int] = {}
+        for parent_idx, parent in enumerate(mdl_nodes):
+            for child in parent.children:
+                child_idx = idx_by_id.get(id(child))
+                if child_idx is not None:
+                    parent_by_idx[child_idx] = parent_idx
 
-        assert bin_node.header is not None
-        bin_node.header.offset_to_children = node_offset + bin_node.children_offsets_offset(self.game)
-        bin_node.header.offset_to_controllers = node_offset + bin_node.controllers_offset(self.game)
-        bin_node.header.offset_to_controller_data = node_offset + bin_node.controller_data_offset(self.game)
-        bin_node.header.offset_to_root = 0
-        bin_node.header.offset_to_parent = self._node_offsets[0] if index != 0 else 0
+        for i, (bin_node, mdl_node) in enumerate(zip(bin_nodes, mdl_nodes, strict=False)):
+            node_offset = bin_offsets[i]
 
-        if bin_node.trimesh:
-            self._calc_trimesh_offsets(node_offset, bin_node)
+            # Child offsets from the MDL node tree
+            bin_node.children_offsets = []
+            for child in mdl_node.children:
+                child_idx = idx_by_id.get(id(child))
+                if child_idx is not None:
+                    bin_node.children_offsets.append(bin_offsets[child_idx])
+
+            assert bin_node.header is not None
+            bin_node.header.offset_to_children = node_offset + bin_node.children_offsets_offset(self.game)
+            bin_node.header.offset_to_controllers = node_offset + bin_node.controllers_offset(self.game)
+            bin_node.header.offset_to_controller_data = node_offset + bin_node.controller_data_offset(self.game)
+            bin_node.header.offset_to_root = 0
+            parent_idx = parent_by_idx.get(i)
+            bin_node.header.offset_to_parent = bin_offsets[parent_idx] if parent_idx is not None else 0
+
+            if bin_node.trimesh:
+                self._calc_trimesh_offsets(node_offset, bin_node)
 
     def _calc_trimesh_offsets(
         self,
@@ -2272,51 +2411,6 @@ class MDLBinaryWriter:
         bin_node.trimesh.offset_to_faces = node_offset + bin_node.faces_offset(self.game)
         bin_node.trimesh.vertices_offset = node_offset + bin_node.vertices_offset(self.game)
 
-    def _get_node_id(
-        self,
-        bin_node: _Node,
-    ) -> int:
-        assert bin_node.header is not None
-        name_index = bin_node.header.name_id
-        for mdl_node in self._mdl_nodes:
-            if self._names.index(mdl_node.name) == name_index:
-                return self._mdl_nodes.index(mdl_node)
-        raise ValueError
-
-    def _get_bin_children(
-        self,
-        bin_node: _Node,
-        all_nodes: list[_Node],
-    ) -> list[_Node]:
-        assert bin_node.header is not None
-        # check the name_id for bin_node
-        # get the corresponding mdl_node
-        # find name_ids of all children
-        # from all_nodes list pick the nodes with the same name_ids
-        name_id = bin_node.header.name_id
-        mdl_node = None
-        for mdlnode in self._mdl_nodes:
-            if self._names.index(mdlnode.name) == name_id:
-                mdl_node = mdlnode
-        if mdl_node is None:
-            raise ValueError
-
-        child_name_ids: list[int] = []
-        for mdlnode in mdl_node.children:
-            child_name_id: int = self._names.index(mdlnode.name)
-            child_name_ids.append(child_name_id)
-
-        bin_children: list[_Node] = []
-        assert bin_node.header is not None
-        for child_name_id in child_name_ids:
-            bin_children.extend(
-                bn
-                for bn in all_nodes
-                if bn is not None
-                and bn.header is not None
-                and bn.header.name_id == child_name_id
-            )
-        return bin_children
 
     def _node_type(
         self,

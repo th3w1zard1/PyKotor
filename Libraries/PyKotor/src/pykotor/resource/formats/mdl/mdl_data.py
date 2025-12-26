@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 from pykotor.common.misc import Color
 from pykotor.resource.formats._base import ComparableMixin
-from pykotor.resource.formats.mdl.mdl_types import MDLClassification, MDLNodeType, MDLNodeFlags
+from pykotor.resource.formats.mdl.mdl_types import MDLClassification, MDLNodeType
 from pykotor.resource.type import ResourceType
 from utility.common.geometry import Vector3, Vector4
 
@@ -1271,6 +1271,10 @@ class MDLMesh(ComparableMixin):
         # uv1 is diffuse texture coords, uv2 is lightmap coords
         self.vertex_uv1: list[Vector2] | None = None
         self.vertex_uv2: list[Vector2] | None = None
+
+        # Back-compat alias used by older code/tests.
+        # Treat as the primary UV set (same object as vertex_uv1).
+        self.vertex_uvs: list[Vector2] | None = self.vertex_uv1
         
         # NOTE: Tangent space data (for bump/normal mapping) is stored separately in MDX
         # vendor/mdlops/MDLOpsM.pm:5379-5597 (tangent space calculation)
@@ -1290,7 +1294,7 @@ class MDLMesh(ComparableMixin):
         ...
 
 
-class MDLSkin(ComparableMixin):
+class MDLSkin(MDLMesh):
     """Skin data for skeletal animation (skinned mesh).
     
     Skinned meshes are meshes whose vertices are influenced by multiple bones in a skeleton,
@@ -1323,6 +1327,10 @@ class MDLSkin(ComparableMixin):
     def __init__(
         self,
     ):
+        # Skins are meshes with extra bone-weighting data.
+        # Reuse MDLMesh initialization so ambient/diffuse/textures/verts/faces exist.
+        super().__init__()
+
         # vendor/mdlops/MDLOpsM.pm:1760 - Fixed 16-bone index array
         self.bone_indices: tuple[int, ...] = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
         
@@ -1418,7 +1426,7 @@ class MDLConstraint:
         self.target_node: int = 0
 
 
-class MDLDangly(ComparableMixin):
+class MDLDangly(MDLMesh):
     """Dangly mesh physics data for cloth, hair, and soft body simulation.
     
     Dangly meshes are special meshes that simulate cloth or hair physics in KotOR.
@@ -1447,6 +1455,10 @@ class MDLDangly(ComparableMixin):
     def __init__(
         self,
     ):
+        # Dangly meshes still behave like meshes for rendering/export purposes.
+        # Reuse MDLMesh initialization so ambient/diffuse/textures/verts/faces exist.
+        super().__init__()
+
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:276-291
         # vendor/mdlops/MDLOpsM.pm:1835-1850
         # Constraints define how vertices can move (springs, limits, etc.)

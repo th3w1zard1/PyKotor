@@ -44,6 +44,7 @@ from pykotor.resource.formats.mdl import (
     bytes_mdl,
     detect_mdl,
     read_mdl,
+    write_mdl,
 )
 from pykotor.resource.formats.mdl.mdl_types import (
     MDLClassification,
@@ -1868,7 +1869,8 @@ class TestMDLAsciiBinaryIntegration(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        self.test_dir = Path("Libraries/PyKotor/tests/test_files/mdl")
+        # Resolve relative to this test file so it works regardless of CWD.
+        self.test_dir = Path(__file__).resolve().parents[2] / "test_files" / "mdl"
         if not self.test_dir.exists():
             self.skipTest(f"Test directory {self.test_dir} does not exist")
 
@@ -1901,9 +1903,11 @@ class TestMDLAsciiBinaryIntegration(unittest.TestCase):
         node.mesh = create_test_mesh()
         mdl_ascii.root.children.append(node)
 
-        # Convert to binary
-        binary_bytes = bytes_mdl(mdl_ascii, ResourceType.MDL)
-        self.assertIsInstance(binary_bytes, bytes)
+        # Convert to binary (keep MDL/MDX separated in-memory)
+        mdl_bytes = bytearray()
+        mdx_bytes = bytearray()
+        write_mdl(mdl_ascii, mdl_bytes, ResourceType.MDL, target_ext=mdx_bytes)
+        binary_bytes = bytes(mdl_bytes)
         self.assertGreater(len(binary_bytes), 0)
 
         # Verify it's binary (starts with null bytes)
@@ -1926,8 +1930,11 @@ class TestMDLAsciiBinaryIntegration(unittest.TestCase):
         # Read ASCII
         mdl2 = read_mdl(ascii_bytes, file_format=ResourceType.MDL_ASCII)
 
-        # Convert back to binary
-        binary_bytes = bytes_mdl(mdl2, ResourceType.MDL)
+        # Convert back to binary (keep MDL/MDX separated in-memory)
+        mdl_bytes = bytearray()
+        mdx_bytes = bytearray()
+        write_mdl(mdl2, mdl_bytes, ResourceType.MDL, target_ext=mdx_bytes)
+        binary_bytes = bytes(mdl_bytes)
 
         # Verify binary structure
         self.assertEqual(binary_bytes[:4], b"\x00\x00\x00\x00")
@@ -1941,11 +1948,14 @@ class TestMDLAsciiBinaryIntegration(unittest.TestCase):
         node.mesh = create_test_mesh()
         mdl1.root.children.append(node)
 
-        # Convert to binary
-        binary_bytes = bytes_mdl(mdl1, ResourceType.MDL)
+        # Convert to binary (keep MDL/MDX separated in-memory)
+        mdl_bytes = bytearray()
+        mdx_bytes = bytearray()
+        write_mdl(mdl1, mdl_bytes, ResourceType.MDL, target_ext=mdx_bytes)
+        binary_bytes = bytes(mdl_bytes)
 
-        # Read binary
-        mdl2 = read_mdl(binary_bytes, file_format=ResourceType.MDL)
+        # Read binary (provide MDX as source_ext)
+        mdl2 = read_mdl(binary_bytes, source_ext=bytes(mdx_bytes), file_format=ResourceType.MDL)
 
         # Convert back to ASCII
         ascii_bytes = bytes_mdl(mdl2, ResourceType.MDL_ASCII)
@@ -2202,7 +2212,8 @@ class TestMDLRoundTripAsciiToBinaryToAscii(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures."""
-        self.test_dir = Path("Libraries/PyKotor/tests/test_files/mdl")
+        # Resolve relative to this test file so it works regardless of CWD.
+        self.test_dir = Path(__file__).resolve().parents[2] / "test_files" / "mdl"
         if not self.test_dir.exists():
             self.skipTest(f"Test directory {self.test_dir} does not exist")
 

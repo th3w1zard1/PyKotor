@@ -190,7 +190,9 @@ def write_mdl(
         ValueError: If the specified format was unsupported.
     """
     if file_format is ResourceType.MDL:
-        MDLBinaryWriter(mdl, target, target_ext or target).write()
+        # Only write MDX if an explicit target is provided.
+        # Writing MDX into the same target as MDL corrupts in-memory callers (e.g., bytearray buffers).
+        MDLBinaryWriter(mdl, target, target_ext).write()
     elif file_format is ResourceType.MDL_ASCII:
         MDLAsciiWriter(mdl, target).write()
     else:
