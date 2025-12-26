@@ -28,7 +28,6 @@ dependencies = [
   "pykotor[all]>=2.0.0",
   "certifi>=2021.10.8",
   "idna>=3.11",
-  "jsmin>=3.0.1",
   "Markdown>=3.4.4,<3.9; python_version<\"3.9\"",
   "Markdown>=3.4.4; python_version>=\"3.9\"",
   "numpy>=1.19.0,<1.25.0; python_version<\"3.9\"",
@@ -145,7 +144,6 @@ pykotorgl = { version = "^2.0.2", extras = ["moderngl"] }
 idna = "*"
 urllib3 = "~1.26"
 Markdown = ">=3.3,<3.6"
-jsmin = "~3.0"
 qtpy = "*"
 send2trash = "*"
 
