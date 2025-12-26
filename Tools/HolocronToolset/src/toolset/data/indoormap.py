@@ -27,6 +27,7 @@ from pykotor.resource.generics.ifo import IFO, bytes_ifo
 from pykotor.resource.generics.utd import bytes_utd
 from pykotor.resource.type import ResourceType
 from pykotor.tools import model
+from pykotor.tools.modulekit import ModuleKit
 from utility.common.geometry import Vector2, Vector3, Vector4
 
 if TYPE_CHECKING:
@@ -578,7 +579,7 @@ class IndoorMap:
                             self.mod.set_data(renamed, ResourceType.TGA, kit.lightmaps[lightmap])
                             self.mod.set_data(renamed, ResourceType.TXI, kit.txis[lightmap])
                         pad_mdl = model.change_lightmaps(pad_mdl, lmRenames)
-                        self.mod.set_data(padding_name, ResourceType.MDL, pad_mdl)
+                        self.mod.set_data(padding_name, ResourceType.MDL, bytes(pad_mdl))
                         self.mod.set_data(padding_name, ResourceType.MDX, kit.side_padding[door_index][padding_key].mdx)
                         self.lyt.rooms.append(LYTRoom(padding_name, insert.position))
                         self.vis.add_room(padding_name)
@@ -890,7 +891,7 @@ class IndoorMap:
             - Serializes room data like position, rotation etc for each room
             - Converts dictionary to JSON and encodes to bytes.
         """
-        data: dict[str, str | dict | list] = {"module_id": self.module_id, "name": {}}
+        data: dict[str, Any] = {"module_id": self.module_id, "name": {}}
 
         data["name"]["stringref"] = self.name.stringref  # type: ignore[call-overload, index]
         for language, gender, text in self.name:
@@ -914,7 +915,7 @@ class IndoorMap:
                 "component": room.component.name,
             }
             # Save module_root if this is a ModuleKit (for proper loading later)
-            if hasattr(room.component.kit, "is_module_kit") and room.component.kit.is_module_kit:
+            if isinstance(room.component.kit, ModuleKit):
                 room_data["module_root"] = room.component.kit.module_root
             if room.walkmesh_override is not None:
                 room_data["walkmesh_override"] = base64.b64encode(bytes_bwm(room.walkmesh_override)).decode("ascii")
@@ -1002,11 +1003,12 @@ class IndoorMap:
             # If kit not found in regular kits, try ModuleKitManager if module_root is saved
             if sKit is None and module_kit_manager is not None and "module_root" in room_data:
                 try:
-                    sKit = module_kit_manager.get_module_kit(room_data["module_root"])
-                    # ModuleKit has ensure_loaded(), but sKit is typed as Kit | None
-                    if hasattr(sKit, "ensure_loaded") and not sKit.ensure_loaded():
+                    module_kit = module_kit_manager.get_module_kit(room_data["module_root"])
+                    if not module_kit.ensure_loaded():
                         RobustLogger().warning(f"Failed to load module kit '{room_data['module_root']}'")
                         sKit = None
+                    else:
+                        sKit = module_kit
                 except Exception as exc:  # noqa: BLE001
                     RobustLogger().warning(f"Error loading module kit '{room_data.get('module_root', 'unknown')}': {exc}")
                     sKit = None
@@ -1018,10 +1020,11 @@ class IndoorMap:
                 if " - " in kit_name:
                     potential_module_root = kit_name.split(" - ")[0].lower()
                     try:
-                        sKit = module_kit_manager.get_module_kit(potential_module_root)
-                        # ModuleKit has ensure_loaded(), but sKit is typed as Kit | None
-                        if hasattr(sKit, "ensure_loaded") and not sKit.ensure_loaded():
+                        module_kit = module_kit_manager.get_module_kit(potential_module_root)
+                        if not module_kit.ensure_loaded():
                             sKit = None
+                        else:
+                            sKit = module_kit
                     except Exception:  # noqa: BLE001
                         sKit = None
             
@@ -1157,7 +1160,7 @@ class IndoorMap:
         """
         return {
             "module_id": self.module_id,
-            "name": str(self.name) if hasattr(self.name, "__str__") else "",
+            "name": str(self.name),
             "lighting": {
                 "r": float(self.lighting.r),
                 "g": float(self.lighting.g),
@@ -1323,7 +1326,7 @@ class IndoorMapRoom:
         """
         return {
             "component_id": id(self.component),  # Reference to component
-            "component_name": self.component.name if hasattr(self.component, "name") else "",
+            "component_name": self.component.name,
             "position": self.position.serialize(),
             "rotation": float(self.rotation),
             "flip_x": bool(self.flip_x),
