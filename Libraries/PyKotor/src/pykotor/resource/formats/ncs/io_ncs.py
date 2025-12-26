@@ -32,11 +32,14 @@ class NCSBinaryReader(ResourceReader):
         source: SOURCE_TYPES,
         offset: int = 0,
         size: int = 0,
+        *,
+        validate_for_vm: bool = False,
     ):
         super().__init__(source, offset, size)
         self._ncs: NCS | None = None
         self._instructions: dict[int, NCSInstruction] = {}
         self._jumps: list[tuple[NCSInstruction, int]] = []
+        self._validate_for_vm: bool = validate_for_vm
 
     @autoclose
     def load(self, *, auto_close: bool = True) -> NCS:
@@ -158,8 +161,9 @@ class NCSBinaryReader(ResourceReader):
 
         self._ncs.instructions = list(self._instructions.values())
 
-        # Validate the NCS for VM compatibility based on reverse engineering findings
-        validate_ncs_for_vm(self._ncs)
+        # Optional strict validation for VM compatibility (can reject valid real-world scripts).
+        if self._validate_for_vm:
+            validate_ncs_for_vm(self._ncs)
 
         return self._ncs
 

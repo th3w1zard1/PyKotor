@@ -512,6 +512,37 @@ class GFFStruct(ComparableMixin, dict):
         # Ordered dictionary of field labels to field instances
         self._fields: dict[str, _GFFField] = {}
 
+    def __copy__(self) -> "GFFStruct":
+        """Support `copy.copy(GFFStruct)` without going through `dict` reconstruction.
+
+        `GFFStruct` subclasses `dict` for historical compatibility, but direct item-setting is
+        intentionally forbidden via `__setitem__`. The stdlib `copy` module will otherwise try
+        to reconstruct the dict portion by iterating `items()` and assigning, which triggers
+        our `__setitem__` guard and breaks callers (including PyKotor's own tests).
+        """
+        new_obj = GFFStruct(self.struct_id)
+        # Shallow copy: preserves field objects/values but isolates the container.
+        new_obj._fields = self._fields.copy()
+        return new_obj
+
+    def __deepcopy__(self, memo: dict[int, object]) -> "GFFStruct":
+        """Support `copy.deepcopy(GFFStruct)`."""
+        new_obj = GFFStruct(self.struct_id)
+        memo[id(self)] = new_obj
+        new_obj._fields = deepcopy(self._fields, memo)
+        return new_obj
+
+    @staticmethod
+    def _from_reduce(struct_id: int, fields: dict[str, _GFFField]) -> "GFFStruct":
+        obj = GFFStruct(struct_id)
+        obj._fields = fields
+        return obj
+
+    def __reduce_ex__(self, protocol: int):
+        """Override dict's reduce to avoid dict-item reconstruction via `__setitem__`."""
+        # Shallow-copy semantics for `copy.copy`: the `copy` module uses reduce for built-ins.
+        return (GFFStruct._from_reduce, (self.struct_id, self._fields.copy()))
+
     def __getitem__(self, key: str) -> Any:
         """Get field value by label, supporting both dict-style and existing API access."""
         if isinstance(key, str):
@@ -535,6 +566,14 @@ class GFFStruct(ComparableMixin, dict):
     def __contains__(self, key: object) -> bool:
         """Check if field exists."""
         return isinstance(key, str) and key in self._fields
+
+    def __len__(self) -> int:
+        """Return number of fields in this struct.
+
+        `GFFStruct` stores its fields in `_fields` (not the inherited `dict` storage), but many
+        callers (including the binary writer) use `len(struct)` to determine field counts.
+        """
+        return len(self._fields)
 
     def keys(self):
         """Return field labels (dict compatibility)."""
@@ -1771,6 +1810,34 @@ class GFFList(ComparableMixin, list):
         # Initialize list first
         super().__init__()
         self._structs: list[GFFStruct] = []
+
+    def __copy__(self) -> "GFFList":
+        """Support `copy.copy(GFFList)` safely.
+
+        `GFFList` subclasses `list`, but stores its real content in `_structs`. The default
+        `list` reduce/copy path will copy `__dict__`/state in a way that can transiently share
+        `_structs` between source and destination during reconstruction, and then populate the
+        destination by iterating the source — which becomes unbounded if `_structs` is shared.
+        """
+        new_obj = GFFList()
+        new_obj._structs = self._structs.copy()
+        return new_obj
+
+    def __deepcopy__(self, memo: dict[int, object]) -> "GFFList":
+        new_obj = GFFList()
+        memo[id(self)] = new_obj
+        new_obj._structs = deepcopy(self._structs, memo)
+        return new_obj
+
+    @staticmethod
+    def _from_reduce(structs: list[GFFStruct]) -> "GFFList":
+        obj = GFFList()
+        obj._structs = structs
+        return obj
+
+    def __reduce_ex__(self, protocol: int):
+        """Override list's reduce to avoid shared `_structs` during reconstruction."""
+        return (GFFList._from_reduce, (self._structs.copy(),))
 
     def __getitem__(self, index: int) -> GFFStruct:
         """Returns the struct at the specified index."""

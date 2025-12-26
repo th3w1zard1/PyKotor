@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from pykotor.resource.formats.ncs.dencs.main_pass import MainPass
 from pykotor.resource.formats.ncs.dencs.utils.node_utils import NodeUtils
 
 if TYPE_CHECKING:
@@ -16,8 +17,7 @@ if TYPE_CHECKING:
 
 class DoGlobalVars(MainPass):
     def __init__(self, nodedata: NodeAnalysisData, subdata: SubroutineAnalysisData):
-        from pykotor.resource.formats.ncs.dencs.main_pass import MainPass  # pyright: ignore[reportMissingImports]
-        # Call protected constructor: MainPass(nodedata, subdata) 
+        # Call protected constructor: MainPass(nodedata, subdata)
         # This matches the protected constructor in Java
         MainPass.__init__(self, nodedata, subdata)
         self.freeze_stack = False
