@@ -21,7 +21,6 @@ from pykotor.resource.formats.bwm.bwm_data import BWM, BWMFace
 from pykotor.resource.generics.utd import UTD
 from pykotor.resource.type import ResourceType
 from pykotor.tools.kit import _extract_doorhooks_from_bwm
-from pykotor.tools.modulekit import ModuleKitManager
 from toolset.data.indoorkit.indoorkit_base import Kit, KitComponent, KitComponentHook, KitDoor
 from utility.common.geometry import SurfaceMaterial, Vector3
 
@@ -144,15 +143,12 @@ class ModuleKit(Kit):
             # This prevents issues if multiple rooms share the same model name
             bwm = deepcopy(bwm)
 
-        # CRITICAL FIX: Re-center the BWM around (0, 0)
-        # Game WOKs are stored in world coordinates, but the Indoor Map Builder
-        # expects BWMs centered at origin because:
-        # - The preview image is drawn CENTERED at room.position
-        # - The walkmesh is TRANSLATED by room.position from its original coords
-        # Without re-centering, the image and walkmesh end up at different locations!
-        # Reference: indoor_builder.py _draw_image() centers image at coords
-        # Reference: indoormap.py IndoorMapRoom.walkmesh() translates by position
-        bwm = self._recenter_bwm(bwm)
+        # IMPORTANT: keep walkmesh and model in the same coordinate space.
+        # The model is stored in its own local space and placed in the module via the LYT room position.
+        # Module WOKs are commonly authored in *module/world* space, so convert them into room-local
+        # coordinates by removing the LYT translation. Using bbox-centering here breaks alignment for
+        # asymmetric rooms (e.g. hallways) because the model origin is not the bbox center.
+        bwm.translate(-lyt_room.position.x, -lyt_room.position.y, -lyt_room.position.z)
 
         # Try to get the model data
         mdl_data: bytes | None = self._get_room_model(model_name)
@@ -163,7 +159,7 @@ class ModuleKit(Kit):
         if mdx_data is None:
             mdx_data = b""
 
-        # Create a preview image from the walkmesh (now re-centered)
+        # Create a preview image from the walkmesh (room-local)
         # Each component gets its own image generated from its own BWM copy
         image = self._create_preview_image_from_bwm(bwm)
 
