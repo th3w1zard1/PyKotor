@@ -307,25 +307,31 @@ When placed at (100.0, 200.0, 0.0) with 0° rotation:
 **Proof from game engine:**
 
 1. **Writing** (vendor/swkotor.c:280811):
+
    ```c
    _fwrite(this_->aabbs).data, 0x2c, header.aabb_count, _File);
    ```
+
    - Writes AABB array sequentially
    - No index transformation applied
 
 2. **Reading** (vendor/swkotor.c:280222):
+
    ```c
    iVar2 = *(int *)((int)param_1->data + 0x6c);
    this_->aabb_root = iVar2;
    ```
+
    - Reads root index directly from file
    - No offset adjustment
 
 3. **Traversal** (vendor/swkotor.c:45920-46297):
+
    ```c
    HitCheckAABBnode(pAVar4->left_child, ...);
    HitCheckAABBnode(pAVar4->right_child, ...);
    ```
+
    - Uses pointers directly (resolved from indices at load time)
    - No arithmetic on indices during traversal
 

@@ -102,6 +102,7 @@ The walkmesh properties section immediately follows the header and contains type
 This is not just a documentation preference: the decompiled engine explicitly treats the field at offset `0x08` as a `world_coords` flag.
 
 References (engine source-of-truth):
+
 - `vendor/swkotor.h`: `CSWWalkMeshHeader.world_coords`
 - `vendor/swkotor.c`: `CSWCollisionMesh__LoadMeshBinary` reads `world_coords` from `(data + 0x08)`
 - `vendor/swkotor.c`: `CSWCollisionMesh__WorldToLocal` and `CSWCollisionMesh__LocalToWorld` short-circuit when `world_coords != 0`
