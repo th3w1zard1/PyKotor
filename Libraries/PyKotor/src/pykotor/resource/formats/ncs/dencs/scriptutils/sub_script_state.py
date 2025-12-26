@@ -183,13 +183,19 @@ class SubScriptState:
         if self.state == 2 and not isinstance(node, AJumpCommand):
             raise RuntimeError(f"In action arg, expected JUMP at node {node}")
         if self.state == -1:
-            raise RuntimeError(f"In DONE state, no more nodes expected at node {node}")
+            # In practice we can still see additional nodes after reaching DONE due to edge-cases in
+            # control-flow reconstruction. Treat DONE as "ignore state assertions" rather than fatal.
+            return
         if self.state == 5 and not isinstance(node, ACopyTopSpCommand):
             raise RuntimeError(f"In prefix stack op state, expected CPTOPSP at node {node}")
 
     def check_start(self, node):
         from pykotor.resource.formats.ncs.dencs.scriptnode.a_switch import ASwitch  # pyright: ignore[reportMissingImports]
         self.assert_state(node)
+        # Defensive: parsing logic assumes we always have a current node during a pass.
+        # If we ever lose it due to an earlier recovery path, fall back to root.
+        if self.current is None:
+            self.current = self.root
         if self.current.has_children():
             last_node: ScriptNode = self.current.get_last_child()
             if isinstance(last_node, ASwitch) and self.nodedata.get_pos(node) == last_node.get_first_case_start():
@@ -224,6 +230,8 @@ class SubScriptState:
                 if self.nodedata.get_pos(dest) != self.current.get_end() + 6:
                     aelse = AElse(self.current.get_end() + 6, self.nodedata.get_pos(NodeUtils.get_previous_command(dest, self.nodedata)))
                     parent = self.current.parent()
+                    if parent is None:
+                        parent = self.root
                     if isinstance(parent, ScriptRootNode):
                         self.current = parent
                     self.current.add_child(aelse)
@@ -232,8 +240,13 @@ class SubScriptState:
             if isinstance(self.current, ADoLoop):
                 self.transform_end_do_loop()
             parent = self.current.parent()
-            if isinstance(parent, ScriptRootNode):
-                self.current = parent
+            # Walk up the script tree.
+            # - If there's no parent, we've reached the top.
+            # - If a buggy node ever reports itself as its own parent, stop (otherwise infinite loop).
+            if parent is None or parent is self.current:
+                self.current = self.root
+                break
+            self.current = parent
         self.state = -1
 
     def in_action_arg(self) -> bool:

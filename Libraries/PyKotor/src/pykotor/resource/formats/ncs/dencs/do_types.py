@@ -43,14 +43,22 @@ class DoTypes(PrunedDepthFirstAdapter):
         self.backupstack: LocalTypeStack | None = None
 
     def done(self):
-        self.state.close()
-        self.stack.close()
-        self.nodedata.close()
-        self.subdata.close()
+        """Release transient resources.
+
+        This pass operates over shared analysis state (`NodeAnalysisData`, `SubroutineAnalysisData`,
+        and `SubroutineState`) owned by the decompiler. It must **not** close or invalidate those
+        shared objects here — only its own temporary stacks.
+        """
         if self.backupstack is not None:
             self.backupstack.close()
             self.backupstack = None
+        if self.stack is not None:
+            self.stack.close()
+        self.stack = None
         self.actions = None
+        self.state = None
+        self.nodedata = None
+        self.subdata = None
 
     def assert_stack(self):
         if self.stack.size() > 0:
