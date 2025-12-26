@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from qtpy.QtWidgets import QWidget
 
     from toolset.data.indoorkit import Kit
-    from toolset.data.indoormap import IndoorMap
+    from pykotor.common.indoormap import IndoorMap
     from toolset.data.installation import HTInstallation
 
 

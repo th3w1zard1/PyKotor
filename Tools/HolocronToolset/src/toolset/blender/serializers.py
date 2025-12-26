@@ -19,7 +19,7 @@ if TYPE_CHECKING:
         GITInstance,
     )
     from utility.common.geometry import Vector3, Vector4
-    from toolset.data.indoormap import IndoorMapRoom, IndoorMap
+    from pykotor.common.indoormap import IndoorMap, IndoorMapRoom
 
 
 def serialize_vector3(v: Vector3) -> dict[str, float]:

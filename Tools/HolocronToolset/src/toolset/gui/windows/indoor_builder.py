@@ -61,7 +61,10 @@ from pykotor.tools.indoormap import extract_indoor_from_module_name
 from toolset.blender import BlenderEditorMode, ConnectionState, check_blender_and_ask, get_blender_settings
 from toolset.blender.integration import BlenderEditorMixin
 from toolset.config import get_remote_toolset_update_info, is_remote_version_newer
-from toolset.data.indoorkit import Kit, KitComponent, KitComponentHook, ModuleKit, ModuleKitManager, ensure_component_image, load_kits
+from pykotor.common.indoorkit import Kit, KitComponent, KitComponentHook
+from pykotor.common.modulekit import ModuleKit, ModuleKitManager
+from pykotor.tools import indoorkit as indoorkit_tools
+from toolset.data.indoorkit.qt_preview import ensure_component_image
 from toolset.data.installation import HTInstallation
 from toolset.gui.common.filters import NoScrollEventFilter
 from toolset.gui.dialogs.asyncloader import AsyncLoader
@@ -140,7 +143,7 @@ if TYPE_CHECKING:
     from qtpy.QtGui import QFocusEvent
 
     from pykotor.resource.formats.bwm import BWMFace  # pyright: ignore[reportMissingImports]
-    from toolset.data.indoormap import MissingRoomInfo
+    from pykotor.common.indoormap import MissingRoomInfo
 
 
 # =============================================================================
@@ -779,7 +782,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
     def _setup_kits(self):
         self.ui.kitSelect.clear()
-        self._kits, missing_files = load_kits("./kits")
+        self._kits, missing_files = indoorkit_tools.load_kits_with_missing_files("./kits")
 
         # Kits are deprecated and optional - modules provide the same functionality
         # No need to show a dialog when kits are missing since modules can be used instead
@@ -3532,7 +3535,7 @@ class IndoorMapRenderer(QWidget):
         if door is None:
             return  # cannot add without a door reference
 
-        hook = KitComponentHook(position=local_pos, rotation=0.0, edge=str(len(room.component.hooks)), door=door)
+        hook = KitComponentHook(position=local_pos, rotation=0.0, edge=len(room.component.hooks), door=door)
         room.component.hooks.append(hook)
         room.hooks.append(None)
         self._selected_hook = (room, len(room.component.hooks) - 1)
@@ -3579,7 +3582,7 @@ class IndoorMapRenderer(QWidget):
         new_hook = KitComponentHook(
             position=Vector3(*src.position),
             rotation=src.rotation,
-            edge=str(len(room.component.hooks)),
+            edge=len(room.component.hooks),
             door=src.door,
         )
         room.component.hooks.append(new_hook)

@@ -11,6 +11,7 @@ from unittest.mock import MagicMock, patch
 
 # Import dialogs to test
 from toolset.gui.dialogs.extract_options import ExtractOptionsDialog
+from toolset.gui.dialogs.inventory import InventoryItem, EquipmentSlot
 from toolset.gui.dialogs.select_module import SelectModuleDialog
 from toolset.gui.dialogs.indoor_settings import IndoorMapSettings
 
@@ -112,7 +113,7 @@ def test_select_module_dialog(qtbot: QtBot, installation: HTInstallation):
 
 def test_indoor_settings_dialog(qtbot: QtBot, installation: HTInstallation):
     """Test IndoorMapSettings."""
-    from toolset.data.indoormap import IndoorMap
+    from pykotor.common.indoormap import IndoorMap
     from toolset.data.indoorkit import Kit
     
     parent = QWidget()
@@ -132,11 +133,19 @@ def test_inventory_editor(qtbot: QtBot, installation: HTInstallation):
     
     # Mock parent and data
     parent = QWidget()
-    capsules = [] # No capsules for now
-    inventory = []
-    equipment = {}  # equipment must be a dict[EquipmentSlot, InventoryItem], not a list
+    capsules: list[LazyCapsule] = [] # No capsules for now
+    inventory: list[InventoryItem] = []
+    equipment: dict[EquipmentSlot, InventoryItem] = {}  # equipment must be a dict[EquipmentSlot, InventoryItem], not a list
     
-    dialog = InventoryEditor(parent, installation, capsules, [], inventory, equipment, droid=False)
+    dialog = InventoryEditor(
+        parent,
+        installation,
+        capsules,
+        [],
+        inventory,
+        equipment,
+        droid=False,
+    )
     qtbot.addWidget(dialog)
     dialog.show()
     

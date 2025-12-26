@@ -623,6 +623,18 @@ class IndoorMapRoom:
     def base_walkmesh(self) -> BWM:
         return self.walkmesh_override if self.walkmesh_override is not None else self.component.bwm
 
+    def walkmesh(self) -> BWM:
+        """Return the room walkmesh transformed into world space.
+
+        Toolset UI historically expects an `IndoorMapRoom.walkmesh()` method.
+        This is non-Qt and safe to provide in the shared data model.
+        """
+        bwm = deepcopy(self.base_walkmesh())
+        bwm.flip(self.flip_x, self.flip_y)
+        bwm.rotate(self.rotation)
+        bwm.translate(self.position.x, self.position.y, self.position.z)
+        return bwm
+
 
 class _RoomTransformMatch(NamedTuple):
     component: KitComponent

@@ -34,7 +34,7 @@ from qtpy.QtWidgets import QApplication, QDialog, QMessageBox, QUndoStack
 
 from pykotor.resource.formats.bwm.bwm_data import BWM
 from toolset.data.indoorkit import Kit, KitComponent, KitComponentHook, KitDoor
-from toolset.data.indoormap import IndoorMap, IndoorMapRoom
+from pykotor.common.indoormap import IndoorMap, IndoorMapRoom
 from toolset.data.installation import HTInstallation
 from toolset.gui.windows.indoor_builder import (
     AddRoomCommand,
@@ -94,10 +94,10 @@ def real_kit_component():
     bwm.faces.append(face2)
 
     # Create real kit
-    kit = Kit("TestKit")
+    kit = Kit("TestKit", "test_kit")
 
     # Create component
-    component = KitComponent(kit, "TestComponent", image, bwm, b"mdl_data", b"mdx_data")
+    component = KitComponent(kit, "TestComponent", "test_kit", bwm, b"mdl_data", b"mdx_data")
 
     # Add hooks for testing
     utd_k1 = UTD()
@@ -1383,7 +1383,7 @@ class TestModuleKit:
 
         assert kit.name == "Test Name"
         assert kit.module_root == "test_root"
-        assert getattr(kit, "is_module_kit", False) is True
+        assert kit.is_module_kit is True
         assert kit.source_module == "test_root"
 
 

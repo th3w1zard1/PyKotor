@@ -2056,12 +2056,18 @@ class ModuleResource(Generic[T]):
             return None
         conversions: dict[ResourceType, Callable[[Any, TARGET_TYPES], Any]] = {
             ResourceType.ARE: write_are,
+#            ResourceType.CNV: write_cnv,
             ResourceType.DLG: write_dlg,
+            ResourceType.DWK: write_bwm,
+#            ResourceType.FAC: write_fac,
             ResourceType.GIT: write_git,
             ResourceType.IFO: write_ifo,
             ResourceType.LYT: write_lyt,
+#            ResourceType.MDL: write_mdl,
+#            ResourceType.MDX: write_mdl,
             ResourceType.NCS: write_ncs,
             ResourceType.PTH: write_pth,
+#            ResourceType.PWK: write_bwm,
             ResourceType.TPC: write_tpc,
             ResourceType.TGA: write_tpc,
             ResourceType.UTC: write_utc,
