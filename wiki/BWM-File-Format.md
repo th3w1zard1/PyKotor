@@ -62,7 +62,7 @@ The binary format uses a header-based structure where offsets point to various d
 The file structure is:
 
 1. **Header** (8 bytes): Magic "BWM " and version "V1.0"
-2. **Walkmesh Properties** (52 bytes): Type, hook vectors, position
+2. **Walkmesh Properties** (52 bytes): Coordinate mode, hook vectors, position
 3. **Data Table Offsets** (76 bytes): Counts and offsets for all data sections
 4. **Data Tables**: Vertices, faces, materials, normals, planar distances, AABB tree, adjacencies, edges, perimeters
 
@@ -85,14 +85,27 @@ The walkmesh properties section immediately follows the header and contains type
 
 | Name                    | Type      | Offset | Size | Description                                                      |
 | ----------------------- | --------- | ------ | ---- | ---------------------------------------------------------------- |
-| type                    | uint32    | 8 (0x08)   | 4    | Walkmesh type (0=PWK/DWK, 1=WOK/Area)                            |
+| world_coords            | uint32    | 8 (0x08)   | 4    | Coordinate mode flag (0=local, 1=world)                          |
 | Relative Use position 1 | float32| 12 (0x0C)   | 12   | Relative use hook position 1 (x, y, z)                           |
 | Relative Use position 2 | float32| 24 (0x18)   | 12   | Relative use hook position 2 (x, y, z)                           |
 | Absolute Use position 1 | float32| 36 (0x24)   | 12   | Absolute use hook position 1 (x, y, z)                           |
 | Absolute Use position 2 | float32| 48 (0x30)   | 12   | Absolute use hook position 2 (x, y, z)                           |
 | position                | float32| 60 (0x3C)   | 12   | Walkmesh position offset (x, y, z)                               |
 
-**Walkmesh Types:**
+**Coordinate mode (`world_coords`):**
+
+- **0 (local)**: vertices are stored in local space and transformed by the engine at runtime (using the owning object's position/rotation).
+- **1 (world)**: vertices are stored in world space; the engine treats them as already-transformed.
+
+This is not just a documentation preference: the decompiled engine explicitly treats the field at offset `0x08` as a `world_coords` flag.
+
+References (engine source-of-truth):
+- `vendor/swkotor.h`: `CSWWalkMeshHeader.world_coords`
+- `vendor/swkotor.c`: `CSWCollisionMesh__LoadMeshBinary` reads `world_coords` from `(data + 0x08)`
+- `vendor/swkotor.c`: `CSWCollisionMesh__WorldToLocal` and `CSWCollisionMesh__LocalToWorld` short-circuit when `world_coords != 0`
+- `vendor/swkotor.c`: `CSWCollisionMesh__TransformToWorld` sets `world_coords = 1` after baking translation into vertex data
+
+**Walkmesh Types (by file extension):**
 
 - **WOK (type 1)**: Area walkmesh - defines walkable regions in game areas
   - Stored as `<area_name>.wok` files (e.g., `m12aa.wok` for Dantooine area)

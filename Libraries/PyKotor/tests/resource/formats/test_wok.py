@@ -30,7 +30,9 @@ from pykotor.resource.formats.bwm import BWMBinaryReader, read_bwm, write_bwm
 if TYPE_CHECKING:
     from pykotor.resource.formats.bwm import BWM, BWMEdge, BWMAdjacency
 
-BINARY_TEST_FILE = "Libraries/PyKotor/tests/test_files/test.wok"
+THIS_FILE = pathlib.Path(__file__).resolve()
+TESTS_DIR = THIS_FILE.parents[2]
+BINARY_TEST_FILE = str(TESTS_DIR / "test_files" / "test.wok")
 
 
 class TestBWM(TestCase):

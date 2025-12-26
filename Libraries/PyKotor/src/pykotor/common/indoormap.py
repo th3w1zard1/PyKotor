@@ -281,10 +281,18 @@ class IndoorMap:
         bwm: BWM = deepcopy(room.base_walkmesh())
         bwm.flip(room.flip_x, room.flip_y)
         bwm.rotate(room.rotation)
-        # IMPORTANT: WOK/WALK meshes are in the room model's local space.
-        # World placement is handled by the LYT room position.
-        # Translating here will double-apply the offset and can break walkability.
-        #bwm.translate(room.position.x, room.position.y, room.position.z)
+        # IMPORTANT (engine behavior):
+        # The game does not apply LYT room transforms to *binary* room walkmeshes at runtime.
+        # Module WOKs are effectively consumed in world coordinates, so we must bake the room transform
+        # into the exported WOK vertices here.
+        #
+        # Reference: `vendor/swkotor.c`:
+        # - `CSWCollisionMesh__LoadMeshBinary` sets `field9_0x4c = 1`
+        # - `CSWCollisionMesh__TransformToWorld` only runs when `field9_0x4c == 0`
+        # - `CSWSRoom__TransformToWorld` calls `TransformToWorld` (but it is a no-op for binary meshes)
+        #
+        # Therefore: translate by LYT position during build to keep walkmesh aligned with the room model.
+        bwm.translate(room.position.x, room.position.y, room.position.z)
         return bwm
 
     def add_model_resources(

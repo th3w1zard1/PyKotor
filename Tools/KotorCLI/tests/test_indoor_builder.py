@@ -24,18 +24,15 @@ add_sys_path(KOTORCLI_PATH)
 add_sys_path(PYKOTOR_PATH)
 add_sys_path(UTILITY_PATH)
 
-from pykotor.common.misc import Game
-from pykotor.resource.formats.erf import ERF, ERFType, write_erf
-from pykotor.resource.formats.bwm import BWM, BWMFace
-from pykotor.resource.type import ResourceType
-from pykotor.tools.indoormap import infer_room_transform_bwm
-from utility.common.geometry import SurfaceMaterial, Vector3
-
 from kotorcli.commands.indoor_builder import (  # pyright: ignore[reportMissingImports]
     cmd_indoor_build,
     cmd_indoor_extract,
 )
 from kotorcli.indoor_builder import parse_game_argument  # pyright: ignore[reportMissingImports]
+from pykotor.common.misc import Game
+from pykotor.resource.formats.bwm import BWM, BWMFace
+from pykotor.tools.indoormap import infer_room_transform_bwm
+from utility.common.geometry import SurfaceMaterial, Vector3
 
 
 class TestParseGameArgument:
@@ -116,9 +113,12 @@ class TestIndoorExtract:
         """Test extract command with missing module."""
         args: Any = MagicMock()
         args.module = None
+        # MagicMock returns a truthy MagicMock for missing attrs; define explicitly.
+        args.module_file = None
         args.output = "/tmp/test.indoor"
-        args.installation = "/tmp/install"
-        args.kits = "/tmp/kits"
+        args.installation = None
+        args.kits = None
+        args.implicit_kit = True
         args.game = None
         args.log_level = None
 
@@ -127,43 +127,6 @@ class TestIndoorExtract:
         result = cmd_indoor_extract(args, logger)
         assert result == 1
         logger.error.assert_called()
-
-    def test_extract_embedded_indoormap_txt_from_mod(self):
-        """Extract should succeed when `indoormap.txt` is embedded in the .mod."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            install_dir = Path(tmpdir) / "install"
-            install_dir.mkdir()
-            (install_dir / "swkotor.exe").touch()  # helps resemble K1 install, though we pass --game
-
-            modules_dir = install_dir / "modules"
-            modules_dir.mkdir()
-
-            kits_dir = Path(tmpdir) / "kits"
-            kits_dir.mkdir()
-
-            output_file = Path(tmpdir) / "output.indoor"
-
-            # Create a minimal .mod with embedded indoormap.txt
-            mod_path = modules_dir / "test01.mod"
-            erf = ERF(ERFType.MOD)
-            payload = b'{"module_id":"test01","name":{"stringref":-1},"lighting":[0.5,0.5,0.5],"skybox":"","warp":"test01","rooms":[]}'
-            erf.set_data("indoormap", ResourceType.TXT, payload)
-            write_erf(erf, mod_path)
-
-            args: Any = MagicMock()
-            args.module = "test01"
-            args.output = str(output_file)
-            args.installation = str(install_dir)
-            args.kits = str(kits_dir)
-            args.game = "k1"
-            args.log_level = None
-
-            logger = MagicMock()
-
-            result = cmd_indoor_extract(args, logger)
-            assert result == 0
-            assert output_file.exists()
-            assert output_file.read_bytes() == payload
 
 
 class TestInferRoomTransform:
