@@ -24,7 +24,7 @@ LTR (Letter) resources store third-order Markov chain probability tables that th
 - LTR files [ARE](GFF-File-Format#are-area) binary and consist of a short header followed by three probability tables (singles, doubles, triples) stored as contiguous [float](GFF-File-Format#gff-data-types) arrays.  
 - field offsets below trace directly to the reader implementations in [`vendor/reone/src/libs/resource/format/ltrreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/ltrreader.cpp#L27-L74), [`vendor/xoreos/src/aurora/ltrfile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/ltrfile.cpp#L135-L168), and [`vendor/KotOR.js/src/resource/LTRObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/LTRObject.ts#L61-L117).  
 
-**Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/ltr/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/ltr)
+**Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/ltr/`](https://github.com/OldRepublicDevs/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/ltr)
 
 ---
 
@@ -62,7 +62,7 @@ The **triple-letter** section encodes 2-character context. There [ARE](GFF-File-
 
 Total size (KotOR): `28 × 28 × 3 × 28 × 4 = 73,472 bytes`.
 
-**Reference:** [`Libraries/PyKotor/src/pykotor/resource/formats/ltr/ltr_data.py:18-44`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/ltr/ltr_data.py#L18-L44)
+**Reference:** [`Libraries/PyKotor/src/pykotor/resource/formats/ltr/ltr_data.py:18-44`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/ltr/ltr_data.py#L18-L44)
 
 ---
 
@@ -90,14 +90,14 @@ The runtime algorithm (implemented in PyKotor, Reone, Xoreos, KotOR.js, and Koto
 5. **Subsequent Characters** – roll against `_triples` middle probabilities; termination decisions use `_triples` end probabilities plus heuristics to avoid overly short names.  
 6. **Post-processing** – capitalize and ensure minimum length; retries occur if probabilities fail to produce a valid sequence.  
 
-**Reference:** [`Libraries/PyKotor/src/pykotor/resource/formats/ltr/ltr_data.py:166-283`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/ltr/ltr_data.py#L166-L283)
+**Reference:** [`Libraries/PyKotor/src/pykotor/resource/formats/ltr/ltr_data.py:166-283`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/ltr/ltr_data.py#L166-L283)
 
 ---
 
 ## Implementation Details
 
-- **Binary Reader/Writer:** [`Libraries/PyKotor/src/pykotor/resource/formats/ltr/io_ltr.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/ltr/io_ltr.py)  
-- **data [model](MDL-MDX-File-Format):** [`Libraries/PyKotor/src/pykotor/resource/formats/ltr/ltr_data.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/ltr/ltr_data.py)  
+- **Binary Reader/Writer:** [`Libraries/PyKotor/src/pykotor/resource/formats/ltr/io_ltr.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/ltr/io_ltr.py)  
+- **data [model](MDL-MDX-File-Format):** [`Libraries/PyKotor/src/pykotor/resource/formats/ltr/ltr_data.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/ltr/ltr_data.py)  
 - **Reference Implementations:**  
   - [`vendor/reone/src/libs/resource/format/ltrreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/ltrreader.cpp)  
   - [`vendor/xoreos/src/aurora/ltrfile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/ltrfile.cpp)  

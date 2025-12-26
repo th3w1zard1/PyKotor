@@ -230,7 +230,7 @@ if ($CreateRelease) {
         Write-Host "❌ GitHub CLI (gh) not found. Install it from https://cli.github.com/" -ForegroundColor Red
         Write-Host ""
         Write-Host "Manual release instructions:" -ForegroundColor Yellow
-        Write-Host "1. Go to https://github.com/th3w1zard1/PyKotor/releases/new"
+        Write-Host "1. Go to https://github.com/OldRepublicDevs/PyKotor/releases/new"
         Write-Host "2. Create tag: $TagName"
         Write-Host "3. Title: $Tool v$Version"
         Write-Host "4. Mark as pre-release"
@@ -256,7 +256,7 @@ if ($CreateRelease) {
         Write-Host "⚠️  Failed to create release: $_" -ForegroundColor Yellow
         Write-Host ""
         Write-Host "Manual release instructions:" -ForegroundColor Yellow
-        Write-Host "1. Go to https://github.com/th3w1zard1/PyKotor/releases/new"
+        Write-Host "1. Go to https://github.com/OldRepublicDevs/PyKotor/releases/new"
         Write-Host "2. Create tag: $TagName"
         Write-Host "3. Title: $tool v$Version"
         Write-Host "4. Mark as pre-release"

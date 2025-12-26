@@ -95,7 +95,7 @@ Installing from source is not strictly necessary, you can grab from PyPI using p
 **Clone the repository:**
 
 ```bash
-git clone https://github.com/th3w1zard1/PyKotor.git
+git clone https://github.com/OldRepublicDevs/PyKotor.git
 cd PyKotor
 python -m venv .venv
 
@@ -214,10 +214,10 @@ python Tools/KotorDiff/src/kotordiff/__main__.py
 
 See individual tool READMEs for more information:
 
-- [HolocronToolset](https://github.com/th3w1zard1/PyKotor/tree/master/Tools/HolocronToolset#readme)
-- [HoloPatcher](https://github.com/th3w1zard1/PyKotor/tree/master/Tools/HoloPatcher#readme)
-- [KotorCLI](https://github.com/th3w1zard1/PyKotor/tree/master/Tools/KotorCLI#readme)
-- [KotorDiff](https://github.com/th3w1zard1/PyKotor/tree/master/Tools/KotorDiff#readme)
+- [HolocronToolset](https://github.com/OldRepublicDevs/PyKotor/tree/master/Tools/HolocronToolset#readme)
+- [HoloPatcher](https://github.com/OldRepublicDevs/PyKotor/tree/master/Tools/HoloPatcher#readme)
+- [KotorCLI](https://github.com/OldRepublicDevs/PyKotor/tree/master/Tools/KotorCLI#readme)
+- [KotorDiff](https://github.com/OldRepublicDevs/PyKotor/tree/master/Tools/KotorDiff#readme)
 
 #### Usage Example
 
@@ -235,7 +235,7 @@ write_tpc(tex, "./C_Gammorean01.tga", ResourceType.TGA)
 
 This saves `C_Gammorean01.tga` to the current directory.
 
-[More examples](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/docs/installation.md)
+[More examples](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/docs/installation.md)
 
 ## Development
 
@@ -246,7 +246,7 @@ For development setup, see [CONTRIBUTING.md](CONTRIBUTING.md).
 **Using uv:**
 
 ```bash
-git clone https://github.com/th3w1zard1/PyKotor.git
+git clone https://github.com/OldRepublicDevs/PyKotor.git
 cd PyKotor
 uv pip install -e "Libraries/PyKotor[all,dev]"
 uv pip install -e "Tools/HolocronToolset"
@@ -307,10 +307,10 @@ This will:
 ## Additional Resources
 
 - [Contributing Guide](CONTRIBUTING.md)
-- [PyKotor Documentation](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/docs)
-- [Project Wiki](https://github.com/th3w1zard1/PyKotor/wiki)
-- [POWERSHELL.md](https://github.com/th3w1zard1/PyKotor/blob/master/POWERSHELL.md) - PowerShell script information
+- [PyKotor Documentation](https://github.com/OldRepublicDevs/PyKotor/tree/master/Libraries/PyKotor/docs)
+- [Project Wiki](https://github.com/OldRepublicDevs/PyKotor/wiki)
+- [POWERSHELL.md](https://github.com/OldRepublicDevs/PyKotor/blob/master/POWERSHELL.md) - PowerShell script information
 
 ## License
 
-This repository falls under the [LGPL-3.0-or-later License](https://github.com/th3w1zard1/PyKotor/blob/master/LICENSE).
+This repository falls under the [LGPL-3.0-or-later License](https://github.com/OldRepublicDevs/PyKotor/blob/master/LICENSE).

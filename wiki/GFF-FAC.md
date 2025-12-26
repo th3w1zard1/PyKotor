@@ -12,7 +12,7 @@ FAC files are GFF-based format files that store faction definitions and reputati
 
 A Faction is a control system for determining how game objects interact with each other in terms of friendly, neutral, and hostile reactions. Faction information is stored in the `repute.fac` file in a module or savegame. This file uses BioWare's Generic File Format (GFF), and the GFF FileType string in the header of `repute.fac` is `"FAC "`.
 
-**Implementation:** [`Libraries/PyKotor/src/pykotor/resource/generics/fac.py`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/generics/fac.py)
+**Implementation:** [`Libraries/PyKotor/src/pykotor/resource/generics/fac.py`](https://github.com/OldRepublicDevs/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/generics/fac.py)
 
 **Related Files:**
 - `repute.2da` - Default faction standings (see [2DA File Format](2DA-File-Format))

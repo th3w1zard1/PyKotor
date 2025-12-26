@@ -345,7 +345,7 @@ if (Test-Path $pyprojectPath) {
         Write-Host "  For uvx compatibility, you may need to:" -ForegroundColor Cyan
         Write-Host "    1. Create a local README.md in the repo" -ForegroundColor Cyan
         Write-Host "    2. Update pykotor dependency to:" -ForegroundColor Cyan
-        Write-Host '       pykotor = { git = "https://github.com/th3w1zard1/pykotor-lib.git" }' -ForegroundColor Cyan
+        Write-Host '       pykotor = { git = "https://github.com/OldRepublicDevs/PyKotor-lib.git" }' -ForegroundColor Cyan
     }
 }
 

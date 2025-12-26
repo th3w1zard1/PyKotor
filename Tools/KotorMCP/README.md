@@ -2,8 +2,8 @@
 
 # KotorMCP
 
-[![Version](https://img.shields.io/github/v/release/th3w1zard1/PyKotor?label=KotorMCP)](https://github.com/th3w1zard1/PyKotor/releases)
-[![License](https://img.shields.io/github/license/th3w1zard1/PyKotor)](https://github.com/th3w1zard1/PyKotor/blob/main/LICENSE)
+[![Version](https://img.shields.io/github/v/release/th3w1zard1/PyKotor?label=KotorMCP)](https://github.com/OldRepublicDevs/PyKotor/releases)
+[![License](https://img.shields.io/github/license/th3w1zard1/PyKotor)](https://github.com/OldRepublicDevs/PyKotor/blob/main/LICENSE)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/downloads/)
 [![MCP](https://img.shields.io/badge/MCP-Protocol-blueviolet)](https://modelcontextprotocol.io)
 
@@ -56,7 +56,7 @@ A Model Context Protocol (MCP) server that exposes context-rich tools for AI age
 pip install kotormcp
 
 # Or install from source
-git clone https://github.com/th3w1zard1/PyKotor.git
+git clone https://github.com/OldRepublicDevs/PyKotor.git
 cd PyKotor/Tools/KotorMCP
 pip install -e .
 ```
@@ -438,7 +438,7 @@ KotorMCP is built on the [Model Context Protocol](https://modelcontextprotocol.i
 
 ```bash
 # Clone the repository
-git clone https://github.com/th3w1zard1/PyKotor.git
+git clone https://github.com/OldRepublicDevs/PyKotor.git
 cd PyKotor
 
 # Install dependencies
@@ -475,22 +475,22 @@ Contributions are welcome! Please:
 3. Make your changes
 4. Submit a pull request
 
-For bug reports or feature requests, please open an issue on [GitHub](https://github.com/th3w1zard1/PyKotor/issues).
+For bug reports or feature requests, please open an issue on [GitHub](https://github.com/OldRepublicDevs/PyKotor/issues).
 
 ## License
 
-This project is part of the PyKotor ecosystem and is licensed under the LGPL-3.0-or-later License. See the main repository [LICENSE](https://github.com/th3w1zard1/PyKotor/blob/main/LICENSE) file for details.
+This project is part of the PyKotor ecosystem and is licensed under the LGPL-3.0-or-later License. See the main repository [LICENSE](https://github.com/OldRepublicDevs/PyKotor/blob/main/LICENSE) file for details.
 
 ## Related Projects
 
-- **[PyKotor](https://github.com/th3w1zard1/PyKotor)** - Core library for KOTOR file formats
-- **[KotorCLI](https://github.com/th3w1zard1/PyKotor/tree/main/Tools/KotorCLI)** - Command-line interface for KOTOR resources
-- **[Holocron Toolset](https://github.com/th3w1zard1/PyKotor/tree/main/Tools/HolocronToolset)** - GUI editor for KOTOR files
+- **[PyKotor](https://github.com/OldRepublicDevs/PyKotor)** - Core library for KOTOR file formats
+- **[KotorCLI](https://github.com/OldRepublicDevs/PyKotor/tree/main/Tools/KotorCLI)** - Command-line interface for KOTOR resources
+- **[Holocron Toolset](https://github.com/OldRepublicDevs/PyKotor/tree/main/Tools/HolocronToolset)** - GUI editor for KOTOR files
 
 ## Acknowledgments
 
 - Built on the [Model Context Protocol](https://modelcontextprotocol.io) specification
-- Uses the [PyKotor](https://github.com/th3w1zard1/PyKotor) library for game file format support
+- Uses the [PyKotor](https://github.com/OldRepublicDevs/PyKotor) library for game file format support
 - Inspired by engine reimplementations: [reone](https://github.com/reone-project/reone), [xoreos](https://github.com/xoreos/xoreos), [kotor.js](https://github.com/jakubg1/kotor.js)
 
 ---
@@ -499,6 +499,6 @@ This project is part of the PyKotor ecosystem and is licensed under the LGPL-3.0
 
 **Made with ❤️ for the KOTOR modding community**
 
-[Report Bug](https://github.com/th3w1zard1/PyKotor/issues) · [Request Feature](https://github.com/th3w1zard1/PyKotor/issues) · [Documentation](https://github.com/th3w1zard1/PyKotor/wiki)
+[Report Bug](https://github.com/OldRepublicDevs/PyKotor/issues) · [Request Feature](https://github.com/OldRepublicDevs/PyKotor/issues) · [Documentation](https://github.com/OldRepublicDevs/PyKotor/wiki)
 
 </div>

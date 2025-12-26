@@ -46,7 +46,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/th3w1zard1/PyKotor.git
+   git clone https://github.com/OldRepublicDevs/PyKotor.git
    cd PyKotor
    ```
 
@@ -99,7 +99,7 @@ This will:
 
 2. **Clone and install:**
    ```bash
-   git clone https://github.com/th3w1zard1/PyKotor.git
+   git clone https://github.com/OldRepublicDevs/PyKotor.git
    cd PyKotor
    poetry install
    ```
@@ -118,7 +118,7 @@ This will:
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/th3w1zard1/PyKotor.git
+   git clone https://github.com/OldRepublicDevs/PyKotor.git
    cd PyKotor
    ```
 
@@ -356,9 +356,9 @@ poetry run pytest
 
 ## Additional Resources
 
-- [PyKotor Documentation](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/docs)
-- [Project Wiki](https://github.com/th3w1zard1/PyKotor/wiki)
-- [Issue Tracker](https://github.com/th3w1zard1/PyKotor/issues)
+- [PyKotor Documentation](https://github.com/OldRepublicDevs/PyKotor/tree/master/Libraries/PyKotor/docs)
+- [Project Wiki](https://github.com/OldRepublicDevs/PyKotor/wiki)
+- [Issue Tracker](https://github.com/OldRepublicDevs/PyKotor/issues)
 
 ## Questions?
 

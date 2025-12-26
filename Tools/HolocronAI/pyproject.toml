@@ -51,10 +51,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/th3w1zard1/PyKotor"
-Documentation = "https://github.com/th3w1zard1/PyKotor/wiki"
-Repository = "https://github.com/th3w1zard1/PyKotor.git"
-Issues = "https://github.com/th3w1zard1/PyKotor/issues"
+Homepage = "https://github.com/OldRepublicDevs/PyKotor"
+Documentation = "https://github.com/OldRepublicDevs/PyKotor/wiki"
+Repository = "https://github.com/OldRepublicDevs/PyKotor.git"
+Issues = "https://github.com/OldRepublicDevs/PyKotor/issues"
 
 # Poetry configuration
 [tool.poetry]
@@ -75,9 +75,9 @@ pykotor = "^2.0.0"
 holocron-ai = "holocron_ai.__main__:main"
 
 [tool.poetry.urls]
-Homepage = "https://github.com/th3w1zard1/PyKotor"
-Repository = "https://github.com/th3w1zard1/PyKotor.git"
-Issues = "https://github.com/th3w1zard1/PyKotor/issues"
+Homepage = "https://github.com/OldRepublicDevs/PyKotor"
+Repository = "https://github.com/OldRepublicDevs/PyKotor.git"
+Issues = "https://github.com/OldRepublicDevs/PyKotor/issues"
 
 [tool.setuptools]
 package-dir = { "" = "src" }

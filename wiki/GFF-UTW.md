@@ -8,7 +8,7 @@ UTW files define [waypoint templates](GFF-File-Format#utw-waypoint). Waypoints [
 
 **Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Waypoint format specification, see [Bioware Aurora Waypoint Format](Bioware-Aurora-Waypoint).
 
-**Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/utw.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utw.py)
+**Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/utw.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utw.py)
 
 ---
 

@@ -16,6 +16,6 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **References**:
 
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:251`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L251) - [StrRef](TLK-File-Format#string-references-strref) column definition for credits.2da (KotOR 2 only)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:251`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L251) - [StrRef](TLK-File-Format#string-references-strref) column definition for credits.2da (KotOR 2 only)
 
 ---

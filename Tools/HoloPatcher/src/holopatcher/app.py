@@ -199,7 +199,7 @@ class App(BaseApp):
         about_menu = tk.Menu(self.menu_bar, tearoff=0)
         about_menu.add_command(label="Check for Updates", command=self.check_for_updates)
         about_menu.add_command(label="HoloPatcher Home", command=lambda: webbrowser.open_new("https://deadlystream.com/files/file/2243-holopatcher"))
-        about_menu.add_command(label="GitHub Source", command=lambda: webbrowser.open_new("https://github.com/th3w1zard1/PyKotor"))
+        about_menu.add_command(label="GitHub Source", command=lambda: webbrowser.open_new("https://github.com/OldRepublicDevs/PyKotor"))
         self.menu_bar.add_cascade(label="About", menu=about_menu)
 
     def initialize_ui_controls(self):

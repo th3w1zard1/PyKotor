@@ -6,7 +6,7 @@ UTI files define [item templates](GFF-File-Format#uti-item) for all objects in c
 
 **Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Item format specification, see [Bioware Aurora Item Format](Bioware-Aurora-Item).
 
-**Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/uti.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/uti.py)
+**Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/uti.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/uti.py)
 
 ## Core Identity fields
 

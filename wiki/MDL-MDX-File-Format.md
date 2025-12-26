@@ -93,7 +93,7 @@ KotOR models [ARE](GFF-File-Format#are-area) defined using two files:
 - **MDL**: Contains the primary model data, including [geometry](MDL-MDX-File-Format#geometry-header) and [node](MDL-MDX-File-Format#node-structures) structures.
 - **MDX**: Contains additional [mesh](MDL-MDX-File-Format#trimesh-header) data, such as [vertex](MDL-MDX-File-Format#vertex-structure) buffers.
 
-**Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/mdl/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/mdl/)
+**Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/mdl/`](https://github.com/OldRepublicDevs/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/mdl/)
 
 **Vendor References:**
 

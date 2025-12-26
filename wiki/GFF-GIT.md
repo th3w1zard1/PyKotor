@@ -4,7 +4,7 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 
 [GIT files](GFF-File-Format#git-game-instance-template) store dynamic instance data for areas, defining where creatures, doors, placeables, triggers, waypoints, stores, encounters, sounds, and cameras [ARE](GFF-File-Format#are-area) positioned in the game world. While [ARE](GFF-File-Format#are-area) files define static environmental properties, [GIT files](GFF-File-Format#git-game-instance-template) contain all runtime object placement and instance-specific properties.
 
-**Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/git.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/git.py)
+**Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/git.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/git.py)
 
 ## [area properties](GFF-File-Format#are-area)
 

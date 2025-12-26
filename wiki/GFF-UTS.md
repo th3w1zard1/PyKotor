@@ -6,7 +6,7 @@ UTS files define [sound object templates](GFF-File-Format#uts-sound) for ambient
 
 **Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Sound Object format specification, see [Bioware Aurora Sound Object Format](Bioware-Aurora-SoundObject).
 
-**Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/uts.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/uts.py)
+**Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/uts.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/uts.py)
 
 ## Core Identity fields
 

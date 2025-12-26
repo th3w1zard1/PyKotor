@@ -9,7 +9,7 @@ HoloGenerator is a **GUI-only** tool for automatically generating `changes.ini` 
 - **Desktop GUI**: User-friendly tkinter-based interface
 - **Web Application**: Modern React-based web interface with real-time diffing
 
-**Note:** HoloGenerator is designed exclusively for GUI usage. If you need command-line functionality, please use [KotorDiff](https://github.com/th3w1zard1/PyKotor/tree/main/Tools/KotorDiff) instead.
+**Note:** HoloGenerator is designed exclusively for GUI usage. If you need command-line functionality, please use [KotorDiff](https://github.com/OldRepublicDevs/PyKotor/tree/main/Tools/KotorDiff) instead.
 
 ### Advanced Diffing
 
@@ -244,7 +244,7 @@ This project is part of the PyKotor toolkit and follows the same licensing terms
 ## 🔗 Links
 
 - **Web App**: <https://th3w1zard1.github.io/hologenerator>
-- **Documentation**: [Full documentation](https://github.com/th3w1zard1/PyKotor/tree/main/Tools/HoloGenerator)
-- **Issues**: [Report bugs](https://github.com/th3w1zard1/PyKotor/issues)
-- **PyKotor**: [Main project](https://github.com/th3w1zard1/PyKotor)
-- **KotorDiff**: [CLI alternative](https://github.com/th3w1zard1/PyKotor/tree/main/Tools/KotorDiff)
+- **Documentation**: [Full documentation](https://github.com/OldRepublicDevs/PyKotor/tree/main/Tools/HoloGenerator)
+- **Issues**: [Report bugs](https://github.com/OldRepublicDevs/PyKotor/issues)
+- **PyKotor**: [Main project](https://github.com/OldRepublicDevs/PyKotor)
+- **KotorDiff**: [CLI alternative](https://github.com/OldRepublicDevs/PyKotor/tree/main/Tools/KotorDiff)

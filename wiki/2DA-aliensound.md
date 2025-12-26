@@ -16,6 +16,6 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **References**:
 
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:183`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L183) - Sound [ResRef](GFF-File-Format#gff-data-types) column definition for aliensound.2da
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:183`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L183) - Sound [ResRef](GFF-File-Format#gff-data-types) column definition for aliensound.2da
 
 ---

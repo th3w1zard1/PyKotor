@@ -129,7 +129,7 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: issue.number,
-                body: `👋 Welcome to PyKotor, @${issue.user.login}! Thanks for your first issue. We appreciate your contribution! 🎉\n\nPlease make sure to:\n- Check [CONTRIBUTING.md](https://github.com/th3w1zard1/PyKotor/blob/master/CONTRIBUTING.md) for guidelines\n- Review the [documentation](https://github.com/th3w1zard1/PyKotor/tree/master/docs) if needed\n\nWe'll review your issue soon!`,
+                body: `👋 Welcome to PyKotor, @${issue.user.login}! Thanks for your first issue. We appreciate your contribution! 🎉\n\nPlease make sure to:\n- Check [CONTRIBUTING.md](https://github.com/OldRepublicDevs/PyKotor/blob/master/CONTRIBUTING.md) for guidelines\n- Review the [documentation](https://github.com/OldRepublicDevs/PyKotor/tree/master/docs) if needed\n\nWe'll review your issue soon!`,
               });
             }
 

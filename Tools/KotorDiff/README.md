@@ -374,13 +374,13 @@ kotordiff --path1 file1 --path2 file2 --log-level debug --output-mode full
 
 **Q: Is there a GUI version available?**
 
-A: No, KotorDiff is designed as a lightweight, command-line only tool. If you need a GUI for configuration generation, check out [HoloGenerator](https://github.com/th3w1zard1/PyKotor/tree/main/Tools/HoloGenerator) which provides a web-based interface for generating HoloPatcher configurations.
+A: No, KotorDiff is designed as a lightweight, command-line only tool. If you need a GUI for configuration generation, check out [HoloGenerator](https://github.com/OldRepublicDevs/PyKotor/tree/main/Tools/HoloGenerator) which provides a web-based interface for generating HoloPatcher configurations.
 
 ## Contributing
 
 KotorDiff is part of the PyKotor project. Contributions are welcome!
 
-- **Source**: [https://github.com/th3w1zard1/PyKotor](https://github.com/th3w1zard1/PyKotor)
+- **Source**: [https://github.com/OldRepublicDevs/PyKotor](https://github.com/OldRepublicDevs/PyKotor)
 - **Issues**: Report bugs and feature requests on GitHub
 - **Documentation**: Help improve this README and inline documentation
 

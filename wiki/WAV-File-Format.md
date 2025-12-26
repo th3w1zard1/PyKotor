@@ -88,8 +88,8 @@ External tooling such as SithCodec and `SWKotOR-Audio-Encoder` implement the sam
 
 ## Implementation Details
 
-- **Binary Reader/Writer:** [`Libraries/PyKotor/src/pykotor/resource/formats/wav/io_wav.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/wav/io_wav.py)  
-- **data [model](MDL-MDX-File-Format):** [`Libraries/PyKotor/src/pykotor/resource/formats/wav/wav_data.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/wav/wav_data.py)  
+- **Binary Reader/Writer:** [`Libraries/PyKotor/src/pykotor/resource/formats/wav/io_wav.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/wav/io_wav.py)  
+- **data [model](MDL-MDX-File-Format):** [`Libraries/PyKotor/src/pykotor/resource/formats/wav/wav_data.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/wav/wav_data.py)  
 - **Reference Implementations:**  
   - [`vendor/reone/src/libs/audio/format/wavreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/audio/format/wavreader.cpp)  
   - [`vendor/SithCodec`](https://github.com/th3w1zard1/SithCodec) (encoding/decoding utility)  

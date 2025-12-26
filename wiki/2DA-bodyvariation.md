@@ -20,6 +20,6 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 - [`vendor/reone/src/libs/game/object/item.cpp:124,140,155`](https://github.com/th3w1zard1/reone/blob/master/src/libs/game/object/item.cpp#L124) - Body variation usage in item object
 - [`vendor/KotOR.js/src/module/ModuleItem.ts:136`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/module/ModuleItem.ts#L136) - Body variation method in item module
 - [`vendor/KotOR.js/src/module/ModuleCreature.ts:82,3908,4798`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/module/ModuleCreature.ts#L82) - Body variation field handling in creature module
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:539`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L539) - [GFF](GFF-File-Format) field mapping: "BodyVariation" -> bodyvariation.2da
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:539`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L539) - [GFF](GFF-File-Format) field mapping: "BodyVariation" -> bodyvariation.2da
 
 ---

@@ -21,17 +21,17 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **PyKotor:**
 
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:497`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L497) - TwoDARegistry.CAMERAS constant definition
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:550`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L550) - [GFF](GFF-File-Format) field mapping: "CameraStyle" -> camerastyle.2da
-- [`Libraries/PyKotor/src/pykotor/resource/generics/are.py:37`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/are.py#L37) - [ARE](GFF-File-Format#are-area) camera_style field documentation
-- [`Libraries/PyKotor/src/pykotor/resource/generics/are.py:123`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/are.py#L123) - Camera style index comment
-- [`Libraries/PyKotor/src/pykotor/resource/generics/are.py:442`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/are.py#L442) - CameraStyle field parsing from [ARE](GFF-File-Format#are-area) [GFF](GFF-File-Format)
-- [`Libraries/PyKotor/src/pykotor/resource/generics/are.py:579`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/are.py#L579) - CameraStyle field writing to [ARE](GFF-File-Format#are-area) [GFF](GFF-File-Format)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:497`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L497) - TwoDARegistry.CAMERAS constant definition
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:550`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L550) - [GFF](GFF-File-Format) field mapping: "CameraStyle" -> camerastyle.2da
+- [`Libraries/PyKotor/src/pykotor/resource/generics/are.py:37`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/are.py#L37) - [ARE](GFF-File-Format#are-area) camera_style field documentation
+- [`Libraries/PyKotor/src/pykotor/resource/generics/are.py:123`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/are.py#L123) - Camera style index comment
+- [`Libraries/PyKotor/src/pykotor/resource/generics/are.py:442`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/are.py#L442) - CameraStyle field parsing from [ARE](GFF-File-Format#are-area) [GFF](GFF-File-Format)
+- [`Libraries/PyKotor/src/pykotor/resource/generics/are.py:579`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/are.py#L579) - CameraStyle field writing to [ARE](GFF-File-Format#are-area) [GFF](GFF-File-Format)
 
 **HolocronToolset:**
 
-- [`Tools/HolocronToolset/src/toolset/data/installation.py:96`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/data/installation.py#L96) - HTInstallation.TwoDA_CAMERAS constant
-- [`Tools/HolocronToolset/src/toolset/gui/editors/are.py:102`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/gui/editors/are.py#L102) - camerastyle.2da loading in [ARE](GFF-File-Format#are-area) editor
+- [`Tools/HolocronToolset/src/toolset/data/installation.py:96`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/data/installation.py#L96) - HTInstallation.TwoDA_CAMERAS constant
+- [`Tools/HolocronToolset/src/toolset/gui/editors/are.py:102`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/gui/editors/are.py#L102) - camerastyle.2da loading in [ARE](GFF-File-Format#are-area) editor
 
 **Vendor Implementations:**
 

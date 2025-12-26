@@ -57,11 +57,11 @@ kotor-diff = "kotorcli.__main__:kotordiff_entry"
 diff-installation = "kotorcli.__main__:kotordiff_entry"
 
 [project.urls]
-Homepage = "https://github.com/th3w1zard1/PyKotor"
-Documentation = "https://github.com/th3w1zard1/PyKotor/wiki"
-Repository = "https://github.com/th3w1zard1/PyKotor.git"
-Issues = "https://github.com/th3w1zard1/PyKotor/issues"
-Changelog = "https://github.com/th3w1zard1/PyKotor/releases"
+Homepage = "https://github.com/OldRepublicDevs/PyKotor"
+Documentation = "https://github.com/OldRepublicDevs/PyKotor/wiki"
+Repository = "https://github.com/OldRepublicDevs/PyKotor.git"
+Issues = "https://github.com/OldRepublicDevs/PyKotor/issues"
+Changelog = "https://github.com/OldRepublicDevs/PyKotor/releases"
 
 # Poetry configuration
 [tool.poetry]
@@ -88,9 +88,9 @@ gui-converter = "kotorcli.__main__:gui_converter_entry"
 guiconverter = "kotorcli.__main__:gui_converter_entry"
 
 [tool.poetry.urls]
-Homepage = "https://github.com/th3w1zard1/PyKotor"
-Repository = "https://github.com/th3w1zard1/PyKotor.git"
-Issues = "https://github.com/th3w1zard1/PyKotor/issues"
+Homepage = "https://github.com/OldRepublicDevs/PyKotor"
+Repository = "https://github.com/OldRepublicDevs/PyKotor.git"
+Issues = "https://github.com/OldRepublicDevs/PyKotor/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]

@@ -68,7 +68,7 @@ print("\nTo create these labels, use the GitHub CLI or web interface:")
 print("\nUsing GitHub CLI (gh):")
 print("  gh label create <name> --color <color> --description '<description>'")
 print("\nOr use the GitHub web interface:")
-print("  https://github.com/th3w1zard1/PyKotor/labels")
+print("  https://github.com/OldRepublicDevs/PyKotor/labels")
 print("\nLabels to create:")
 print("-" * 50)
 for label in LABELS:

@@ -15,6 +15,6 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **References**:
 
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:588`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L588) - [GFF](GFF-File-Format) field mapping: "DamageReduction" -> iprp_damagered.2da
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:588`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L588) - [GFF](GFF-File-Format) field mapping: "DamageReduction" -> iprp_damagered.2da
 
 ---

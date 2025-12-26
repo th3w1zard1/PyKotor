@@ -79,7 +79,7 @@ function Update-PyProjectToml {
             $readmeContent = @"
 # $projectName
 
-Part of the [PyKotor](https://github.com/th3w1zard1/PyKotor) ecosystem.
+Part of the [PyKotor](https://github.com/OldRepublicDevs/PyKotor) ecosystem.
 
 ## Installation
 
@@ -116,20 +116,20 @@ LGPL-3.0-or-later
         # Check if this is a tool that depends on pykotor
         $parentDir = Split-Path -Leaf (Split-Path -Parent $ProjectPath)
         if ($parentDir -eq "Tools") {
-            $content = $content -replace '"pykotor>=[\d.]+"', '"pykotor @ git+https://github.com/th3w1zard1/pykotor-lib.git"'
+            $content = $content -replace '"pykotor>=[\d.]+"', '"pykotor @ git+https://github.com/OldRepublicDevs/PyKotor-lib.git"'
             $changes += "Updated pykotor dependency to git URL"
         }
     }
     
     # 3. Update pykotorgl dependency
     if ($content -match '"pykotorgl>=[\d.]+"') {
-        $content = $content -replace '"pykotorgl>=[\d.]+"', '"pykotorgl @ git+https://github.com/th3w1zard1/PyKotorGL.git"'
+        $content = $content -replace '"pykotorgl>=[\d.]+"', '"pykotorgl @ git+https://github.com/OldRepublicDevs/PyKotorGL.git"'
         $changes += "Updated pykotorgl dependency to git URL"
     }
     
     # 4. Update pykotorfont dependency
     if ($content -match '"pykotorfont>=[\d.]+"') {
-        $content = $content -replace '"pykotorfont>=[\d.]+"', '"pykotorfont @ git+https://github.com/th3w1zard1/PyKotorFont.git"'
+        $content = $content -replace '"pykotorfont>=[\d.]+"', '"pykotorfont @ git+https://github.com/OldRepublicDevs/PyKotorFont.git"'
         $changes += "Updated pykotorfont dependency to git URL"
     }
     

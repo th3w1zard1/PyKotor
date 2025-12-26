@@ -27,6 +27,6 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 - [`vendor/KotOR.js/src/module/ModuleItem.ts:745`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/module/ModuleItem.ts#L745) - PaletteID field handling in item module
 - [`vendor/KotOR.js/src/module/ModuleDoor.ts:76,1088,1413`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/module/ModuleDoor.ts#L76) - PaletteID field handling in door module
 - [`vendor/KotOR.js/src/module/ModuleEncounter.ts:52,383`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/module/ModuleEncounter.ts#L52) - PaletteID field handling in encounter module
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:535`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L535) - [GFF](GFF-File-Format) field mapping: "PaletteID" -> palette.2da
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:535`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L535) - [GFF](GFF-File-Format) field mapping: "PaletteID" -> palette.2da
 
 ---

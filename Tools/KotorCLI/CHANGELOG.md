@@ -53,5 +53,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Multiple target support
 - Group-based target building
 
-[1.2.0]: https://github.com/th3w1zard1/PyKotor/releases/tag/KotorCLI-v1.2.0
-[1.0.0]: https://github.com/th3w1zard1/PyKotor/releases/tag/KotorCLI-v1.0.0
+[1.2.0]: https://github.com/OldRepublicDevs/PyKotor/releases/tag/KotorCLI-v1.2.0
+[1.0.0]: https://github.com/OldRepublicDevs/PyKotor/releases/tag/KotorCLI-v1.0.0

@@ -6,7 +6,7 @@ UTE files define [encounter templates](GFF-File-Format#ute-encounter) which spaw
 
 **Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Encounter format specification, see [Bioware Aurora Encounter Format](Bioware-Aurora-Encounter).
 
-**Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/ute.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/ute.py)
+**Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/ute.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/ute.py)
 
 ## Core Identity fields
 

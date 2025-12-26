@@ -20,7 +20,7 @@ jobs:
       - name: Check links in markdown files
         uses: peter-evans/link-checker@v1
         with:
-          args: -r -v -x "https://github.com/th3w1zard1/PyKotor" --timeout 30
+          args: -r -v -x "https://github.com/OldRepublicDevs/PyKotor" --timeout 30
         continue-on-error: true
 
       - name: Check links in documentation

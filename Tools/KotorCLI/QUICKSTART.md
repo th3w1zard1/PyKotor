@@ -223,4 +223,4 @@ KotorCLI --help
 KotorCLI <command> --help
 ```
 
-For issues or questions, visit the [PyKotor repository](https://github.com/th3w1zard1/PyKotor).
+For issues or questions, visit the [PyKotor repository](https://github.com/OldRepublicDevs/PyKotor).

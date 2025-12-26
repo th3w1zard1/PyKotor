@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "pykotor"
 version = "2.0.1"
 description = "Read, modify and write files used by KotOR's game engine."
-authors = [{name = "NickHugi"}]
+authors = [{name = "NickHugi"}, {name = "th3w1zard1", email = "halomastar@gmail.com"}]
 maintainers = [{name = "th3w1zard1", email = "halomastar@gmail.com"}]
 readme = "README.md"
 license = {text = "LGPL-3.0-or-later"}
@@ -30,6 +30,7 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Games/Entertainment",
     "Topic :: Games/Entertainment :: Role-Playing",
     "Topic :: Software Development :: Libraries :: Python Modules",
@@ -76,11 +77,11 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/th3w1zard1/PyKotor"
-Documentation = "https://github.com/th3w1zard1/PyKotor/wiki"
-Repository = "https://github.com/th3w1zard1/PyKotor.git"
-Issues = "https://github.com/th3w1zard1/PyKotor/issues"
-Changelog = "https://github.com/th3w1zard1/PyKotor/releases"
+Homepage = "https://github.com/OldRepublicDevs/PyKotor"
+Documentation = "https://github.com/OldRepublicDevs/PyKotor/wiki"
+Repository = "https://github.com/OldRepublicDevs/PyKotor.git"
+Issues = "https://github.com/OldRepublicDevs/PyKotor/issues"
+Changelog = "https://github.com/OldRepublicDevs/PyKotor/releases"
 
 # Poetry configuration for those who prefer it
 [tool.poetry]
@@ -94,6 +95,7 @@ license = "LGPL-3.0-or-later"
 packages = [
     { include = "pykotor", from = "src" },
     { include = "utility", from = "src" },
+    { include = "loggerplus", from = "src" },
 ]
 keywords = [
     "kotor", "kotor1", "kotor2", "tsl",
@@ -114,10 +116,10 @@ encodings = ["charset-normalizer"]
 all = ["pillow", "numpy", "PyOpenGL", "PyGLM", "moderngl", "defusedxml", "charset-normalizer"]
 
 [tool.poetry.urls]
-Homepage = "https://github.com/th3w1zard1/PyKotor"
-Documentation = "https://github.com/th3w1zard1/PyKotor/wiki"
-Repository = "https://github.com/th3w1zard1/PyKotor.git"
-Issues = "https://github.com/th3w1zard1/PyKotor/issues"
+Homepage = "https://github.com/OldRepublicDevs/PyKotor"
+Documentation = "https://github.com/OldRepublicDevs/PyKotor/wiki"
+Repository = "https://github.com/OldRepublicDevs/PyKotor.git"
+Issues = "https://github.com/OldRepublicDevs/PyKotor/issues"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

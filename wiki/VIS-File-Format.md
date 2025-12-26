@@ -21,7 +21,7 @@ VIS (Visibility) files describe which module rooms can be seen from other rooms.
 - Child room lines [ARE](GFF-File-Format#are-area) indented by two spaces. Empty lines [ARE](GFF-File-Format#are-area) ignored and names [ARE](GFF-File-Format#are-area) case-insensitive.  
 - files usually ship as `moduleXXX.vis` pairs; the `moduleXXXs.vis` (or `.vis` appended inside [ERF](ERF-File-Format)) uses the same syntax.  
 
-**Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/vis/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/vis)
+**Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/vis/`](https://github.com/OldRepublicDevs/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/vis)
 
 **Vendor References:**
 
@@ -98,14 +98,14 @@ VIS files [ARE](GFF-File-Format#are-area) crucial for performance in large areas
 
 Module designers balance between performance (fewer visible rooms) and visual quality (no pop-in/clipping). Testing VIS changes in-game is essential.  
 
-PyKotor’s `VIS` class stores the data as a `dict[str, set[str]]`, exposing helpers like `set_visible()` and `set_all_visible()` for tooling (see [`vis_data.py:52-294`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/vis/vis_data.py#L52-L294)).
+PyKotor’s `VIS` class stores the data as a `dict[str, set[str]]`, exposing helpers like `set_visible()` and `set_all_visible()` for tooling (see [`vis_data.py:52-294`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/vis/vis_data.py#L52-L294)).
 
 ---
 
 ## Implementation Details
 
-- **Parser:** [`Libraries/PyKotor/src/pykotor/resource/formats/vis/io_vis.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/vis/io_vis.py)  
-- **data [model](MDL-MDX-File-Format):** [`Libraries/PyKotor/src/pykotor/resource/formats/vis/vis_data.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/vis/vis_data.py)  
+- **Parser:** [`Libraries/PyKotor/src/pykotor/resource/formats/vis/io_vis.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/vis/io_vis.py)  
+- **data [model](MDL-MDX-File-Format):** [`Libraries/PyKotor/src/pykotor/resource/formats/vis/vis_data.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/vis/vis_data.py)  
 - **Reference Implementations:**  
   - [`vendor/reone/src/libs/resource/format/visreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/visreader.cpp)  
   - [`vendor/xoreos/src/aurora/visfile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/visfile.cpp)  

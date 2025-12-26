@@ -17,6 +17,6 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **References**:
 
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:71`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L71) - [StrRef](TLK-File-Format#string-references-strref) column definitions for aiscripts.2da (K1: name_strref, description_strref; K2: name_strref only)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:71`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L71) - [StrRef](TLK-File-Format#string-references-strref) column definitions for aiscripts.2da (K1: name_strref, description_strref; K2: name_strref only)
 
 ---

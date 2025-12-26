@@ -1,12 +1,12 @@
 blank_issues_enabled: false
 contact_links:
   - name: 💬 Discussions
-    url: https://github.com/th3w1zard1/PyKotor/discussions
+    url: https://github.com/OldRepublicDevs/PyKotor/discussions
     about: Ask questions and discuss ideas with the community
   - name: 📚 Documentation
-    url: https://github.com/th3w1zard1/PyKotor/tree/master/docs
+    url: https://github.com/OldRepublicDevs/PyKotor/tree/master/docs
     about: Check the documentation for answers
   - name: 🐛 Security Vulnerability
-    url: https://github.com/th3w1zard1/PyKotor/security/advisories/new
+    url: https://github.com/OldRepublicDevs/PyKotor/security/advisories/new
     about: Report a security vulnerability (please do not create a public issue)
 

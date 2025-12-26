@@ -1,12 +1,12 @@
 # Indoor Map Builder - Implementation Guide
 
-**Implementation:** [`Tools/HolocronToolset/src/toolset/data/indoormap.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/data/indoormap.py)
+**Implementation:** [`Tools/HolocronToolset/src/toolset/data/indoormap.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/data/indoormap.py)
 
 **Related Components:**
 
-- [`Tools/HolocronToolset/src/toolset/data/indoorkit/`](https://github.com/th3w1zard1/PyKotor/tree/master/Tools/HolocronToolset/src/toolset/data/indoorkit) - Kit system implementation
-- [`Tools/HolocronToolset/src/toolset/gui/windows/indoor_builder.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/gui/windows/indoor_builder.py) - Qt UI implementation
-- [`Tools/HolocronToolset/src/toolset/kits/`](https://github.com/th3w1zard1/PyKotor/tree/master/Tools/HolocronToolset/src/toolset/kits) - Kit data (ToolsetData submodule)
+- [`Tools/HolocronToolset/src/toolset/data/indoorkit/`](https://github.com/OldRepublicDevs/PyKotor/tree/master/Tools/HolocronToolset/src/toolset/data/indoorkit) - Kit system implementation
+- [`Tools/HolocronToolset/src/toolset/gui/windows/indoor_builder.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/gui/windows/indoor_builder.py) - Qt UI implementation
+- [`Tools/HolocronToolset/src/toolset/kits/`](https://github.com/OldRepublicDevs/PyKotor/tree/master/Tools/HolocronToolset/src/toolset/kits) - Kit data (ToolsetData submodule)
 
 **See Also:**
 

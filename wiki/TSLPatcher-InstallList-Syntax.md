@@ -2,12 +2,12 @@
 
 This guide explains how to install files using TSLPatcher syntax. For general TSLPatcher information, see [TSLPatcher's Official Readme](TSLPatcher's-Official-Readme). For HoloPatcher-specific information, see [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.).
 
-**Implementation:** [`Libraries/PyKotor/src/pykotor/tslpatcher/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/tslpatcher/)
+**Implementation:** [`Libraries/PyKotor/src/pykotor/tslpatcher/`](https://github.com/OldRepublicDevs/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/tslpatcher/)
 
 **Vendor References:**
 
 - [`vendor/TSLPatcher/`](https://github.com/th3w1zard1/TSLPatcher) - Original Perl TSLPatcher by stoffe
-- [`Tools/HolocronToolset/src/toolset/gui/dialogs/install_mod.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/gui/dialogs/install_mod.py) - HoloPatcher [GUI](GFF-File-Format#gui-graphical-user-interface) implementation
+- [`Tools/HolocronToolset/src/toolset/gui/dialogs/install_mod.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/gui/dialogs/install_mod.py) - HoloPatcher [GUI](GFF-File-Format#gui-graphical-user-interface) implementation
 - [`vendor/KotOR.js/src/manager/`](https://github.com/th3w1zard1/KotOR.js/tree/master/src/manager) - TypeScript mod management (different approach)
 
 **See Also:**

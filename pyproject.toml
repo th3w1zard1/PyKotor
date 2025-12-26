@@ -137,11 +137,11 @@ dev = [
 ]
 
 [project.urls]
-homepage = "https://github.com/th3w1zard1/PyKotor"
-documentation = "https://github.com/th3w1zard1/PyKotor/blob/master/README.md"
-repository = "https://github.com/th3w1zard1/PyKotor.git"
-issues = "https://github.com/th3w1zard1/PyKotor/issues"
-#Changelog = "https://github.com/th3w1zard1/PyKotor/blob/master/CHANGELOG.md"
+homepage = "https://github.com/OldRepublicDevs/PyKotor"
+documentation = "https://github.com/OldRepublicDevs/PyKotor/blob/master/README.md"
+repository = "https://github.com/OldRepublicDevs/PyKotor.git"
+issues = "https://github.com/OldRepublicDevs/PyKotor/issues"
+#Changelog = "https://github.com/OldRepublicDevs/PyKotor/blob/master/CHANGELOG.md"
 
 ########################################################
 ## UV workspace configuration                         ##

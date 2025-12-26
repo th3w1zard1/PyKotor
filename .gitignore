@@ -125,3 +125,4 @@ working_vs_current_diff.txt
 profiling/
 vendor/swkotor.h
 vendor/swkotor.c
+Tools/*/.github/

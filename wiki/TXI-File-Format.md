@@ -28,7 +28,7 @@ TXI ([texture](TPC-File-Format) Info) files [ARE](GFF-File-Format#are-area) comp
 - Commands [ARE](GFF-File-Format#are-area) case-insensitive but conventionally lowercase. values can be integers, floats, booleans (`0`/`1`), [ResRefs](GFF-File-Format#gff-data-types), or multi-line coordinate tables.  
 - A single TXI can be appended to the end of a `.tpc` file (as Bioware does) or shipped as a sibling `.txi` file; the parser treats both identically.  
 
-**Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/txi/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/txi)
+**Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/txi/`](https://github.com/OldRepublicDevs/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/txi)
 
 **Vendor References:**
 
@@ -75,7 +75,7 @@ Each line encodes a UV triplet; UV coordinates follow standard UV mapping conven
 
 ## Command Reference
 
-> The tables below summarize the commands implemented by PyKotor’s `TXICommand` enum. values map directly to the fields described in [`txi_data.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKyor/resource/formats/txi/txi_data.py#L700-L830).
+> The tables below summarize the commands implemented by PyKotor’s `TXICommand` enum. values map directly to the fields described in [`txi_data.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKyor/resource/formats/txi/txi_data.py#L700-L830).
 
 ### Rendering and Filtering
 
@@ -111,7 +111,7 @@ Each line encodes a UV triplet; UV coordinates follow standard UV mapping conven
 | `fps` | Frames per second for playback. |
 | `speed` | Legacy alias for `fps` (still parsed for compatibility). |
 
-When `proceduretype=cycle`, PyKotor splits the [TPC](TPC-File-Format) into `numx × numy` layers and advances them at `fps` (see [`io_tpc.py:169-190`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tpc/io_tpc.py#L169-L190)).
+When `proceduretype=cycle`, PyKotor splits the [TPC](TPC-File-Format) into `numx × numy` layers and advances them at `fps` (see [`io_tpc.py:169-190`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tpc/io_tpc.py#L169-L190)).
 
 ### Font Atlas Layout
 
@@ -174,8 +174,8 @@ Many TXI files in the game installation [ARE](GFF-File-Format#are-area) **empty*
 
 ## Implementation Details
 
-- **Parser:** [`Libraries/PyKotor/src/pykotor/resource/formats/txi/io_txi.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/txi/io_txi.py)  
-- **data [model](MDL-MDX-File-Format):** [`Libraries/PyKotor/src/pykotor/resource/formats/txi/txi_data.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/txi/txi_data.py)  
+- **Parser:** [`Libraries/PyKotor/src/pykotor/resource/formats/txi/io_txi.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/txi/io_txi.py)  
+- **data [model](MDL-MDX-File-Format):** [`Libraries/PyKotor/src/pykotor/resource/formats/txi/txi_data.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/txi/txi_data.py)  
 - **Reference Implementations:**  
   - [`vendor/reone/src/libs/graphics/format/txireader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/txireader.cpp)  
   - [`vendor/KotOR.js/src/resource/TXI.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/TXI.ts)  

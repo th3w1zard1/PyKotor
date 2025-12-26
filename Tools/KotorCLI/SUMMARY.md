@@ -342,7 +342,7 @@ Potential improvements:
 ## Credits
 
 - **Syntax inspired by**: [cli](https://github.com/squattingmonk/cli) by squattingmonk
-- **Built on**: [PyKotor](https://github.com/th3w1zard1/PyKotor) by NickHugi
+- **Built on**: [PyKotor](https://github.com/OldRepublicDevs/PyKotor) by NickHugi
 - **Format references**: xoreos-tools, KotOR.js, reone, Kotor.NET
 
 ## Conclusion

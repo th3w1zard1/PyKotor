@@ -136,7 +136,7 @@ def get_expected_header_lines(today: str) -> list[str]:
         ";    • HoloPatcher: Cross-platform TSLPatcher alternative",
         ";    • HolocronToolset: Complete modding suite for KotOR I & II",
         ";    • KotorDiff: Advanced diff engine for patch generation",
-        ";        https://github.com/th3w1zard1/PyKotor",
+        ";        https://github.com/OldRepublicDevs/PyKotor",
         ";    • KOTORModSync: Multi-mod installer with conflict resolution",
         ";        https://github.com/th3w1zard1/KOTORModSync",
         ";    • HoloLSP: The first ever Language Server Protocol for KotOR",

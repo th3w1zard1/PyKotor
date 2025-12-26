@@ -6,7 +6,7 @@ ARE files define static [area properties](GFF-File-Format#are-area) including li
 
 **Official Bioware Documentation:** For the authoritative Bioware Aurora Engine [ARE](GFF-File-Format#are-area) format specification, see [Bioware Aurora Area File Format](Bioware-Aurora-AreaFile).
 
-**Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/are.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/are.py)
+**Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/are.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/are.py)
 
 ## Core Identity fields
 

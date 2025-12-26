@@ -32,7 +32,7 @@ TPC (texture Pack Container) is KotOR's native texture format. It supports palet
 
 This layout is identical across PyKotor, Reone, Xoreos, KotOR.js, and the original Bioware tools; KotOR-Unity and NorthernLights consume the same header.
 
-**Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/tpc/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/tpc)
+**Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/tpc/`](https://github.com/OldRepublicDevs/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/tpc)
 
 **Vendor References:**
 
@@ -62,7 +62,7 @@ This layout is identical across PyKotor, Reone, Xoreos, KotOR.js, and the origin
 | `mipmap_count` | Number of mip levels per layer (minimum 1). |
 | Reserved | 0x72 bytes reserved; KotOR stores platform hints here but all implementations skip them. |
 
-**Reference:** [`Libraries/PyKotor/src/pykotor/resource/formats/tpc/io_tpc.py:112-167`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tpc/io_tpc.py#L112-L167)
+**Reference:** [`Libraries/PyKotor/src/pykotor/resource/formats/tpc/io_tpc.py:112-167`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tpc/io_tpc.py#L112-L167)
 
 ---
 
@@ -79,7 +79,7 @@ TPC supports the following encodings (documented in `TPCTextureFormat`):
 | DXT1 | Block-compressed (4×4 blocks, 8 bytes) | Detected via `data_size` and encoding [flags](GFF-File-Format#gff-data-types) |
 | DXT3/DXT5 | Block-compressed (4×4 blocks, 16 bytes) | Chosen based on `pixel_type` and compression [flag](GFF-File-Format#gff-data-types) |
 
-**Reference:** [`Libraries/PyKotor/src/pykotor/resource/formats/tpc/tpc_data.py:54-178`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tpc/tpc_data.py#L54-L178)
+**Reference:** [`Libraries/PyKotor/src/pykotor/resource/formats/tpc/tpc_data.py:54-178`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tpc/tpc_data.py#L54-L178)
 
 ---
 
@@ -89,7 +89,7 @@ TPC supports the following encodings (documented in `TPCTextureFormat`):
 - Every layer stores `mipmap_count` levels. For uncompressed textures, each level’s size equals `width × height × bytes_per_pixel`; for DXT formats it equals the block size calculation.  
 - Animated textures rely on [TXI](TXI-File-Format) fields (`proceduretype cycle`, `numx`, `numy`, `fps`). PyKotor splits the sprite sheet into layers and recalculates mip counts per frame.  
 
-**Reference:** [`Libraries/PyKotor/src/pykotor/resource/formats/tpc/io_tpc.py:216-285`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tpc/io_tpc.py#L216-L285)
+**Reference:** [`Libraries/PyKotor/src/pykotor/resource/formats/tpc/io_tpc.py:216-285`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tpc/io_tpc.py#L216-L285)
 
 ---
 
@@ -99,7 +99,7 @@ TPC supports the following encodings (documented in `TPCTextureFormat`):
 - PyKotor normalizes cube [faces](MDL-MDX-File-Format#face-structure) after reading (deswizzle + rotation) so that [face](MDL-MDX-File-Format#face-structure) ordering matches the high-level texture API.  
 - Reone and KotOR.js use the same inference logic, so the cube-map detection below mirrors their behavior.  
 
-**Reference:** [`Libraries/PyKotor/src/pykotor/resource/formats/tpc/io_tpc.py:138-285`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tpc/io_tpc.py#L138-L285)
+**Reference:** [`Libraries/PyKotor/src/pykotor/resource/formats/tpc/io_tpc.py:138-285`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tpc/io_tpc.py#L138-L285)
 
 ---
 
@@ -109,14 +109,14 @@ TPC supports the following encodings (documented in `TPCTextureFormat`):
 - [TXI](TXI-File-Format) commands drive [animations](MDL-MDX-File-Format#animation-header), environment mapping, font metrics, downsampling directives, etc. See the [TXI File Format](TXI-File-Format) document for exhaustive command descriptions.  
 - PyKotor automatically parses the [TXI](TXI-File-Format) footer and exposes `TPC.txi` plus convenience flags (`is_animated`, `is_cube_map`).  
 
-**Reference:** [`Libraries/PyKotor/src/pykotor/resource/formats/tpc/io_tpc.py:159-188`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tpc/io_tpc.py#L159-L188)
+**Reference:** [`Libraries/PyKotor/src/pykotor/resource/formats/tpc/io_tpc.py:159-188`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tpc/io_tpc.py#L159-L188)
 
 ---
 
 ## Implementation Details
 
-- **Binary Reader/Writer:** [`Libraries/PyKotor/src/pykotor/resource/formats/tpc/io_tpc.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tpc/io_tpc.py)  
-- **data [model](MDL-MDX-File-Format) & Conversion Utilities:** [`Libraries/PyKotor/src/pykotor/resource/formats/tpc/tpc_data.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tpc/tpc_data.py)  
+- **Binary Reader/Writer:** [`Libraries/PyKotor/src/pykotor/resource/formats/tpc/io_tpc.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tpc/io_tpc.py)  
+- **data [model](MDL-MDX-File-Format) & Conversion Utilities:** [`Libraries/PyKotor/src/pykotor/resource/formats/tpc/tpc_data.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tpc/tpc_data.py)  
 - **Reference Implementations:**  
   - [`vendor/reone/src/libs/graphics/format/tpcreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/tpcreader.cpp)  
   - [`vendor/xoreos-tools/src/graphics/tpc.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/graphics/tpc.cpp)  

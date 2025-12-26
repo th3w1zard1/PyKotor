@@ -6,7 +6,7 @@ UTT files define [trigger templates](GFF-File-Format#utt-trigger) for invisible 
 
 **Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Trigger format specification, see [Bioware Aurora Trigger Format](Bioware-Aurora-Trigger).
 
-**Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/utt.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utt.py)
+**Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/utt.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/utt.py)
 
 ## Core Identity fields
 

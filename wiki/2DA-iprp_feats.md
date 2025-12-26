@@ -17,7 +17,7 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **PyKotor:**
 
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:102`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L102) - [StrRef](TLK-File-Format#string-references-strref) column definition for iprp_feats.2da (K1: name)
-- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:280`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L280) - [StrRef](TLK-File-Format#string-references-strref) column definition for iprp_feats.2da (K2: name)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:102`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L102) - [StrRef](TLK-File-Format#string-references-strref) column definition for iprp_feats.2da (K1: name)
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:280`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L280) - [StrRef](TLK-File-Format#string-references-strref) column definition for iprp_feats.2da (K2: name)
 
 ---

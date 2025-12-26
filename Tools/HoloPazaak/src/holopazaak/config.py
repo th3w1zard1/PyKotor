@@ -9,8 +9,8 @@ LOCAL_PROGRAM_INFO: dict[str, Any] = {
     "holopazaakLatestBetaVersion": "1.0.0",
     "updateInfoLink": "https://api.github.com/repos/th3w1zard1/PyKotor/contents/Tools/HoloPazaak/src/holopazaak/config.py",
     "updateBetaInfoLink": "https://api.github.com/repos/th3w1zard1/PyKotor/contents/Tools/HoloPazaak/src/holopazaak/config.py?ref=bleeding-edge",
-    "holopazaakDownloadLink": "https://github.com/th3w1zard1/PyKotor/releases",
-    "holopazaakBetaDownloadLink": "https://github.com/th3w1zard1/PyKotor/releases/tag/v{tag}-holopazaak",
+    "holopazaakDownloadLink": "https://github.com/OldRepublicDevs/PyKotor/releases",
+    "holopazaakBetaDownloadLink": "https://github.com/OldRepublicDevs/PyKotor/releases/tag/v{tag}-holopazaak",
     "holopazaakLatestNotes": "Initial release of HoloPazaak - A PyQt5 Pazaak card game implementation.",
     "holopazaakLatestBetaNotes": "Initial release of HoloPazaak - A PyQt5 Pazaak card game implementation.",
 }  # <---JSON_END--->

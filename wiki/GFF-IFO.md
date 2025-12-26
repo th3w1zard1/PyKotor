@@ -6,7 +6,7 @@ IFO files define module-level metadata including entry configuration, expansion 
 
 **Official Bioware Documentation:** For the authoritative Bioware Aurora Engine [IFO](GFF-File-Format#ifo-module-info) format specification, see [Bioware Aurora IFO Format](Bioware-Aurora-IFO).
 
-**Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/ifo.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/ifo.py)
+**Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/ifo.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/ifo.py)
 
 ## Core Module Identity
 

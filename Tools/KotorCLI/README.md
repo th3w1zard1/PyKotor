@@ -301,7 +301,7 @@ MIT License - See LICENSE file for details.
 ## Credits
 
 - **Syntax inspired by**: [cli](https://github.com/squattingmonk/cli) by squattingmonk
-- **Built on**: [PyKotor](https://github.com/th3w1zard1/PyKotor)
+- **Built on**: [PyKotor](https://github.com/OldRepublicDevs/PyKotor)
 - **Format references**: xoreos-tools, KotOR.js, reone, Kotor.NET (in vendor/)
 
 ## Contributing

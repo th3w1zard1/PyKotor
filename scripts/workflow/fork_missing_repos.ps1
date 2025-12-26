@@ -119,7 +119,7 @@ function Get-ForkInfo {
 # Repos that failed to clone - we need to determine their original upstream repos
 # Format: @{ LocalPath = "vendor/xyz"; FailedUrl = "https://github.com/th3w1zard1/xyz.git"; UpstreamRepo = "original/xyz" }
 $failedRepos = @(
-    @{ LocalPath = "wiki"; FailedUrl = "https://github.com/th3w1zard1/PyKotor.wiki.git"; UpstreamRepo = $null; Note = "GitHub wiki - special handling needed" },
+    @{ LocalPath = "wiki"; FailedUrl = "https://github.com/OldRepublicDevs/PyKotor.wiki.git"; UpstreamRepo = $null; Note = "GitHub wiki - special handling needed" },
     @{ LocalPath = "vendor/CHORD"; FailedUrl = "https://github.com/th3w1zard1/CHORD.git"; UpstreamRepo = $null; Note = "Need to identify upstream" },
     @{ LocalPath = "vendor/pazaak-eggborne"; FailedUrl = "https://github.com/th3w1zard1/pazaak-eggborne.git"; UpstreamRepo = "eggborne/pazaak-eggborne" },
     @{ LocalPath = "vendor/pure-pazaak-michaeljoelphillips"; FailedUrl = "https://github.com/th3w1zard1/pure-pazaak-michaeljoelphillips.git"; UpstreamRepo = "michaeljoelphillips/pure-pazaak" },

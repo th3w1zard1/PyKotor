@@ -5,7 +5,7 @@
 # PyKotor's Official wiki & documentation
 [submodule "wiki"]
 	path = wiki
-	url = https://github.com/th3w1zard1/PyKotor.wiki.git
+	url = https://github.com/OldRepublicDevs/PyKotor.wiki.git
 
 
 # ===============================
@@ -334,4 +334,4 @@
 #	url = https://github.com/th3w1zard1/Pazaak-Handensaken.git
 [submodule "vendor/PyKotor"]
 	path = vendor/PyKotor
-	url = https://github.com/th3w1zard1/PyKotor.git
+	url = https://github.com/OldRepublicDevs/PyKotor.git

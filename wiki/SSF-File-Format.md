@@ -23,7 +23,7 @@ This document provides a detailed description of the SSF (sound set files) file 
 
 SSF files define a set of 28 sound effects that creatures can play during various game events (battle cries, pain grunts, selection sounds, etc.). The [StrRefs](TLK-File-Format#string-references-strref) point to entries in [`dialog.tlk`](TLK-File-Format) which contain the actual [WAV file](WAV-File-Format) references.
 
-**Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/ssf/`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/ssf/)
+**Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/ssf/`](https://github.com/OldRepublicDevs/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/ssf/)
 
 **Vendor References:**
 
@@ -106,17 +106,17 @@ The 28 sound event types correspond to array indices:
 | 26    | WHIRL_WIND            | Whirlwind sound                                                   |
 | 27    | POISONED              | Poisoned sound                                                    |
 
-**Reference**: [`Libraries/PyKotor/src/pykotor/resource/formats/ssf/ssf_data.py:50-258`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/ssf/ssf_data.py#L50-L258)
+**Reference**: [`Libraries/PyKotor/src/pykotor/resource/formats/ssf/ssf_data.py:50-258`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/ssf/ssf_data.py#L50-L258)
 
 ---
 
 ## Implementation Details
 
-**Binary Reading**: [`Libraries/PyKotor/src/pykotor/resource/formats/ssf/io_ssf.py`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/ssf/io_ssf.py)
+**Binary Reading**: [`Libraries/PyKotor/src/pykotor/resource/formats/ssf/io_ssf.py`](https://github.com/OldRepublicDevs/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/ssf/io_ssf.py)
 
-**Binary Writing**: [`Libraries/PyKotor/src/pykotor/resource/formats/ssf/io_ssf.py`](https://github.com/th3w1zard1/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/ssf/io_ssf.py)
+**Binary Writing**: [`Libraries/PyKotor/src/pykotor/resource/formats/ssf/io_ssf.py`](https://github.com/OldRepublicDevs/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/ssf/io_ssf.py)
 
-**SSF Class**: [`Libraries/PyKotor/src/pykotor/resource/formats/ssf/ssf_data.py:50-258`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/ssf/ssf_data.py#L50-L258)
+**SSF Class**: [`Libraries/PyKotor/src/pykotor/resource/formats/ssf/ssf_data.py:50-258`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/ssf/ssf_data.py#L50-L258)
 
 ---
 

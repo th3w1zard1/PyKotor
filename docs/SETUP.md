@@ -36,7 +36,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/th3w1zard1/PyKotor.git
+   git clone https://github.com/OldRepublicDevs/PyKotor.git
    cd PyKotor
    ```
 
@@ -135,7 +135,7 @@ export PATH="$HOME/.local/bin:$PATH"
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/th3w1zard1/PyKotor.git
+   git clone https://github.com/OldRepublicDevs/PyKotor.git
    cd PyKotor
    ```
 
@@ -209,7 +209,7 @@ Standard pip installation - works everywhere Python is available.
 1. **Clone the repository:**
 
    ```bash
-   git clone https://github.com/th3w1zard1/PyKotor.git
+   git clone https://github.com/OldRepublicDevs/PyKotor.git
    cd PyKotor
    ```
 
@@ -512,6 +512,6 @@ Output will be in the `dist/` directory.
 
 ## Getting Help
 
-- **GitHub Issues**: [Report bugs or request features](https://github.com/th3w1zard1/PyKotor/issues)
-- **Discussions**: [Ask questions](https://github.com/th3w1zard1/PyKotor/discussions)
+- **GitHub Issues**: [Report bugs or request features](https://github.com/OldRepublicDevs/PyKotor/issues)
+- **Discussions**: [Ask questions](https://github.com/OldRepublicDevs/PyKotor/discussions)
 - **Documentation**: Check the `docs/` directory

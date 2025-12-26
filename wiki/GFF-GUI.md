@@ -4,7 +4,7 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 
 GUI files define the layout and behavior of the user interface. They [ARE](GFF-File-Format#are-area) [GFF files](GFF-File-Format) describing hierarchies of panels, buttons, labels, and other controls.
 
-**Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/gui.py`](https://github.com/th3w1zard1/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/gui.py)
+**Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/gui.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/gui.py)
 
 ## Core Identity fields
 

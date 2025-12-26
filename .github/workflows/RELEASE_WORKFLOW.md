@@ -99,7 +99,7 @@ The workflow searches for version information in this order:
    ```
 
 3. **Create pre-release on GitHub:**
-   - Go to [Releases](https://github.com/th3w1zard1/PyKotor/releases/new)
+   - Go to [Releases](https://github.com/OldRepublicDevs/PyKotor/releases/new)
    - Tag: `v3.1.3-toolset`
    - Title: `toolset v3.1.3`
    - Check "Set as a pre-release"
