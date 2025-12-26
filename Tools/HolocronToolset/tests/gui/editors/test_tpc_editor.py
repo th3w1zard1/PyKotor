@@ -15,9 +15,15 @@ from toolset.data.installation import HTInstallation
 from pykotor.resource.formats.tpc import TPC, TPCTextureFormat, read_tpc, write_tpc
 from pykotor.resource.type import ResourceType
 from pykotor.extract.file import ResourceIdentifier, ResourceResult
-from PIL import Image
 import io
 from typing import TYPE_CHECKING
+
+# Handle optional PIL/Pillow dependency
+try:
+    from PIL import Image
+except ImportError:
+    import pytest
+    pytest.skip("PIL/Pillow not available", allow_module_level=True)
 
 if TYPE_CHECKING:
     from pytestqt.qtbot import QtBot

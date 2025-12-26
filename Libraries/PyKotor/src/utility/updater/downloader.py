@@ -12,7 +12,12 @@ import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Callable
 
-import certifi
+# Handle optional certifi dependency
+try:
+    import certifi
+except ImportError:
+    certifi = None  # type: ignore[assignment, unused-ignore]
+
 import requests
 import urllib3
 
@@ -122,11 +127,19 @@ class FileDownloader:
 
     def _get_http_pool(self, *, secure=True):
         if secure:
-            _http = urllib3.PoolManager(
-                cert_reqs="CERT_REQUIRED",
-                ca_certs=certifi.where(),
-                timeout=self.http_timeout,
-            )
+            if certifi is None:
+                # certifi not available, use system default certificates or disable verification
+                self.log.warning("certifi not available, using system default certificate store")
+                _http = urllib3.PoolManager(
+                    cert_reqs="CERT_REQUIRED",
+                    timeout=self.http_timeout,
+                )
+            else:
+                _http = urllib3.PoolManager(
+                    cert_reqs="CERT_REQUIRED",
+                    ca_certs=certifi.where(),
+                    timeout=self.http_timeout,
+                )
         else:
             _http = urllib3.PoolManager(timeout=self.http_timeout)
 

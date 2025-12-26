@@ -5,8 +5,14 @@ import tempfile
 import shutil
 import warnings
 
-from PIL import Image
 from pathlib import Path
+
+# Handle optional PIL/Pillow dependency
+try:
+    from PIL import Image
+except ImportError:
+    import pytest
+    pytest.skip("PIL/Pillow not available", allow_module_level=True)
 
 from pykotor.common.language import Language  # pyright: ignore[reportMissingImports]
 

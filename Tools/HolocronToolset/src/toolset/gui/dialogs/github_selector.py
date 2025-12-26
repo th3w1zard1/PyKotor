@@ -11,8 +11,21 @@ from contextlib import suppress
 from pathlib import PurePosixPath
 from typing import TYPE_CHECKING, Any
 
-import requests
-import requests.structures
+# Handle optional requests dependency
+try:
+    import requests
+    import requests.structures
+except ImportError:
+    requests = None  # type: ignore[assignment, unused-ignore]
+    # For type checking, we need a dummy type for requests.structures
+    if TYPE_CHECKING:
+        class CaseInsensitiveDict:  # noqa: PYI024
+            pass
+        class _RequestsStructures:
+            CaseInsensitiveDict = CaseInsensitiveDict
+        requests.structures = _RequestsStructures()  # type: ignore[assignment]
+    else:
+        requests.structures = None  # type: ignore[assignment, attr-defined]
 
 from loggerplus import RobustLogger
 from qtpy import QtCore
@@ -80,6 +93,8 @@ class GitHubFileSelector(QDialog):
         selected_files: list[str] | None = None,
         parent: QWidget | None = None,
     ):
+        if requests is None:
+            raise ImportError("requests library is required for GitHubFileSelector. Install it with: pip install requests")
         super().__init__(parent)
         self.setWindowFlags(
             QtCore.Qt.WindowType.Dialog  # pyright: ignore[reportArgumentType]
@@ -496,7 +511,7 @@ class GitHubFileSelector(QDialog):
 
     def update_rate_limit_info(
         self,
-        headers: dict[str, Any] | requests.structures.CaseInsensitiveDict[str],
+        headers: dict[str, Any] | Any,  # requests.structures.CaseInsensitiveDict[str] when requests is available
     ) -> None:
         if "X-RateLimit-Reset" in headers:
             self.rate_limit_reset = int(headers["X-RateLimit-Reset"])

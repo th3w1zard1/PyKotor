@@ -68,7 +68,7 @@ from toolset.gui.common.widgets.debug_watch_widget import DebugWatchWidget  # py
 from toolset.gui.common.widgets.find_replace_widget import FindReplaceWidget  # pyright: ignore[reportPrivateImportUsage]
 from toolset.gui.common.widgets.syntax_highlighter import SyntaxHighlighter  # pyright: ignore[reportPrivateImportUsage]
 from toolset.gui.common.widgets.test_config_widget import TestConfigDialog  # pyright: ignore[reportPrivateImportUsage]
-from toolset.gui.dialogs.github_selector import GitHubFileSelector  # pyright: ignore[reportPrivateImportUsage]
+# GitHubFileSelector is imported lazily in determine_script_path to avoid import errors when requests is missing
 from toolset.gui.editor import Editor  # pyright: ignore[reportPrivateImportUsage]
 from toolset.gui.widgets.settings.installations import GlobalSettings, NoConfigurationSetError  # pyright: ignore[reportPrivateImportUsage]
 from toolset.gui.widgets.terminal_widget import TerminalWidget  # pyright: ignore[reportPrivateImportUsage]
@@ -2107,6 +2107,8 @@ class NSSEditor(Editor):
                 self.refresh_window_title()
 
     def determine_script_path(self, resref: str) -> str:
+        # Import lazily to avoid import errors when requests is missing
+        from toolset.gui.dialogs.github_selector import GitHubFileSelector  # pyright: ignore[reportPrivateImportUsage]
         script_filename = f"{resref.lower()}.nss"
         dialog = GitHubFileSelector(self.owner, self.repo, selected_files=[script_filename], parent=self)
         if dialog.exec_() != QDialog.DialogCode.Accepted:

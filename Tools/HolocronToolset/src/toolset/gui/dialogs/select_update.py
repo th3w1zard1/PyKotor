@@ -12,7 +12,12 @@ from multiprocessing import Queue
 from typing import TYPE_CHECKING, Any, NoReturn
 
 import markdown
-import requests
+
+# Handle optional requests dependency
+try:
+    import requests
+except ImportError:
+    requests = None  # type: ignore[assignment, unused-ignore]
 
 from loggerplus import RobustLogger
 from qtpy.QtCore import QThread, Qt
@@ -187,6 +192,9 @@ class UpdateDialog(QDialog):
     def fetch_and_cache_forks_with_releases(self):
         self.forks_cache.clear()
         forks_url = "https://api.github.com/repos/th3w1zard1/PyKotor/forks"
+        if requests is None:
+            RobustLogger().warning("requests library not available, cannot fetch forks")
+            return
         try:
             forks_response: requests.Response = requests.get(forks_url, timeout=15)
             forks_response.raise_for_status()
@@ -205,6 +213,9 @@ class UpdateDialog(QDialog):
         include_all: bool = False,
     ) -> list[GithubRelease]:
         url = f"https://api.github.com/repos/{fork_full_name}/releases"
+        if requests is None:
+            RobustLogger().warning("requests library not available, cannot fetch fork releases")
+            return []
         try:
             response: requests.Response = requests.get(url, timeout=15)
             response.raise_for_status()

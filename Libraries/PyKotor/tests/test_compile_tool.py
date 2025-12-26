@@ -272,7 +272,8 @@ class TestCompileToolIntegration:
     ):
         """Test that compile_tool skips venv installation when --skip-venv is used."""
         # Import here to avoid issues with path setup
-        compile_dir = Path(__file__).resolve().parent.parent / "compile"
+        repo_root = Path(__file__).resolve().parents[3]
+        compile_dir = repo_root / "compile"
         if str(compile_dir) not in sys.path:
             sys.path.insert(0, str(compile_dir))
 

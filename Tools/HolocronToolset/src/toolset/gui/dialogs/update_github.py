@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from typing import Any
 
-import requests
+# Handle optional requests dependency
+try:
+    import requests
+except ImportError:
+    requests = None  # type: ignore[assignment, unused-ignore]
 
 from loggerplus import RobustLogger
 
@@ -16,6 +20,9 @@ def fetch_fork_releases(
     include_prerelease: bool = False
 ) -> list[GithubRelease]:
     """Fetch releases for a specific fork."""
+    if requests is None:
+        RobustLogger().warning("requests library not available, cannot fetch fork releases")
+        return []
     url = f"https://api.github.com/repos/{fork_full_name}/releases"
     try:
         response = requests.get(url, timeout=15)
@@ -34,6 +41,9 @@ def fetch_fork_releases(
 def fetch_and_cache_forks() -> dict[str, list[GithubRelease]]:
     """Fetch all forks and their releases."""
     forks_cache: dict[str, list[GithubRelease]] = {}
+    if requests is None:
+        RobustLogger().warning("requests library not available, cannot fetch forks")
+        return forks_cache
     forks_url = "https://api.github.com/repos/th3w1zard1/PyKotor/forks"
     try:
         forks_response: requests.Response = requests.get(forks_url, timeout=15)
