@@ -13,8 +13,9 @@ from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
-# Add compile directory to path
-compile_dir = Path(__file__).resolve().parent.parent / "compile"
+# Add compile directory to path (located at repo root)
+repo_root = Path(__file__).resolve().parents[3]
+compile_dir = repo_root / "compile"
 sys.path.insert(0, str(compile_dir))
 
 # Import after adding to path - use type ignore for linters
@@ -30,7 +31,8 @@ except ImportError:
     # Fallback for when running from different locations
     import importlib.util
 
-    spec = importlib.util.spec_from_file_location("compile_tool", compile_dir / "compile_tool.py")
+    compile_tool_path = compile_dir / "compile_tool.py"
+    spec = importlib.util.spec_from_file_location("compile_tool", compile_tool_path)
     if spec and spec.loader:
         compile_tool = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(compile_tool)
@@ -39,6 +41,8 @@ except ImportError:
         detect_os = compile_tool.detect_os
         normalize_add_data = compile_tool.normalize_add_data
         path_separator_for_data = compile_tool.path_separator_for_data
+    else:
+        raise ImportError(f"Could not load compile_tool.py from {compile_tool_path}")
 
 
 class TestDetectOS:

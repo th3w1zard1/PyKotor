@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from numpy import ndarray
 
 try:
-    import glm
+    import glm  # noqa: F401  # pyright: ignore[reportMissingImports, reportUnusedImport]
 except ImportError:
     class vec3:  # noqa: N801
         """3D vector class compatible with PyGLM vec3."""

@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from pykotor.common.indoormap import IndoorMap
+from pykotor.common.modulekit import ModuleKitManager
 from pykotor.extract.installation import Installation
 from pykotor.tools.indoorkit import load_kits
 from pykotor.tools.indoormap import (
@@ -140,6 +141,7 @@ def cmd_indoor_build(args: Namespace, logger: RobustLogger) -> int:  # noqa: PLR
         logger.info("Game: %s", game.name)
 
         if args.implicit_kit:
+            mk_mgr = ModuleKitManager(installation)
             build_mod_from_indoor_file_modulekit(
                 input_path,
                 output_mod_path=output_path,
@@ -148,6 +150,7 @@ def cmd_indoor_build(args: Namespace, logger: RobustLogger) -> int:  # noqa: PLR
                 module_id=args.module_filename,
                 loadscreen_path=args.loading_screen,
                 installation=installation,
+                module_kit_manager=mk_mgr,
             )
         else:
             indoor = IndoorMap()
@@ -255,6 +258,7 @@ def cmd_indoor_extract(args: Namespace, logger: RobustLogger) -> int:  # noqa: P
         # real module resources (LYT/WOK/MDL/MDX/etc), not cached editor data.
 
         if args.implicit_kit:
+            mk_mgr = ModuleKitManager(_installation)
             if module_file_arg:
                 if not module_name:
                     logger.error("When using --implicit-kit with --module-file, you must also pass --module <module_root> to specify which ModuleKit to match against.")
@@ -266,6 +270,7 @@ def cmd_indoor_extract(args: Namespace, logger: RobustLogger) -> int:  # noqa: P
                     game=game,
                     logger=logger,
                     installation=_installation,
+                    module_kit_manager=mk_mgr,
                 )
             else:
                 indoor = extract_indoor_from_module_as_modulekit(
@@ -274,6 +279,7 @@ def cmd_indoor_extract(args: Namespace, logger: RobustLogger) -> int:  # noqa: P
                     game=game,
                     logger=logger,
                     installation=_installation,
+                    module_kit_manager=mk_mgr,
                 )
             output_path.write_bytes(indoor.write())
             logger.info("Extracted indoor map via ModuleKit to: %s", output_path)
