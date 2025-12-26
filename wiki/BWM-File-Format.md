@@ -23,6 +23,8 @@ Walkmeshes serve multiple critical functions in KotOR:
 
 **Related formats:** BWM files are used in conjunction with [GFF ARE files](GFF-File-Format#are-area) which define area properties and contain references to walkmesh files.
 
+**Game Engine Implementation**: See [Game Engine BWM/AABB Implementation](Game-Engine-BWM-AABB-Implementation) for detailed analysis of how the original KOTOR engine handles BWM files, based on reverse-engineered source code.
+
 ---
 
 ## Table of Contents
@@ -104,6 +106,7 @@ References (engine source-of-truth):
 - `vendor/swkotor.c`: `CSWCollisionMesh__LoadMeshBinary` reads `world_coords` from `(data + 0x08)`
 - `vendor/swkotor.c`: `CSWCollisionMesh__WorldToLocal` and `CSWCollisionMesh__LocalToWorld` short-circuit when `world_coords != 0`
 - `vendor/swkotor.c`: `CSWCollisionMesh__TransformToWorld` sets `world_coords = 1` after baking translation into vertex data
+- See [Game Engine BWM/AABB Implementation](Game-Engine-BWM-AABB-Implementation#coordinate-spaces-and-transformations) for detailed coordinate space handling
 
 **Walkmesh Types (by file extension):**
 

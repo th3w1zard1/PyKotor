@@ -35,7 +35,9 @@ _add_sys_path(PYKOTOR_PATH)
 _add_sys_path(UTILITY_PATH)
 
 
-from kotorcli.__main__ import cli_main
+from argparse import Namespace
+
+from kotorcli.commands.indoor_builder import cmd_indoor_build, cmd_indoor_extract
 from pykotor.common.indoormap import IndoorMap
 from pykotor.common.modulekit import ModuleKitManager
 from pykotor.extract.installation import Installation
@@ -46,8 +48,77 @@ from pykotor.resource.type import ResourceType
 from pykotor.tools.path import CaseAwarePath
 
 
-def _run_cli(argv: list[str]) -> int:
-    return int(cli_main(argv))
+class _MemLogger:
+    """Minimal logger shim for calling CLI command functions directly in tests."""
+
+    def setLevel(self, _level: int) -> None:  # noqa: N802
+        return
+
+    def debug(self, *_args: object, **_kwargs: object) -> None:
+        return
+
+    def info(self, *_args: object, **_kwargs: object) -> None:
+        return
+
+    def warning(self, *_args: object, **_kwargs: object) -> None:
+        return
+
+    def error(self, *_args: object, **_kwargs: object) -> None:
+        return
+
+    def exception(self, *_args: object, **_kwargs: object) -> None:
+        return
+
+
+def _run_indoor_extract(
+    *,
+    installation: Installation,
+    mk_mgr: ModuleKitManager,
+    game_arg: str,
+    module_root: str,
+    module_file: Path | None,
+    output: Path,
+) -> int:
+    args = Namespace(
+        module=module_root,
+        module_file=str(module_file) if module_file is not None else None,
+        output=str(output),
+        installation=str(installation.path()),
+        game=game_arg,
+        kits=None,
+        implicit_kit=True,
+        log_level="error",
+    )
+    # Acceleration hooks (tests only): reuse installation + modulekit across calls.
+    args._installation_obj = installation  # type: ignore[attr-defined]
+    args._module_kit_manager = mk_mgr  # type: ignore[attr-defined]
+    return int(cmd_indoor_extract(args, _MemLogger()))  # type: ignore[arg-type]
+
+
+def _run_indoor_build(
+    *,
+    installation: Installation,
+    mk_mgr: ModuleKitManager,
+    game_arg: str,
+    input_indoor: Path,
+    output_mod: Path,
+    module_filename: str,
+) -> int:
+    args = Namespace(
+        input=str(input_indoor),
+        output=str(output_mod),
+        installation=str(installation.path()),
+        game=game_arg,
+        kits=None,
+        implicit_kit=True,
+        module_filename=module_filename,
+        loading_screen=None,
+        log_level="error",
+    )
+    # Acceleration hooks (tests only): reuse installation + modulekit across calls.
+    args._installation_obj = installation  # type: ignore[attr-defined]
+    args._module_kit_manager = mk_mgr  # type: ignore[attr-defined]
+    return int(cmd_indoor_build(args, _MemLogger()))  # type: ignore[arg-type]
 
 
 def _make_min_installation(tmp_path: Path) -> Path:
@@ -141,10 +212,16 @@ def _installation_for(
 
 
 def _safe_out_module_id(*, module_root: str, game_key: str, room_count: int) -> str:
-    """Pick a module id that will not exceed the 16-char ResRef limit for `{id}_room{i}`."""
+    """Pick a module id that will not exceed the 16-char ResRef limit for `{id}_room{i}` and `lbl_map{id}`."""
     max_index = max(room_count - 1, 0)
     digits = len(str(max_index))
-    max_module_id_len = 16 - (len("_room") + digits)
+    # Two constraints:
+    # 1. Room models: `{id}_room{i}` must fit in 16 chars
+    # 2. Minimap: `lbl_map{id}` must fit in 16 chars
+    max_for_rooms = 16 - (len("_room") + digits)
+    max_for_minimap = 16 - len("lbl_map")
+    max_module_id_len = min(max_for_rooms, max_for_minimap)
+    
     if max_module_id_len <= 0:
         msg = f"Cannot construct a valid module_id for room_count={room_count} (digits={digits})"
         raise AssertionError(msg)
@@ -196,6 +273,7 @@ def rt(
     if cache_key in _RT_CACHE:
         return _RT_CACHE[cache_key]
     installation, game_arg = _installation_for(request, game_key=game_key, k1_installation=k1_installation)
+    mk_mgr = ModuleKitManager(installation)
 
     tmp_path = tmp_path_factory.mktemp(f"rt_modulekit_{game_key}_{source_module_root}")
 
@@ -209,21 +287,13 @@ def rt(
     source_mod_bytes = b""
     source_mod_payloads = {}
 
-    rc = _run_cli(
-        [
-            "indoor-extract",
-            "--implicit-kit",
-            "--module",
-            source_module_root,
-            "--output",
-            str(indoor0),
-            "--installation",
-            str(install_dir),
-            "--game",
-            game_arg,
-            "--log-level",
-            "error",
-        ]
+    rc = _run_indoor_extract(
+        installation=installation,
+        mk_mgr=mk_mgr,
+        game_arg=game_arg,
+        module_root=source_module_root,
+        module_file=None,
+        output=indoor0,
     )
     assert rc == 0, f"indoor-extract failed for {game_key}:{source_module_root} with exit code: {rc}"
 
@@ -239,63 +309,33 @@ def rt(
     indoor0.write_bytes(json.dumps(d0).encode("utf-8"))
     indoor0_normalized_raw = indoor0.read_bytes()
 
-    rc = _run_cli(
-        [
-            "indoor-build",
-            "--implicit-kit",
-            "--input",
-            str(indoor0),
-            "--output",
-            str(mod1),
-            "--installation",
-            str(install_dir),
-            "--game",
-            game_arg,
-            "--module-filename",
-            output_module_root,
-            "--log-level",
-            "error",
-        ]
+    rc = _run_indoor_build(
+        installation=installation,
+        mk_mgr=mk_mgr,
+        game_arg=game_arg,
+        input_indoor=indoor0,
+        output_mod=mod1,
+        module_filename=output_module_root,
     )
     assert rc == 0, f"indoor-build failed for {game_key}:{source_module_root} with exit code: {rc}"
 
-    rc = _run_cli(
-        [
-            "indoor-extract",
-            "--implicit-kit",
-            "--module",
-            source_module_root,
-            "--module-file",
-            str(mod1),
-            "--output",
-            str(indoor1),
-            "--installation",
-            str(install_dir),
-            "--game",
-            game_arg,
-            "--log-level",
-            "error",
-        ]
+    rc = _run_indoor_extract(
+        installation=installation,
+        mk_mgr=mk_mgr,
+        game_arg=game_arg,
+        module_root=source_module_root,
+        module_file=mod1,
+        output=indoor1,
     )
     assert rc == 0, f"indoor-extract (module-file) failed for {game_key}:{source_module_root} with exit code: {rc}"
 
-    rc = _run_cli(
-        [
-            "indoor-build",
-            "--implicit-kit",
-            "--input",
-            str(indoor1),
-            "--output",
-            str(mod2),
-            "--installation",
-            str(install_dir),
-            "--game",
-            game_arg,
-            "--module-filename",
-            output_module_root,
-            "--log-level",
-            "error",
-        ]
+    rc = _run_indoor_build(
+        installation=installation,
+        mk_mgr=mk_mgr,
+        game_arg=game_arg,
+        input_indoor=indoor1,
+        output_mod=mod2,
+        module_filename=output_module_root,
     )
     assert rc == 0, f"indoor-build (2nd) failed for {game_key}:{source_module_root} with exit code: {rc}"
 
