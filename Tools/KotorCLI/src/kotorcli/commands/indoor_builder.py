@@ -51,7 +51,7 @@ def _resolve_context(args: Namespace, logger: RobustLogger):
         msg = "No installation path specified. Use --installation <path>"
         raise ValueError(msg)
     if not installation_path.exists():
-        msg = "Installation path does not exist: {installation_path}"
+        msg = f"Installation path does not exist: {installation_path}"
         raise ValueError(msg)
 
     game = parse_game_argument(args.game)
@@ -78,7 +78,7 @@ def _resolve_context(args: Namespace, logger: RobustLogger):
     return game, installation_path, kits_path, installation, kits
 
 
-def cmd_indoor_build(args: Namespace, logger: RobustLogger) -> int:
+def cmd_indoor_build(args: Namespace, logger: RobustLogger) -> int:  # noqa: PLR0911, PLR0912, PLR0915
     """Build a .mod file from a .indoor file.
 
     This command loads a .indoor JSON file and builds it into a complete .mod file
@@ -175,7 +175,7 @@ def cmd_indoor_build(args: Namespace, logger: RobustLogger) -> int:
         return 0
 
 
-def cmd_indoor_extract(args: Namespace, logger: RobustLogger) -> int:
+def cmd_indoor_extract(args: Namespace, logger: RobustLogger) -> int:  # noqa: PLR0911, PLR0912, PLR0915
     """Extract a .indoor file from a composite module.
 
     This command extracts module data from composite files (_s.rim/.rim/_dlg.erf)

@@ -19,7 +19,6 @@ from typing import Any
 
 import pytest
 
-
 absolute_file_path = Path(__file__).absolute()
 KOTORCLI_PATH = absolute_file_path.parents[1].joinpath("src")
 PYKOTOR_PATH = absolute_file_path.parents[3].joinpath("Libraries", "PyKotor", "src")
@@ -37,15 +36,15 @@ _add_sys_path(PYKOTOR_PATH)
 _add_sys_path(UTILITY_PATH)
 
 
-from kotorcli.__main__ import cli_main  # noqa: E402
-from pykotor.extract.installation import Installation  # noqa: E402
-from pykotor.resource.formats.bwm import read_bwm  # noqa: E402
-from pykotor.resource.formats.erf import ERF, ERFType, read_erf, write_erf  # noqa: E402
-from pykotor.resource.formats.lyt import LYT, LYTRoom, bytes_lyt, read_lyt  # noqa: E402
-from pykotor.resource.type import ResourceType  # noqa: E402
-from pykotor.tools.indoormap import IndoorMap  # noqa: E402
-from pykotor.tools.modulekit import ModuleKitManager  # noqa: E402
-from pykotor.tools.path import CaseAwarePath  # noqa: E402
+from kotorcli.__main__ import cli_main
+from pykotor.extract.installation import Installation
+from pykotor.resource.formats.bwm import read_bwm
+from pykotor.resource.formats.erf import ERF, ERFType, read_erf, write_erf
+from pykotor.resource.formats.lyt import LYT, LYTRoom, bytes_lyt, read_lyt
+from pykotor.resource.type import ResourceType
+from pykotor.tools.indoormap import IndoorMap
+from pykotor.tools.modulekit import ModuleKitManager
+from pykotor.tools.path import CaseAwarePath
 
 
 @dataclass(frozen=True)
@@ -335,7 +334,8 @@ def test_mim_has_room_model_triplet(rt: RoundtripResult):
     mdls = [k for k in rt.mod1_payloads if k[1] == ResourceType.MDL and k[0].startswith(prefix)]
     mdxs = [k for k in rt.mod1_payloads if k[1] == ResourceType.MDX and k[0].startswith(prefix)]
     woks = [k for k in rt.mod1_payloads if k[1] == ResourceType.WOK and k[0].startswith(prefix)]
-    assert len(mdls) == len(mdxs) == len(woks) and len(mdls) > 0
+    assert len(mdls) == len(mdxs) == len(woks)
+    assert len(mdls) > 0
 
 
 def test_mim_minimap_exists(rt: RoundtripResult):
@@ -507,7 +507,9 @@ def test_unit_indoormap_present_in_payloads(rt: RoundtripResult):
 
 def test_unit_wok_count_matches_room_count(rt: RoundtripResult):
     room_count = len(_parse_indoor(rt.indoor1_raw)["rooms"])
-    wok_count = sum(1 for (_r, t) in rt.mod1_payloads if t == ResourceType.WOK and _r.startswith(f"{rt.module_root}_room"))
+    wok_count = sum(
+        1 for (_r, t) in rt.mod1_payloads if t == ResourceType.WOK and _r.startswith(f"{rt.module_root}_room")
+    )
     assert wok_count == room_count
 
 
@@ -583,5 +585,3 @@ def test_unit_indoor_room_count_positive(rt: RoundtripResult):
 
 def test_unit_mod_roundtrip_payloads_match(rt: RoundtripResult):
     assert rt.mod1_payloads == rt.mod2_payloads
-
-

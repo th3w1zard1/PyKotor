@@ -578,11 +578,22 @@ def create_parser() -> ArgumentParser:  # noqa: PLR0915
     indoor_build_parser.add_argument("--input", "-i", required=True, help="Input .indoor file")
     indoor_build_parser.add_argument("--output", "-o", required=True, help="Output .mod file")
     indoor_build_parser.add_argument("--installation", required=True, help="Path to KOTOR installation")
-    indoor_build_parser.add_argument("--kits", "-k", required=True, help="Path to kits directory")
     indoor_build_parser.add_argument(
-        "--game", "-g",
+        "--implicit-kit",
+        action="store_true",
+        help="Use implicit ModuleKit components derived from module resources (no external kits required)",
+    )
+    indoor_build_parser.add_argument(
+        "--kits",
+        "-k",
+        required=False,
+        help="(Deprecated) Path to kits directory. Only needed when NOT using --implicit-kit.",
+    )
+    indoor_build_parser.add_argument(
+        "--game",
+        "-g",
         choices=["k1", "k2", "kotor1", "kotor2", "tsl"],
-        help="Target game version (default: auto-detect from installation)"
+        help="Target game version (default: auto-detect from installation)",
     )
     indoor_build_parser.add_argument("--module-filename", help="Module filename (overrides .indoor module_id)")
     indoor_build_parser.add_argument("--loading-screen", help="Path to loading screen image (TPC/TGA format)")
@@ -601,11 +612,22 @@ def create_parser() -> ArgumentParser:  # noqa: PLR0915
     indoor_extract_parser.add_argument("--module", "-m", required=True, help="Module name (e.g., danm13)")
     indoor_extract_parser.add_argument("--output", "-o", required=True, help="Output .indoor file")
     indoor_extract_parser.add_argument("--installation", required=True, help="Path to KOTOR installation")
-    indoor_extract_parser.add_argument("--kits", "-k", required=True, help="Path to kits directory")
     indoor_extract_parser.add_argument(
-        "--game", "-g",
+        "--implicit-kit",
+        action="store_true",
+        help="Extract using implicit ModuleKit components derived from module resources (no external kits required)",
+    )
+    indoor_extract_parser.add_argument(
+        "--kits",
+        "-k",
+        required=False,
+        help="(Deprecated) Path to kits directory (only needed for reverse-extraction when no embedded indoormap exists).",
+    )
+    indoor_extract_parser.add_argument(
+        "--game",
+        "-g",
         choices=["k1", "k2", "kotor1", "kotor2", "tsl"],
-        help="Target game version (default: auto-detect from installation)"
+        help="Target game version (default: auto-detect from installation)",
     )
     indoor_extract_parser.add_argument(
         "--log-level",
@@ -682,7 +704,7 @@ def create_parser() -> ArgumentParser:  # noqa: PLR0915
     return parser
 
 
-def cli_main(argv: Sequence[str]) -> int:
+def cli_main(argv: Sequence[str]) -> int:  # noqa: PLR0911, PLR0912, PLR0915
     """Entry point for CLI execution (headless-friendly)."""
     parser = create_parser()
     args = parser.parse_args(argv)
@@ -796,10 +818,12 @@ def cli_main(argv: Sequence[str]) -> int:
             return cmd_gui_convert(args, logger)
         # Indoor map commands
         if args.command in ("indoor-build", "indoormap-build"):
-            from kotorcli.commands.indoor_builder import cmd_indoor_build  # noqa: PLC0415
+            from kotorcli.commands.indoor_builder import cmd_indoor_build
+
             return cmd_indoor_build(args, logger)
         if args.command in ("indoor-extract", "indoormap-extract"):
-            from kotorcli.commands.indoor_builder import cmd_indoor_extract  # noqa: PLC0415
+            from kotorcli.commands.indoor_builder import cmd_indoor_extract
+
             return cmd_indoor_extract(args, logger)
         # Patching commands
         if args.command == "batch-patch":
@@ -825,9 +849,9 @@ def cli_main(argv: Sequence[str]) -> int:
 def launch_gui() -> int:
     """Launch the Tkinter GUI when no CLI args are provided."""
     try:
-        from kotorcli.app import App  # noqa: PLC0415
+        from kotorcli.app import App
     except Exception as exc:
-        from loggerplus import RobustLogger  # noqa: PLC0415
+        from loggerplus import RobustLogger
 
         RobustLogger().warning("GUI not available: %s", exc)
         print("[Warning] Display driver not available, cannot run in GUI mode without command-line arguments.")  # noqa: T201
@@ -839,7 +863,7 @@ def launch_gui() -> int:
     return 0
 
 
-def _parse_kitgenerator_args(argv: Sequence[str]) -> ArgumentParser:
+def _parse_kitgenerator_args(_argv: Sequence[str]) -> ArgumentParser:
     """Create a lightweight parser compatible with the legacy KitGenerator CLI.
 
     This keeps the GUI import-free when CLI args are supplied, matching the
@@ -921,7 +945,7 @@ def gui_converter_entry(argv: Sequence[str] | None = None) -> int:
     logger = setup_logger(args.log_level.upper(), use_color=True)
 
     if not args.input or not args.output or not args.resolution:
-        from kotorcli.gui_converter import launch_gui_converter  # noqa: PLC0415
+        from kotorcli.gui_converter import launch_gui_converter
 
         launch_gui_converter()
         return 0
@@ -935,7 +959,7 @@ def kotordiff_entry(argv: Sequence[str] | None = None) -> int:
     CLI arguments keep execution headless; omitting them falls back to the GUI.
     """
     arg_list = list(sys.argv[1:] if argv is None else argv)
-    from kotorcli.diff_tool.__main__ import main as kotordiff_main  # noqa: PLC0415
+    from kotorcli.diff_tool.__main__ import main as kotordiff_main
 
     return kotordiff_main(arg_list)
 

@@ -21,11 +21,13 @@ from __future__ import annotations
 import math
 
 from copy import deepcopy
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from loggerplus import RobustLogger
-from pykotor.common.module import Module, ModuleResource
+from pykotor.extract.capsule import Capsule
 from pykotor.resource.formats.bwm import BWM, BWMEdge, BWMFace, read_bwm
+from pykotor.resource.formats.lyt import read_lyt
 from pykotor.resource.generics.utd import UTD
 from pykotor.resource.type import ResourceType
 from pykotor.tools.indoorkit import Kit, KitComponent, KitComponentHook, KitDoor
@@ -46,7 +48,8 @@ class ModuleKit(Kit):
         self.module_root: str = module_root.lower()
         self._installation: Installation = installation
         self._loaded: bool = False
-        self._module: Module | None = None
+        self._capsule: Capsule | None = None
+        self._capsule_path: Path | None = None
 
         # Duck-typed marker used by Toolset/CLI to know this kit is module-backed.
         self.is_module_kit: bool = True
@@ -64,40 +67,40 @@ class ModuleKit(Kit):
 
     def _load_module_components(self) -> None:
         """Load components from the module's LYT and resources."""
-        # Load the module
-        try:
-            self._module = Module(self.module_root, self._installation)
-        except Exception:  # noqa: BLE001
-            RobustLogger().warning("Module '%s' failed to load", self.module_root)
+        # Try the installation's canonical Modules path first, but also support lowercase `modules`
+        # (common in test fixtures and some tooling).
+        candidates: list[Path] = [
+            self._installation.module_path() / f"{self.module_root}.mod",
+            self._installation.path() / "Modules" / f"{self.module_root}.mod",
+            self._installation.path() / "modules" / f"{self.module_root}.mod",
+        ]
+        mod_path = next((p for p in candidates if p.is_file()), candidates[0])
+        if not mod_path.is_file():
+            RobustLogger().warning("Module '%s' not found under installation modules.", self.module_root)
             return
 
-        # Get the LYT resource
-        lyt_resource = self._module.layout()
-        if lyt_resource is None:
+        self._capsule_path = mod_path
+        self._capsule = Capsule(mod_path)
+
+        raw_lyt: bytes | None = self._capsule.resource(self.module_root, ResourceType.LYT)
+        if raw_lyt is None:
             RobustLogger().warning("Module '%s' has no LYT resource", self.module_root)
             return
-
-        lyt_data = lyt_resource.resource()
-        if lyt_data is None:
-            RobustLogger().warning("Failed to load LYT data for module '%s'", self.module_root)
+        try:
+            lyt_data: LYT = read_lyt(raw_lyt)
+        except Exception:  # noqa: BLE001
+            RobustLogger().warning("Failed to parse LYT data for module '%s'", self.module_root)
             return
 
         # Create a default door for hooks
-        default_door = self._create_default_door()
+        default_door: KitDoor = self._create_default_door()
         self.doors.append(default_door)
 
-        # Extract rooms from LYT and maintain mapping for doorhook processing
-        # Map LYT room index to component (not all rooms may successfully create components)
-        lyt_room_to_component: dict[int, KitComponent] = {}
+        # Extract rooms from LYT
         for room_idx, lyt_room in enumerate(lyt_data.rooms):
-            component = self._component_from_lyt_room(lyt_room, room_idx, default_door)
+            component: KitComponent | None = self._component_from_lyt_room(lyt_room, room_idx, default_door)
             if component is not None:
                 self.components.append(component)
-                lyt_room_to_component[room_idx] = component
-
-        # Also load any doorhooks from LYT as potential hook points
-        # Pass the mapping to ensure correct room-to-component association
-        self._process_lyt_doorhooks(lyt_data, lyt_room_to_component)
 
     def _create_default_door(self) -> KitDoor:
         utd = UTD()
@@ -186,15 +189,10 @@ class ModuleKit(Kit):
         Returns the BWM exactly as stored in the game files.
         Note: The BWM will be re-centered by _recenter_bwm() before use.
         """
-        if self._module is None:
+        if self._capsule is None:
             return None
 
-        # Try to find the WOK resource
-        wok_resource: ModuleResource | None = self._module.resource(model_name, ResourceType.WOK)
-        if wok_resource is None:
-            return None
-
-        data = wok_resource.data()
+        data: bytes | None = self._capsule.resource(model_name, ResourceType.WOK)
         if data is None:
             return None
 
@@ -205,10 +203,9 @@ class ModuleKit(Kit):
             return None
 
     def _get_room_model(self, model_name: str, restype: ResourceType) -> bytes | None:
-        if self._module is None:
+        if self._capsule is None:
             return None
-        res = self._module.resource(model_name, restype)
-        return None if res is None else res.data()
+        return self._capsule.resource(model_name, restype)
 
     def _create_placeholder_bwm(self) -> BWM:
         """Create a placeholder BWM with a single quad."""
@@ -264,13 +261,15 @@ class ModuleKit(Kit):
         # Match doorhooks to components by finding the component
         # that corresponds to the LYT room with matching model name
         for doorhook in lyt_data.doorhooks:
-            room_name_lower = doorhook.room.lower()
+            room_name_lower: str = doorhook.room.lower()
 
             # Find the LYT room that matches this doorhook's room name
             lyt_room_match: LYTRoom | None = None
             room_idx: int | None = None
+            idx: int
+            lyt_room: LYTRoom
             for idx, lyt_room in enumerate(lyt_data.rooms):
-                room_model = (lyt_room.model or "").lower()
+                room_model: str = (lyt_room.model or "").lower()
                 if room_model == room_name_lower or room_name_lower == f"room{idx}":
                     lyt_room_match = lyt_room
                     room_idx = idx
@@ -287,7 +286,7 @@ class ModuleKit(Kit):
             # Use the mapping to find the component (handles cases where component creation failed)
             # This fixes the index misalignment bug where failed component creations
             # would cause doorhooks to be assigned to wrong components
-            matching_component = lyt_room_to_component.get(room_idx)
+            matching_component: KitComponent | None = lyt_room_to_component.get(room_idx)
             if matching_component is None:
                 RobustLogger().warning(
                     "Doorhook room '%s' (index %d) has no corresponding component in module '%s' (component creation may have failed)",
@@ -309,8 +308,8 @@ class ModuleKit(Kit):
 
             # Convert quaternion orientation to rotation angle (yaw in degrees)
             # For doors in KOTOR, we typically only care about Z-axis rotation (yaw)
-            euler = doorhook.orientation.to_euler()
-            rotation_deg = math.degrees(euler.z)  # Z-axis rotation (yaw)
+            euler: Vector3 = doorhook.orientation.to_euler()
+            rotation_deg: float = math.degrees(euler.z)  # Z-axis rotation (yaw)
             # Normalize to 0-360
             rotation_deg = rotation_deg % 360
             if rotation_deg < 0:
@@ -318,7 +317,7 @@ class ModuleKit(Kit):
 
             # Find the closest edge on the BWM to the doorhook position
             # This determines which edge the hook should be associated with
-            closest_edge = self._find_closest_edge(matching_component.bwm, local_position)
+            closest_edge: int | None = self._find_closest_edge(matching_component.bwm, local_position)
             if closest_edge is None:
                 RobustLogger().warning(
                     "Could not find edge near doorhook position (%.2f, %.2f, %.2f) for room '%s' in module '%s'",
@@ -335,8 +334,8 @@ class ModuleKit(Kit):
 
             # Determine which door to use
             # Try to find a door by name, otherwise use default door
-            door = self.doors[0] if self.doors else self._create_default_door()
-            door_name_lower = doorhook.door.lower()
+            door: KitDoor = self.doors[0] if self.doors else self._create_default_door()
+            door_name_lower: str = doorhook.door.lower()
             for _, existing_door in enumerate(self.doors):
                 if existing_door.utdK1.resref.get().lower() == door_name_lower or existing_door.utdK2.resref.get().lower() == door_name_lower:
                     door = existing_door
@@ -377,7 +376,7 @@ class ModuleKit(Kit):
             face = edge.face
             # NOTE: `edge.index` is a GLOBAL edge index computed as `face_index * 3 + local_edge_index`.
             # Convert to local (0, 1, 2) before choosing the face vertices.
-            local_edge_index = edge.index % 3
+            local_edge_index: int = edge.index % 3
 
             if local_edge_index == 0:
                 v1 = face.v1
@@ -418,7 +417,7 @@ class ModuleKit(Kit):
                 # We need to find the face index in the BWM's faces list
                 # Use identity-based search (like BWM._index_by_identity) to handle
                 # cases where faces have value-based equality
-                face_index = next((i for i, f in enumerate(bwm.faces) if f is face), -1)
+                face_index: int = next((i for i, f in enumerate(bwm.faces) if f is face), -1)
                 if face_index == -1:
                     # Fallback to value-based search if identity search fails
                     try:
@@ -448,7 +447,7 @@ class ModuleKitManager:
         Uses the installation's module_names method for display names.
 
         Returns:
-            Dict mapping module filename to display name (or None).
+            dict[str, str | None]: Mapping module filename to display name (or None).
         """
         if self._module_names is None:
             self._module_names = self._installation.module_names(use_hardcoded=True)
@@ -508,7 +507,10 @@ class ModuleKitManager:
         """
         key: str = module_root.lower()
         if key not in self._cache:
-            self._cache[key] = ModuleKit(module_root=key, installation=self._installation)
+            self._cache[key] = ModuleKit(
+                module_root=key,
+                installation=self._installation,
+            )
         return self._cache[key]
 
     def clear_cache(self) -> None:

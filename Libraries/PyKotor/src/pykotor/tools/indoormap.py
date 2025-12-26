@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any, NamedTuple
 from loggerplus import RobustLogger
 from pykotor.common.language import LocalizedString
 from pykotor.common.misc import Color, Game, ResRef
-from pykotor.common.module import Module
+from pykotor.common.module import Module, ModuleResource
 from pykotor.extract.capsule import Capsule
 from pykotor.extract.file import ResourceIdentifier
 from pykotor.extract.installation import Installation, SearchLocation
@@ -142,11 +142,25 @@ class IndoorMap:
                 if position not in points:
                     points.append(position)
                     static: bool = connection is None
-                    insertions.append(DoorInsertion(door, room1, room2, static, position, rotation, hook1, hook2))
+                    door_insertion = DoorInsertion(
+                        door,
+                        room1,
+                        room2,
+                        static,
+                        position,
+                        rotation,
+                        hook1,
+                        hook2,
+                    )
+                    insertions.append(door_insertion)
 
         return insertions
 
-    def _target_is_k2(self, installation: Installation, game_override: Game | None) -> bool:
+    def _target_is_k2(
+        self,
+        installation: Installation,
+        game_override: Game | None,
+    ) -> bool:
         if self.target_game_type is not None:
             return bool(self.target_game_type)
         if game_override is not None:
@@ -168,7 +182,10 @@ class IndoorMap:
         for kit_room in self.used_rooms:
             self.scan_mdls.add(kit_room.mdl)
             self.used_kits.add(kit_room.kit)
-            for door_padding_dict in list(kit_room.kit.top_padding.values()) + list(kit_room.kit.side_padding.values()):
+            for door_padding_dict in (
+                list(kit_room.kit.top_padding.values())
+                + list(kit_room.kit.side_padding.values())
+            ):
                 for padding_model in door_padding_dict.values():
                     self.scan_mdls.add(padding_model.mdl)
 
@@ -184,7 +201,10 @@ class IndoorMap:
                     self.mod.set_data(renamed, ResourceType.TGA, kit.textures[texture])
                     self.mod.set_data(renamed, ResourceType.TXI, kit.txis.get(texture, b""))
 
-    def handle_lightmaps(self, installation: Installation):
+    def handle_lightmaps(
+        self,
+        installation: Installation,
+    ):
         assert self.mod is not None
         # The toolset tries kit lightmaps first, then installation. We keep the same behavior.
         for kit in self.used_kits:
@@ -227,9 +247,21 @@ class IndoorMap:
             lm_renames[lightmap.lower()] = renamed
 
             # Prefer kit-copied lightmaps already in mod; else try installation for texture + txi.
-            tga_in_mod = self.mod.get(renamed, ResourceType.TGA) if self.mod.has(renamed, ResourceType.TGA) else None
+            tga_in_mod = (
+                self.mod.get(renamed, ResourceType.TGA)
+                if self.mod.has(renamed, ResourceType.TGA)
+                else None
+            )
             if tga_in_mod is None:
-                tex = installation.texture(lightmap, [SearchLocation.CHITIN, SearchLocation.OVERRIDE, SearchLocation.TEXTURES_TPA, SearchLocation.TEXTURES_GUI])
+                tex = installation.texture(
+                    lightmap,
+                    [
+                        SearchLocation.CHITIN,
+                        SearchLocation.OVERRIDE,
+                        SearchLocation.TEXTURES_TPA,
+                        SearchLocation.TEXTURES_GUI,
+                    ],
+                )
                 if tex is not None:
                     # Convert to RGBA and store as TGA
                     tex = tex.copy()
@@ -394,7 +426,7 @@ class IndoorMap:
         self.used_kits.clear()
         self.scan_mdls.clear()
 
-        target_tsl = self._target_is_k2(installation, game_override)
+        target_tsl: bool = self._target_is_k2(installation, game_override)
 
         self.add_rooms()
         self.process_room_components()
@@ -428,7 +460,7 @@ class IndoorMap:
                 self.mod.set_data(f"load_{self.module_id}", restype, data)
 
         self.handle_door_insertions(target_tsl)
-        bounds = self._compute_bounds()
+        bounds: tuple[Vector2, Vector2] = self._compute_bounds()
         self.set_area_attributes(bounds)
         self.set_ifo_attributes()
         self.finalize_module_data()
@@ -465,7 +497,12 @@ class IndoorMap:
 
         return json.dumps(data).encode("utf-8")
 
-    def load(self, raw: bytes, kits: list[Kit], module_kit_manager: ModuleKitManager | None = None) -> list[MissingRoomInfo]:
+    def load(
+        self,
+        raw: bytes,
+        kits: list[Kit],
+        module_kit_manager: ModuleKitManager | None = None,
+    ) -> list[MissingRoomInfo]:
         self.reset()
         data: dict[str, Any] = json.loads(raw)
         try:
@@ -501,9 +538,14 @@ class IndoorMap:
             comp_id = room_data["component"]
             s_kit: Kit | None = next((k for k in kits if k.id == kit_id), None)
             if s_kit is None:
-                RobustLogger().warning("Kit '%s' is missing, skipping room.", kit_id)
-                missing_rooms.append(MissingRoomInfo(kit_name=kit_id, component_name=comp_id, reason="kit_missing"))
-                continue
+                if module_kit_manager is not None:
+                    mk = module_kit_manager.get_module_kit(kit_id)
+                    if mk.ensure_loaded():
+                        s_kit = mk
+                if s_kit is None:
+                    RobustLogger().warning("Kit '%s' is missing, skipping room.", kit_id)
+                    missing_rooms.append(MissingRoomInfo(kit_name=kit_id, component_name=comp_id, reason="kit_missing"))
+                    continue
             s_component: KitComponent | None = next((c for c in s_kit.components if c.id == comp_id), None)
             if s_component is None:
                 RobustLogger().warning("Component '%s' is missing in kit '%s', skipping room.", comp_id, s_kit.id)
@@ -617,13 +659,15 @@ def build_mod_from_indoor_file_modulekit(
     indoor_map.load(Path(indoor_path).read_bytes(), [], module_kit_manager)
     if module_id:
         indoor_map.module_id = module_id
-    # For modulekit builds, we need to create kits from the module_kit_manager
-    # Get available module roots and create kits for them
-    kits = []
-    for module_root in module_kit_manager.get_module_roots():
-        kit = module_kit_manager.get_module_kit(module_root)
-        if kit is not None:
-            kits.append(kit)
+    # For implicit-kit builds, just pass the kits referenced by the rooms (deduped by id).
+    kits: list[Kit] = []
+    seen: set[str] = set()
+    for room in indoor_map.rooms:
+        kit = room.component.kit
+        if kit.id in seen:
+            continue
+        seen.add(kit.id)
+        kits.append(kit)
     indoor_map.build(installation, kits, output_mod_path, game_override=game, loadscreen_path=loadscreen_path)
 
 
@@ -634,17 +678,29 @@ def extract_indoor_from_module_as_modulekit(
     game: Game | None,
     logger: RobustLogger | None = None,
 ) -> IndoorMap:
-    """Extract indoor map using ModuleKit (implicit-kit) instead of external kits."""
+    """Extract indoor map using ModuleKit (implicit-kit) instead of external kits.
+
+    This path avoids `pykotor.common.module.Module` (which requires `module.ifo`) by
+    reading LYT/MDL/MDX/WOK directly via `ModuleKitManager`'s capsule-based loader.
+    """
+    if logger is None:
+        logger = RobustLogger()
+
+    module_root = Path(module_name).stem.lower()
     installation = Installation(CaseAwarePath(installation_path))
     module_kit_manager = ModuleKitManager(installation)
-    return extract_indoor_from_module_name(
-        module_name,
-        installation_path=installation_path,
-        kits_path="",  # Not used when module_kit_manager is provided
-        game=game,
-        logger=logger,
-        module_kit_manager=module_kit_manager,
-    )
+    kit = module_kit_manager.get_module_kit(module_root)
+    if not kit.ensure_loaded():
+        msg = f"Failed to load module '{module_root}' as ModuleKit"
+        raise ValueError(msg)
+
+    indoor = IndoorMap(module_id=module_root)
+    for comp in kit.components:
+        pos = getattr(comp, "default_position", Vector3.from_null())
+        indoor.rooms.append(IndoorMapRoom(comp, Vector3(pos.x, pos.y, pos.z), rotation=0.0, flip_x=False, flip_y=False))
+    indoor.rebuild_room_connections()
+    logger.debug("ModuleKit extraction produced %d room(s) for '%s'", len(indoor.rooms), module_root)
+    return indoor
 
 
 def extract_indoor_from_module_files(
@@ -708,7 +764,10 @@ def _apply_flip(points: list[Vector3], flip_x: bool, flip_y: bool) -> list[Vecto
     return out
 
 
-def _apply_rotate_z(points: list[Vector3], rotation_deg: float) -> list[Vector3]:
+def _apply_rotate_z(
+    points: list[Vector3],
+    rotation_deg: float,
+) -> list[Vector3]:
     if abs(rotation_deg) < 1e-12:
         return [Vector3(p.x, p.y, p.z) for p in points]
     cos = math.cos(math.radians(rotation_deg))
@@ -719,7 +778,10 @@ def _apply_rotate_z(points: list[Vector3], rotation_deg: float) -> list[Vector3]
     return out
 
 
-def _apply_translate(points: list[Vector3], translation: Vector3) -> list[Vector3]:
+def _apply_translate(
+    points: list[Vector3],
+    translation: Vector3,
+) -> list[Vector3]:
     if translation.x == 0 and translation.y == 0 and translation.z == 0:
         return [Vector3(p.x, p.y, p.z) for p in points]
     return [Vector3(p.x + translation.x, p.y + translation.y, p.z + translation.z) for p in points]
@@ -757,8 +819,8 @@ def infer_room_transform(
     if len(base_vertices) != len(instance_vertices) or not base_vertices:
         return None
 
-    _base_centroid = _centroid(base_vertices)
-    inst_centroid = _centroid(instance_vertices)
+    _base_centroid: Vector3 = _centroid(base_vertices)
+    inst_centroid: Vector3 = _centroid(instance_vertices)
 
     best: tuple[bool, bool, float, Vector3, float] | None = None
 
@@ -852,22 +914,29 @@ def extract_indoor_from_module_name(
         logger = RobustLogger()
 
     installation = Installation(CaseAwarePath(installation_path))
-    kits = load_kits(kits_path)
+    kits: list[Kit] = []
+    if str(kits_path):
+        kits = load_kits(kits_path)
+    if module_kit_manager is not None:
+        module_root = Installation.get_module_root(module_name)
+        mk = module_kit_manager.get_module_kit(module_root)
+        if mk.ensure_loaded():
+            kits.append(mk)
 
     module = Module(module_name, installation, use_dot_mod=True)
-    lyt_res = module.layout()
+    lyt_res: ModuleResource[LYT] | None = module.layout()
     if lyt_res is None or lyt_res.resource() is None:
         raise ValueError(f"Module '{module_name}' has no LYT layout; cannot extract rooms.")
     lyt: LYT | None = lyt_res.resource()
     if lyt is None:
         raise ValueError(f"Module '{module_name}' has no LYT layout; cannot extract rooms.")
 
-    are_res = module.are()
+    are_res: ModuleResource[ARE] | None = module.are()
     are: ARE | None = None if are_res is None else are_res.resource()
-    ifo_res = module.info()
+    ifo_res: ModuleResource[IFO] | None = module.ifo()
     ifo: IFO | None = None if ifo_res is None else ifo_res.resource()
 
-    indoor = IndoorMap()
+    indoor: IndoorMap = IndoorMap()
     indoor.module_id = module.module_id() or "test01"
     if are is not None:
         indoor.name = are.name
@@ -876,12 +945,7 @@ def extract_indoor_from_module_name(
         indoor.warp_point = ifo.entry_position
 
     # Build candidate pool once; prefilter by vertex count.
-    components: list[KitComponent] = [
-        comp
-        for kit in kits
-        for comp in kit.components
-        if module_kit_manager is None or module_kit_manager.is_kit_valid(Installation.get_module_root(module_name))
-    ]
+    components: list[KitComponent] = [comp for kit in kits for comp in kit.components]
     by_vert_count: dict[int, list[KitComponent]] = {}
     for comp in components:
         vcount = len(comp.bwm.vertices())
