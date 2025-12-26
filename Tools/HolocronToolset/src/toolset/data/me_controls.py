@@ -14,10 +14,9 @@ from qtpy.QtGui import QKeySequence
 from pykotor.gl.scene import Camera
 from pykotor.tools.encoding import decode_bytes_with_fallbacks
 from utility.common.geometry import Vector3
-from utility.system.path import Path
 
 if TYPE_CHECKING:
-    from glm import vec3
+    from pykotor.gl.glm_compat import vec3
     from qtpy.QtCore import QKeyCombination, Qt
 
     from pykotor.resource.generics.git import GITInstance
@@ -417,9 +416,9 @@ class DynamicModuleEditorControls(ModuleEditorControls):
             if controlJSON["keys"] is None:
                 keys = None
             else:
-                keys: set[int | Qt.Key | QKeySequence] | None = set()
+                keys: set[int | Qt.Key | QKeySequence | QKeyCombination] | None = set()
                 for keyJSON in controlJSON["keys"]:
-                    key: int | Qt.Key | QKeySequence = keyJSON if isinstance(keyJSON, int) else get_key_code(keyJSON)
+                    key: int | Qt.Key | QKeySequence | QKeyCombination = keyJSON if isinstance(keyJSON, int) else get_key_code(keyJSON)
                     keys.add(key)
 
             if controlJSON["mouse"] is None:
@@ -441,7 +440,7 @@ class DynamicModuleEditorControls(ModuleEditorControls):
                     try:
                         effect: DCEffect = DC_EFFECT_MAP[effectJSON](*args)
                     except TypeError as e:
-                        msg: str = f"Invalid number of arguments for '{effectJSON}'."
+                        msg = f"Invalid number of arguments for '{effectJSON}'."
                         raise ValueError(msg) from e
 
                     effects.append(effect)
@@ -618,11 +617,11 @@ class HolocronModuleEditorControls(DynamicModuleEditorControls):
 class DCItem:
     def __init__(
         self,
-        keys: set[int] | set[Qt.Key | QKeySequence],
+        keys: set[int] | set[Qt.Key | QKeySequence | QKeyCombination],
         mouse: set[int] | set[Qt.MouseButton] | set[int | Qt.MouseButton],
         effects: list[DCEffect],
     ):
-        self.keys: set[int] | set[Qt.Key | QKeySequence] = keys
+        self.keys: set[int] | set[Qt.Key | QKeySequence | QKeyCombination] = keys
         self.mouse: set[int] | set[Qt.MouseButton] | set[int | Qt.MouseButton] = mouse
         self.effects: list[DCEffect] = effects
 
@@ -784,7 +783,7 @@ class DCEffect(ABC):
         elif value == "cpdxFlat":
             forward: vec3 = -dy * controls.renderer.scene.camera.forward()
             sideward: vec3 = dx * controls.renderer.scene.camera.sideward()
-            output: float = -(forward.x + sideward.x)
+            output = -(forward.x + sideward.x)
         elif value == "cpdyFlat":
             forward = -dy * controls.renderer.scene.camera.forward()
             sideward = dx * controls.renderer.scene.camera.sideward()

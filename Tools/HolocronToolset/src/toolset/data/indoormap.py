@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, NamedTuple
 
 from loggerplus import RobustLogger  # type: ignore[import-untyped]
-from qtpy import QtCore
+from qtpy import QtCore  # pyright: ignore[reportMissingImports]
 from qtpy.QtGui import QColor, QImage, QLinearGradient, QPainter, QPixmap, QTransform  # pyright: ignore[reportMissingImports]
 
 from pykotor.common.language import LocalizedString

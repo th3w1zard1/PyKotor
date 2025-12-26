@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from pykotor.resource.formats.bwm import BWM
 
 
-def ensure_component_image(component: "KitComponent") -> QImage:
+def ensure_component_image(component: KitComponent) -> QImage:
     """Ensure a `KitComponent` has a Qt `image` attribute and return it."""
     img = component.image
     if img is not None:
@@ -58,7 +58,7 @@ def _get_default_material_color(material: SurfaceMaterial) -> QColor:
     return material_colors.get(material, QColor(128, 128, 128))
 
 
-def _create_preview_image_from_bwm(bwm: "BWM") -> QImage:
+def _create_preview_image_from_bwm(bwm: BWM) -> QImage:
     """Create a preview image from a walkmesh showing fully rendered materials.
 
     Matches the historical Toolset/kit rendering conventions:

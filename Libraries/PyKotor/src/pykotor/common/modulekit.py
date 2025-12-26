@@ -317,12 +317,15 @@ class ModuleKit(Kit):
                 rotation_deg += 360
 
             closest_edge: int | None = self._find_closest_edge(matching_component.bwm, local_position)
-            edge_index = 0 if closest_edge is None else closest_edge
+            edge_index: int = 0 if closest_edge is None else closest_edge
 
             door: KitDoor = self.doors[0] if self.doors else self._create_default_door()
             door_name_lower: str = doorhook.door.lower()
             for existing_door in self.doors:
-                if existing_door.utdK1.resref.get().lower() == door_name_lower or existing_door.utdK2.resref.get().lower() == door_name_lower:
+                if (
+                    existing_door.utdK1.resref.get().lower() == door_name_lower
+                    or existing_door.utdK2.resref.get().lower() == door_name_lower
+                ):
                     door = existing_door
                     break
 

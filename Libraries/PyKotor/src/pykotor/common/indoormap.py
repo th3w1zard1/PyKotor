@@ -12,6 +12,7 @@ from loggerplus import RobustLogger
 from pykotor.common.indoorkit import Kit, KitComponent, KitComponentHook, KitDoor
 from pykotor.common.language import LocalizedString
 from pykotor.common.misc import Color, Game, ResRef
+from pykotor.common.modulekit import ModuleKit, ModuleKitManager
 from pykotor.extract.installation import Installation, SearchLocation
 from pykotor.resource.formats.bwm import BWM, bytes_bwm, read_bwm
 from pykotor.resource.formats.erf import ERF, ERFType, write_erf
@@ -25,8 +26,6 @@ from pykotor.resource.generics.utd import bytes_utd
 from pykotor.resource.type import ResourceType
 from pykotor.tools import model
 from utility.common.geometry import Vector2, Vector3
-
-from .modulekit import ModuleKitManager
 
 if TYPE_CHECKING:
     import os
@@ -176,10 +175,7 @@ class IndoorMap:
         for kit_room in self.used_rooms:
             self.scan_mdls.add(kit_room.mdl)
             self.used_kits.add(kit_room.kit)
-            for door_padding_dict in (
-                list(kit_room.kit.top_padding.values())
-                + list(kit_room.kit.side_padding.values())
-            ):
+            for door_padding_dict in list(kit_room.kit.top_padding.values()) + list(kit_room.kit.side_padding.values()):
                 for padding_model in door_padding_dict.values():
                     self.scan_mdls.add(padding_model.mdl)
 
@@ -247,11 +243,7 @@ class IndoorMap:
             lm_renames[lightmap.lower()] = renamed
 
             # Prefer kit-copied lightmaps already in mod; else try installation for texture + txi.
-            tga_in_mod = (
-                self.mod.get(renamed, ResourceType.TGA)
-                if self.mod.has(renamed, ResourceType.TGA)
-                else None
-            )
+            tga_in_mod = self.mod.get(renamed, ResourceType.TGA) if self.mod.has(renamed, ResourceType.TGA) else None
             if tga_in_mod is None:
                 tex = installation.texture(
                     lightmap,
@@ -639,5 +631,3 @@ class _RoomTransformMatch(NamedTuple):
     rotation_deg: float
     translation: Vector3
     rms_error: float
-
-
