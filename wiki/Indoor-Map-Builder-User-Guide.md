@@ -126,7 +126,7 @@ You can combine 2 or more rooms into a single merged room:
 - **Walkmeshes combined**: All room walkmeshes are merged into a single walkmesh (collision + pathfinding)
 - **Internal hooks removed**: Hooks that connected the merged rooms to each other are removed (no longer needed)
 - **External hooks preserved**: Hooks that connected to other rooms outside the merge are kept
-- **Visual model**: The first room's model is used for display (model merging is not yet implemented)
+- **Visual model**: The first room's MDL/MDX model is used for rendering. The merged walkmesh (BWM) correctly combines all collision geometry from all rooms.
 - **Undo/Redo supported**: You can undo/redo the merge operation without data loss
 
 **When to use merging:**
