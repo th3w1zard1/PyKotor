@@ -1648,7 +1648,6 @@ dependencies = [
     { name = "comtypes", version = "1.4.12", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9' and sys_platform == 'win32'" },
     { name = "comtypes", version = "1.4.14", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9' and sys_platform == 'win32'" },
     { name = "idna" },
-    { name = "jsmin" },
     { name = "jsonpickle" },
     { name = "markdown", version = "3.7", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
     { name = "markdown", version = "3.9", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version == '3.9.*'" },
@@ -1708,7 +1707,6 @@ requires-dist = [
     { name = "certifi", marker = "extra == 'updater'", specifier = "==2021.10.8" },
     { name = "comtypes", marker = "sys_platform == 'win32'", specifier = ">=1.4.0" },
     { name = "idna", specifier = ">=3.11" },
-    { name = "jsmin", specifier = ">=3.0.1" },
     { name = "jsonpickle", specifier = ">=4.1.1" },
     { name = "markdown", marker = "python_full_version < '3.9'", specifier = ">=3.4.4,<3.9" },
     { name = "markdown", marker = "python_full_version >= '3.9'", specifier = ">=3.4.4" },
@@ -2169,12 +2167,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/df/bf/f7da0350254c0ed7c
 wheels = [
     { url = "https://files.pythonhosted.org/packages/62/a1/3d680cbfd5f4b8f15abc1d571870c5fc3e594bb582bc3b64ea099db13e56/jinja2-3.1.6-py3-none-any.whl", hash = "sha256:85ece4451f492d0c13c5dd7c13a64681a86afae63a5f347908daf103ce6d2f67", size = 134899, upload-time = "2025-03-05T20:05:00.369Z" },
 ]
-
-[[package]]
-name = "jsmin"
-version = "3.0.1"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/5e/73/e01e4c5e11ad0494f4407a3f623ad4d87714909f50b17a06ed121034ff6e/jsmin-3.0.1.tar.gz", hash = "sha256:c0959a121ef94542e807a674142606f7e90214a2b3d1eb17300244bbb5cc2bfc", size = 13925, upload-time = "2022-01-16T20:35:59.13Z" }
 
 [[package]]
 name = "jsonpickle"

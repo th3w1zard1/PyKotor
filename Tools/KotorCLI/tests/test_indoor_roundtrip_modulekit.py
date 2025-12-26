@@ -66,6 +66,11 @@ FIXTURE: FixtureModule = FixtureModule(
     / "step01.mod",
 )
 
+# We keep the source module (`FIXTURE.module_root`) in the installation as the implicit-kit source,
+# but we build a *different* module id so the builder is idempotent on its own output
+# (i.e., we don't overwrite the source ModuleKit inputs).
+OUTPUT_MODULE_ROOT = "step01_rt"
+
 
 def _run_cli(argv: list[str]) -> int:
     return int(cli_main(argv))
@@ -149,6 +154,7 @@ def _parse_indoor(raw: bytes) -> dict[str, Any]:
 @dataclass
 class RoundtripResult:
     module_root: str
+    source_module_root: str
     install_dir: Path
     indoor0_raw: bytes
     indoor1_raw: bytes
@@ -164,13 +170,18 @@ def rt(tmp_path_factory: pytest.TempPathFactory) -> RoundtripResult:
     tmp_path = tmp_path_factory.mktemp("rt_modulekit")
 
     install_dir = _make_min_installation(tmp_path)
+    # Install the implicit-kit *source* module.
     tiny_mod = install_dir / "modules" / f"{FIXTURE.module_root}.mod"
-    _write_tiny_1room_module_from_fixture(src_mod=FIXTURE.mod_path, dst_mod=tiny_mod, module_root=FIXTURE.module_root)
+    _write_tiny_1room_module_from_fixture(
+        src_mod=FIXTURE.mod_path,
+        dst_mod=tiny_mod,
+        module_root=FIXTURE.module_root,
+    )
 
-    indoor0 = tmp_path / f"{FIXTURE.module_root}.0.indoor"
-    indoor1 = tmp_path / f"{FIXTURE.module_root}.1.indoor"
-    mod1 = tmp_path / f"{FIXTURE.module_root}.1.mod"
-    mod2 = tmp_path / f"{FIXTURE.module_root}.2.mod"
+    indoor0 = tmp_path / f"{OUTPUT_MODULE_ROOT}.0.indoor"
+    indoor1 = tmp_path / f"{OUTPUT_MODULE_ROOT}.1.indoor"
+    mod1 = tmp_path / f"{OUTPUT_MODULE_ROOT}.1.mod"
+    mod2 = tmp_path / f"{OUTPUT_MODULE_ROOT}.2.mod"
 
     rc = _run_cli(
         [
@@ -189,6 +200,13 @@ def rt(tmp_path_factory: pytest.TempPathFactory) -> RoundtripResult:
         ]
     )
     assert rc == 0
+
+    # Normalize the `.indoor` module id to the output module root, so the build output embeds
+    # an `.indoor` that is stable and so `indoor0 == indoor1`.
+    d0 = _parse_indoor(indoor0.read_bytes())
+    d0["warp"] = OUTPUT_MODULE_ROOT
+    d0["module_id"] = OUTPUT_MODULE_ROOT
+    indoor0.write_bytes(json.dumps(d0).encode("utf-8"))
 
     rc = _run_cli(
         [
@@ -202,19 +220,22 @@ def rt(tmp_path_factory: pytest.TempPathFactory) -> RoundtripResult:
             str(install_dir),
             "--game",
             "k1",
+            "--module-filename",
+            OUTPUT_MODULE_ROOT,
             "--log-level",
             "error",
         ]
     )
     assert rc == 0
 
-    shutil.copyfile(mod1, tiny_mod)
+    # Put the built module into the installation under its own name; keep the source module intact.
+    shutil.copyfile(mod1, install_dir / "modules" / f"{OUTPUT_MODULE_ROOT}.mod")
     rc = _run_cli(
         [
             "indoor-extract",
             "--implicit-kit",
             "--module",
-            FIXTURE.module_root,
+            OUTPUT_MODULE_ROOT,
             "--output",
             str(indoor1),
             "--installation",
@@ -239,6 +260,8 @@ def rt(tmp_path_factory: pytest.TempPathFactory) -> RoundtripResult:
             str(install_dir),
             "--game",
             "k1",
+            "--module-filename",
+            OUTPUT_MODULE_ROOT,
             "--log-level",
             "error",
         ]
@@ -253,7 +276,8 @@ def rt(tmp_path_factory: pytest.TempPathFactory) -> RoundtripResult:
     mod2_payloads = _read_erf_payloads(mod2)
 
     return RoundtripResult(
-        module_root=FIXTURE.module_root,
+        module_root=OUTPUT_MODULE_ROOT,
+        source_module_root=FIXTURE.module_root,
         install_dir=install_dir,
         indoor0_raw=indoor0_raw,
         indoor1_raw=indoor1_raw,
@@ -394,7 +418,7 @@ def test_imi_module_root_written(rt: RoundtripResult):
     d = _parse_indoor(rt.indoor1_raw)
     for room in d["rooms"]:
         assert "module_root" in room
-        assert str(room["module_root"]).lower() == rt.module_root
+        assert str(room["module_root"]).lower() == rt.source_module_root
 
 
 def test_imi_warp_matches(rt: RoundtripResult):
@@ -417,7 +441,7 @@ def test_imi_components_unique(rt: RoundtripResult):
 
 def test_imi_kit_is_module_root(rt: RoundtripResult):
     d = _parse_indoor(rt.indoor1_raw)
-    assert all(str(r["kit"]).lower() == rt.module_root for r in d["rooms"])
+    assert all(str(r["kit"]).lower() == rt.source_module_root for r in d["rooms"])
 
 
 def test_imi_loadable_with_modulekit(rt: RoundtripResult):
