@@ -1,3 +1,7 @@
+"""Pazaak card game implementation and rules.
+Note: Pazaak is a card game minigame in KotOR with specific card types and scoring rules
+"""
+
 from __future__ import annotations
 
 import random
@@ -5,20 +9,6 @@ import random
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import ClassVar
-
-"""Pazaak card game implementation and rules.
-
-References:
-----------
-    vendor/pazaak-eggborne (Pazaak game in JavaScript)
-    vendor/pazaak-iron-ginger (Pazaak game in Python)
-    vendor/Java_Pazaak (Pazaak game in Java)
-    vendor/PazaakApp (Pazaak web app)
-    vendor/react-pazaak (React Pazaak component)
-    vendor/vue-pazaak (Vue Pazaak component)
-    vendor/GetLucky33 (Pazaak-related tool)
-    Note: Pazaak is a card game minigame in KotOR with specific card types and scoring rules
-"""
 
 
 class CardType:
@@ -28,10 +18,10 @@ class CardType:
     YELLOW_SPECIAL = "Yellow"
 
 
-@dataclass
 class PazaakSideCard:
-    value: ClassVar[int | list[int]]
-    card_type: ClassVar[CardType]
+    def __init__(self, value: int | list[int], card_type: CardType):
+        self.value: int | list[int] = value
+        self.card_type: CardType = card_type
 
     def __str__(self) -> str:
         if self.card_type == CardType.YELLOW_SPECIAL:
@@ -42,7 +32,7 @@ class PazaakSideCard:
         self,
         choice: str | None = None,
     ) -> int:
-        value_map: dict[CardType, int | list[int]] = {
+        value_map: dict[CardType, int | list[int] | None] = {
             CardType.POSITIVE: self.value,
             CardType.NEGATIVE: -self.value,
             CardType.POS_OR_NEG: self.value if choice == "+" else -self.value,
