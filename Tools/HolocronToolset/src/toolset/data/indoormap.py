@@ -229,7 +229,7 @@ class IndoorMap:
             mdl, mdx = self.process_model(room, installation)
 
             # Process lightmaps
-            self.process_lightmaps(room, mdl, installation)
+            mdl = self.process_lightmaps(room, mdl, installation)
 
             # Add model resources
             self.add_model_resources(modelname, mdl, mdx)
@@ -370,7 +370,8 @@ class IndoorMap:
             self.mod.set_data(renamed, ResourceType.TGA, lightmap_data)
             self.mod.set_data(renamed, ResourceType.TXI, txi_data if txi_data is not None else b"")
 
-        mdl_data = model.change_lightmaps(mdl_data, lm_renames)  # FIXME(th3w1zard1): Should this be returned and used throughout?
+        mdl_data = model.change_lightmaps(mdl_data, lm_renames)
+        return mdl_data
 
     def add_model_resources(
         self,
