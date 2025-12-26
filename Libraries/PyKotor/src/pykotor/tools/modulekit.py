@@ -19,17 +19,18 @@ Implementation notes:
 from __future__ import annotations
 
 import math
+
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
 from loggerplus import RobustLogger
-from pykotor.common.module import Module
+from pykotor.common.module import Module, ModuleResource
 from pykotor.resource.formats.bwm import BWM, BWMEdge, BWMFace, read_bwm
 from pykotor.resource.generics.utd import UTD
 from pykotor.resource.type import ResourceType
 from pykotor.tools.indoorkit import Kit, KitComponent, KitComponentHook, KitDoor
 from pykotor.tools.kit import _extract_doorhooks_from_bwm, _recenter_bwm  # NOTE: shared logic
-from utility.common.geometry import SurfaceMaterial, Vector3, Vector4
+from utility.common.geometry import SurfaceMaterial, Vector3
 
 if TYPE_CHECKING:
     from pykotor.extract.installation import Installation
@@ -85,14 +86,18 @@ class ModuleKit(Kit):
         default_door = self._create_default_door()
         self.doors.append(default_door)
 
-        # Extract rooms from LYT
+        # Extract rooms from LYT and maintain mapping for doorhook processing
+        # Map LYT room index to component (not all rooms may successfully create components)
+        lyt_room_to_component: dict[int, KitComponent] = {}
         for room_idx, lyt_room in enumerate(lyt_data.rooms):
             component = self._component_from_lyt_room(lyt_room, room_idx, default_door)
             if component is not None:
                 self.components.append(component)
+                lyt_room_to_component[room_idx] = component
 
         # Also load any doorhooks from LYT as potential hook points
-        self._process_lyt_doorhooks(lyt_data)
+        # Pass the mapping to ensure correct room-to-component association
+        self._process_lyt_doorhooks(lyt_data, lyt_room_to_component)
 
     def _create_default_door(self) -> KitDoor:
         utd = UTD()
@@ -185,7 +190,7 @@ class ModuleKit(Kit):
             return None
 
         # Try to find the WOK resource
-        wok_resource = self._module.resource(model_name, ResourceType.WOK)
+        wok_resource: ModuleResource | None = self._module.resource(model_name, ResourceType.WOK)
         if wok_resource is None:
             return None
 
@@ -226,7 +231,7 @@ class ModuleKit(Kit):
 
         return bwm
 
-    def _process_lyt_doorhooks(self, lyt_data: LYT) -> None:
+    def _process_lyt_doorhooks(self, lyt_data: LYT, lyt_room_to_component: dict[int, KitComponent]) -> None:
         """Process LYT doorhooks to create component hooks.
 
         Maps LYT doorhooks (world-space door positions) to KitComponentHook objects
@@ -239,6 +244,13 @@ class ModuleKit(Kit):
         3. Convert quaternion orientation to rotation angle (yaw in degrees)
         4. Find the closest edge on the BWM to the doorhook position
         5. Create KitComponentHook objects and add them to the component
+
+        Args:
+            lyt_data: The LYT layout data containing doorhooks.
+            lyt_room_to_component: Mapping from LYT room index to created KitComponent.
+                Only includes successfully created components (excludes None results).
+                This ensures correct room-to-component association even when some
+                component creations fail.
 
         References:
         ----------
@@ -254,23 +266,17 @@ class ModuleKit(Kit):
         for doorhook in lyt_data.doorhooks:
             room_name_lower = doorhook.room.lower()
 
-            # Find the component that matches this room
-            # We need to match by finding which component was created from the LYT room
-            # with this model name. Since components are created in order from lyt_data.rooms,
-            # we can match by checking the component's default_position against room positions
-            matching_component: KitComponent | None = None
-
-            # Try to find component by matching room name to component's source
-            # Since we don't store the original room name directly, we'll match by position
-            # and model name. First, find the LYT room that matches this doorhook's room name
+            # Find the LYT room that matches this doorhook's room name
             lyt_room_match: LYTRoom | None = None
-            for lyt_room in lyt_data.rooms:
+            room_idx: int | None = None
+            for idx, lyt_room in enumerate(lyt_data.rooms):
                 room_model = (lyt_room.model or "").lower()
-                if room_model == room_name_lower or room_name_lower == f"room{lyt_data.rooms.index(lyt_room)}":
+                if room_model == room_name_lower or room_name_lower == f"room{idx}":
                     lyt_room_match = lyt_room
+                    room_idx = idx
                     break
 
-            if lyt_room_match is None:
+            if lyt_room_match is None or room_idx is None:
                 RobustLogger().warning(
                     "Doorhook references room '%s' which doesn't exist in LYT for module '%s'",
                     doorhook.room,
@@ -278,28 +284,24 @@ class ModuleKit(Kit):
                 )
                 continue
 
-            # Find component that matches this LYT room by position
-            # Components are created in the same order as LYT rooms
-            room_idx = lyt_data.rooms.index(lyt_room_match)
-            if 0 <= room_idx < len(self.components):
-                matching_component = self.components[room_idx]
-            else:
+            # Use the mapping to find the component (handles cases where component creation failed)
+            # This fixes the index misalignment bug where failed component creations
+            # would cause doorhooks to be assigned to wrong components
+            matching_component = lyt_room_to_component.get(room_idx)
+            if matching_component is None:
                 RobustLogger().warning(
-                    "Doorhook room '%s' index %d out of range for module '%s'",
+                    "Doorhook room '%s' (index %d) has no corresponding component in module '%s' (component creation may have failed)",
                     doorhook.room,
                     room_idx,
                     self.module_root,
                 )
                 continue
 
-            if matching_component is None:
-                continue
-
             # Convert doorhook world position to local space
             # Doorhook position is in world space, but component BWM is centered at origin
             # We need to subtract the room's original position to get local coordinates
-            room_position = matching_component.default_position  # type: ignore[attr-defined]
-            local_position = Vector3(
+            room_position: Vector3 = matching_component.default_position  # type: ignore[attr-defined]
+            local_position: Vector3 = Vector3(
                 doorhook.position.x - room_position.x,
                 doorhook.position.y - room_position.y,
                 doorhook.position.z - room_position.z,
@@ -335,7 +337,7 @@ class ModuleKit(Kit):
             # Try to find a door by name, otherwise use default door
             door = self.doors[0] if self.doors else self._create_default_door()
             door_name_lower = doorhook.door.lower()
-            for i, existing_door in enumerate(self.doors):
+            for _, existing_door in enumerate(self.doors):
                 if existing_door.utdK1.resref.get().lower() == door_name_lower or existing_door.utdK2.resref.get().lower() == door_name_lower:
                     door = existing_door
                     break
@@ -467,12 +469,14 @@ class ModuleKitManager:
         module_names: dict[str, str | None] = self.get_module_names()
 
         # Try to find the display name from various extensions
-        for ext in (".rim", ".mod", "_s.rim"):
-            filename = f"{module_root}{ext}"
-            if filename in module_names:
-                area_name = module_names[filename]
-                if area_name:
-                    return f"{module_root.upper()} - {area_name}"
+        for ext in (".mod", "_s.rim", ".rim", "_dlg.erf", "_adx.rim", "_a.rim"):
+            filename: str = f"{module_root}{ext}"
+            if filename not in module_names:
+                continue
+            area_name: str | None = module_names[filename]
+            if area_name is None:
+                continue
+            return f"{module_root.upper()} - {area_name}"
 
         return module_root.upper()
 
@@ -488,7 +492,7 @@ class ModuleKitManager:
         Returns:
             A ModuleKit for the specified module.
         """
-        key = module_root.lower()
+        key: str = module_root.lower()
         if key not in self._cache:
             self._cache[key] = ModuleKit(module_root=key, installation=self._installation)
         return self._cache[key]
