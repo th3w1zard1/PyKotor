@@ -1519,17 +1519,27 @@ class BWMFace(Face, ComparableMixin):
         # Edge 2 (v3->v1): transition index into LYT door hooks
         self.trans3: int | None = None
 
-    # Leave these commented, must use identity-based equality for BWMFace, not value-based.
-    #def __eq__(self, other):
-    #    if not isinstance(other, BWMFace):
-    #        return NotImplemented
-    #    parent_eq = super().__eq__(other)
-    #    if parent_eq is NotImplemented:
-    #        return NotImplemented
-    #    return parent_eq and self.trans1 == other.trans1 and self.trans2 == other.trans2 and self.trans3 == other.trans3
+    def __eq__(self, other):  # type: ignore[override]
+        """Value-based equality (geometry + transitions).
 
-    #def __hash__(self):
-    #    return hash((super().__hash__(), self.trans1, self.trans2, self.trans3))
+        IMPORTANT: some algorithms must map a *specific face object* back to its index when
+        emitting edge indices (face_index * 3 + edge). Those algorithms must use identity-based
+        lookup (the `is` operator) instead of relying on `__eq__`. See `io_bwm.py`.
+        """
+        if not isinstance(other, BWMFace):
+            return NotImplemented
+        parent_eq = super().__eq__(other)
+        if parent_eq is NotImplemented:
+            return NotImplemented
+        return (
+            parent_eq
+            and self.trans1 == other.trans1
+            and self.trans2 == other.trans2
+            and self.trans3 == other.trans3
+        )
+
+    def __hash__(self):  # type: ignore[override]
+        return hash((super().__hash__(), self.trans1, self.trans2, self.trans3))
 
 
 class BWMMostSignificantPlane(IntEnum):

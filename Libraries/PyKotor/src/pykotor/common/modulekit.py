@@ -140,12 +140,15 @@ class ModuleKit(Kit):
 
         # IMPORTANT: keep walkmesh and model in the same coordinate space.
         # The model is stored in its own local space and placed in the module via the LYT room position.
-        # Module WOKs are commonly authored in room-local space (matching MDL coordinates), so they
-        # do NOT need translation.
+        # Game modules typically store binary WOKs in *world* coordinates (baked with the LYT room position).
+        # Toolset/editor workflows expect kit components to be in room-local space, with placement applied
+        # separately via `IndoorMapRoom.position`.
         #
-        # Do NOT bbox-center; many rooms have non-centered origins (e.g. hallways), and bbox-centering
-        # shifts collision relative to visuals.
-        # bwm.translate(-lyt_room.position.x, -lyt_room.position.y, -lyt_room.position.z)
+        # Therefore, when extracting a module into a ModuleKit component, we convert the module WOK into
+        # room-local coordinates by subtracting the LYT room position.
+        #
+        # NOTE: We intentionally do NOT bbox-center here; the engine expects the original coordinate basis.
+        bwm.translate(-lyt_room.position.x, -lyt_room.position.y, -lyt_room.position.z)
 
         # Try to get the model data
         mdl = self._get_room_model(model_name, ResourceType.MDL) or b""
