@@ -374,9 +374,10 @@ class ModuleKit(Kit):
 
         for edge in edges:
             # Get edge vertices based on local edge index
-            # edge.index is the LOCAL edge index (0, 1, or 2) within the face
             face = edge.face
-            local_edge_index = edge.index
+            # NOTE: `edge.index` is a GLOBAL edge index computed as `face_index * 3 + local_edge_index`.
+            # Convert to local (0, 1, 2) before choosing the face vertices.
+            local_edge_index = edge.index % 3
 
             if local_edge_index == 0:
                 v1 = face.v1

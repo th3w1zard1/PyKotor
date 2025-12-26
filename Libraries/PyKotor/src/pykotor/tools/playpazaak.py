@@ -26,23 +26,34 @@ class PazaakSideCard:
     def __str__(self) -> str:
         if self.card_type == CardType.YELLOW_SPECIAL:
             return f"Yellow {self.value}"
-        return f"{self.card_type.value.replace('+', f'+{self.value}').replace('-', f'-{self.value}')}"
+        if self.card_type == CardType.POS_OR_NEG:
+            return f"+/-{self.value}"
+        return f"{self.card_type}{self.value}"
 
     def get_value(
         self,
         choice: str | None = None,
     ) -> int:
-        value_map: dict[CardType, int | list[int] | None] = {
-            CardType.POSITIVE: self.value,
-            CardType.NEGATIVE: -self.value,
-            CardType.POS_OR_NEG: self.value if choice == "+" else -self.value,
-            CardType.YELLOW_SPECIAL: self.value[0],
-        }
+        # NOTE: Do not use a mapping/dict here: it would eagerly evaluate expressions like
+        # `-self.value` even when `self.value` is a `list[int]` for yellow special cards.
+        if self.card_type == CardType.YELLOW_SPECIAL:
+            if not isinstance(self.value, list):
+                raise TypeError(f"Yellow special card value must be a list[int], got {type(self.value)!r}")
+            if not self.value:
+                raise ValueError("Yellow special card value list cannot be empty")
+            return int(self.value[0])
 
-        if self.card_type not in value_map:
-            raise ValueError(f"Unknown card_type {self.card_type!r}")
+        if not isinstance(self.value, int):
+            raise TypeError(f"Card value must be an int for card_type={self.card_type!r}, got {type(self.value)!r}")
 
-        return value_map[self.card_type]
+        if self.card_type == CardType.POSITIVE:
+            return self.value
+        if self.card_type == CardType.NEGATIVE:
+            return -self.value
+        if self.card_type == CardType.POS_OR_NEG:
+            return self.value if choice == "+" else -self.value
+
+        raise ValueError(f"Unknown card_type {self.card_type!r}")
 
 
 @dataclass
