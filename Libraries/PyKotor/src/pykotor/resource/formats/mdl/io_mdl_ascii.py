@@ -337,10 +337,9 @@ class MDLAsciiWriter:
         self.write_line(1, f"bmax {mdl.bmax.x} {mdl.bmax.y} {mdl.bmax.z}")
         self.write_line(1, f"radius {mdl.radius}")
         self.write_line(0, "")
-        # ASCII MDL geometry lists nodes directly; the in-memory MDL has an implicit
-        # root container node that should NOT be serialized as a node itself.
-        for child in mdl.root.children:
-            self._write_node(1, child, None)
+        # Serialize the real root node as a node entry (as in binary MDL), so Binary→ASCII→Binary
+        # roundtrips preserve the full node set (including the model-name root).
+        self._write_node(1, mdl.root, None)
         self.write_line(0, "")
         self.write_line(0, "endmodelgeom " + mdl.name)
         self.write_line(0, "")
@@ -718,8 +717,11 @@ class MDLAsciiWriter:
         """
         self.write_line(0, "")
         self.write_line(0, f"newanim {anim.name} {model_name}")
-        self.write_line(1, f"length {anim.anim_length:.7g}")
-        self.write_line(1, f"transtime {anim.transition_length:.7g}")
+        # Preserve exact float values across Binary→ASCII→Binary roundtrips.
+        # Using general-format precision (e.g., .7g) will round float32-derived values like 1.899999976 → 1.9,
+        # which breaks strict equality tests.
+        self.write_line(1, f"length {repr(float(anim.anim_length))}")
+        self.write_line(1, f"transtime {repr(float(anim.transition_length))}")
         if anim.root_model:
             self.write_line(1, f"animroot {anim.root_model}")
 
@@ -1474,6 +1476,41 @@ class MDLAsciiReader:
             # Reference: vendor/mdlops/MDLOpsM.pm:4472-4549
             # Support both normal format and magnusll format with extra tvert indices
             parts = line.split()
+            # MDLOps ASCII commonly encodes faces as packed 4-tuples:
+            #   v1 v2 v3 packed_material
+            # and will often place TWO faces per line:
+            #   v1 v2 v3 packed_material v1 v2 v3 packed_material
+            #
+            # packed_material is a 32-bit integer (surface + smoothing in higher bits),
+            # e.g. values like 131072 are common and must NOT be treated as a vertex index.
+            #
+            # Reference: MDLOpsM.pm (faces export) + our binary face material packing helpers.
+            if len(parts) >= 4 and len(parts) % 4 == 0:
+                try:
+                    m0 = int(parts[3])
+                except ValueError:
+                    m0 = 0
+                if m0 > 0xFFFF:
+                    # Parse as groups of 4: (v1, v2, v3, packed_material)
+                    for base in range(0, len(parts), 4):
+                        v1 = int(parts[base + 0])
+                        v2 = int(parts[base + 1])
+                        v3 = int(parts[base + 2])
+                        packed_material = int(parts[base + 3])
+
+                        face = MDLFace()
+                        face.v1 = v1
+                        face.v2 = v2
+                        face.v3 = v3
+                        face.material = packed_material
+                        mesh.faces.append(face)
+
+                        self._task_count += 1
+                        if self._task_count >= self._task_total:
+                            self._task = ""
+                            break
+                    return True
+
             # Unit test fixtures also allow compact forms:
             # - "v1 v2 v3 material"
             # - "v1 v2 v3 material smoothing"
@@ -2033,17 +2070,45 @@ class MDLAsciiReader:
         if not self._nodes:
             return
 
-        # The in-memory MDL always has an implicit root container node. Nodes in the
-        # ASCII are attached under it when parent_id == -1.
-        self._mdl.root.children = []
+        # If the ASCII contains an explicit root node, prefer that as the real root.
+        # MDLOps uses a real node as the root of the geometry tree (no extra implicit container node).
+        # In many files/tests the root node is named "root" (not the same as `newmodel`).
+        #
+        # Heuristics:
+        # - If there is exactly one top-level node (parent_id == -1), that node is the root.
+        # - Otherwise, if there is a top-level node matching the model name, use that.
+        # - Otherwise, fall back to an implicit root container (legacy behavior).
+        explicit_root: MDLNode | None = None
+        top_level_nodes = [n for n in self._nodes if getattr(n, "parent_id", -1) == -1]
+        if self._mdl.name:
+            for n in top_level_nodes:
+                if n.name and n.name.lower() == self._mdl.name.lower():
+                    explicit_root = n
+                    break
+
+        # Many exported ASCIIs use a literal "root" node name. Treat that as an explicit root.
+        if explicit_root is None and len(top_level_nodes) == 1:
+            only = top_level_nodes[0]
+            if only.name and only.name.lower() == "root":
+                explicit_root = only
+
+        if explicit_root is not None:
+            self._mdl.root = explicit_root
+            self._mdl.root.children = []
+        else:
+            self._mdl.root.children = []
         for node in self._nodes:
             node.children = []
 
         # Build parent-child relationships
         for node in self._nodes:
             if node.parent_id == -1:
-                # Attach to root
-                self._mdl.root.children.append(node)
+                if explicit_root is None:
+                    # Attach to implicit root container
+                    self._mdl.root.children.append(node)
+                elif node is not explicit_root:
+                    # Attach other top-level nodes under the explicit root
+                    self._mdl.root.children.append(node)
             elif node.parent_id >= 0 and node.parent_id < len(self._nodes):
                 parent = self._nodes[node.parent_id]
                 parent.children.append(node)
