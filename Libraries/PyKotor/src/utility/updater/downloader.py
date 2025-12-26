@@ -14,7 +14,7 @@ from typing import TYPE_CHECKING, Any, Callable
 
 # Handle optional certifi dependency
 try:
-    import certifi
+    import certifi  # pyright: ignore[reportMissingImports]
 except ImportError:
     certifi = None  # type: ignore[assignment, unused-ignore]
 

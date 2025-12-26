@@ -221,7 +221,7 @@ def _safe_out_module_id(*, module_root: str, game_key: str, room_count: int) -> 
     max_for_rooms = 16 - (len("_room") + digits)
     max_for_minimap = 16 - len("lbl_map")
     max_module_id_len = min(max_for_rooms, max_for_minimap)
-    
+
     if max_module_id_len <= 0:
         msg = f"Cannot construct a valid module_id for room_count={room_count} (digits={digits})"
         raise AssertionError(msg)

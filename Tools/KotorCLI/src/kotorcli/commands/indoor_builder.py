@@ -61,7 +61,27 @@ def _resolve_context(args: Namespace, logger: RobustLogger):
         msg = "Could not determine game type. Please specify --game k1 or --game k2"
         raise ValueError(msg)
 
-    installation = Installation(CaseAwarePath(installation_path))
+    # Test acceleration hook: allow injecting a pre-warmed Installation object.
+    # This is not part of the public CLI surface area; it is only used by tests
+    # to avoid re-reading chitin/override/modules repeatedly.
+    injected_installation = getattr(args, "_installation_obj", None)
+    if isinstance(injected_installation, Installation):
+        # Sanity check: do not allow mismatched installation roots.
+        try:
+            injected_root = Path(injected_installation.path()).resolve()
+            cli_root = installation_path.resolve()
+        except Exception:
+            # If path resolution fails for any reason, fall back to trusting CLI path.
+            injected_installation = None
+        else:
+            if injected_root != cli_root:
+                msg = (
+                    "Injected Installation root does not match --installation: "
+                    f"{injected_installation.path()} != {installation_path}"
+                )
+                raise ValueError(msg)
+
+    installation = injected_installation or Installation(CaseAwarePath(installation_path))
     if args.implicit_kit:
         logger.debug("Implicit-kit mode enabled (ModuleKit). External kits will not be loaded.")
         return game, installation_path, kits_path, installation, []
@@ -141,7 +161,9 @@ def cmd_indoor_build(args: Namespace, logger: RobustLogger) -> int:  # noqa: PLR
         logger.info("Game: %s", game.name)
 
         if args.implicit_kit:
-            mk_mgr = ModuleKitManager(installation)
+            mk_mgr = getattr(args, "_module_kit_manager", None)
+            if not isinstance(mk_mgr, ModuleKitManager):
+                mk_mgr = ModuleKitManager(installation)
             build_mod_from_indoor_file_modulekit(
                 input_path,
                 output_mod_path=output_path,
@@ -258,7 +280,9 @@ def cmd_indoor_extract(args: Namespace, logger: RobustLogger) -> int:  # noqa: P
         # real module resources (LYT/WOK/MDL/MDX/etc), not cached editor data.
 
         if args.implicit_kit:
-            mk_mgr = ModuleKitManager(_installation)
+            mk_mgr = getattr(args, "_module_kit_manager", None)
+            if not isinstance(mk_mgr, ModuleKitManager):
+                mk_mgr = ModuleKitManager(_installation)
             if module_file_arg:
                 if not module_name:
                     logger.error("When using --implicit-kit with --module-file, you must also pass --module <module_root> to specify which ModuleKit to match against.")
