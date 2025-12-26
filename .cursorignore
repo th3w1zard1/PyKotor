@@ -46,7 +46,6 @@ EXE-*.toc
 ignore
 installlog.txt
 Libraries/*/LICENSE
-Libraries/*/MANIFEST.in
 Libraries/Utility/.aider.model.settings.json
 logs/*
 nuitka_dist
