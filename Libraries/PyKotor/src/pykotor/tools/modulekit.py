@@ -374,8 +374,9 @@ class ModuleKit(Kit):
 
         for edge in edges:
             # Get edge vertices based on local edge index
+            # edge.index is the LOCAL edge index (0, 1, or 2) within the face
             face = edge.face
-            local_edge_index = edge.index % 3
+            local_edge_index = edge.index
 
             if local_edge_index == 0:
                 v1 = face.v1
@@ -411,7 +412,19 @@ class ModuleKit(Kit):
 
             if distance < min_distance:
                 min_distance = distance
-                closest_edge_index = edge.index
+                # Compute global edge index: face_index * 3 + local_edge_index
+                # BWMEdge.index is the local edge index (0-2), not global
+                # We need to find the face index in the BWM's faces list
+                # Use identity-based search (like BWM._index_by_identity) to handle
+                # cases where faces have value-based equality
+                face_index = next((i for i, f in enumerate(bwm.faces) if f is face), -1)
+                if face_index == -1:
+                    # Fallback to value-based search if identity search fails
+                    try:
+                        face_index = bwm.faces.index(face)
+                    except ValueError:
+                        continue  # Skip if face not found (shouldn't happen)
+                closest_edge_index = face_index * 3 + local_edge_index
 
         return closest_edge_index
 
