@@ -1,13 +1,15 @@
-"""Kit generation utilities for extracting kit resources from module RIM files.
+"""Kit extraction / generation workflow (mostly legacy; headless-first).
 
-This module provides functionality to extract kit resources (MDL, MDX, WOK, TGA, TXI, UTD files)
-from module RIM files and generate a kit structure that can be used by the Holocron Toolset.
+This module extracts “kit-like” assets from an installation/module so they can be consumed by
+the Holocron indoor pipeline (MDL/MDX/WOK + textures/lightmaps + door/placeable walkmeshes).
 
-References:
-----------
-    Tools/HolocronToolset/src/toolset/data/indoorkit.py - Kit structure
-    Tools/HolocronToolset/src/toolset/data/indoormap.py - Indoor map generation
-    Libraries/PyKotor/src/pykotor/resource/formats/rim/rim_data.py - RIM file format
+Important project direction:
+- On-disk “kits” are increasingly **deprecated** in favor of implicit `ModuleKit` workflows.
+- This module remains useful for interoperability/export, and for reproducing older toolchains.
+
+Qt note:
+- This module *may* use Qt for image generation if available, but must not require it.
+- If Qt is unavailable, it falls back to Pillow.
 """
 
 from __future__ import annotations

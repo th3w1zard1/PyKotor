@@ -1,5 +1,14 @@
 from __future__ import annotations
 
+"""DEPRECATED legacy Qt-facing indoor-kit classes (Toolset).
+
+Toolset now uses the headless data model in `pykotor.common.indoorkit` plus Qt preview helpers
+from `pykotor.common.indoorkit.qt_preview`.
+
+This file remains only for backward compatibility with historical Toolset code/tests.
+Do not add new logic here.
+"""
+
 import copy
 
 from typing import TYPE_CHECKING, Any

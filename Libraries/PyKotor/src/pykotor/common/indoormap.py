@@ -1,5 +1,17 @@
 from __future__ import annotations
 
+"""Indoor map data model + headless builder (no Qt).
+
+This module defines the **core** Holocron `.indoor` model and the routines needed to build a
+game module (ERF `.mod`) from it *without* any UI dependencies.
+
+Design rule (repo convention):
+- `pykotor.common.*` contains **data models / classes** (headless)
+- `pykotor.tools.*` contains **workflows** and higher-level helpers
+
+Toolset keeps Qt rendering and widgets elsewhere (e.g. generating QImage previews / minimaps).
+"""
+
 import base64
 import itertools
 import json

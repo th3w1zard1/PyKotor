@@ -7,7 +7,7 @@ import os
 os.chdir('Tools/HolocronToolset/src/toolset')
 
 from pykotor.tools import model
-from toolset.data.indoorkit import Kit, load_kits
+from pykotor.common.indoorkit import Kit, load_kits
 
 def main():
     kits = load_kits('./kits')

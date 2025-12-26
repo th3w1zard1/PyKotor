@@ -33,7 +33,7 @@ from qtpy.QtGui import QMouseEvent
 from qtpy.QtWidgets import QApplication, QDialog, QMessageBox, QUndoStack
 
 from pykotor.resource.formats.bwm.bwm_data import BWM
-from toolset.data.indoorkit import Kit, KitComponent, KitComponentHook, KitDoor
+from pykotor.common.indoorkit import Kit, KitComponent, KitComponentHook, KitDoor
 from pykotor.common.indoormap import IndoorMap, IndoorMapRoom
 from toolset.data.installation import HTInstallation
 from toolset.gui.windows.indoor_builder import (
@@ -1297,7 +1297,7 @@ class TestModuleKitManager:
 
     def test_manager_initialization(self, installation: HTInstallation):
         """Test ModuleKitManager initializes correctly."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
 
@@ -1306,7 +1306,7 @@ class TestModuleKitManager:
 
     def test_get_module_names(self, installation: HTInstallation):
         """Test getting module names."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         names = manager.get_module_names()
@@ -1315,7 +1315,7 @@ class TestModuleKitManager:
 
     def test_get_module_roots_unique(self, installation: HTInstallation):
         """Test module roots are unique."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -1324,7 +1324,7 @@ class TestModuleKitManager:
 
     def test_module_kit_caching(self, installation: HTInstallation):
         """Test that module kits are cached."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -1339,7 +1339,7 @@ class TestModuleKitManager:
 
     def test_clear_cache(self, installation: HTInstallation):
         """Test clearing cache."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -1359,13 +1359,13 @@ class TestModuleKit:
 
     def test_module_kit_is_kit_subclass(self):
         """Test ModuleKit inherits from Kit."""
-        from toolset.data.indoorkit import Kit, ModuleKit
+        from pykotor.common.indoorkit import Kit, ModuleKit
 
         assert issubclass(ModuleKit, Kit)
 
     def test_module_kit_lazy_loading(self, installation: HTInstallation):
         """Test ModuleKit loads lazily."""
-        from toolset.data.indoorkit import ModuleKit
+        from pykotor.common.indoorkit import ModuleKit
 
         kit = ModuleKit("Test", "nonexistent_module", installation)
 
@@ -1377,7 +1377,7 @@ class TestModuleKit:
 
     def test_module_kit_properties(self, installation: HTInstallation):
         """Test ModuleKit has expected properties."""
-        from toolset.data.indoorkit import ModuleKit
+        from pykotor.common.indoorkit import ModuleKit
 
         kit = ModuleKit("Test Name", "test_root", installation)
 
@@ -2261,7 +2261,7 @@ class TestModuleComponentExtraction:
 
     def test_module_kit_loads_from_installation(self, installation: HTInstallation):
         """Test ModuleKit can load components from a real module."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -2286,7 +2286,7 @@ class TestModuleComponentExtraction:
 
     def test_module_components_have_required_attributes(self, installation: HTInstallation):
         """Test module-derived components have all required KitComponent attributes."""
-        from toolset.data.indoorkit import KitComponent, ModuleKitManager
+        from pykotor.common.indoorkit import KitComponent, ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -2324,7 +2324,7 @@ class TestModuleComponentExtraction:
     def test_module_component_bwm_is_valid(self, installation: HTInstallation):
         """Test module-derived component BWM is valid for walkmesh operations."""
         from pykotor.resource.formats.bwm.bwm_data import BWM  # pyright: ignore[reportMissingImports]
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -2355,7 +2355,7 @@ class TestModuleComponentExtraction:
     def test_module_component_image_is_valid(self, installation: HTInstallation):
         """Test module-derived component preview image is valid."""
         from qtpy.QtGui import QImage
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -2380,7 +2380,7 @@ class TestModuleComponentExtraction:
 
     def test_multiple_modules_load_independently(self, installation: HTInstallation):
         """Test multiple modules can be loaded independently."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -2427,7 +2427,7 @@ class TestModuleImageWalkmeshAlignment:
         Game WOKs are in local room coordinates. We don't re-center them -
         they're used as-is, same as how kit.py extracts and Kit loader loads them.
         """
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -2475,7 +2475,7 @@ class TestModuleImageWalkmeshAlignment:
 
         Reference: kit.py uses 10 pixels per unit, 5.0 unit padding, min 256x256
         """
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         PIXELS_PER_UNIT = 10
         PADDING = 5.0  # Same as in kit.py and qt_preview.py
@@ -2630,7 +2630,7 @@ class TestModuleImageWalkmeshAlignment:
 
         Reference: kit.py uses PIXELS_PER_UNIT=10, PADDING=5.0, MIN_SIZE=256
         """
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         PIXELS_PER_UNIT = 10
         PADDING = 5.0
@@ -2688,7 +2688,7 @@ class TestModuleImageWalkmeshAlignment:
         Reference: kit.py line 1550: QImage.Format.Format_RGB888
         """
         from qtpy.QtGui import QImage
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -2727,7 +2727,7 @@ class TestModuleImageWalkmeshAlignment:
         Reference: indoorkit.py line 161: image = QImage(path).mirrored()
         Reference: qt_preview.py: return image.mirrored()
         """
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -2775,7 +2775,7 @@ class TestModuleImageWalkmeshAlignment:
 
         Reference: kit.py line 1538: width = max(width, 256)
         """
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         MIN_SIZE = 256  # Same as kit.py
 
@@ -2810,7 +2810,7 @@ class TestModuleImageWalkmeshAlignment:
         This test verifies the BWM center is NOT at origin (which would indicate
         re-centering happened). Game WOKs typically have their center elsewhere.
         """
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -2870,7 +2870,7 @@ class TestModuleImageWalkmeshAlignment:
         - Same format (RGB888)
         - Same walkable/non-walkable material logic
         """
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         PIXELS_PER_UNIT = 10
         PADDING = 5.0
@@ -3018,7 +3018,7 @@ class TestModuleImageWalkmeshAlignment:
 
         Reference: indoor_builder.py _draw_image: width = image.width() / 10
         """
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         PIXELS_PER_UNIT = 10
         PADDING = 5.0
@@ -3315,7 +3315,7 @@ class TestModuleImageWalkmeshAlignment:
         """
         from qtpy.QtGui import QImage
         from pykotor.tools.kit import _generate_component_minimap
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -3398,7 +3398,7 @@ class TestModuleImageWalkmeshAlignment:
         - BWM vertices are exactly as stored in game files
         - BWM faces preserve original material values
         """
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
         from pykotor.resource.formats.bwm import read_bwm
         from pykotor.resource.type import ResourceType
         from pykotor.common.module import Module
@@ -3469,7 +3469,7 @@ class TestModuleImageWalkmeshAlignment:
 
         This test verifies the walkable detection is identical.
         """
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         # The walkable material set from kit.py (line 1560)
         KIT_PY_WALKABLE_MATERIALS = {1, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 16, 18, 20, 21, 22}
@@ -3518,7 +3518,7 @@ class TestModuleComponentRoomCreation:
 
     def test_create_room_from_module_component(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, installation: HTInstallation):
         """Test creating a room from a module-derived component."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         builder = builder_no_kits
 
@@ -3559,7 +3559,7 @@ class TestModuleComponentRoomCreation:
 
     def test_module_room_undo_redo(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, installation: HTInstallation):
         """Test undo/redo works with module-derived rooms."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         builder = builder_no_kits
         undo_stack = builder._undo_stack
@@ -3599,7 +3599,7 @@ class TestModuleComponentRoomCreation:
 
     def test_module_room_move_operation(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, installation: HTInstallation):
         """Test move operation works with module-derived rooms."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         builder = builder_no_kits
         undo_stack = builder._undo_stack
@@ -3638,7 +3638,7 @@ class TestModuleComponentRoomCreation:
 
     def test_module_room_rotate_flip(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, installation: HTInstallation):
         """Test rotate and flip operations work with module-derived rooms."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         builder = builder_no_kits
         undo_stack = builder._undo_stack
@@ -3675,7 +3675,7 @@ class TestModuleComponentRoomCreation:
 
     def test_module_room_duplicate(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, installation: HTInstallation):
         """Test duplicate operation works with module-derived rooms."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         builder = builder_no_kits
         undo_stack = builder._undo_stack
@@ -4048,7 +4048,7 @@ class TestModuleKitEquivalence:
 
     def test_module_component_same_interface_as_kit_component(self, installation: HTInstallation, real_kit_component):
         """Test module components have same interface as kit components."""
-        from toolset.data.indoorkit import KitComponent, ModuleKitManager
+        from pykotor.common.indoorkit import KitComponent, ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -4173,7 +4173,7 @@ class TestModulePerformance:
 
     def test_lazy_loading_does_not_load_until_selected(self, installation: HTInstallation):
         """Test modules are not loaded until explicitly selected."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -4192,7 +4192,7 @@ class TestModulePerformance:
 
     def test_cache_prevents_duplicate_loading(self, installation: HTInstallation):
         """Test caching prevents loading same module twice."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -4255,7 +4255,7 @@ class TestModuleHooksAndDoors:
 
     def test_module_kit_has_doors(self, installation: HTInstallation):
         """Test ModuleKit creates default doors."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -4283,7 +4283,7 @@ class TestModuleHooksAndDoors:
 
     def test_module_component_hooks_list(self, installation: HTInstallation):
         """Test module component has hooks list."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -5822,7 +5822,7 @@ class TestModuleKitManagerComprehensive:
 
     def test_module_kit_manager_functionality(self, installation: HTInstallation):
         """Test ModuleKitManager basic functionality."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
 
@@ -5844,7 +5844,7 @@ class TestModuleKitManagerComprehensive:
 
     def test_module_kit_lazy_loading(self, installation: HTInstallation):
         """Test ModuleKit lazy loading."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -5870,7 +5870,7 @@ class TestModuleKitManagerComprehensive:
 
     def test_component_structure(self, installation: HTInstallation):
         """Test that module components have correct structure."""
-        from toolset.data.indoorkit import KitComponent, ModuleKitManager
+        from pykotor.common.indoorkit import KitComponent, ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -5907,7 +5907,7 @@ class TestModuleKitManagerComprehensive:
     def test_bwm_preview_generation(self, installation: HTInstallation):
         """Test BWM preview image generation."""
         from qtpy.QtGui import QImage
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -5936,7 +5936,7 @@ class TestModuleKitManagerComprehensive:
 
     def test_room_creation_from_module(self, installation: HTInstallation):
         """Test creating IndoorMapRoom from module component."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -5979,7 +5979,7 @@ class TestModuleKitManagerComprehensive:
 
     def test_indoor_map_operations(self, installation: HTInstallation):
         """Test IndoorMap operations with module-derived rooms."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -6025,7 +6025,7 @@ class TestModuleKitManagerComprehensive:
 
     def test_module_doors_and_hooks(self, installation: HTInstallation):
         """Test module kit doors and hooks."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -6059,7 +6059,7 @@ class TestModuleKitManagerComprehensive:
     def test_module_bwm_geometry(self, installation: HTInstallation):
         """Test BWM geometry from module components."""
         from pykotor.resource.formats.bwm.bwm_data import BWM
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -6109,7 +6109,7 @@ class TestModuleKitManagerComprehensive:
 
     def test_multiple_module_loading(self, installation: HTInstallation):
         """Test loading multiple modules simultaneously."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -6137,7 +6137,7 @@ class TestModuleKitManagerComprehensive:
 
     def test_component_equivalence(self, installation: HTInstallation, temp_work_dir):
         """Test that module components can be used interchangeably with kit components."""
-        from toolset.data.indoorkit import KitComponent, ModuleKitManager, load_kits
+        from pykotor.common.indoorkit import KitComponent, ModuleKitManager, load_kits
 
         kits_path = str(temp_work_dir / "kits")
 
@@ -6306,7 +6306,7 @@ class TestWalkabilityGranular:
 
     def test_walkable_faces_have_walkable_materials(self, installation: HTInstallation):
         """Test that all walkable faces have walkable materials."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -6334,7 +6334,7 @@ class TestWalkabilityGranular:
 
     def test_unwalkable_faces_have_unwalkable_materials(self, installation: HTInstallation):
         """Test that all unwalkable faces have non-walkable materials."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -6362,7 +6362,7 @@ class TestWalkabilityGranular:
 
     def test_walkable_material_set_consistency(self, installation: HTInstallation):
         """Test that walkable material set matches expected values."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         # Expected walkable materials from kit.py
         EXPECTED_WALKABLE = {1, 3, 4, 5, 6, 9, 10, 11, 12, 13, 14, 16, 18, 20, 21, 22}
@@ -6396,7 +6396,7 @@ class TestWalkabilityGranular:
 
     def test_walkable_face_count_matches_material_count(self, installation: HTInstallation):
         """Test that walkable face count matches count of faces with walkable materials."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -6426,7 +6426,7 @@ class TestWalkabilityGranular:
 
     def test_walkable_faces_have_valid_geometry(self, installation: HTInstallation):
         """Test that walkable faces have valid triangle geometry."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -6479,7 +6479,7 @@ class TestWalkabilityGranular:
 
     def test_walkable_faces_z_coordinate_consistency(self, installation: HTInstallation):
         """Test that walkable faces in the same area have consistent Z coordinates (levels)."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -6533,7 +6533,7 @@ class TestWalkabilityGranular:
 
     def test_indoor_map_walkability_preservation(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, installation: HTInstallation):
         """Test that walkability is preserved when creating rooms in indoor map."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -6581,7 +6581,7 @@ class TestWalkabilityGranular:
 
     def test_multiple_rooms_walkability_independence(self, qtbot: QtBot, builder_no_kits: IndoorMapBuilder, installation: HTInstallation):
         """Test that multiple rooms maintain independent walkability."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -6621,7 +6621,7 @@ class TestWalkabilityGranular:
 
     def test_walkable_face_adjacency_consistency(self, installation: HTInstallation):
         """Test that walkable face adjacencies are consistent."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         roots = manager.get_module_roots()
@@ -7458,7 +7458,7 @@ class TestModuleKitBWMCentering:
 
     def test_module_kit_bwm_is_centered(self, installation: HTInstallation):
         """Verify that ModuleKit BWMs are re-centered around (0, 0)."""
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         module_roots = manager.get_module_roots()
@@ -7506,7 +7506,7 @@ class TestModuleKitBWMCentering:
         same location. If they're not congruent, users will see the room preview
         in one place but have to click in a different place to select it.
         """
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         module_roots = manager.get_module_roots()
@@ -7597,7 +7597,7 @@ class TestModuleKitBWMCentering:
         3. Simulate a click to place the room
         4. Move mouse to room position and verify it's detected under mouse
         """
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         module_roots = manager.get_module_roots()
@@ -7665,7 +7665,7 @@ class TestModuleKitBWMCentering:
         working rooms shown in the center of the Indoor Map Builder (not the broken ones
         with black buffer zones).
         """
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         module_roots = manager.get_module_roots()
@@ -7769,7 +7769,7 @@ class TestModuleKitBWMCentering:
         The key test is that the first room (which we know is re-centered from
         test_module_kit_bwm_is_centered) has its image and hitbox aligned.
         """
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit import ModuleKitManager
 
         manager = ModuleKitManager(installation)
         module_roots = manager.get_module_roots()
@@ -7854,7 +7854,7 @@ class TestKitModuleEquivalence:
         at origin to ensure image/hitbox alignment in the Indoor Map Builder.
         """
         from pathlib import Path
-        from toolset.data.indoorkit.indoorkit_loader import load_kits
+        from pykotor.common.indoorkit.indoorkit_loader import load_kits
 
         kits_path = Path("Tools/HolocronToolset/src/toolset/kits")
         kits, missing = load_kits(kits_path)
@@ -7903,8 +7903,8 @@ class TestKitModuleEquivalence:
         - BWM center (both should be at 0,0)
         """
         from pathlib import Path
-        from toolset.data.indoorkit.indoorkit_loader import load_kits
-        from toolset.data.indoorkit import ModuleKitManager
+        from pykotor.common.indoorkit.indoorkit_loader import load_kits
+        from pykotor.common.indoorkit import ModuleKitManager
 
         kits_path = Path("Tools/HolocronToolset/src/toolset/kits")
         kits, missing = load_kits(kits_path)
@@ -8076,7 +8076,7 @@ class TestKitModuleEquivalence:
         - No excessive black padding
         """
         from pathlib import Path
-        from toolset.data.indoorkit.indoorkit_loader import load_kits
+        from pykotor.common.indoorkit.indoorkit_loader import load_kits
 
         kits_path = Path("Tools/HolocronToolset/src/toolset/kits")
         kits, missing = load_kits(kits_path)

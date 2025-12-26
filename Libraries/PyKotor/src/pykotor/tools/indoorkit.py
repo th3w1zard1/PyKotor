@@ -1,5 +1,15 @@
 from __future__ import annotations
 
+"""Indoor-kit workflows (headless).
+
+This module loads Holocron Toolset kit folders from disk into the headless data model in
+`pykotor.common.indoorkit`.
+
+Qt/Toolset specifics:
+- Toolset may show previews; that lives in Toolset code (Qt) and should not be added here.
+- This module focuses on deterministic parsing and optional “missing file” reporting.
+"""
+
 import json
 import re
 

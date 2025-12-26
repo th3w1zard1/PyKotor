@@ -8,7 +8,7 @@ from qtpy.QtWidgets import QDialog
 if TYPE_CHECKING:
     from qtpy.QtWidgets import QWidget
 
-    from toolset.data.indoorkit import Kit
+    from pykotor.common.indoorkit import Kit
     from pykotor.common.indoormap import IndoorMap
     from toolset.data.installation import HTInstallation
 

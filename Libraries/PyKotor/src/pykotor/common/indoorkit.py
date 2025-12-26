@@ -2,7 +2,11 @@ from __future__ import annotations
 
 """Indoor-kit data model (headless).
 
-This module contains the *classes* for the Holocron indoor-kit format.
+This module contains the **classes** for the Holocron indoor-kit format:
+- `Kit`, `KitComponent`, `KitDoor`, `KitComponentHook`
+
+The classes are intentionally UI-agnostic; Toolset may attach Qt preview data at runtime
+via `KitComponent.image` (typed as `object | None` here to avoid a Qt dependency).
 
 Design rule (repo convention):
 - `pykotor.common.*` contains **classes / data models**

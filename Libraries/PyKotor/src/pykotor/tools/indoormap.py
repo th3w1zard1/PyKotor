@@ -1,5 +1,18 @@
 from __future__ import annotations
 
+"""Indoor map workflows (headless helpers).
+
+This module provides **workflow functions** around the core model in
+`pykotor.common.indoormap`:
+- Build a `.mod` from an `.indoor` file (with explicit on-disk kits)
+- Build a `.mod` from an `.indoor` file using implicit `ModuleKit`
+- Extract an `.indoor` from a module either:
+  - fast-path: embedded `indoormap.txt` payload
+  - full reverse-extraction: fit WOK walkmeshes back to kit components
+
+Keep UI/Qt out of this module. Toolset uses these functions indirectly via its UI.
+"""
+
 import math
 
 from copy import deepcopy
@@ -38,6 +51,7 @@ def build_mod_from_indoor_file(
     module_id: str | None = None,
     loadscreen_path: os.PathLike | str | None = None,
 ) -> None:
+    """Build a `.mod` from an `.indoor` file using **explicit kits** from disk."""
     installation = Installation(CaseAwarePath(installation_path))
     kits = load_kits(kits_path)
     indoor_map = IndoorMap()
@@ -56,6 +70,7 @@ def build_mod_from_indoor_file_modulekit(
     module_id: str | None = None,
     loadscreen_path: os.PathLike | str | None = None,
 ) -> None:
+    """Build a `.mod` from an `.indoor` file using **implicit ModuleKit** (no on-disk kits)."""
     installation = Installation(CaseAwarePath(installation_path))
     module_kit_manager = ModuleKitManager(installation)
     indoor_map = IndoorMap()
@@ -84,10 +99,9 @@ def extract_indoor_from_module_as_modulekit(
     game: Game | None,
     logger: RobustLogger | None = None,
 ) -> IndoorMap:
-    """Extract indoor map using ModuleKit (implicit-kit) instead of external kits.
+    """Extract an `IndoorMap` by treating the module as an implicit kit (`ModuleKit`).
 
-    This path avoids `pykotor.common.module.Module` (which requires `module.ifo`) by
-    reading LYT/MDL/MDX/WOK directly via `ModuleKitManager`'s capsule-based loader.
+    This is the “implicit-kit extraction” path, used by `kotorcli indoor-extract --implicit-kit`.
     """
     if logger is None:
         logger = RobustLogger()
@@ -305,17 +319,42 @@ def extract_indoor_from_module_name(
     - room rotations + flip flags (by fitting kit-component walkmesh vertices to room WOK vertices)
     - module lighting/name/warp (from ARE/IFO when present)
 
-    If `strict` is True, raises ValueError if any LYT room cannot be matched to a kit component.
+    Args:
+    ----
+        module_name (str): The name of the module to extract the indoor map from.
+        installation_path (os.PathLike | str): The path to the installation.
+        kits_path (os.PathLike | str): The path to the kits.
+        game (Game | None): The game to extract the indoor map for.
+        strict (bool): Whether to raise an error if any LYT room cannot be matched to a kit component.
+        max_rms (float): The maximum RMS error allowed for a match.
+        logger (RobustLogger | None): The logger to use.
+        module_kit_manager (ModuleKitManager | None): The module kit manager to use.
+
+    Returns:
+    -------
+        IndoorMap: The extracted indoor map.
+
+    Processing Logic:
+    ----------------
+        - Loads the module from the installation path.
+        - Loads the kits from the kits path.
+        - Loads the module kit manager from the module kit manager path.
+        - Loads the module from the module name.
+        - Loads the LYT from the module.
+        - Loads the ARE from the module.
+        - Loads the IFO from the module.
+        - Builds the indoor map.
+        - Returns the indoor map.
     """
     if logger is None:
         logger = RobustLogger()
 
-    installation = Installation(CaseAwarePath(installation_path))
+    installation: Installation = Installation(CaseAwarePath(installation_path))
     kits: list[Kit] = []
     if str(kits_path):
         kits = load_kits(kits_path)
     if module_kit_manager is not None:
-        module_root = Installation.get_module_root(module_name)
+        module_root: str = Installation.get_module_root(module_name)
         mk: ModuleKit = module_kit_manager.get_module_kit(module_root)
         if mk.ensure_loaded():
             kits.append(mk)
@@ -351,23 +390,23 @@ def extract_indoor_from_module_name(
     unmatched: list[str] = []
 
     for room in lyt.rooms:
-        model_name = room.model
+        model_name: str = room.model
 
         # Skip known builder sky room; we attempt to infer skybox later.
         if model_name.lower() == f"{indoor.module_id}_sky".lower():
             continue
 
-        wok_res = module.resource(model_name, ResourceType.WOK)
+        wok_res: ModuleResource[bytes] | None = module.resource(model_name, ResourceType.WOK)
         if wok_res is None:
             unmatched.append(model_name)
             continue
-        wok_data = wok_res.data()
+        wok_data: bytes | None = wok_res.data()
         if wok_data is None:
             unmatched.append(model_name)
             continue
-        instance_bwm = read_bwm(wok_data)
-        instance_vertices = instance_bwm.vertices()
-        candidates = by_vert_count.get(len(instance_vertices), [])
+        instance_bwm: BWM = read_bwm(wok_data)
+        instance_vertices: list[Vector3] = instance_bwm.vertices()
+        candidates: list[KitComponent] = by_vert_count.get(len(instance_vertices), [])
         if not candidates:
             unmatched.append(model_name)
             continue
@@ -397,11 +436,11 @@ def extract_indoor_from_module_name(
         # If the fitted translation doesn't match LYT position closely, treat it as a walkmesh override
         # and force the indoor room position to LYT position (source of truth for placement).
         # We also store an override walkmesh in local space so a rebuild reproduces the original WOK.
-        pos_from_fit = best_match.translation
-        lyt_pos = Vector3(room.position.x, room.position.y, room.position.z)
+        pos_from_fit: Vector3 = best_match.translation
+        lyt_pos: Vector3 = Vector3(room.position.x, room.position.y, room.position.z)
         if pos_from_fit.distance(lyt_pos) > 1e-3:
             # compute local override by inverting the transform
-            override = deepcopy(instance_bwm)
+            override: BWM = deepcopy(instance_bwm)
             override.translate(-lyt_pos.x, -lyt_pos.y, -lyt_pos.z)
             override.rotate(-best_match.rotation_deg)
             override.flip(best_match.flip_x, best_match.flip_y)

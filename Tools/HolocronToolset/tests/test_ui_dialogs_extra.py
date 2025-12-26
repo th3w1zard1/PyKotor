@@ -114,7 +114,7 @@ def test_select_module_dialog(qtbot: QtBot, installation: HTInstallation):
 def test_indoor_settings_dialog(qtbot: QtBot, installation: HTInstallation):
     """Test IndoorMapSettings."""
     from pykotor.common.indoormap import IndoorMap
-    from toolset.data.indoorkit import Kit
+    from pykotor.common.indoorkit import Kit
     
     parent = QWidget()
     indoor_map = IndoorMap()

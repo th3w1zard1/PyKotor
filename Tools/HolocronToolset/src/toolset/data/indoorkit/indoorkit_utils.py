@@ -1,13 +1,17 @@
 from __future__ import annotations
 
+"""Toolset indoor-kit helpers (legacy).
+
+Toolset should prefer `pykotor.tools.indoorkit` for loading/processing.
+This module remains only for compatibility with historical Toolset code paths.
+"""
+
 from typing import TYPE_CHECKING
 
-from pykotor.common.indoorkit import MDLMDXTuple
+from pykotor.common.indoorkit import MDLMDXTuple, Kit
 
 if TYPE_CHECKING:
     from pathlib import Path
-
-    from toolset.data.indoorkit import Kit
 
 
 def process_padding_file(

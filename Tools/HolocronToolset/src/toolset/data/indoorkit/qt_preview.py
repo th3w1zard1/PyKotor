@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-"""Qt-only preview helpers for indoor kits.
+"""Qt-only preview helpers for indoor kits (Toolset).
 
-`pykotor.common.*` holds the headless data model. Toolset needs QImage previews for UI,
-so we attach them dynamically on KitComponents via this module.
+This module is intentionally small and UI-focused:
+- It attaches a `QImage` preview onto `pykotor.common.indoorkit.KitComponent.image`.
+
+All parsing/loading of kit data is handled by `pykotor.tools.indoorkit`.
 """
 
 from typing import TYPE_CHECKING

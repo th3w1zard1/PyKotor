@@ -64,7 +64,7 @@ from toolset.config import get_remote_toolset_update_info, is_remote_version_new
 from pykotor.common.indoorkit import Kit, KitComponent, KitComponentHook
 from pykotor.common.modulekit import ModuleKit, ModuleKitManager
 from pykotor.tools import indoorkit as indoorkit_tools
-from toolset.data.indoorkit.qt_preview import ensure_component_image
+from pykotor.common.indoorkit.qt_preview import ensure_component_image
 from toolset.data.installation import HTInstallation
 from toolset.gui.common.filters import NoScrollEventFilter
 from toolset.gui.dialogs.asyncloader import AsyncLoader
