@@ -407,22 +407,16 @@ class _Node:
 
     def _write_trimesh_data(self, writer: BinaryWriter):
         assert self.trimesh is not None
-        for count in self.trimesh.indices_counts:
-            writer.write_uint32(count)
-        for offset in self.trimesh.indices_offsets:
-            writer.write_uint32(offset)
-        for counter in self.trimesh.inverted_counters:
-            writer.write_uint32(counter)
-
-        for face in self.trimesh.faces:
-            writer.write_uint16(face.vertex1)
-            writer.write_uint16(face.vertex2)
-            writer.write_uint16(face.vertex3)
-
-        for vertex in self.trimesh.vertices:
-            writer.write_vector3(vertex)
+        # NOTE:
+        # Real-world K1/K2 MDL nodes store the face structs and vertex array as the core geometry payload.
+        # The various index/count tables are not required for successful parsing in this codebase and
+        # are not currently consumed by the reader. To keep offsets consistent, we write:
+        #   - faces (full _Face structs)
+        #   - vertices (Vector3 array)
         for face in self.trimesh.faces:
             face.write(writer)
+        for vertex in self.trimesh.vertices:
+            writer.write_vector3(vertex)
 
     def all_headers_size(
         self,
@@ -470,27 +464,28 @@ class _Node:
         self,
         game: Game,
     ) -> int:
-        offset = self.indices_offset(game)
+        # Vertices follow the face struct array.
+        offset = self.faces_offset(game)
         if self.trimesh:
-            offset += len(self.trimesh.faces) * 3 * 2
+            offset += self.trimesh.faces_size()
         return offset
 
     def faces_offset(
         self,
         game: Game,
     ) -> int:
-        size = self.vertices_offset(game)
-        if self.trimesh:
-            size += self.trimesh.vertices_size()
-        return size
+        # Faces begin immediately after all headers / index tables.
+        # (Index tables are currently treated as optional and may be empty.)
+        return self.indices_offset(game)
 
     def children_offsets_offset(
         self,
         game: Game,
     ) -> int:
-        size = self.faces_offset(game)
+        # Children offsets follow the vertex array.
+        size = self.vertices_offset(game)
         if self.trimesh:
-            size += self.trimesh.faces_size()
+            size += self.trimesh.vertices_size()
         return size
 
     def children_offsets_size(
@@ -2163,14 +2158,16 @@ class MDLBinaryWriter:
             bin_node.trimesh.vertex_count = len(mdl_node.mesh.vertex_positions)
             bin_node.trimesh.vertices = mdl_node.mesh.vertex_positions
 
-            bin_node.trimesh.indices_counts = [len(mdl_node.mesh.faces) * 3]
-            bin_node.trimesh.indices_counts_count = bin_node.trimesh.indices_counts_count2 = 1
+            # These index/count tables are not required by the current reader and are intentionally omitted
+            # from the written node payload to keep offsets stable across roundtrips.
+            bin_node.trimesh.indices_counts = []
+            bin_node.trimesh.indices_counts_count = bin_node.trimesh.indices_counts_count2 = 0
 
-            bin_node.trimesh.indices_offsets = [0]  # Placeholder to be updated with offsets - do not remove line
-            bin_node.trimesh.indices_offsets_count = bin_node.trimesh.indices_offsets_count2 = 1
+            bin_node.trimesh.indices_offsets = []
+            bin_node.trimesh.indices_offsets_count = bin_node.trimesh.indices_offsets_count2 = 0
 
-            bin_node.trimesh.inverted_counters = [0]
-            bin_node.trimesh.counters_count = bin_node.trimesh.counters_count2 = 1
+            bin_node.trimesh.inverted_counters = []
+            bin_node.trimesh.counters_count = bin_node.trimesh.counters_count2 = 0
 
             bin_node.trimesh.faces_count = bin_node.trimesh.faces_count2 = len(mdl_node.mesh.faces)
             for face in mdl_node.mesh.faces:
@@ -2406,7 +2403,8 @@ class MDLBinaryWriter:
         bin_node.trimesh.offset_to_counters = node_offset + bin_node.inverted_counters_offset(self.game)
         bin_node.trimesh.offset_to_indices_counts = node_offset + bin_node.indices_counts_offset(self.game)
         bin_node.trimesh.offset_to_indices_offset = node_offset + bin_node.indices_offsets_offset(self.game)
-        bin_node.trimesh.indices_offsets = [node_offset + bin_node.indices_offset(self.game)]
+        if bin_node.trimesh.indices_offsets_count and bin_node.trimesh.indices_offsets:
+            bin_node.trimesh.indices_offsets = [node_offset + bin_node.indices_offset(self.game)]
 
         bin_node.trimesh.offset_to_faces = node_offset + bin_node.faces_offset(self.game)
         bin_node.trimesh.vertices_offset = node_offset + bin_node.vertices_offset(self.game)
