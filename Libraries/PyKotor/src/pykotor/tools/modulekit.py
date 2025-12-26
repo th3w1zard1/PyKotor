@@ -18,17 +18,18 @@ Implementation notes:
 
 from __future__ import annotations
 
+import math
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
 from loggerplus import RobustLogger
 from pykotor.common.module import Module
-from pykotor.resource.formats.bwm import BWM, BWMFace, read_bwm
+from pykotor.resource.formats.bwm import BWM, BWMEdge, BWMFace, read_bwm
 from pykotor.resource.generics.utd import UTD
 from pykotor.resource.type import ResourceType
 from pykotor.tools.indoorkit import Kit, KitComponent, KitComponentHook, KitDoor
 from pykotor.tools.kit import _extract_doorhooks_from_bwm, _recenter_bwm  # NOTE: shared logic
-from utility.common.geometry import SurfaceMaterial, Vector3
+from utility.common.geometry import SurfaceMaterial, Vector3, Vector4
 
 if TYPE_CHECKING:
     from pykotor.extract.installation import Installation
@@ -99,7 +100,12 @@ class ModuleKit(Kit):
         utd.tag = "module_door"
         return KitDoor(utd, utd, width=2.0, height=3.0)
 
-    def _component_from_lyt_room(self, lyt_room: LYTRoom, idx: int, default_door: KitDoor) -> KitComponent | None:
+    def _component_from_lyt_room(
+        self,
+        lyt_room: LYTRoom,
+        idx: int,
+        default_door: KitDoor,
+    ) -> KitComponent | None:
         """Create a KitComponent from a LYT room definition.
 
         We intentionally create one component per LYT room, even if model names repeat,
@@ -223,14 +229,189 @@ class ModuleKit(Kit):
     def _process_lyt_doorhooks(self, lyt_data: LYT) -> None:
         """Process LYT doorhooks to create component hooks.
 
-        For now, this is a placeholder. Full implementation would need to
-        map doorhooks to their corresponding rooms and create proper
-        KitComponentHook objects.
+        Maps LYT doorhooks (world-space door positions) to KitComponentHook objects
+        in local-space coordinates. This enables roundtrip preservation of door placements
+        when extracting modules to indoor JSON and rebuilding them.
+
+        Processing steps:
+        1. Match doorhooks to components by room name (case-insensitive)
+        2. Convert doorhook world position to local space (relative to room position)
+        3. Convert quaternion orientation to rotation angle (yaw in degrees)
+        4. Find the closest edge on the BWM to the doorhook position
+        5. Create KitComponentHook objects and add them to the component
+
+        References:
+        ----------
+            Libraries/PyKotor/src/pykotor/resource/formats/lyt/lyt_data.py:LYTDoorHook
+            Tools/HolocronToolset/src/toolset/data/indoormap.py:499 (doorhook creation)
+            Libraries/PyKotor/src/pykotor/tools/kit.py:_extract_doorhooks_from_bwm
         """
-        # LYT doorhooks contain information about where doors connect rooms
-        # This is complex and would require matching doorhooks to rooms
-        # For simplicity, we'll leave hooks empty for module-derived components
-        pass
+        if not lyt_data.doorhooks:
+            return
+
+        # Match doorhooks to components by finding the component
+        # that corresponds to the LYT room with matching model name
+        for doorhook in lyt_data.doorhooks:
+            room_name_lower = doorhook.room.lower()
+
+            # Find the component that matches this room
+            # We need to match by finding which component was created from the LYT room
+            # with this model name. Since components are created in order from lyt_data.rooms,
+            # we can match by checking the component's default_position against room positions
+            matching_component: KitComponent | None = None
+
+            # Try to find component by matching room name to component's source
+            # Since we don't store the original room name directly, we'll match by position
+            # and model name. First, find the LYT room that matches this doorhook's room name
+            lyt_room_match: LYTRoom | None = None
+            for lyt_room in lyt_data.rooms:
+                room_model = (lyt_room.model or "").lower()
+                if room_model == room_name_lower or room_name_lower == f"room{lyt_data.rooms.index(lyt_room)}":
+                    lyt_room_match = lyt_room
+                    break
+
+            if lyt_room_match is None:
+                RobustLogger().warning(
+                    "Doorhook references room '%s' which doesn't exist in LYT for module '%s'",
+                    doorhook.room,
+                    self.module_root,
+                )
+                continue
+
+            # Find component that matches this LYT room by position
+            # Components are created in the same order as LYT rooms
+            room_idx = lyt_data.rooms.index(lyt_room_match)
+            if 0 <= room_idx < len(self.components):
+                matching_component = self.components[room_idx]
+            else:
+                RobustLogger().warning(
+                    "Doorhook room '%s' index %d out of range for module '%s'",
+                    doorhook.room,
+                    room_idx,
+                    self.module_root,
+                )
+                continue
+
+            if matching_component is None:
+                continue
+
+            # Convert doorhook world position to local space
+            # Doorhook position is in world space, but component BWM is centered at origin
+            # We need to subtract the room's original position to get local coordinates
+            room_position = matching_component.default_position  # type: ignore[attr-defined]
+            local_position = Vector3(
+                doorhook.position.x - room_position.x,
+                doorhook.position.y - room_position.y,
+                doorhook.position.z - room_position.z,
+            )
+
+            # Convert quaternion orientation to rotation angle (yaw in degrees)
+            # For doors in KOTOR, we typically only care about Z-axis rotation (yaw)
+            euler = doorhook.orientation.to_euler()
+            rotation_deg = math.degrees(euler.z)  # Z-axis rotation (yaw)
+            # Normalize to 0-360
+            rotation_deg = rotation_deg % 360
+            if rotation_deg < 0:
+                rotation_deg += 360
+
+            # Find the closest edge on the BWM to the doorhook position
+            # This determines which edge the hook should be associated with
+            closest_edge = self._find_closest_edge(matching_component.bwm, local_position)
+            if closest_edge is None:
+                RobustLogger().warning(
+                    "Could not find edge near doorhook position (%.2f, %.2f, %.2f) for room '%s' in module '%s'",
+                    local_position.x,
+                    local_position.y,
+                    local_position.z,
+                    doorhook.room,
+                    self.module_root,
+                )
+                # Use edge index 0 as fallback
+                edge_index = 0
+            else:
+                edge_index = closest_edge
+
+            # Determine which door to use
+            # Try to find a door by name, otherwise use default door
+            door = self.doors[0] if self.doors else self._create_default_door()
+            door_name_lower = doorhook.door.lower()
+            for i, existing_door in enumerate(self.doors):
+                if existing_door.utdK1.resref.get().lower() == door_name_lower or existing_door.utdK2.resref.get().lower() == door_name_lower:
+                    door = existing_door
+                    break
+
+            # Create the hook and add it to the component
+            hook = KitComponentHook(
+                position=local_position,
+                rotation=rotation_deg,
+                edge=edge_index,
+                door=door,
+            )
+            matching_component.hooks.append(hook)
+
+    def _find_closest_edge(
+        self,
+        bwm: BWM,
+        position: Vector3,
+    ) -> int | None:
+        """Find the closest edge on a BWM to a given position.
+
+        Args:
+            bwm: The BWM walkmesh to search.
+            position: The position to find the closest edge to (in local space).
+
+        Returns:
+            The global edge index of the closest edge, or None if no edges found.
+        """
+        edges: list[BWMEdge] = bwm.edges()
+        if not edges:
+            return None
+
+        min_distance: float = float("inf")
+        closest_edge_index: int | None = None
+
+        for edge in edges:
+            # Get edge vertices based on local edge index
+            face = edge.face
+            local_edge_index = edge.index % 3
+
+            if local_edge_index == 0:
+                v1 = face.v1
+                v2 = face.v2
+            elif local_edge_index == 1:
+                v1 = face.v2
+                v2 = face.v3
+            else:  # local_edge_index == 2
+                v1 = face.v3
+                v2 = face.v1
+
+            # Calculate distance from point to edge (2D distance in XY plane)
+            # Use point-to-line-segment distance formula
+            edge_vec: Vector3 = Vector3(v2.x - v1.x, v2.y - v1.y, 0.0)
+            point_vec: Vector3 = Vector3(position.x - v1.x, position.y - v1.y, 0.0)
+
+            # Project point onto edge line
+            edge_len_sq: float = edge_vec.x * edge_vec.x + edge_vec.y * edge_vec.y
+            if edge_len_sq < 1e-6:  # Degenerate edge
+                continue
+
+            t: float = max(0.0, min(1.0, (point_vec.x * edge_vec.x + point_vec.y * edge_vec.y) / edge_len_sq))
+            closest_point: Vector3 = Vector3(
+                v1.x + t * edge_vec.x,
+                v1.y + t * edge_vec.y,
+                v1.z + t * (v2.z - v1.z),
+            )
+
+            # Calculate 2D distance (XY plane only, as doors are typically placed on edges)
+            dx: float = position.x - closest_point.x
+            dy: float = position.y - closest_point.y
+            distance: float = math.sqrt(dx * dx + dy * dy)
+
+            if distance < min_distance:
+                min_distance = distance
+                closest_edge_index = edge.index
+
+        return closest_edge_index
 
 
 class ModuleKitManager:
@@ -283,10 +464,10 @@ class ModuleKitManager:
         Returns:
             Display name combining root and area name if available.
         """
-        module_names = self.get_module_names()
+        module_names: dict[str, str | None] = self.get_module_names()
 
         # Try to find the display name from various extensions
-        for ext in [".rim", ".mod", "_s.rim"]:
+        for ext in (".rim", ".mod", "_s.rim"):
             filename = f"{module_root}{ext}"
             if filename in module_names:
                 area_name = module_names[filename]
