@@ -53,13 +53,13 @@ class Kit:
 
 
 class KitComponent:
-    def __init__(self, kit: Kit, name: str, component_id: str, bwm: "BWM", mdl: bytes, mdx: bytes):
+    def __init__(self, kit: Kit, name: str, component_id: str, bwm: BWM, mdl: bytes, mdx: bytes):
         self.kit: Kit = kit
         self.id: str = component_id
         self.name: str = name
         self.hooks: list[KitComponentHook] = []
 
-        self.bwm: "BWM" = bwm
+        self.bwm: BWM = bwm
         self.mdl: bytes = mdl
         self.mdx: bytes = mdx
 
@@ -75,7 +75,7 @@ class KitComponent:
 
 
 class KitComponentHook:
-    def __init__(self, position: "Vector3", rotation: float, edge: int, door: "KitDoor"):
+    def __init__(self, position: Vector3, rotation: float, edge: int, door: KitDoor):
         self.position: Vector3 = position
         self.rotation: float = rotation
         self.edge: int = edge
@@ -101,19 +101,19 @@ class KitDoor:
 
     # ---- compatibility aliases (no additional storage) ----
     @property
-    def utd_k1(self) -> "UTD":  # noqa: D401
+    def utd_k1(self) -> UTD:  # noqa: D401
         """Alias for `utdK1`."""
 
         return self.utdK1
 
     @property
-    def utd_k2(self) -> "UTD":  # noqa: D401
+    def utd_k2(self) -> UTD:  # noqa: D401
         """Alias for `utdK2`."""
 
         return self.utdK2
 
     @property
-    def utd(self) -> "UTD":  # noqa: D401
+    def utd(self) -> UTD:  # noqa: D401
         """Canonical single-blueprint alias (Toolset compatibility)."""
 
         return self.utdK1

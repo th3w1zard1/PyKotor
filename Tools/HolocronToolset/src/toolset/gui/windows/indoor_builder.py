@@ -19,6 +19,7 @@ from qtpy import QtCore
 from qtpy.QtCore import QEvent, QPoint, QPointF, QRectF, QSize, QTimer, Qt
 from qtpy.QtGui import QColor, QIcon, QImage, QKeyEvent, QMouseEvent, QPainter, QPainterPath, QPen, QPixmap, QShortcut, QTransform, QWheelEvent
 from qtpy.QtWidgets import (
+    QAction,
     QApplication,
     QDialog,
     QFileDialog,
@@ -56,15 +57,16 @@ else:
 from pykotor.common.misc import Color  # type: ignore[reportPrivateImportUsage]
 from pykotor.common.stream import BinaryWriter  # type: ignore[reportPrivateImportUsage]
 from pykotor.resource.formats.bwm import BWM, bytes_bwm, read_bwm  # type: ignore[reportPrivateImportUsage]
-from pykotor.common.indoormap import IndoorMap, IndoorMapRoom
-from pykotor.tools.indoormap import extract_indoor_from_module_name
+from pykotor.common.indoormap import INDOOR_EMBED_RESREF, INDOOR_EMBED_RESTYPE, IndoorMap, IndoorMapRoom
+from pykotor.tools.indoormap import extract_indoor_from_module_as_modulekit
+from pykotor.extract.capsule import Capsule
 from toolset.blender import BlenderEditorMode, ConnectionState, check_blender_and_ask, get_blender_settings
 from toolset.blender.integration import BlenderEditorMixin
 from toolset.config import get_remote_toolset_update_info, is_remote_version_newer
 from pykotor.common.indoorkit import Kit, KitComponent, KitComponentHook
 from pykotor.common.modulekit import ModuleKit, ModuleKitManager
 from pykotor.tools import indoorkit as indoorkit_tools
-from pykotor.common.indoorkit.qt_preview import ensure_component_image
+from toolset.data.indoorkit.qt_preview import ensure_component_image
 from toolset.data.installation import HTInstallation
 from toolset.gui.common.filters import NoScrollEventFilter
 from toolset.gui.dialogs.asyncloader import AsyncLoader
@@ -532,8 +534,20 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
         from toolset.uic.qtpy.windows.indoor_builder import Ui_MainWindow
 
-        self.ui = Ui_MainWindow()
+        self.ui: Ui_MainWindow = Ui_MainWindow()
         self.ui.setupUi(self)
+
+        # Add a missing "Open .mod" action at runtime (UI code is generated; do not edit it).
+        self._action_open_mod: QAction = QAction("Open .mod...", self)
+        self._action_open_mod.setShortcut("Ctrl+Shift+O")
+        self._action_open_mod.setStatusTip("Open a built module (.mod) and load its embedded indoor map")
+        # Put it right after "Open" in File menu and toolbar.
+        try:
+            self.ui.menuFile.insertAction(self.ui.actionSave, self._action_open_mod)
+            self.ui.toolBar.insertAction(self.ui.actionSave, self._action_open_mod)
+        except Exception:
+            # If UI structure changes, we still keep the action accessible via signal hookup below.
+            pass
 
         # Get mainSplitter - handle cases where it might not exist (new UI uses dock widgets)
         # Fallback to finding it by object name if direct attribute access fails
@@ -616,6 +630,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         # File menu
         self.ui.actionNew.triggered.connect(self.new)
         self.ui.actionOpen.triggered.connect(self.open)
+        self._action_open_mod.triggered.connect(self.open_mod)
         self.ui.actionSave.triggered.connect(self.save)
         self.ui.actionSaveAs.triggered.connect(self.save_as)
         self.ui.actionBuild.triggered.connect(self.build_map)
@@ -1592,6 +1607,66 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                     trf("{error}", error=str(universal_simplify_exception(e))),
                 ).exec()
 
+    def open_mod(self):
+        """Open a built `.mod` file and load its embedded `indoormap.txt` (if present).
+
+        This is intended for debugging built modules quickly without requiring on-disk kits.
+        If the `.mod` does not contain embedded indoor data, we fall back to module-name extraction
+        only when the selected file resides in the active installation's `Modules/` folder.
+        """
+        if not isinstance(self._installation, HTInstallation):
+            QMessageBox.warning(self, "No Installation", "Please select an installation first.")
+            return
+
+        filepath, _ = QFileDialog.getOpenFileName(self, "Open Module", "", "Module (*.mod);;All Files (*)")
+        if not filepath or not str(filepath).strip():
+            return
+
+        mod_path = Path(filepath)
+        if not mod_path.is_file():
+            QMessageBox.warning(self, "Invalid File", f"File not found:\n{mod_path}")
+            return
+
+        try:
+            cap = Capsule(mod_path)
+            if cap.contains(INDOOR_EMBED_RESREF, INDOOR_EMBED_RESTYPE):
+                data = cap.resource(INDOOR_EMBED_RESREF, INDOOR_EMBED_RESTYPE)
+                if data is None:
+                    raise ValueError(f"Embedded indoor data not found in {mod_path}")
+                missing_rooms = self._map.load(data, self._kits, self._module_kit_manager)
+                self._map.rebuild_room_connections()
+                self.ui.mapRenderer._cached_walkmeshes.clear()
+                self.ui.mapRenderer.set_map(self._map)
+                self._undo_stack.clear()
+                self._undo_stack.setClean()
+                self._filepath = ""  # This load comes from a module, not a .indoor file
+                self._refresh_window_title()
+
+                if missing_rooms:
+                    self._show_missing_rooms_dialog(missing_rooms)
+                return
+        except Exception as e:  # noqa: BLE001
+            # fall through to fallback below
+            from loggerplus import RobustLogger  # type: ignore[import-untyped, note]  # pyright: ignore[reportMissingTypeStubs]
+
+            RobustLogger().warning("Failed to load embedded indoor from '%s': %s", mod_path, universal_simplify_exception(e))
+
+        # Fallback: only possible if the module exists in the active installation.
+        try:
+            install_modules_dir = Path(self._installation.module_path())
+            if mod_path.parent.resolve() == install_modules_dir.resolve():
+                self.load_module_from_name(mod_path.stem)
+                return
+        except Exception:
+            pass
+
+        QMessageBox.warning(
+            self,
+            "Cannot Open Module",
+            "This .mod does not contain embedded indoor data (indoormap.txt), and it is not inside the active installation's Modules folder.\n\n"
+            "Tip: build modules via Indoor Builder / KotorCLI so they embed the indoor map for fast reload.",
+        )
+
     def _show_missing_rooms_dialog(
         self,
         missing_rooms: list[MissingRoomInfo],
@@ -1749,18 +1824,15 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
             # Get installation path and kits path
             installation_path = self._installation.path()
-            kits_path = Path("./kits").resolve()
             game = self._installation.game()
 
             # Extract the module
             def extract_task() -> IndoorMap:
-                return extract_indoor_from_module_name(
+                # Kits are deprecated; module browsing/extraction should use the implicit ModuleKit pipeline.
+                return extract_indoor_from_module_as_modulekit(
                     module_root,
                     installation_path=installation_path,
-                    kits_path=kits_path,
                     game=game,
-                    strict=False,  # Don't fail on unmatched rooms
-                    max_rms=1e-3,
                     logger=RobustLogger(),
                 )
 

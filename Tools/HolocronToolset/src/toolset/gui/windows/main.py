@@ -560,20 +560,17 @@ class ToolWindow(QMainWindow):
                 )
                 return None
             
-            # Get the module root name (extract_indoor_from_module_name expects module root without extension)
-            module_name = str(module_data)
-            # Remove .rim or .mod extension if present
-            if module_name.endswith(('.rim', '.mod')):
-                module_name = module_name.rsplit('.', 1)[0]
+            # Use the selected module file name and strip extension robustly.
+            module_name = PurePath(str(module_data)).stem
             
             builder = IndoorMapBuilder(None, self.active)
-            builder.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
-            builder.show()
-            builder.activateWindow()
-            add_window(builder)
+            builder.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)  # Set the window to delete on close, so it doesn't hang around after the function returns.
+            builder.show()  # Show the window
+            builder.activateWindow()  # Bring the window to the front
+            add_window(builder)  # Add the window to the window manager
             
             # Load the selected module (use QTimer to ensure window is fully initialized)
-            QTimer.singleShot(33, lambda: builder.load_module_from_name(module_name))
+            QTimer.singleShot(33, lambda: builder.load_module_from_name(module_name))  # Load the module after the window is fully initialized
             
             return builder
             

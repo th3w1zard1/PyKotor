@@ -124,15 +124,40 @@ def k1_installation() -> Installation:
 
 @pytest.fixture(scope="session")
 def k2_installation() -> Installation:
-    # Accept either K2_PATH or TSL_PATH (repo convention).
+    # Accept either K2_PATH or TSL_PATH (repo convention). Skip if not available.
     k2_env = os.environ.get("K2_PATH") or os.environ.get("TSL_PATH")
-    assert k2_env, "K2_PATH or TSL_PATH is required for these tests (set it to your KOTOR2 installation directory)."
+    if not k2_env:
+        pytest.skip("K2_PATH/TSL_PATH not set (ensure `.env` is loaded or set the env var).")
     k2_path = Path(k2_env)
-    assert k2_path.is_dir(), f"K2_PATH/TSL_PATH path does not exist or is not a directory: {k2_path}"
-    assert k2_path.joinpath(
-        "chitin.key"
-    ).is_file(), f"K2_PATH/TSL_PATH does not look like a real install (missing chitin.key): {k2_path}"
+    if not k2_path.is_dir():
+        pytest.skip(f"K2_PATH/TSL_PATH path does not exist or is not a directory: {k2_path}")
+    if not k2_path.joinpath("chitin.key").is_file():
+        pytest.skip(f"K2_PATH/TSL_PATH does not look like a real install (missing chitin.key): {k2_path}")
     return Installation(CaseAwarePath(k2_path))
+
+
+def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item]) -> None:  # noqa: ARG001
+    """Rewrite nodeids for per-module installation tests for easier scanning.
+
+    When a test is parametrized with `module_case=('k1'|'k2', module_root)`, we rewrite the nodeid to:
+    `<path>::<k1_installation|tsl_installation>::<module_root>::<test_name>[...]`
+    """
+    for item in items:
+        callspec = getattr(item, "callspec", None)
+        if callspec is None:
+            continue
+        params = getattr(callspec, "params", {})
+        if "module_case" not in params:
+            continue
+        try:
+            game_key, module_root = params["module_case"]
+        except Exception:
+            continue
+        install_label = "k1_installation" if game_key == "k1" else "tsl_installation" if game_key == "k2" else str(game_key)
+        base = item.nodeid.split("::", 1)[0]
+        rest = item.nodeid[len(base) + 2 :] if item.nodeid.startswith(base + "::") else item.nodeid
+        # `rest` typically begins with the function name, potentially with `[param]`.
+        item._nodeid = f"{base}::{install_label}::{module_root}::{rest}"  # type: ignore[attr-defined]
 
 
 def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:

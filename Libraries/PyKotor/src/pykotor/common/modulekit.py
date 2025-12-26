@@ -184,16 +184,15 @@ class ModuleKit(Kit):
 
     def _get_room_walkmesh(self, model_name: str) -> BWM | None:
         """Get the walkmesh for a room from the module.
-        
-        Returns the BWM exactly as stored in the game files.
-        Note: The BWM will be re-centered by _recenter_bwm() before use.
+
+        Returns the parsed walkmesh (BWM) exactly as read from the module's WOK resource.
         """
         if self._module is None:
             return None
         res = self._module.resource(model_name, ResourceType.WOK)
         if res is None:
             return None
-        data = res.data()
+        data: bytes | None = res.data()
         if not data:
             return None
         if isinstance(data, BWM):

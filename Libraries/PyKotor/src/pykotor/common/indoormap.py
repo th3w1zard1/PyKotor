@@ -105,9 +105,9 @@ class IndoorMap:
         self.ifo: IFO | None = None
         self.git: GIT | None = None
 
+        self.total_lm: int = 0
         self.room_names: dict[IndoorMapRoom, str] = {}
         self.tex_renames: dict[str, str] = {}
-        self.total_lm: int = 0
         self.used_rooms: set[KitComponent] = set()
         self.used_kits: set[Kit] = set()
         self.scan_mdls: set[bytes] = set()
@@ -281,7 +281,10 @@ class IndoorMap:
         bwm: BWM = deepcopy(room.base_walkmesh())
         bwm.flip(room.flip_x, room.flip_y)
         bwm.rotate(room.rotation)
-        bwm.translate(room.position.x, room.position.y, room.position.z)
+        # IMPORTANT: WOK/WALK meshes are in the room model's local space.
+        # World placement is handled by the LYT room position.
+        # Translating here will double-apply the offset and can break walkability.
+        #bwm.translate(room.position.x, room.position.y, room.position.z)
         return bwm
 
     def add_model_resources(
@@ -290,19 +293,21 @@ class IndoorMap:
         mdl: bytes | bytearray,
         mdx: bytes | bytearray,
     ) -> None:
-        assert self.mod is not None
+        assert self.mod is not None, "mod is None"
         mdl = model.change_textures(mdl, self.tex_renames)
         self.mod.set_data(modelname, ResourceType.MDL, bytes(mdl))
         self.mod.set_data(modelname, ResourceType.MDX, bytes(mdx))
 
     def add_bwm_resource(self, modelname: str, bwm: BWM):
-        assert self.mod is not None
+        assert self.mod is not None, "mod is None"
         self.mod.set_data(modelname, ResourceType.WOK, bytes_bwm(bwm))
 
     def process_skybox(self, kits: list[Kit]):
         if not self.skybox:
             return
-        assert self.mod is not None and self.lyt is not None and self.vis is not None
+        assert self.mod is not None, "mod is None"
+        assert self.lyt is not None, "lyt is None"
+        assert self.vis is not None, "vis is None"
         for kit in kits:
             if self.skybox not in kit.skyboxes:
                 continue
@@ -344,7 +349,7 @@ class IndoorMap:
         We generate a blank 512x256 RGBA minimap. Bounds are still computed from walkmeshes
         and written into ARE so the in-game map framing remains consistent.
         """
-        assert self.mod is not None
+        assert self.mod is not None, "mod is None"
         from pykotor.resource.formats.tpc import TPC  # noqa: PLC0415
 
         data = bytearray()
@@ -355,7 +360,7 @@ class IndoorMap:
         self.mod.set_data(f"lbl_map{self.module_id}", ResourceType.TGA, bytes_tpc(minimap_tpc, ResourceType.TGA))
 
     def set_area_attributes(self, bounds: tuple[Vector2, Vector2]):
-        assert self.are is not None
+        assert self.are is not None, "are is None"
         world_min, world_max = bounds
         self.are.tag = self.module_id
         self.are.dynamic_light = self.lighting
@@ -370,7 +375,8 @@ class IndoorMap:
         self.are.north_axis = ARENorthAxis.NegativeY
 
     def set_ifo_attributes(self):
-        assert self.ifo is not None and self.vis is not None
+        assert self.ifo is not None, "ifo is None"
+        assert self.vis is not None, "vis is None"
         self.ifo.tag = self.module_id
         self.ifo.area_name = ResRef(self.module_id)
         self.ifo.resref = ResRef(self.module_id)
@@ -378,7 +384,8 @@ class IndoorMap:
         self.ifo.entry_position = self.warp_point
 
     def handle_door_insertions(self, target_tsl: bool):
-        assert self.mod is not None and self.git is not None
+        assert self.mod is not None, "mod is None"
+        assert self.git is not None, "git is None"
         insertions = self.door_insertions()
         for i, insertion in enumerate(insertions):
             door_resname = f"{self.module_id}_dor{i}"
@@ -400,7 +407,12 @@ class IndoorMap:
             self.mod.set_data(door_resname, ResourceType.UTD, bytes_utd(utd))
 
     def finalize_module_data(self):
-        assert self.mod is not None and self.lyt is not None and self.vis is not None and self.are is not None and self.git is not None and self.ifo is not None
+        assert self.mod is not None, "mod is None"
+        assert self.lyt is not None, "lyt is None"
+        assert self.vis is not None, "vis is None"
+        assert self.are is not None, "are is None"
+        assert self.git is not None, "git is None"
+        assert self.ifo is not None, "ifo is None"
         self.mod.set_data(self.module_id, ResourceType.LYT, bytes_lyt(self.lyt))
         self.mod.set_data(self.module_id, ResourceType.VIS, bytes_vis(self.vis))
         self.mod.set_data(self.module_id, ResourceType.ARE, bytes_are(self.are))

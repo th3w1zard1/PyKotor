@@ -232,6 +232,18 @@ class AsyncLoader(QDialog, Generic[T]):
         if start_immediately:
             self.start_worker()
 
+    def result(self) -> T | None:  # pyright: ignore[reportIncompatibleMethodOverride]
+        """Return the task result (not the QDialog dialog-code int).
+
+        Qt's `QDialog.result()` returns an `int` accept/reject code. For `AsyncLoader`, callers
+        expect the return value produced by the asynchronous `task`, which is stored in `self.value`.
+        """
+        return self.value
+
+    def dialog_result_code(self) -> int:
+        """Return the underlying QDialog accept/reject result code."""
+        return super().result()
+
     def progress_callback_api(
         self,
         data: int | str,

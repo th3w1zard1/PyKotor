@@ -11,7 +11,6 @@ Constraints:
 from __future__ import annotations
 
 import json
-import os
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -45,15 +44,6 @@ from pykotor.resource.formats.erf import ERF, ERFType, read_erf, write_erf
 from pykotor.resource.formats.lyt import LYT, LYTRoom, bytes_lyt, read_lyt
 from pykotor.resource.type import ResourceType
 from pykotor.tools.path import CaseAwarePath
-
-
-def _require_installation(env_var: str) -> Path:
-    value = os.environ.get(env_var)
-    assert value, f"{env_var} is required (set it to your installation directory)."
-    p = Path(value)
-    assert p.is_dir(), f"{env_var} does not exist or is not a directory: {p}"
-    assert p.joinpath("chitin.key").is_file(), f"{env_var} does not look like a real install (missing chitin.key): {p}"
-    return p
 
 
 def _run_cli(argv: list[str]) -> int:
@@ -135,6 +125,41 @@ def _parse_indoor(raw: bytes) -> dict[str, Any]:
     return json.loads(raw.decode("utf-8"))
 
 
+def _installation_for(
+    request: pytest.FixtureRequest,
+    *,
+    game_key: str,
+    k1_installation: Installation,
+) -> tuple[Installation, str]:
+    """Resolve installation without forcing K2 fixture when K2 isn't configured."""
+    if game_key == "k1":
+        return k1_installation, "k1"
+    if game_key == "k2":
+        return request.getfixturevalue("k2_installation"), "k2"
+    msg = f"Unexpected game key: {game_key!r}"
+    raise AssertionError(msg)
+
+
+def _safe_out_module_id(*, module_root: str, game_key: str, room_count: int) -> str:
+    """Pick a module id that will not exceed the 16-char ResRef limit for `{id}_room{i}`."""
+    max_index = max(room_count - 1, 0)
+    digits = len(str(max_index))
+    max_module_id_len = 16 - (len("_room") + digits)
+    if max_module_id_len <= 0:
+        msg = f"Cannot construct a valid module_id for room_count={room_count} (digits={digits})"
+        raise AssertionError(msg)
+
+    base = f"{module_root}{game_key}rt".lower()
+    base = "".join(c for c in base if c.isalnum() or c == "_")
+    return base[:max_module_id_len]
+
+
+@pytest.fixture(autouse=True)
+def _require_module_case(module_case: tuple[str, str]) -> None:  # noqa: ARG001
+    """Ensure all tests in this module are collected per-installation and per-module."""
+    return
+
+
 @dataclass
 class RoundtripResult:
     module_root: str
@@ -152,38 +177,26 @@ class RoundtripResult:
     mod2_payloads: dict[tuple[str, ResourceType], bytes]
 
 
-@pytest.fixture(scope="session")
-def rt(tmp_path_factory: pytest.TempPathFactory, k1_installation: Installation) -> RoundtripResult:
-    # Pick a real module from K1 installation deterministically:
-    # first root that ModuleKit can load and has >=1 component with non-empty WOK faces.
-    mk = ModuleKitManager(k1_installation)
-    module_roots = mk.get_module_roots()
-    assert module_roots, "No modules discovered in K1 installation."
+@pytest.fixture(scope="module")
+def rt(
+    request: pytest.FixtureRequest,
+    tmp_path_factory: pytest.TempPathFactory,
+    module_case: tuple[str, str],
+    k1_installation: Installation,
+) -> RoundtripResult:
+    """Roundtrip once per (installation, module_root), reused across granular assertions."""
+    game_key, source_module_root = module_case
+    installation, game_arg = _installation_for(request, game_key=game_key, k1_installation=k1_installation)
 
-    chosen_root: str | None = None
-    for root in module_roots:
-        kit = mk.get_module_kit(root)
-        if not kit.ensure_loaded():
-            continue
-        if not kit.components:
-            continue
-        if any(c.bwm.faces for c in kit.components):
-            chosen_root = root
-            break
+    tmp_path = tmp_path_factory.mktemp(f"rt_modulekit_{game_key}_{source_module_root}")
 
-    assert chosen_root is not None, "No ModuleKit-loadable module with usable WOK/BWM faces found in K1 installation."
-
-    tmp_path = tmp_path_factory.mktemp(f"rt_modulekit_{chosen_root}")
-    source_module_root = chosen_root
-    output_module_root = f"{chosen_root}_rt"
-
-    indoor0 = tmp_path / f"{output_module_root}.0.indoor"
-    indoor1 = tmp_path / f"{output_module_root}.1.indoor"
-    mod1 = tmp_path / f"{output_module_root}.1.mod"
-    mod2 = tmp_path / f"{output_module_root}.2.mod"
+    indoor0 = tmp_path / f"{source_module_root}.{game_key}.0.indoor"
+    indoor1 = tmp_path / f"{source_module_root}.{game_key}.1.indoor"
+    mod1 = tmp_path / f"{source_module_root}.{game_key}.1.mod"
+    mod2 = tmp_path / f"{source_module_root}.{game_key}.2.mod"
 
     # Use the real installation as the authoritative source; do not copy/mutate it.
-    install_dir = Path(k1_installation.path())
+    install_dir = Path(installation.path())
     source_mod_bytes = b""
     source_mod_payloads = {}
 
@@ -198,18 +211,20 @@ def rt(tmp_path_factory: pytest.TempPathFactory, k1_installation: Installation) 
             "--installation",
             str(install_dir),
             "--game",
-            "k1",
+            game_arg,
             "--log-level",
             "error",
         ]
     )
-    assert rc == 0, f"indoor-build failed with exit code: {rc}"
+    assert rc == 0, f"indoor-extract failed for {game_key}:{source_module_root} with exit code: {rc}"
 
     indoor0_extracted_raw = indoor0.read_bytes()
 
     # Normalize the `.indoor` module id to the output module root, so the build output embeds
     # an `.indoor` that is stable and so `indoor0 == indoor1`.
     d0 = _parse_indoor(indoor0.read_bytes())
+    room_count = len(d0.get("rooms", [])) if isinstance(d0.get("rooms", []), list) else 0
+    output_module_root = _safe_out_module_id(module_root=source_module_root, game_key=game_key, room_count=room_count)
     d0["warp"] = output_module_root
     d0["module_id"] = output_module_root
     indoor0.write_bytes(json.dumps(d0).encode("utf-8"))
@@ -226,14 +241,14 @@ def rt(tmp_path_factory: pytest.TempPathFactory, k1_installation: Installation) 
             "--installation",
             str(install_dir),
             "--game",
-            "k1",
+            game_arg,
             "--module-filename",
             output_module_root,
             "--log-level",
             "error",
         ]
     )
-    assert rc == 0, f"indoor-extract failed with exit code: {rc}"
+    assert rc == 0, f"indoor-build failed for {game_key}:{source_module_root} with exit code: {rc}"
 
     rc = _run_cli(
         [
@@ -246,12 +261,12 @@ def rt(tmp_path_factory: pytest.TempPathFactory, k1_installation: Installation) 
             "--installation",
             str(install_dir),
             "--game",
-            "k1",
+            game_arg,
             "--log-level",
             "error",
         ]
     )
-    assert rc == 0, f"indoor-extract failed with exit code: {rc}"
+    assert rc == 0, f"indoor-extract (module-file) failed for {game_key}:{source_module_root} with exit code: {rc}"
 
     rc = _run_cli(
         [
@@ -264,14 +279,14 @@ def rt(tmp_path_factory: pytest.TempPathFactory, k1_installation: Installation) 
             "--installation",
             str(install_dir),
             "--game",
-            "k1",
+            game_arg,
             "--module-filename",
             output_module_root,
             "--log-level",
             "error",
         ]
     )
-    assert rc == 0, f"indoor-build failed with exit code: {rc}"
+    assert rc == 0, f"indoor-build (2nd) failed for {game_key}:{source_module_root} with exit code: {rc}"
 
     indoor0_raw = indoor0.read_bytes()
     indoor1_raw = indoor1.read_bytes()
@@ -307,12 +322,16 @@ def test_mim_mod_bytes_identical(rt: RoundtripResult):
 
 
 def test_mim_resource_keys_identical(rt: RoundtripResult):
-    assert set(rt.mod1_payloads.keys()) == set(rt.mod2_payloads.keys()), f"Mod1 payload keys do not match mod2 payload keys: {rt.mod1_payloads.keys()} != {rt.mod2_payloads.keys()}"
+    assert set(rt.mod1_payloads.keys()) == set(
+        rt.mod2_payloads.keys()
+    ), f"Mod1 payload keys do not match mod2 payload keys: {rt.mod1_payloads.keys()} != {rt.mod2_payloads.keys()}"
 
 
 def test_mim_resource_payloads_identical(rt: RoundtripResult):
     for key, b1 in rt.mod1_payloads.items():
-        assert b1 == rt.mod2_payloads[key], f"Mod1 payload {key} does not match mod2 payload {key}: {b1} != {rt.mod2_payloads[key]}"
+        assert (
+            b1 == rt.mod2_payloads[key]
+        ), f"Mod1 payload {key} does not match mod2 payload {key}: {b1} != {rt.mod2_payloads[key]}"
 
 
 def test_mim_has_core_resources(rt: RoundtripResult):
@@ -326,15 +345,22 @@ def test_mim_has_core_resources(rt: RoundtripResult):
 
 
 def test_mim_embeds_indoormap(rt: RoundtripResult):
-    assert ("indoormap", ResourceType.TXT) in rt.mod1_payloads, f"indoormap not in mod1 payloads: {rt.mod1_payloads.keys()}"
+    assert (
+        "indoormap",
+        ResourceType.TXT,
+    ) in rt.mod1_payloads, f"indoormap not in mod1 payloads: {rt.mod1_payloads.keys()}"
 
 
 def test_mim_embedded_indoormap_matches_extracted(rt: RoundtripResult):
-    assert rt.mod1_payloads[("indoormap", ResourceType.TXT)] == rt.indoor1_raw, f"indoormap payload does not match extracted indoor1: {rt.mod1_payloads[('indoormap', ResourceType.TXT)]} != {rt.indoor1_raw}"
+    assert (
+        rt.mod1_payloads[("indoormap", ResourceType.TXT)] == rt.indoor1_raw
+    ), f"indoormap payload does not match extracted indoor1: {rt.mod1_payloads[('indoormap', ResourceType.TXT)]} != {rt.indoor1_raw}"
 
 
 def test_mim_has_wok(rt: RoundtripResult):
-    assert any(restype == ResourceType.WOK for (_r, restype) in rt.mod1_payloads), f"No WOK in mod1 payloads: {rt.mod1_payloads.keys()}"
+    assert any(
+        restype == ResourceType.WOK for (_r, restype) in rt.mod1_payloads
+    ), f"No WOK in mod1 payloads: {rt.mod1_payloads.keys()}"
 
 
 def test_mim_all_woks_nonempty(rt: RoundtripResult):
@@ -359,7 +385,9 @@ def test_mim_wok_materials_preserved(rt: RoundtripResult):
                     assert -1 <= int(t) <= 2048, f"Suspicious transition index in {resref}.wok: {t}"
         return out
 
-    assert mats(rt.mod1_payloads) == mats(rt.mod2_payloads), f"WOK materials do not match: {mats(rt.mod1_payloads)} != {mats(rt.mod2_payloads)}"
+    assert mats(rt.mod1_payloads) == mats(
+        rt.mod2_payloads
+    ), f"WOK materials do not match: {mats(rt.mod1_payloads)} != {mats(rt.mod2_payloads)}"
 
 
 def test_mim_has_room_model_triplet(rt: RoundtripResult):
@@ -372,22 +400,32 @@ def test_mim_has_room_model_triplet(rt: RoundtripResult):
 
 
 def test_mim_minimap_exists(rt: RoundtripResult):
-    assert (f"lbl_map{rt.module_root}", ResourceType.TGA) in rt.mod1_payloads, f"lbl_map{rt.module_root} not in mod1 payloads: {rt.mod1_payloads.keys()}"
+    assert (
+        f"lbl_map{rt.module_root}",
+        ResourceType.TGA,
+    ) in rt.mod1_payloads, f"lbl_map{rt.module_root} not in mod1 payloads: {rt.mod1_payloads.keys()}"
 
 
 def test_mim_git_nonempty(rt: RoundtripResult):
-    assert len(rt.mod1_payloads[(rt.module_root, ResourceType.GIT)]) > 0, f"GIT is empty: {rt.mod1_payloads[(rt.module_root, ResourceType.GIT)]}"
+    assert (
+        len(rt.mod1_payloads[(rt.module_root, ResourceType.GIT)]) > 0
+    ), f"GIT is empty: {rt.mod1_payloads[(rt.module_root, ResourceType.GIT)]}"
 
 
 def test_mim_wok_bytes_identical(rt: RoundtripResult):
     for key, b1 in rt.mod1_payloads.items():
         if key[1] != ResourceType.WOK:
             continue
-        assert b1 == rt.mod2_payloads[key], f"WOK {key} does not match mod2 payload {key}: {b1} != {rt.mod2_payloads[key]}"
+        assert (
+            b1 == rt.mod2_payloads[key]
+        ), f"WOK {key} does not match mod2 payload {key}: {b1} != {rt.mod2_payloads[key]}"
 
 
 def test_mim_embedded_indoormap_present_after_roundtrip(rt: RoundtripResult):
-    assert ("indoormap", ResourceType.TXT) in rt.mod2_payloads, f"indoormap not in mod2 payloads: {rt.mod2_payloads.keys()}"
+    assert (
+        "indoormap",
+        ResourceType.TXT,
+    ) in rt.mod2_payloads, f"indoormap not in mod2 payloads: {rt.mod2_payloads.keys()}"
 
 
 # -----------------------------
@@ -396,7 +434,9 @@ def test_mim_embedded_indoormap_present_after_roundtrip(rt: RoundtripResult):
 
 
 def test_imi_indoor_bytes_identical(rt: RoundtripResult):
-    assert rt.indoor0_raw == rt.indoor1_raw, f"indoor0 raw does not match indoor1 raw: {rt.indoor0_raw} != {rt.indoor1_raw}"
+    assert (
+        rt.indoor0_raw == rt.indoor1_raw
+    ), f"indoor0 raw does not match indoor1 raw: {rt.indoor0_raw} != {rt.indoor1_raw}"
 
 
 def test_imi_indoor_json_parses(rt: RoundtripResult):
@@ -430,7 +470,9 @@ def test_imi_module_root_written(rt: RoundtripResult):
     d = _parse_indoor(rt.indoor1_raw)
     for room in d["rooms"]:
         assert "module_root" in room, f"Module_root not in room: {room}"
-        assert str(room["module_root"]).lower() == rt.source_module_root, f"Module_root does not match source module root: {room['module_root']} != {rt.source_module_root}"
+        assert (
+            str(room["module_root"]).lower() == rt.source_module_root
+        ), f"Module_root does not match source module root: {room['module_root']} != {rt.source_module_root}"
 
 
 def test_imi_warp_matches(rt: RoundtripResult):
@@ -453,7 +495,9 @@ def test_imi_components_unique(rt: RoundtripResult):
 
 def test_imi_kit_is_module_root(rt: RoundtripResult):
     d = _parse_indoor(rt.indoor1_raw)
-    assert all(str(r["kit"]).lower() == rt.source_module_root for r in d["rooms"]), f"Kit does not match source module root: {d['rooms']}"
+    assert all(
+        str(r["kit"]).lower() == rt.source_module_root for r in d["rooms"]
+    ), f"Kit does not match source module root: {d['rooms']}"
 
 
 def test_imi_loadable_with_modulekit(rt: RoundtripResult):
@@ -497,7 +541,11 @@ def test_imi_name_shape(rt: RoundtripResult):
 def test_imi_target_game_type_optional(rt: RoundtripResult):
     d = _parse_indoor(rt.indoor1_raw)
     if "target_game_type" in d:
-        assert d["target_game_type"] in (True, False, None), f"Target game type is not a bool or None: {d['target_game_type']}"
+        assert d["target_game_type"] in (
+            True,
+            False,
+            None,
+        ), f"Target game type is not a bool or None: {d['target_game_type']}"
 
 
 # -----------------------------
@@ -506,15 +554,24 @@ def test_imi_target_game_type_optional(rt: RoundtripResult):
 
 
 def test_unit_mod_has_are(rt: RoundtripResult):
-    assert (rt.module_root, ResourceType.ARE) in rt.mod1_payloads, f"ARE not in mod1 payloads: {rt.mod1_payloads.keys()}"
+    assert (
+        rt.module_root,
+        ResourceType.ARE,
+    ) in rt.mod1_payloads, f"ARE not in mod1 payloads: {rt.mod1_payloads.keys()}"
 
 
 def test_unit_mod_has_git(rt: RoundtripResult):
-    assert (rt.module_root, ResourceType.GIT) in rt.mod1_payloads, f"GIT not in mod1 payloads: {rt.mod1_payloads.keys()}"
+    assert (
+        rt.module_root,
+        ResourceType.GIT,
+    ) in rt.mod1_payloads, f"GIT not in mod1 payloads: {rt.mod1_payloads.keys()}"
 
 
 def test_unit_mod_has_vis(rt: RoundtripResult):
-    assert (rt.module_root, ResourceType.VIS) in rt.mod1_payloads, f"VIS not in mod1 payloads: {rt.mod1_payloads.keys()}"
+    assert (
+        rt.module_root,
+        ResourceType.VIS,
+    ) in rt.mod1_payloads, f"VIS not in mod1 payloads: {rt.mod1_payloads.keys()}"
 
 
 def test_unit_mod_has_ifo(rt: RoundtripResult):
@@ -522,11 +579,15 @@ def test_unit_mod_has_ifo(rt: RoundtripResult):
 
 
 def test_unit_room_models_have_mdl(rt: RoundtripResult):
-    assert any(restype == ResourceType.MDL for (_r, restype) in rt.mod1_payloads), f"No MDL in mod1 payloads: {rt.mod1_payloads.keys()}"
+    assert any(
+        restype == ResourceType.MDL for (_r, restype) in rt.mod1_payloads
+    ), f"No MDL in mod1 payloads: {rt.mod1_payloads.keys()}"
 
 
 def test_unit_room_models_have_mdx(rt: RoundtripResult):
-    assert any(restype == ResourceType.MDX for (_r, restype) in rt.mod1_payloads), f"No MDX in mod1 payloads: {rt.mod1_payloads.keys()}"
+    assert any(
+        restype == ResourceType.MDX for (_r, restype) in rt.mod1_payloads
+    ), f"No MDX in mod1 payloads: {rt.mod1_payloads.keys()}"
 
 
 def test_unit_embedded_indoor_is_utf8(rt: RoundtripResult):
@@ -541,18 +602,16 @@ def test_unit_mod_payloads_nonempty(rt: RoundtripResult):
 
 
 def test_unit_indoormap_present_in_payloads(rt: RoundtripResult):
-    assert ("indoormap", ResourceType.TXT) in rt.mod1_payloads, f"indoormap not in mod1 payloads: {rt.mod1_payloads.keys()}"
+    assert (
+        "indoormap",
+        ResourceType.TXT,
+    ) in rt.mod1_payloads, f"indoormap not in mod1 payloads: {rt.mod1_payloads.keys()}"
 
 
 def test_unit_wok_count_matches_room_count(rt: RoundtripResult):
     room_count = len(_parse_indoor(rt.indoor1_raw)["rooms"])
     wok_count = sum(
-        1
-        for (_r, t) in rt.mod1_payloads
-        if (
-            t == ResourceType.WOK
-            and _r.startswith(f"{rt.module_root}_room")
-        )
+        1 for (_r, t) in rt.mod1_payloads if (t == ResourceType.WOK and _r.startswith(f"{rt.module_root}_room"))
     )
     assert wok_count == room_count, f"Wok count does not match room count: {wok_count} != {room_count}"
 
@@ -687,4 +746,6 @@ def test_unit_indoor_room_count_positive(rt: RoundtripResult):
 
 
 def test_unit_mod_roundtrip_payloads_match(rt: RoundtripResult):
-    assert rt.mod1_payloads == rt.mod2_payloads, f"Mod1 payloads do not match mod2 payloads: {rt.mod1_payloads} != {rt.mod2_payloads}"
+    assert (
+        rt.mod1_payloads == rt.mod2_payloads
+    ), f"Mod1 payloads do not match mod2 payloads: {rt.mod1_payloads} != {rt.mod2_payloads}"
