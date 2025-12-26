@@ -7,7 +7,7 @@ from qtpy.QtGui import QImage
 
 from pykotor.common.indoorkit import Kit
 from pykotor.tools import indoorkit as indoorkit_tools
-from pykotor.common.indoorkit.qt_preview import ensure_component_image
+from toolset.data.indoorkit.qt_preview import ensure_component_image
 
 if TYPE_CHECKING:
     import os
