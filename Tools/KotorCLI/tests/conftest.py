@@ -36,6 +36,7 @@ _load_dotenv_if_present()
 import cProfile
 import pstats
 import re
+import time
 from typing import Iterator
 
 
@@ -101,6 +102,48 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo):  # type
     if rep.when == "call":
         item.rep_call = rep  # type: ignore[attr-defined]
     return rep
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_setup(item: pytest.Item) -> Iterator[None]:
+    """If enabled, dump cProfile for slow *setup* (fixture) phases.
+
+    This is critical for our indoor/module roundtrip tests because the expensive work
+    (extract/build) often happens in fixtures during setup.
+    """
+    threshold = _profile_threshold_ms()
+    if threshold <= 0:
+        yield
+        return
+
+    profiler = cProfile.Profile()
+    start = time.perf_counter()
+    profiler.enable()
+    yield
+    profiler.disable()
+    dur_ms = int((time.perf_counter() - start) * 1000)
+    if dur_ms < threshold:
+        return
+
+    out_dir = Path(__file__).resolve().parents[3] / "profiling"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    base = _safe_name(item.nodeid)
+    pstat_path = out_dir / f"{base}__setup.pstat"
+    txt_path = out_dir / f"{base}__setup.txt"
+
+    profiler.dump_stats(str(pstat_path))
+    with txt_path.open("w", encoding="utf-8") as f:
+        stats = pstats.Stats(profiler, stream=f)
+        stats.strip_dirs()
+        stats.sort_stats("cumulative")
+        f.write(f"nodeid: {item.nodeid}\n")
+        f.write(f"phase: setup\n")
+        f.write(f"threshold_ms: {threshold}\n")
+        f.write(f"duration_ms: {dur_ms}\n\n")
+        stats.print_stats(80)
+        f.write("\n\n---- callers (top 40) ----\n")
+        stats.print_callers(40)
 
 
 def _require_installation_path(env_var: str) -> Path:
@@ -183,11 +226,11 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     # K2 is optional: if not present, we just won't generate K2 cases.
     k2_env = os.environ.get("K2_PATH") or os.environ.get("TSL_PATH")
     if not k2_env:
-        metafunc.parametrize("module_case", cases, ids=ids)  # type: ignore[arg-type]
+        metafunc.parametrize("module_case", cases, ids=ids, scope="module")  # type: ignore[arg-type]
         return
     k2_path = Path(k2_env)
     if not k2_path.joinpath("chitin.key").is_file():
-        metafunc.parametrize("module_case", cases, ids=ids)  # type: ignore[arg-type]
+        metafunc.parametrize("module_case", cases, ids=ids, scope="module")  # type: ignore[arg-type]
         return
     k2_install = Installation(CaseAwarePath(k2_path))
     for module_filename in k2_install.module_names(use_hardcoded=True):
@@ -198,4 +241,17 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
         cases.append(key)
         ids.append(f"k2:{root}")
 
-    metafunc.parametrize("module_case", cases, ids=ids)  # type: ignore[arg-type]
+    # Optional slicing for long-running per-module suites.
+    # Format: "start:end" (Python slice semantics), e.g. "0:50", "50:100", "100:".
+    raw_slice = os.environ.get("PYKOTOR_MODULE_CASE_SLICE", "").strip()
+    if raw_slice:
+        if ":" not in raw_slice:
+            msg = f"Invalid PYKOTOR_MODULE_CASE_SLICE (expected start:end): {raw_slice!r}"
+            raise ValueError(msg)
+        start_s, end_s = raw_slice.split(":", 1)
+        start = int(start_s) if start_s.strip() else None
+        end = int(end_s) if end_s.strip() else None
+        cases = cases[slice(start, end)]
+        ids = ids[slice(start, end)]
+
+    metafunc.parametrize("module_case", cases, ids=ids, scope="module")  # type: ignore[arg-type]

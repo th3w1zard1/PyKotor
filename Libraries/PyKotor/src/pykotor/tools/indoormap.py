@@ -6,9 +6,8 @@ This module provides **workflow functions** around the core model in
 `pykotor.common.indoormap`:
 - Build a `.mod` from an `.indoor` file (with explicit on-disk kits)
 - Build a `.mod` from an `.indoor` file using implicit `ModuleKit`
-- Extract an `.indoor` from a module either:
-  - fast-path: embedded `indoormap.txt` payload
-  - full reverse-extraction: fit WOK walkmeshes back to kit components
+- Extract an `.indoor` from a module via reverse-extraction: fit WOK walkmeshes back
+  to kit components.
 
 Keep UI/Qt out of this module. Toolset uses these functions indirectly via its UI.
 """
@@ -21,19 +20,19 @@ from typing import TYPE_CHECKING
 
 from loggerplus import RobustLogger
 from pykotor.common.indoorkit import Kit, KitComponent
-from pykotor.common.indoormap import INDOOR_EMBED_RESREF, INDOOR_EMBED_RESTYPE, IndoorMap, IndoorMapRoom, _RoomTransformMatch
+from pykotor.common.indoormap import IndoorMap, IndoorMapRoom, _RoomTransformMatch
 from pykotor.common.misc import Game
 from pykotor.common.module import Module, ModuleResource
 from pykotor.common.modulekit import ModuleKit, ModuleKitManager
-from pykotor.extract.capsule import Capsule
 from pykotor.extract.installation import Installation
 from pykotor.resource.formats.bwm import BWM, read_bwm
 from pykotor.resource.formats.lyt import LYT
 from pykotor.resource.generics.are import ARE
 from pykotor.resource.generics.ifo import IFO
+from pykotor.resource.formats.erf import read_erf
+from pykotor.resource.formats.lyt import read_lyt
 from pykotor.resource.type import ResourceType
 from pykotor.tools.indoorkit import load_kits
-from pykotor.tools.module import prioritize_module_files
 from pykotor.tools.path import CaseAwarePath
 from utility.common.geometry import Vector3
 
@@ -69,10 +68,14 @@ def build_mod_from_indoor_file_modulekit(
     game: Game | None,
     module_id: str | None = None,
     loadscreen_path: os.PathLike | str | None = None,
+    installation: Installation | None = None,
+    module_kit_manager: ModuleKitManager | None = None,
 ) -> None:
     """Build a `.mod` from an `.indoor` file using **implicit ModuleKit** (no on-disk kits)."""
-    installation = Installation(CaseAwarePath(installation_path))
-    module_kit_manager = ModuleKitManager(installation)
+    if installation is None:
+        installation = Installation(CaseAwarePath(installation_path))
+    if module_kit_manager is None:
+        module_kit_manager = ModuleKitManager(installation)
     indoor_map = IndoorMap()
     missing = indoor_map.load(Path(indoor_path).read_bytes(), [], module_kit_manager)
     if missing:
@@ -98,6 +101,8 @@ def extract_indoor_from_module_as_modulekit(
     installation_path: os.PathLike | str,
     game: Game | None,
     logger: RobustLogger | None = None,
+    installation: Installation | None = None,
+    module_kit_manager: ModuleKitManager | None = None,
 ) -> IndoorMap:
     """Extract an `IndoorMap` by treating the module as an implicit kit (`ModuleKit`).
 
@@ -107,8 +112,10 @@ def extract_indoor_from_module_as_modulekit(
         logger = RobustLogger()
 
     module_root = Path(module_name).stem.lower()
-    installation = Installation(CaseAwarePath(installation_path))
-    module_kit_manager = ModuleKitManager(installation)
+    if installation is None:
+        installation = Installation(CaseAwarePath(installation_path))
+    if module_kit_manager is None:
+        module_kit_manager = ModuleKitManager(installation)
     kit = module_kit_manager.get_module_kit(module_root)
     if not kit.ensure_loaded():
         msg = f"Failed to load module '{module_root}' as ModuleKit"
@@ -123,36 +130,84 @@ def extract_indoor_from_module_as_modulekit(
     return indoor
 
 
+def extract_indoor_from_module_file_against_modulekit(
+    module_file: os.PathLike | str,
+    *,
+    module_root: str,
+    installation_path: os.PathLike | str,
+    game: Game | None,
+    logger: RobustLogger | None = None,
+    installation: Installation | None = None,
+    module_kit_manager: ModuleKitManager | None = None,
+) -> IndoorMap:
+    """Extract an `IndoorMap` from a module container file by mapping it onto a ModuleKit.
+
+    This is used for roundtrip testing/debugging *without* relying on embedded `.indoor` payloads.
+    The caller supplies the `module_root` (the ModuleKit to match against); the extracted map's
+    `module_id` is derived from the module file name (stem).
+
+    Current behavior (strict, but simple):
+    - Parse the module's LYT to recover room positions and room ordering.
+    - Load `ModuleKit(module_root)` from the installation.
+    - Pair rooms by index: LYT room i ↔ kit.components[i].
+
+    This matches the common "extract -> build" pipeline where the room ordering is preserved.
+    """
+    if logger is None:
+        logger = RobustLogger()
+
+    module_path = Path(module_file)
+
+    erf = read_erf(module_path)
+    lyt_bytes: bytes | None = None
+    lyt_resref: str | None = None
+    for res in erf:
+        if res.restype == ResourceType.LYT:
+            payload = res.data() if callable(getattr(res, "data", None)) else res.data  # type: ignore[truthy-function]
+            lyt_bytes = bytes(payload)
+            lyt_resref = str(res.resref).lower()
+            break
+    if lyt_bytes is None:
+        msg = f"Module file has no LYT: {module_path}"
+        raise ValueError(msg)
+
+    lyt = read_lyt(lyt_bytes)
+
+    if installation is None:
+        installation = Installation(CaseAwarePath(installation_path))
+    if module_kit_manager is None:
+        module_kit_manager = ModuleKitManager(installation)
+    kit = module_kit_manager.get_module_kit(module_root.lower())
+    if not kit.ensure_loaded():
+        msg = f"Failed to load module '{module_root}' as ModuleKit"
+        raise ValueError(msg)
+
+    if len(lyt.rooms) != len(kit.components):
+        msg = f"Room count mismatch for file '{module_path.name}': lyt={len(lyt.rooms)} kit={len(kit.components)}"
+        raise ValueError(msg)
+
+    # Prefer the LYT resref as the module id. For modules built by the builder/CLI, the LYT resref
+    # is the true module id/root, while the file name may include extra suffixes.
+    out_module_id = (lyt_resref or module_path.stem).lower()
+    indoor = IndoorMap(module_id=out_module_id)
+    for i, room in enumerate(lyt.rooms):
+        comp = kit.components[i]
+        indoor.rooms.append(IndoorMapRoom(comp, Vector3(room.position.x, room.position.y, room.position.z), rotation=0.0, flip_x=False, flip_y=False))
+
+    indoor.rebuild_room_connections()
+    logger.debug("Module-file extraction produced %d room(s) for '%s' against ModuleKit '%s'", len(indoor.rooms), module_path.name, module_root)
+    return indoor
+
+
 def extract_indoor_from_module_files(
     module_files: list[os.PathLike | str],
     *,
     output_indoor_path: os.PathLike | str,
 ) -> bool:
-    """Extract embedded `.indoor` JSON from module containers.
+    """Deprecated: embedded `.indoor` payloads are not used.
 
-    Uses canonical composite module loading priority:
-    - `.mod` files are prioritized first
-    - If no `.mod` exists, combines `.rim`, `_s.rim`, and `_dlg.erf` files
-
-    Returns True if embedded data was found and written.
+    This function remains for API compatibility but always returns False.
     """
-    output_indoor_path_obj = Path(output_indoor_path).absolute()
-    # Use canonical composite module loading priority logic
-    prioritized_files = prioritize_module_files(module_files)
-
-    for container in prioritized_files:
-        try:
-            # Check if it's a capsule file we can read
-            if container.suffix.lower() in {".mod", ".erf", ".rim", ".sav", ".hak"}:
-                cap = Capsule(container)
-                if cap.contains(INDOOR_EMBED_RESREF, INDOOR_EMBED_RESTYPE):
-                    data = cap.resource(INDOOR_EMBED_RESREF, INDOOR_EMBED_RESTYPE)
-                    if data is None:
-                        raise ValueError(f"Embedded indoor data not found in {container}")
-                    output_indoor_path_obj.write_bytes(data)
-                    return True
-        except Exception:  # noqa: BLE001
-            continue
     return False
 
 

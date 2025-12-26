@@ -525,6 +525,20 @@ Hooks can be edited per-room:
 - Base64-encoded [walkmesh](BWM-File-Format) overrides
 - Preserves all room properties
 
+### No embedded `.indoor` inside modules
+
+Some tooling historically embedded a copy of the `.indoor` JSON into the built `.mod` as an ERF resource
+(`resref="indoormap"`, `restype=TXT`) for fast reload/debug.
+
+This repository intentionally **does not embed** `.indoor` JSON into modules. Roundtrip correctness must come
+from reconstructing state from real game resources (LYT/MDL/MDX/WOK/etc), not from shipping cached editor data.
+
+Implications:
+
+- Tooling must treat module extraction as a **real extraction** step, not a "read back cached JSON" step.
+- `kotorcli indoor-extract --implicit-kit --module-file <path>` requires `--module <module_root>` to specify which
+  installation module (ModuleKit) to match against when extracting from a module file.
+
 ### Load Process
 
 1. Parse JSON

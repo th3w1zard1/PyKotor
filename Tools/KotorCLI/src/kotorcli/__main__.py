@@ -618,7 +618,7 @@ def create_parser() -> ArgumentParser:  # noqa: PLR0915
     indoor_extract_parser.add_argument(
         "--module-file",
         required=False,
-        help="Extract embedded indoormap from a specific module container file (.mod/.rim/.erf/.sav).",
+        help="Extract an indoor map from a specific module container file (.mod/.rim/.erf/.sav).",
     )
     indoor_extract_parser.add_argument("--output", "-o", required=True, help="Output .indoor file")
     indoor_extract_parser.add_argument("--installation", required=True, help="Path to KOTOR installation")
@@ -631,7 +631,7 @@ def create_parser() -> ArgumentParser:  # noqa: PLR0915
         "--kits",
         "-k",
         required=False,
-        help="(Deprecated) Path to kits directory (only needed for reverse-extraction when no embedded indoormap exists).",
+        help="(Deprecated) Path to kits directory (only needed for reverse-extraction in non-implicit mode).",
     )
     indoor_extract_parser.add_argument(
         "--game",

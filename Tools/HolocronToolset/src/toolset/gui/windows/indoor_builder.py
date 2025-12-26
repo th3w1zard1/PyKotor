@@ -57,7 +57,7 @@ else:
 from pykotor.common.misc import Color  # type: ignore[reportPrivateImportUsage]
 from pykotor.common.stream import BinaryWriter  # type: ignore[reportPrivateImportUsage]
 from pykotor.resource.formats.bwm import BWM, bytes_bwm, read_bwm  # type: ignore[reportPrivateImportUsage]
-from pykotor.common.indoormap import INDOOR_EMBED_RESREF, INDOOR_EMBED_RESTYPE, IndoorMap, IndoorMapRoom
+from pykotor.common.indoormap import IndoorMap, IndoorMapRoom
 from pykotor.tools.indoormap import extract_indoor_from_module_as_modulekit
 from pykotor.extract.capsule import Capsule
 from toolset.blender import BlenderEditorMode, ConnectionState, check_blender_and_ask, get_blender_settings
@@ -1608,11 +1608,10 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                 ).exec()
 
     def open_mod(self):
-        """Open a built `.mod` file and load its embedded `indoormap.txt` (if present).
+        """Open a `.mod` file by locating it in the active installation and loading by module name.
 
-        This is intended for debugging built modules quickly without requiring on-disk kits.
-        If the `.mod` does not contain embedded indoor data, we fall back to module-name extraction
-        only when the selected file resides in the active installation's `Modules/` folder.
+        We intentionally do not support embedded `.indoor` payloads inside modules; the map must be
+        reconstructible from real module resources.
         """
         if not isinstance(self._installation, HTInstallation):
             QMessageBox.warning(self, "No Installation", "Please select an installation first.")
@@ -1627,31 +1626,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             QMessageBox.warning(self, "Invalid File", f"File not found:\n{mod_path}")
             return
 
-        try:
-            cap = Capsule(mod_path)
-            if cap.contains(INDOOR_EMBED_RESREF, INDOOR_EMBED_RESTYPE):
-                data = cap.resource(INDOOR_EMBED_RESREF, INDOOR_EMBED_RESTYPE)
-                if data is None:
-                    raise ValueError(f"Embedded indoor data not found in {mod_path}")
-                missing_rooms = self._map.load(data, self._kits, self._module_kit_manager)
-                self._map.rebuild_room_connections()
-                self.ui.mapRenderer._cached_walkmeshes.clear()
-                self.ui.mapRenderer.set_map(self._map)
-                self._undo_stack.clear()
-                self._undo_stack.setClean()
-                self._filepath = ""  # This load comes from a module, not a .indoor file
-                self._refresh_window_title()
-
-                if missing_rooms:
-                    self._show_missing_rooms_dialog(missing_rooms)
-                return
-        except Exception as e:  # noqa: BLE001
-            # fall through to fallback below
-            from loggerplus import RobustLogger  # type: ignore[import-untyped, note]  # pyright: ignore[reportMissingTypeStubs]
-
-            RobustLogger().warning("Failed to load embedded indoor from '%s': %s", mod_path, universal_simplify_exception(e))
-
-        # Fallback: only possible if the module exists in the active installation.
+        # Only possible if the module exists in the active installation.
         try:
             install_modules_dir = Path(self._installation.module_path())
             if mod_path.parent.resolve() == install_modules_dir.resolve():
@@ -1663,8 +1638,8 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         QMessageBox.warning(
             self,
             "Cannot Open Module",
-            "This .mod does not contain embedded indoor data (indoormap.txt), and it is not inside the active installation's Modules folder.\n\n"
-            "Tip: build modules via Indoor Builder / KotorCLI so they embed the indoor map for fast reload.",
+            "This .mod is not inside the active installation's Modules folder, so the Toolset cannot resolve its resources.\n\n"
+            "Tip: copy it into the active installation's Modules folder, then re-open.",
         )
 
     def _show_missing_rooms_dialog(

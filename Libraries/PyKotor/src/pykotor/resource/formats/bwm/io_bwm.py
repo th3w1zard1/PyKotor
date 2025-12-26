@@ -29,12 +29,18 @@ import struct
 
 from typing import TYPE_CHECKING
 
-from pykotor.resource.formats.bwm.bwm_data import BWM, BWMFace, BWMType  # noqa: E402
+from pykotor.resource.formats.bwm.bwm_data import (  # noqa: E402
+    BWM,
+    BWMAdjacency,
+    BWMEdge,
+    BWMFace,
+    BWMNodeAABB,
+    BWMType,
+)
 from pykotor.resource.type import ResourceReader, ResourceWriter, autoclose  # noqa: E402
 from utility.common.geometry import SurfaceMaterial, Vector3  # noqa: E402
 
 if TYPE_CHECKING:
-    from pykotor.resource.formats.bwm.bwm_data import BWMAdjacency, BWMEdge, BWMNodeAABB
     from pykotor.resource.type import SOURCE_TYPES, TARGET_TYPES
 
 
@@ -126,18 +132,18 @@ class BWMBinaryReader(ResourceReader):
         face_count = self._reader.read_uint32()
         indices_offset = self._reader.read_uint32()
         materials_offset = self._reader.read_uint32()
-        self._reader.read_uint32()  # normals_offset
-        self._reader.read_uint32()  # planar_distances_offset
+        normals_offset = self._reader.read_uint32()
+        planar_distances_offset = self._reader.read_uint32()
 
-        self._reader.read_uint32()  # aabb_count
-        self._reader.read_uint32()  # aabb_offset
-        self._reader.skip(4)
-        self._reader.read_uint32()  # adjacencies_count
-        self._reader.read_uint32()  # adjacencies_offset
+        aabb_count = self._reader.read_uint32()
+        aabb_offset = self._reader.read_uint32()
+        aabb_root = self._reader.read_uint32()
+        adjacencies_count = self._reader.read_uint32()
+        adjacencies_offset = self._reader.read_uint32()
         edges_count = self._reader.read_uint32()
         edges_offset = self._reader.read_uint32()
-        self._reader.read_uint32()  # perimeters_count
-        self._reader.read_uint32()  # perimeters_offset
+        perimeters_count = self._reader.read_uint32()
+        perimeters_offset = self._reader.read_uint32()
 
         self._reader.seek(vertices_offset)
         vertices = [self._reader.read_vector3() for _ in range(vertices_count)]
@@ -160,12 +166,13 @@ class BWMBinaryReader(ResourceReader):
             if face.material.walkable():
                 walkable_count += 1
 
+        # Read edges table (transition mapping) and apply transitions to faces.
         self._reader.seek(edges_offset)
-        x: list[int] = []
+        edges_table: list[tuple[int, int]] = []
         for _ in range(edges_count):
             edge_index = self._reader.read_uint32()
-            x.append(edge_index)
             transition = self._reader.read_uint32()
+            edges_table.append((edge_index, transition))
 
             if transition != 0xFFFFFFFF:
                 face_index = edge_index // 3
@@ -176,6 +183,9 @@ class BWMBinaryReader(ResourceReader):
                     faces[face_index].trans2 = transition
                 elif trans_index == 2:
                     faces[face_index].trans3 = transition
+
+        # NOTE: We intentionally do not preserve any raw binary tables (AABB/adjacency/perimeter tables).
+        # The writer regenerates these structures from geometry.
 
         self._wok.faces = faces
 
@@ -210,9 +220,12 @@ class BWMBinaryWriter(ResourceWriter):
         """
         vertices: list[Vector3] = self._wok.vertices()
 
+        # Emit the canonical ordering (walkable faces first) to match engine/tooling expectations.
         walkable: list[BWMFace] = [face for face in self._wok.faces if face.material.walkable()]
         unwalkable: list[BWMFace] = [face for face in self._wok.faces if not face.material.walkable()]
         faces: list[BWMFace] = walkable + unwalkable
+
+        walkable = [face for face in faces if face.material.walkable()]
         aabbs: list[BWMNodeAABB] = self._wok.aabbs()
 
         vertex_offset = 136
@@ -279,6 +292,7 @@ class BWMBinaryWriter(ResourceWriter):
                     indexes.append(idx * 3 + adjacency.edge)
             adjacency_data += struct.pack("iii", *indexes)
 
+        edge_offset = adjacency_offset + len(adjacency_data)
         # Get perimeter edges from the walkmesh
         # Note: edges() returns perimeter edges based on walkable face indices
         # We need to map these to the reordered face list (walkable + unwalkable)
@@ -308,7 +322,6 @@ class BWMBinaryWriter(ResourceWriter):
             edges.append(BWMEdge(faces[face_idx], edge.index, edge.transition))
 
         edge_data = bytearray()
-        edge_offset = adjacency_offset + len(adjacency_data)
         for edge in edges:
             # Find face index by object identity
             face_idx = next(i for i, f in enumerate(faces) if f is edge.face)
@@ -317,10 +330,12 @@ class BWMBinaryWriter(ResourceWriter):
 
         # Find edge indices by object identity for perimeters
         perimeters: list[int] = [next(i for i, e in enumerate(edges) if e is edge) + 1 for edge in edges if edge.final]
-        perimeter_data = bytearray()
         perimeter_offset = edge_offset + len(edge_data)
+        perimeter_data = bytearray()
         for perimeter in perimeters:
             perimeter_data += struct.pack("I", perimeter)
+        edges_count_out = len(edges)
+        perimeters_count_out = len(perimeters)
 
         self._writer.write_string("BWM V1.0")
         self._writer.write_uint32(self._wok.walkmesh_type.value)
@@ -342,9 +357,9 @@ class BWMBinaryWriter(ResourceWriter):
         self._writer.write_uint32(0)
         self._writer.write_uint32(len(self._wok.walkable_faces()))
         self._writer.write_uint32(adjacency_offset)
-        self._writer.write_uint32(len(edges))
+        self._writer.write_uint32(edges_count_out)
         self._writer.write_uint32(edge_offset)
-        self._writer.write_uint32(len(perimeters))
+        self._writer.write_uint32(perimeters_count_out)
         self._writer.write_uint32(perimeter_offset)
 
         self._writer.write_bytes(vertex_data)

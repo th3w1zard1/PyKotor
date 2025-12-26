@@ -13,13 +13,12 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from pykotor.common.indoormap import IndoorMap
-from pykotor.common.modulekit import ModuleKitManager
 from pykotor.extract.installation import Installation
 from pykotor.tools.indoorkit import load_kits
 from pykotor.tools.indoormap import (
     build_mod_from_indoor_file_modulekit,
     extract_indoor_from_module_as_modulekit,
-    extract_indoor_from_module_files,
+    extract_indoor_from_module_file_against_modulekit,
     extract_indoor_from_module_name,
 )
 from pykotor.tools.path import CaseAwarePath
@@ -148,6 +147,7 @@ def cmd_indoor_build(args: Namespace, logger: RobustLogger) -> int:  # noqa: PLR
                 game=game,
                 module_id=args.module_filename,
                 loadscreen_path=args.loading_screen,
+                installation=installation,
             )
         else:
             indoor = IndoorMap()
@@ -205,7 +205,7 @@ def cmd_indoor_extract(args: Namespace, logger: RobustLogger) -> int:  # noqa: P
     if not args.installation:
         logger.error("No installation path specified. Use --installation <path>")
         return 1
-    # kits are optional in implicit-kit mode and for embedded indoormap extraction.
+    # kits are optional in implicit-kit mode.
 
     module_name = args.module.lower().strip() if args.module else ""
     output_path = Path(args.output)
@@ -216,7 +216,7 @@ def cmd_indoor_extract(args: Namespace, logger: RobustLogger) -> int:  # noqa: P
         game, _install_path, _kits_path, _installation, _kits = _resolve_context(args, logger)
 
         if module_file_arg:
-            logger.info("Extracting embedded indoor map from module file: %s", module_file_arg)
+            logger.info("Extracting indoor map from module file: %s", module_file_arg)
         else:
             logger.info("Extracting indoor map from module: %s", module_name)
         logger.info("Installation: %s", installation_path)
@@ -251,40 +251,30 @@ def cmd_indoor_extract(args: Namespace, logger: RobustLogger) -> int:  # noqa: P
 
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        # Fast path: extract embedded indoor JSON if present.
-        embedded_found = extract_indoor_from_module_files(
-            [str(p) for p in candidate_files], output_indoor_path=output_path
-        )
-        if embedded_found:
-            if args.implicit_kit:
-                try:
-                    test_map = IndoorMap()
-                    mk = ModuleKitManager(_installation)
-                    missing = test_map.load(output_path.read_bytes(), [], module_kit_manager=mk)
-                    if missing:
-                        msg = "embedded indoor requires external kits"
-                        raise ValueError(msg)  # noqa: TRY301
-                except Exception:
-                    logger.info("Embedded indoor not ModuleKit-compatible; falling back to ModuleKit extraction.")
-                else:
-                    logger.info("Extracted embedded indoor data (ModuleKit-compatible) to: %s", output_path)
-                    return 0
-            else:
-                logger.info("Extracted embedded indoor data to: %s", output_path)
-                return 0
-
-        # If --module-file was provided, we are strictly in "embedded extraction only" mode.
-        if module_file_arg:
-            logger.error("No embedded indoor data found in %s", candidate_files[0])
-            return 1
+        # NOTE: We do not use embedded `indoormap.txt` payloads. Extraction must be based on
+        # real module resources (LYT/WOK/MDL/MDX/etc), not cached editor data.
 
         if args.implicit_kit:
-            indoor = extract_indoor_from_module_as_modulekit(
-                module_name,
-                installation_path=installation_path,
-                game=game,
-                logger=logger,
-            )
+            if module_file_arg:
+                if not module_name:
+                    logger.error("When using --implicit-kit with --module-file, you must also pass --module <module_root> to specify which ModuleKit to match against.")
+                    return 1
+                indoor = extract_indoor_from_module_file_against_modulekit(
+                    candidate_files[0],
+                    module_root=module_name,
+                    installation_path=installation_path,
+                    game=game,
+                    logger=logger,
+                    installation=_installation,
+                )
+            else:
+                indoor = extract_indoor_from_module_as_modulekit(
+                    module_name,
+                    installation_path=installation_path,
+                    game=game,
+                    logger=logger,
+                    installation=_installation,
+                )
             output_path.write_bytes(indoor.write())
             logger.info("Extracted indoor map via ModuleKit to: %s", output_path)
             logger.info("Indoor map extraction completed successfully.")
@@ -295,7 +285,7 @@ def cmd_indoor_extract(args: Namespace, logger: RobustLogger) -> int:  # noqa: P
             return 1
 
         # Full reverse-extraction path: rebuild `.indoor` by matching room WOKs back to kits.
-        logger.info("No embedded indoor data found; attempting full reverse-extraction from module resources...")
+        logger.info("Attempting full reverse-extraction from module resources...")
         indoor = extract_indoor_from_module_name(
             module_name,
             installation_path=installation_path,

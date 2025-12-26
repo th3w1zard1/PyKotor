@@ -43,8 +43,10 @@ if TYPE_CHECKING:
     import os
 
 
-INDOOR_EMBED_RESREF = "indoormap"
-INDOOR_EMBED_RESTYPE = ResourceType.TXT
+#
+# NOTE: We intentionally do not embed `.indoor` JSON inside built modules.
+# The roundtrip and correctness story must come from real module resources.
+#
 
 
 class DoorInsertion(NamedTuple):
@@ -427,8 +429,9 @@ class IndoorMap:
         self.mod.set_data(self.module_id, ResourceType.GIT, bytes_git(self.git))
         self.mod.set_data("module", ResourceType.IFO, bytes_ifo(self.ifo))
 
-        # Embed the .indoor JSON so it can be recovered from composite modules later.
-        self.mod.set_data(INDOOR_EMBED_RESREF, INDOOR_EMBED_RESTYPE, self.write())
+        # NOTE: We intentionally do NOT embed the `.indoor` JSON into the built module.
+        # Roundtrip correctness must come from reconstructing state from game resources
+        # (LYT/MDL/MDX/WOK/etc), not from embedding cached editor data.
 
     def build(
         self,

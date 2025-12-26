@@ -141,6 +141,15 @@ class BIFBinaryReader(ResourceReader):
             last_resource: BIFResource = self.bif.resources[-1]
             last_resource.packed_size = self._reader.size() - last_resource.offset
 
+        # For plain BIF, some resource table sizes are known to be unreliable for certain binary formats
+        # (notably WOK/BWM). The engine can treat the payload as a memory-mapped blob and walk offsets
+        # inside it, so we compute a safe "packed_size" from offset deltas as well.
+        if self.bif.bif_type == BIFType.BIF and self.bif.resources:
+            for i in range(1, len(self.bif.resources)):
+                prev = self.bif.resources[i - 1]
+                prev.packed_size = self.bif.resources[i].offset - prev.offset
+            self.bif.resources[-1].packed_size = self._reader.size() - self.bif.resources[-1].offset
+
     def _read_resource_data(self) -> None:
         """Read BIF/BZF resource data."""
         for i, resource in enumerate(self.bif.resources):
@@ -156,7 +165,13 @@ class BIFBinaryReader(ResourceReader):
                     raise ValueError(msg) from e
             else:
                 # For BIF, read raw data
-                resource.data = self._reader.read_bytes(resource.size)
+                # Prefer packed_size for formats where the table's `size` is known to be truncated.
+                # WOK/BWM in particular frequently reports only the 0x88 header size, but the payload
+                # includes all the offset-addressed tables after the header.
+                read_len = resource.size
+                if resource.restype == ResourceType.WOK and getattr(resource, "packed_size", 0) and resource.packed_size > resource.size:
+                    read_len = resource.packed_size
+                resource.data = self._reader.read_bytes(read_len)
 
         self.bif.build_lookup_tables()
 

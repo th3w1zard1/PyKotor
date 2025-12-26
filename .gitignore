@@ -122,3 +122,6 @@ temp_log_*.txt
 Tools/HolocronToolset/tests/test_files/
 *.diff
 working_vs_current_diff.txt
+profiling/
+vendor/swkotor.h
+vendor/swkotor.c

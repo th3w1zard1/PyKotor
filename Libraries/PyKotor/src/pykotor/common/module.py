@@ -792,6 +792,9 @@ class Module:  # noqa: PLR0904
                 resource_wrapper.activate(location)
                 loaded_resource: type[GIT | LYT | VIS] | None = resource_wrapper.resource()
 
+                # VIS is optional and some installations ship malformed VIS. If parsing fails, treat as absent.
+                if useable_type is VIS and loaded_resource is None:
+                    continue
                 if not isinstance(loaded_resource, (GIT, LYT, VIS)):
                     raise RuntimeError(f"{useable_type.__name__} is somehow None even though we know the path there.")  # noqa: TRY004
 
@@ -2031,7 +2034,23 @@ class ModuleResource(Generic[T]):
                     msg = f"Resource '{self._identifier}' not found in '{active_path}'"
                     RobustLogger().error(msg)
                     return None
-                self._resource_obj = conversions.get(self._restype, lambda _: None)(data)
+                try:
+                    self._resource_obj = conversions.get(self._restype, lambda _: None)(data)
+                except Exception as e:  # noqa: BLE001
+                    # Some shipped installations contain malformed VIS. Treat it as missing so
+                    # module workflows that do not require VIS (e.g. walkmesh extraction/build)
+                    # can still function.
+                    if self._restype == ResourceType.VIS:
+                        RobustLogger().warning(
+                            "Failed to parse VIS '%s.%s' from '%s': %s",
+                            self._resname,
+                            self._restype.extension,
+                            active_path,
+                            e,
+                        )
+                        self._resource_obj = None
+                    else:
+                        raise
 
             elif is_bif_file(active_path):
                 resource: ResourceResult | None = self._installation.resource(
@@ -2043,11 +2062,37 @@ class ModuleResource(Generic[T]):
                     msg = f"Resource '{self._identifier}' not found in '{active_path}'"
                     RobustLogger().error(msg)
                     return None
-                self._resource_obj = conversions.get(self._restype, lambda _: None)(resource.data)
+                try:
+                    self._resource_obj = conversions.get(self._restype, lambda _: None)(resource.data)
+                except Exception as e:  # noqa: BLE001
+                    if self._restype == ResourceType.VIS:
+                        RobustLogger().warning(
+                            "Failed to parse VIS '%s.%s' from '%s': %s",
+                            self._resname,
+                            self._restype.extension,
+                            active_path,
+                            e,
+                        )
+                        self._resource_obj = None
+                    else:
+                        raise
 
             else:
                 data = active_path.read_bytes()
-                self._resource_obj = conversions.get(self._restype, lambda _: None)(data)
+                try:
+                    self._resource_obj = conversions.get(self._restype, lambda _: None)(data)
+                except Exception as e:  # noqa: BLE001
+                    if self._restype == ResourceType.VIS:
+                        RobustLogger().warning(
+                            "Failed to parse VIS '%s.%s' from '%s': %s",
+                            self._resname,
+                            self._restype.extension,
+                            active_path,
+                            e,
+                        )
+                        self._resource_obj = None
+                    else:
+                        raise
 
         return self._resource_obj
 

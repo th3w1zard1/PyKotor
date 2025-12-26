@@ -194,6 +194,11 @@ class Installation:
 
         # Derived/cached lookups
         self._module_names_cache: dict[str, str | None] | None = None
+        # Performance caches (in-memory only; safe to rebuild anytime)
+        # - locations(): per resource_list id -> (lookup_dict, identifier_set)
+        # - texture lookups: per resource_list id -> (first_texture_by_name, first_txi_by_name)
+        self._locations_list_cache: dict[int, tuple[dict[ResourceIdentifier, FileResource], set[ResourceIdentifier]]] = {}
+        self._texture_list_cache: dict[int, tuple[dict[str, FileResource], dict[str, FileResource]]] = {}
 
         # Lazy-loading flags
         self._modules_loaded: bool = False
@@ -469,6 +474,8 @@ class Installation:
         elif chitin_exists is None:
             self._log.error("No permissions to the chitin.key file at '%s' when loading the installation, skipping...", self._path)
         self._chitin_loaded = True
+        self._locations_list_cache.clear()
+        self._texture_list_cache.clear()
 
     def load_lips(
         self,
@@ -486,6 +493,8 @@ class Installation:
         self._modules_data = self.load_resources_dict(self.module_path(), capsule_check=is_capsule_file)
         # Clear derived caches that depend on module contents
         self._module_names_cache = None
+        self._locations_list_cache.clear()
+        self._texture_list_cache.clear()
         self._modules_loaded = True
 
     def reload_module(self, module: str):
@@ -499,6 +508,8 @@ class Installation:
             self.load_modules()
         self._modules_data[module] = list(Capsule(self.module_path() / module))
         self._module_names_cache = None
+        self._locations_list_cache.clear()
+        self._texture_list_cache.clear()
 
     def load_textures(
         self,
@@ -508,6 +519,8 @@ class Installation:
             return
         self._texturepacks_data = self.load_resources_dict(self.texturepacks_path(), capsule_check=is_erf_file)
         self._texturepacks_loaded = True
+        self._locations_list_cache.clear()
+        self._texture_list_cache.clear()
 
     def load_saves(
         self,
@@ -589,6 +602,8 @@ class Installation:
 
         if not directory:
             self._override_loaded = True
+        self._locations_list_cache.clear()
+        self._texture_list_cache.clear()
 
     def reload_override(
         self,
@@ -1424,7 +1439,7 @@ class Installation:
                 check_list(resource_list)
 
         # Cache for expensive lookup operations to avoid rebuilding for same resource lists
-        _list_cache: dict[int, tuple[dict[ResourceIdentifier, FileResource], set[ResourceIdentifier]]] = {}
+        _list_cache = self._locations_list_cache
 
         def check_list(resource_list: list[FileResource]):
             # Use object id as cache key for resource lists
@@ -1629,8 +1644,17 @@ class Installation:
             RobustLogger().debug("'%s.txi' resource not found during texture lookup.", case_resname)
             return ""
 
-        def build_result(resource: FileResource, resource_list: list[FileResource]) -> tuple[ResourceResult, str]:
-            txi_text = get_txi_from_list(resource.identifier().lower_resname, resource_list) if resource.restype() is ResourceType.TGA else ""
+        def decode_txi_resource(txi_resource: FileResource | None) -> str:
+            if txi_resource is None:
+                RobustLogger().debug("'%s.txi' resource not found during texture lookup.", resname_lower)
+                return ""
+            contents = decode_txi(txi_resource.data())
+            if contents and not contents.isascii():
+                RobustLogger().warning("Texture TXI '%s' is not ascii! (found at %s)", txi_resource.identifier(), txi_resource.filepath())
+            return contents
+
+        def build_result(resource: FileResource, txi_resource: FileResource | None) -> tuple[ResourceResult, str]:
+            txi_text = decode_txi_resource(txi_resource) if resource.restype() is ResourceType.TGA else ""
             result = ResourceResult(resource.resname(), resource.restype(), resource.filepath(), resource.data())
             result.set_file_resource(resource)
             return result, txi_text
@@ -1643,13 +1667,25 @@ class Installation:
             return None, ""
 
         def check_list(resource_list: list[FileResource]) -> tuple[ResourceResult | None, str]:
-            for resource in resource_list:
-                if resource.restype() not in texture_types:
-                    continue
-                if resource.identifier().lower_resname != resname_lower:
-                    continue
-                return build_result(resource, resource_list)
-            return None, ""
+            # Build per-list indices once and reuse across calls for the lifetime of this Installation.
+            list_id = id(resource_list)
+            if list_id not in self._texture_list_cache:
+                tex_first: dict[str, FileResource] = {}
+                txi_first: dict[str, FileResource] = {}
+                for resource in resource_list:
+                    rtype = resource.restype()
+                    key = resource.identifier().lower_resname
+                    if rtype in texture_types:
+                        tex_first.setdefault(key, resource)
+                    elif rtype is ResourceType.TXI:
+                        txi_first.setdefault(key, resource)
+                self._texture_list_cache[list_id] = (tex_first, txi_first)
+
+            tex_first, txi_first = self._texture_list_cache[list_id]
+            resource = tex_first.get(resname_lower)
+            if resource is None:
+                return None, ""
+            return build_result(resource, txi_first.get(resname_lower))
 
         def check_capsules(values: Sequence[LazyCapsule]) -> tuple[ResourceResult | None, str]:
             for capsule in values:

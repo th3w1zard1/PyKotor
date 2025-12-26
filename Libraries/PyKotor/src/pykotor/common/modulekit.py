@@ -23,7 +23,7 @@ from pykotor.resource.formats.bwm import BWM, BWMEdge, BWMFace, read_bwm
 from pykotor.resource.generics.utd import UTD
 from pykotor.resource.type import ResourceType
 from pykotor.tools.kit import _extract_doorhooks_from_bwm  # NOTE: shared logic (function)
-from utility.common.geometry import SurfaceMaterial, Vector3
+from utility.common.geometry import Vector3, SurfaceMaterial
 
 if TYPE_CHECKING:
     from pykotor.extract.installation import Installation
@@ -128,27 +128,20 @@ class ModuleKit(Kit):
 
         # Try to get the walkmesh (WOK) for this room
         bwm = self._get_room_walkmesh(model_name)
-        # Ensure we always have a usable walkmesh with at least one face for
-        # collision / snapping logic. Some modules ship with empty or missing
-        # WOK data; in that case we fall back to a simple placeholder quad.
-        if bwm is None or not bwm.faces:
-            bwm = self._create_placeholder_bwm()
+        # IMPORTANT: never synthesize placeholder geometry for missing WOK.
+        # Some rooms legitimately have no walkmesh; we represent those as an empty BWM.
+        if bwm is None:
+            bwm = BWM()
         else:
             # Make a deep copy of the BWM so each component has its own instance
             # This prevents issues if multiple rooms share the same model name
             bwm = deepcopy(bwm)
 
         # IMPORTANT: keep walkmesh and model in the same coordinate space.
-        # The model is stored in its own local space and placed in the module via the LYT room position.
-        # Game modules typically store binary WOKs in *world* coordinates (baked with the LYT room position).
-        # Toolset/editor workflows expect kit components to be in room-local space, with placement applied
-        # separately via `IndoorMapRoom.position`.
         #
-        # Therefore, when extracting a module into a ModuleKit component, we convert the module WOK into
-        # room-local coordinates by subtracting the LYT room position.
-        #
-        # NOTE: We intentionally do NOT bbox-center here; the engine expects the original coordinate basis.
-        bwm.translate(-lyt_room.position.x, -lyt_room.position.y, -lyt_room.position.z)
+        # KotOR module room walkmeshes (WOK) are authored in the same local space as the room model (MDL),
+        # while the LYT provides placement in the area via room.position. Therefore we **do not** apply any
+        # LYT translation to the BWM here; placement is handled at the IndoorMapRoom level.
 
         # Try to get the model data
         mdl = self._get_room_model(model_name, ResourceType.MDL) or b""
