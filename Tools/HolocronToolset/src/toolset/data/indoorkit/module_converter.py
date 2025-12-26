@@ -21,6 +21,7 @@ from pykotor.resource.formats.bwm.bwm_data import BWM, BWMFace
 from pykotor.resource.generics.utd import UTD
 from pykotor.resource.type import ResourceType
 from pykotor.tools.kit import _extract_doorhooks_from_bwm
+from pykotor.tools.modulekit import ModuleKitManager
 from toolset.data.indoorkit.indoorkit_base import Kit, KitComponent, KitComponentHook, KitDoor
 from utility.common.geometry import SurfaceMaterial, Vector3
 
@@ -441,93 +442,3 @@ class ModuleKit(Kit):
         # This is complex and would require matching doorhooks to rooms
         # For simplicity, we'll leave hooks empty for module-derived components
 
-
-class ModuleKitManager:
-    """Manages lazy loading of ModuleKits from an installation.
-    
-    Provides methods to list available modules and convert them to kits
-    on demand. Only loads module data when a specific module is selected.
-    """
-
-    def __init__(self, installation: HTInstallation):
-        self._installation: HTInstallation = installation
-        self._cache: dict[str, ModuleKit] = {}
-        self._module_names: dict[str, str | None] | None = None
-
-    def get_module_names(self) -> dict[str, str | None]:
-        """Get dictionary mapping module filenames to display names.
-        
-        Uses the installation's module_names method for display names.
-        
-        Returns:
-            Dict mapping module filename to display name (or None).
-        """
-        if self._module_names is None:
-            self._module_names = self._installation.module_names(use_hardcoded=True)
-        return self._module_names
-
-    def get_module_roots(self) -> list[str]:
-        """Get list of unique module roots from the installation.
-        
-        Returns:
-            List of module root names (without extensions).
-        """
-        seen_roots: set[str] = set()
-        roots: list[str] = []
-
-        for module_filename in self.get_module_names():
-            root = self._installation.get_module_root(module_filename)
-            if root not in seen_roots:
-                seen_roots.add(root)
-                roots.append(root)
-
-        return sorted(roots)
-
-    def get_module_display_name(self, module_root: str) -> str:
-        """Get the display name for a module root.
-        
-        Args:
-            module_root: The module root name.
-            
-        Returns:
-            Display name combining root and area name if available.
-        """
-        module_names = self.get_module_names()
-
-        # Try to find the display name from various extensions
-        for ext in [".rim", ".mod", "_s.rim"]:
-            filename = f"{module_root}{ext}"
-            if filename in module_names:
-                area_name = module_names[filename]
-                if area_name:
-                    return f"{module_root.upper()} - {area_name}"
-
-        return module_root.upper()
-
-    def get_module_kit(self, module_root: str) -> ModuleKit:
-        """Get or create a ModuleKit for the specified module.
-        
-        Kits are cached so repeated requests for the same module return
-        the same kit instance.
-        
-        Args:
-            module_root: The module root name (e.g., "danm13").
-            
-        Returns:
-            A ModuleKit for the specified module.
-        """
-        if module_root not in self._cache:
-            display_name = self.get_module_display_name(module_root)
-            kit = ModuleKit(display_name, module_root, self._installation)
-            self._cache[module_root] = kit
-
-        return self._cache[module_root]
-
-    def clear_cache(self):
-        """Clear the kit cache to free memory."""
-        self._cache.clear()
-        self._module_names = None
-
-    def is_kit_valid(self, module_root: str) -> bool:
-        """Check if a module kit is valid."""
-        return module_root in self._cache
