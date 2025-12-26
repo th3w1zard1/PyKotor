@@ -120,3 +120,5 @@ venv/
 upx-dir/
 temp_log_*.txt
 Tools/HolocronToolset/tests/test_files/
+*.diff
+working_vs_current_diff.txt
