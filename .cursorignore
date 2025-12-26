@@ -40,8 +40,6 @@ dist-mac
 dist-win
 dist/
 Engines/*/examples/
-Engines/*/requirements.txt
-Engines/*/setup.py
 Engines/*/tests/
 errorlog.txt
 EXE-*.toc
@@ -49,10 +47,6 @@ ignore
 installlog.txt
 Libraries/*/LICENSE
 Libraries/*/MANIFEST.in
-Libraries/*/PyKotor.code-workspace
-Libraries/*/pyproject.toml
-Libraries/*/requirements.txt
-Libraries/*/setup.py
 Libraries/Utility/.aider.model.settings.json
 logs/*
 nuitka_dist
