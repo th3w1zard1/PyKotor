@@ -17,7 +17,7 @@ from pykotor.resource.formats.mdl.mdl_data import (
     MDLNodeFlags,
     MDLSkin,
 )
-from pykotor.resource.formats.mdl.mdl_types import MDLControllerType
+from pykotor.resource.formats.mdl.mdl_types import MDLControllerType, MDLNodeType
 from utility.common.geometry import Vector2, Vector3, Vector4
 
 if TYPE_CHECKING:
@@ -390,6 +390,9 @@ class _Node:
         if self.trimesh:
             self.trimesh.write(writer, game)
 
+        if self.skin:
+            self.skin.write(writer)
+
         if self.trimesh:
             self._write_trimesh_data(writer)
         for child_offset in self.children_offsets:
@@ -425,6 +428,8 @@ class _Node:
         size = _Node.SIZE
         if self.trimesh:
             size += _TrimeshHeader.K1_SIZE if game == Game.K1 else _TrimeshHeader.K2_SIZE
+        if self.skin:
+            size += _SkinmeshHeader.SIZE
         return size
 
     def indices_counts_offset(
@@ -608,8 +613,11 @@ class _MDXDataFlags:
 
 
 class _TrimeshHeader:
-    K1_SIZE: Literal[332] = 332
-    K2_SIZE: Literal[340] = 340
+    # NOTE: These sizes reflect the actual number of bytes written/read by `_TrimeshHeader.write/read`.
+    # Historically these constants were out-of-sync, which caused MDLBinaryWriter node offset drift
+    # (bad child offsets, OOB seeks) during roundtrips.
+    K1_SIZE: Literal[361] = 361
+    K2_SIZE: Literal[377] = 377
 
     K1_FUNCTION_POINTER0: Literal[4216656] = 4216656
     K2_FUNCTION_POINTER0: Literal[4216880] = 4216880
@@ -938,6 +946,8 @@ class _DanglymeshHeader:
 
 
 class _SkinmeshHeader:
+    SIZE: ClassVar[int] = 100
+
     def __init__(
         self,
     ):
@@ -1034,7 +1044,7 @@ class _SkinmeshHeader:
         writer.write_uint32(self.unknown0_count)  # TODO: what is this?
         writer.write_uint32(self.unknown0_count2)  # TODO: what is this?
         for i in range(16):
-            writer.write_uint32(self.bones[i])
+            writer.write_uint16(self.bones[i])
         writer.write_uint32(self.unknown1)  # TODO: what is this?
 
 
@@ -1755,9 +1765,11 @@ class MDLBinaryReader:
         node.name = self._names[bin_node.header.name_id]
         node.position = bin_node.header.position
         node.orientation = bin_node.header.orientation
+        node.node_type = MDLNodeType.DUMMY
 
         if bin_node.trimesh is not None:
             node.mesh = MDLMesh()
+            node.node_type = MDLNodeType.TRIMESH
             node.mesh.shadow = bool(bin_node.trimesh.has_shadow)
             node.mesh.render = bool(bin_node.trimesh.render)
             node.mesh.background_geometry = bool(bin_node.trimesh.background)
@@ -2441,13 +2453,15 @@ class MDLBinaryWriter:
         self._file_header.offset_to_super_root = self._file_header.geometry.root_node_offset
         self._file_header.mdx_size = self._writer_ext.size()
 
-        # TODO self._file_header.model_type = 0
-        # TODO self._file_header.fog = 0
+        # Preserve basic model header fields needed for roundtrip tests.
+        # `model_type` corresponds to classification in practice.
+        self._file_header.model_type = int(self._mdl.classification)
+        self._file_header.fog = 1 if self._mdl.fog else 0
         self._file_header.animation_count = self._file_header.animation_count2 = len(self._mdl.anims)
-        # TODO self._file_header.bounding_box_min
-        # TODO self._file_header.bounding_box_max
-        # TODO self._file_header.radius
-        # TODO self._file_header.anim_scale
+        self._file_header.bounding_box_min = self._mdl.bmin
+        self._file_header.bounding_box_max = self._mdl.bmax
+        self._file_header.radius = self._mdl.radius
+        self._file_header.anim_scale = float(self._mdl.animation_scale)
         self._file_header.supermodel = self._mdl.supermodel
         # TODO self._file_header.mdx_size
         # TODO self._file_header.mdx_offset

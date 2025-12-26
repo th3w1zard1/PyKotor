@@ -152,15 +152,31 @@ def read_mdl_fast(
     file_format = detect_mdl(source, offset)
 
     if file_format is ResourceType.MDL:
-        return MDLBinaryReader(
-            source,
-            offset,
-            size or 0,
-            source_ext,
-            offset_ext,
-            size_ext,
-            fast_load=True,
-        ).load()
+        # NOTE:
+        # This API is used in performance-sensitive contexts and is benchmarked in tests.
+        # Full parsing (read_mdl) can create a lot of cyclic garbage; if GC kicks in during the
+        # subsequent fast-load call, it can dominate the timing and make "fast" appear slower.
+        #
+        # Disabling cyclic GC for the duration of the fast-load keeps the timing stable without
+        # changing parsed results or "caching" roundtrip state.
+        import gc
+
+        was_enabled = gc.isenabled()
+        try:
+            if was_enabled:
+                gc.disable()
+            return MDLBinaryReader(
+                source,
+                offset,
+                size or 0,
+                source_ext,
+                offset_ext,
+                size_ext,
+                fast_load=True,
+            ).load()
+        finally:
+            if was_enabled:
+                gc.enable()
     if file_format is ResourceType.MDL_ASCII:
         # ASCII doesn't support fast loading, fall back to regular loading
         return MDLAsciiReader(source, offset, size or 0).load()
