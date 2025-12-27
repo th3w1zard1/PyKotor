@@ -1,4 +1,9 @@
-"""Native terminal widget for Holocron Toolset - VSCode-like experience."""
+"""Integrated terminal widget for Holocron Toolset.
+
+This widget runs a single long-lived shell process and streams input/output.
+We intentionally avoid “fake prompts” and “one process per command” execution,
+because that causes discrepancies (aliases, profiles, environment/state).
+"""
 
 from __future__ import annotations
 
@@ -9,34 +14,26 @@ import sys
 from typing import TYPE_CHECKING
 
 from qtpy.QtCore import QProcess, Qt, Signal  # pyright: ignore[reportPrivateImportUsage]
-from qtpy.QtGui import QColor, QFont, QPalette, QTextCursor  # pyright: ignore[reportPrivateImportUsage]
-from qtpy.QtWidgets import QPlainTextEdit, QVBoxLayout, QWidget  # pyright: ignore[reportPrivateImportUsage]
+from qtpy.QtGui import QFont, QTextCursor  # pyright: ignore[reportPrivateImportUsage]
+from qtpy.QtWidgets import QLineEdit, QPlainTextEdit, QVBoxLayout, QWidget  # pyright: ignore[reportPrivateImportUsage]
 
 if TYPE_CHECKING:
     from qtpy.QtCore import QByteArray  # pyright: ignore[reportPrivateImportUsage]
-    from qtpy.QtGui import QKeyEvent
 
 
 class TerminalWidget(QWidget):
-    """A native terminal widget that behaves like VSCode's integrated terminal."""
+    """A lightweight integrated terminal backed by a real shell."""
 
-    command_executed = Signal(str)
+    command_executed: Signal = Signal(str)
 
     def __init__(self, parent: QWidget | None = None):
-        """Initialize the terminal widget.
-
-        Args:
-        ----
-            parent: QWidget | None: The parent widget
-        """
         super().__init__(parent)
-        self._setup_ui()
-        self._setup_process()
+        self._working_dir: str = os.getcwd()
         self._command_history: list[str] = []
         self._history_index: int = -1
-        self._current_command: str = ""
-        self._prompt: str = self._get_prompt()
-        self._output_buffer: str = ""
+        self._setup_ui()
+        self._setup_process()
+        self._start_shell()
 
     def _setup_ui(self):
         """Set up the terminal UI."""
@@ -44,9 +41,9 @@ class TerminalWidget(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
 
-        # Create the text display
-        self.terminal_output = QPlainTextEdit(self)
-        self.terminal_output.setReadOnly(False)
+        # Output display
+        self.terminal_output: QPlainTextEdit = QPlainTextEdit(self)
+        self.terminal_output.setReadOnly(True)
         self.terminal_output.setUndoRedoEnabled(False)
         self.terminal_output.setLineWrapMode(QPlainTextEdit.LineWrapMode.WidgetWidth)
         self.terminal_output.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOn)
@@ -60,17 +57,17 @@ class TerminalWidget(QWidget):
         # Apply terminal color scheme (VSCode dark theme style)
         self._apply_terminal_theme()
 
-        # Override key press event (store original for chaining)
-        self._original_key_press = self.terminal_output.keyPressEvent
-        self.terminal_output.keyPressEvent = self._handle_key_press  # type: ignore[method-assign]
+        # Input line
+        self.terminal_input: QLineEdit = QLineEdit(self)
+        self.terminal_input.setFont(font)
+        self.terminal_input.returnPressed.connect(self._on_enter_pressed)
+        self.terminal_input.installEventFilter(self)
 
         layout.addWidget(self.terminal_output)
+        layout.addWidget(self.terminal_input)
         self.setLayout(layout)
 
-        # Show welcome message
-        self._write_output("Holocron Toolset Terminal\n")
-        self._write_output("Type 'help' for available commands.\n\n")
-        self._write_prompt()
+        self._write_output("Holocron Toolset Terminal\n\n")
 
     def _apply_terminal_theme(self):
         """Apply a theme that respects the current application palette."""
@@ -100,21 +97,29 @@ class TerminalWidget(QWidget):
                 height: 0px;
             }
         """)
+        self.terminal_input.setStyleSheet("""
+            QLineEdit {
+                background-color: palette(base);
+                color: palette(text);
+                border: none;
+                padding: 6px 8px;
+                selection-background-color: palette(highlight);
+                selection-color: palette(highlighted-text);
+            }
+        """)
 
     def _setup_process(self):
-        """Set up the process for command execution."""
-        self.process = QProcess(self)
+        """Set up the process for shell execution."""
+        self.process: QProcess = QProcess(self)
         self.process.setProcessChannelMode(QProcess.ProcessChannelMode.MergedChannels)  # type: ignore[attr-defined]
         self.process.readyReadStandardOutput.connect(self._handle_stdout)
-        self.process.readyReadStandardError.connect(self._handle_stderr)
+        # stderr is merged, but keep for compatibility across Qt bindings
+        self.process.readyReadStandardError.connect(self._handle_stdout)
         self.process.finished.connect(self._handle_process_finished)
 
-    def _get_prompt(self) -> str:
-        """Get the command prompt string."""
-        cwd = os.getcwd()
-        if sys.platform == "win32":
-            return f"{cwd}> "
-        return f"{cwd}$ "
+    def set_working_directory(self, path: str) -> None:
+        """Set the initial working directory for the shell (applies on next start)."""
+        self._working_dir = path
 
     def _write_output(self, text: str):
         """Write text to the terminal output.
@@ -132,7 +137,7 @@ class TerminalWidget(QWidget):
         try:
             # Handle different encoding scenarios
             if isinstance(text, bytes):
-                text = text.decode('utf-8', errors='replace')
+                text = text.decode("utf-8", errors="replace")
             self.terminal_output.insertPlainText(text)
         except (UnicodeDecodeError, AttributeError):
             # Fallback to replace errors
@@ -142,178 +147,73 @@ class TerminalWidget(QWidget):
         # Ensure we scroll to the bottom
         self.terminal_output.ensureCursorVisible()
 
-    def _write_prompt(self):
-        """Write the command prompt."""
-        self._prompt = self._get_prompt()
-        self._write_output(self._prompt)
-        self._mark_prompt_start()
+    def eventFilter(self, obj, event):  # noqa: N802
+        # Basic command history navigation on the input line.
+        if obj is self.terminal_input and event.type() == event.Type.KeyPress:
+            if event.key() == Qt.Key.Key_Up:
+                if self._command_history and self._history_index > 0:
+                    self._history_index -= 1
+                    self.terminal_input.setText(self._command_history[self._history_index])
+                return True
+            if event.key() == Qt.Key.Key_Down:
+                if self._command_history:
+                    if self._history_index < len(self._command_history) - 1:
+                        self._history_index += 1
+                        self.terminal_input.setText(self._command_history[self._history_index])
+                    else:
+                        self._history_index = len(self._command_history)
+                        self.terminal_input.clear()
+                return True
+            if event.key() == Qt.Key.Key_L and (event.modifiers() & Qt.KeyboardModifier.ControlModifier):
+                self.clear()
+                return True
+        return super().eventFilter(obj, event)
 
-    def _mark_prompt_start(self):
-        """Mark the start position of user input."""
-        self._prompt_start_pos = self.terminal_output.textCursor().position()
+    def _on_enter_pressed(self) -> None:
+        command = self.terminal_input.text()
+        self.terminal_input.clear()
 
-    def _get_current_command(self) -> str:
-        """Get the current command text."""
-        cursor = self.terminal_output.textCursor()
-        cursor.setPosition(self._prompt_start_pos)
-        cursor.movePosition(QTextCursor.MoveOperation.End, QTextCursor.MoveMode.KeepAnchor)
-        return cursor.selectedText()
-
-    def _clear_current_command(self):
-        """Clear the current command line."""
-        cursor = self.terminal_output.textCursor()
-        cursor.setPosition(self._prompt_start_pos)
-        cursor.movePosition(QTextCursor.MoveOperation.End, QTextCursor.MoveMode.KeepAnchor)
-        cursor.removeSelectedText()
-
-    def _replace_current_command(self, text: str):
-        """Replace the current command with new text."""
-        self._clear_current_command()
-        self.terminal_output.insertPlainText(text)
-
-    def _handle_key_press(self, event: QKeyEvent):
-        """Handle key press events in the terminal.
-
-        Args:
-        ----
-            event: QKeyEvent: The key event
-        """
-        key = event.key()
-        modifiers = event.modifiers()
-
-        # Prevent editing before the prompt
-        cursor_pos = self.terminal_output.textCursor().position()
-        if cursor_pos < self._prompt_start_pos:
-            if key in (Qt.Key.Key_Backspace, Qt.Key.Key_Left, Qt.Key.Key_Delete):
-                return
-            # Move cursor to end if trying to type
-            if not modifiers & (Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.AltModifier):
-                cursor = self.terminal_output.textCursor()
-                cursor.movePosition(QTextCursor.MoveOperation.End)
-                self.terminal_output.setTextCursor(cursor)
-
-        # Handle Enter key - execute command
-        if key == Qt.Key.Key_Return or key == Qt.Key.Key_Enter:
-            command = self._get_current_command().strip()
-            self._write_output("\n")
-
-            if command:
-                self._command_history.append(command)
-                self._history_index = len(self._command_history)
-                self._execute_command(command)
-            else:
-                self._write_prompt()
+        if not command.strip():
+            self._send_to_shell("\n")
             return
 
-        # Handle Up arrow - previous command
-        elif key == Qt.Key.Key_Up:
-            if self._command_history and self._history_index > 0:
-                self._history_index -= 1
-                self._replace_current_command(self._command_history[self._history_index])
-            return
-
-        # Handle Down arrow - next command
-        elif key == Qt.Key.Key_Down:
-            if self._command_history:
-                if self._history_index < len(self._command_history) - 1:
-                    self._history_index += 1
-                    self._replace_current_command(self._command_history[self._history_index])
-                elif self._history_index == len(self._command_history) - 1:
-                    self._history_index = len(self._command_history)
-                    self._clear_current_command()
-            return
-
-        # Handle Ctrl+C - cancel current command
-        elif key == Qt.Key.Key_C and modifiers & Qt.KeyboardModifier.ControlModifier:
-            if self.process.state() == QProcess.ProcessState.Running:
-                self.process.kill()
-                self._write_output("\n^C\n")
-                self._write_prompt()
-            else:
-                self._write_output("^C\n")
-                self._write_prompt()
-            return
-
-        # Handle Ctrl+L - clear screen
-        elif key == Qt.Key.Key_L and modifiers & Qt.KeyboardModifier.ControlModifier:
-            self.clear()
-            return
-
-        # Handle Backspace - don't delete prompt
-        elif key == Qt.Key.Key_Backspace:
-            if cursor_pos <= self._prompt_start_pos:
-                return
-
-        # Allow default handling for other keys
-        QPlainTextEdit.keyPressEvent(self.terminal_output, event)
-
-    def _execute_command(self, command: str):
-        """Execute a command in the terminal.
-
-        Args:
-        ----
-            command: str: The command to execute
-        """
         self.command_executed.emit(command)
+        self._command_history.append(command)
+        self._history_index = len(self._command_history)
+        self._send_to_shell(command + "\n")
 
-        # Handle built-in commands
-        if command == "clear" or command == "cls":
-            self.clear()
+    def _send_to_shell(self, text: str) -> None:
+        if self.process.state() != QProcess.ProcessState.Running:
+            self._write_output("\n[terminal] shell is not running\n")
             return
-        elif command == "help":
-            self._show_help()
-            return
-        elif command.startswith("cd "):
-            self._change_directory(command[3:].strip())
-            return
+        # Keep it simple: UTF-8 input (most modern shells can handle it; pwsh does by default).
+        self.process.write(text.replace("\n", os.linesep).encode("utf-8", errors="replace"))
 
-        # Common convenience: `ls` is not a cmd.exe builtin, but users expect it on Windows.
-        # If we ever fall back to cmd.exe, provide a minimal built-in `ls` that behaves like
-        # "list current directory contents" (or a single path argument).
-        if sys.platform == "win32" and (command == "ls" or command.startswith("ls ")):
-            self._list_directory(command)
+    def _start_shell(self) -> None:
+        if self.process.state() == QProcess.ProcessState.Running:
             return
-
-        # Execute external command
-        self.process.setWorkingDirectory(os.getcwd())
-        if sys.platform == "win32":
-            program, args = self._get_windows_shell_command(command)
-            self.process.start(program, args)
-        else:
-            # Use bash for Unix-like systems
-            self.process.start('/bin/bash', ['-c', command])
-
-        if not self.process.waitForStarted(3000):
-            self._write_output("Error: Failed to start process\n")
-            self._write_prompt()
+        program, args = self._get_shell_program()
+        self.process.setWorkingDirectory(self._working_dir)
+        self._write_output(f"[terminal] starting: {program} {' '.join(args)}\n")
+        self.process.start(program, args)
+        if not self.process.waitForStarted(5000):
+            self._write_output("[terminal] Error: failed to start shell process\n")
+            return
+        # Trigger initial prompt/output.
+        self._send_to_shell("\n")
 
     def _handle_stdout(self):
         """Handle stdout from the process."""
         data: QByteArray = self.process.readAllStandardOutput()
         try:
             # Try UTF-8 first, then fall back to system encoding
-            text = bytes(data).decode('utf-8', errors='replace')
+            text = bytes(data).decode("utf-8", errors="replace")
         except (UnicodeDecodeError, AttributeError):
             try:
-                text = bytes(data).decode(sys.getdefaultencoding(), errors='replace')
+                text = bytes(data).decode(sys.getdefaultencoding(), errors="replace")
             except (UnicodeDecodeError, AttributeError):
                 text = str(data)
 
-        self._write_output(text)
-
-    def _handle_stderr(self):
-        """Handle stderr from the process."""
-        data: QByteArray = self.process.readAllStandardError()
-        try:
-            # Try UTF-8 first, then fall back to system encoding
-            text = bytes(data).decode('utf-8', errors='replace')
-        except (UnicodeDecodeError, AttributeError):
-            try:
-                text = bytes(data).decode(sys.getdefaultencoding(), errors='replace')
-            except (UnicodeDecodeError, AttributeError):
-                text = str(data)
-
-        # Write errors in red (ANSI color code simulation)
         self._write_output(text)
 
     def _handle_process_finished(self, exit_code: int, exit_status):
@@ -324,109 +224,12 @@ class TerminalWidget(QWidget):
             exit_code: int: The process exit code
             exit_status: The exit status
         """
-        if exit_code != 0:
-            self._write_output(f"\nProcess exited with code {exit_code}\n")
-        self._write_prompt()
-
-    def _change_directory(self, path: str):
-        """Change the working directory.
-
-        Args:
-        ----
-            path: str: The path to change to
-        """
-        try:
-            # Expand user home directory
-            if path.startswith("~"):
-                path = os.path.expanduser(path)
-
-            # Handle relative paths
-            if not os.path.isabs(path):
-                path = os.path.join(os.getcwd(), path)
-
-            # Normalize the path
-            path = os.path.normpath(path)
-
-            if os.path.isdir(path):
-                os.chdir(path)
-                self._write_output(f"Changed directory to: {path}\n")
-            else:
-                self._write_output(f"Error: Directory not found: {path}\n")
-        except Exception as e:
-            self._write_output(f"Error changing directory: {e}\n")
-
-        self._write_prompt()
-
-    def _get_windows_shell_command(self, command: str) -> tuple[str, list[str]]:
-        """Return the program + arguments to execute a command on Windows.
-
-        Preference order:
-        - `PYKOTOR_TERMINAL_SHELL` env var (advanced users)
-        - PowerShell 7 (`pwsh`)
-        - Windows PowerShell (`powershell`)
-        - cmd.exe (`COMSPEC`)
-        """
-        override = os.environ.get("PYKOTOR_TERMINAL_SHELL", "").strip()
-        if override:
-            # If the user supplies a full command (e.g. "pwsh -NoLogo"), we can only
-            # support that reliably if it's a single executable path. Keep it simple.
-            return override, ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", command]
-
-        pwsh = shutil.which("pwsh")
-        if pwsh:
-            return pwsh, ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", command]
-
-        powershell = shutil.which("powershell")
-        if powershell:
-            return powershell, ["-NoLogo", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", command]
-
-        shell = os.environ.get("COMSPEC", "cmd.exe")
-        return shell, ["/c", command]
-
-    def _list_directory(self, command: str) -> None:
-        """Built-in `ls` for Windows compatibility (mainly for cmd.exe users)."""
-        parts = command.split(maxsplit=1)
-        target = parts[1].strip().strip('"') if len(parts) > 1 else os.getcwd()
-        try:
-            if not os.path.isabs(target):
-                target = os.path.normpath(os.path.join(os.getcwd(), target))
-            if not os.path.isdir(target):
-                self._write_output(f"Error: Not a directory: {target}\n")
-                self._write_prompt()
-                return
-            entries = sorted(os.scandir(target), key=lambda e: (not e.is_dir(), e.name.lower()))
-            for e in entries:
-                suffix = "/" if e.is_dir() else ""
-                self._write_output(f"{e.name}{suffix}\n")
-        except Exception as e:  # noqa: BLE001
-            self._write_output(f"Error: {e}\n")
-        self._write_prompt()
-
-    def _show_help(self):
-        """Show help information."""
-        help_text = """
-Available built-in commands:
-  clear/cls  - Clear the terminal screen
-  cd <path>  - Change the current directory
-  help       - Show this help message
-  ls [path]  - List directory contents (Windows compatibility)
-  
-Keyboard shortcuts:
-  Ctrl+C     - Cancel current command
-  Ctrl+L     - Clear screen
-  Up Arrow   - Previous command
-  Down Arrow - Next command
-
-You can also run any system command directly.
-"""
-        self._write_output(help_text)
-        self._write_prompt()
+        self._write_output(f"\n[terminal] process exited with code {exit_code}\n")
 
     def clear(self):
         """Clear the terminal."""
         self.terminal_output.clear()
         self._write_output("Holocron Toolset Terminal\n\n")
-        self._write_prompt()
 
     def write_message(self, message: str, color: str | None = None):
         """Write a message to the terminal.
@@ -445,5 +248,29 @@ You can also run any system command directly.
         ----
             command: str: The command to execute
         """
-        self._execute_command(command)
+        self._send_to_shell(command + "\n")
 
+    def _get_shell_program(self) -> tuple[str, list[str]]:
+        """Return the interactive shell program + arguments."""
+        override = os.environ.get("PYKOTOR_TERMINAL_SHELL", "").strip()
+        if override:
+            return override, []
+
+        if sys.platform == "win32":
+            pwsh = shutil.which("pwsh")
+            if pwsh:
+                return pwsh, ["-NoLogo"]
+            powershell = shutil.which("powershell")
+            if powershell:
+                return powershell, ["-NoLogo", "-NoExit"]
+            comspec = os.environ.get("COMSPEC", "cmd.exe")
+            return comspec, []
+
+        shell = os.environ.get("SHELL", "").strip()
+        if shell:
+            return shell, ["-i"]
+        bash = shutil.which("bash")
+        if bash:
+            return bash, ["-i"]
+        sh = shutil.which("sh") or "/bin/sh"
+        return sh, ["-i"]
