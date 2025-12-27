@@ -7,26 +7,6 @@ from loggerplus import RobustLogger
 
 HAS_PYOPENGL = has_pyopengl()
 HAS_MODERNGL = has_moderngl()
-USE_PYOPENGL = HAS_PYOPENGL and not HAS_MODERNGL
-
-if USE_PYOPENGL:
-    from OpenGL.raw.GL.VERSION.GL_1_0 import (  # pyright: ignore[reportMissingImports]
-        GL_BACK,
-        GL_DEPTH_TEST,
-        GL_ONE_MINUS_SRC_ALPHA,
-        GL_SRC_ALPHA,
-        glBlendFunc,
-        glCullFace,
-        glEnable,
-    )
-else:
-    glEnable = missing_gl_func("glEnable")
-    glBlendFunc = missing_gl_func("glBlendFunc")
-    glCullFace = missing_gl_func("glCullFace")
-    GL_DEPTH_TEST = missing_constant("GL_DEPTH_TEST")
-    GL_SRC_ALPHA = missing_constant("GL_SRC_ALPHA")
-    GL_ONE_MINUS_SRC_ALPHA = missing_constant("GL_ONE_MINUS_SRC_ALPHA")
-    GL_BACK = missing_constant("GL_BACK")
 
 from pykotor.common.module import Module, ModuleResource
 from pykotor.common.stream import BinaryReader
@@ -108,12 +88,6 @@ class SceneBase:
         # If __init__ raises an exception before line 195, __del__ can safely check is not None
         self.async_loader: AsyncResourceLoader | None = None
         
-        # Only set up GL state if PyOpenGL is available (legacy mode) and ModernGL is absent
-        if USE_PYOPENGL:
-            glEnable(GL_DEPTH_TEST)
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
-            glCullFace(GL_BACK)
-
         self.installation: Installation | None = installation
         if installation is not None:
             self.set_installation(installation)

@@ -225,7 +225,19 @@ class ModuleRenderer(QOpenGLWidget):
 
         self._installation = installation
         self._module = module
-        self._scene = Scene(installation=installation, module=module)
+        # IMPORTANT:
+        # `Scene` can optionally create its own ModernGL context, but in our Qt embedding we already
+        # create a ModernGL context in `initializeGL()` while the Qt context is current.
+        #
+        # If we do NOT pass that context through, `Scene` will try `moderngl.create_context()` again
+        # and may fail (ctx=None) depending on timing / current-context state, causing it to
+        # fall back to legacy PyOpenGL and then crash if legacy shaders are unavailable.
+        self._scene = Scene(
+            installation=installation,
+            module=module,
+            moderngl_context=self._modern_context if self._use_moderngl else None,
+            use_legacy_gl=not self._use_moderngl,
+        )
 
         # Initialize module data
         lyt: ModuleResource[LYT] | None = module.layout()

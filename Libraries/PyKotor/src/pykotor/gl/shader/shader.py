@@ -4,13 +4,11 @@ from typing import TYPE_CHECKING
 
 import glm
 
-from pykotor.gl.compat import has_moderngl, has_pyopengl, missing_constant, missing_gl_func
+from pykotor.gl.compat import MissingPyOpenGLError, has_pyopengl, missing_constant, missing_gl_func
 
 HAS_PYOPENGL = has_pyopengl()
-HAS_MODERNGL = has_moderngl()
-USE_PYOPENGL = HAS_PYOPENGL and not HAS_MODERNGL
 
-if USE_PYOPENGL:
+if HAS_PYOPENGL:
     from OpenGL.GL import glGetUniformLocation, glUniform3fv, glUniform4fv, glUniformMatrix4fv, shaders  # pyright: ignore[reportMissingImports]
     from OpenGL.GL.shaders import GL_FALSE  # pyright: ignore[reportMissingImports]
     from OpenGL.raw.GL.VERSION.GL_2_0 import GL_FRAGMENT_SHADER, GL_VERTEX_SHADER, glUniform1i, glUseProgram  # pyright: ignore[reportMissingImports]
@@ -158,9 +156,11 @@ class Shader:
         vshader: str,
         fshader: str,
     ):
-        if not USE_PYOPENGL or shaders is None:
-            from pykotor.gl.compat import MissingPyOpenGLError
-            raise MissingPyOpenGLError("PyOpenGL is required for legacy Shader class. Use ModernGLRenderer instead.")
+        if not HAS_PYOPENGL or shaders is None:
+            raise MissingPyOpenGLError(
+                "PyOpenGL is required for the legacy Shader class. "
+                "Install PyOpenGL (and ensure it imports), or use the ModernGL renderer."
+            )
         vertex_shader: int = shaders.compileShader(vshader, GL_VERTEX_SHADER)
         fragment_shader: int = shaders.compileShader(fshader, GL_FRAGMENT_SHADER)
         self._id: int = shaders.compileProgram(vertex_shader, fragment_shader)
@@ -168,9 +168,11 @@ class Shader:
         self._uniform_cache: dict[str, int] = {}
 
     def use(self):
-        if not USE_PYOPENGL:
-            from pykotor.gl.compat import MissingPyOpenGLError
-            raise MissingPyOpenGLError("PyOpenGL is required for legacy Shader class. Use ModernGLRenderer instead.")
+        if not HAS_PYOPENGL:
+            raise MissingPyOpenGLError(
+                "PyOpenGL is required for the legacy Shader class. "
+                "Install PyOpenGL (and ensure it imports), or use the ModernGL renderer."
+            )
         glUseProgram(self._id)
 
     def uniform(
