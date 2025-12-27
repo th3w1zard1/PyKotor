@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import shutil
 import sys
 
 from typing import TYPE_CHECKING
@@ -266,11 +267,18 @@ class TerminalWidget(QWidget):
             self._change_directory(command[3:].strip())
             return
 
+        # Common convenience: `ls` is not a cmd.exe builtin, but users expect it on Windows.
+        # If we ever fall back to cmd.exe, provide a minimal built-in `ls` that behaves like
+        # "list current directory contents" (or a single path argument).
+        if sys.platform == "win32" and (command == "ls" or command.startswith("ls ")):
+            self._list_directory(command)
+            return
+
         # Execute external command
+        self.process.setWorkingDirectory(os.getcwd())
         if sys.platform == "win32":
-            # Use PowerShell or cmd for Windows
-            shell = os.environ.get('COMSPEC', 'cmd.exe')
-            self.process.start(shell, ['/c', command])
+            program, args = self._get_windows_shell_command(command)
+            self.process.start(program, args)
         else:
             # Use bash for Unix-like systems
             self.process.start('/bin/bash', ['-c', command])
@@ -349,6 +357,51 @@ class TerminalWidget(QWidget):
 
         self._write_prompt()
 
+    def _get_windows_shell_command(self, command: str) -> tuple[str, list[str]]:
+        """Return the program + arguments to execute a command on Windows.
+
+        Preference order:
+        - `PYKOTOR_TERMINAL_SHELL` env var (advanced users)
+        - PowerShell 7 (`pwsh`)
+        - Windows PowerShell (`powershell`)
+        - cmd.exe (`COMSPEC`)
+        """
+        override = os.environ.get("PYKOTOR_TERMINAL_SHELL", "").strip()
+        if override:
+            # If the user supplies a full command (e.g. "pwsh -NoLogo"), we can only
+            # support that reliably if it's a single executable path. Keep it simple.
+            return override, ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", command]
+
+        pwsh = shutil.which("pwsh")
+        if pwsh:
+            return pwsh, ["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", command]
+
+        powershell = shutil.which("powershell")
+        if powershell:
+            return powershell, ["-NoLogo", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", command]
+
+        shell = os.environ.get("COMSPEC", "cmd.exe")
+        return shell, ["/c", command]
+
+    def _list_directory(self, command: str) -> None:
+        """Built-in `ls` for Windows compatibility (mainly for cmd.exe users)."""
+        parts = command.split(maxsplit=1)
+        target = parts[1].strip().strip('"') if len(parts) > 1 else os.getcwd()
+        try:
+            if not os.path.isabs(target):
+                target = os.path.normpath(os.path.join(os.getcwd(), target))
+            if not os.path.isdir(target):
+                self._write_output(f"Error: Not a directory: {target}\n")
+                self._write_prompt()
+                return
+            entries = sorted(os.scandir(target), key=lambda e: (not e.is_dir(), e.name.lower()))
+            for e in entries:
+                suffix = "/" if e.is_dir() else ""
+                self._write_output(f"{e.name}{suffix}\n")
+        except Exception as e:  # noqa: BLE001
+            self._write_output(f"Error: {e}\n")
+        self._write_prompt()
+
     def _show_help(self):
         """Show help information."""
         help_text = """
@@ -356,6 +409,7 @@ Available built-in commands:
   clear/cls  - Clear the terminal screen
   cd <path>  - Change the current directory
   help       - Show this help message
+  ls [path]  - List directory contents (Windows compatibility)
   
 Keyboard shortcuts:
   Ctrl+C     - Cancel current command
