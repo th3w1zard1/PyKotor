@@ -54,9 +54,6 @@ class TerminalWidget(QWidget):
         font.setStyleHint(QFont.StyleHint.Monospace)
         self.terminal_output.setFont(font)
 
-        # Apply terminal color scheme (VSCode dark theme style)
-        self._apply_terminal_theme()
-
         # Input line
         self.terminal_input: QLineEdit = QLineEdit(self)
         self.terminal_input.setFont(font)
@@ -66,6 +63,10 @@ class TerminalWidget(QWidget):
         layout.addWidget(self.terminal_output)
         layout.addWidget(self.terminal_input)
         self.setLayout(layout)
+
+        # Apply terminal color scheme (VSCode dark theme style)
+        # Note: Must be done after creating both widgets.
+        self._apply_terminal_theme()
 
         self._write_output("Holocron Toolset Terminal\n\n")
 
@@ -97,16 +98,18 @@ class TerminalWidget(QWidget):
                 height: 0px;
             }
         """)
-        self.terminal_input.setStyleSheet("""
-            QLineEdit {
-                background-color: palette(base);
-                color: palette(text);
-                border: none;
-                padding: 6px 8px;
-                selection-background-color: palette(highlight);
-                selection-color: palette(highlighted-text);
-            }
-        """)
+        terminal_input = getattr(self, "terminal_input", None)
+        if terminal_input is not None:
+            terminal_input.setStyleSheet("""
+                QLineEdit {
+                    background-color: palette(base);
+                    color: palette(text);
+                    border: none;
+                    padding: 6px 8px;
+                    selection-background-color: palette(highlight);
+                    selection-color: palette(highlighted-text);
+                }
+            """)
 
     def _setup_process(self):
         """Set up the process for shell execution."""
