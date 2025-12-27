@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "kotormcp"
-version = "0.1.0"
+version = "0.1.1"
 description = "Model Context Protocol server exposing Knights of the Old Republic resources for AI agents."
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.11"
@@ -37,7 +37,7 @@ classifiers = [
 ]
 dependencies = [
     "mcp>=0.1.1",
-    "pykotor>=2.0.1",
+    "pykotor>=2.0.2",
     "uvicorn[standard]>=0.30.0",
 ]
 

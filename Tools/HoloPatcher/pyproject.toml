@@ -5,10 +5,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "holopatcher"
 description = "A faster, cross-platform alternative to TSLPatcher written in Python."
-version = "2.0.0a2"
+version = "2.0.0a3"
 requires-python = ">= 3.8"
 dependencies = [
-    "pykotor>=2.0.0",
+    "pykotor>=2.0.2",
     "requests>=2.25.0,<2.32.0; python_version<\"3.9\"",
     "requests>=2.25.0; python_version>=\"3.9\"",
     "charset-normalizer>=2.0,<3.4",  # auto-detect encoding of INI/RTF files
@@ -72,7 +72,7 @@ Changelog = "https://github.com/OldRepublicDevs/PyKotor/releases"
 [tool.poetry]
 name = "holopatcher"
 description = "A faster, cross-platform alternative to TSLPatcher written in Python."
-version = "2.0.0a2"
+version = "2.0.0a3"
 authors = ["NickHugi", "Benjamin Auquite <halomastar@gmail.com>"]
 maintainers = ["Benjamin Auquite <halomastar@gmail.com>"]
 readme = "README.md"
@@ -85,7 +85,7 @@ keywords = [
 
 [tool.poetry.dependencies]
 python = "^3.8"
-pykotor = "^2.0.0"
+pykotor = "^2.0.2"
 requests = ">=2.25.0"
 charset-normalizer = ">=2.0,<3.5"
 

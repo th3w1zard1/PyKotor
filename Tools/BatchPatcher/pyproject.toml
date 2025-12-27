@@ -5,11 +5,10 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "batchpatcher"
 description = "A translator/font creator tool useful for patching/working with many files at once."
-version = "2.2.0"
+version = "2.2.1"
 requires-python = ">=3.8"
 dependencies = [
-  "pykotor>=2.0.0",
-  "pykotorfont>=2.0.0",
+  "pykotor>=2.0.2",
   "setuptools>=67.8.0",
   "deep_translator==1.11.4",
   "deepl-cli>=1",
@@ -70,7 +69,7 @@ Changelog = "https://github.com/OldRepublicDevs/PyKotor/releases"
 # Poetry configuration
 [tool.poetry]
 name = "batchpatcher"
-version = "2.2.0"
+version = "2.2.1"
 description = "A translator/font creator tool useful for patching/working with many files at once."
 authors = ["NickHugi", "Benjamin Auquite <halomastar@gmail.com>"]
 maintainers = ["Benjamin Auquite <halomastar@gmail.com>"]
@@ -80,8 +79,7 @@ packages = [{ include = "batchpatcher", from = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.9"
-pykotor = "^2.0.0"
-pykotorfont = "^2.0.0"
+pykotor = "^2.0.2"
 opencv-contrib-python = "4.8.0.76"
 
 [tool.poetry.scripts]

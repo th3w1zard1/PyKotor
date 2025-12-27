@@ -161,7 +161,7 @@ wheels = [
 
 [[package]]
 name = "batchpatcher"
-version = "2.2.0"
+version = "2.2.1"
 source = { editable = "Tools/BatchPatcher" }
 dependencies = [
     { name = "arabic-reshaper" },
@@ -174,7 +174,6 @@ dependencies = [
     { name = "playwright", version = "1.48.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
     { name = "playwright", version = "1.57.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
     { name = "pykotor" },
-    { name = "pykotorfont" },
     { name = "pyquery" },
     { name = "requests" },
     { name = "setuptools" },
@@ -196,7 +195,6 @@ requires-dist = [
     { name = "playwright", marker = "python_full_version == '3.8.*'", specifier = ">=1.40.0,<1.49.1" },
     { name = "playwright", marker = "python_full_version >= '3.9'", specifier = ">=1.49.1,<2" },
     { name = "pykotor", editable = "Libraries/PyKotor" },
-    { name = "pykotorfont", specifier = ">=2.0.0" },
     { name = "pyquery", specifier = "==2.0.1" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0.0" },
     { name = "requests", marker = "python_full_version < '3.9'", specifier = ">=2.25.0,<2.32.0" },
@@ -1641,7 +1639,7 @@ wheels = [
 
 [[package]]
 name = "holocrontoolset"
-version = "4.0.0b10"
+version = "4.0.0b11"
 source = { editable = "Tools/HolocronToolset" }
 dependencies = [
     { name = "certifi" },
@@ -1751,7 +1749,7 @@ dev = []
 
 [[package]]
 name = "hologenerator"
-version = "1.0.0"
+version = "1.0.1"
 source = { editable = "Tools/HoloGenerator" }
 dependencies = [
     { name = "pykotor" },
@@ -1781,7 +1779,7 @@ provides-extras = ["gui", "web", "dev"]
 
 [[package]]
 name = "holopatcher"
-version = "2.0.0a2"
+version = "2.0.0a3"
 source = { editable = "Tools/HoloPatcher" }
 dependencies = [
     { name = "charset-normalizer" },
@@ -2179,7 +2177,7 @@ wheels = [
 
 [[package]]
 name = "kotor-diff"
-version = "1.0.0"
+version = "1.0.1"
 source = { editable = "Tools/KotorDiff" }
 dependencies = [
     { name = "pykotor" },
@@ -2201,7 +2199,7 @@ provides-extras = ["dev"]
 
 [[package]]
 name = "kotorcli"
-version = "1.2.0"
+version = "1.2.1"
 source = { editable = "Tools/KotorCLI" }
 dependencies = [
     { name = "pykotor" },
@@ -3776,7 +3774,7 @@ wheels = [
 
 [[package]]
 name = "pykotor"
-version = "2.0.1"
+version = "2.0.2"
 source = { editable = "Libraries/PyKotor" }
 dependencies = [
     { name = "ply" },
@@ -3922,7 +3920,7 @@ provides-extras = ["font", "gl", "secure-xml", "encodings", "all", "dev"]
 
 [[package]]
 name = "pykotor-workspace"
-version = "2.0.0"
+version = "2.0.1"
 source = { editable = "." }
 dependencies = [
     { name = "pykotor" },
@@ -4023,20 +4021,6 @@ provides-extras = ["all-extensions", "holocrontoolset", "holopatcher", "kotor-di
 
 [package.metadata.requires-dev]
 dev = []
-
-[[package]]
-name = "pykotorfont"
-version = "2.0.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "pillow", version = "10.4.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version < '3.9' and platform_python_implementation == 'CPython') or (python_full_version < '3.9' and platform_python_implementation == 'PyPy')" },
-    { name = "pillow", version = "11.0.0", source = { registry = "https://pypi.org/simple" }, marker = "(python_full_version >= '3.9' and platform_python_implementation == 'CPython') or (python_full_version >= '3.9' and platform_python_implementation == 'PyPy')" },
-    { name = "pykotor" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/ac/89/7b573371b188de80c1ec12539f257aacf7974051e857b9cab31274e7e309/pykotorfont-2.0.0.tar.gz", hash = "sha256:47add130125562e7744d5cf6993b99a5ac08a517be26eca14e4530ebaad80a03", size = 5098, upload-time = "2025-12-02T06:47:36.169Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/73/77/0240253e0cd6065af5939c08c172a6295f4741a2ca135e3159287ef922b0/pykotorfont-2.0.0-py3-none-any.whl", hash = "sha256:a8295d737cba956d5e9766f8c5e57ca0648df29fef36f436bcc64bb4d9a6950f", size = 4468, upload-time = "2025-12-02T06:47:35.057Z" },
-]
 
 [[package]]
 name = "pylint"

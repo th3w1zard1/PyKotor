@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pykotor-workspace"
-version = "2.0.0"
+version = "2.0.1"
 description = "PyKotor workspace - meta-package for PyKotor ecosystem"
 authors = [{name = "NickHugi"}]
 maintainers = [{name = "th3w1zard1", email = "halomastar@gmail.com"}]
@@ -13,12 +13,12 @@ license = {text = "LGPL-3.0-or-later License"}
 keywords = ["kotor", "library", "holocron", "toolset", "pykotor", "editor", "holopatcher", "tslpatcher"]
 requires-python = ">=3.8"
 dependencies = [
-    "pykotor>=2.0.0",
+    "pykotor>=2.0.2",
 ]
 
 [project.optional-dependencies]
 # Extension libraries (now part of pykotor package)
-all-extensions = ["pykotor>=2.0.0"]
+all-extensions = ["pykotor>=2.0.2"]
 
 # Tools (lowercase PyPI names)
 holocrontoolset = ["holocrontoolset"]
@@ -30,7 +30,7 @@ holopazaak = ["holopazaak"]
 
 # Everything
 all = [
-    "pykotor>=2.0.0",
+    "pykotor>=2.0.2",
     "holocrontoolset",
     "holopatcher",
     "kotor-diff",
@@ -62,7 +62,7 @@ dev = [
 
 [tool.poetry]
 name = "pykotor-workspace"
-version = "2.0.0"
+version = "2.0.1"
 description = "PyKotor workspace - meta-package for PyKotor ecosystem"
 authors = ["Benjamin Auquite <halomastar@gmail.com>"]
 readme = "README.md"
@@ -106,7 +106,7 @@ all-tools = [
 
 # Everything
 all = [
-    "pykotor>=2.0.0",
+    "pykotor>=2.0.2",
     "holocrontoolset",
     "holopatcher",
     "kotordiff",

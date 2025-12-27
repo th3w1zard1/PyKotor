@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hologenerator"
-version = "1.0.0"
+version = "1.0.1"
 description = "KOTOR Configuration Generator for HoloPatcher - GUI and CLI tool"
 readme = "README.md"
 authors = [
@@ -36,7 +36,7 @@ classifiers = [
 ]
 requires-python = ">=3.8"
 dependencies = [
-    "pykotor>=2.0.0",
+    "pykotor>=2.0.2",
 ]
 
 [project.scripts]
@@ -60,7 +60,7 @@ Changelog = "https://github.com/OldRepublicDevs/PyKotor/releases"
 # Poetry configuration
 [tool.poetry]
 name = "hologenerator"
-version = "1.0.0"
+version = "1.0.1"
 description = "KOTOR Configuration Generator for HoloPatcher - GUI and CLI tool"
 authors = ["Benjamin Auquite <halomastar@gmail.com>"]
 maintainers = ["Benjamin Auquite <halomastar@gmail.com>"]
@@ -70,7 +70,7 @@ packages = [{ include = "hologenerator", from = "src" }]
 
 [tool.poetry.dependencies]
 python = "^3.8"
-pykotor = "^2.0.0"
+pykotor = "^2.0.2"
 
 [tool.poetry.extras]
 web = ["flask", "flask-cors"]

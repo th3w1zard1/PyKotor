@@ -23,7 +23,7 @@ def read_requirements() -> list[str]:
 
 setup(
     name="pykotor",
-    version="1.8.0",
+    version="2.0.2",
     description="Read, modify and write files used by KotOR's game engine.",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
