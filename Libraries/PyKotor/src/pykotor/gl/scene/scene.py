@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypeVar
+from typing import TypeVar
 
 import glm
 
 from glm import mat4, vec3, vec4
 
-from pykotor.extract.installation import SearchLocation
+from pykotor.common.module import Module
+from pykotor.extract.installation import Installation, SearchLocation
 from pykotor.gl.compat import (
     GL_BGRA,
     GL_BLEND,
@@ -25,7 +26,7 @@ from pykotor.gl.compat import (
 )
 from pykotor.gl.models.mdl import Model
 from pykotor.gl.scene.frustum import CullingStats, Frustum
-from pykotor.gl.scene.scene_base import SceneBase
+from pykotor.gl.scene.scene_base import RenderObject, SceneBase
 from pykotor.gl.scene.scene_cache import SceneCache
 from pykotor.gl.shader import (
     KOTOR_FSHADER,
@@ -51,11 +52,6 @@ from pykotor.resource.generics.git import (
 )
 from utility.common.geometry import Vector3
 
-if TYPE_CHECKING:
-    from pykotor.common.module import Module
-    from pykotor.gl.scene.scene_base import RenderObject
-    from toolset.data.installation import Installation
-
 T = TypeVar("T")
 SEARCH_ORDER_2DA: list[SearchLocation] = [SearchLocation.OVERRIDE, SearchLocation.CHITIN]
 SEARCH_ORDER: list[SearchLocation] = [SearchLocation.OVERRIDE, SearchLocation.CHITIN]
@@ -78,7 +74,7 @@ class Scene(SceneBase):
 
     def __init__(
         self,
-        *,
+        *args,
         installation: Installation | None = None,
         module: Module | None = None,
         **kwargs,
