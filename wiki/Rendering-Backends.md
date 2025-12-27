@@ -17,3 +17,12 @@
 ## ModernGL renderer coverage
 
 - `ModernGLRenderer` consumes the CPU-side blobs and now renders cubes and boundaries through the plain shader, reusing the same [mesh](MDL-MDX-File-Format#trimesh-header) cache path used for standard geometry (`Libraries/PyKotor/src/pykotor/gl/modern_renderer.py`:L156-L339).
+
+## Scene object-cache invalidation (ModernGL)
+
+- `Scene` maintains cached render-object lists (`_cached_regular_objects`, `_cached_special_objects`, etc.) and only rebuilds those lists when the scene is marked dirty. If a caller mutates `scene.objects` directly (e.g. replacing `scene.objects["model"]`), the ModernGL path will continue rendering the old cached lists until the cache is invalidated.
+- Callers that modify `scene.objects` should invalidate the cache via `Scene._invalidate_object_cache()` (private) or a future public wrapper. This is especially important for Qt widgets that swap preview objects dynamically, like `ModelRenderer` (`Libraries/PyKotor/src/pykotor/gl/scene/scene.py`: `_invalidate_object_cache` / `_rebuild_object_caches`; `Tools/HolocronToolset/src/toolset/gui/widgets/renderer/model.py`: `paintGL()` object swaps).
+
+## Texture resolution metadata for UI (no extra lookups)
+
+- The renderer can expose “where a texture came from” to the UI without additional `Installation.location(...)` calls by recording the result of the existing async location resolver. `SceneBase` stores per-texture resolution metadata in `texture_lookup_info` and request names in `requested_texture_names`; these are populated during async resolution and updated on async completion (`Libraries/PyKotor/src/pykotor/gl/scene/scene_base.py`: `_resolve_texture_location`, `texture()`, `poll_async_resources()`).

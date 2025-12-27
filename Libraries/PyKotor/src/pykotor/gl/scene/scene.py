@@ -15,6 +15,7 @@ from pykotor.gl.compat import (
     GL_DEPTH_COMPONENT,
     GL_FLOAT,
     GL_UNSIGNED_INT_8_8_8_8,
+    HAS_PYOPENGL,
     HAS_MODERNGL,
     USE_PYOPENGL,
     glClear,
@@ -83,7 +84,11 @@ class Scene(SceneBase):
         # Enable legacy PyOpenGL if:
         # 1. Explicitly requested with use_legacy_gl=True, OR
         # 2. ModernGL is not available but PyOpenGL is (automatic fallback)
-        self._legacy_gl_enabled: bool = use_legacy_gl or (USE_PYOPENGL and not HAS_MODERNGL)
+        # Enable legacy PyOpenGL if:
+        # - explicitly requested, OR
+        # - ModernGL is not available and PyOpenGL is.
+        # NOTE: We also allow dynamic fallback to PyOpenGL later if ModernGL context creation fails.
+        self._legacy_gl_enabled: bool = use_legacy_gl or (HAS_PYOPENGL and not HAS_MODERNGL)
 
         # Initialize ModernGL renderer if available (default)
         if HAS_MODERNGL and not use_legacy_gl:
@@ -101,9 +106,20 @@ class Scene(SceneBase):
                 from pykotor.gl.modern_renderer import ModernGLRenderer
 
                 self._modern_renderer = ModernGLRenderer(self._modern_context)
-            elif USE_PYOPENGL:
+            elif HAS_PYOPENGL:
                 # ModernGL context creation failed, but PyOpenGL is available - auto-fallback
                 self._legacy_gl_enabled = True
+
+        # Canonical backend selection log (one line, high signal).
+        # This is critical for debugging “ModernGL missing / fallback broken” reports.
+        from loggerplus import RobustLogger
+        RobustLogger().debug(
+            "Scene backend selection: moderngl=%s (ctx=%s), pyopengl=%s, legacy_enabled=%s",
+            HAS_MODERNGL,
+            self._modern_context is not None,
+            HAS_PYOPENGL,
+            self._legacy_gl_enabled,
+        )
 
         # Initialize legacy PyOpenGL shaders if enabled (explicitly or automatically)
         if self._legacy_gl_enabled:
@@ -211,7 +227,7 @@ class Scene(SceneBase):
                     return
                 except Exception:  # noqa: BLE001
                     # ModernGL context creation failed, check if PyOpenGL is available
-                    if USE_PYOPENGL:
+                    if HAS_PYOPENGL:
                         # Auto-enable legacy GL mode and initialize shaders
                         self._legacy_gl_enabled = True
                         self.picker_shader = Shader(PICKER_VSHADER, PICKER_FSHADER)
@@ -223,7 +239,7 @@ class Scene(SceneBase):
                         raise MissingPyOpenGLError("No rendering backend available. Install moderngl (default) or PyOpenGL (legacy).")
             else:
                 # ModernGL is not installed, check if PyOpenGL is available
-                if USE_PYOPENGL:
+                if HAS_PYOPENGL:
                     # Auto-enable legacy GL mode and initialize shaders
                     self._legacy_gl_enabled = True
                     self.picker_shader = Shader(PICKER_VSHADER, PICKER_FSHADER)

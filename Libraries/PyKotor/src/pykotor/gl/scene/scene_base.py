@@ -30,7 +30,7 @@ else:
 
 from pykotor.common.module import Module, ModuleResource
 from pykotor.common.stream import BinaryReader
-from pykotor.extract.file import ResourceResult
+from pykotor.extract.file import ResourceIdentifier, ResourceResult
 from pykotor.extract.installation import SearchLocation
 from pykotor.gl.models.mdl import Model, Node
 from pykotor.gl.models.predefined_mdl import (
@@ -136,31 +136,125 @@ class SceneBase:
         self.git: GIT | None = None
         self.layout: LYT | None = None
         self.clear_cache_buffer: list[ResourceIdentifier] = []
+
+        # Texture lookup tracking (for UI/debugging)
+        # Populated by the existing async resolver (main process) + completion polling.
+        # NOTE: Do NOT add additional installation.location(...) calls just for UI.
+        self.texture_lookup_info: dict[str, dict[str, Any]] = {}
+        self.requested_texture_names: set[str] = set()
         
         # Async resource loading
         # Main thread: Use Installation to RESOLVE file locations ONLY (no Installation in child!)
         # Child process: Do raw file IO + parsing (one process per file)
         
         # Pre-compute search location lists to avoid creating new lists on every call
-        texture_search_locs = [SearchLocation.OVERRIDE, SearchLocation.TEXTURES_TPA, SearchLocation.CHITIN]
+        # Include all texture packs so creature/world textures resolve correctly.
+        texture_search_locs = [
+            SearchLocation.OVERRIDE,
+            SearchLocation.TEXTURES_GUI,
+            SearchLocation.TEXTURES_TPA,
+# Note: only include tpa, don't include tpb/tpc, same as tpa but worse quality.
+# DO NOT uncomment these.
+#            SearchLocation.TEXTURES_TPB,
+#            SearchLocation.TEXTURES_TPC,
+            SearchLocation.CHITIN,
+        ]
         model_search_locs = [SearchLocation.OVERRIDE, SearchLocation.CHITIN]
         # Cache capsules list for model loading (computed once per scene, not per model)
         _cached_capsules: list[Capsule] | None = None
         
-        def _resolve_texture_location(name: str) -> tuple[str, int, int] | None:
+        def _infer_search_location(filepath_str: str) -> SearchLocation | None:
+            """Infer SearchLocation from the resolved filepath (no additional lookups).
+
+            This is used purely for reporting/UI: we already have the resolved filepath
+            from the existing Installation.location() call.
+            """
+            path_lower = filepath_str.lower().replace("\\", "/")
+            if "/override/" in path_lower:
+                return SearchLocation.OVERRIDE
+            if "/modules/" in path_lower:
+                return SearchLocation.MODULES
+            if "/texturepacks/" in path_lower:
+                # Typical filenames: swpc_tex_tpa.erf, swpc_tex_tpb.erf, swpc_tex_tpc.erf, swpc_tex_gui.erf
+                if "tex_gui" in path_lower or "_gui" in path_lower:
+                    return SearchLocation.TEXTURES_GUI
+                if "tex_tpa" in path_lower or "_tpa" in path_lower:
+                    return SearchLocation.TEXTURES_TPA
+                if "tex_tpb" in path_lower or "_tpb" in path_lower:
+                    return SearchLocation.TEXTURES_TPB
+                if "tex_tpc" in path_lower or "_tpc" in path_lower:
+                    return SearchLocation.TEXTURES_TPC
+            if "/data/" in path_lower or "chitin.key" in path_lower:
+                return SearchLocation.CHITIN
+            return None
+
+        def _resolve_texture_location(name: str) -> tuple[str, int, int, int] | None:
             """Resolve texture file location in main thread using Installation ONLY.
             
             Returns (filepath, offset, size) or None.
             """
             if self.installation is None:
+                self.texture_lookup_info[name] = {
+                    "found": False,
+                    "filepath": None,
+                    "restype": None,
+                    "source_location": None,
+                    "search_order": list(texture_search_locs),
+                    "error": "No installation set on Scene",
+                }
                 return None
             
-            # Installation.location() returns LocationResult which has offset/size as fields
-            locations = self.installation.location(name, ResourceType.TPC, texture_search_locs)
-            if locations:
-                loc = locations[0]
-                # LocationResult has: filepath (Path field), offset (int field), size (int field)
-                return (str(loc.filepath), loc.offset, loc.size)
+            # Single call: find texture by trying all supported texture restypes.
+            # This avoids extra location() calls while still reporting the real restype (TPC/TGA/DDS).
+            restypes = list(getattr(self.installation, "TEXTURES_TYPES", (ResourceType.TPC, ResourceType.TGA, ResourceType.DDS)))
+            found_loc = None
+            found_restype = None
+            locs_by_query = self.installation.locations(([name], restypes), list(texture_search_locs))
+            for rt in restypes:
+                query = ResourceIdentifier(name, rt)
+                locs = locs_by_query.get(query, [])
+                if locs:
+                    found_loc = locs[0]
+                    found_restype = rt
+                    break
+
+            if found_loc is not None and found_restype is not None:
+                loc_path_str = str(found_loc.filepath)
+                resolved_source = _infer_search_location(loc_path_str)
+                self.texture_lookup_info[name] = {
+                    "found": True,
+                    "filepath": loc_path_str,
+                    "offset": found_loc.offset,
+                    "size": found_loc.size,
+                    "restype": found_restype.extension,
+                    "source_location": resolved_source,
+                    "search_order": list(texture_search_locs),
+                    "error": None,
+                }
+                RobustLogger().debug(
+                    "SceneBase: resolved texture '%s.%s' -> %s (offset=%s size=%s, source=%s, search_order=%s)",
+                    name,
+                    found_restype.extension,
+                    loc_path_str,
+                    found_loc.offset,
+                    found_loc.size,
+                    getattr(resolved_source, "name", resolved_source),
+                    [getattr(x, "name", str(x)) for x in texture_search_locs],
+                )
+                return (str(found_loc.filepath), found_loc.offset, found_loc.size, found_restype.type_id)
+            self.texture_lookup_info[name] = {
+                "found": False,
+                "filepath": None,
+                "restype": None,
+                "source_location": None,
+                "search_order": list(texture_search_locs),
+                "error": f"Texture '{name}' not found",
+            }
+            RobustLogger().debug(
+                "SceneBase: failed to resolve texture '%s' (search_order=%s)",
+                name,
+                [getattr(x, "name", str(x)) for x in texture_search_locs],
+            )
             return None
         
         def _resolve_model_location(name: str) -> tuple[tuple[str, int, int] | None, tuple[str, int, int] | None]:
@@ -469,13 +563,26 @@ class SceneBase:
                         else:
                             RobustLogger().warning(f"Async texture load failed for '{resource_name}': {error}")
                         self.textures[resource_name] = self._missing_texture  # Magenta placeholder
+                        # Persist status for UI/debugging (no additional lookups)
+                        info = self.texture_lookup_info.setdefault(resource_name, {})
+                        info.update({"loaded": False, "load_error": error})
+                        RobustLogger().debug(
+                            "SceneBase: texture async complete '%s' (loaded=False, error=%s)",
+                            resource_name,
+                            error,
+                        )
                     elif intermediate:
                         self.textures[resource_name] = create_texture_from_intermediate(intermediate)
+                        info = self.texture_lookup_info.setdefault(resource_name, {})
+                        info.update({"loaded": True, "load_error": None})
+                        RobustLogger().debug("SceneBase: texture async complete '%s' (loaded=True)", resource_name)
                     completed_textures.append(name)
                     textures_processed += 1
                 except Exception:  # noqa: BLE001
                     RobustLogger().exception(f"Error processing completed texture future for '{name}'")
                     self.textures[name] = self._missing_texture
+                    info = self.texture_lookup_info.setdefault(name, {})
+                    info.update({"loaded": False, "load_error": "Exception while processing completed texture future"})
                     completed_textures.append(name)
                     textures_processed += 1
         
@@ -540,6 +647,9 @@ class SceneBase:
         
         # Start async loading if location resolver available
         if self.async_loader is not None and self.async_loader.texture_location_resolver is not None:
+            # Track requests for UI/debugging (names only). Resolution details are stored by the resolver.
+            self.requested_texture_names.add(name)
+            RobustLogger().debug("SceneBase: requesting texture '%s' (lightmap=%s)", name, lightmap)
             future = self.async_loader.load_texture_async(name)
             self._pending_texture_futures[name] = future
             # Return gray placeholder immediately

@@ -9,6 +9,7 @@ git add file1.py file2.py; git commit -m "type: message"
 ```
 
 Rules:
+
 - NEVER use wildcards: no `git add .`, no `git add *`
 - List EVERY file explicitly
 - Use conventional commits: `fix:`, `feat:`, `refactor:`, `docs:`, `chore:`, `test:`
@@ -20,9 +21,36 @@ New .md files → only in `docs/`
 Content → only public-facing, end-user or developer info  
 NEVER write progress reports or TODOs
 
+### Verification rule (MUST follow)
+
+**Do not add or modify technical claims** (docs, comments, docstrings, or code behavior) unless they are verified by **at least 3 independent sources**:
+
+- At most **one** source may be anything inside `Libraries/PyKotor/src` (PyKotor code).
+- The other sources must be **engine / vendor** material, preferring:
+  - `vendor/swkotor.c`
+  - other `vendor/` projects that are actually present in the checkout
+  - wiki sources
+
+**No broken citations**:
+
+- Check links after adding to ensure they are valid and not resulting in a 404 in this repo checkout.
+- Always use external URLs for citations.
+
+If 3 sources cannot be found locally:
+
+- Do **not** "fill in" with guesses.
+- Either (a) leave behavior unchanged and add a `TODO` requesting the missing source, or (b) ask the user to provide the missing vendor checkout / submodule content.
+
+## 2b. Git/commit focus
+
+- Do not derail work on core tasks by fighting git mechanics early.
+- Only run add/commit steps when they are **simple and not failing**; otherwise, defer until the end of the task.
+- When committing, still follow the explicit-path, chained-command rule above.
+
 ## 3. Helper Scripts (scripts/)
 
 Always:
+
 - Use argparse / param() with defaults
 - Follow POSIX flags: `-h`, `--help`, `-v`, etc.
 - Output formats: text, json, compact
@@ -37,6 +65,7 @@ Always:
 - NEVER run tests without timeout: 120s individual, 300s suite
 
 Test example:
+
 ```powershell
 . .\.venv_3.13\Scripts\Activate.ps1
 $proc = Start-Process python -ArgumentList "-m pytest tests/..." -PassThru -NoNewWindow
@@ -46,14 +75,17 @@ if (-not $proc.WaitForExit(300000)) { $proc.Kill(); Write-Host "TIMEOUT" }
 ## 5. Wiki Maintenance – MANDATORY
 
 After discovering ANY new info about:
+
 - File formats
 - Game mechanics
 - Code relationships
 
 YOU MUST:
+
 1. Check `wiki/*.md` exists
 2. Update or create missing docs
 3. Commit to wiki repo:
+
    ```powershell
    cd wiki
    git add file.md; git commit -m "docs: description"
@@ -70,9 +102,11 @@ YOU MUST:
 ## 7. KotorCLI Priority
 
 ALWAYS prefer CLI over raw Python:
+
 - `uv --directory="Tools/KotorCLI/src" run --module kotorcli ...`
 - `python -m Tools.KotorCLI.src.kotorcli gff2xml "path/to/some/gff.fac" --output "gff_fac_example.xml"`
 - Use `list`, `extract`, `search-archive --content`, `diff`, `validate`, etc.
+
 ```bash
 usage: kotorcli [--version] [-h] [--yes] [--no] [--default] [--verbose] [--debug] [--quiet] [--no-color]
                 {config,init,list,unpack,convert,compile,pack,install,launch,serve,play,test,extract,list-archive,ls-archive,create-archive,pack-archive,gff2xml,xml2gff,gff2json,json2gff,tlk2xml,xml2tlk,tlk2json,ssf2xml,xml2ssf,2da2csv,csv22da,decompile,disassemble,assemble,texture-convert,sound-convert,model-convert,diff-installation,diff-paths,kotordiff,diff-kotor,diff,grep,stats,validate,merge,search-archive,grep-archive,cat,key-pack,create-key,check-txi,check-2da,validate-installation,investigate-module,check-missing-resources,module-resources,kit-generate,kit,gui-convert,gui,indoor-build,indoormap-build,indoor-extract,indoormap-extract,batch-patch,patch-file,patch-folder,patch-installation} ...

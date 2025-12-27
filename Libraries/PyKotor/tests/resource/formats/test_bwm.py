@@ -662,7 +662,29 @@ class TestBWMWOKvsPWK:
         aabb_count = reader._reader.read_uint32()
         
         # WOK should have AABB tree (may be 0 for very simple walkmeshes)
-        assert aabb_count >= 0
+        #assert aabb_count >= 0
+        aabb_offset = reader._reader.read_uint32()
+        aabb_root = reader._reader.read_uint32()
+        adjacency_count = reader._reader.read_uint32()
+        adjacency_offset = reader._reader.read_uint32()
+        edges_count = reader._reader.read_uint32()
+        edges_offset = reader._reader.read_uint32()
+        perimeter_count = reader._reader.read_uint32()
+        perimeter_offset = reader._reader.read_uint32()
+
+        # Engine uses the AABB tree for broad-phase walk/collision queries (see `vendor/swkotor.c`
+        # `CSWRoomSurfaceMesh__CheckAABBNode` + `CSWRoomSurfaceMesh__LoadMeshBinary` wiring).
+        assert aabb_count > 0, "Area-model (WOK) must emit an AABB tree for movement/collision queries"
+        assert 0 <= aabb_root < aabb_count, "AABB root index must be within the AABB array"
+        assert aabb_offset != 0, "AABB table offset must be non-zero when AABBs exist"
+
+        # Adjacency table is indexed as (walkable_face_count * 3) in the engine pathing codepaths.
+        assert adjacency_count == 1, "Single-face WOK should emit adjacency_count == walkable_face_count (1)"
+        assert adjacency_offset != 0, "Adjacency table offset must be non-zero when adjacencies exist"
+
+        # Edge/perimeter tables are not required for a single isolated triangle but should be coherent.
+        assert edges_count >= 0 and perimeter_count >= 0
+        assert edges_offset != 0 and perimeter_offset != 0
 
     def test_pwk_no_aabb_tree(self):
         """Test that PWK/DWK files don't include AABB tree."""

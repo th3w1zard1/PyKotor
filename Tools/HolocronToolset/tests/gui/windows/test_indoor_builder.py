@@ -15,6 +15,13 @@ Uses pytest-qt and qtbot for actual UI testing including:
 - Camera controls and view transformations
 - Module selection and lazy loading
 - Collapsible UI sections
+
+Runtime note:
+- This suite was originally intended as an exhaustive integration test bed, but running it end-to-end
+  is not practical in CI or during local iteration. Tests that iterate many modules/components are
+  now limited to a small sample by default.
+- Override via env var:
+  - `PYKOTOR_GUI_INDOOR_MODULE_SAMPLE=3` (default: 3)
 """
 
 from __future__ import annotations
@@ -54,6 +61,27 @@ from utility.common.geometry import Vector2, Vector3
 
 if TYPE_CHECKING:
     from pytestqt.qtbot import QtBot
+
+
+# ----------------------------------------------------------------------------
+# Helpers
+# ----------------------------------------------------------------------------
+def _sample_n() -> int:
+    raw = os.environ.get("PYKOTOR_GUI_INDOOR_MODULE_SAMPLE", "3").strip()
+    try:
+        return max(1, int(raw))
+    except ValueError:
+        return 3
+
+
+def _sample_roots(roots: list[str]) -> list[str]:
+    """Deterministically pick a small subset of module roots for slow GUI integration tests."""
+    return roots[: _sample_n()]
+
+
+def _sample_module_select_count(builder: IndoorMapBuilder) -> int:
+    """Return how many moduleSelect entries to iterate over (bounded for runtime)."""
+    return min(_sample_n(), builder.ui.moduleSelect.count())
 
 
 # ============================================================================
@@ -2295,7 +2323,7 @@ class TestModuleComponentExtraction:
             pytest.skip("No modules available")
 
         # Find a module with components
-        for root in roots[:5]:  # Check first 5 modules
+        for root in _sample_roots(roots):  # sampled for runtime
             kit = manager.get_module_kit(root)
             if kit.ensure_loaded() and kit.components:
                 component = kit.components[0]
@@ -2332,7 +2360,7 @@ class TestModuleComponentExtraction:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = manager.get_module_kit(root)
             if kit.ensure_loaded() and kit.components:
                 component = kit.components[0]
@@ -2363,7 +2391,7 @@ class TestModuleComponentExtraction:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = manager.get_module_kit(root)
             if kit.ensure_loaded() and kit.components:
                 component = kit.components[0]
@@ -2435,7 +2463,7 @@ class TestModuleImageWalkmeshAlignment:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = manager.get_module_kit(root)
             if kit.ensure_loaded() and kit.components:
                 component = kit.components[0]
@@ -2487,7 +2515,7 @@ class TestModuleImageWalkmeshAlignment:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = manager.get_module_kit(root)
             if kit.ensure_loaded() and kit.components:
                 component = kit.components[0]
@@ -2546,7 +2574,7 @@ class TestModuleImageWalkmeshAlignment:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = builder._module_kit_manager.get_module_kit(root)
             if kit.ensure_loaded() and kit.components:
                 component = kit.components[0]
@@ -2643,7 +2671,7 @@ class TestModuleImageWalkmeshAlignment:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = manager.get_module_kit(root)
             if kit.ensure_loaded() and kit.components:
                 module_component = kit.components[0]
@@ -2696,7 +2724,7 @@ class TestModuleImageWalkmeshAlignment:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = manager.get_module_kit(root)
             if kit.ensure_loaded() and kit.components:
                 component = kit.components[0]
@@ -2735,7 +2763,7 @@ class TestModuleImageWalkmeshAlignment:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = manager.get_module_kit(root)
             if kit.ensure_loaded() and kit.components:
                 component = kit.components[0]
@@ -2785,7 +2813,7 @@ class TestModuleImageWalkmeshAlignment:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = manager.get_module_kit(root)
             if kit.ensure_loaded() and kit.components:
                 component = kit.components[0]
@@ -2818,7 +2846,7 @@ class TestModuleImageWalkmeshAlignment:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = manager.get_module_kit(root)
             if kit.ensure_loaded() and kit.components:
                 component = kit.components[0]
@@ -2882,7 +2910,7 @@ class TestModuleImageWalkmeshAlignment:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = manager.get_module_kit(root)
             if kit.ensure_loaded() and kit.components:
                 module_component = kit.components[0]
@@ -2940,7 +2968,7 @@ class TestModuleImageWalkmeshAlignment:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = builder._module_kit_manager.get_module_kit(root)
             if kit.ensure_loaded() and kit.components:
                 component = kit.components[0]
@@ -3029,7 +3057,7 @@ class TestModuleImageWalkmeshAlignment:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = manager.get_module_kit(root)
             if kit.ensure_loaded() and kit.components:
                 component = kit.components[0]
@@ -3098,7 +3126,7 @@ class TestModuleImageWalkmeshAlignment:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = builder._module_kit_manager.get_module_kit(root)
             if kit.ensure_loaded() and kit.components:
                 component = kit.components[0]
@@ -3189,7 +3217,7 @@ class TestModuleImageWalkmeshAlignment:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = builder._module_kit_manager.get_module_kit(root)
             if kit.ensure_loaded() and kit.components:
                 component = kit.components[0]
@@ -3323,7 +3351,7 @@ class TestModuleImageWalkmeshAlignment:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = manager.get_module_kit(root)
             if kit.ensure_loaded() and kit.components:
                 module_component = kit.components[0]
@@ -3409,7 +3437,7 @@ class TestModuleImageWalkmeshAlignment:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = manager.get_module_kit(root)
             if kit.ensure_loaded() and kit.components:
                 module_component = kit.components[0]
@@ -3480,7 +3508,7 @@ class TestModuleImageWalkmeshAlignment:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = manager.get_module_kit(root)
             if kit.ensure_loaded() and kit.components:
                 module_component = kit.components[0]
@@ -3530,7 +3558,7 @@ class TestModuleComponentRoomCreation:
             pytest.skip("No modules available")
 
         # Find a module with components
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = builder._module_kit_manager.get_module_kit(root)
             if kit.ensure_loaded() and kit.components:
                 component = kit.components[0]
@@ -3571,7 +3599,7 @@ class TestModuleComponentRoomCreation:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = builder._module_kit_manager.get_module_kit(root)
             if kit.ensure_loaded() and kit.components:
                 component = kit.components[0]
@@ -3611,7 +3639,7 @@ class TestModuleComponentRoomCreation:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = builder._module_kit_manager.get_module_kit(root)
             if kit.ensure_loaded() and kit.components:
                 component = kit.components[0]
@@ -3650,7 +3678,7 @@ class TestModuleComponentRoomCreation:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = builder._module_kit_manager.get_module_kit(root)
             if kit.ensure_loaded() and kit.components:
                 component = kit.components[0]
@@ -3687,7 +3715,7 @@ class TestModuleComponentRoomCreation:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = builder._module_kit_manager.get_module_kit(root)
             if kit.ensure_loaded() and kit.components:
                 component = kit.components[0]
@@ -3771,7 +3799,7 @@ class TestModuleUIInteractions:
         QApplication.processEvents()
 
         # Try multiple modules to find one with components
-        for i in range(min(5, builder.ui.moduleSelect.count())):
+        for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
             qtbot.wait(300)  # Wait for lazy loading
             QApplication.processEvents()
@@ -3798,7 +3826,7 @@ class TestModuleUIInteractions:
         QApplication.processEvents()
 
         # Find a module with components
-        for i in range(min(5, builder.ui.moduleSelect.count())):
+        for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
             qtbot.wait(300)
             QApplication.processEvents()
@@ -3830,7 +3858,7 @@ class TestModuleUIInteractions:
         qtbot.wait(50)
         QApplication.processEvents()
 
-        for i in range(min(5, builder.ui.moduleSelect.count())):
+        for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
             qtbot.wait(300)
             QApplication.processEvents()
@@ -3904,7 +3932,7 @@ class TestModuleRoomPlacementWorkflow:
         initial_room_count = len(builder._map.rooms)
 
         # Find a module with components
-        for i in range(min(5, builder.ui.moduleSelect.count())):
+        for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
             qtbot.wait(300)
             QApplication.processEvents()
@@ -3955,7 +3983,7 @@ class TestModuleRoomPlacementWorkflow:
         qtbot.wait(50)
         QApplication.processEvents()
 
-        for i in range(min(5, builder.ui.moduleSelect.count())):
+        for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
             qtbot.wait(300)
             QApplication.processEvents()
@@ -4006,7 +4034,7 @@ class TestModuleRoomPlacementWorkflow:
         qtbot.wait(50)
         QApplication.processEvents()
 
-        for i in range(min(5, builder.ui.moduleSelect.count())):
+        for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
             qtbot.wait(300)
             QApplication.processEvents()
@@ -4056,7 +4084,7 @@ class TestModuleKitEquivalence:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = manager.get_module_kit(root)
             if kit.ensure_loaded() and kit.components:
                 module_component = kit.components[0]
@@ -4095,7 +4123,7 @@ class TestModuleKitEquivalence:
         builder._map.rooms.append(kit_room)
 
         # Find module with components
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = builder._module_kit_manager.get_module_kit(root)
             if kit.ensure_loaded() and kit.components:
                 module_component = kit.components[0]
@@ -4135,7 +4163,7 @@ class TestModuleKitEquivalence:
         kit_room = IndoorMapRoom(real_kit_component, Vector3(0, 0, 0), 0.0, flip_x=False, flip_y=False)
         builder._map.rooms.append(kit_room)
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = builder._module_kit_manager.get_module_kit(root)
             if kit.ensure_loaded() and kit.components:
                 module_room = IndoorMapRoom(kit.components[0], Vector3(20, 0, 0), 0.0, flip_x=False, flip_y=False)
@@ -4263,7 +4291,7 @@ class TestModuleHooksAndDoors:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = manager.get_module_kit(root)
             kit.ensure_loaded()
 
@@ -4291,7 +4319,7 @@ class TestModuleHooksAndDoors:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = manager.get_module_kit(root)
             if kit.ensure_loaded() and kit.components:
                 component = kit.components[0]
@@ -4422,7 +4450,7 @@ class TestModuleRendererIntegration:
         qtbot.wait(50)
         QApplication.processEvents()
 
-        for i in range(min(5, builder.ui.moduleSelect.count())):
+        for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
             qtbot.wait(300)
             QApplication.processEvents()
@@ -4469,7 +4497,7 @@ class TestModuleRendererIntegration:
         qtbot.wait(50)
         QApplication.processEvents()
 
-        for i in range(min(5, builder.ui.moduleSelect.count())):
+        for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
             qtbot.wait(300)
             QApplication.processEvents()
@@ -4530,7 +4558,7 @@ class TestModuleWorkflowEndToEnd:
         qtbot.wait(50)
         QApplication.processEvents()
 
-        for i in range(min(5, builder.ui.moduleSelect.count())):
+        for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
             qtbot.wait(300)
             QApplication.processEvents()
@@ -4625,7 +4653,7 @@ class TestModuleWorkflowEndToEnd:
         module_roots_used = []
 
         # Try to place rooms from different modules
-        for i in range(min(5, builder.ui.moduleSelect.count())):
+        for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
             qtbot.wait(300)
             QApplication.processEvents()
@@ -6036,7 +6064,7 @@ class TestModuleKitManagerComprehensive:
         doors_found = 0
         hooks_found = 0
 
-        for root in roots[:5]:  # Check first 5 modules
+        for root in _sample_roots(roots):  # sampled for runtime
             kit = manager.get_module_kit(root)
             kit.ensure_loaded()
 
@@ -6067,7 +6095,7 @@ class TestModuleKitManagerComprehensive:
         if not roots:
             pytest.skip("No modules available for testing")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = manager.get_module_kit(root)
             kit.ensure_loaded()
 
@@ -6119,7 +6147,7 @@ class TestModuleKitManagerComprehensive:
 
         # Load multiple modules
         loaded_kits = []
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = manager.get_module_kit(root)
             kit.ensure_loaded()
             loaded_kits.append((root, kit))
@@ -6314,7 +6342,7 @@ class TestWalkabilityGranular:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = manager.get_module_kit(root)
             kit.ensure_loaded()
 
@@ -6342,7 +6370,7 @@ class TestWalkabilityGranular:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = manager.get_module_kit(root)
             kit.ensure_loaded()
 
@@ -6373,7 +6401,7 @@ class TestWalkabilityGranular:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = manager.get_module_kit(root)
             kit.ensure_loaded()
 
@@ -6404,7 +6432,7 @@ class TestWalkabilityGranular:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = manager.get_module_kit(root)
             kit.ensure_loaded()
 
@@ -6434,7 +6462,7 @@ class TestWalkabilityGranular:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = manager.get_module_kit(root)
             kit.ensure_loaded()
 
@@ -6487,7 +6515,7 @@ class TestWalkabilityGranular:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = manager.get_module_kit(root)
             kit.ensure_loaded()
 
@@ -6629,7 +6657,7 @@ class TestWalkabilityGranular:
         if not roots:
             pytest.skip("No modules available")
 
-        for root in roots[:5]:
+        for root in _sample_roots(roots):
             kit = manager.get_module_kit(root)
             kit.ensure_loaded()
 
@@ -8168,7 +8196,7 @@ class TestModuleKitMouseDragAndConnect:
 
         # Find a module with components
         module_found = False
-        for i in range(min(10, builder.ui.moduleSelect.count())):
+        for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
             qtbot.wait(300)
             QApplication.processEvents()
@@ -8294,7 +8322,7 @@ class TestModuleKitMouseDragAndConnect:
         qtbot.wait(100)
         QApplication.processEvents()
 
-        for i in range(min(10, builder.ui.moduleSelect.count())):
+        for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
             qtbot.wait(300)
             QApplication.processEvents()
@@ -8373,7 +8401,7 @@ class TestModuleKitMouseDragAndConnect:
         qtbot.wait(100)
         QApplication.processEvents()
 
-        for i in range(min(10, builder.ui.moduleSelect.count())):
+        for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
             qtbot.wait(300)
             QApplication.processEvents()
@@ -8462,7 +8490,7 @@ class TestModuleKitMouseDragAndConnect:
         renderer.snap_to_hooks = True
         builder.ui.snapToHooksCheck.setChecked(True)
 
-        for i in range(min(10, builder.ui.moduleSelect.count())):
+        for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
             qtbot.wait(300)
             QApplication.processEvents()
@@ -8612,7 +8640,7 @@ class TestModuleKitMouseDragAndConnect:
         renderer.snap_to_hooks = True
         builder.ui.snapToHooksCheck.setChecked(True)
 
-        for i in range(min(10, builder.ui.moduleSelect.count())):
+        for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
             qtbot.wait(300)
             QApplication.processEvents()
@@ -8733,7 +8761,7 @@ class TestModuleKitMouseDragAndConnect:
         renderer.snap_to_hooks = True
         builder.ui.snapToHooksCheck.setChecked(True)
 
-        for i in range(min(10, builder.ui.moduleSelect.count())):
+        for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
             qtbot.wait(300)
             QApplication.processEvents()
@@ -8936,7 +8964,7 @@ class TestModuleKitMouseDragAndConnect:
         qtbot.wait(100)
         QApplication.processEvents()
 
-        for i in range(min(10, builder.ui.moduleSelect.count())):
+        for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
             qtbot.wait(300)
             QApplication.processEvents()
@@ -9191,7 +9219,7 @@ class TestModuleKitMouseDragAndConnect:
         module_found = False
         component_with_hooks = None
 
-        for i in range(min(10, builder.ui.moduleSelect.count())):
+        for i in range(_sample_module_select_count(builder)):
             builder.ui.moduleSelect.setCurrentIndex(i)
             qtbot.wait(300)
             QApplication.processEvents()

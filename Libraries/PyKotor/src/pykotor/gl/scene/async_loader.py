@@ -74,6 +74,7 @@ class IntermediateModel(NamedTuple):
 
 def _load_and_parse_texture(
     name: str,
+    restype_id: int,
     filepath: str,
     offset: int,
     size: int,
@@ -93,6 +94,7 @@ def _load_and_parse_texture(
     """
     try:
         from pathlib import Path
+        from pykotor.resource.type import ResourceType
         
         # IO: Read raw bytes from file
         path = Path(filepath)
@@ -104,7 +106,7 @@ def _load_and_parse_texture(
             tpc_bytes = f.read(size)
         
         # Parsing: Convert bytes to intermediate texture
-        return _parse_texture_data(name, tpc_bytes)
+        return _parse_texture_data(name, tpc_bytes, ResourceType.from_id(restype_id))
     except Exception as e:  # noqa: BLE001
         return (name, None, f"IO+parse error for texture '{name}': {e!s}\n{traceback.format_exc()}")
 
@@ -164,7 +166,8 @@ def _load_and_parse_model(
 # ===== Parsing Functions =====
 def _parse_texture_data(
     name: str,
-    tpc_bytes: bytes,
+    tex_bytes: bytes,
+    restype,
 ) -> tuple[str, IntermediateTexture | None, str | None]:
     """Parse TPC bytes into intermediate texture data.
     
@@ -173,32 +176,61 @@ def _parse_texture_data(
         tuple[resource_name, intermediate_texture, error_message]
     """
     try:
-        from pykotor.resource.formats.tpc.tpc_data import TPCTextureFormat
-        
-        tpc: TPC = read_tpc(tpc_bytes)
-        
-        # Get the first mipmap
-        mm = tpc.get(0, 0)
-        width = mm.width
-        height = mm.height
-        
-        # Convert to RGBA if needed
-        if mm.tpc_format != TPCTextureFormat.RGBA:
-            tpc.convert(TPCTextureFormat.RGBA)
+        import io
+
+        from pykotor.resource.type import ResourceType
+
+        # TPC (native)
+        if restype == ResourceType.TPC:
+            from pykotor.resource.formats.tpc.tpc_data import TPCTextureFormat
+
+            tpc: TPC = read_tpc(tex_bytes)
             mm = tpc.get(0, 0)
-        
-        rgba_data = bytes(mm.data)  # Ensure it's bytes, not bytearray
-        
-        return (
-            name,
-            IntermediateTexture(
-                width=width,
-                height=height,
-                rgba_data=rgba_data,
-                mipmap_count=1,  # We only use the first mipmap
-            ),
-            None,
-        )
+            width = mm.width
+            height = mm.height
+
+            if mm.tpc_format != TPCTextureFormat.RGBA:
+                tpc.convert(TPCTextureFormat.RGBA)
+                mm = tpc.get(0, 0)
+
+            rgba_data = bytes(mm.data)
+            return (
+                name,
+                IntermediateTexture(width=width, height=height, rgba_data=rgba_data, mipmap_count=1),
+                None,
+            )
+
+        # TGA (override / modding)
+        if restype == ResourceType.TGA:
+            from pykotor.resource.formats.tpc.tga import read_tga
+
+            img = read_tga(io.BytesIO(tex_bytes))
+            return (
+                name,
+                IntermediateTexture(width=img.width, height=img.height, rgba_data=bytes(img.data), mipmap_count=1),
+                None,
+            )
+
+        # DDS (rare, but supported by Installation.TEXTURES_TYPES)
+        if restype == ResourceType.DDS:
+            from pykotor.resource.formats.tpc.io_dds import TPCDDSReader
+            from pykotor.resource.formats.tpc.tpc_data import TPCTextureFormat
+
+            tpc_from_dds = TPCDDSReader(tex_bytes).load()
+            mm = tpc_from_dds.get(0, 0)
+            width = mm.width
+            height = mm.height
+            if mm.tpc_format != TPCTextureFormat.RGBA:
+                tpc_from_dds.convert(TPCTextureFormat.RGBA)
+                mm = tpc_from_dds.get(0, 0)
+            rgba_data = bytes(mm.data)
+            return (
+                name,
+                IntermediateTexture(width=width, height=height, rgba_data=rgba_data, mipmap_count=1),
+                None,
+            )
+
+        return (name, None, f"Unsupported texture restype for async parse: {restype!r}")
     except Exception as e:  # noqa: BLE001
         return (name, None, f"Parse error for texture '{name}': {e!s}\n{traceback.format_exc()}")
 
@@ -387,7 +419,7 @@ class AsyncResourceLoader:
     
     def __init__(
         self,
-        texture_location_resolver: Callable[[str], tuple[str, int, int] | None] | None = None,
+        texture_location_resolver: Callable[[str], tuple[str, int, int, int] | None] | None = None,
         model_location_resolver: Callable[[str], tuple[tuple[str, int, int] | None, tuple[str, int, int] | None]] | None = None,
         max_workers: int | None = None,
     ):
@@ -479,10 +511,10 @@ class AsyncResourceLoader:
                 # Don't log warnings for every missing texture - too spammy
                 result_future.set_result((name, None, f"Texture '{name}' not found"))
             else:
-                filepath, offset, size = location
+                filepath, offset, size, restype_id = location
                 # Submit IO + parsing to child process
                 assert self.process_pool is not None
-                io_parse_future = self.process_pool.submit(_load_and_parse_texture, name, filepath, offset, size)
+                io_parse_future = self.process_pool.submit(_load_and_parse_texture, name, restype_id, filepath, offset, size)
                     
                 def on_complete(pf: Future):
                     # Check if result_future was cancelled before trying to set result

@@ -407,6 +407,17 @@ class IndoorMap:
         assert self.are is not None, "are is None"
         world_min, world_max = bounds
         self.are.tag = self.module_id
+        # Verified engine behavior (do not change without re-validating):
+        # - `SunAmbientColor` / `SunDiffuseColor` are read from ARE and applied by day/night setup.
+        # - `DynAmbientColor` is read from ARE and used to set scene ambient.
+        #
+        # Sources:
+        # - `vendor/swkotor.c` reads these fields from the ARE GFF into `sw_area.*_color`
+        #   and later uses them when loading the area scene (incl. `CAurScene__SetAmbient`).
+        # - `vendor/swkotor.h` defines `sun_ambient_color`, `sun_diffuse_color`, `dynamic_ambient_color`
+        #   on the area struct.
+        self.are.sun_ambient = self.lighting
+        self.are.sun_diffuse = self.lighting
         self.are.dynamic_light = self.lighting
         self.are.name = self.name
         # Image points are pixels in the minimap image; use full image.

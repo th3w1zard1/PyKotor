@@ -19,3 +19,5 @@ send2trash>=1.8.3
 comtypes>=1.4.0; sys_platform == "win32"
 Pillow>=9.5; python_implementation == 'CPython'
 Pillow>10,<11.1.0; python_implementation == 'PyPy'
+PyOpenGL>=3.1.0
+PyOpenGL-accelerate>=3.1.0

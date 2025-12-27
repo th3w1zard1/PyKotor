@@ -106,6 +106,18 @@ class ARE(GenericBase):
         no_hang_back: "NoHangBack" field. Not used by the game engine.
         player_only: "PlayerOnly" field. Not used by the game engine.
         player_vs_player: "PlayerVsPlayer" field. Not used by the game engine.
+
+        NOTE on engine usage claims:
+        We do not claim a field is "unused by the engine" unless verified against engine implementations.
+
+        Verified by `vendor/swkotor.c` + `vendor/swkotor.h`:
+        - Moon lighting/fog fields are read from ARE and used by the day/night codepath.
+        - `IsNight` / `DayNightCycle` affect whether/when the engine updates day/night state.
+        - `SunAmbientColor`, `SunDiffuseColor`, `DynAmbientColor` are used for lighting setup.
+
+        See also:
+        - `vendor/swkotor.c` (`CSW*Area` load from ARE + area scene setup)
+        - `vendor/swkotor.h` (`CSWArea` struct fields: `moon_*`, `sun_*`, `day_night_cycle`, `is_night`, `dynamic_ambient_color`)
     """
 
     BINARY_TYPE = ResourceType.ARE

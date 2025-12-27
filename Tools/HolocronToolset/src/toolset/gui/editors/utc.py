@@ -926,6 +926,51 @@ class UTCEditor(Editor):
         info_lines: list[str] = []
         
         try:
+            def _append_renderer_texture_details(tex_name: str, *, indent: str = "    ") -> None:
+                """Append texture resolution details from the renderer's existing lookup info.
+                
+                IMPORTANT: This MUST NOT perform any new Installation lookups. It only reads
+                the cached metadata produced by the existing async resolver/worker pipeline.
+                """
+                scene = getattr(self.ui.previewRenderer, "_scene", None)
+                if scene is None:
+                    info_lines.append(f"{indent}Renderer: (scene not initialized)")
+                    return
+                lookup = getattr(scene, "texture_lookup_info", {}) or {}
+                tex_info = lookup.get(tex_name)
+                if not tex_info:
+                    info_lines.append(f"{indent}Renderer: (not yet requested)")
+                    return
+
+                if tex_info.get("found"):
+                    filepath = tex_info.get("filepath")
+                    restype = tex_info.get("restype")
+                    source_location = tex_info.get("source_location")
+
+                    if filepath:
+                        try:
+                            rel_path = os.path.relpath(filepath, self._installation.path())
+                        except Exception:  # noqa: BLE001
+                            rel_path = str(filepath)
+                        if restype:
+                            info_lines.append(f"{indent}Renderer: {rel_path} ({restype})")
+                        else:
+                            info_lines.append(f"{indent}Renderer: {rel_path}")
+                    else:
+                        info_lines.append(f"{indent}Renderer: ✓ Loaded")
+
+                    if source_location is not None:
+                        # source_location is a SearchLocation (or None) recorded by SceneBase
+                        try:
+                            info_lines.append(f"{indent}  └─ SearchLocation: {self._format_search_order([source_location])}")
+                        except Exception:  # noqa: BLE001
+                            info_lines.append(f"{indent}  └─ SearchLocation: {source_location}")
+                else:
+                    search_order = tex_info.get("search_order", [])
+                    search_str = self._format_search_order(search_order) if search_order else "Unknown"
+                    info_lines.append(f"{indent}Renderer: ❌ Not found")
+                    info_lines.append(f"{indent}  └─ Searched: {search_str}")
+
             # Get body model and texture
             body_model, body_texture = creature.get_body_model(utc, self._installation)
             if body_model:
@@ -943,18 +988,9 @@ class UTCEditor(Editor):
                 
                 if body_texture:
                     info_lines.append(f"  Body Texture: '{body_texture}'")
-                    tex_res: ResourceResult | None = self._installation.texture(body_texture, [SearchLocation.OVERRIDE, SearchLocation.TEXTURES_TPA, SearchLocation.TEXTURES_TPB, SearchLocation.TEXTURES_TPC, SearchLocation.CHITIN])
-                    if tex_res:
-                        try:
-                            tex_path = tex_res.filepath.relative_to(self._installation.path())
-                            info_lines.append(f"    TPC/TGA: {tex_path}")
-                            source = self._get_source_location_type(tex_res.filepath)
-                            if source:
-                                info_lines.append(f"      └─ Source: {source}")
-                        except ValueError:
-                            info_lines.append(f"    TPC/TGA: {tex_res.filepath}")
-                    else:
-                        info_lines.append("    TPC/TGA: Not found")
+                    # NOTE: Do not call Installation.texture()/location() here.
+                    # Use renderer-produced lookup info instead (async-safe, no extra lookups).
+                    _append_renderer_texture_details(body_texture, indent="    ")
             
             # Get head model and texture
             head_model, head_texture = creature.get_head_model(utc, self._installation)
@@ -970,13 +1006,7 @@ class UTCEditor(Editor):
                 
                 if head_texture:
                     info_lines.append(f"  Head Texture: '{head_texture}'")
-                    tex_res = self._installation.texture(head_texture, [SearchLocation.OVERRIDE, SearchLocation.TEXTURES_TPA, SearchLocation.TEXTURES_TPB, SearchLocation.TEXTURES_TPC, SearchLocation.CHITIN])
-                    if tex_res:
-                        try:
-                            tex_path = tex_res.filepath.relative_to(self._installation.path())
-                            info_lines.append(f"    TPC/TGA: {tex_path}")
-                        except ValueError:
-                            info_lines.append(f"    TPC/TGA: {tex_res.filepath}")
+                    _append_renderer_texture_details(head_texture, indent="    ")
             
             # Get weapon models
             right_weapon, left_weapon = creature.get_weapon_models(utc, self._installation)
@@ -1090,27 +1120,48 @@ class UTCEditor(Editor):
                 new_lines.append(f"Renderer Textures ({len(texture_lookup_info)} loaded):")
                 
                 for tex_name, lookup_info in sorted(texture_lookup_info.items()):
+                    restype = lookup_info.get("restype") or ""
                     if lookup_info.get("found"):
                         filepath = lookup_info.get("filepath")
+                        source_location = lookup_info.get("source_location")
                         if filepath:
                             try:
                                 if self._installation:
                                     rel_path = os.path.relpath(filepath, self._installation.path())
                                 else:
                                     rel_path = str(filepath)
-                                new_lines.append(f"  {tex_name}: {rel_path}")
+                                if restype:
+                                    new_lines.append(f"  {tex_name} ({restype}): {rel_path}")
+                                else:
+                                    new_lines.append(f"  {tex_name}: {rel_path}")
                             except (ValueError, AttributeError):
-                                new_lines.append(f"  {tex_name}: {filepath}")
-                            
-                            source = self._get_source_location_type(filepath)
-                            if source:
-                                new_lines.append(f"    └─ Source: {source}")
+                                if restype:
+                                    new_lines.append(f"  {tex_name} ({restype}): {filepath}")
+                                else:
+                                    new_lines.append(f"  {tex_name}: {filepath}")
+
+                            # Prefer the exact SearchLocation recorded by the renderer (no extra lookups).
+                            if source_location is not None:
+                                try:
+                                    new_lines.append(f"    └─ SearchLocation: {self._format_search_order([source_location])}")
+                                except Exception:  # noqa: BLE001
+                                    new_lines.append(f"    └─ SearchLocation: {source_location}")
+                            else:
+                                source = self._get_source_location_type(filepath)
+                                if source:
+                                    new_lines.append(f"    └─ Source: {source}")
                         else:
-                            new_lines.append(f"  {tex_name}: ✓ Loaded")
+                            if restype:
+                                new_lines.append(f"  {tex_name} ({restype}): ✓ Loaded")
+                            else:
+                                new_lines.append(f"  {tex_name}: ✓ Loaded")
                     else:
                         search_order = lookup_info.get("search_order", [])
                         search_str = self._format_search_order(search_order) if search_order else "Unknown"
-                        new_lines.append(f"  {tex_name}: ❌ Not found")
+                        if restype:
+                            new_lines.append(f"  {tex_name} ({restype}): ❌ Not found")
+                        else:
+                            new_lines.append(f"  {tex_name}: ❌ Not found")
                         new_lines.append(f"    └─ Searched: {search_str}")
             elif skip_old_texture_section and line.startswith("  "):
                 # Skip old texture lines (indented)

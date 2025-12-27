@@ -332,6 +332,9 @@ class Mesh:
         transform: mat4,
         override_texture: str | None = None,
     ):
+        # Defensive: ensure the shader program is bound before setting uniforms.
+        # In some Qt/OpenGL driver combinations, the current program can be lost between calls.
+        shader.use()
         shader.set_matrix4("model", transform)
 
         glActiveTexture(GL_TEXTURE0)

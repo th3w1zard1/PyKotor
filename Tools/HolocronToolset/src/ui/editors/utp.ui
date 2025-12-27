@@ -19,6 +19,12 @@
      <layout class="QVBoxLayout" name="verticalLayout_preview">
       <item>
        <widget class="ModelRenderer" name="previewRenderer">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <property name="minimumSize">
          <size>
           <width>300</width>
@@ -87,7 +93,7 @@
            <property name="maximumSize">
             <size>
              <width>16777215</width>
-             <height>200</height>
+             <height>300</height>
             </size>
            </property>
            <property name="wordWrap">

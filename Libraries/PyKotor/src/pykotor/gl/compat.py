@@ -20,7 +20,7 @@ def has_pyopengl() -> bool:
     """Return True when PyOpenGL is importable."""
     try:
         import OpenGL  # noqa: F401
-    except ModuleNotFoundError:
+    except Exception:  # noqa: BLE001
         return False
     return True
 
@@ -30,7 +30,7 @@ def has_moderngl() -> bool:
     """Return True when moderngl is importable."""
     try:
         import moderngl  # noqa: F401
-    except ModuleNotFoundError:
+    except Exception:  # noqa: BLE001
         return False
     return True
 
@@ -73,7 +73,7 @@ HAS_PYOPENGL = has_pyopengl()
 HAS_MODERNGL = has_moderngl()
 USE_PYOPENGL = HAS_PYOPENGL and not HAS_MODERNGL
 
-if USE_PYOPENGL:
+if HAS_PYOPENGL:
     from OpenGL.GL import glReadPixels  # pyright: ignore[reportMissingImports]
     from OpenGL.raw.GL.ARB.vertex_shader import GL_FLOAT  # pyright: ignore[reportMissingImports]
     from OpenGL.raw.GL.VERSION.GL_1_0 import (  # pyright: ignore[reportMissingImports]

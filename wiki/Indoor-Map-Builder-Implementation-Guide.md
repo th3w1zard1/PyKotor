@@ -1,6 +1,8 @@
 # Indoor Map Builder - Implementation Guide
 
-**Implementation:** [`Tools/HolocronToolset/src/toolset/data/indoormap.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/data/indoormap.py)
+**Implementation (headless core):** [`Libraries/PyKotor/src/pykotor/common/indoormap.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/common/indoormap.py)
+
+**Workflows (CLI/tooling helpers):** [`Libraries/PyKotor/src/pykotor/tools/indoormap.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/tools/indoormap.py)
 
 **Related Components:**
 
@@ -35,9 +37,9 @@ The Indoor Map Builder is a complex system that combines several subsystems:
 
 The root data structure representing a complete indoor module.
 
-**Location**: `Tools/HolocronToolset/src/toolset/data/indoormap.py`
+**Location**: [`Libraries/PyKotor/src/pykotor/common/indoormap.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/common/indoormap.py)
 
-**[KEY](KEY-File-Format) Properties**:
+**Key Properties**:
 
 - `rooms: list[IndoorMapRoom]` - All rooms in the map
 - `module_id: str` - Module identifier (warp code)
@@ -46,7 +48,7 @@ The root data structure representing a complete indoor module.
 - `skybox: str` - Optional skybox [model](MDL-MDX-File-Format) name
 - `warp_point: Vector3` - Player spawn location
 
-**[KEY](KEY-File-Format) Methods**:
+**Key Methods**:
 
 - `write() -> bytes`: Serializes map to JSON format
 - `load(raw: bytes, kits: list[Kit]) -> list[MissingRoomInfo]`: Loads map from JSON
@@ -80,9 +82,9 @@ The root data structure representing a complete indoor module.
 
 Represents a single room instance placed in the map.
 
-**Location**: `Tools/HolocronToolset/src/toolset/data/indoormap.py`
+**Location**: [`Libraries/PyKotor/src/pykotor/common/indoormap.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/common/indoormap.py)
 
-**[KEY](KEY-File-Format) Properties**:
+**Key Properties**:
 
 - `component: KitComponent` - The component template
 - `position: Vector3` - World position
@@ -92,7 +94,7 @@ Represents a single room instance placed in the map.
 - `hooks: list[IndoorMapRoom | None]` - Connected rooms (by hook index)
 - `walkmesh_override: BWM | None` - Custom walkmesh (for painting)
 
-**[KEY](KEY-File-Format) Methods**:
+**Key Methods**:
 
 - `hook_position(hook, world_offset=True) -> Vector3`: Calculates hook world position
 - `rebuild_connections(rooms)`: Rebuilds hook connections
@@ -110,9 +112,11 @@ Represents a single room instance placed in the map.
 
 A collection of reusable room components.
 
-**Location**: `Tools/HolocronToolset/src/toolset/data/indoorkit/indoorkit_base.py`
+**Location (data model)**: [`Libraries/PyKotor/src/pykotor/common/indoorkit.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/common/indoorkit.py)
 
-**[KEY](KEY-File-Format) Properties**:
+**Location (loaders/workflows)**: [`Libraries/PyKotor/src/pykotor/tools/indoorkit.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/tools/indoorkit.py)
+
+**Key Properties**:
 
 - `name: str` - Kit name
 - `components: list[KitComponent]` - Available components
@@ -135,9 +139,9 @@ A collection of reusable room components.
 
 A reusable room template.
 
-**Location**: `Tools/HolocronToolset/src/toolset/data/indoorkit/indoorkit_base.py`
+**Location (data model)**: [`Libraries/PyKotor/src/pykotor/common/indoorkit.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/common/indoorkit.py)
 
-**[KEY](KEY-File-Format) Properties**:
+**Key Properties**:
 
 - `kit: Kit` - Parent kit
 - `name: str` - Component name
@@ -151,9 +155,9 @@ A reusable room template.
 
 A connection point on a component.
 
-**Location**: `Tools/HolocronToolset/src/toolset/data/indoorkit/indoorkit_base.py`
+**Location (data model)**: [`Libraries/PyKotor/src/pykotor/common/indoorkit.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/common/indoorkit.py)
 
-**[KEY](KEY-File-Format) Properties**:
+**Key Properties**:
 
 - `position: Vector3` - Local position (relative to component center)
 - `rotation: float` - rotation in degrees
@@ -170,9 +174,9 @@ A connection point on a component.
 
 Defines a door type with K1/K2 variants.
 
-**Location**: `Libraries/PyKotor/src/pykotor/common/indoorkit.py`
+**Location**: [`Libraries/PyKotor/src/pykotor/common/indoorkit.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/common/indoorkit.py)
 
-**[KEY](KEY-File-Format) Properties**:
+**Key Properties**:
 
 - `utd_k1: UTD` - K1 door blueprint
 - `utd_k2: [UTD](GFF-File-Format#utd-door)` - K2 door blueprint
@@ -183,9 +187,9 @@ Defines a door type with K1/K2 variants.
 
 The module converter allows using game modules as component sources.
 
-**Core (headless) Location**: `Libraries/PyKotor/src/pykotor/common/modulekit.py`
+**Core (headless) Location**: [`Libraries/PyKotor/src/pykotor/common/modulekit.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/common/modulekit.py)
 
-**Toolset Qt Preview Helper**: `Tools/HolocronToolset/src/toolset/data/indoorkit/qt_preview.py`
+**Toolset Qt Preview Helper**: [`Tools/HolocronToolset/src/toolset/data/indoorkit/qt_preview.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/data/indoorkit/qt_preview.py)
 
 ### ModuleKit
 
@@ -217,6 +221,16 @@ A dynamically-generated kit from a game module.
   - \(bwm.translate(-lyt\_room.position.x, -lyt\_room.position.y, -lyt\_room.position.z)\)
 - Do **not** bbox-center the walkmesh, because many rooms have non-centered origins (e.g. hallways); bbox-centering shifts collision relative to visuals.
 
+**Build-time WOK export (critical runtime detail):**
+
+- When *building* a `.mod` from an `.indoor`, the builder bakes the LYT room transform into each exported room WOK so the engine consumes the walkmesh in world space.
+- After baking translation into vertices, the builder must set the walkmesh header flag at offset `0x08` (`world_coords`) to `1` (world-space / WOK / `BWMType.AreaModel`). Leaving this as `0` can cause the engine to treat vertices as local-space and apply transforms again, resulting in the player spawning with no walkable face underfoot (appearing “stuck”).
+
+**Area lighting (why “pitch black” can happen):**
+
+- `ARE.DynAmbientColor` alone is not sufficient for usable lighting in-game.
+- The builder should set `ARE.SunAmbientColor` and `ARE.SunDiffuseColor` (and can mirror the same `IndoorMap.lighting` value into all three fields for a sane default).
+
 **Preview Image Generation**:
 
 - Matches `kit.py:_generate_component_minimap()` exactly
@@ -240,7 +254,7 @@ Manages lazy loading and caching of ModuleKits.
 
 The build process converts `IndoorMap` data to game module files.
 
-**Location**: `Tools/HolocronToolset/src/toolset/data/indoormap.py:build()`
+**Location**: [`Tools/HolocronToolset/src/toolset/data/indoormap.py:build()`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/data/indoormap.py#L100)
 
 ### Build Steps
 
@@ -638,9 +652,3 @@ Implications:
 - [BWM File Format](BWM-File-Format.md)
 - [GFF File Format](GFF-File-Format.md)
 - [ERF File Format](ERF-File-Format.md)
-
-### Vendor References
-
-- `vendor/reone/` - Engine implementation
-- `vendor/kotor.js/` - JavaScript implementation
-- `vendor/xoreos/` - C++ implementation
