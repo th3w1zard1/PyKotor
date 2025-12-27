@@ -904,25 +904,36 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
 
         # Mouse and camera info
         if isinstance(renderer, ModuleRenderer):
-            pos = renderer.scene.cursor.position()
-            world_pos_3d = Vector3(pos.x, pos.y, pos.z)
-            world_pos = world_pos_3d
-            self.mouse_pos_label.setText(
-                f"<b><span style='{self._emoji_style}'>🖱</span>&nbsp;Coords:</b> "
-                f"<span style='color:#0055B0'>{world_pos_3d.y:.2f}</span>, "
-                f"<span style='color:#228800'>{world_pos_3d.z:.2f}</span>"
-            )
+            # Check if scene is initialized before accessing it
+            if renderer._scene is None:
+                self.mouse_pos_label.setText(
+                    f"<b><span style='{self._emoji_style}'>🖱</span>&nbsp;Coords:</b> "
+                    f"<span style='font-style:italic; color:#888'>— not available —</span>"
+                )
+                self.view_camera_label.setText(
+                    f"<b><span style='{self._emoji_style}'>🎥</span>&nbsp;View:</b> "
+                    f"<span style='font-style:italic; color:#888'>— not available —</span>"
+                )
+            else:
+                pos = renderer.scene.cursor.position()
+                world_pos_3d = Vector3(pos.x, pos.y, pos.z)
+                world_pos = world_pos_3d
+                self.mouse_pos_label.setText(
+                    f"<b><span style='{self._emoji_style}'>🖱</span>&nbsp;Coords:</b> "
+                    f"<span style='color:#0055B0'>{world_pos_3d.y:.2f}</span>, "
+                    f"<span style='color:#228800'>{world_pos_3d.z:.2f}</span>"
+                )
 
-            camera = renderer.scene.camera
-            cam_text = (
-                f"<b><span style='{self._emoji_style}'>🎥</span>&nbsp;View:</b> "
-                f"<span style='color:#c46811'>Pos ("
-                f"{camera.x:.2f}, {camera.y:.2f}, {camera.z:.2f}</span>), "
-                f"Pitch: <span style='color:#a13ac8'>{camera.pitch:.2f}</span>, "
-                f"Yaw: <span style='color:#a13ac8'>{camera.yaw:.2f}</span>, "
-                f"FOV: <span style='color:#0b7d96'>{camera.fov:.2f}</span>"
-            )
-            self.view_camera_label.setText(cam_text)
+                camera = renderer.scene.camera
+                cam_text = (
+                    f"<b><span style='{self._emoji_style}'>🎥</span>&nbsp;View:</b> "
+                    f"<span style='color:#c46811'>Pos ("
+                    f"{camera.x:.2f}, {camera.y:.2f}, {camera.z:.2f}</span>), "
+                    f"Pitch: <span style='color:#a13ac8'>{camera.pitch:.2f}</span>, "
+                    f"Yaw: <span style='color:#a13ac8'>{camera.yaw:.2f}</span>, "
+                    f"FOV: <span style='color:#0b7d96'>{camera.fov:.2f}</span>"
+                )
+                self.view_camera_label.setText(cam_text)
         else:
             if isinstance(norm_mouse_pos, Vector2):
                 norm_mouse_pos = Vector2(float(norm_mouse_pos.x), float(norm_mouse_pos.y))
