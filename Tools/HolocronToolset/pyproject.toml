@@ -131,8 +131,8 @@ Changelog = "https://github.com/OldRepublicDevs/PyKotor/releases"
 # Optional Poetry configuration for those who prefer it
 [tool.poetry]
 name = "holocrontoolset"
-version = "4.0.0b7"
-description = "A PyQt5-backed program with a collection of tools and editors that make it easy to work with kotor files"
+version = "4.0.0b10"
+description = "A PyQt-backed program with a collection of tools and editors that make it easy to work with kotor files"
 authors = ["NickHugi", "Benjamin Auquite <halomastar@gmail.com>"]
 readme = "README.md"
 packages = [{ include = "toolset", from = "src" }]
