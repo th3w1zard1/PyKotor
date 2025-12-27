@@ -140,7 +140,7 @@ packages = [{ include = "toolset", from = "src" }]
 [tool.poetry.dependencies]
 python = "^3.8"
 pykotor = "^2.0.2"
-pykotorgl = { version = "^2.0.2", extras = ["moderngl"] }
+pykotorgl = "^2.0.2"
 idna = "*"
 urllib3 = "~1.26"
 Markdown = ">=3.3,<3.6"

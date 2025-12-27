@@ -52,9 +52,7 @@ gl = [
     "PyGLM>=2.0,<2.8; python_implementation == 'CPython'",
     "PyOpenGL>=3.1",
 ]
-newgl = [
-    "moderngl>=5.6.0",
-]
+newgl = []
 secure_xml = ["defusedxml~=0.7"]
 encodings = [
     "charset-normalizer>=2.0,<3.4; python_version<\"3.9\"",
@@ -65,7 +63,6 @@ all = [
     "numpy>=1.22",
     "PyOpenGL>=3.1",
     "PyGLM>=2.0; python_implementation == 'CPython'",
-    "moderngl>=5.6.0",
     "defusedxml~=0.7",
     "charset-normalizer>=2.0",
 ]
@@ -110,10 +107,10 @@ pycryptodome = ">=3.19.0"
 
 [tool.poetry.extras]
 font = ["pillow"]
-gl = ["numpy", "PyOpenGL", "PyGLM", "moderngl"]
+gl = ["numpy", "PyOpenGL", "PyGLM"]
 secure_xml = ["defusedxml"]
 encodings = ["charset-normalizer"]
-all = ["pillow", "numpy", "PyOpenGL", "PyGLM", "moderngl", "defusedxml", "charset-normalizer"]
+all = ["pillow", "numpy", "PyOpenGL", "PyGLM", "defusedxml", "charset-normalizer"]
 
 [tool.poetry.urls]
 Homepage = "https://github.com/OldRepublicDevs/PyKotor"
