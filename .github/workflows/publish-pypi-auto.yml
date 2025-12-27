@@ -322,15 +322,18 @@ jobs:
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "| Package | Version | Previous PyPI Version | Status |" >> $GITHUB_STEP_SUMMARY
             echo "|---------|---------|----------------------|--------|" >> $GITHUB_STEP_SUMMARY
-            echo "$PACKAGES" | python3 << 'PYEOF'
-            import json
-            import sys
-            packages = json.load(sys.stdin)
-            for pkg in packages:
-                prev = pkg.get('pypi_version', 'none')
-                status = "✅ Published" if "${{ needs.publish-packages.result }}" == "success" else "❌ Failed"
-                print(f"| {pkg['name']} | {pkg['version']} | {prev} | {status} |")
-            PYEOF
-            >> $GITHUB_STEP_SUMMARY
+            PUBLISH_RESULT="${{ needs.publish-packages.result }}"
+            PACKAGES="$PACKAGES" PUBLISH_RESULT="$PUBLISH_RESULT" python3 - << 'PYEOF' >> $GITHUB_STEP_SUMMARY
+import json
+import os
+
+packages = json.loads(os.environ.get("PACKAGES", "[]"))
+publish_result = os.environ.get("PUBLISH_RESULT", "")
+status = "✅ Published" if publish_result == "success" else "❌ Failed"
+
+for pkg in packages:
+    prev = pkg.get("pypi_version", "none")
+    print(f"| {pkg['name']} | {pkg['version']} | {prev} | {status} |")
+PYEOF
           fi
 
