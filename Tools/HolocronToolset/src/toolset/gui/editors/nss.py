@@ -216,6 +216,11 @@ class NSSEditor(Editor):
         self._hover_last_shown_word: str = ""
         self._hover_last_shown_html: str = ""
         self._hover_last_shown_pos: QPoint | None = None
+        # Hover request correlation: language-server responses can return out-of-order.
+        # Track which request is "current" so stale results don't overwrite the tooltip/cache.
+        self._hover_request_seq: int = 0
+        self._hover_latest_request_id: int = 0
+        self._hover_latest_requested_word: str = ""
 
         self._setupUI()
         self._update_game_specific_data()
@@ -1907,20 +1912,28 @@ class NSSEditor(Editor):
                 if doc:
                     self._show_tooltip_cached(word=word, html=doc)
                     return
+            else:
+                return
+        else:
+            return
 
         # Fall back to language server for project-defined symbols
         if not self._ensure_language_server():
             return
 
         assert self._ls_client is not None
+        self._hover_request_seq += 1
+        request_id = self._hover_request_seq
+        self._hover_latest_request_id = request_id
+        self._hover_latest_requested_word = word
         self._ls_client.request_hover(
             text=self.ui.codeEdit.toPlainText(),
             line=line,
             character=character,
-            callback=self._on_hover_complete,
+            callback=lambda r, w=word, rid=request_id: self._on_hover_complete(r, requested_word=w, request_id=rid),
         )
 
-    def _on_hover_complete(self, result: dict[str, Any] | None):
+    def _on_hover_complete(self, result: dict[str, Any] | None, *, requested_word: str, request_id: int):
         """Handle hover result from language server."""
         # Language server callbacks can run off the UI thread; marshal to UI thread.
         from qtpy.QtCore import QThread, QTimer
@@ -1928,15 +1941,21 @@ class NSSEditor(Editor):
 
         app = QApplication.instance()
         if app is not None and QThread.currentThread() != app.thread():
-            QTimer.singleShot(0, lambda r=result: self._on_hover_complete(r))
+            QTimer.singleShot(0, lambda r=result, w=requested_word, rid=request_id: self._on_hover_complete(r, requested_word=w, request_id=rid))
             return
 
         if result is None or "contents" not in result:
             return
+        # Ignore stale responses (user already hovered something else).
+        if request_id != self._hover_latest_request_id:
+            return
+        # If the cursor moved off the original token, do not show mismatched docs.
+        if requested_word != self._last_hover_word:
+            return
 
         contents = result.get("contents", "")
         if contents:
-            self._show_tooltip_cached(word=self._last_hover_word, html=str(contents))
+            self._show_tooltip_cached(word=requested_word, html=str(contents))
 
     def _get_documentation(self, word: str) -> str | None:
         """Get the documentation for a word with VS Code-like formatting.
