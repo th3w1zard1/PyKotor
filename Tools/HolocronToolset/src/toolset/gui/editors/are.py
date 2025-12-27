@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from qtpy.QtGui import QColor, QImage, QPixmap
+from qtpy.QtCore import Qt
+from qtpy.QtGui import QColor, QImage, QPixmap, QShortcut
 from qtpy.QtWidgets import QColorDialog
 
 from pykotor.common.misc import Color, ResRef
@@ -16,7 +17,10 @@ from pykotor.resource.type import ResourceType
 from toolset.data.installation import HTInstallation
 from toolset.gui.dialogs.edit.locstring import LocalizedStringDialog
 from toolset.gui.editor import Editor
+from toolset.gui.widgets.settings.widgets.module_designer import ModuleDesignerSettings
 from utility.common.geometry import SurfaceMaterial, Vector2
+
+from loggerplus import RobustLogger
 
 if TYPE_CHECKING:
     import os
@@ -86,6 +90,15 @@ class AREEditor(Editor):
         self.ui.mapImageY1Spin.valueChanged.connect(self.redoMinimap)
         self.ui.mapImageY2Spin.valueChanged.connect(self.redoMinimap)
 
+        # Minimap renderer input: match other WalkmeshRenderer users (PTH/BWM).
+        self.ui.minimapRenderer.sig_mouse_moved.connect(self.on_minimap_mouse_moved)
+        self.ui.minimapRenderer.sig_mouse_scrolled.connect(self.on_minimap_mouse_scrolled)
+
+        # Common zoom shortcuts (mirrors `BWMEditor` behavior).
+        QShortcut("+", self).activated.connect(lambda: self.ui.minimapRenderer.camera.nudge_zoom(1.25))
+        QShortcut("-", self).activated.connect(lambda: self.ui.minimapRenderer.camera.nudge_zoom(0.8))
+        QShortcut("Ctrl+0", self).activated.connect(self.fit_minimap_view)
+
         assert self._installation is not None, "Installation is not set"
         self.relevant_script_resnames: list[str] = sorted(
             iter(
@@ -153,23 +166,41 @@ class AREEditor(Editor):
             print("Load an installation first.")
             return
         self._rooms = are.rooms
-        if self._resname:
-            res_result_lyt: ResourceResult | None = self._installation.resource(self._resname, ResourceType.LYT)
+        # Only attempt related-resource lookups when we have a real area resref.
+        # Editor uses `untitled_<hex>` placeholders for new/unsaved tabs.
+        # Engine reference: `vendor/swkotor.c:L468225-L468237` (`area_name` -> "lbl_map%s").
+        if self._resname and not self._resname.startswith("untitled_"):
+            # Layout (.lyt) lookup for room walkmeshes.
+            # Mirrors engine: areas resolve by `area_name` and then load auxiliary assets.
+            # Engine reference: `vendor/swkotor.c:L476816-L476845` and `vendor/swkotor.c:L194243-L194331`.
+            order_lyt: list[SearchLocation] = [SearchLocation.OVERRIDE, SearchLocation.CHITIN, SearchLocation.MODULES]
+            res_result_lyt: ResourceResult | None = self._installation.resource(self._resname, ResourceType.LYT, order_lyt)
             if res_result_lyt:
                 lyt: LYT = read_lyt(res_result_lyt.data)
                 queries: list[ResourceIdentifier] = [ResourceIdentifier(room.model, ResourceType.WOK) for room in lyt.rooms]
 
-                wok_results: dict[ResourceIdentifier, ResourceResult | None] = self._installation.resources(queries)
+                wok_results: dict[ResourceIdentifier, ResourceResult | None] = self._installation.resources(queries, order_lyt)
                 walkmeshes: list[BWM] = [read_bwm(result.data) for result in wok_results.values() if result]
                 self.ui.minimapRenderer.set_walkmeshes(walkmeshes)
 
-            order: list[SearchLocation] = [SearchLocation.OVERRIDE, SearchLocation.TEXTURES_GUI, SearchLocation.MODULES]
-            self._minimap = self._installation.texture(f"lbl_map{self._resname}", order)
+            # Minimap texture lookup: "lbl_map<area>" (TGA/TPC via `Installation.texture`).
+            # Engine reference: `vendor/swkotor.c:L468230-L468238` and `vendor/swkotor.c:L476829-L476842`.
+            order_tex: list[SearchLocation] = [
+                SearchLocation.OVERRIDE,
+                SearchLocation.TEXTURES_TPA,
+                SearchLocation.TEXTURES_GUI,
+                SearchLocation.CHITIN,
+                SearchLocation.MODULES,
+            ]
+            minimap_resname = f"lbl_map{self._resname}"
+            self._minimap = self._installation.texture(minimap_resname, order_tex)
             if self._minimap is None:
-                print(f"Could not find texture 'lbl_map{self._resname}' required for minimap")
+                RobustLogger().warning(f"Could not find texture '{minimap_resname}' required for minimap")
             else:
                 self.ui.minimapRenderer.set_minimap(are, self._minimap)
-                self.ui.minimapRenderer.center_camera()
+
+            # Fit view after bounds/minimap are set; show with margin so content is not edge-to-edge.
+            self.fit_minimap_view()
 
         max_value: int = 100
 
@@ -371,6 +402,32 @@ class AREEditor(Editor):
             are: ARE = self._buildARE()
             self.ui.minimapRenderer.set_minimap(are, self._minimap)
 
+    def fit_minimap_view(self):
+        # Default view: fit bounds with margin so walkmesh/minimap occupies ~half the view area.
+        # This is intentionally less tight than a full fit for usability.
+        self.ui.minimapRenderer.center_camera(fill=0.70710678)  # sqrt(0.5)
+
+    def on_minimap_mouse_moved(self, screen: Vector2, delta: Vector2, buttons: set[int], keys: set[int]):
+        # Pan/rotate controls mirror `BWMEditor` (Ctrl+drag) and respect module designer sensitivities.
+        world_delta: Vector2 = self.ui.minimapRenderer.to_world_delta(delta.x, delta.y)
+        if Qt.MouseButton.LeftButton in buttons and Qt.Key.Key_Control in keys:  # type: ignore[attr-defined]
+            self.ui.minimapRenderer.do_cursor_lock(screen)
+            move_sens = ModuleDesignerSettings().moveCameraSensitivity2d / 100
+            self.ui.minimapRenderer.camera.nudge_position(-world_delta.x * move_sens, -world_delta.y * move_sens)
+        elif Qt.MouseButton.MiddleButton in buttons and Qt.Key.Key_Control in keys:  # type: ignore[attr-defined]
+            self.ui.minimapRenderer.do_cursor_lock(screen)
+            rotate_sens = ModuleDesignerSettings().rotateCameraSensitivity2d / 1000
+            self.ui.minimapRenderer.camera.nudge_rotation((delta.x / 50) * rotate_sens)
+
+    def on_minimap_mouse_scrolled(self, delta: Vector2, buttons: set[int], keys: set[int]):
+        if not delta.y:
+            return
+        if Qt.Key.Key_Control not in keys:  # type: ignore[attr-defined]
+            return
+        sens_setting = ModuleDesignerSettings().zoomCameraSensitivity2d
+        zoom_factor = calculate_zoom_strength(delta.y, sens_setting)
+        self.ui.minimapRenderer.camera.nudge_zoom(zoom_factor)
+
     def change_color(self, color_spin: LongSpinBox):
         qcolor: QColor = QColorDialog.getColor(QColor(color_spin.value()))
         color = Color.from_bgr_integer(qcolor.rgb())
@@ -391,3 +448,11 @@ class AREEditor(Editor):
 
     def generate_tag(self):
         self.ui.tagEdit.setText("newarea" if self._resname is None or self._resname == "" else self._resname)
+
+
+def calculate_zoom_strength(delta_y: float, sens_setting: int) -> float:
+    # Mirrors `BWMEditor.calculate_zoom_strength` / `PTHEditor.calculate_zoom_strength`.
+    m = 0.00202
+    b = 1
+    factor_in = (m * sens_setting + b)
+    return 1 / abs(factor_in) if delta_y < 0 else abs(factor_in)

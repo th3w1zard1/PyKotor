@@ -1214,11 +1214,11 @@ class Installation:
             if search is not None:
                 return search
 
-        from utility.error_handling import format_exception_with_variables
-        try:
-            raise Exception("test")
-        except Exception as e:
-            RobustLogger().warning(f"Could not find '{resname}' with restypes {restypes} during resource lookup! {format_exception_with_variables(e)}")
+        # Not found: log once and return None.
+        #
+        # NOTE: This path is hit frequently for optional resources (e.g. editors probing for
+        # related assets like LYT/minimap textures). It must not throw.
+        RobustLogger().warning(f"Could not find '{resname}' with restypes {restypes} during resource lookup!")
         return None
 
     def resources(

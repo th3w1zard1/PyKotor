@@ -202,10 +202,10 @@ class WalkmeshRenderer(QWidget):
 
         self._loop()
 
-    def keys_down(self) -> set[int]:
+    def keys_down(self) -> set[int | Qt.Key]:
         return self._keys_down
 
-    def mouse_down(self) -> set[int]:
+    def mouse_down(self) -> set[int | Qt.MouseButton]:
         return self._mouse_down
 
     def _loop(self):
@@ -233,6 +233,10 @@ class WalkmeshRenderer(QWidget):
         self._walkmeshes = walkmeshes
         self._highlighted_face = None
         self._highlighted_edge = None
+        # Keep bounds in sync so callers can immediately `center_camera()` reliably.
+        # This mirrors engine-side behavior where the active area map is initialized
+        # with the current area's map parameters before any drawing occurs.
+        self.update_walkmesh_display()
 
     def setHighlightedTrans(self, face: BWMFace | None, edge: int | None):
         """Highlight a transition edge for the given face.
@@ -300,7 +304,7 @@ class WalkmeshRenderer(QWidget):
         tpc_rgb_data: bytearray = get_result.data
         image = QImage(bytes(tpc_rgb_data), get_result.width, get_result.height, QImage.Format.Format_RGB888)
         crop: QRect = QRect(0, 0, 435, 256)
-        self._minimap_image: QImage = image.copy(crop)
+        self._minimap_image = image.copy(crop)
 
     def snap_camera_to_point(
         self,
@@ -456,10 +460,16 @@ class WalkmeshRenderer(QWidget):
             retPixmap = self._pixmap_waypoint
         return retPixmap
 
-    def center_camera(self):
+    def center_camera(self, *, fill: float = 1.0):
         self.camera.set_position((self._bbmin.x + self._bbmax.x) / 2, (self._bbmin.y + self._bbmax.y) / 2)
         world_w: float = self._world_size.x
         world_h: float = self._world_size.y
+
+        # Guard against empty/degenerate bounds.
+        if world_w <= 0 or world_h <= 0:
+            self.camera.set_zoom(1.0)
+            self.camera.set_rotation(0)
+            return
 
         # If the GIT is being loaded directly after the window opens the widget won't have appropriately resized itself,
         # so we check for this and set the sizes to what it should be by default.
@@ -472,7 +482,7 @@ class WalkmeshRenderer(QWidget):
 
         scale_w: float = screen_w / world_w if world_w != 0 else 0.0
         scale_h: float = screen_h / world_h if world_h != 0 else 0.0
-        camScale: float = min(scale_w, scale_h)
+        camScale: float = min(scale_w, scale_h) * clamp(fill, 0.1, 10.0)
 
         self.camera.set_zoom(camScale)
         self.camera.set_rotation(0)
@@ -567,10 +577,13 @@ class WalkmeshRenderer(QWidget):
         painter.setTransform(transform)
 
         # Draw the minimap
-        # Reference: vendor/reone/src/libs/game/gui/map.cpp - getMapPosition()
+        # References (engine behavior mirrored):
+        # - `vendor/swkotor.c:L194248-L194331` initializes the area map from ARE "Map" struct fields.
+        # - `vendor/xoreos/src/engines/kotor/gui/ingame/minimap.cpp:L51-L77` maps world -> minimap coords
+        #   based on NorthAxis and the ARE map/world points.
         # 
         # MATHEMATICAL DERIVATION:
-        # Reone's getMapPosition converts world -> map texture coordinates:
+        # xoreos' Minimap::setPosition converts world -> normalized minimap coordinates:
         #   mapPos.x = (world.x - worldPoint1.x) * scaleX + mapPoint1.x
         #   mapPos.y = (world.y - worldPoint1.y) * scaleY + mapPoint1.y
         # Where:
@@ -593,7 +606,7 @@ class WalkmeshRenderer(QWidget):
         # For texture end (mapPos = 1,1):
         #   world.x = worldPoint1.x + (1 - mapPoint1.x) * (worldPoint1.x - worldPoint2.x) / (mapPoint1.x - mapPoint2.x)
         #
-        # However, reone handles NorthAxis differently:
+        # However, NorthAxis changes which world axis maps to which minimap axis:
         #   Case 0,1: X/Y map directly to X/Y
         #   Case 2,3: X/Y are swapped (world.x maps to map.y, world.y maps to map.x)
         #
@@ -630,8 +643,8 @@ class WalkmeshRenderer(QWidget):
             end_x: float = world_pt1_x + (1.0 - map_pt1_x) * world_scale_x
             end_y: float = world_pt1_y + (1.0 - map_pt1_y) * world_scale_y
 
-            # Handle NorthAxis swapping (cases 2,3 swap X/Y)
-            # Reference: reone map.cpp lines 186-192
+            # Handle NorthAxis swapping (cases 2,3 swap X/Y).
+            # Reference: `vendor/xoreos/src/engines/kotor/gui/ingame/minimap.cpp:L55-L71`
             north_axis = self._are.north_axis
             if north_axis in (ARENorthAxis.PositiveX, ARENorthAxis.NegativeX):
                 # For swapped case: world.x maps to map.y, world.y maps to map.x
@@ -847,9 +860,9 @@ class WalkmeshRenderer(QWidget):
         self.sig_mouse_moved.emit(coords, coords_delta, self._mouse_down, self._keys_down)
         self._mouse_prev = coords  # Always assign mouse_prev after emitting: allows signal handlers (e.g. ModuleDesigner, GITEditor) to handle cursor lock.
 
-        self._instances_under_mouse: list[GITInstance] = []
-        self._geom_points_under_mouse: list[GeomPoint] = []
-        self._path_nodes_under_mouse: list[Vector2] = []
+        self._instances_under_mouse = []
+        self._geom_points_under_mouse = []
+        self._path_nodes_under_mouse = []
 
         world: Vector2 = Vector2.from_vector3(self.to_world_coords(coords.x, coords.y))  # Mouse pos in world
 
