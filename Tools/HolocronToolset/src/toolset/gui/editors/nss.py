@@ -2132,7 +2132,7 @@ class NSSEditor(Editor):
         elif restype is ResourceType.NCS:
             error_occurred = False
             try:
-                self._handle_user_ncs(data, resref)
+                self._handle_user_ncs(data, resref)  # pyright: ignore[reportArgumentType]
             except ValueError as e:
                 error_occurred = self._handle_exc_debug_mode("Decompilation/Download Failed", e)
             except NoConfigurationSetError as e:
@@ -2163,8 +2163,8 @@ class NSSEditor(Editor):
             buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel,
         )
         box.setDefaultButton(QMessageBox.StandardButton.Cancel)
-        box.button(QMessageBox.StandardButton.Yes).setText(tr("Decompile"))
-        box.button(QMessageBox.StandardButton.Ok).setText(tr("Download"))
+        box.button(QMessageBox.StandardButton.Yes).setText(tr("Decompile"))  # type: ignore[union-attr]
+        box.button(QMessageBox.StandardButton.Ok).setText(tr("Download"))  # type: ignore[union-attr]
         choice = box.exec()
         print(f"User chose '{choice}' in the decompile/download messagebox.")
 
@@ -3032,20 +3032,20 @@ class NSSEditor(Editor):
             fileres = FileResource.from_path(Path(file_path))
             result = open_resource_editor(fileres)
             # open_resource_editor returns a tuple, get the editor
-            editor: NSSEditor | None = None
+            editor = None
             if isinstance(result, tuple):
-                _, editor = cast("tuple[None, NSSEditor]", result)
+                _, editor = result
             else:
                 editor = result
-            ui = None if editor is None else editor.ui
-            if ui is not None:
+            # Only NSSEditor has ui.codeEdit, so check if editor is an NSSEditor instance
+            if isinstance(editor, NSSEditor) and editor.ui is not None:
                 # Try to go to the line
-                document = ui.codeEdit.document()
+                document = editor.ui.codeEdit.document()
                 if document:
                     block = document.findBlockByLineNumber(result_data["line"] - 1)
                     cursor = QTextCursor(block)
-                    ui.codeEdit.setTextCursor(cursor)
-                    ui.codeEdit.centerCursor()
+                    editor.ui.codeEdit.setTextCursor(cursor)
+                    editor.ui.codeEdit.centerCursor()
 
     def _setup_find_replace_widget(self):
         """Set up the VS Code-style inline find/replace widget."""
