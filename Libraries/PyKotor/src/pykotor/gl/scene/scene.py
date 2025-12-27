@@ -64,6 +64,8 @@ class Scene(SceneBase):
     def __init__(
         self,
         *,
+        installation=None,
+        module=None,
         **kwargs,
     ):
         # Backwards-compat for older callers that still pass renderer-selection kwargs.
@@ -71,7 +73,7 @@ class Scene(SceneBase):
         kwargs.pop("moderngl_context", None)
         kwargs.pop("use_legacy_gl", None)
 
-        super().__init__(**kwargs)
+        super().__init__(installation=installation, module=module, **kwargs)
 
         # Canonical backend selection log (one line, high signal).
         from loggerplus import RobustLogger
