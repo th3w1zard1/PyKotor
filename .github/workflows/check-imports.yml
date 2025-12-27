@@ -37,6 +37,3 @@ jobs:
       - name: Check for missing imports
         run: |
           python -m py_compile Libraries/PyKotor/src/pykotor/**/*.py || true
-          python -m py_compile Libraries/PyKotorGL/src/pykotor/**/*.py || true
-          python -m py_compile Libraries/PyKotorFont/src/pykotor/**/*.py || true
-

@@ -1,19 +1,17 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from pykotor.gl.compat import (
     MissingPyOpenGLError,
-    has_moderngl,
     has_pyopengl,
     missing_constant,
     missing_gl_func,
 )
 
 HAS_PYOPENGL = has_pyopengl()
-HAS_MODERNGL = has_moderngl()
 
 if HAS_PYOPENGL:
     from OpenGL.GL import GL_NO_ERROR, glGenTextures, glGetError, glTexImage2D  # pyright: ignore[reportMissingImports]
@@ -73,11 +71,7 @@ from pykotor.resource.formats.tpc.convert.dxt.decompress_dxt import (
 )
 
 if TYPE_CHECKING:
-    from moderngl import Context as ModernContext, Texture as ModernTexture
     from pykotor.resource.formats.tpc import TPC, TPCMipmap
-else:  # pragma: no cover - optional dependency
-    ModernContext = Any  # type: ignore[assignment]
-    ModernTexture = Any  # type: ignore[assignment]
 
 
 class Texture:
@@ -92,7 +86,6 @@ class Texture:
         self._width: int | None = width
         self._height: int | None = height
         self._rgba_cache: bytes | None = rgba_data
-        self._modern_texture: ModernTexture | None = None  # type: ignore[name-defined]
 
     @classmethod
     def from_tpc(
@@ -102,22 +95,22 @@ class Texture:
         mm: TPCMipmap = tpc.get(0, 0)
         image_size: int = len(mm.data)
 
-        # If ModernGL is available, never touch PyOpenGL. Prepare RGBA for moderngl upload only.
-        # Fall back to legacy GL uploads only when moderngl is unavailable but PyOpenGL is present.
-        rgba_cache: bytes | None
-        if HAS_MODERNGL or not HAS_PYOPENGL:
-            if mm.tpc_format == TPCTextureFormat.DXT1:
-                rgba_cache = _rgb_to_rgba_bytes(dxt1_to_rgb(mm.data, mm.width, mm.height), mm.width, mm.height)
-            elif mm.tpc_format == TPCTextureFormat.DXT3:
-                rgba_cache = bytes(dxt3_to_rgba(mm.data, mm.width, mm.height))
-            elif mm.tpc_format == TPCTextureFormat.DXT5:
-                rgba_cache = bytes(dxt5_to_rgba(mm.data, mm.width, mm.height))
-            elif mm.tpc_format == TPCTextureFormat.RGB:
-                rgba_cache = _rgb_to_rgba_bytes(mm.data, mm.width, mm.height)
-            elif mm.tpc_format == TPCTextureFormat.RGBA:
-                rgba_cache = bytes(mm.data)
-            else:
-                raise ValueError(f"Unsupported texture format: {mm.tpc_format!r}")
+        rgba_cache: bytes
+        if mm.tpc_format == TPCTextureFormat.DXT1:
+            rgba_cache = _rgb_to_rgba_bytes(dxt1_to_rgb(mm.data, mm.width, mm.height), mm.width, mm.height)
+        elif mm.tpc_format == TPCTextureFormat.DXT3:
+            rgba_cache = bytes(dxt3_to_rgba(mm.data, mm.width, mm.height))
+        elif mm.tpc_format == TPCTextureFormat.DXT5:
+            rgba_cache = bytes(dxt5_to_rgba(mm.data, mm.width, mm.height))
+        elif mm.tpc_format == TPCTextureFormat.RGB:
+            rgba_cache = _rgb_to_rgba_bytes(mm.data, mm.width, mm.height)
+        elif mm.tpc_format == TPCTextureFormat.RGBA:
+            rgba_cache = bytes(mm.data)
+        else:
+            raise ValueError(f"Unsupported texture format: {mm.tpc_format!r}")
+
+        # If PyOpenGL is not available, keep an in-memory texture placeholder.
+        if not HAS_PYOPENGL:
             return Texture(0, mm.width, mm.height, rgba_cache)
 
         gl_id: int = glGenTextures(1)
@@ -125,19 +118,14 @@ class Texture:
 
         if mm.tpc_format == TPCTextureFormat.DXT1:
             glCompressedTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGB_S3TC_DXT1_EXT, mm.width, mm.height, 0, image_size, mm.data)
-            rgba_cache = _rgb_to_rgba_bytes(dxt1_to_rgb(mm.data, mm.width, mm.height), mm.width, mm.height)
         elif mm.tpc_format == TPCTextureFormat.DXT3:
             glCompressedTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, mm.width, mm.height, 0, image_size, mm.data)
-            rgba_cache = bytes(dxt3_to_rgba(mm.data, mm.width, mm.height))
         elif mm.tpc_format == TPCTextureFormat.DXT5:
             glCompressedTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, mm.width, mm.height, 0, image_size, mm.data)
-            rgba_cache = bytes(dxt5_to_rgba(mm.data, mm.width, mm.height))
         elif mm.tpc_format == TPCTextureFormat.RGB:
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, mm.width, mm.height, 0, GL_RGB, GL_UNSIGNED_BYTE, mm.data)
-            rgba_cache = _rgb_to_rgba_bytes(mm.data, mm.width, mm.height)
         elif mm.tpc_format == TPCTextureFormat.RGBA:
             glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mm.width, mm.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, mm.data)
-            rgba_cache = bytes(mm.data)
         else:
             raise ValueError(f"Unsupported texture format: {mm.tpc_format!r}")
 
@@ -168,8 +156,7 @@ class Texture:
         -------
             Texture: OpenGL texture object
         """
-        # Prefer ModernGL exclusively when available; avoid touching legacy GL in that case.
-        if HAS_MODERNGL or not HAS_PYOPENGL:
+        if not HAS_PYOPENGL:
             return Texture(0, width, height, bytes(rgba_data))
 
         gl_id: int = glGenTextures(1)
@@ -194,8 +181,7 @@ class Texture:
         # Create pixel data using numpy for better performance and alignment
         pixels: np.ndarray = np.full((64, 64, 3), [r, g, b], dtype=np.uint8)
 
-        # If ModernGL is available, skip PyOpenGL entirely.
-        if HAS_MODERNGL or not HAS_PYOPENGL:
+        if not HAS_PYOPENGL:
             rgba = _rgb_to_rgba_bytes(pixels.tobytes(), 64, 64)
             return Texture(0, 64, 64, rgba)
 
@@ -212,50 +198,14 @@ class Texture:
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-        # Convert RGB to RGBA for ModernGL compatibility
+        # Cache RGBA for downstream consumers (and for consistency with other loaders).
         rgba = _rgb_to_rgba_bytes(pixels.tobytes(), 64, 64)
         return Texture(gl_id, 64, 64, rgba)
 
     def use(self):
         if not HAS_PYOPENGL:
-            raise MissingPyOpenGLError("PyOpenGL is required to bind legacy GL textures. Use ModernGLRenderer instead.")
+            raise MissingPyOpenGLError("PyOpenGL is required to bind GL textures.")
         glBindTexture(GL_TEXTURE_2D, self._id)
-
-    def ensure_modern(
-        self,
-        ctx: ModernContext,
-    ):
-        if self._modern_texture is not None:
-            return self._modern_texture
-        if self._rgba_cache is None or self._width is None or self._height is None:
-            raise RuntimeError("RGBA texture data not available for moderngl upload")
-        
-        # Validate data size matches expected dimensions
-        expected_size = self._width * self._height * 4  # RGBA = 4 bytes per pixel
-        actual_size = len(self._rgba_cache)
-        if actual_size != expected_size:
-            # Try to fix by padding or truncating if close, otherwise raise error
-            if actual_size < expected_size:
-                # Pad with opaque alpha if data is too small
-                padding = bytes([255] * (expected_size - actual_size))
-                self._rgba_cache = self._rgba_cache + padding
-            elif actual_size > expected_size:
-                # Truncate if data is too large (shouldn't happen, but handle gracefully)
-                self._rgba_cache = self._rgba_cache[:expected_size]
-            # Re-validate after fix
-            if len(self._rgba_cache) != expected_size:
-                raise RuntimeError(
-                    f"Texture data size mismatch: expected {expected_size} bytes "
-                    f"(width={self._width}, height={self._height}, RGBA=4), "
-                    f"got {actual_size} bytes (after fix: {len(self._rgba_cache)} bytes)"
-                )
-        
-        texture = ctx.texture((self._width, self._height), 4, data=self._rgba_cache)
-        texture.repeat_x = True
-        texture.repeat_y = True
-        texture.build_mipmaps()
-        self._modern_texture = texture
-        return texture
 
 
 def _rgb_to_rgba_bytes(

@@ -1,7 +1,6 @@
 """Compatibility layer for OpenGL backends.
 
-ModernGL is the default renderer. PyOpenGL is kept as a legacy fallback
-for backwards compatibility.
+PyKotor's OpenGL support is PyOpenGL-based.
 """
 
 from __future__ import annotations
@@ -25,21 +24,11 @@ def has_pyopengl() -> bool:
     return True
 
 
-@lru_cache(maxsize=1)
-def has_moderngl() -> bool:
-    """Return True when moderngl is importable."""
-    try:
-        import moderngl  # noqa: F401
-    except Exception:  # noqa: BLE001
-        return False
-    return True
-
-
 def require_pyopengl(usage: str = "OpenGL rendering") -> None:
     """Raise a clear error if PyOpenGL is required but missing."""
     if not has_pyopengl():
         raise MissingPyOpenGLError(
-            f"PyOpenGL is required for {usage}. Install PyOpenGL or use the ModernGL backend."
+            f"PyOpenGL is required for {usage}. Install PyOpenGL."
         )
 
 
@@ -57,7 +46,7 @@ def missing_gl_func(name: str) -> Callable[..., Any]:
     def _missing(*_args: Any, **_kwargs: Any) -> None:
         raise MissingPyOpenGLError(
             f"PyOpenGL function '{name}' is unavailable because PyOpenGL is not installed. "
-            f"Install PyOpenGL or use the ModernGL renderer instead."
+            f"Install PyOpenGL."
         )
 
     return _missing
@@ -68,10 +57,8 @@ def missing_constant(_name: str) -> int:
     return 0
 
 
-# Scene-specific OpenGL imports (only when PyOpenGL is used, not ModernGL)
+# Scene-specific OpenGL imports
 HAS_PYOPENGL = has_pyopengl()
-HAS_MODERNGL = has_moderngl()
-USE_PYOPENGL = HAS_PYOPENGL and not HAS_MODERNGL
 
 if HAS_PYOPENGL:
     from OpenGL.GL import glReadPixels  # pyright: ignore[reportMissingImports]

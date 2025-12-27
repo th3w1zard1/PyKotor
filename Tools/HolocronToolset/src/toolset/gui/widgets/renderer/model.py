@@ -114,7 +114,7 @@ class ModelRenderer(QOpenGLWidget):
         if self._model_to_load is not None:
             self.scene.models["model"] = gl_load_mdl(self.scene, *self._model_to_load)
             self.scene.objects["model"] = RenderObject("model")
-            # Scene (ModernGL) caches object lists; invalidate so new objects are rendered.
+            # Scene caches object lists; invalidate so new objects are rendered.
             if hasattr(self.scene, "_invalidate_object_cache"):
                 self.scene._invalidate_object_cache()  # noqa: SLF001
             self._model_to_load = None
@@ -124,7 +124,7 @@ class ModelRenderer(QOpenGLWidget):
             # Use sync=True to force synchronous model loading for the preview renderer
             # This ensures hooks (headhook, rhand, lhand, gogglehook) are found correctly
             self.scene.objects["model"] = self.scene.get_creature_render_object(None, self._creature_to_load, sync=True)
-            # Scene (ModernGL) caches object lists; invalidate so swapped render objects take effect.
+            # Scene caches object lists; invalidate so swapped render objects take effect.
             if hasattr(self.scene, "_invalidate_object_cache"):
                 self.scene._invalidate_object_cache()  # noqa: SLF001
             self._creature_to_load = None
@@ -195,7 +195,7 @@ class ModelRenderer(QOpenGLWidget):
     def clear_model(self):
         if self._scene is not None and "model" in self.scene.objects:
             del self.scene.objects["model"]
-            # Scene (ModernGL) caches object lists; invalidate so removals take effect.
+            # Scene caches object lists; invalidate so removals take effect.
             if hasattr(self.scene, "_invalidate_object_cache"):
                 self.scene._invalidate_object_cache()  # noqa: SLF001
         if hasattr(self, "_pending_camera_reset"):

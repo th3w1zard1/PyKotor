@@ -6,15 +6,13 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 
-from pykotor.gl.compat import has_moderngl, has_pyopengl, missing_constant, missing_gl_func, safe_gl_error_module
+from pykotor.gl.compat import has_pyopengl, missing_constant, missing_gl_func, safe_gl_error_module
 from glm import vec3
 
 HAS_PYOPENGL = has_pyopengl()
-HAS_MODERNGL = has_moderngl()
-USE_PYOPENGL = HAS_PYOPENGL and not HAS_MODERNGL
 gl_error = safe_gl_error_module()
 
-if USE_PYOPENGL:
+if HAS_PYOPENGL:
     from OpenGL.GL import glGenBuffers, glGenVertexArrays, glVertexAttribPointer  # pyright: ignore[reportMissingImports]
     from OpenGL.GL.shaders import GL_FALSE  # pyright: ignore[reportMissingImports]
     from OpenGL.raw.GL.ARB.tessellation_shader import GL_TRIANGLES  # pyright: ignore[reportMissingImports]
@@ -100,7 +98,7 @@ class Cube:
         self._index_data = elements
         self._face_count: int = len(elements)
 
-        if USE_PYOPENGL:
+        if HAS_PYOPENGL:
             self._vao: int = glGenVertexArrays(1)
             self._vbo: int = glGenBuffers(1)
             self._ebo: int = glGenBuffers(1)
@@ -123,14 +121,14 @@ class Cube:
             self._ebo = 0
 
     def draw(self, shader: Shader, transform: mat4):
-        if not USE_PYOPENGL:
-            raise gl_error.NullFunctionError("PyOpenGL is unavailable; use ModernGLRenderer for rendering.")
+        if not HAS_PYOPENGL:
+            raise gl_error.NullFunctionError("PyOpenGL is unavailable.")
         shader.set_matrix4("model", transform)
         glBindVertexArray(self._vao)
         glDrawElements(GL_TRIANGLES, self._face_count, GL_UNSIGNED_SHORT, None)
     
     def vertex_blob(self) -> bytes:
-        """Interleaved vertex data (position only) for ModernGL."""
+        """Interleaved vertex data (position only)."""
         vertex_count = len(self._vertex_data) // 3
         blob = np.zeros((vertex_count, 7), dtype=np.float32)
         blob[:, 0:3] = self._vertex_data.reshape(vertex_count, 3)

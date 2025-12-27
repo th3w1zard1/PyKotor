@@ -182,22 +182,10 @@ def _suppress_modal_dialogs(monkeypatch: pytest.MonkeyPatch):
     )
 
 
-@pytest.fixture(params=["pyopengl", "moderngl"])
-def renderer_type(request, monkeypatch):
-    """Parametrize tests to run with both PyOpenGL (first) and ModernGL (second) renderers."""
-    renderer = request.param
-    
-    if renderer == "moderngl":
-        # Try to enable ModernGL
-        try:
-            import moderngl  # type: ignore[import]
-            monkeypatch.setenv("PYKOTOR_USE_MODERNGL", "1")
-            return "moderngl"
-        except Exception:
-            pytest.skip("ModernGL not available")
-    else:
-        monkeypatch.setenv("PYKOTOR_USE_MODERNGL", "0")
-        return "pyopengl"
+@pytest.fixture
+def renderer_type():
+    """Renderer backend identifier for tests."""
+    return "pyopengl"
 
 
 def _find_available_modules(installation: HTInstallation) -> list[str]:
@@ -341,43 +329,11 @@ def module_designer(
     except Exception:
         pytest.skip(f"OpenGL context could not be initialized for {renderer_type} renderer")
 
-    # The renderer type should already be set from the environment variable in __init__
-    # But we may need to adjust it if ModernGL was initialized but we want PyOpenGL
-    use_moderngl = renderer_type == "moderngl"
-    
-    # Always explicitly set the renderer type to ensure it matches what we want
-    if use_moderngl:
-        # Force ModernGL initialization - ensure context is current first
-        renderer.makeCurrent()
-        try:
-            # If ModernGL isn't already initialized, force initialization by temporarily
-            # setting _use_moderngl to False so set_renderer_type will actually initialize it
-            if renderer._modern_renderer is None:
-                renderer._use_moderngl = False
-            renderer.set_renderer_type(True)
-            # Verify it was actually set
-            if renderer._use_moderngl is False or renderer._modern_renderer is None:
-                raise RuntimeError(f"Failed to initialize ModernGL: _use_moderngl={renderer._use_moderngl}, _modern_renderer={renderer._modern_renderer}")
-        except RuntimeError as e:
-            pytest.skip(f"ModernGL renderer not available: {e}")
-    else:
-        # Force PyOpenGL (disable ModernGL if it was initialized)
-        if renderer._modern_renderer is not None:
-            renderer._use_moderngl = False
-            renderer._modern_renderer = None  # type: ignore[assignment]  # pyright: ignore[reportAttributeAccessIssue]
-            if renderer._modern_context is not None:
-                try:
-                    renderer._modern_context.release()
-                except Exception:
-                    pass
-                renderer._modern_context = None
-        renderer.set_renderer_type(False)
-
     # Now wait for the scene to be initialized (module loading happens asynchronously)
     _wait_for_designer_ready(qtbot, designer)
 
     # Verify the renderer type was set correctly
-    assert renderer.renderer_type == renderer_type, f"Failed to set renderer to {renderer_type}, got {renderer.renderer_type}"
+    assert renderer.renderer_type == renderer_type, f"Unexpected renderer type: {renderer.renderer_type}"
 
     yield designer
     
@@ -636,15 +592,13 @@ def _first_movable_instance(designer: ModuleDesigner) -> GITInstance | None:
 @pytest.mark.slow
 @MODULE_PARAM
 def test_module_designer_baseline_fps(qtbot, module_designer: ModuleDesigner, module_name: str, renderer_type: str):
-    """Ensure the renderer sustains the expected baseline FPS for both ModernGL and PyOpenGL.
+    """Ensure the renderer sustains the expected baseline FPS.
     
     This test:
     1. Waits for the scene to be fully loaded (async resources completed)
     2. Allows a warm-up period for the renderer to stabilize
     3. Measures FPS over a sustained period
-    4. Verifies both ModernGL and PyOpenGL achieve acceptable frame rates
-    
-    Note: PyOpenGL may xfail if FPS < 30, but ModernGL must actually pass.
+    4. Verifies PyOpenGL achieves an acceptable frame rate
     """
     from pykotor.gl.scene import Scene  # Local import to avoid circular imports
     
@@ -706,16 +660,11 @@ def test_module_designer_baseline_fps(qtbot, module_designer: ModuleDesigner, mo
     
     print(f"[FPS Test] Measured {frame_count} frames in {measure_elapsed:.1f}s = {fps:.1f} FPS")
     
-    # PyOpenGL may xfail if FPS < 30, but ModernGL must actually pass
     if fps < MIN_EXPECTED_FPS:
-        if renderer_type == "pyopengl":
-            pytest.xfail(
-                f"[{renderer_type}] Measured FPS {fps:.2f} < {MIN_EXPECTED_FPS:.0f}; "
-                f"renderer still CPU bound"
-            )
-        else:
-            # ModernGL must actually pass - fail the test
-            assert False, f"[{renderer_type}] Measured FPS {fps:.2f} < {MIN_EXPECTED_FPS:.0f}; ModernGL must achieve at least {MIN_EXPECTED_FPS:.0f} FPS"
+        pytest.xfail(
+            f"[{renderer_type}] Measured FPS {fps:.2f} < {MIN_EXPECTED_FPS:.0f}; "
+            f"renderer still CPU bound"
+        )
     assert fps >= MIN_EXPECTED_FPS, f"[{renderer_type}] FPS {fps:.2f} below minimum {MIN_EXPECTED_FPS:.0f}"
 
 

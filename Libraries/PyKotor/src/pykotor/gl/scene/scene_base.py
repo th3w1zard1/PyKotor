@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
-from pykotor.gl.compat import has_moderngl, has_pyopengl, missing_constant, missing_gl_func
+from pykotor.gl.compat import has_pyopengl, missing_constant, missing_gl_func
 from loggerplus import RobustLogger
 
 HAS_PYOPENGL = has_pyopengl()
-HAS_MODERNGL = has_moderngl()
 
 from pykotor.common.module import Module, ModuleResource
 from pykotor.common.stream import BinaryReader

@@ -159,7 +159,7 @@ class Shader:
         if not HAS_PYOPENGL or shaders is None:
             raise MissingPyOpenGLError(
                 "PyOpenGL is required for the legacy Shader class. "
-                "Install PyOpenGL (and ensure it imports), or use the ModernGL renderer."
+                "Install PyOpenGL (and ensure it imports)."
             )
         vertex_shader: int = shaders.compileShader(vshader, GL_VERTEX_SHADER)
         fragment_shader: int = shaders.compileShader(fshader, GL_FRAGMENT_SHADER)
@@ -171,7 +171,7 @@ class Shader:
         if not HAS_PYOPENGL:
             raise MissingPyOpenGLError(
                 "PyOpenGL is required for the legacy Shader class. "
-                "Install PyOpenGL (and ensure it imports), or use the ModernGL renderer."
+                "Install PyOpenGL (and ensure it imports)."
             )
         glUseProgram(self._id)
 
