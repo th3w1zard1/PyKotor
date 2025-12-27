@@ -824,6 +824,7 @@ class _TrimeshHeader:
         writer: BinaryWriter,
         game: Game,
     ):
+        start_pos = writer.position()
         writer.write_uint32(self.function_pointer0)
         writer.write_uint32(self.function_pointer1)
         writer.write_uint32(self.offset_to_faces)
@@ -889,6 +890,24 @@ class _TrimeshHeader:
             writer.write_uint32(self.unknown13)  # Reserved field (K2 only, part of L[3] sequence after total_area) - always 0
         writer.write_uint32(self.mdx_data_offset)
         writer.write_uint32(self.vertices_offset)
+
+        # K1 layout quirk: some real-world files (and MDLOps) treat key tail fields as being at fixed
+        # offsets within the trimesh header. Our reader already re-reads these from the canonical K1
+        # offsets; ensure our writer also places them there for interoperability.
+        if game == Game.K1:
+            end_pos = writer.position()
+            # Canonical K1 offsets from _TrimeshHeader.read():
+            # - vertex_count: u2 @ +304
+            # - texture_count: u2 @ +306
+            # - mdx_data_offset: u4 @ +324
+            # - vertices_offset: u4 @ +328
+            writer.seek(start_pos + 304)
+            writer.write_uint16(self.vertex_count)
+            writer.write_uint16(self.texture_count)
+            writer.seek(start_pos + 324)
+            writer.write_uint32(self.mdx_data_offset)
+            writer.write_uint32(self.vertices_offset)
+            writer.seek(end_pos)
 
     def header_size(
         self,
@@ -1873,7 +1892,11 @@ class MDLBinaryReader:
                 face.a3 = bin_face.adjacent3
                 face.normal = bin_face.normal
                 face.coefficient = int(bin_face.plane_coefficient)
-                face.material = bin_face.material
+                # Unpack material into material (low 5 bits) and smoothgroup (high bits)
+                # This ensures the internal MDLFace state is canonical (split fields).
+                packed = bin_face.material
+                face.material = packed & 0x1F
+                face.smoothgroup = packed >> 5
 
         if bin_node.skin:
             node.skin = MDLSkin()
@@ -1966,11 +1989,13 @@ class MDLBinaryReader:
         row_count: int = bin_controller.row_count
         column_count: int = bin_controller.column_count
 
-        self._reader.seek(data_offset + bin_controller.key_offset)
+        # key_offset/data_offset are stored as uint16 float-index offsets relative to the start of the
+        # controller-data block (not byte offsets). Convert to bytes when seeking.
+        self._reader.seek(data_offset + (bin_controller.key_offset * 4))
         time_keys: list[int] = [self._reader.read_single() for _ in range(row_count)]
 
         # There are some special cases when reading controller data rows.
-        data_pointer: int = data_offset + bin_controller.data_offset
+        data_pointer: int = data_offset + (bin_controller.data_offset * 4)
         self._reader.seek(data_pointer)
 
         # Detect bezier interpolation flag (bit 4 = 0x10) in column count
@@ -2191,23 +2216,49 @@ class MDLBinaryWriter:
                 bin_face.adjacent1 = face.a1
                 bin_face.adjacent2 = face.a2
                 bin_face.adjacent3 = face.a3
-                bin_face.material = face.material
+                # Repack surface material (low 5 bits) and smoothgroup (high bits)
+                surface = getattr(face, "material", 0) & 0x1F
+                smooth = getattr(face, "smoothgroup", 0)
+                bin_face.material = surface | (smooth << 5)
                 bin_face.plane_coefficient = face.coefficient
                 bin_face.normal = face.normal
 
-        data_offset = 0
-        key_offset = 0
+        # Controller key/data offsets are stored as uint16 *byte offsets* relative to the start of
+        # the controller-data block (header.offset_to_controller_data).
+        #
+        # Layout in controller-data block:
+        #   [time keys (row_count floats)] + [row data (row_count * data_floats_per_row floats)]
+        #
+        # References:
+        #   - vendor/mdlops/MDLOpsM.pm:1649-1778
+        #   - vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:664-690
+        cur_float_offset = 0
         for mdl_controller in mdl_node.controllers:
             bin_controller = _Controller()
             bin_controller.type_id = mdl_controller.controller_type
             bin_controller.row_count = len(mdl_controller.rows)
-            bin_controller.column_count = len(mdl_controller.rows[0].data)
-            bin_controller.key_offset = key_offset
-            data_offset += len(mdl_controller.rows)
-            bin_controller.data_offset = data_offset
+            if bin_controller.row_count == 0:
+                continue
+
+            first_row = mdl_controller.rows[0]
+            data_floats_per_row = len(first_row.data)
+            if data_floats_per_row < 0:
+                data_floats_per_row = 0
+
+            # Encode bezier flag in column_count bit 4 (16) as per mdlops.
+            # For bezier controllers, each logical column stores 3 floats per row.
+            if getattr(mdl_controller, "is_bezier", False):
+                logical_cols = data_floats_per_row // 3 if data_floats_per_row >= 3 else data_floats_per_row
+                bin_controller.column_count = int(logical_cols) | 16
+            else:
+                bin_controller.column_count = int(data_floats_per_row)
+
+            # Offsets are float-index offsets into the controller-data array.
+            bin_controller.key_offset = cur_float_offset
+            bin_controller.data_offset = cur_float_offset + bin_controller.row_count
+
+            cur_float_offset += bin_controller.row_count + (bin_controller.row_count * data_floats_per_row)
             bin_node.w_controllers.append(bin_controller)
-            data_offset += len(mdl_controller.rows) * len(mdl_controller.rows[0].data)
-            key_offset += data_offset
 
         bin_node.w_controller_data = []
         for controller in mdl_node.controllers:
@@ -2429,13 +2480,20 @@ class MDLBinaryWriter:
         type_id = 1
         if node.mesh:
             type_id = type_id | MDLNodeFlags.MESH
-        # if node.skin: type_id = type_id | MDLNodeFlags.SKIN
-        # if node.dangly: type_id = type_id | MDLNodeFlags.DANGLY
-        # if node.saber: type_id = type_id | MDLNodeFlags.SABER
-        # if node.aabb: type_id = type_id | MDLNodeFlags.AABB
-        # if node.emitter: type_id = type_id | MDLNodeFlags.EMITTER
-        # if node.light: type_id = type_id | MDLNodeFlags.LIGHT
-        # if node.reference: type_id = type_id | MDLNodeFlags.REFERENCE
+        if node.skin:
+            type_id = type_id | MDLNodeFlags.SKIN
+        if node.dangly:
+            type_id = type_id | MDLNodeFlags.DANGLY
+        if node.saber:
+            type_id = type_id | MDLNodeFlags.SABER
+        if node.aabb:
+            type_id = type_id | MDLNodeFlags.AABB
+        if node.emitter:
+            type_id = type_id | MDLNodeFlags.EMITTER
+        if node.light:
+            type_id = type_id | MDLNodeFlags.LIGHT
+        if node.reference:
+            type_id = type_id | MDLNodeFlags.REFERENCE
         return type_id
 
     def _write_all(

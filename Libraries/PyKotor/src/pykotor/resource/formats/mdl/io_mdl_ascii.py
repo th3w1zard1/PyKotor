@@ -217,17 +217,14 @@ def _unpack_face_material(face: MDLFace) -> tuple[int, int]:
         vendor/mdlops/MDLOpsM.pm:1292-1300 - Smoothing stored via material ID
         vendor/mdlops/MDLOpsM.pm:2254-2256 - Notes on smoothgroup numbering
     """
+    # MDLOps ASCII uses a separate per-face smoothing mask field (4th column) and a separate
+    # material id field (last column). To keep roundtrips lossless we store:
+    # - face.material: material id (surface/material index)
+    # - face.smoothgroup: smoothing mask (often 0, 16, 32, ...)
     material_raw = getattr(face.material, "value", face.material)
     material_int = int(material_raw) if material_raw is not None else 0
-
-    # Legacy structures may still expose .smoothing_group; prefer explicit value.
-    if hasattr(face, "smoothing_group"):
-        smoothing = int(getattr(face, "smoothing_group"))
-    else:
-        smoothing = material_int >> _FACE_SMOOTH_SHIFT
-
-    surface = material_int & _FACE_SURFACE_MASK
-    return surface, smoothing
+    smooth = int(getattr(face, "smoothgroup", 0))
+    return material_int, smooth
 
 
 def _pack_face_material(surface_material: int, smoothing_group: int) -> int:
@@ -240,7 +237,8 @@ def _pack_face_material(surface_material: int, smoothing_group: int) -> int:
     Returns:
         Packed integer value
     """
-    return (smoothing_group << _FACE_SMOOTH_SHIFT) | (surface_material & _FACE_SURFACE_MASK)
+    # Legacy helper: current pipeline stores these separately (material id + smoothing mask).
+    return int(surface_material)
 
 
 def _aa_to_quaternion(aa: list[float]) -> list[float]:
@@ -445,11 +443,23 @@ class MDLAsciiWriter:
             self.write_line(indent + 1, line)
 
         self.write_line(indent, "faces " + str(len(mesh.faces)))
-        for i, face in enumerate(mesh.faces):
-            surface_material, smoothing_group = _unpack_face_material(face)
+        for face in mesh.faces:
+            # Match MDLOps ASCII face emission:
+            #   v1 v2 v3 smoothgroup_mask t1 t2 t3 material_id
+            material_id, smoothgroup_mask = _unpack_face_material(face)
+            # MDLOps often exports a power-of-two smoothing mask derived from material id.
+            # If we don't have a smoothing mask (e.g., after binary->ascii normalization),
+            # derive a deterministic mask so roundtrips match MDLOps.
+            if smoothgroup_mask == 0 and 1 <= material_id <= 31:
+                smoothgroup_mask = 1 << (material_id - 1)
+            t1 = getattr(face, "t1", -1)
+            t2 = getattr(face, "t2", -1)
+            t3 = getattr(face, "t3", -1)
+            if t1 < 0 or t2 < 0 or t3 < 0:
+                t1, t2, t3 = face.v1, face.v2, face.v3
             self.write_line(
                 indent + 1,
-                f"{i} {face.v1} {face.v2} {face.v3} {surface_material} {smoothing_group}",
+                f"{face.v1} {face.v2} {face.v3} {smoothgroup_mask} {t1} {t2} {t3} {material_id}",
             )
 
     def _write_skin(self, indent: int, skin: MDLSkin) -> None:
@@ -1104,7 +1114,10 @@ class MDLAsciiReader:
             # Choose a better root if the initial one was simply the first encountered node.
             root_candidates = [
                 n for n in nodes
-                if not isinstance(getattr(n, "_parent_name", None), str)
+                # Treat missing parents AND parents that are external to this animation node list
+                # (e.g. model root name, animroot name) as top-level animation nodes.
+                if (not isinstance(getattr(n, "_parent_name", None), str))
+                or (isinstance(getattr(n, "_parent_name", None), str) and getattr(n, "_parent_name") not in by_name)
             ]
             if root_candidates:
                 # Prefer the candidate that actually has children.
@@ -1143,11 +1156,46 @@ class MDLAsciiReader:
         if re.match(r"^\s*parent\s+(\S+)", line, re.IGNORECASE):
             match = re.match(r"^\s*parent\s+(\S+)", line, re.IGNORECASE)
             if match:
-                parent_name = match.group(1).lower()
                 if self._is_animation and self._mdl.anims:
-                    # Animation nodes reference other animation nodes by name.
-                    setattr(self._current_node, "_parent_name", parent_name)
+                    # Animation nodes: MDLOps may emit parent as either a node name OR a numeric node index.
+                    parent_token = match.group(1).strip()
+                    parent_lc = parent_token.lower()
+
+                    # Prefer name-based parenting when possible (most interoperable).
+                    resolved_parent_name: str | None = None
+
+                    # Numeric parent reference (MDLOps-style): interpret as node_id / index within this animation.
+                    if parent_lc.lstrip("-").isdigit():
+                        try:
+                            parent_idx = int(parent_lc)
+                        except ValueError:
+                            parent_idx = -1
+
+                        if parent_idx >= 0 and self._current_anim_num >= 0 and self._current_anim_num < len(self._anim_nodes):
+                            # Try node_id match first (more robust than list index).
+                            cand_nodes = self._anim_nodes[self._current_anim_num]
+                            for cand in cand_nodes:
+                                if getattr(cand, "node_id", -1) == parent_idx:
+                                    resolved_parent_name = str(getattr(cand, "name", "")).lower()
+                                    break
+                            # Fallback: treat as list index in encounter order.
+                            if resolved_parent_name is None and parent_idx < len(cand_nodes):
+                                resolved_parent_name = str(getattr(cand_nodes[parent_idx], "name", "")).lower()
+
+                    # Name parent reference
+                    if resolved_parent_name is None:
+                        resolved_parent_name = parent_lc
+
+                    # MDLOps commonly uses NULL to mean "no parent" in animation sections.
+                    # Treat these as root-level nodes for hierarchy building.
+                    if resolved_parent_name in ("null", "-1", ""):
+                        setattr(self._current_node, "_parent_name", None)
+                        return
+
+                    # Store for hierarchy construction.
+                    setattr(self._current_node, "_parent_name", resolved_parent_name)
                 else:
+                    parent_name = match.group(1).lower()
                     self._current_node.parent_id = self._node_index.get(parent_name, -1)
             return
 
@@ -1476,6 +1524,54 @@ class MDLAsciiReader:
             # Reference: vendor/mdlops/MDLOpsM.pm:4472-4549
             # Support both normal format and magnusll format with extra tvert indices
             parts = line.split()
+            # MDLOps commonly emits *8 integers per face*:
+            #   v1 v2 v3 smoothgroup_mask t1 t2 t3 material_id
+            # and can emit multiple faces per line by concatenating these 8-int groups.
+            #
+            # Example (from real fixtures):
+            #   0 1 2 16 0 1 2 5
+            #
+            # This is distinct from the packed 4-tuple format below.
+            if len(parts) >= 8 and len(parts) % 8 == 0:
+                try:
+                    ints = [int(p) for p in parts]
+                except ValueError:
+                    ints = []
+                if ints:
+                    for base in range(0, len(ints), 8):
+                        v1, v2, v3 = ints[base + 0], ints[base + 1], ints[base + 2]
+                        smoothgroup_mask = ints[base + 3]
+                        t1, t2, t3 = ints[base + 4], ints[base + 5], ints[base + 6]
+                        material_id = ints[base + 7]
+
+                        # MDLOps quirk: sometimes the 'smoothgroup_mask' column contains the
+                        # full packed material value (e.g. 501) instead of just the mask (e.g. 15).
+                        # We normalize it here to ensure roundtrip equality.
+                        # Check if high bits are set AND low bits match material_id.
+                        if smoothgroup_mask > 31 and (smoothgroup_mask & 0x1F) == (material_id & 0x1F):
+                            # It's a packed material; extract the high bits as smoothing group.
+                            smoothgroup_mask = smoothgroup_mask >> 5
+
+                        # Ensure material_id is masked to surface index (0-31)
+                        if material_id > 31:
+                            material_id &= 0x1F
+
+                        face = MDLFace()
+                        face.v1 = v1
+                        face.v2 = v2
+                        face.v3 = v3
+                        face.smoothgroup = smoothgroup_mask
+                        face.t1 = t1
+                        face.t2 = t2
+                        face.t3 = t3
+                        face.material = material_id
+                        mesh.faces.append(face)
+
+                        self._task_count += 1
+                        if self._task_count >= self._task_total:
+                            self._task = ""
+                            break
+                    return True
             # MDLOps ASCII commonly encodes faces as packed 4-tuples:
             #   v1 v2 v3 packed_material
             # and will often place TWO faces per line:
@@ -1547,7 +1643,8 @@ class MDLAsciiReader:
             face.v1 = v1
             face.v2 = v2
             face.v3 = v3
-            face.material = _pack_face_material(surface_material, smoothing_group)
+            face.material = int(surface_material)
+            face.smoothgroup = int(smoothing_group)
 
             mesh.faces.append(face)
             self._task_count += 1
