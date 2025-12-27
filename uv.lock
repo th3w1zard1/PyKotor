@@ -1641,7 +1641,7 @@ wheels = [
 
 [[package]]
 name = "holocrontoolset"
-version = "4.0.0b8"
+version = "4.0.0b9"
 source = { editable = "Tools/HolocronToolset" }
 dependencies = [
     { name = "certifi" },

@@ -9,4 +9,4 @@ print('Beta versions on PyPI:')
 for v in sorted(beta_versions):
     print(f'  {v}')
 
-print(f'\n4.0.0b5 available: {"4.0.0b5" in versions}')
+print(f'\n4.0.0b9 available: {"4.0.0b9" in versions}')
