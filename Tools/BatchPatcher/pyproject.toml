@@ -80,7 +80,7 @@ packages = [{ include = "batchpatcher", from = "src" }]
 [tool.poetry.dependencies]
 python = "^3.9"
 pykotor = "^2.0.2"
-opencv-contrib-python = "4.8.0.76"
+opencv-contrib-python = "4.12.0.88"
 
 [tool.poetry.scripts]
 batchpatcher = "batchpatcher.__main__:main"
