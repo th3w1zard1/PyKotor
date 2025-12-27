@@ -664,7 +664,7 @@ class NSSEditor(Editor):
         ]
 
         # Register commands with callbacks
-        command_map = {
+        command_map: dict[str, Callable[[], bool | None]] = {
             "file.new": self.new,
             "file.open": self.open,
             "file.save": self.save,
@@ -1474,7 +1474,7 @@ class NSSEditor(Editor):
             assert set_root_action is not None, "Set root action should not be None"
             set_root_action.triggered.connect(lambda: self._set_explorer_root(file_path))
 
-        menu.exec_(self.ui.fileExplorerView.viewport().mapToGlobal(position))
+        menu.exec(self.ui.fileExplorerView.viewport().mapToGlobal(position))  # pyright: ignore[reportOptionalMemberAccess]
 
     def _reveal_in_explorer(self, file_path: Path):
         """Open the file's location in the system file explorer."""
@@ -1897,6 +1897,15 @@ class NSSEditor(Editor):
         lines = text.split("\n")
         if 0 <= line < len(lines):
             current_line = lines[line]
+            if not current_line:
+                return
+
+            # Clamp to valid range; cursor column can be past EOL (e.g. trailing whitespace / empty spans).
+            if character < 0:
+                character = 0
+            if character > len(current_line):
+                character = len(current_line)
+
             # Find word at position
             word_start = character
             word_end = character
