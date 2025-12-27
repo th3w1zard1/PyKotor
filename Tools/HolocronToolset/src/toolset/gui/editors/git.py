@@ -910,7 +910,7 @@ class _InstanceMode(_Mode):
     def edit_selected_instance_spawns(self):
         if self.renderer2d.instance_selection.last():
             self.renderer2d.instance_selection.last()
-            # TODO
+            # TODO: Implement spawn mode (UTE)
             #self._editor.enter_spawn_mode()
 
     def add_instance(self, instance: GITInstance):
@@ -928,27 +928,27 @@ class _InstanceMode(_Mode):
             instance: {The selected GIT instance object}
             menu: {The QMenu to add actions to}.
         """
-        menu.addAction("Remove").triggered.connect(self.delete_selected)
+        menu.addAction("Remove").triggered.connect(self.delete_selected)  # pyright: ignore[reportOptionalMemberAccess]
         if isinstance(self._editor, GITEditor):
-            menu.addAction("Edit Instance").triggered.connect(self.edit_selected_instance)
+            menu.addAction("Edit Instance").triggered.connect(self.edit_selected_instance)  # pyright: ignore[reportOptionalMemberAccess]
 
         action_edit_resource = menu.addAction("Edit Resource")
-        action_edit_resource.triggered.connect(self.edit_selected_instance_resource)
-        action_edit_resource.setEnabled(not isinstance(instance, GITCamera))
+        action_edit_resource.triggered.connect(self.edit_selected_instance_resource)  # pyright: ignore[reportOptionalMemberAccess]
+        action_edit_resource.setEnabled(not isinstance(instance, GITCamera))  # pyright: ignore[reportOptionalMemberAccess]
         menu.addAction(action_edit_resource)
 
         if isinstance(instance, (GITEncounter, GITTrigger)):
-            menu.addAction("Edit Geometry").triggered.connect(self.edit_selected_instance_geometry)
+            menu.addAction("Edit Geometry").triggered.connect(self.edit_selected_instance_geometry)  # pyright: ignore[reportOptionalMemberAccess]
 
         if isinstance(instance, GITEncounter):
-            menu.addAction("Edit Spawn Points").triggered.connect(self.edit_selected_instance_spawns)
+            menu.addAction("Edit Spawn Points").triggered.connect(self.edit_selected_instance_spawns)  # pyright: ignore[reportOptionalMemberAccess]
         menu.addSeparator()
         self.add_resource_sub_menu(menu, instance)
 
     def add_resource_sub_menu(self, menu: QMenu, instance: GITInstance) -> QMenu:
         if isinstance(instance, GITCamera):
             return menu
-        locations = self._installation.location(*instance.identifier().unpack())
+        locations = self._installation.location(*instance.identifier().unpack())  # pyright: ignore[reportOptionalMemberAccess]
         if not locations:
             return menu
 
@@ -972,7 +972,7 @@ class _InstanceMode(_Mode):
                 display_path = result.filepath.relative_to(override_path.parent)
             else:
                 display_path = result.filepath.joinpath(str(instance.identifier())).relative_to(self._installation.path())
-            loc_menu: QMenu = file_menu.addMenu(str(display_path))
+            loc_menu: QMenu = file_menu.addMenu(str(display_path))  # pyright: ignore[reportOptionalMemberAccess]
             ResourceItems(resources=[result]).build_menu(loc_menu)
         def more_info():
             selection_window = FileSelectionWindow(locations, self._installation)
@@ -980,7 +980,7 @@ class _InstanceMode(_Mode):
             selection_window.activateWindow()
             add_window(selection_window)
 
-        file_menu.addAction("Details...").triggered.connect(more_info)
+        file_menu.addAction("Details...").triggered.connect(more_info)  # pyright: ignore[reportOptionalMemberAccess]
         return menu
 
     def set_list_item_label(self, item: QListWidgetItem, instance: GITInstance):
@@ -1047,7 +1047,7 @@ class _InstanceMode(_Mode):
     def get_instance_tooltip(self, instance: GITInstance) -> str:
         if isinstance(instance, GITCamera):
             return f"Struct Index: {self._git.index(instance)}\nCamera ID: {instance.camera_id}"
-        return f"Struct Index: {self._git.index(instance)}\nResRef: {instance.identifier().resname}"
+        return f"Struct Index: {self._git.index(instance)}\nResRef: {instance.identifier().resname}"  # pyright: ignore[reportOptionalMemberAccess]
 
     # region Interface Methods
     def on_filter_edited(self, text: str):
@@ -1059,11 +1059,11 @@ class _InstanceMode(_Mode):
 
     def update_status_bar(self, world: Vector2):
         if self.renderer2d.instances_under_mouse() and self.renderer2d.instances_under_mouse()[-1] is not None:
-            instance = self.renderer2d.instances_under_mouse()[-1]
-            resname = "" if isinstance(instance, GITCamera) else instance.identifier().resname
-            self._editor.statusBar().showMessage(f"({world.x:.1f}, {world.y:.1f}) {resname}")
+            instance: GITInstance = self.renderer2d.instances_under_mouse()[-1]
+            resname = "" if isinstance(instance, GITCamera) else instance.identifier().resname  # pyright: ignore[reportOptionalMemberAccess]
+            self._editor.statusBar().showMessage(f"({world.x:.1f}, {world.y:.1f}) {resname}")  # pyright: ignore[reportOptionalMemberAccess]
         else:
-            self._editor.statusBar().showMessage(f"({world.x:.1f}, {world.y:.1f})")
+            self._editor.statusBar().showMessage(f"({world.x:.1f}, {world.y:.1f})")  # pyright: ignore[reportOptionalMemberAccess]
 
     def open_list_context_menu(self, item: QListWidgetItem, point: QPoint):  # pyright: ignore[reportIncompatibleMethodOverride]
         if item is None:
@@ -1106,23 +1106,23 @@ class _InstanceMode(_Mode):
             menu.addSeparator()
             for instance in under_mouse:
                 icon = QIcon(self.renderer2d.instance_pixmap(instance))
-                reference = "" if instance.identifier() is None else instance.identifier().resname
+                reference = "" if instance.identifier() is None else instance.identifier().resname  # pyright: ignore[reportOptionalMemberAccess]
                 index = self._editor.git().index(instance)
 
                 instance_action = menu.addAction(icon, f"[{index}] {reference}")
-                instance_action.triggered.connect(lambda _=None, inst=instance: self.set_selection([inst]))
-                instance_action.setEnabled(instance not in self.renderer2d.instance_selection.all())
+                instance_action.triggered.connect(lambda _=None, inst=instance: self.set_selection([inst]))  # pyright: ignore[reportOptionalMemberAccess]
+                instance_action.setEnabled(instance not in self.renderer2d.instance_selection.all())  # pyright: ignore[reportOptionalMemberAccess]
                 menu.addAction(instance_action)
 
     def add_insert_actions_to_menu(self, menu: QMenu, world: Vector2):
-        menu.addAction("Insert Creature").triggered.connect(lambda: self.add_instance(GITCreature(world.x, world.y)))
-        menu.addAction("Insert Door").triggered.connect(lambda: self.add_instance(GITDoor(world.x, world.y)))
-        menu.addAction("Insert Placeable").triggered.connect(lambda: self.add_instance(GITPlaceable(world.x, world.y)))
-        menu.addAction("Insert Store").triggered.connect(lambda: self.add_instance(GITStore(world.x, world.y)))
-        menu.addAction("Insert Sound").triggered.connect(lambda: self.add_instance(GITSound(world.x, world.y)))
-        menu.addAction("Insert Waypoint").triggered.connect(lambda: self.add_instance(GITWaypoint(world.x, world.y)))
-        menu.addAction("Insert Camera").triggered.connect(lambda: self.add_instance(GITCamera(world.x, world.y)))
-        menu.addAction("Insert Encounter").triggered.connect(lambda: self.add_instance(GITEncounter(world.x, world.y)))
+        menu.addAction("Insert Creature").triggered.connect(lambda: self.add_instance(GITCreature(world.x, world.y)))  # pyright: ignore[reportOptionalMemberAccess]
+        menu.addAction("Insert Door").triggered.connect(lambda: self.add_instance(GITDoor(world.x, world.y)))  # pyright: ignore[reportOptionalMemberAccess]
+        menu.addAction("Insert Placeable").triggered.connect(lambda: self.add_instance(GITPlaceable(world.x, world.y)))  # pyright: ignore[reportOptionalMemberAccess]
+        menu.addAction("Insert Store").triggered.connect(lambda: self.add_instance(GITStore(world.x, world.y)))  # pyright: ignore[reportOptionalMemberAccess]
+        menu.addAction("Insert Sound").triggered.connect(lambda: self.add_instance(GITSound(world.x, world.y)))  # pyright: ignore[reportOptionalMemberAccess]
+        menu.addAction("Insert Waypoint").triggered.connect(lambda: self.add_instance(GITWaypoint(world.x, world.y)))  # pyright: ignore[reportOptionalMemberAccess]
+        menu.addAction("Insert Camera").triggered.connect(lambda: self.add_instance(GITCamera(world.x, world.y)))  # pyright: ignore[reportOptionalMemberAccess]
+        menu.addAction("Insert Encounter").triggered.connect(lambda: self.add_instance(GITEncounter(world.x, world.y)))  # pyright: ignore[reportOptionalMemberAccess]
 
         simple_trigger = GITTrigger(world.x, world.y)
         simple_trigger.geometry.extend(
@@ -1133,7 +1133,7 @@ class _InstanceMode(_Mode):
                 Vector3(0.0, 3.0, 0.0),
             ],
         )
-        menu.addAction("Insert Trigger").triggered.connect(lambda: self.add_instance(simple_trigger))
+        menu.addAction("Insert Trigger").triggered.connect(lambda: self.add_instance(simple_trigger))  # pyright: ignore[reportOptionalMemberAccess]
 
     def build_list(self):
         self.list_widget().clear()
@@ -1302,7 +1302,7 @@ class _GeometryMode(_Mode):
     def update_status_bar(self, world: Vector2):
         instance: GITInstance | None = self.renderer2d.instance_selection.last()
         if instance:
-            self._editor.statusBar().showMessage(f"({world.x:.1f}, {world.y:.1f}) Editing Geometry of {instance.identifier().resname}")
+            self._editor.statusBar().showMessage(f"({world.x:.1f}, {world.y:.1f}) Editing Geometry of {instance.identifier().resname}")  # pyright: ignore[reportOptionalMemberAccess]
 
     def on_render_context_menu(self, world: Vector2, screen: QPoint):
         menu = QMenu(self._editor)
@@ -1311,13 +1311,13 @@ class _GeometryMode(_Mode):
 
     def _get_render_context_menu(self, world: Vector2, menu: QMenu):
         if not self.renderer2d.geometry_selection.isEmpty():
-            menu.addAction("Remove").triggered.connect(self.delete_selected)
+            menu.addAction("Remove").triggered.connect(self.delete_selected)  # pyright: ignore[reportOptionalMemberAccess]
 
         if self.renderer2d.geometry_selection.count() == 0:
-            menu.addAction("Insert").triggered.connect(self.insert_point_at_mouse)
+            menu.addAction("Insert").triggered.connect(self.insert_point_at_mouse)  # pyright: ignore[reportOptionalMemberAccess]
 
         menu.addSeparator()
-        menu.addAction("Finish Editing").triggered.connect(self._editor.enter_instance_mode)
+        menu.addAction("Finish Editing").triggered.connect(self._editor.enter_instance_mode)  # pyright: ignore[reportOptionalMemberAccess]
 
     def open_list_context_menu(self, item: QListWidgetItem, screen: QPoint):
         ...
@@ -1436,7 +1436,7 @@ class GITControlScheme:
             ):
                 self.is_drag_rotating = True
                 RobustLogger().debug("rotateSelected instance in GITControlScheme")
-                selection: list[GITInstance] = self.editor._mode.renderer2d.instance_selection.all()  # noqa: SLF001
+                selection = self.editor._mode.renderer2d.instance_selection.all()  # noqa: SLF001
                 for instance in selection:
                     if not isinstance(instance, (GITCamera, GITCreature, GITDoor, GITPlaceable, GITStore, GITWaypoint)):
                         continue  # doesn't support rotations.

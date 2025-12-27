@@ -306,7 +306,7 @@ def get_documentation_tooltip_html(
     app = QApplication.instance()
     if widget is not None:
         palette = widget.palette()
-    elif app is not None:
+    elif isinstance(app, QApplication):
         palette = app.palette()
     else:
         # Create default palette as fallback
@@ -411,19 +411,17 @@ def apply_tooltip_style_to_app(app: QApplication | None = None):
     Args:
         app: The QApplication instance. If None, uses current instance.
     """
-    if app is None:
-        app = QApplication.instance()
-    
-    if app is None:
+    parsed_app = QApplication.instance() if app is None else app
+    if not isinstance(parsed_app, QApplication):
         return
     
     # Get current stylesheet and append tooltip styling
-    current_style = app.styleSheet() or ""
+    current_style = parsed_app.styleSheet() or ""
     tooltip_style = get_tooltip_stylesheet()
     
     # Only add if not already present
     if "QToolTip" not in current_style:
-        app.setStyleSheet(current_style + "\n" + tooltip_style)
+        parsed_app.setStyleSheet(current_style + "\n" + tooltip_style)
 
 
 def get_line_number_font(base_font: QFont) -> QFont:

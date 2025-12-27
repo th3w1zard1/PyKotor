@@ -1893,10 +1893,10 @@ class NSSEditor(Editor):
         line, character = self._pending_hover_pos
 
         # Try local documentation first (faster for built-in functions/constants)
-        text = self.ui.codeEdit.toPlainText()
-        lines = text.split("\n")
+        text: str = self.ui.codeEdit.toPlainText()
+        lines: list[str] = text.split("\n")
         if 0 <= line < len(lines):
-            current_line = lines[line]
+            current_line: str = lines[line]
             if not current_line:
                 return
 
@@ -1907,17 +1907,17 @@ class NSSEditor(Editor):
                 character = len(current_line)
 
             # Find word at position
-            word_start = character
-            word_end = character
+            word_start: int = character
+            word_end: int = character
             while word_start > 0 and (current_line[word_start - 1].isalnum() or current_line[word_start - 1] == "_"):
                 word_start -= 1
             while word_end < len(current_line) and (current_line[word_end].isalnum() or current_line[word_end] == "_"):
                 word_end += 1
-            word = current_line[word_start:word_end]
+            word: str = current_line[word_start:word_end]
 
             if word:
                 # Get local documentation (fast path)
-                doc = self._get_documentation(word)
+                doc: str | None = self._get_documentation(word)
                 if doc:
                     self._show_tooltip_cached(word=word, html=doc)
                     return
@@ -1950,7 +1950,14 @@ class NSSEditor(Editor):
 
         app = QApplication.instance()
         if app is not None and QThread.currentThread() != app.thread():
-            QTimer.singleShot(0, lambda r=result, w=requested_word, rid=request_id: self._on_hover_complete(r, requested_word=w, request_id=rid))
+            QTimer.singleShot(
+                0,
+                lambda r=result, w=requested_word, rid=request_id: self._on_hover_complete(
+                    r,
+                    requested_word=w,
+                    request_id=rid,
+                ),
+            )
             return
 
         if result is None or "contents" not in result:
@@ -1962,7 +1969,7 @@ class NSSEditor(Editor):
         if requested_word != self._last_hover_word:
             return
 
-        contents = result.get("contents", "")
+        contents: str = result.get("contents", "")
         if contents:
             self._show_tooltip_cached(word=requested_word, html=str(contents))
 
@@ -2088,7 +2095,7 @@ class NSSEditor(Editor):
         from toolset.gui.dialogs.github_selector import GitHubFileSelector  # pyright: ignore[reportPrivateImportUsage]
         script_filename = f"{resref.lower()}.nss"
         dialog = GitHubFileSelector(self.owner, self.repo, selected_files=[script_filename], parent=self)
-        if dialog.exec_() != QDialog.DialogCode.Accepted:
+        if dialog.exec() != QDialog.DialogCode.Accepted:
             raise ValueError("No script selected.")
 
         selected_path: str | None = dialog.selected_path
@@ -2141,7 +2148,7 @@ class NSSEditor(Editor):
             self._setup_file_explorer()
 
     def _handle_exc_debug_mode(self, err_msg: str, e: Exception) -> bool:
-        QMessageBox(QMessageBox.Icon.Critical, err_msg, str(universal_simplify_exception(e))).exec_()
+        QMessageBox(QMessageBox.Icon.Critical, err_msg, str(universal_simplify_exception(e))).exec()
         if is_debug_mode():
             raise e
         return True
@@ -3431,19 +3438,23 @@ Code Operations:
 
     def _check_for_updates(self):
         """Check for updates."""
-        QMessageBox.information(self, "Check for Updates", "Update checking is not yet implemented.\n\nPlease check the PyKotor repository for updates.")
+        QMessageBox.information(
+            self,
+            "Check for Updates",
+            "Update checking is not yet implemented.\n\nPlease check the PyKotor repository for updates.",
+        )
 
     def _start_debugging(self):
         """Start test run (dry-run testing with event simulation)."""
         try:
             # Get source code
-            text = self.ui.codeEdit.toPlainText()
+            text: str = self.ui.codeEdit.toPlainText()
             if not text.strip():
                 QMessageBox.warning(self, "Test Run", "Cannot test empty script.")
                 return
 
             # Detect entry point
-            entry_point = self._detect_entry_point(text)
+            entry_point: str = self._detect_entry_point(text)
             if entry_point == "unknown":
                 QMessageBox.warning(self, "Test Run", "Cannot detect entry point. Script must have either main() or StartingConditional() function.")
                 return
@@ -3452,7 +3463,7 @@ Code Operations:
             from qtpy.QtWidgets import QDialog
 
             config_dialog = TestConfigDialog(entry_point, self)
-            if config_dialog.exec_() != QDialog.DialogCode.Accepted:
+            if config_dialog.exec() != QDialog.DialogCode.Accepted:
                 return  # User cancelled
 
             test_config = config_dialog.get_test_config()
