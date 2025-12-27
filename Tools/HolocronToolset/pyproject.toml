@@ -22,10 +22,10 @@ toolset = [
 [project]
 name = "holocrontoolset"
 description = "A PyQt-backed program with a collection of tools and editors that make it easy to work with kotor files"
-version = "4.0.0b12"
+version = "4.0.0b13"
 requires-python = ">=3.8"
 dependencies = [
-  "pykotor[all]>=2.0.2",
+  "pykotor[all]>=2.0.3",
   "certifi>=2021.10.8",
   "idna>=3.11",
   "Markdown>=3.4.4,<3.9; python_version<\"3.9\"",
