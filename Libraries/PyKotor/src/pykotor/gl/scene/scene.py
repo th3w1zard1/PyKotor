@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from typing import TypeVar
+from typing import TYPE_CHECKING, TypeVar
 
 import glm
 
 from glm import mat4, vec3, vec4
 
+from pykotor.extract.installation import SearchLocation
 from pykotor.gl.compat import (
     GL_BGRA,
     GL_BLEND,
@@ -22,8 +23,6 @@ from pykotor.gl.compat import (
     glEnable,
     glReadPixels,
 )
-
-from pykotor.extract.installation import SearchLocation
 from pykotor.gl.models.mdl import Model
 from pykotor.gl.scene.frustum import CullingStats, Frustum
 from pykotor.gl.scene.scene_base import SceneBase
@@ -38,8 +37,24 @@ from pykotor.gl.shader import (
     Shader,
 )
 from pykotor.resource.formats.lyt.lyt_data import LYTRoom
-from pykotor.resource.generics.git import GITCamera, GITCreature, GITDoor, GITEncounter, GITInstance, GITPlaceable, GITSound, GITStore, GITTrigger, GITWaypoint
+from pykotor.resource.generics.git import (
+    GITCamera,
+    GITCreature,
+    GITDoor,
+    GITEncounter,
+    GITInstance,
+    GITPlaceable,
+    GITSound,
+    GITStore,
+    GITTrigger,
+    GITWaypoint,
+)
 from utility.common.geometry import Vector3
+
+if TYPE_CHECKING:
+    from pykotor.common.module import Module
+    from pykotor.gl.scene.scene_base import RenderObject
+    from toolset.data.installation import Installation
 
 T = TypeVar("T")
 SEARCH_ORDER_2DA: list[SearchLocation] = [SearchLocation.OVERRIDE, SearchLocation.CHITIN]
@@ -64,8 +79,8 @@ class Scene(SceneBase):
     def __init__(
         self,
         *,
-        installation=None,
-        module=None,
+        installation: Installation | None = None,
+        module: Module | None = None,
         **kwargs,
     ):
         # Backwards-compat for older callers that still pass renderer-selection kwargs.
@@ -77,6 +92,7 @@ class Scene(SceneBase):
 
         # Canonical backend selection log (one line, high signal).
         from loggerplus import RobustLogger
+
         RobustLogger().debug(
             "Scene backend selection: pyopengl=%s",
             HAS_PYOPENGL,
@@ -169,6 +185,7 @@ class Scene(SceneBase):
     def render(self):
         if not HAS_PYOPENGL:
             from pykotor.gl.compat import MissingPyOpenGLError
+
             raise MissingPyOpenGLError("PyOpenGL is required for rendering.")
 
         # Poll for completed async resources (non-blocking) - MAIN PROCESS ONLY
