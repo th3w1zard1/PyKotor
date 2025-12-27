@@ -1651,6 +1651,18 @@ class NSSEditor(Editor):
         This is called asynchronously when the language server completes analysis.
         Updates diagnostics, outline, and breadcrumbs from the result.
         """
+        # NOTE:
+        # `LanguageServerClient` invokes callbacks from a background thread.
+        # All Qt widget updates must occur on the UI thread; otherwise outline/diagnostics
+        # updates can silently fail or behave unpredictably.
+        from qtpy.QtCore import QThread, QTimer
+        from qtpy.QtWidgets import QApplication
+
+        app = QApplication.instance()
+        if app is not None and QThread.currentThread() != app.thread():
+            QTimer.singleShot(0, lambda r=result: self._on_analysis_complete(r))
+            return
+
         try:
             if "error" in result:
                 RobustLogger().error(f"Language server error: {result['error']}")

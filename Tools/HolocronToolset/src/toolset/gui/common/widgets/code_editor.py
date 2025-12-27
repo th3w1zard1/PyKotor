@@ -1099,12 +1099,21 @@ class CodeEditor(QPlainTextEdit):
         obj = item.data(0, Qt.ItemDataRole.UserRole)
         if obj is None:
             return
-        
-        # Get line number from object
-        line_num = getattr(obj, 'line_num', None)
+
+        # Language-server symbols arrive as dicts; legacy outline items may store
+        # richer objects. Support both.
+        line_num: int | None = None
+        if isinstance(obj, dict):
+            selection_range = obj.get("selection_range") or obj.get("range") or {}
+            start = selection_range.get("start") or {}
+            if isinstance(start, dict):
+                line_num = int(start.get("line", 0)) + 1  # LSP is 0-indexed
+        else:
+            # Get line number from object
+            line_num = getattr(obj, "line_num", None)
         if line_num is None:
             # Try to find line number from identifier
-            identifier = getattr(obj, 'identifier', '')
+            identifier = getattr(obj, "identifier", "")
             if identifier:
                 # Search for the identifier in the document
                 text = self.toPlainText()
@@ -1133,12 +1142,21 @@ class CodeEditor(QPlainTextEdit):
         obj = item.data(0, Qt.ItemDataRole.UserRole)
         if obj is None:
             return
-        
-        # Get line number from object
-        line_num = getattr(obj, 'line_num', None)
+
+        # Language-server symbols arrive as dicts; legacy outline items may store
+        # richer objects. Support both.
+        line_num: int | None = None
+        if isinstance(obj, dict):
+            selection_range = obj.get("selection_range") or obj.get("range") or {}
+            start = selection_range.get("start") or {}
+            if isinstance(start, dict):
+                line_num = int(start.get("line", 0)) + 1  # LSP is 0-indexed
+        else:
+            # Get line number from object
+            line_num = getattr(obj, "line_num", None)
         if line_num is None:
             # Try to find line number from identifier
-            identifier = getattr(obj, 'identifier', '')
+            identifier = getattr(obj, "identifier", "")
             if identifier:
                 # Search for the identifier in the document
                 text = self.toPlainText()
