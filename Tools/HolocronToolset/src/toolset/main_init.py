@@ -8,6 +8,7 @@ import pathlib
 import subprocess
 import sys
 import tempfile
+import threading
 
 from typing import TYPE_CHECKING
 
@@ -164,6 +165,11 @@ def main_init():
     from loggerplus import RobustLogger  # noqa: PLC0415
 
     sys.excepthook = on_app_crash
+    # Ensure thread exceptions (Python 3.8+) are routed to the same handler.
+    def _thread_excepthook(args: threading.ExceptHookArgs):  # noqa: ANN001
+        on_app_crash(args.exc_type, args.exc_value, args.exc_traceback)
+
+    threading.excepthook = _thread_excepthook
     is_main_process: bool = multiprocessing.current_process() == "MainProcess"
     if is_main_process:
         multiprocessing.set_start_method("spawn")  # 'spawn' is default on windows, linux/mac defaults to most likely 'fork' which breaks the built-in updater.

@@ -60,16 +60,27 @@ class SizeWidget(QWidget):
         self,
         font: QFont,
     ):
-        fd: QFontDatabase = QFontDatabase()  # pyright: ignore[reportCallIssue]
+        # Some Qt6 Python bindings expose QFontDatabase without a default constructor.
+        # Try the class/static APIs first, then fall back to an instance when possible.
         font_name: str = font.family()
-        style_names: list[str] = fd.styles(font_name)
+        try:
+            style_names: list[str] = QFontDatabase.styles(font_name)  # type: ignore[arg-type]
+            point_sizes = QFontDatabase.pointSizes  # type: ignore[attr-defined]
+        except Exception:  # noqa: BLE001
+            fd: QFontDatabase = QFontDatabase()  # pyright: ignore[reportCallIssue]
+            style_names = fd.styles(font_name)
+            point_sizes = fd.pointSizes
         # In case of font is not in the font list
         if style_names:
             style_name: str = style_names[0]
         else:
             font_name = "Arial"
-            style_name = fd.styles(font_name)[0]
-        sizes: list[int] | list[str] = fd.pointSizes(font_name, style_name)
+            try:
+                style_name = QFontDatabase.styles(font_name)[0]  # type: ignore[arg-type]
+            except Exception:  # noqa: BLE001
+                fd: QFontDatabase = QFontDatabase()  # pyright: ignore[reportCallIssue]
+                style_name = fd.styles(font_name)[0]
+        sizes: list[int] | list[str] = point_sizes(font_name, style_name)
         sizes = list(map(str, sizes))
         self._size_list_widget.addItems(sizes)
 

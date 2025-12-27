@@ -121,16 +121,22 @@ class FontWidget(QWidget):
     def _font_item_changed_exec(
         self,
         font_text: str,
-        fd: QFontDatabase,
+        _fd: object,  # QFontDatabase instance may not be constructible on some Qt6 bindings.
     ):
         self._preview_text_edit.selectAll()
         font: QFont = self._preview_text_edit.currentFont()
         prev_size: int = font.pointSize()
-        styles: list[str] = fd.styles(font_text)
+        try:
+            styles: list[str] = QFontDatabase.styles(font_text)  # type: ignore[arg-type]
+            point_sizes = QFontDatabase.pointSizes  # type: ignore[attr-defined]
+        except Exception:  # noqa: BLE001
+            fd: QFontDatabase = QFontDatabase()  # pyright: ignore[reportCallIssue]
+            styles = fd.styles(font_text)
+            point_sizes = fd.pointSizes
 
         font.setFamily(font_text)
 
-        sizes: list[int] = fd.pointSizes(font_text, styles[0])
+        sizes: list[int] = point_sizes(font_text, styles[0])
         if prev_size in sizes:
             self._size_widget.set_sizes(sizes, prev_size)
             font.setPointSize(prev_size)

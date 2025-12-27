@@ -62,10 +62,22 @@ def get_best_monospace_font(
         QFont configured with the best available monospace font.
     """
     families_to_try = preferred_families or VSCODE_FONT_FAMILIES
-    font_db = QFontDatabase()
-    
-    # Get list of all available font families
-    available_families = set(font_db.families())
+
+    # NOTE:
+    # Some Qt6 Python bindings (notably certain PyQt6 builds) expose `QFontDatabase`
+    # without a default constructor, so `QFontDatabase()` raises `TypeError`.
+    # Use class/static APIs when available and fall back gracefully.
+    try:
+        available_families = set(QFontDatabase.families())  # type: ignore[arg-type]
+        is_fixed_pitch = QFontDatabase.isFixedPitch  # type: ignore[attr-defined]
+    except Exception:  # noqa: BLE001
+        try:
+            font_db = QFontDatabase()  # type: ignore[call-arg]
+            available_families = set(font_db.families())
+            is_fixed_pitch = font_db.isFixedPitch
+        except Exception:  # noqa: BLE001
+            available_families = set()
+            is_fixed_pitch = lambda *_args, **_kwargs: False  # noqa: E731
     
     # Find first available font from our preferred list
     selected_family = None
@@ -74,7 +86,7 @@ def get_best_monospace_font(
             # Verify it's actually monospace
             test_font = QFont(family, size)
             test_font.setStyleHint(QFont.StyleHint.Monospace)
-            if font_db.isFixedPitch(family) or _is_font_monospace(test_font):
+            if bool(is_fixed_pitch(family)) or _is_font_monospace(test_font):
                 selected_family = family
                 break
     
@@ -312,13 +324,11 @@ def get_documentation_tooltip_html(
         # Dark theme colors (VS Code Dark+)
         keyword_color = "#569CD6"  # Blue for keywords
         type_color = "#4EC9B0"     # Cyan for types
-        param_color = "#9CDCFE"    # Light blue for parameters
         comment_color = "#6A9955"  # Green for descriptions
     else:
         # Light theme colors (VS Code Light+)
         keyword_color = "#0000FF"  # Blue for keywords
         type_color = "#267F99"     # Teal for types
-        param_color = "#001080"    # Dark blue for parameters
         comment_color = "#008000"  # Green for descriptions
     
     # Build HTML content

@@ -26,6 +26,24 @@ from toolset.utils.window import TOOLSET_WINDOWS
 from utility.system.app_process.shutdown import terminate_child_processes
 
 
+class ToolsetApplication(QApplication):
+    """QApplication wrapper to route Qt callback exceptions to sys.excepthook.
+
+    Qt callbacks (signals/events) can swallow exceptions and/or terminate the app
+    without invoking `sys.excepthook`. Wrapping `notify()` ensures we capture and
+    log unexpected errors via the existing `toolset.main_init.on_app_crash` hook.
+    """
+
+    def notify(self, receiver: QObject, event: QEvent) -> bool:  # type: ignore[override]
+        try:
+            return super().notify(receiver, event)
+        except Exception:  # noqa: BLE001
+            etype, exc, tback = sys.exc_info()
+            if etype is not None and exc is not None:
+                sys.excepthook(etype, exc, tback)
+            return False
+
+
 class VerboseEventTracer(QObject):
     """Ultimate debug event tracer – logs detailed Qt event diagnostics."""
 
@@ -231,10 +249,10 @@ def main():
         RobustLogger().info("To disable profiling, set TOOLSET_DISABLE_PROFILE=1 or use --no-profile flag")
         RobustLogger().info("Profiling will capture all function calls and execution times")
 
-    app = QApplication(sys.argv)
+    app = ToolsetApplication(sys.argv)
     app.setApplicationName("HolocronToolset")
     app.setOrganizationName("PyKotor")
-    app.setOrganizationDomain("github.com/th3w1zard1/PyKotor")
+    app.setOrganizationDomain("github.com/OldRepublicDevs/PyKotor")
     app.setApplicationVersion(CURRENT_VERSION)
     app.setDesktopFileName("com.pykotor.toolset")
     app.setApplicationDisplayName("Holocron Toolset")

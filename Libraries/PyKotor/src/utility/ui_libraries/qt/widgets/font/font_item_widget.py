@@ -11,7 +11,10 @@ if TYPE_CHECKING:
 
 
 class FontItemWidget(QWidget):
-    sig_item_font_changed = pyqtSignal(str, QFontDatabase)
+    # NOTE: Some Qt6 Python bindings expose QFontDatabase without a default constructor.
+    # Emitting a QFontDatabase instance can therefore hard-crash at runtime.
+    # The receiver can use QFontDatabase class/static APIs if it needs styles/sizes.
+    sig_item_font_changed = pyqtSignal(str, object)
 
     def __init__(
         self,
@@ -57,8 +60,13 @@ class FontItemWidget(QWidget):
         self.set_current_font(font=font)
 
     def _init_fonts_list(self):
-        fd: QFontDatabase = QFontDatabase()  # pyright: ignore[reportCallIssue]
-        font_families: list[str] = fd.families(QFontDatabase.WritingSystem.Any)
+        # Some Qt6 Python bindings expose QFontDatabase without a default constructor.
+        # Try the class/static API first, then fall back to an instance when possible.
+        try:
+            font_families: list[str] = QFontDatabase.families(QFontDatabase.WritingSystem.Any)  # type: ignore[arg-type]
+        except Exception:  # noqa: BLE001
+            fd: QFontDatabase = QFontDatabase()  # pyright: ignore[reportCallIssue]
+            font_families = fd.families(QFontDatabase.WritingSystem.Any)
         self._font_families.extend(font_families)
         self._font_list_widget.addItems(font_families)
 
@@ -81,8 +89,7 @@ class FontItemWidget(QWidget):
             return
         font_name = item.text()
         self._font_line_edit.setText(font_name)
-        fd = QFontDatabase()  # pyright: ignore[reportCallIssue]
-        self.sig_item_font_changed.emit(font_name, fd)
+        self.sig_item_font_changed.emit(font_name, None)
 
     def _text_edited(self):
         self._font_list_widget.clear()
