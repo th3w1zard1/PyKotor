@@ -42,22 +42,15 @@ SETUPS = [
     {
         "path": Path("Libraries/PyKotor/setup.py"),
         "name": "pykotor",
-        "version": "1.8.0",
+        "version": "2.0.2",
         "description": "Read, modify and write files used by KotOR's game engine.",
         "extra": "",
     },
     {
         "path": Path("Libraries/PyKotorGL/setup.py"),
         "name": "pykotorgl",
-        "version": "1.8.0",
+        "version": "2.0.2",
         "description": "OpenGL rendering module for PyKotor - renders KotOR modules and scenes.",
-        "extra": "",
-    },
-    {
-        "path": Path("Libraries/PyKotorFont/setup.py"),
-        "name": "pykotorfont",
-        "version": "1.8.0",
-        "description": "Font rendering module for PyKotor - handles TXI/TGA font generation.",
         "extra": "",
     },
 ]

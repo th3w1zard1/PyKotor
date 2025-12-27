@@ -83,7 +83,6 @@ function Get-PykotorDependencies {
         $content = Get-Content $pyprojectPath -Raw
         if ($content -match '"pykotor[^"]*"') { $deps += "pykotor" }
         if ($content -match '"pykotorgl[^"]*"') { $deps += "pykotorgl" }
-        if ($content -match '"pykotorfont[^"]*"') { $deps += "pykotorfont" }
     }
     return $deps
 }
@@ -106,9 +105,6 @@ function Generate-CiWorkflow {
     }
     if ($PyKotorDeps -contains "pykotorgl") {
         $installCommands += 'pip install "pykotorgl @ git+https://github.com/OldRepublicDevs/PyKotorGL.git"'
-    }
-    if ($PyKotorDeps -contains "pykotorfont") {
-        $installCommands += 'pip install "pykotorfont @ git+https://github.com/OldRepublicDevs/PyKotorFont.git"'
     }
     $installCommands += "pip install -e .[dev]"
     

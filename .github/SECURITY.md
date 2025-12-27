@@ -88,7 +88,7 @@ When reporting a vulnerability, please include:
 ## Security Updates
 
 Security updates will be:
-- Released as patch versions (e.g., 1.8.0 → 1.8.1)
+- Released as patch versions (e.g., 2.0.2 → 2.0.3)
 - Documented in release notes
 - Tagged with security labels on GitHub
 - Announced via GitHub releases

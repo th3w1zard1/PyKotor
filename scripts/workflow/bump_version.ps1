@@ -10,7 +10,7 @@
     The tool to bump version for: toolset, holopatcher, kotordiff, batchpatcher, kitgenerator
 
 .PARAMETER Version
-    The new version (e.g., 3.1.3 or 1.8.0)
+    The new version (e.g., 3.1.3 or 2.0.2)
 
 .PARAMETER Commit
     If specified, commits and pushes the version change

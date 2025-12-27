@@ -28,7 +28,7 @@ A clear and concise description of what actually happened.
 
 - **OS**: [e.g., Windows 11, macOS 14.0, Ubuntu 22.04]
 - **Python Version**: [e.g., 3.11.5]
-- **PyKotor Version**: [e.g., 1.8.0]
+- **PyKotor Version**: [e.g., 2.0.2]
 - **Package Manager**: [e.g., pip, poetry, uv]
 
 ## Package Information

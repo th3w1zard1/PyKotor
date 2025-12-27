@@ -288,7 +288,6 @@ Each library is a standalone package:
 
 - **Libraries/PyKotor/** - Core library (`pykotor`)
 - **Libraries/PyKotorGL/** - OpenGL rendering (`pykotorgl`)
-- **Libraries/PyKotorFont/** - Font rendering (`pykotorfont`)
 
 ### Tools
 
@@ -318,14 +317,14 @@ Both files are automatically synchronized. The `setup.py` files read from `requi
 
 **PyKotorGL** (OpenGL extension):
 
-- `pykotor>=1.8.0` - Core library
+- `pykotor>=2.0.2` - Core library
 - `numpy>=1.22` - Numerical operations
 - `PyOpenGL~=3.1` - OpenGL bindings
 - `PyGLM>=2.0,<2.8` - GLM math library (CPython only)
 
 **PyKotorFont** (font extension):
 
-- `pykotor>=1.8.0` - Core library
+- `pykotor>=2.0.2` - Core library
 - `pillow>=9.5` - Image processing (CPython)
 - `pillow>10,<11.1.0` - Image processing (PyPy)
 
@@ -333,21 +332,20 @@ Both files are automatically synchronized. The `setup.py` files read from `requi
 
 **HolocronToolset**:
 
-- `pykotor>=1.8.0`
-- `pykotorgl>=1.8.0`
+- `pykotor>=2.0.2`
+- `pykotorgl>=2.0.2`
 - Qt bindings (PyQt5/PySide6)
 - Various UI libraries
 
 **HoloPatcher**:
 
-- `pykotor>=1.8.0`
+- `pykotor>=2.0.2`
 - `requests` - For update checking
 - `charset-normalizer` - Encoding detection
 
 **BatchPatcher**:
 
-- `pykotor>=1.8.0`
-- `pykotorfont>=1.8.0`
+- `pykotor>=2.0.2`
 - Translation libraries
 - Image processing tools
 

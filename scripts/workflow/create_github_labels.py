@@ -29,7 +29,6 @@ LABELS = [
     # Package labels
     {"name": "package: pykotor", "color": "1d76db", "description": "Related to PyKotor core"},
     {"name": "package: pykotorgl", "color": "1d76db", "description": "Related to PyKotorGL"},
-    {"name": "package: pykotorfont", "color": "1d76db", "description": "Related to PyKotorFont"},
     {"name": "package: toolset", "color": "1d76db", "description": "Related to HolocronToolset"},
     {"name": "package: holopatcher", "color": "1d76db", "description": "Related to HoloPatcher"},
     {"name": "package: batchpatcher", "color": "1d76db", "description": "Related to BatchPatcher"},

@@ -47,7 +47,6 @@ jobs:
         package:
           - pykotor
           - pykotorgl
-          - pykotorfont
         exclude:
           # PyGLM has limited support on older Python + macOS combinations
           - os: macos-latest
@@ -93,7 +92,6 @@ jobs:
           package_imports = {
               'pykotor': ['pykotor', 'pykotor.common', 'pykotor.resource', 'pykotor.extract'],
               'pykotorgl': ['pykotor.gl', 'pykotor.gl.scene'],
-              'pykotorfont': ['pykotor.font'],
           }
           
           package = '${{ matrix.package }}'
@@ -132,9 +130,7 @@ jobs:
               from pykotor.gl import scene
               print('✓ GL scene module loaded')
               
-          elif package == 'pykotorfont':
-              from pykotor.font import draw
-              print('✓ Font module loaded')
+          # No separate font package.
           
           print(f'✓ All {package} functionality tests passed')
           "
@@ -217,7 +213,6 @@ jobs:
           # Install core library with all extensions
           pip install "pykotor[all]" $INDEX
           pip install "pykotorgl[moderngl]" $INDEX || echo "pykotorgl not available yet"
-          pip install pykotorfont $INDEX || echo "pykotorfont not available yet"
         shell: bash
       
       - name: Run integration tests

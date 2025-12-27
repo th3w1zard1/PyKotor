@@ -128,7 +128,7 @@ jobs:
           if [ "${{ env.PYPI_SOURCE }}" = "testpypi" ]; then
             INDEX_ARGS="--index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/"
           fi
-          pip install "pykotor[all]" "pykotorgl[moderngl]" pykotorfont $INDEX_ARGS || echo "Some packages may not be available yet"
+          pip install "pykotor[all]" "pykotorgl[moderngl]" $INDEX_ARGS || echo "Some packages may not be available yet"
         shell: bash
       
       - name: Test pykotorgl
@@ -142,7 +142,7 @@ jobs:
               print(f'○ PyKotorGL not available: {e}')
           " || true
       
-      - name: Test pykotorfont
+      - name: Test pykotor
         run: |
           python -c "
           try:

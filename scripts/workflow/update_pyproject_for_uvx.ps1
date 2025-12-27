@@ -127,11 +127,6 @@ LGPL-3.0-or-later
         $changes += "Updated pykotorgl dependency to git URL"
     }
     
-    # 4. Update pykotorfont dependency
-    if ($content -match '"pykotorfont>=[\d.]+"') {
-        $content = $content -replace '"pykotorfont>=[\d.]+"', '"pykotorfont @ git+https://github.com/OldRepublicDevs/PyKotorFont.git"'
-        $changes += "Updated pykotorfont dependency to git URL"
-    }
     
     # 5. Add namespace package config for pykotor.* packages
     if ($content -match 'pykotor\.' -and $content -notmatch 'namespaces\s*=\s*true') {

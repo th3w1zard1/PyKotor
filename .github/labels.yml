@@ -66,9 +66,6 @@ labels:
   - name: "package: pykotorgl"
     color: 1d76db
     description: Related to PyKotorGL
-  - name: "package: pykotorfont"
-    color: 1d76db
-    description: Related to PyKotorFont
   - name: "package: toolset"
     color: 1d76db
     description: Related to HolocronToolset

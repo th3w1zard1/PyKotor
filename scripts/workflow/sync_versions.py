@@ -51,7 +51,6 @@ PROJECT_ROOT = Path(__file__).parent.parent
 CORE_PACKAGES = {
     "pykotor": PROJECT_ROOT / "Libraries" / "PyKotor" / "pyproject.toml",
     "pykotorgl": PROJECT_ROOT / "Libraries" / "PyKotorGL" / "pyproject.toml",
-    "pykotorfont": PROJECT_ROOT / "Libraries" / "PyKotorFont" / "pyproject.toml",
 }
 
 # Workspace meta-package

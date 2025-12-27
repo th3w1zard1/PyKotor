@@ -464,7 +464,7 @@ Tools/KotorMCP/
 ### Dependencies
 
 - `mcp>=0.1.1` - Model Context Protocol Python SDK
-- `pykotor>=1.8.0` - PyKotor core library for KOTOR file format support
+- `pykotor>=2.0.2` - PyKotor core library for KOTOR file format support
 
 ## Contributing
 

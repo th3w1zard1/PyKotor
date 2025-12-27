@@ -287,7 +287,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to release (e.g., 1.8.0)'
+        description: 'Version to release (e.g., 2.0.2)'
         required: true
         type: string
 
@@ -511,7 +511,7 @@ updates:
       day: "monday"
     open-pull-requests-limit: 5
     commit-message:
-      prefix: "chore(pykotorfont)"
+      prefix: "chore(pykotor)"
       include: "scope"
 
   - package-ecosystem: "pip"

@@ -70,14 +70,11 @@ jobs:
             // Label based on package mentions (dynamic tools + known packages)
             const addPackageLabel = (pkg) => labels.push(`package: ${pkg}`);
 
-            if (lcBody.includes('pykotor') && !lcBody.includes('pykotorgl') && !lcBody.includes('pykotorfont')) {
+            if (lcBody.includes('pykotor') && !lcBody.includes('pykotorgl')) {
               addPackageLabel('pykotor');
             }
             if (lcBody.includes('pykotorgl')) {
               addPackageLabel('pykotorgl');
-            }
-            if (lcBody.includes('pykotorfont')) {
-              addPackageLabel('pykotorfont');
             }
 
             for (const t of tools) {
