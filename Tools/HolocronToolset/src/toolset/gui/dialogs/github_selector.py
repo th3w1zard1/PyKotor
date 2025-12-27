@@ -30,7 +30,7 @@ except ImportError:
 from loggerplus import RobustLogger
 from qtpy import QtCore
 from qtpy.QtCore import QTimer, Qt
-from qtpy.QtGui import QBrush
+from qtpy.QtGui import QBrush, QPalette
 from qtpy.QtWidgets import (
     QApplication,
     QComboBox,
@@ -367,7 +367,9 @@ class GitHubFileSelector(QDialog):
                         return  # Stop if the expected part is not found
 
             if current_item:
-                current_item.setBackground(0, QBrush(Qt.GlobalColor.yellow))
+                pal = self.repo_tree_widget.palette()
+                current_item.setBackground(0, QBrush(pal.color(QPalette.ColorRole.Highlight)))
+                current_item.setForeground(0, QBrush(pal.color(QPalette.ColorRole.HighlightedText)))
                 current_item.setExpanded(True)
                 item_data: TreeInfoData | None = current_item.data(0, Qt.ItemDataRole.UserRole)
                 if item_data and item_data.type == "tree":
@@ -390,6 +392,7 @@ class GitHubFileSelector(QDialog):
         def hide_item(item: QTreeWidgetItem):
             item.setHidden(True)
             item.setBackground(0, QBrush(Qt.GlobalColor.transparent))
+            item.setForeground(0, QBrush(self.repo_tree_widget.palette().color(QPalette.ColorRole.Text)))
             for i in range(item.childCount()):
                 child: QTreeWidgetItem | None = item.child(i)
                 if child is None:

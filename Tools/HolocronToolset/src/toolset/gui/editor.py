@@ -1020,25 +1020,17 @@ class Editor(QMainWindow):
             - Sets textbox text and style accordingly.
         """
         setText: Callable[[str], None] = textbox.setPlainText if isinstance(textbox, QPlainTextEdit) else textbox.setText
-        className = "QLineEdit" if isinstance(textbox, QLineEdit) else "QPlainTextEdit"
+
+        from toolset.gui.common.style.palette_utils import apply_locstring_background
 
         textbox.locstring = locstring  # pyright: ignore[reportAttributeAccessIssue]
-        theme = GlobalSettings().selectedTheme
         if locstring.stringref == -1:
             text = str(locstring)
             setText(text if text != "-1" else "")
-            # Check theme condition for setting stylesheet
-            if theme in ("Native", "Fusion (Light)"):
-                textbox.setStyleSheet(f"{textbox.styleSheet()} {className} {{background-color: white;}}")
-            else:
-                textbox.setStyleSheet(f"{textbox.styleSheet()} {className} {{background-color: white; color: black;}}")
+            apply_locstring_background(textbox, from_tlk=False)
         elif self._installation is not None:
             setText(self._installation.talktable().string(locstring.stringref))
-            # Check theme condition for setting stylesheet
-            if theme in ("Native", "Fusion (Light)"):
-                textbox.setStyleSheet(f"{textbox.styleSheet()} {className} {{background-color: #fffded;}}")
-            else:
-                textbox.setStyleSheet(f"{textbox.styleSheet()} {className} {{background-color: #fffded; color: black;}}")
+            apply_locstring_background(textbox, from_tlk=True)
 
     def blinkWindow(self, *, sound: bool = True):
         if sound:

@@ -732,31 +732,31 @@ class RobustTreeView(QTreeView):
             self.branch_connectors_enabled = True
             self.setStyleSheet("""
             QTreeView {
-                alternate-background-color: yellow;
+                alternate-background-color: palette(alternate-base);
                 show-decoration-selected: 1;
             }
 
             QTreeView::item {
-                border: 1px solid #d9d9d9;
+                border: 1px solid palette(mid);
                 border-top-color: transparent;
                 border-bottom-color: transparent;
             }
 
             QTreeView::item:hover {
-                background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #e7effd, stop: 1 #cbdaf1);
-                border: 1px solid #bfcde4;
+                background: palette(midlight);
+                border: 1px solid palette(mid);
             }
 
             QTreeView::item:selected {
-                border: 1px solid #567dbc;
+                border: 1px solid palette(highlight);
             }
 
             QTreeView::item:selected:active {
-                background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #6ea1f1, stop: 1 #567dbc);
+                background: palette(highlight);
             }
 
             QTreeView::item:selected:!active {
-                background: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #6b9be8, stop: 1 #577fbf);
+                background: palette(highlight);
             }
 
             QTreeView::branch {

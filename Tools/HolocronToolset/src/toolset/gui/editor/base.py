@@ -712,14 +712,16 @@ class Editor(QMainWindow):
             textbox.set_locstring(locstring)
             return
         setText: Callable[[str], None] = textbox.setPlainText if isinstance(textbox, QPlainTextEdit) else textbox.setText
-        class_name: Literal["QLineEdit", "QPlainTextEdit"] = "QLineEdit" if isinstance(textbox, QLineEdit) else "QPlainTextEdit"
+
+        from toolset.gui.common.style.palette_utils import apply_locstring_background
+
         if locstring.stringref == -1:
             text = str(locstring)
             setText(text if text != "-1" else "")
-            textbox.setStyleSheet(f"{textbox.styleSheet()} {class_name} {{background-color: white;}}")
+            apply_locstring_background(textbox, from_tlk=False)
         elif self._installation is not None:
             setText(self._installation.talktable().string(locstring.stringref))
-            textbox.setStyleSheet(f"{textbox.styleSheet()} {class_name} {{background-color: #fffded;}}")
+            apply_locstring_background(textbox, from_tlk=True)
         textbox.locstring = locstring  # type: ignore[attr-defined]
 
     def blink_window(

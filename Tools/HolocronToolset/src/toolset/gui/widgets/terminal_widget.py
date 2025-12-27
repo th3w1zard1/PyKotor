@@ -72,33 +72,28 @@ class TerminalWidget(QWidget):
         self._write_prompt()
 
     def _apply_terminal_theme(self):
-        """Apply VSCode-style dark terminal theme."""
-        palette = self.terminal_output.palette()
-        palette.setColor(QPalette.ColorRole.Base, QColor(30, 30, 30))  # Background
-        palette.setColor(QPalette.ColorRole.Text, QColor(204, 204, 204))  # Foreground text
-        self.terminal_output.setPalette(palette)
-
+        """Apply a theme that respects the current application palette."""
         self.terminal_output.setStyleSheet("""
             QPlainTextEdit {
-                background-color: #1e1e1e;
-                color: #cccccc;
+                background-color: palette(base);
+                color: palette(text);
                 border: none;
                 padding: 8px;
-                selection-background-color: #264f78;
-                selection-color: #ffffff;
+                selection-background-color: palette(highlight);
+                selection-color: palette(highlighted-text);
             }
             QScrollBar:vertical {
-                background-color: #1e1e1e;
+                background-color: palette(base);
                 width: 14px;
                 border: none;
             }
             QScrollBar::handle:vertical {
-                background-color: #424242;
+                background-color: palette(mid);
                 min-height: 30px;
                 border-radius: 7px;
             }
             QScrollBar::handle:vertical:hover {
-                background-color: #4f4f4f;
+                background-color: palette(dark);
             }
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
                 height: 0px;

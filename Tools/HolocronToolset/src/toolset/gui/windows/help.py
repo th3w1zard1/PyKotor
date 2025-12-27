@@ -181,6 +181,21 @@ class HelpWindow(QMainWindow):
 
     def _wrap_html_with_styles(self, html_body: str) -> str:
         """Wrap HTML body with modern CSS styling for better readability."""
+        from qtpy.QtGui import QPalette
+
+        pal = self.palette()
+        fg = pal.color(QPalette.ColorRole.WindowText)
+        bg = pal.color(QPalette.ColorRole.Window)
+        base = pal.color(QPalette.ColorRole.Base)
+        alt_base = pal.color(QPalette.ColorRole.AlternateBase)
+        border = pal.color(QPalette.ColorRole.Mid)
+        highlight = pal.color(QPalette.ColorRole.Highlight)
+        link = pal.color(QPalette.ColorRole.Link)
+
+        muted_fg = QColor(fg)
+        muted_fg.setAlpha(190)
+        muted_css = f"rgba({muted_fg.red()}, {muted_fg.green()}, {muted_fg.blue()}, {muted_fg.alpha() / 255.0:.3f})"
+
         return f"""<!DOCTYPE html>
 <html>
 <head>
@@ -189,11 +204,11 @@ class HelpWindow(QMainWindow):
         body {{
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
             line-height: 1.6;
-            color: #333;
+            color: {fg.name()};
             max-width: 100%;
             margin: 0;
             padding: 24px;
-            background-color: #ffffff;
+            background-color: {bg.name()};
         }}
         
         h1 {{
@@ -202,8 +217,8 @@ class HelpWindow(QMainWindow):
             margin-top: 0;
             margin-bottom: 16px;
             padding-bottom: 12px;
-            border-bottom: 2px solid #e1e4e8;
-            color: #24292e;
+            border-bottom: 2px solid {border.name()};
+            color: {fg.name()};
         }}
         
         h2 {{
@@ -212,8 +227,8 @@ class HelpWindow(QMainWindow):
             margin-top: 32px;
             margin-bottom: 16px;
             padding-bottom: 8px;
-            border-bottom: 1px solid #e1e4e8;
-            color: #24292e;
+            border-bottom: 1px solid {border.name()};
+            color: {fg.name()};
         }}
         
         h3 {{
@@ -221,7 +236,7 @@ class HelpWindow(QMainWindow):
             font-weight: 600;
             margin-top: 24px;
             margin-bottom: 12px;
-            color: #24292e;
+            color: {fg.name()};
         }}
         
         h4, h5, h6 {{
@@ -229,7 +244,7 @@ class HelpWindow(QMainWindow):
             font-weight: 600;
             margin-top: 20px;
             margin-bottom: 10px;
-            color: #24292e;
+            color: {fg.name()};
         }}
         
         p {{
@@ -261,61 +276,61 @@ class HelpWindow(QMainWindow):
         }}
         
         table thead {{
-            background-color: #f6f8fa;
+            background-color: {alt_base.name()};
         }}
         
         table th {{
             font-weight: 600;
             text-align: left;
             padding: 12px 16px;
-            border: 1px solid #d1d5da;
-            background-color: #f6f8fa;
-            color: #24292e;
+            border: 1px solid {border.name()};
+            background-color: {alt_base.name()};
+            color: {fg.name()};
         }}
         
         table td {{
             padding: 12px 16px;
-            border: 1px solid #d1d5da;
+            border: 1px solid {border.name()};
             vertical-align: top;
         }}
         
         table tbody tr:nth-child(even) {{
-            background-color: #f9fafb;
+            background-color: {alt_base.name()};
         }}
         
         table tbody tr:hover {{
-            background-color: #f1f3f5;
+            background-color: {base.name()};
         }}
         
         code {{
             font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', 'Courier', monospace;
             font-size: 0.9em;
             padding: 2px 6px;
-            background-color: #f6f8fa;
+            background-color: {alt_base.name()};
             border-radius: 3px;
-            color: #e83e8c;
+            color: {highlight.name()};
         }}
         
         pre {{
             font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', 'Menlo', 'Courier', monospace;
             font-size: 0.9em;
             padding: 16px;
-            background-color: #f6f8fa;
+            background-color: {alt_base.name()};
             border-radius: 6px;
             overflow-x: auto;
             margin: 16px 0;
-            border: 1px solid #e1e4e8;
+            border: 1px solid {border.name()};
         }}
         
         pre code {{
             padding: 0;
             background-color: transparent;
-            color: #24292e;
+            color: {fg.name()};
             border-radius: 0;
         }}
         
         a {{
-            color: #0366d6;
+            color: {link.name()};
             text-decoration: none;
         }}
         
@@ -328,19 +343,19 @@ class HelpWindow(QMainWindow):
             margin: 24px 0;
             background: transparent;
             border: 0;
-            border-top: 1px solid #e1e4e8;
+            border-top: 1px solid {border.name()};
         }}
         
         blockquote {{
             margin: 16px 0;
             padding: 0 16px;
-            color: #6a737d;
-            border-left: 4px solid #dfe2e5;
+            color: {muted_css};
+            border-left: 4px solid {border.name()};
         }}
         
         strong {{
             font-weight: 600;
-            color: #24292e;
+            color: {fg.name()};
         }}
     </style>
 </head>

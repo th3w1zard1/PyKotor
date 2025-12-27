@@ -8,6 +8,7 @@ from qtpy.QtCore import (
 from qtpy.QtWidgets import QApplication, QWidget
 
 from pykotor.common.language import LocalizedString
+from toolset.gui.common.style.palette_utils import apply_locstring_background
 from toolset.gui.dialogs.edit.locstring import LocalizedStringDialog
 
 if TYPE_CHECKING:
@@ -68,22 +69,15 @@ class LocalizedStringLineEdit(QWidget):
         Args:
         ----
             locstring: {Localized string object to set}
-
-        Processing Logic:
-        ----------------
-            - Sets the internal locstring property to the passed in value
-            - Checks if the stringref is -1
-            - If so, sets the text directly from the string and uses white background
-            - If not, looks up the string from the talktable and uses a yellow background
         """
         self._locstring = locstring
         if locstring.stringref == -1:
             text = str(locstring)
             self.ui.locstringText.setText(text if text != "-1" else "")
-            self.ui.locstringText.setStyleSheet(f"{self.ui.locstringText.styleSheet()} QLineEdit {{background-color: white;}}")
+            apply_locstring_background(self.ui.locstringText, from_tlk=False)
         else:
             self.ui.locstringText.setText(self._installation.talktable().string(locstring.stringref))
-            self.ui.locstringText.setStyleSheet(f"{self.ui.locstringText.styleSheet()} QLineEdit {{background-color: #fffded;}}")
+            apply_locstring_background(self.ui.locstringText, from_tlk=True)
 
     def edit_locstring(self):
         dialog = LocalizedStringDialog(self, self._installation, self._locstring)
