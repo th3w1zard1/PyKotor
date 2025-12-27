@@ -331,32 +331,50 @@ def get_documentation_tooltip_html(
         type_color = "#267F99"     # Teal for types
         comment_color = "#008000"  # Green for descriptions
     
-    # Build HTML content
-    parts = []
-    
-    # Title with keyword styling
-    parts.append(f'<span style="color: {keyword_color}; font-weight: bold;">{title}</span>')
-    
-    # Signature with syntax highlighting
+    # Build HTML content with explicit wrapping + compact spacing.
+    parts: list[str] = []
+
+    # Title
+    parts.append(
+        f'<div style="margin: 0; padding: 0;">'
+        f'<span style="color: {keyword_color}; font-weight: 600;">{title}</span>'
+        f'</div>'
+    )
+
+    # Signature (must wrap; Qt tooltips otherwise tend to treat <code> as no-wrap)
     if signature:
-        parts.append(f'<br><code style="color: {type_color}; font-family: monospace;">{signature}</code>')
-    
-    # Description
+        parts.append(
+            f'<div style="margin-top: 4px;">'
+            f'<code style="'
+            f'color: {type_color}; '
+            f'font-family: Consolas, Menlo, Monaco, monospace; '
+            f'white-space: pre-wrap; '
+            f'word-break: break-word; '
+            f'display: block;'
+            f'">{signature}</code>'
+            f'</div>'
+        )
+
+    # Description (wrap + compact)
     if description:
-        parts.append(f'<br><br><span style="color: {comment_color};">{description}</span>')
-    
+        parts.append(
+            f'<div style="margin-top: 6px; color: {comment_color}; white-space: normal; word-break: break-word;">'
+            f'{description}'
+            f'</div>'
+        )
+
     content = "".join(parts)
-    
-    # Wrap in styled container
-    # Using a monospace font for code parts ensures alignment
+
     return f'''<div style="
         font-family: 'Segoe UI', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
-        font-size: 13px;
-        line-height: 1.4;
+        font-size: 12px;
+        line-height: 1.2;
         color: {text_color};
-        max-width: 500px;
-        white-space: pre-wrap;
-        word-wrap: break-word;
+        max-width: 520px;
+        white-space: normal;
+        word-break: break-word;
+        margin: 0;
+        padding: 0;
     ">{content}</div>'''
 
 
