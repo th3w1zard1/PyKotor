@@ -14,8 +14,6 @@ from __future__ import annotations
 from io import BytesIO
 from typing import TYPE_CHECKING
 
-from loggerplus import RobustLogger
-
 from pykotor.extract.file import FileResource
 from pykotor.resource.formats.tpc import read_tpc
 from pykotor.resource.formats.tpc.tpc_data import TPCMipmap, TPCTextureFormat
@@ -79,9 +77,9 @@ def choose_best_mipmap(mipmaps: list[TPCMipmap], target_size: int) -> TPCMipmap:
 def load_tpc_preview_mipmap(tpc_bytes: bytes, target_size: int) -> TPCMipmap:
     """Load a displayable preview mipmap from raw TPC bytes."""
     tpc = read_tpc(tpc_bytes)
-    # Ensure mipmap data is populated.
-    with _suppress_decode_errors():
-        tpc.decode()
+    # IMPORTANT (performance): do NOT call tpc.decode()/tpc.convert() here.
+    # Those convert *every* mipmap in the texture, which is far too slow for thumbnails.
+    # We only normalize the single chosen mipmap.
     best = choose_best_mipmap(tpc.layers[0].mipmaps, target_size)
     return normalize_mipmap_for_qt(best)
 
@@ -157,15 +155,5 @@ def _qimage_from_bytes(data: bytes) -> "QImage":
     if not qimg.loadFromData(data):
         raise ValueError("Failed to load image data into QImage")
     return qimg
-
-
-class _suppress_decode_errors:
-    def __enter__(self):  # noqa: D401
-        return self
-
-    def __exit__(self, exc_type, exc, tb):  # noqa: D401
-        if exc is not None:
-            RobustLogger().debug(f"tpc.decode() failed during preview generation: {exc}")
-        return True
 
 

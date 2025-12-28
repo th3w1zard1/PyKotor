@@ -30,7 +30,6 @@ from qtpy.QtWidgets import (
 from pykotor.resource.formats.tpc import TPC, TPCTextureFormat, read_tpc, write_tpc
 from pykotor.resource.type import ResourceType
 from toolset.gui.editor import Editor
-from toolset.gui.widgets.texture_preview import normalize_mipmap_for_qt
 
 if TYPE_CHECKING:
     import os
@@ -390,7 +389,20 @@ class TPCEditor(Editor):
 
         mipmap_index = max(0, min(self._current_mipmap, len(self._tpc.layers[layer_index].mipmaps) - 1))
         mipmap: TPCMipmap = self._tpc.layers[layer_index].mipmaps[mipmap_index].copy()
-        mipmap = normalize_mipmap_for_qt(mipmap)
+        display_format = mipmap.tpc_format
+
+        # Convert to displayable format (decompress DXT formats for display)
+        if display_format == TPCTextureFormat.DXT1:
+            mipmap.convert(TPCTextureFormat.RGB)
+        elif display_format in (TPCTextureFormat.DXT3, TPCTextureFormat.DXT5):
+            mipmap.convert(TPCTextureFormat.RGBA)
+        elif display_format == TPCTextureFormat.BGRA:
+            mipmap.convert(TPCTextureFormat.RGBA)
+        elif display_format == TPCTextureFormat.BGR:
+            mipmap.convert(TPCTextureFormat.RGB)
+        elif display_format == TPCTextureFormat.Greyscale:
+            mipmap.convert(TPCTextureFormat.RGBA)
+
         target_format: TPCTextureFormat = mipmap.tpc_format
 
         # Validate data before creating QImage
@@ -688,7 +700,17 @@ class TPCEditor(Editor):
 
             mipmap_index = max(0, min(self._current_mipmap, len(self._tpc.layers[layer_index].mipmaps) - 1))
             mipmap: TPCMipmap = self._tpc.layers[layer_index].mipmaps[mipmap_index].copy()
-            mipmap = normalize_mipmap_for_qt(mipmap)
+            export_format = mipmap.tpc_format
+
+            # Convert to displayable format
+            if export_format == TPCTextureFormat.DXT1:
+                mipmap.convert(TPCTextureFormat.RGB)
+            elif export_format in (TPCTextureFormat.DXT3, TPCTextureFormat.DXT5, TPCTextureFormat.BGRA):
+                mipmap.convert(TPCTextureFormat.RGBA)
+            elif export_format == TPCTextureFormat.BGR:
+                mipmap.convert(TPCTextureFormat.RGB)
+            elif export_format == TPCTextureFormat.Greyscale:
+                mipmap.convert(TPCTextureFormat.RGBA)
 
             # Try PIL first, fallback to QImage
             if Image is not None:
@@ -737,7 +759,20 @@ class TPCEditor(Editor):
 
         mipmap_index = max(0, min(self._current_mipmap, len(self._tpc.layers[layer_index].mipmaps) - 1))
         mipmap: TPCMipmap = self._tpc.layers[layer_index].mipmaps[mipmap_index].copy()
-        mipmap = normalize_mipmap_for_qt(mipmap)
+        display_format = mipmap.tpc_format
+
+        # Convert to displayable format (decompress DXT formats for display)
+        if display_format == TPCTextureFormat.DXT1:
+            mipmap.convert(TPCTextureFormat.RGB)
+        elif display_format in (TPCTextureFormat.DXT3, TPCTextureFormat.DXT5):
+            mipmap.convert(TPCTextureFormat.RGBA)
+        elif display_format == TPCTextureFormat.BGRA:
+            mipmap.convert(TPCTextureFormat.RGBA)
+        elif display_format == TPCTextureFormat.BGR:
+            mipmap.convert(TPCTextureFormat.RGB)
+        elif display_format == TPCTextureFormat.Greyscale:
+            mipmap.convert(TPCTextureFormat.RGBA)
+
         target_format = mipmap.tpc_format
 
         # Validate data before creating QImage
