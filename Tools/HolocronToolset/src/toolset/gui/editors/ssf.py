@@ -5,7 +5,13 @@ from typing import TYPE_CHECKING
 
 from qtpy.QtCore import QEvent, QObject, QPoint
 from qtpy.QtGui import QCloseEvent
-from qtpy.QtWidgets import QFileDialog, QMenu, QMessageBox, QShortcut, QStyle
+from qtpy.QtWidgets import (
+    QFileDialog,
+    QMenu,
+    QMessageBox,
+    QShortcut,
+    QStyle,
+)
 
 from pykotor.extract.talktable import TalkTable
 from pykotor.extract.installation import SearchLocation
