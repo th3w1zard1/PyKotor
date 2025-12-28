@@ -617,9 +617,7 @@ class CaseAwarePath(InternalWindowsPath if os.name == "nt" else InternalPosixPat
 
     __slots__: tuple[str] = ("_tail_cached",)
     _original_methods: ClassVar[dict[str, Callable[..., Any]]] = {}
-    # Cache directory listings for case-resolution. Must be invalidated when the directory changes
-    # (create/rename/delete updates dir mtime on POSIX/NTFS).
-    _dir_cache: ClassVar[dict[str, tuple[int | None, tuple[InternalPath, ...]]]] = {}
+    _dir_cache: ClassVar[dict[str, tuple[InternalPath, ...]]] = {}
     _dir_cache_max_size: ClassVar[int] = 1000
 
     if sys.version_info < (3, 13):
