@@ -53,6 +53,11 @@ class ThemeSelectorDialog(QDialog):
         self._init_ui()
         self._populate_lists()
         
+        # Setup event filter to prevent scroll wheel interaction with controls
+        from toolset.gui.common.filters import NoScrollEventFilter
+        self._no_scroll_filter = NoScrollEventFilter(self)
+        self._no_scroll_filter.setup_filter(parent_widget=self)
+        
     def _init_ui(self):
         """Set up the user interface."""
         self.setWindowTitle(tr("Theme Selection"))

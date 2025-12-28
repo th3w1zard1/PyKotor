@@ -143,7 +143,7 @@ class NSSEditor(Editor):
         # This ensures tooltips are readable in all themes
         apply_tooltip_style_to_app()
 
-        # Setup scrollbar event filter to prevent scrollbar interaction with controls
+        # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
 
         self._no_scroll_filter = NoScrollEventFilter(self)

@@ -553,7 +553,7 @@ class RoomPropertiesDialog(QDialog):
 
         self.setLayout(main_layout)
         
-        # Setup scrollbar event filter to prevent scrollbar interaction with controls
+        # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
@@ -608,7 +608,7 @@ class TrackPropertiesDialog(QDialog):
 
         self.setLayout(main_layout)
         
-        # Setup scrollbar event filter to prevent scrollbar interaction with controls
+        # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
@@ -663,7 +663,7 @@ class ObstaclePropertiesDialog(QDialog):
 
         self.setLayout(main_layout)
         
-        # Setup scrollbar event filter to prevent scrollbar interaction with controls
+        # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
@@ -730,7 +730,7 @@ class DoorHookPropertiesDialog(QDialog):
 
         self.setLayout(main_layout)
         
-        # Setup scrollbar event filter to prevent scrollbar interaction with controls
+        # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)

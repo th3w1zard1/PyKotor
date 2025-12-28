@@ -294,6 +294,12 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         self.ui: Ui_MainWindow = Ui_MainWindow()
         self.ui.setupUi(self)
         self.setWindowTitle("Module Designer")  # Re-set after UI setup
+        
+        # Setup event filter to prevent scroll wheel interaction with controls
+        from toolset.gui.common.filters import NoScrollEventFilter
+        self._no_scroll_filter = NoScrollEventFilter(self)
+        self._no_scroll_filter.setup_filter(parent_widget=self)
+        
         self._init_ui()
         self._install_view_stack()
         self._setup_signals()

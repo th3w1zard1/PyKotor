@@ -88,6 +88,12 @@ class UTCEditor(Editor):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.resize(798, 553)
+        
+        # Setup event filter to prevent scroll wheel interaction with controls
+        from toolset.gui.common.filters import NoScrollEventFilter
+        self._no_scroll_filter = NoScrollEventFilter(self)
+        self._no_scroll_filter.setup_filter(parent_widget=self)
+        
         self._setup_menus()
         self._add_help_action()
         self._setup_installation(installation)

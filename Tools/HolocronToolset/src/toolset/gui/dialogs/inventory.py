@@ -95,7 +95,7 @@ class InventoryEditor(QDialog):
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
         
-        # Setup scrollbar event filter to prevent scrollbar interaction with controls
+        # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
@@ -645,7 +645,7 @@ class ItemBuilderDialog(QDialog):
         self._progress_bar: QProgressBar = QProgressBar(self)
         self._progress_bar.setMaximum(0)
 
-        # Setup scrollbar event filter to prevent scrollbar interaction with controls
+        # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter  # noqa: PLC0415
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
@@ -838,7 +838,7 @@ class SetItemResRefDialog(QDialog):
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
         
-        # Setup scrollbar event filter to prevent scrollbar interaction with controls
+        # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)

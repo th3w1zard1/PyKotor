@@ -7,6 +7,7 @@ allowing them to choose which editor to use.
 from __future__ import annotations
 
 import platform
+
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -28,7 +29,6 @@ from qtpy.QtWidgets import (
 
 from toolset.blender import BlenderInfo, detect_blender, get_blender_settings
 from toolset.blender.detection import (
-    check_kotorblender_installed,
     find_all_blender_installations,
     install_kotorblender,
 )
@@ -65,6 +65,12 @@ class BlenderChoiceDialog(QDialog):
 
         self._setup_ui()
 
+        # Setup event filter to prevent scroll wheel interaction with controls
+        from toolset.gui.common.filters import NoScrollEventFilter
+
+        self._no_scroll_filter = NoScrollEventFilter(self)
+        self._no_scroll_filter.setup_filter(parent_widget=self)
+
     @property
     def choice(self) -> str:
         """Get the user's choice: 'blender' or 'builtin'."""
@@ -79,7 +85,7 @@ class BlenderChoiceDialog(QDialog):
         """Setup the dialog UI."""
         self.setWindowTitle("Choose Editor")
         self.setMinimumWidth(500)
-        self.setWindowFlags(self.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowType.WindowContextHelpButtonHint)
 
         layout = QVBoxLayout(self)
         layout.setSpacing(16)
@@ -87,7 +93,7 @@ class BlenderChoiceDialog(QDialog):
 
         # Blender detection info
         self._info_frame = QFrame()
-        self._info_frame.setFrameStyle(QFrame.StyledPanel | QFrame.Raised)
+        self._info_frame.setFrameStyle(QFrame.Shape.StyledPanel | QFrame.Shadow.Raised)
         self._info_layout = QVBoxLayout(self._info_frame)
 
         self._update_blender_info_display()
@@ -95,10 +101,8 @@ class BlenderChoiceDialog(QDialog):
         layout.addWidget(self._info_frame)
 
         # Question
-        question_label = QLabel(
-            f"<b>How would you like to open the {self._context}?</b>"
-        )
-        question_label.setAlignment(Qt.AlignCenter)
+        question_label = QLabel(f"<b>How would you like to open the {self._context}?</b>")
+        question_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(question_label)
 
         # Choice buttons
@@ -118,10 +122,7 @@ class BlenderChoiceDialog(QDialog):
         self._builtin_button.setText("Use Built-in Editor")
         self._builtin_button.setMinimumHeight(60)
         self._builtin_button.clicked.connect(self._choose_builtin)
-        self._builtin_button.setToolTip(
-            "Use the built-in PyKotorGL renderer.\n"
-            "Integrated experience, no external application needed."
-        )
+        self._builtin_button.setToolTip("Use the built-in PyKotorGL renderer.\n" "Integrated experience, no external application needed.")
         buttons_layout.addWidget(self._builtin_button)
 
         layout.addLayout(buttons_layout)
@@ -138,43 +139,39 @@ class BlenderChoiceDialog(QDialog):
             "</table>"
         )
         comparison_label.setStyleSheet("color: #666; font-size: 11px;")
-        comparison_label.setAlignment(Qt.AlignCenter)
+        comparison_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(comparison_label)
 
         # Remember choice
         self._remember_checkbox = QCheckBox("Remember my choice")
-        self._remember_checkbox.setToolTip(
-            "Don't show this dialog again. You can change this in Settings."
-        )
-        layout.addWidget(self._remember_checkbox, alignment=Qt.AlignCenter)
+        self._remember_checkbox.setToolTip("Don't show this dialog again. You can change this in Settings.")
+        layout.addWidget(self._remember_checkbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
         # Cancel button
-        layout.addItem(QSpacerItem(20, 10, QSizePolicy.Minimum, QSizePolicy.Expanding))
+        layout.addItem(QSpacerItem(20, 10, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
 
         cancel_button = QPushButton("Cancel")
         cancel_button.clicked.connect(self.reject)
-        layout.addWidget(cancel_button, alignment=Qt.AlignRight)
+        layout.addWidget(cancel_button, alignment=Qt.AlignmentFlag.AlignRight)
 
     def _update_blender_info_display(self):
         """Update the Blender info display based on current state."""
         # Clear existing widgets
         while self._info_layout.count():
             item = self._info_layout.takeAt(0)
-            if item.widget():
-                item.widget().deleteLater()
-            elif item.layout():
+            if item is not None and item.widget():
+                item.widget().deleteLater()  # pyright: ignore[reportOptionalMemberAccess]
+            elif item is not None and item.layout():
                 # Clear nested layouts
-                while item.layout().count():
-                    nested_item = item.layout().takeAt(0)
-                    if nested_item.widget():
-                        nested_item.widget().deleteLater()
+                while item is not None and item.layout().count():  # pyright: ignore[reportOptionalMemberAccess]
+                    nested_item = item.layout().takeAt(0)  # pyright: ignore[reportOptionalMemberAccess]
+                    if nested_item is not None and nested_item.widget():
+                        nested_item.widget().deleteLater()  # pyright: ignore[reportOptionalMemberAccess]
 
         if self._blender_info.is_valid:
             # Blender found - show status
-            status_label = QLabel(
-                f"<b>Blender {self._blender_info.version_string}</b> detected"
-            )
-            status_label.setStyleSheet("color: #4CAF50;")  # Green
+            status_label = QLabel(f"<b>Blender {self._blender_info.version_string}</b> detected")
+            status_label.setStyleSheet("color: #4caf50;")  # Green
             self._info_layout.addWidget(status_label)
 
             path_label = QLabel(f"<small>{self._blender_info.executable}</small>")
@@ -184,21 +181,15 @@ class BlenderChoiceDialog(QDialog):
 
             if self._blender_info.has_kotorblender:
                 # kotorblender installed - all good
-                addon_label = QLabel(
-                    f"<b>kotorblender {self._blender_info.kotorblender_version}</b> installed"
-                )
-                addon_label.setStyleSheet("color: #4CAF50;")
+                addon_label = QLabel(f"<b>kotorblender {self._blender_info.kotorblender_version}</b> installed")
+                addon_label.setStyleSheet("color: #4caf50;")
                 self._info_layout.addWidget(addon_label)
             else:
                 # kotorblender missing - show warning and install option
-                self._warning_label = QLabel(
-                    "<span style='color: #FF9800;'><b>Warning:</b> kotorblender not found</span>"
-                )
+                self._warning_label = QLabel("<span style='color: #ff9800;'><b>Warning:</b> kotorblender not found</span>")
                 self._info_layout.addWidget(self._warning_label)
 
-                self._install_hint_label = QLabel(
-                    "<small>kotorblender is required to use Blender. Install it to enable the Blender option.</small>"
-                )
+                self._install_hint_label = QLabel("<small>kotorblender is required to use Blender. Install it to enable the Blender option.</small>")
                 self._install_hint_label.setWordWrap(True)
                 self._install_hint_label.setStyleSheet("color: #888;")
                 self._info_layout.addWidget(self._install_hint_label)
@@ -206,17 +197,17 @@ class BlenderChoiceDialog(QDialog):
                 # Install buttons
                 install_button_layout = QHBoxLayout()
                 install_button_layout.addStretch()
-                
+
                 self._install_button = QPushButton("Install kotorblender")
                 self._install_button.clicked.connect(self._install_kotorblender)
                 self._install_button.setToolTip("Automatically install kotorblender from bundled source")
                 install_button_layout.addWidget(self._install_button)
-                
+
                 browse_addon_btn = QPushButton("Browse...")
                 browse_addon_btn.clicked.connect(self._browse_kotorblender)
                 browse_addon_btn.setToolTip("Manually select kotorblender folder (io_scene_kotor)")
                 install_button_layout.addWidget(browse_addon_btn)
-                
+
                 install_button_layout.addStretch()
                 self._info_layout.addLayout(install_button_layout)
 
@@ -227,14 +218,10 @@ class BlenderChoiceDialog(QDialog):
 
         else:
             # No Blender found - show error and browse option
-            error_label = QLabel(
-                "<span style='color: #f44336;'><b>Blender not found</b></span>"
-            )
+            error_label = QLabel("<span style='color: #f44336;'><b>Blender not found</b></span>")
             self._info_layout.addWidget(error_label)
 
-            hint_label = QLabel(
-                "<small>Install Blender 3.6 or later, or browse to an existing installation.</small>"
-            )
+            hint_label = QLabel("<small>Install Blender 3.6 or later, or browse to an existing installation.</small>")
             hint_label.setWordWrap(True)
             hint_label.setStyleSheet("color: #888;")
             self._info_layout.addWidget(hint_label)
@@ -242,42 +229,42 @@ class BlenderChoiceDialog(QDialog):
             # Browse button
             browse_layout = QHBoxLayout()
             browse_layout.addStretch()
-            
+
             browse_btn = QPushButton("Browse for Blender...")
             browse_btn.clicked.connect(self._browse_blender)
             browse_layout.addWidget(browse_btn)
-            
+
             browse_layout.addStretch()
             self._info_layout.addLayout(browse_layout)
 
     def _add_installation_selector(self):
         """Add a combo box to select from multiple Blender installations."""
         selector_layout = QHBoxLayout()
-        
+
         selector_label = QLabel("<small>Other installations:</small>")
         selector_label.setStyleSheet("color: #888;")
         selector_layout.addWidget(selector_label)
-        
+
         self._installation_combo = QComboBox()
         self._installation_combo.setMaximumWidth(300)
-        
+
         for info in self._all_installations:
             label = f"Blender {info.version_string}"
             if info.has_kotorblender:
                 label += f" (kotorblender {info.kotorblender_version})"
             label += f" - {info.executable.parent.name}"
             self._installation_combo.addItem(label)
-        
+
         # Select the current one
         for i, info in enumerate(self._all_installations):
             if info.executable == self._blender_info.executable:
                 self._installation_combo.setCurrentIndex(i)
                 break
-        
+
         self._installation_combo.currentIndexChanged.connect(self._on_installation_changed)
         selector_layout.addWidget(self._installation_combo)
         selector_layout.addStretch()
-        
+
         self._info_layout.addLayout(selector_layout)
 
     def _on_installation_changed(self, index: int):
@@ -291,22 +278,13 @@ class BlenderChoiceDialog(QDialog):
         """Update the Blender button enabled state and tooltip."""
         is_enabled = self._blender_info.is_valid and self._blender_info.has_kotorblender
         self._blender_button.setEnabled(is_enabled)
-        
+
         if self._blender_info.has_kotorblender:
-            tooltip = (
-                "Use Blender for professional-grade 3D editing with full kotorblender support.\n"
-                "Better performance, more features, industry-standard tools."
-            )
+            tooltip = "Use Blender for professional-grade 3D editing with full kotorblender support.\n" "Better performance, more features, industry-standard tools."
         elif self._blender_info.is_valid:
-            tooltip = (
-                "kotorblender is required to use Blender.\n"
-                "Click 'Install kotorblender' above to install it."
-            )
+            tooltip = "kotorblender is required to use Blender.\n" "Click 'Install kotorblender' above to install it."
         else:
-            tooltip = (
-                "Blender is not installed or not found.\n"
-                "Click 'Browse for Blender...' above to locate it."
-            )
+            tooltip = "Blender is not installed or not found.\n" "Click 'Browse for Blender...' above to locate it."
         self._blender_button.setToolTip(tooltip)
 
     def _choose_blender(self):
@@ -322,7 +300,7 @@ class BlenderChoiceDialog(QDialog):
     def _browse_blender(self):
         """Browse for Blender executable."""
         system = platform.system()
-        
+
         if system == "Windows":
             file_filter = "Blender Executable (blender.exe);;All Files (*)"
             start_dir = "C:\\Program Files\\Blender Foundation"
@@ -332,14 +310,14 @@ class BlenderChoiceDialog(QDialog):
         else:
             file_filter = "Blender Executable (blender);;All Files (*)"
             start_dir = "/usr/bin"
-        
+
         path, _ = QFileDialog.getOpenFileName(
             self,
             "Select Blender Executable",
             start_dir,
             file_filter,
         )
-        
+
         if path:
             # Try to detect this Blender
             new_info = detect_blender(path)
@@ -360,9 +338,9 @@ class BlenderChoiceDialog(QDialog):
             self,
             "Select kotorblender folder (io_scene_kotor)",
             "",
-            QFileDialog.ShowDirsOnly,
+            QFileDialog.Option.ShowDirsOnly,
         )
-        
+
         if folder:
             folder_path = Path(folder)
             # Verify it's a valid kotorblender source
@@ -445,7 +423,7 @@ def show_blender_choice_dialog(
 
     # Check if Blender is available
     blender_info = settings.get_blender_info()
-    
+
     # Always show dialog if Blender is detected (even without kotorblender)
     # This allows user to see the option and install kotorblender if needed
     if not blender_info.is_valid:
@@ -454,13 +432,13 @@ def show_blender_choice_dialog(
 
     # Show dialog (will inform user if kotorblender is missing)
     dialog = BlenderChoiceDialog(parent, blender_info, context)
-    result = dialog.exec_()
+    result = dialog.exec()
 
-    if result == QDialog.Accepted:
+    if result == QDialog.DialogCode.Accepted:
         # Update settings if user wants to remember
         if dialog.remember_choice:
             settings.remember_choice = True
-            settings.prefer_blender = (dialog.choice == "blender")
+            settings.prefer_blender = dialog.choice == "blender"
 
         return (dialog.choice, dialog.remember_choice)
 
@@ -476,7 +454,7 @@ class BlenderConnectionWidget(QFrame):
     def __init__(self, parent: QWidget | None = None):
         super().__init__(parent)
 
-        self._connected = False
+        self._connected: bool = False
         self._setup_ui()
 
     def _setup_ui(self):
@@ -486,17 +464,17 @@ class BlenderConnectionWidget(QFrame):
         layout.setSpacing(4)
 
         # Status indicator
-        self._indicator = QLabel("●")
+        self._indicator: QLabel = QLabel("●")
         self._indicator.setStyleSheet("color: #f44336;")  # Red by default
         layout.addWidget(self._indicator)
 
         # Status text
-        self._status_label = QLabel("Disconnected")
+        self._status_label: QLabel = QLabel("Disconnected")
         self._status_label.setStyleSheet("font-size: 11px;")
         layout.addWidget(self._status_label)
 
         # Connect button
-        self._connect_button = QPushButton("Connect")
+        self._connect_button: QPushButton = QPushButton("Connect")
         self._connect_button.setMaximumHeight(22)
         self._connect_button.clicked.connect(self._on_connect_clicked)
         layout.addWidget(self._connect_button)
@@ -506,7 +484,7 @@ class BlenderConnectionWidget(QFrame):
         self._connected = connected
 
         if connected:
-            self._indicator.setStyleSheet("color: #4CAF50;")  # Green
+            self._indicator.setStyleSheet("color: #4caf50;")  # Green
             self._status_label.setText("Connected to Blender")
             self._connect_button.setText("Disconnect")
         else:
@@ -516,7 +494,7 @@ class BlenderConnectionWidget(QFrame):
 
     def set_connecting(self):
         """Show connecting status."""
-        self._indicator.setStyleSheet("color: #FF9800;")  # Orange
+        self._indicator.setStyleSheet("color: #ff9800;")  # Orange
         self._status_label.setText("Connecting...")
         self._connect_button.setEnabled(False)
 
@@ -560,7 +538,7 @@ class BlenderSettingsWidget(QFrame):
         path_layout = QHBoxLayout()
         path_layout.addWidget(QLabel("Blender Path:"))
 
-        self._path_edit = QLineEdit()
+        self._path_edit: QLineEdit = QLineEdit()
         self._path_edit.setPlaceholderText("Auto-detect")
         self._path_edit.textChanged.connect(self._on_path_changed)
         path_layout.addWidget(self._path_edit)
@@ -576,24 +554,22 @@ class BlenderSettingsWidget(QFrame):
         layout.addLayout(path_layout)
 
         # Status display
-        self._status_label = QLabel()
+        self._status_label: QLabel = QLabel()
         self._status_label.setWordWrap(True)
         layout.addWidget(self._status_label)
 
         # kotorblender install button (shown only when Blender found but kotorblender missing)
-        self._install_kotorblender_btn = QPushButton("Install kotorblender")
+        self._install_kotorblender_btn: QPushButton = QPushButton("Install kotorblender")
         self._install_kotorblender_btn.clicked.connect(self._install_kotorblender)
         self._install_kotorblender_btn.setVisible(False)
         layout.addWidget(self._install_kotorblender_btn)
 
         # Options
-        self._prefer_blender_cb = QCheckBox("Prefer Blender when available")
-        self._prefer_blender_cb.setToolTip(
-            "Automatically use Blender for Module Designer, GIT Editor, etc."
-        )
+        self._prefer_blender_cb: QCheckBox = QCheckBox("Prefer Blender when available")
+        self._prefer_blender_cb.setToolTip("Automatically use Blender for Module Designer, GIT Editor, etc.")
         layout.addWidget(self._prefer_blender_cb)
 
-        self._remember_cb = QCheckBox("Remember editor choice")
+        self._remember_cb: QCheckBox = QCheckBox("Remember editor choice")
         self._remember_cb.setToolTip("Don't ask which editor to use each time")
         layout.addWidget(self._remember_cb)
 
@@ -601,7 +577,7 @@ class BlenderSettingsWidget(QFrame):
         port_layout = QHBoxLayout()
         port_layout.addWidget(QLabel("IPC Port:"))
 
-        self._port_spin = QSpinBox()
+        self._port_spin: QSpinBox = QSpinBox()
         self._port_spin.setRange(1024, 65535)
         self._port_spin.setValue(7531)
         port_layout.addWidget(self._port_spin)
@@ -616,7 +592,7 @@ class BlenderSettingsWidget(QFrame):
         """Load current settings."""
         settings = get_blender_settings()
 
-        self._path_edit.setText(settings.custom_path)
+        self._path_edit.setText(settings.custom_path or "")
         self._prefer_blender_cb.setChecked(settings.prefer_blender)
         self._remember_cb.setChecked(settings.remember_choice)
         self._port_spin.setValue(settings.ipc_port)
@@ -637,7 +613,7 @@ class BlenderSettingsWidget(QFrame):
     def _browse_blender(self):
         """Browse for Blender executable."""
         system = platform.system()
-        
+
         if system == "Windows":
             file_filter = "Blender Executable (blender.exe);;All Files (*)"
         elif system == "Darwin":

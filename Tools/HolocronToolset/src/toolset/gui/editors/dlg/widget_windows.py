@@ -55,7 +55,7 @@ class ReferenceChooserDialog(QDialog):
         self.list_widget.setItemDelegate(HTMLDelegate(self.list_widget))
         layout.addWidget(self.list_widget)
         
-        # Setup scrollbar event filter to prevent scrollbar interaction with controls
+        # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)

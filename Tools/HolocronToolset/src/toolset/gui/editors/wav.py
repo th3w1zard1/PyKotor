@@ -84,6 +84,11 @@ class WAVEditor(Editor):
         # Hide the base MediaPlayerWidget - we use our own UI controls
         self.mediaPlayer.hide()  # pyright: ignore[reportAttributeAccessIssue]
 
+        # Setup event filter to prevent scroll wheel interaction with controls
+        from toolset.gui.common.filters import NoScrollEventFilter
+        self._no_scroll_filter = NoScrollEventFilter(self)
+        self._no_scroll_filter.setup_filter(parent_widget=self)
+
         self._setup_menus()
         self._setup_signals()
         self._setup_player_signals()

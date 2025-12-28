@@ -105,7 +105,7 @@ class SaveGameEditor(Editor):
         self._screenshot_original_pixmap: QPixmap | None = None
         self._screenshot_original_size: tuple[int, int] | None = None  # (width, height)
         
-        # Setup scrollbar event filter to prevent scrollbar interaction with controls
+        # Setup event filter to prevent scroll wheel interaction with controls
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
         

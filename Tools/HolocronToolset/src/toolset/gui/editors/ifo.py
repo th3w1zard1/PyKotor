@@ -32,7 +32,7 @@ class IFOEditor(Editor):
         self._setup_menus()
         self._add_help_action()
         
-        # Setup scrollbar event filter to prevent scrollbar interaction with controls
+        # Setup event filter to prevent scroll wheel interaction with controls
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
 

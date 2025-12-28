@@ -51,6 +51,11 @@ class FACEditor(Editor):
             self.ui.factionTree.setSelectionMode(QTreeView.SelectionMode.SingleSelection)
             self.ui.reputationTree.setModel(self._reputation_model)
             self.ui.reputationTree.setSelectionMode(QTreeView.SelectionMode.SingleSelection)
+            
+            # Setup event filter to prevent scroll wheel interaction with controls
+            from toolset.gui.common.filters import NoScrollEventFilter
+            self._no_scroll_filter = NoScrollEventFilter(self)
+            self._no_scroll_filter.setup_filter(parent_widget=self)
         except ImportError:
             # UI file doesn't exist yet - create minimal UI programmatically
             # This allows the editor to function even without a .ui file
@@ -88,6 +93,11 @@ class FACEditor(Editor):
             controls_layout.addWidget(QLabel("Parent ID:"))
             controls_layout.addWidget(self.ui_parent_id_spin)
             layout.addLayout(controls_layout)
+
+            # Setup event filter to prevent scroll wheel interaction with controls
+            from toolset.gui.common.filters import NoScrollEventFilter
+            self._no_scroll_filter = NoScrollEventFilter(self)
+            self._no_scroll_filter.setup_filter(parent_widget=self)
 
             # Create a minimal ui object for compatibility
             class MinimalUI:

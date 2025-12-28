@@ -108,6 +108,23 @@ KotOR models [ARE](GFF-File-Format#are-area) defined using two files:
 - [`vendor/mdlops/mdlops/`](https://github.com/th3w1zard1/mdlops/tree/master/mdlops) - Legacy Python MDL toolkit for conversions
 - [`vendor/xoreos-tools/src/aurora/model.cpp`](https://github.com/th3w1zard1/xoreos-tools/blob/master/src/aurora/model.cpp) - Command-line model extraction tools
 
+### Rendering notes (depth + alpha)
+
+Some MDL meshes use layered geometry and masked textures (for example: thin planes laid over other geometry). Renderers typically use:
+
+- **Depth testing**: enabled while drawing 3D meshes.  
+  **Reference**: xoreos enables depth testing in its renderer ([`vendor/xoreos/src/graphics/graphics.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/graphics/graphics.cpp#L433)).  
+  **Reference**: OpenGL `glEnable(GL_DEPTH_TEST)` ([Khronos refpage](https://registry.khronos.org/OpenGL-Refpages/gl4/html/glEnable.xhtml)) and `glDepthFunc` ([Khronos refpage](https://registry.khronos.org/OpenGL-Refpages/gl4/html/glDepthFunc.xhtml)).
+
+- **Alpha cutout / alpha testing**: masked texels are rejected before contributing to the framebuffer (commonly handled as fixed-function alpha test in legacy pipelines, or as a fragment-shader discard).  
+  **Reference**: xoreos toggles `GL_ALPHA_TEST` around Aurora model rendering ([`vendor/xoreos/src/graphics/aurora/modelnode.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/graphics/aurora/modelnode.cpp#L755-L771)).  
+  **Reference**: OpenGL `glAlphaFunc` (legacy) ([Khronos refpage](https://registry.khronos.org/OpenGL-Refpages/gl2.1/xhtml/glAlphaFunc.xml)).  
+  **Reference**: PyKotorGL preview applies an alpha cutoff in the fragment shader and uses standard alpha blending ([`Libraries/PyKotor/src/pykotor/gl/shader/shader.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/gl/shader/shader.py), [`Libraries/PyKotor/src/pykotor/gl/scene/scene.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/gl/scene/scene.py)).
+
+- **Alpha blending**: a conventional blend function when drawing textures with meaningful alpha.  
+  **Reference**: xoreos uses `glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)` ([`vendor/xoreos/src/graphics/graphics.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/graphics/graphics.cpp#L438)).  
+  **Reference**: OpenGL `glBlendFunc` ([Khronos refpage](https://registry.khronos.org/OpenGL-Refpages/gl4/html/glBlendFunc.xhtml)).
+
 **Additional Documentation Sources:**
 
 - [`vendor/xoreos-docs/specs/kotor_mdl.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/kotor_mdl.html) - Partial KotOR model format specification from xoreos-docs
