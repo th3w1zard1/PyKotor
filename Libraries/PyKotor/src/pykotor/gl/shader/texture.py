@@ -24,6 +24,7 @@ if HAS_PYOPENGL:
     )
     from OpenGL.raw.GL.VERSION.GL_1_0 import (  # pyright: ignore[reportMissingImports]
         GL_LINEAR,
+        GL_LINEAR_MIPMAP_LINEAR,
         GL_NEAREST_MIPMAP_LINEAR,
         GL_REPEAT,
         GL_RGB,
@@ -52,6 +53,7 @@ else:
     GL_COMPRESSED_RGBA_S3TC_DXT5_EXT = missing_constant("GL_COMPRESSED_RGBA_S3TC_DXT5_EXT")
     GL_COMPRESSED_RGB_S3TC_DXT1_EXT = missing_constant("GL_COMPRESSED_RGB_S3TC_DXT1_EXT")
     GL_LINEAR = missing_constant("GL_LINEAR")
+    GL_LINEAR_MIPMAP_LINEAR = missing_constant("GL_LINEAR_MIPMAP_LINEAR")
     GL_NEAREST_MIPMAP_LINEAR = missing_constant("GL_NEAREST_MIPMAP_LINEAR")
     GL_REPEAT = missing_constant("GL_REPEAT")
     GL_RGB = missing_constant("GL_RGB")
@@ -93,7 +95,6 @@ class Texture:
         tpc: TPC,
     ) -> Texture:
         mm: TPCMipmap = tpc.get(0, 0)
-        image_size: int = len(mm.data)
 
         rgba_cache: bytes
         if mm.tpc_format == TPCTextureFormat.DXT1:
@@ -116,24 +117,33 @@ class Texture:
         gl_id: int = glGenTextures(1)
         glBindTexture(GL_TEXTURE_2D, gl_id)
 
-        if mm.tpc_format == TPCTextureFormat.DXT1:
-            glCompressedTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGB_S3TC_DXT1_EXT, mm.width, mm.height, 0, image_size, mm.data)
-        elif mm.tpc_format == TPCTextureFormat.DXT3:
-            glCompressedTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, mm.width, mm.height, 0, image_size, mm.data)
-        elif mm.tpc_format == TPCTextureFormat.DXT5:
-            glCompressedTexImage2D(GL_TEXTURE_2D, 0, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, mm.width, mm.height, 0, image_size, mm.data)
-        elif mm.tpc_format == TPCTextureFormat.RGB:
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, mm.width, mm.height, 0, GL_RGB, GL_UNSIGNED_BYTE, mm.data)
-        elif mm.tpc_format == TPCTextureFormat.RGBA:
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, mm.width, mm.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, mm.data)
-        else:
-            raise ValueError(f"Unsupported texture format: {mm.tpc_format!r}")
+        # Upload all mip levels when present (TPC stores authored mipmaps).
+        # This avoids driver-generated mipmaps that can look noticeably worse at distance.
+        mipmaps = list(tpc.layers[0].mipmaps) if tpc.layers and tpc.layers[0].mipmaps else [mm]
+        for level, mip in enumerate(mipmaps):
+            image_size: int = len(mip.data)
+            if mip.tpc_format == TPCTextureFormat.DXT1:
+                glCompressedTexImage2D(GL_TEXTURE_2D, level, GL_COMPRESSED_RGB_S3TC_DXT1_EXT, mip.width, mip.height, 0, image_size, mip.data)
+            elif mip.tpc_format == TPCTextureFormat.DXT3:
+                glCompressedTexImage2D(GL_TEXTURE_2D, level, GL_COMPRESSED_RGBA_S3TC_DXT3_EXT, mip.width, mip.height, 0, image_size, mip.data)
+            elif mip.tpc_format == TPCTextureFormat.DXT5:
+                glCompressedTexImage2D(GL_TEXTURE_2D, level, GL_COMPRESSED_RGBA_S3TC_DXT5_EXT, mip.width, mip.height, 0, image_size, mip.data)
+            elif mip.tpc_format == TPCTextureFormat.RGB:
+                glTexImage2D(GL_TEXTURE_2D, level, GL_RGB, mip.width, mip.height, 0, GL_RGB, GL_UNSIGNED_BYTE, mip.data)
+            elif mip.tpc_format == TPCTextureFormat.RGBA:
+                glTexImage2D(GL_TEXTURE_2D, level, GL_RGBA, mip.width, mip.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, mip.data)
+            else:
+                raise ValueError(f"Unsupported texture format: {mip.tpc_format!r}")
 
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR)
+        # Trilinear filtering reduces shimmering/aliasing when zoomed out.
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-        glGenerateMipmap(GL_TEXTURE_2D)
+
+        # Only generate mipmaps when the source has a single level.
+        if len(mipmaps) <= 1:
+            glGenerateMipmap(GL_TEXTURE_2D)
 
         return Texture(gl_id, mm.width, mm.height, rgba_cache)
 
@@ -165,7 +175,7 @@ class Texture:
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, rgba_data)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR)
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
         glGenerateMipmap(GL_TEXTURE_2D)
         

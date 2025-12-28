@@ -71,7 +71,8 @@ void main()
     vec4 lightmapColor = texture(lightmap, lightmap_uv);
 
     // Alpha cutout for masked textures (prevents opaque artifacts from fully transparent texels).
-    if (diffuseColor.a < 0.1) {
+    // Keep the threshold low so thin details (e.g., lashes) don't disappear when mipmapping.
+    if (diffuseColor.a < 0.01) {
         discard;
     }
 
