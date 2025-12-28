@@ -35,6 +35,9 @@ class IntermediateTexture(NamedTuple):
     height: int
     rgba_data: bytes  # RGBA pixel data
     mipmap_count: int
+    blend_mode: int  # 0=default, 1=additive, 2=punchthrough
+    alpha_cutoff: float  # 0 disables cutout
+    has_alpha: bool
 
 
 class IntermediateMesh(NamedTuple):
@@ -189,6 +192,15 @@ def _parse_texture_data(
             width = mm.width
             height = mm.height
 
+            # Material hints from embedded TXI (if present)
+            txi_features = tpc._txi.features  # noqa: SLF001
+            blend_mode = int(txi_features.blending or 0)
+            has_alpha = mm.tpc_format in (TPCTextureFormat.DXT3, TPCTextureFormat.DXT5, TPCTextureFormat.RGBA)
+            base_cutoff = 0.01 if has_alpha and blend_mode != 1 else 0.0
+            alpha_cutoff = base_cutoff
+            if blend_mode == 2:
+                alpha_cutoff = max(alpha_cutoff, float(txi_features.alphamean) if txi_features.alphamean is not None else 0.1)
+
             if mm.tpc_format != TPCTextureFormat.RGBA:
                 tpc.convert(TPCTextureFormat.RGBA)
                 mm = tpc.get(0, 0)
@@ -196,7 +208,7 @@ def _parse_texture_data(
             rgba_data = bytes(mm.data)
             return (
                 name,
-                IntermediateTexture(width=width, height=height, rgba_data=rgba_data, mipmap_count=1),
+                IntermediateTexture(width=width, height=height, rgba_data=rgba_data, mipmap_count=1, blend_mode=blend_mode, alpha_cutoff=alpha_cutoff, has_alpha=has_alpha),
                 None,
             )
 
@@ -207,7 +219,7 @@ def _parse_texture_data(
             img = read_tga(io.BytesIO(tex_bytes))
             return (
                 name,
-                IntermediateTexture(width=img.width, height=img.height, rgba_data=bytes(img.data), mipmap_count=1),
+                IntermediateTexture(width=img.width, height=img.height, rgba_data=bytes(img.data), mipmap_count=1, blend_mode=0, alpha_cutoff=0.01, has_alpha=True),
                 None,
             )
 
@@ -226,7 +238,7 @@ def _parse_texture_data(
             rgba_data = bytes(mm.data)
             return (
                 name,
-                IntermediateTexture(width=width, height=height, rgba_data=rgba_data, mipmap_count=1),
+                IntermediateTexture(width=width, height=height, rgba_data=rgba_data, mipmap_count=1, blend_mode=0, alpha_cutoff=0.01, has_alpha=True),
                 None,
             )
 
@@ -613,11 +625,15 @@ def create_texture_from_intermediate(
     """Create OpenGL Texture from intermediate data in main process."""
     from pykotor.gl.shader.texture import Texture
     
-    return Texture.from_rgba(
+    tex = Texture.from_rgba(
         intermediate.width,
         intermediate.height,
         intermediate.rgba_data,
     )
+    tex.blend_mode = int(getattr(intermediate, "blend_mode", 0))
+    tex.alpha_cutoff = float(getattr(intermediate, "alpha_cutoff", 0.0))
+    tex.has_alpha = bool(getattr(intermediate, "has_alpha", True))
+    return tex
 
 
 def create_model_from_intermediate(

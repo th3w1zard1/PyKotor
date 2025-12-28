@@ -27,6 +27,7 @@ if HAS_PYOPENGL:
     from OpenGL.raw.GL.VERSION.GL_1_5 import GL_ARRAY_BUFFER, GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW, glBindBuffer, glBufferData  # pyright: ignore[reportMissingImports]
     from OpenGL.raw.GL.VERSION.GL_2_0 import glEnableVertexAttribArray  # pyright: ignore[reportMissingImports]
     from OpenGL.raw.GL.VERSION.GL_3_0 import glBindVertexArray  # pyright: ignore[reportMissingImports]
+    from pykotor.gl.compat import GL_ONE, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA, GL_SRC_COLOR, glBlendFunc, glDepthMask  # noqa: E501
 else:
     glGenBuffers = missing_gl_func("glGenBuffers")
     glGenVertexArrays = missing_gl_func("glGenVertexArrays")
@@ -46,6 +47,12 @@ else:
     GL_ARRAY_BUFFER = missing_constant("GL_ARRAY_BUFFER")
     GL_ELEMENT_ARRAY_BUFFER = missing_constant("GL_ELEMENT_ARRAY_BUFFER")
     GL_STATIC_DRAW = missing_constant("GL_STATIC_DRAW")
+    GL_ONE = missing_constant("GL_ONE")
+    GL_ONE_MINUS_SRC_ALPHA = missing_constant("GL_ONE_MINUS_SRC_ALPHA")
+    GL_SRC_ALPHA = missing_constant("GL_SRC_ALPHA")
+    GL_SRC_COLOR = missing_constant("GL_SRC_COLOR")
+    glBlendFunc = missing_gl_func("glBlendFunc")
+    glDepthMask = missing_gl_func("glDepthMask")
 
 from pykotor.gl import glm, mat4, quat, vec3, vec4
 from utility.common.geometry import Vector3
@@ -336,13 +343,37 @@ class Mesh:
         shader.set_matrix4("model", transform)
 
         glActiveTexture(GL_TEXTURE0)
-        self._scene.texture(override_texture or self.texture).use()
+        diffuse_tex = self._scene.texture(override_texture or self.texture)
+        diffuse_tex.use()
+
+        # Material hints (TXI blending) influence how we draw “effect” meshes (e.g. light shafts).
+        blend_mode = int(getattr(diffuse_tex, "blend_mode", 0))
+        alpha_cutoff = float(getattr(diffuse_tex, "alpha_cutoff", 0.0))
+        has_alpha = bool(getattr(diffuse_tex, "has_alpha", True))
+
+        # Blend + depth-write selection:
+        # - additive: no depth writes + additive blend (prevents “solid sheets” / incorrect occlusion)
+        # - punchthrough: depth writes + alpha cutout
+        # - default: depth writes + standard alpha blend
+        if blend_mode == 1:
+            glDepthMask(False)
+            glBlendFunc(GL_SRC_ALPHA if has_alpha else GL_SRC_COLOR, GL_ONE)
+            shader.set_float("alphaCutoff", 0.0)
+        else:
+            glDepthMask(True)
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+            shader.set_float("alphaCutoff", alpha_cutoff)
 
         glActiveTexture(GL_TEXTURE1)
         self._scene.texture(self.lightmap, lightmap=True).use()
 
         glBindVertexArray(self._vao)
         glDrawElements(GL_TRIANGLES, self._face_count, GL_UNSIGNED_SHORT, None)
+
+        # Restore conservative defaults for the next draw.
+        glDepthMask(True)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+        shader.set_float("alphaCutoff", 0.0)
 
     def vertex_blob(self) -> bytes:
         """Generate an interleaved vertex blob for rendering.

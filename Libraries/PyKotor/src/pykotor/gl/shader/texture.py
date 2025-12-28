@@ -89,6 +89,12 @@ class Texture:
         self._height: int | None = height
         self._rgba_cache: bytes | None = rgba_data
 
+        # Optional material hints (populated when the source format carries TXI metadata).
+        # 0 = default, 1 = additive, 2 = punchthrough.
+        self.blend_mode: int = 0
+        self.alpha_cutoff: float = 0.0
+        self.has_alpha: bool = False
+
     @classmethod
     def from_tpc(
         cls,

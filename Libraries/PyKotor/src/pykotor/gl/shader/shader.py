@@ -9,11 +9,12 @@ from pykotor.gl.compat import MissingPyOpenGLError, has_pyopengl, missing_consta
 HAS_PYOPENGL = has_pyopengl()
 
 if HAS_PYOPENGL:
-    from OpenGL.GL import glGetUniformLocation, glUniform3fv, glUniform4fv, glUniformMatrix4fv, shaders  # pyright: ignore[reportMissingImports]
+    from OpenGL.GL import glGetUniformLocation, glUniform1f, glUniform3fv, glUniform4fv, glUniformMatrix4fv, shaders  # pyright: ignore[reportMissingImports]
     from OpenGL.GL.shaders import GL_FALSE  # pyright: ignore[reportMissingImports]
     from OpenGL.raw.GL.VERSION.GL_2_0 import GL_FRAGMENT_SHADER, GL_VERTEX_SHADER, glUniform1i, glUseProgram  # pyright: ignore[reportMissingImports]
 else:
     glGetUniformLocation = missing_gl_func("glGetUniformLocation")
+    glUniform1f = missing_gl_func("glUniform1f")
     glUniform3fv = missing_gl_func("glUniform3fv")
     glUniform4fv = missing_gl_func("glUniform4fv")
     glUniformMatrix4fv = missing_gl_func("glUniformMatrix4fv")
@@ -64,15 +65,15 @@ out vec4 FragColor;
 layout(binding = 0) uniform sampler2D diffuse;
 layout(binding = 1) uniform sampler2D lightmap;
 uniform int enableLightmap;
+uniform float alphaCutoff;
 
 void main()
 {
     vec4 diffuseColor = texture(diffuse, diffuse_uv);
     vec4 lightmapColor = texture(lightmap, lightmap_uv);
 
-    // Alpha cutout for masked textures (prevents opaque artifacts from fully transparent texels).
-    // Keep the threshold low so thin details (e.g., lashes) don't disappear when mipmapping.
-    if (diffuseColor.a < 0.01) {
+    // Optional alpha cutout for masked textures (configured per-material).
+    if (alphaCutoff > 0.0 && diffuseColor.a < alphaCutoff) {
         discard;
     }
 
@@ -224,6 +225,9 @@ class Shader:
 
     def set_bool(self, uniform: str, boolean: bool):  # noqa: FBT001
         glUniform1i(self.uniform(uniform), boolean)
+
+    def set_float(self, uniform: str, value: float):
+        glUniform1f(self.uniform(uniform), float(value))
     
     def clear_cache(self):
         """Clear the uniform cache. Call if shader is recompiled."""

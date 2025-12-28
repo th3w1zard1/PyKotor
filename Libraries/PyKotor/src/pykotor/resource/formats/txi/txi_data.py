@@ -331,7 +331,12 @@ class TXI:
 
     @staticmethod
     def parse_blending(s: str) -> int:
-        return s.lower() in {"default", "additive", "punchthrough"}
+        s_norm = (s or "").strip().lower()
+        if s_norm == "additive":
+            return 1
+        if s_norm in {"punchthrough", "punch-through"}:
+            return 2
+        return 0
 
     def __str__(self) -> str:
         lines: list[str] = []

@@ -70,8 +70,11 @@ if HAS_PYOPENGL:
         GL_DEPTH_TEST,
         GL_DEPTH_BUFFER_BIT,
         GL_DEPTH_COMPONENT,
+        GL_ONE,
         GL_ONE_MINUS_SRC_ALPHA,
+        GL_SRC_COLOR,
         GL_SRC_ALPHA,
+        glDepthMask,
         glClear,
         glClearColor,
         glBlendFunc,
@@ -87,6 +90,7 @@ else:
     glClearColor = missing_gl_func("glClearColor")
     glBlendFunc = missing_gl_func("glBlendFunc")
     glDepthFunc = missing_gl_func("glDepthFunc")
+    glDepthMask = missing_gl_func("glDepthMask")
     glDisable = missing_gl_func("glDisable")
     glEnable = missing_gl_func("glEnable")
     GL_BLEND = missing_constant("GL_BLEND")
@@ -97,6 +101,8 @@ else:
     GL_DEPTH_COMPONENT = missing_constant("GL_DEPTH_COMPONENT")
     GL_SRC_ALPHA = missing_constant("GL_SRC_ALPHA")
     GL_ONE_MINUS_SRC_ALPHA = missing_constant("GL_ONE_MINUS_SRC_ALPHA")
+    GL_ONE = missing_constant("GL_ONE")
+    GL_SRC_COLOR = missing_constant("GL_SRC_COLOR")
     GL_LEQUAL = missing_constant("GL_LEQUAL")
     GL_FLOAT = missing_constant("GL_FLOAT")
     GL_BGRA = missing_constant("GL_BGRA")
