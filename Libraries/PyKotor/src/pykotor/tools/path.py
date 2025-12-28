@@ -617,6 +617,8 @@ class CaseAwarePath(InternalWindowsPath if os.name == "nt" else InternalPosixPat
 
     __slots__: tuple[str] = ("_tail_cached",)
     _original_methods: ClassVar[dict[str, Callable[..., Any]]] = {}
+    _dir_cache: ClassVar[dict[str, tuple[InternalPath, ...]]] = {}
+    _dir_cache_max_size: ClassVar[int] = 1000
 
     if sys.version_info < (3, 13):
         def as_posix(self) -> str:
@@ -1212,7 +1214,7 @@ class CaseAwarePath(InternalWindowsPath if os.name == "nt" else InternalPosixPat
                 cached_items = cls._dir_cache[base_path_str]
                 parts[i] = cls.find_closest_match(
                     parts[i],
-                    (item for item in base_path.iterdir() if last_part or item.is_dir()),
+                    (item for item in cached_items if last_part or item.is_dir()),
                 )
 
             elif not next_path.exists():
