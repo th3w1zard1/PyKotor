@@ -470,6 +470,22 @@ class FileResource:
             if self._filepath.is_file():
                 if not self.inside_capsule and not self.inside_bif:
                     return True
+
+                # BIF resources are indexed externally (KEY/BIF) and cannot be validated by
+                # treating the .bif itself as a capsule (LazyCapsule only supports ERF/RIM/MOD/SAV/HAK).
+                # For FileResource instances already pointing at a .bif, the safest existence check
+                # is that the backing file exists and the stored offset/size are within bounds.
+                if self.inside_bif:
+                    try:
+                        file_size = self._filepath.stat().st_size
+                    except OSError:
+                        return False
+                    if self._offset < 0 or self._size < 0:
+                        return False
+                    if self._offset > file_size:
+                        return False
+                    return (self._offset + self._size) <= file_size
+
                 # It's a capsule file that exists - verify the resource is inside it
                 from pykotor.extract.capsule import LazyCapsule  # Prevent circular imports
                 return bool(LazyCapsule(self._filepath).info(self._resname, self._restype))

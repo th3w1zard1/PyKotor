@@ -220,6 +220,21 @@ class TestNestedCapsuleExtraction:
         result = _extract_from_nested_capsules(erf_path, nested_parts)
         assert result == test_data
 
+    def test_file_resource_exists_inside_bif_does_not_use_lazy_capsule(self, tmp_path: Path):
+        """FileResource.exists() must not treat .bif as a capsule (Open (Windows) temp-extract depends on this)."""
+        bif_path = tmp_path / "sounds.bif"
+        bif_path.write_bytes(b"\x00" * 64)
+
+        fr = FileResource(
+            resname="some_resource",
+            restype=ResourceType.TXT,
+            size=1,
+            offset=0,
+            filepath=bif_path,
+        )
+        assert fr.inside_bif is True
+        assert fr.exists() is True
+
 
 class TestResourceIdentifierFromPath:
     """Tests for ResourceIdentifier.from_path with nested paths."""
