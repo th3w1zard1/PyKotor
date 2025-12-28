@@ -70,8 +70,14 @@ void main()
     vec4 diffuseColor = texture(diffuse, diffuse_uv);
     vec4 lightmapColor = texture(lightmap, lightmap_uv);
 
+    // Alpha cutout for masked textures (prevents opaque artifacts from fully transparent texels).
+    if (diffuseColor.a < 0.1) {
+        discard;
+    }
+
     if (enableLightmap == 1) {
-        FragColor = mix(diffuseColor, lightmapColor, 0.5);
+        vec3 rgb = mix(diffuseColor.rgb, lightmapColor.rgb, 0.5);
+        FragColor = vec4(rgb, diffuseColor.a);
     } else {
         FragColor = diffuseColor;
     }

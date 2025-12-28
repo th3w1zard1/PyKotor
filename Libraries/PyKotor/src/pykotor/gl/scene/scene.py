@@ -15,11 +15,17 @@ from pykotor.gl.compat import (
     GL_CULL_FACE,
     GL_DEPTH_BUFFER_BIT,
     GL_DEPTH_COMPONENT,
+    GL_DEPTH_TEST,
     GL_FLOAT,
+    GL_LEQUAL,
+    GL_ONE_MINUS_SRC_ALPHA,
+    GL_SRC_ALPHA,
     GL_UNSIGNED_INT_8_8_8_8,
     HAS_PYOPENGL,
     glClear,
     glClearColor,
+    glBlendFunc,
+    glDepthFunc,
     glDisable,
     glEnable,
     glReadPixels,
@@ -281,11 +287,20 @@ class Scene(SceneBase):
         """Optimized GL state preparation using cached matrices."""
         glClearColor(0.5, 0.5, 1, 1.0)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)  # type: ignore[]
+
+        # Correct depth ordering is essential for layered meshes (e.g., hair planes over a head).
+        glEnable(GL_DEPTH_TEST)
+        glDepthFunc(GL_LEQUAL)
+
+        # Configure standard alpha blending. The main fragment shader also applies an alpha cutoff
+        # for masked textures (see `KOTOR_FSHADER`).
+        glEnable(GL_BLEND)
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
+
         if self.backface_culling:
             glEnable(GL_CULL_FACE)
         else:
             glDisable(GL_CULL_FACE)
-        glDisable(GL_BLEND)
         self.shader.use()
 
         # Use cached matrices instead of recalculating

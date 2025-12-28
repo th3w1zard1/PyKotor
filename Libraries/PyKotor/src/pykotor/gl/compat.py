@@ -67,25 +67,37 @@ if HAS_PYOPENGL:
         GL_BLEND,
         GL_COLOR_BUFFER_BIT,
         GL_CULL_FACE,
+        GL_DEPTH_TEST,
         GL_DEPTH_BUFFER_BIT,
         GL_DEPTH_COMPONENT,
+        GL_ONE_MINUS_SRC_ALPHA,
+        GL_SRC_ALPHA,
         glClear,
         glClearColor,
+        glBlendFunc,
+        glDepthFunc,
         glDisable,
         glEnable,
     )
+    from OpenGL.raw.GL.VERSION.GL_1_0 import GL_LEQUAL  # pyright: ignore[reportMissingImports]
     from OpenGL.raw.GL.VERSION.GL_1_2 import GL_BGRA, GL_UNSIGNED_INT_8_8_8_8  # pyright: ignore[reportMissingImports]
 else:
     glReadPixels = missing_gl_func("glReadPixels")
     glClear = missing_gl_func("glClear")
     glClearColor = missing_gl_func("glClearColor")
+    glBlendFunc = missing_gl_func("glBlendFunc")
+    glDepthFunc = missing_gl_func("glDepthFunc")
     glDisable = missing_gl_func("glDisable")
     glEnable = missing_gl_func("glEnable")
     GL_BLEND = missing_constant("GL_BLEND")
     GL_COLOR_BUFFER_BIT = missing_constant("GL_COLOR_BUFFER_BIT")
     GL_CULL_FACE = missing_constant("GL_CULL_FACE")
+    GL_DEPTH_TEST = missing_constant("GL_DEPTH_TEST")
     GL_DEPTH_BUFFER_BIT = missing_constant("GL_DEPTH_BUFFER_BIT")
     GL_DEPTH_COMPONENT = missing_constant("GL_DEPTH_COMPONENT")
+    GL_SRC_ALPHA = missing_constant("GL_SRC_ALPHA")
+    GL_ONE_MINUS_SRC_ALPHA = missing_constant("GL_ONE_MINUS_SRC_ALPHA")
+    GL_LEQUAL = missing_constant("GL_LEQUAL")
     GL_FLOAT = missing_constant("GL_FLOAT")
     GL_BGRA = missing_constant("GL_BGRA")
     GL_UNSIGNED_INT_8_8_8_8 = missing_constant("GL_UNSIGNED_INT_8_8_8_8")
