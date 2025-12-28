@@ -684,6 +684,29 @@ class SnapResult:
 
 
 # =============================================================================
+# Renderer caches (performance-critical)
+# =============================================================================
+
+
+@dataclass(frozen=True)
+class _BWMSurfaceCache:
+    """Precomputed geometry for a BWM in *local* space.
+
+    This cache exists to avoid rebuilding transformed BWMs (deepcopy + rotate/flip/translate)
+    on every mouse move / repaint. Transforming is handled by the painter + cheap math.
+    """
+
+    bwm_obj_id: int
+    face_paths: list[QPainterPath]
+    face_id_to_index: dict[int, int]
+    # Unique vertex list for operations like marquee selection (local space).
+    vertices: list[Vector3]
+    # Local-space AABB for cheap early-out in picking.
+    bbmin: Vector3
+    bbmax: Vector3
+
+
+# =============================================================================
 # Main Window
 # =============================================================================
 
@@ -1771,7 +1794,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
         self._filepath = ""
         self._map.reset()
-        self.ui.mapRenderer._cached_walkmeshes.clear()
+        self.ui.mapRenderer._bwm_surface_cache.clear()
         self._undo_stack.clear()
         self._undo_stack.setClean()  # Mark as clean for new file
         self._refresh_window_title()
@@ -1794,7 +1817,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             try:
                 missing_rooms = self._map.load(Path(filepath).read_bytes(), self._kits, self._module_kit_manager)
                 self._map.rebuild_room_connections()
-                self.ui.mapRenderer._cached_walkmeshes.clear()
+                self.ui.mapRenderer._bwm_surface_cache.clear()
                 self._filepath = filepath
                 self._undo_stack.clear()
                 self._undo_stack.setClean()  # Mark as clean after loading
@@ -2032,7 +2055,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             # Load the extracted map into the builder
             self._map = extracted_map
             self._map.rebuild_room_connections()
-            self.ui.mapRenderer._cached_walkmeshes.clear()
+            self.ui.mapRenderer._bwm_surface_cache.clear()
             self.ui.mapRenderer.set_map(self._map)
             self._undo_stack.clear()
             self._undo_stack.setClean()
@@ -2995,7 +3018,9 @@ class IndoorMapRenderer(QWidget):
 
         # Performance: dirty flag for rendering
         self._dirty: bool = True
-        self._cached_walkmeshes: dict[int, BWM] = {}
+        # NOTE: We no longer cache *transformed* room walkmeshes (they require deepcopy + transforms).
+        # Instead we cache BWM face paths/indices in local space and apply transforms cheaply.
+        self._bwm_surface_cache: dict[int, _BWMSurfaceCache] = {}
 
         # Warp point hover detection
         self._hovering_warp: bool = False
@@ -3092,7 +3117,7 @@ class IndoorMapRenderer(QWidget):
 
     def set_map(self, indoor_map: IndoorMap):
         self._map = indoor_map
-        self._cached_walkmeshes.clear()
+        self._bwm_surface_cache.clear()
         self.mark_dirty()
 
     def set_undo_stack(self, undo_stack: QUndoStack):
@@ -3160,9 +3185,8 @@ class IndoorMapRenderer(QWidget):
         step = math.copysign(self.rotation_snap, delta_y)
         for room in self._drag_rooms:
             room.rotation = (room.rotation + step) % 360
-            # Invalidate cached walkmesh since rotation affects the geometry
-            self._invalidate_walkmesh_cache(room)
-        self._map.rebuild_room_connections()
+        # NOTE: Don't rebuild_room_connections() during drag - it's O(n²) and kills perf.
+        # Connections are rebuilt in RotateRoomsCommand.redo() when drag ends.
         self.mark_dirty()
 
     def clear_selected_hook(self):
@@ -3232,32 +3256,36 @@ class IndoorMapRenderer(QWidget):
         self.mark_dirty()
 
     def invalidate_rooms(self, rooms: list[IndoorMapRoom]):
-        for room in rooms:
-            self._invalidate_walkmesh_cache(room)
+        # Geometry caches are keyed by the BWM object id and are safe to keep across
+        # room transforms (position/rotation/flip). Most invalidations are UI-driven.
         # Validate selected hook in case the room was deleted or modified
         self._validate_selected_hook()
         self.mark_dirty()
 
     def pick_face(self, world: Vector3) -> tuple[IndoorMapRoom | None, int | None]:
-        """Return the room and face index under the given world position."""
+        """Return the room and *base-walkmesh* face index under the given world position.
+
+        Performance:
+        - Avoids `IndoorMapRoom.walkmesh()` which deepcopies + transforms the full mesh.
+        - Uses cheap world->local math and tests against the base walkmesh in local space.
+        """
         for room in reversed(self._map.rooms):
-            # Use transformed walkmesh for picking (to account for position/rotation/flip)
-            walkmesh = self._get_room_walkmesh(room)
-            face = walkmesh.faceAt(world.x, world.y)
+            base_bwm = room.base_walkmesh()
+            cache = self._get_bwm_surface_cache(base_bwm)
+            local = self._world_to_room_local(room, world)
+            # Cheap AABB reject before O(n_faces) point-in-triangle scan.
+            if local.x < cache.bbmin.x or local.x > cache.bbmax.x or local.y < cache.bbmin.y or local.y > cache.bbmax.y:
+                continue
+            face = base_bwm.faceAt(local.x, local.y)
             if face is None:
                 continue
-            # Find the index in the base walkmesh (not transformed) since that's what we modify
-            base_bwm = room.base_walkmesh()
-            face_index: int | None = None
-            # The transformed walkmesh is a deepcopy, so we need to match by geometry
-            # Since deepcopy preserves order, we can use the index from transformed walkmesh
-            # But we need to ensure it's valid for the base walkmesh
-            for idx, candidate in enumerate(walkmesh.faces):
-                if candidate is face:
-                    # Index should match base walkmesh since deepcopy preserves order
-                    if idx < len(base_bwm.faces):
+            face_index = cache.face_id_to_index.get(id(face))
+            if face_index is None:
+                # Fallback (should be rare): identity-based scan.
+                for idx, candidate in enumerate(base_bwm.faces):
+                    if candidate is face:
                         face_index = idx
-                    break
+                        break
             if face_index is not None:
                 return room, face_index
         return None, None
@@ -3513,7 +3541,11 @@ class IndoorMapRenderer(QWidget):
         self.mark_dirty()
 
     def _get_rooms_in_marquee(self) -> list[IndoorMapRoom]:
-        """Get all rooms that intersect with the marquee rectangle."""
+        """Get all rooms that intersect with the marquee rectangle.
+
+        Uses cached local-space vertices and transforms to world space for testing.
+        This avoids deepcopying geometry on every frame.
+        """
         # Convert screen coords to world coords
         start_world = self.to_world_coords(self._marquee_start.x, self._marquee_start.y)
         end_world = self.to_world_coords(self._marquee_end.x, self._marquee_end.y)
@@ -3530,10 +3562,13 @@ class IndoorMapRenderer(QWidget):
                 selected.append(room)
                 continue
 
-            # Also check if any walkmesh vertex is within marquee
-            walkmesh = self._get_room_walkmesh(room)
-            for vertex in walkmesh.vertices():
-                if min_x <= vertex.x <= max_x and min_y <= vertex.y <= max_y:
+            # Check if any walkmesh vertex (transformed to world) is within marquee.
+            # Use cached local-space vertices and transform via math (no geometry copy).
+            base_bwm = room.base_walkmesh()
+            cache = self._get_bwm_surface_cache(base_bwm)
+            for local_v in cache.vertices:
+                world_v = self._room_local_to_world(room, local_v)
+                if min_x <= world_v.x <= max_x and min_y <= world_v.y <= max_y:
                     selected.append(room)
                     break
 
@@ -3680,17 +3715,29 @@ class IndoorMapRenderer(QWidget):
         painter: QPainter,
         room: IndoorMapRoom,
     ):
-        """Draw a room using its walkmesh geometry (no QImage)."""
-        bwm = self._get_room_walkmesh(room)
+        """Draw a room using its walkmesh geometry (no QImage).
 
-        # Draw each face with appropriate color based on material
-        for face in bwm.faces:
+        Uses QPainter transforms to draw local-space geometry in world space.
+        This avoids deepcopying the walkmesh on every frame.
+        """
+        base_bwm = room.base_walkmesh()
+        cache = self._get_bwm_surface_cache(base_bwm)
+
+        # Apply room transform via painter (flip -> rotate -> translate)
+        painter.save()
+        painter.translate(room.position.x, room.position.y)
+        painter.rotate(room.rotation)
+        painter.scale(-1.0 if room.flip_x else 1.0, -1.0 if room.flip_y else 1.0)
+
+        # Draw each face using cached local-space paths
+        for idx, face in enumerate(base_bwm.faces):
             painter.setBrush(self._face_color(face.material))
             painter.setPen(Qt.PenStyle.NoPen)
-            path = self._build_face(face)
-            painter.drawPath(path)
+            painter.drawPath(cache.face_paths[idx])
 
-        # Draw hooks (snap points) for this room
+        painter.restore()
+
+        # Draw hooks (snap points) for this room (already handles transforms internally)
         self._draw_hooks_for_component(
             painter,
             room.component,
@@ -3706,25 +3753,28 @@ class IndoorMapRenderer(QWidget):
     def _draw_cursor_walkmesh(self, painter: QPainter):
         """Draw the cursor preview using walkmesh geometry.
 
-        Draws the cursor component's walkmesh transformed by cursor position,
-        rotation, and flip settings. Uses semi-transparent grey to indicate
-        it's a preview.
+        Uses QPainter transforms to draw local-space geometry in world space.
+        This avoids deepcopying the walkmesh on every mouse move.
         """
         if not self.cursor_component:
             return
 
-        # Get a transformed copy of the component's BWM
-        bwm: BWM = deepcopy(self.cursor_component.bwm)
-        bwm.flip(self.cursor_flip_x, self.cursor_flip_y)
-        bwm.rotate(self.cursor_rotation)
-        bwm.translate(self.cursor_point.x, self.cursor_point.y, self.cursor_point.z)
+        base_bwm = self.cursor_component.bwm
+        cache = self._get_bwm_surface_cache(base_bwm)
 
-        # Draw each face with semi-transparent color
-        for face in bwm.faces:
+        # Apply cursor transform via painter (flip -> rotate -> translate)
+        painter.save()
+        painter.translate(self.cursor_point.x, self.cursor_point.y)
+        painter.rotate(self.cursor_rotation)
+        painter.scale(-1.0 if self.cursor_flip_x else 1.0, -1.0 if self.cursor_flip_y else 1.0)
+
+        # Draw each face using cached local-space paths with semi-transparent color
+        for idx, face in enumerate(base_bwm.faces):
             painter.setBrush(self._face_color(face.material, alpha=CURSOR_PREVIEW_ALPHA))
             painter.setPen(Qt.PenStyle.NoPen)
-            path = self._build_face(face)
-            painter.drawPath(path)
+            painter.drawPath(cache.face_paths[idx])
+
+        painter.restore()
 
         # Draw hooks for the cursor preview (semi-transparent)
         self._draw_hooks_for_component(
@@ -3747,28 +3797,103 @@ class IndoorMapRenderer(QWidget):
         alpha: int,
         color: QColor | None = None,
     ):
-        bwm: BWM = self._get_room_walkmesh(room)
+        """Draw a highlight overlay on a room.
+
+        Uses QPainter transforms to draw local-space geometry in world space.
+        """
+        base_bwm = room.base_walkmesh()
+        cache = self._get_bwm_surface_cache(base_bwm)
+
         if color is None:
             color = QColor(255, 255, 255, alpha)
         else:
             color.setAlpha(alpha)
         painter.setBrush(color)
         painter.setPen(Qt.PenStyle.NoPen)
-        for face in bwm.faces:
-            path = self._build_face(face)
+
+        # Apply room transform via painter
+        painter.save()
+        painter.translate(room.position.x, room.position.y)
+        painter.rotate(room.rotation)
+        painter.scale(-1.0 if room.flip_x else 1.0, -1.0 if room.flip_y else 1.0)
+
+        for path in cache.face_paths:
             painter.drawPath(path)
 
-    def _get_room_walkmesh(self, room: IndoorMapRoom) -> BWM:
-        """Get cached walkmesh for room."""
-        room_id: int = id(room)
-        if room_id not in self._cached_walkmeshes:
-            self._cached_walkmeshes[room_id] = room.walkmesh()
-        return self._cached_walkmeshes[room_id]
+        painter.restore()
 
-    def _invalidate_walkmesh_cache(self, room: IndoorMapRoom):
-        """Invalidate cached walkmesh for a room."""
-        room_id: int = id(room)
-        self._cached_walkmeshes.pop(room_id, None)
+    def _get_bwm_surface_cache(self, bwm: BWM) -> _BWMSurfaceCache:
+        """Get (or build) cached local-space geometry for a BWM."""
+        key: int = id(bwm)
+        cached: _BWMSurfaceCache | None = self._bwm_surface_cache.get(key)
+        if cached is not None:
+            return cached
+
+        # Build face paths (local space) and identity->index map.
+        face_paths: list[QPainterPath] = []
+        face_id_to_index: dict[int, int] = {}
+        for idx, face in enumerate(bwm.faces):
+            path = QPainterPath()
+            path.moveTo(face.v1.x, face.v1.y)
+            path.lineTo(face.v2.x, face.v2.y)
+            path.lineTo(face.v3.x, face.v3.y)
+            path.closeSubpath()
+            face_paths.append(path)
+            face_id_to_index[id(face)] = idx
+
+        # Vertex list + AABB for early rejection.
+        verts = bwm.vertices()
+        if verts:
+            bbmin = Vector3(min(v.x for v in verts), min(v.y for v in verts), min(v.z for v in verts))
+            bbmax = Vector3(max(v.x for v in verts), max(v.y for v in verts), max(v.z for v in verts))
+        else:
+            bbmin = Vector3.from_null()
+            bbmax = Vector3.from_null()
+
+        cached = _BWMSurfaceCache(
+            bwm_obj_id=key,
+            face_paths=face_paths,
+            face_id_to_index=face_id_to_index,
+            vertices=verts,
+            bbmin=bbmin,
+            bbmax=bbmax,
+        )
+        self._bwm_surface_cache[key] = cached
+        return cached
+
+    def _world_to_room_local(self, room: IndoorMapRoom, world_pos: Vector3) -> Vector3:
+        """Convert world position into room-local space (inverse of flip->rotate->translate)."""
+        pos = Vector3(*world_pos)
+        # inverse translate
+        pos.x -= room.position.x
+        pos.y -= room.position.y
+        pos.z -= room.position.z
+        # inverse rotation
+        cos_r = math.cos(math.radians(-room.rotation))
+        sin_r = math.sin(math.radians(-room.rotation))
+        x = pos.x * cos_r - pos.y * sin_r
+        y = pos.x * sin_r + pos.y * cos_r
+        pos.x, pos.y = x, y
+        # inverse flip
+        if room.flip_x:
+            pos.x = -pos.x
+        if room.flip_y:
+            pos.y = -pos.y
+        return pos
+
+    def _room_local_to_world(self, room: IndoorMapRoom, local_pos: Vector3) -> Vector3:
+        """Convert room-local to world (flip->rotate->translate)."""
+        pos = Vector3(*local_pos)
+        if room.flip_x:
+            pos.x = -pos.x
+        if room.flip_y:
+            pos.y = -pos.y
+        cos_r = math.cos(math.radians(room.rotation))
+        sin_r = math.sin(math.radians(room.rotation))
+        x = pos.x * cos_r - pos.y * sin_r
+        y = pos.x * sin_r + pos.y * cos_r
+        pos.x, pos.y = x, y
+        return pos + room.position
 
     # ------------------------------------------------------------------
     # Hook editing helpers
@@ -3783,7 +3908,7 @@ class IndoorMapRenderer(QWidget):
         room.component = component_copy
         # Rebuild connections list to match hooks length
         room.hooks = [None] * len(component_copy.hooks)  # type: ignore[assignment]
-        self._invalidate_walkmesh_cache(room)
+        # NOTE: No cache invalidation needed - new BWM object gets a fresh cache entry
 
     def _world_to_local_hook(
         self,
@@ -3829,7 +3954,6 @@ class IndoorMapRenderer(QWidget):
         room.hooks.append(None)
         self._selected_hook = (room, len(room.component.hooks) - 1)
         self._map.rebuild_room_connections()
-        self._invalidate_walkmesh_cache(room)
         self.mark_dirty()
 
     def delete_hook(
@@ -3855,7 +3979,6 @@ class IndoorMapRenderer(QWidget):
             if sel_room is room and sel_index >= len(room.component.hooks):
                 self._selected_hook = None
         self._map.rebuild_room_connections()
-        self._invalidate_walkmesh_cache(room)
         self.mark_dirty()
 
     def duplicate_hook(
@@ -3878,7 +4001,6 @@ class IndoorMapRenderer(QWidget):
         room.hooks.append(None)
         self._selected_hook = (room, len(room.component.hooks) - 1)
         self._map.rebuild_room_connections()
-        self._invalidate_walkmesh_cache(room)
         self.mark_dirty()
 
     def _draw_grid(self, painter: QPainter):
@@ -4138,7 +4260,6 @@ class IndoorMapRenderer(QWidget):
                 new_world = room.hook_position(hook) + Vector3(world_delta.x, world_delta.y, 0)
                 local = self._world_to_local_hook(room, new_world)
                 hook.position = local
-                self._invalidate_walkmesh_cache(room)
                 self.mark_dirty()
             return
 
@@ -4153,7 +4274,6 @@ class IndoorMapRenderer(QWidget):
             for room in self._drag_rooms:
                 room.position.x += world_delta.x
                 room.position.y += world_delta.y
-                self._invalidate_walkmesh_cache(room)
 
             # Get the primary room for snapping calculations
             active_room = self._drag_rooms[-1] if self._drag_rooms else None
@@ -4191,7 +4311,6 @@ class IndoorMapRenderer(QWidget):
                                 for room in self._drag_rooms:
                                     room.position.x += offset_x
                                     room.position.y += offset_y
-                                    self._invalidate_walkmesh_cache(room)
                                 self._snap_indicator = snap_result
                                 # Update snap anchor to new snap position
                                 self._snap_anchor_position = Vector3(*snap_result.position)
@@ -4220,7 +4339,6 @@ class IndoorMapRenderer(QWidget):
                             for room in self._drag_rooms:
                                 room.position.x += offset_x
                                 room.position.y += offset_y
-                                self._invalidate_walkmesh_cache(room)
                             self._snap_indicator = snap_result
                             # Record snap anchor position
                             self._snap_anchor_position = Vector3(*snap_result.position)
@@ -4241,9 +4359,9 @@ class IndoorMapRenderer(QWidget):
                 for room in self._drag_rooms:
                     room.position.x += offset_x
                     room.position.y += offset_y
-                    self._invalidate_walkmesh_cache(room)
 
-            self._map.rebuild_room_connections()
+            # NOTE: Don't rebuild_room_connections() during drag - it's O(n²) and kills perf.
+            # Connections are rebuilt in the MoveRoomsCommand.redo() when drag ends.
             self.mark_dirty()
             return
 
@@ -4391,7 +4509,7 @@ class IndoorMapRenderer(QWidget):
         self._map = IndoorMap()
         self._undo_stack = None
         self._selected_rooms.clear()
-        self._cached_walkmeshes.clear()
+        self._bwm_surface_cache.clear()
         self.cursor_component = None
 
         # Process any pending events before destruction
