@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
-from qtpy.QtCore import QPoint
+from qtpy.QtCore import QEvent, QObject, QPoint
 from qtpy.QtGui import QCloseEvent
 from qtpy.QtWidgets import QFileDialog, QMenu, QMessageBox, QShortcut, QStyle
 
@@ -26,6 +26,27 @@ try:  # QUndoStack location differs between Qt5/Qt6 bindings
     from qtpy.QtWidgets import QUndoCommand, QUndoStack  # type: ignore[assignment]
 except Exception:  # noqa: BLE001
     from qtpy.QtGui import QUndoCommand, QUndoStack  # type: ignore[assignment]
+
+@dataclass(frozen=True)
+class _PendingSpinEdit:
+    row_label: str
+    start_value: int
+
+
+class _SpinFocusBatcher(QObject):
+    """Coalesce multiple spinbox edits into a single undo command per focus session."""
+
+    def __init__(self, editor: "SSFEditor"):
+        super().__init__(editor)
+        self._editor = editor
+
+    def eventFilter(self, obj: QObject, event: QEvent) -> bool:  # noqa: N802
+        if isinstance(obj, type(getattr(self._editor.ui, "battlecry1StrrefSpin"))):  # QSpinBox
+            if event.type() == QEvent.Type.FocusIn:
+                self._editor._on_spin_focus_in(obj)  # noqa: SLF001
+            elif event.type() == QEvent.Type.FocusOut:
+                self._editor._on_spin_focus_out(obj)  # noqa: SLF001
+        return False
 
 
 @dataclass(frozen=True)
@@ -89,8 +110,9 @@ class SSFEditor(Editor):
         self._undo_stack: QUndoStack = QUndoStack(self)
         self._clean_undo_index: int = self._undo_stack.index()
         self._suppress_undo_push: bool = False
-        self._last_spin_values: dict[QSpinBox, int] = {}
+        self._pending_spin_edits: dict[QSpinBox, _PendingSpinEdit] = {}
         self._rows: list[_SSFRow] = []
+        self._spin_focus_batcher = _SpinFocusBatcher(self)
         
         # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
@@ -182,10 +204,10 @@ class SSFEditor(Editor):
         self.ui.poisonedStrrefSpin.setValue(ssf.get(SSFSound.POISONED) or 0)
         self._suppress_undo_push = False
 
-        self._sync_last_spin_values()
+        self._pending_spin_edits.clear()
         self._undo_stack.clear()
         self._clean_undo_index = self._undo_stack.index()
-        self.setWindowModified(False)
+        self._recompute_window_modified()
         self.update_text_boxes()
 
     def build(self) -> tuple[bytes, bytes]:
@@ -277,10 +299,10 @@ class SSFEditor(Editor):
         self.ui.poisonedStrrefSpin.setValue(0)
         self._suppress_undo_push = False
 
+        self._pending_spin_edits.clear()
         self._undo_stack.clear()
         self._clean_undo_index = self._undo_stack.index()
-        self.setWindowModified(False)
-        self._sync_last_spin_values()
+        self._recompute_window_modified()
         self.update_text_boxes()
 
     def update_text_boxes(self):
@@ -337,10 +359,14 @@ class SSFEditor(Editor):
         super().open()
 
     def save(self):  # noqa: D401
+        # Ensure the current focused spinbox session is committed to the undo stack
+        # so clean-index + undo/redo remain consistent after saving.
+        self._flush_pending_spin_edits()
         super().save()
         # If save succeeded, Editor will have set WindowModified to False.
         if not self.isWindowModified():
             self._clean_undo_index = self._undo_stack.index()
+        self._recompute_window_modified()
 
     def closeEvent(self, event: QCloseEvent | None):  # noqa: N802
         if event is None:
@@ -398,25 +424,57 @@ class SSFEditor(Editor):
             row.more_button.setToolTip("Locate sound…")
             row.more_button.setEnabled(False)
 
+            row.spin.installEventFilter(self._spin_focus_batcher)
             row.spin.valueChanged.connect(lambda value, r=row: self._on_spin_value_changed(r, int(value)))
             row.play_button.clicked.connect(lambda *args, r=row: self._play_row_sound(r))  # type: ignore[misc]
             row.more_button.clicked.connect(lambda *args, r=row: self._open_row_menu(r))  # type: ignore[misc]
 
-        self._sync_last_spin_values()
+        self._pending_spin_edits.clear()
         self.update_text_boxes()
-
-    def _sync_last_spin_values(self):
-        self._last_spin_values = {row.spin: int(row.spin.value()) for row in self._rows}
 
     def _on_spin_value_changed(self, row: _SSFRow, new_value: int):
         if self._suppress_undo_push:
-            self._last_spin_values[row.spin] = new_value
             return
-        old_value = self._last_spin_values.get(row.spin, new_value)
-        if new_value == old_value:
+        # Coalesce: update preview + dirty flag, but do NOT push commands here.
+        # We only push one command on focus-out.
+        self.update_text_boxes()
+        self._recompute_window_modified()
+
+    def _on_spin_focus_in(self, spin: QSpinBox):
+        if self._suppress_undo_push:
             return
-        self._last_spin_values[row.spin] = new_value
-        self._undo_stack.push(_SpinValueCommand(self, row_label=row.label, spin=row.spin, old_value=old_value, new_value=new_value))
+        if spin in self._pending_spin_edits:
+            return
+        row = next((r for r in self._rows if r.spin is spin), None)
+        if row is None:
+            return
+        self._pending_spin_edits[spin] = _PendingSpinEdit(row_label=row.label, start_value=int(spin.value()))
+        self._recompute_window_modified()
+
+    def _on_spin_focus_out(self, spin: QSpinBox):
+        if self._suppress_undo_push:
+            return
+        pending = self._pending_spin_edits.pop(spin, None)
+        if pending is None:
+            return
+        end_value = int(spin.value())
+        if end_value != pending.start_value:
+            self._undo_stack.push(
+                _SpinValueCommand(
+                    self,
+                    row_label=pending.row_label,
+                    spin=spin,
+                    old_value=pending.start_value,
+                    new_value=end_value,
+                )
+            )
+        self._recompute_window_modified()
+
+    def _flush_pending_spin_edits(self):
+        """Commit any in-progress focus sessions to the undo stack."""
+        # Copy keys because focus-out will mutate the dict.
+        for spin in list(self._pending_spin_edits.keys()):
+            self._on_spin_focus_out(spin)
 
     def _apply_spin_value(self, spin: QSpinBox, value: int):
         self._suppress_undo_push = True
@@ -424,13 +482,19 @@ class SSFEditor(Editor):
             spin.setValue(int(value))
         finally:
             self._suppress_undo_push = False
-        self._last_spin_values[spin] = int(value)
+        # If an undo/redo occurs while the spinbox was "pending", treat it as committed.
+        self._pending_spin_edits.pop(spin, None)
         self.update_text_boxes()
-        # WindowModified is driven by undo stack index vs clean index.
-        self.setWindowModified(self._undo_stack.index() != self._clean_undo_index)
+        self._recompute_window_modified()
 
     def _on_undo_index_changed(self, index: int):
-        self.setWindowModified(index != self._clean_undo_index)
+        self._recompute_window_modified()
+
+    def _recompute_window_modified(self):
+        """WindowModified should reflect both undo-stack changes and in-focus pending edits."""
+        undo_dirty = self._undo_stack.index() != self._clean_undo_index
+        pending_dirty = any(int(spin.value()) != pending.start_value for spin, pending in self._pending_spin_edits.items())
+        self.setWindowModified(undo_dirty or pending_dirty)
 
     def _play_row_sound(self, row: _SSFRow):
         sound_resref = row.sound_edit.text().strip()
@@ -483,6 +547,7 @@ class SSFEditor(Editor):
             QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel,
         )
         if result == QMessageBox.StandardButton.Save:
+            self._flush_pending_spin_edits()
             self.save()
             return not self.isWindowModified()
         if result == QMessageBox.StandardButton.Discard:
