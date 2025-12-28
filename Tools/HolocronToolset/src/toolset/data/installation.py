@@ -322,65 +322,87 @@ class HTInstallation(Installation):
 
         return ht_installation
 
+    def build_file_context_menu(  # noqa: PLR0913
+        self,
+        root_menu: QMenu,
+        *,
+        parent_widget: QWidget,
+        widget_text: str,
+        resref_type: list[ResourceType] | list[ResourceIdentifier],
+        order: list[SearchLocation] | None = None,
+    ) -> None:
+        """Populate `root_menu` with the standard 'file(s) located' menu for a resref.
+
+        This is the shared implementation used by the toolset wherever we show the
+        '# file(s) located…' expander + per-location actions + Details… dialog.
+        """
+        from toolset.gui.dialogs.load_from_location_result import ResourceItems
+
+        # NOTE: This logic is intentionally kept in-sync with the previous nested implementation
+        # inside `setup_file_context_menu`. If you change behavior here, you are changing the
+        # menu behavior toolset-wide.
+
+        file_menu = QMenu("File...", parent_widget)
+        root_menu.addMenu(file_menu)
+        root_menu.addSeparator()
+
+        search_order: list[SearchLocation] = order or [
+            SearchLocation.CHITIN,
+            SearchLocation.OVERRIDE,
+            SearchLocation.MODULES,
+            SearchLocation.RIMS,
+        ]
+        resource_types: list[ResourceType] | list[ResourceIdentifier] = (
+            resref_type if isinstance(resref_type[0], ResourceType) else resref_type
+        )
+        # FIXME(th3w1zard1): Seems the type hinter override's for `locations` are wrong, need to fix
+        locations: dict[str, list[LocationResult]] = self.locations(
+            ([widget_text], resource_types),  # pyright: ignore[reportArgumentType, reportAssignmentType]
+            search_order,
+        )
+        flat_locations: list[LocationResult] = (
+            [item for sublist in locations.values() for item in sublist] if isinstance(locations, dict) else locations
+        )
+
+        if flat_locations:
+            for location in flat_locations:
+                display_path: Path = location.filepath.relative_to(self.path())
+                file_resource: FileResource = location.as_file_resource()
+                if file_resource.inside_bif:
+                    display_path /= file_resource.filename()
+                location_menu: QMenu | None = file_menu.addMenu(str(display_path))
+                ResourceItems(resources=[location]).build_menu(location_menu, self)
+
+            details_action = QAction("Details...", file_menu)
+            details_action.triggered.connect(lambda: self._open_details(flat_locations))
+            file_menu.addAction(details_action)
+        else:
+            file_menu.setDisabled(True)
+
+        for action in root_menu.actions():
+            if action.text() == "File...":
+                action.setText(f"{len(flat_locations)} file(s) located")
+                break
+
     def setup_file_context_menu(
         self,
         widget: QPlainTextEdit | QLineEdit | QComboBox,
         resref_type: list[ResourceType] | list[ResourceIdentifier],
         order: list[SearchLocation] | None = None,
     ):
-        from toolset.gui.dialogs.load_from_location_result import ResourceItems
 
         @Slot(QPoint)
         def extend_context_menu(pos: QPoint):
             root_menu = QMenu(widget) if isinstance(widget, QComboBox) else widget.createStandardContextMenu()
             widget_text: str = widget.currentText().strip() if isinstance(widget, QComboBox) else (widget.text() if isinstance(widget, QLineEdit) else widget.toPlainText()).strip()
-
-            build_file_context_menu(root_menu, widget_text)
-            root_menu.exec(widget.mapToGlobal(pos))
-
-        def build_file_context_menu(root_menu: QMenu, widget_text: str):
-            """Build and populate a file context menu for the given widget text.
-
-            This function creates a "File..." submenu in the root menu, populates it with
-            file locations based on the widget text, and adds a "Details..." action.
-
-            Args:
-                rootMenu (QMenu): The parent menu to which the file submenu will be added.
-                pos (QPoint): The position where the menu should be displayed.
-                widgetText (str): The text from the widget used to search for file locations.
-            """
-            file_menu = QMenu("File...", widget)
-            root_menu.addMenu(file_menu)
-            root_menu.addSeparator()
-
-            search_order: list[SearchLocation] = order or [SearchLocation.CHITIN, SearchLocation.OVERRIDE, SearchLocation.MODULES, SearchLocation.RIMS]
-            resource_types: list[ResourceType] | list[ResourceIdentifier] = resref_type if isinstance(resref_type[0], ResourceType) else resref_type
-            # FIXME(th3w1zard1): Seems the type hinter override's for `locations` are wrong, need to fix
-            locations: dict[str, list[LocationResult]] = self.locations(
-                ([widget_text], resource_types),  # pyright: ignore[reportArgumentType, reportAssignmentType]
-                search_order,
+            self.build_file_context_menu(
+                root_menu,
+                parent_widget=widget,
+                widget_text=widget_text,
+                resref_type=resref_type,
+                order=order,
             )
-            flat_locations: list[LocationResult] = [item for sublist in locations.values() for item in sublist] if isinstance(locations, dict) else locations
-
-            if flat_locations:
-                for location in flat_locations:
-                    display_path: Path = location.filepath.relative_to(self.path())
-                    file_resource: FileResource = location.as_file_resource()
-                    if file_resource.inside_bif:
-                        display_path /= file_resource.filename()
-                    location_menu: QMenu | None = file_menu.addMenu(str(display_path))
-                    ResourceItems(resources=[location]).build_menu(location_menu, self)
-
-                details_action = QAction("Details...", file_menu)
-                details_action.triggered.connect(lambda: self._open_details(flat_locations))
-                file_menu.addAction(details_action)
-            else:
-                file_menu.setDisabled(True)
-
-            for action in root_menu.actions():
-                if action.text() == "File...":
-                    action.setText(f"{len(flat_locations)} file(s) located")
-                    break
+            root_menu.exec(widget.mapToGlobal(pos))
 
         widget.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         widget.customContextMenuRequested.connect(extend_context_menu)
