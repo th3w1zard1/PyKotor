@@ -11,9 +11,12 @@ git add file1.py file2.py; git commit -m "type: message"
 Rules:
 
 - NEVER use wildcards: no `git add .`, no `git add *`
-- List EVERY file explicitly
+- IGNORE any file that you DID NOT modify (another simultaneous ai agent may be working with)
+- DO NOT run `git status` or `git diff`. DO NOT run ANY git command besides `git add <file1> <file2>; git commit -m <message>`.
 - Use conventional commits: `fix:`, `feat:`, `refactor:`, `docs:`, `chore:`, `test:`
-- Verify success: command must exit with code 0
+- Do not derail work on core tasks by fighting git mechanics early.
+- When committing, still follow the explicit-path, chained-command rule which is: `git add <file1> <file2>; git commit -m <message>`. Do not split the command into multiple steps!
+- When committing, simply `git add <file1> <file2>; git commit -m "type: message"` and IMMEDIATELY move on.
 
 ## 2. Documentation
 
@@ -40,12 +43,6 @@ If 3 sources cannot be found locally:
 
 - Do **not** "fill in" with guesses.
 - Either (a) leave behavior unchanged and add a `TODO` requesting the missing source, or (b) ask the user to provide the missing vendor checkout / submodule content.
-
-## 2b. Git/commit focus
-
-- Do not derail work on core tasks by fighting git mechanics early.
-- Only run add/commit steps when they are **simple and not failing**; otherwise, defer until the end of the task.
-- When committing, still follow the explicit-path, chained-command rule above.
 
 ## 3. Helper Scripts (scripts/)
 

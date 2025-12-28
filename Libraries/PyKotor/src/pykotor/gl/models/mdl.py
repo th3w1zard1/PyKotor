@@ -355,15 +355,15 @@ class Mesh:
         # - additive: no depth writes + additive blend (prevents “solid sheets” / incorrect occlusion)
         # - punchthrough: depth writes + alpha cutout
         # - default: depth writes + standard alpha blend
-        if blend_mode == 1:
+        if blend_mode == 1:  # Additive
             glDepthMask(False)
             glBlendFunc(GL_SRC_ALPHA if has_alpha else GL_SRC_COLOR, GL_ONE)
             shader.set_float("alphaCutoff", 0.0)
-        elif blend_mode == 2:
+        elif blend_mode == 2:  # Punchthrough
             glDepthMask(True)
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
             shader.set_float("alphaCutoff", alpha_cutoff)
-        else:
+        else:  # Default blend mode
             glDepthMask(True)
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA)
             shader.set_float("alphaCutoff", 0.0)

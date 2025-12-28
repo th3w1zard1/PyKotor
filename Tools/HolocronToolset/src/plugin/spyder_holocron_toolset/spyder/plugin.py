@@ -66,7 +66,7 @@ class HolocronToolset(SpyderPluginV2):
     def _connect_signals(self):
         """Connect signals for inter-component communication."""
         self.tool_window.sig_installation_changed.connect(self.on_installation_changed)
-        self.tool_window.installationsUpdated.connect(self.on_installations_updated)
+        self.tool_window.sig_installations_updated.connect(self.on_installations_updated)
         # Additional signal connections for Spyder integration
         self.sig_installation_changed.connect(self.update_status_bar)
         self.sig_installation_changed.connect(self.update_toolbar)
@@ -84,16 +84,7 @@ class HolocronToolset(SpyderPluginV2):
     def _disassemble_tool_window(self):
 
         # Import the appropriate Ui_MainWindow based on the Qt bindings
-        if qtpy.API_NAME == "PySide2":
-            from toolset.uic.pyside2.windows.main import Ui_MainWindow
-        elif qtpy.API_NAME == "PySide6":
-            from toolset.uic.pyside6.windows.main import Ui_MainWindow
-        elif qtpy.API_NAME == "PyQt5":
-            from toolset.uic.pyqt5.windows.main import Ui_MainWindow
-        elif qtpy.API_NAME == "PyQt6":
-            from toolset.uic.pyqt6.windows.main import Ui_MainWindow
-        else:
-            raise ImportError(f"Unsupported Qt bindings: {qtpy.API_NAME}")
+        from toolset.uic.qtpy.windows.main import Ui_MainWindow
 
         orig_ui = Ui_MainWindow()
         orig_ui.setupUi(self)
@@ -346,7 +337,7 @@ class HolocronToolset(SpyderPluginV2):
 
         # Connect signals
         self.tool_window.sig_installation_changed.connect(self.on_installation_changed)
-        self.tool_window.installationsUpdated.connect(self.on_installations_updated)
+        self.tool_window.sig_installations_updated.connect(self.on_installations_updated)
 
         self.load_installations()
         self._setup_plugin()
