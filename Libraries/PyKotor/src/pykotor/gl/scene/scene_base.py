@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
-from pykotor.gl.compat import has_pyopengl, missing_constant, missing_gl_func
+from pykotor.gl.compat import has_pyopengl
 from loggerplus import RobustLogger
 
 HAS_PYOPENGL = has_pyopengl()
@@ -86,6 +86,7 @@ class SceneBase:
         # Initialize async_loader to None early to handle partial initialization
         # If __init__ raises an exception before line 195, __del__ can safely check is not None
         self.async_loader: AsyncResourceLoader | None = None
+        self._shutdown: bool = False
         
         self.installation: Installation | None = installation
         if installation is not None:
@@ -290,12 +291,40 @@ class SceneBase:
         self.use_lightmap: bool = True
         self.show_cursor: bool = True
     
+    @property
+    def is_shutdown(self) -> bool:
+        return self._shutdown
+
+    def shutdown(self, *, wait: bool = False):
+        """Release non-GL resources and stop background workers.
+
+        This is safe to call multiple times.
+        """
+        if self._shutdown:
+            return
+        self._shutdown = True
+
+        # Cancel pending futures early (these can outlive the widget otherwise).
+        try:
+            self.invalidate_cache()
+        except Exception:  # noqa: BLE001
+            RobustLogger().debug("SceneBase.shutdown: invalidate_cache failed", exc_info=True)
+
+        # Stop worker processes. Do not block by default; Qt teardown may be time-sensitive.
+        try:
+            if self.async_loader is not None:
+                self.async_loader.shutdown(wait=wait)
+        except Exception:  # noqa: BLE001
+            RobustLogger().debug("SceneBase.shutdown: async_loader.shutdown failed", exc_info=True)
+        finally:
+            self.async_loader = None
+
     def __del__(self):
         """Cleanup async resources when scene is destroyed."""
         try:
-            if self.async_loader is not None:
-                self.async_loader.shutdown(wait=False)
-                RobustLogger().debug("Scene cleanup: shutdown async loader")
+            # __del__ can run during Qt teardown; keep this fast and exception-safe.
+            self.shutdown(wait=False)
+            RobustLogger().debug("Scene cleanup: shutdown async loader")
         except Exception as e:  # noqa: BLE001, S110
             # Log but don't raise exceptions in __del__
             # Note: With strict type checking, async_loader should always exist after __init__
