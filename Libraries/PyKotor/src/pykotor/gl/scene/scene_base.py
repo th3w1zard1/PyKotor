@@ -415,11 +415,17 @@ class SceneBase:
 
             rhand_hook: Node | None = body_model_obj.find("rhand")
             if rhand_model and rhand_hook:
+                # Pre-load weapon model synchronously when sync=True to ensure it's renderable immediately
+                if sync:
+                    self.model_sync(rhand_model)
                 rhand_obj = RenderObject(rhand_model)
                 rhand_obj.set_transform(rhand_hook.global_transform())
                 obj.children.append(rhand_obj)
             lhand_hook: Node | None = body_model_obj.find("lhand")
             if lhand_model and lhand_hook:
+                # Pre-load weapon model synchronously when sync=True to ensure it's renderable immediately
+                if sync:
+                    self.model_sync(lhand_model)
                 lhand_obj = RenderObject(lhand_model)
                 lhand_obj.set_transform(lhand_hook.global_transform())
                 obj.children.append(lhand_obj)
@@ -429,6 +435,9 @@ class SceneBase:
                 head_model_obj: Model = self.model_sync(head_model) if sync else self.model(head_model)
                 mask_hook = head_model_obj.find("gogglehook")
             if mask_model and mask_hook:
+                # Pre-load mask model synchronously when sync=True to ensure it's renderable immediately
+                if sync:
+                    self.model_sync(mask_model)
                 mask_obj = RenderObject(mask_model)
                 mask_obj.set_transform(mask_hook.global_transform())
                 if head_hook is None:
