@@ -247,42 +247,60 @@ class RobustTableView(RobustAbstractItemView, QTableView):
             self.resizeColumnToContents(column)
 
     def setSelection(self, rect: QRect, command: QItemSelectionModel.SelectionFlags):  # pyright: ignore[reportIncompatibleMethodOverride]
-        index = self.indexAt(rect.topLeft())
-        if self.only_first_column_selectable and index.isValid() and index.column() == 0:
+        # Let Qt drive selection unless we're in the "first column only" mode.
+        # Qt's selection behavior relies on QItemSelectionModel's current index/anchor
+        # being updated by the base implementation. Skipping the base implementation
+        # can leave the anchor stuck on a previous drag start.
+        if not self.only_first_column_selectable:
             super().setSelection(rect, command)
-        else:
-            self.clearSelection()
+            return
+
+        index = self.indexAt(rect.topLeft())
+        if index.isValid() and index.column() == 0:
+            super().setSelection(rect, command)
+            return
+
+        self.clearSelection()
 
     def mousePressEvent(self, event: QMouseEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
-        index = self.indexAt(event.pos())
-        if self.only_first_column_selectable and index.isValid() and index.column() == 0:
+        if not self.only_first_column_selectable:
             super().mousePressEvent(event)
-        else:
-            # Clear selection and reset the selection anchor
-            self.clearSelection()
+            return
+
+        index = self.indexAt(event.pos())
+        if index.isValid() and index.column() == 0:
+            super().mousePressEvent(event)
+            return
+
+        # Disallow selecting non-first-column cells in this mode.
+        self.clearSelection()
+        event.ignore()
 
     def mouseReleaseEvent(self, event: QMouseEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
-        index = self.indexAt(event.pos())
-        if (
-            self.only_first_column_selectable
-            and index.isValid()
-            and index.column() == 0
-        ):
+        if not self.only_first_column_selectable:
             super().mouseReleaseEvent(event)
-        else:
-            event.ignore()
+            return
+
+        index = self.indexAt(event.pos())
+        if index.isValid() and index.column() == 0:
+            super().mouseReleaseEvent(event)
+            return
+
+        event.ignore()
 
     def clearSelection(self):
+        # Always clear Qt's selection; in "first column only" mode also clear the
+        # current index so shift/drag operations don't reuse a stale anchor.
+        QTableView.clearSelection(self)
+
         if not self.only_first_column_selectable:
             return
-        itemSelectionModel = self.selectionModel()
-        if itemSelectionModel is None:
-            itemSelectionModel = QItemSelectionModel(self.model())
-            self.setSelectionModel(itemSelectionModel)
-        self.selectionModel().clear()
-        self.selectionModel().reset()
-        self.selectionModel().setCurrentIndex(QModelIndex(), QItemSelectionModel.Clear)
-        self.selectionModel().select(QModelIndex(), QItemSelectionModel.Clear | QItemSelectionModel.Rows)
+
+        # If no model is set yet, there's nothing else to reset.
+        if self.model() is None:
+            return
+
+        QTableView.setCurrentIndex(self, QModelIndex())
 
 
 if __name__ == "__main__":
