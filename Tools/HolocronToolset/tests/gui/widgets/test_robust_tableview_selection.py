@@ -60,3 +60,57 @@ def test_click_resets_selection_anchor_when_all_columns_selectable(qtbot):
     assert selected[0].column() == 1
 
 
+def test_first_column_only_mode_restricts_selection(qtbot):
+    """
+    Ensure that when "first column only" mode is enabled, clicking/dragging
+    from non-first columns clears selection (the intended restriction behavior).
+    """
+    view = RobustTableView()
+    qtbot.addWidget(view)
+
+    model = _model()
+    view.setModel(model)
+    view.setSelectionMode(view.SelectionMode.ContiguousSelection)
+    view.setSelectionBehavior(view.SelectionBehavior.SelectItems)
+
+    # Enable "First Column Only" mode (default is True)
+    view.setFirstColumnInteractable(True)
+
+    view.resize(600, 400)
+    view.show()
+    qtbot.waitExposed(view)
+
+    # Click on first column should select it
+    click_pos_col0 = _center_pos(view, 3, 0)
+    qtbot.mouseClick(view.viewport(), Qt.MouseButton.LeftButton, pos=click_pos_col0)
+    selected = view.selectedIndexes()
+    assert len(selected) > 0, "First column click should select something"
+    # All selected items should be in column 0
+    assert all(idx.column() == 0 for idx in selected), "Selection should only be in column 0"
+
+    # Click on a non-first column should clear selection (restriction mode)
+    click_pos_other = _center_pos(view, 5, 2)
+    qtbot.mouseClick(view.viewport(), Qt.MouseButton.LeftButton, pos=click_pos_other)
+    selected_after = view.selectedIndexes()
+    assert len(selected_after) == 0, "Clicking non-first column should clear selection in restriction mode"
+
+    # Drag starting from first column should work
+    start_col0 = _center_pos(view, 1, 0)
+    end_col0 = _center_pos(view, 3, 0)
+    qtbot.mousePress(view.viewport(), Qt.MouseButton.LeftButton, pos=start_col0)
+    qtbot.mouseMove(view.viewport(), pos=end_col0)
+    qtbot.mouseRelease(view.viewport(), Qt.MouseButton.LeftButton, pos=end_col0)
+    selected_drag = view.selectedIndexes()
+    assert len(selected_drag) > 0, "Drag from first column should select"
+    assert all(idx.column() == 0 for idx in selected_drag), "Drag selection should only be in column 0"
+
+    # Drag starting from non-first column should clear selection
+    start_other = _center_pos(view, 5, 2)
+    end_other = _center_pos(view, 7, 2)
+    qtbot.mousePress(view.viewport(), Qt.MouseButton.LeftButton, pos=start_other)
+    qtbot.mouseMove(view.viewport(), pos=end_other)
+    qtbot.mouseRelease(view.viewport(), Qt.MouseButton.LeftButton, pos=end_other)
+    selected_drag_other = view.selectedIndexes()
+    assert len(selected_drag_other) == 0, "Drag from non-first column should clear selection in restriction mode"
+
+
