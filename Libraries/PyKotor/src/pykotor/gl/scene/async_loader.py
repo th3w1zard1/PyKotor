@@ -193,13 +193,15 @@ def _parse_texture_data(
             height = mm.height
 
             # Material hints from embedded TXI (if present)
-            txi_features = tpc._txi.features  # noqa: SLF001
-            blend_mode = int(txi_features.blending or 0)
+            txi = getattr(tpc, "_txi", None)  # noqa: SLF001
+            txi_features = getattr(txi, "features", None)
+            blend_mode = int((getattr(txi_features, "blending", 0) if txi_features is not None else 0) or 0)
             has_alpha = mm.tpc_format in (TPCTextureFormat.DXT3, TPCTextureFormat.DXT5, TPCTextureFormat.RGBA)
             base_cutoff = 0.01 if has_alpha and blend_mode != 1 else 0.0
             alpha_cutoff = base_cutoff
             if blend_mode == 2:
-                alpha_cutoff = max(alpha_cutoff, float(txi_features.alphamean) if txi_features.alphamean is not None else 0.1)
+                alphamean = getattr(txi_features, "alphamean", None) if txi_features is not None else None
+                alpha_cutoff = max(alpha_cutoff, float(alphamean) if alphamean is not None else 0.1)
 
             if mm.tpc_format != TPCTextureFormat.RGBA:
                 tpc.convert(TPCTextureFormat.RGBA)
