@@ -64,6 +64,15 @@ Always:
 - Always use `uv run` instead of `python -m`. e.g. `uv --directory="Tools/KotorCLI/src" run --module kotorcli --help`
 - NEVER run tests without timeout: 120s individual, 300s suite
 
+### Git safety for AI agents (local work preservation)
+
+- Treat every existing working-tree change as intentional local work
+- Use additive git actions by default: `git status`, `git diff`, `git add <explicit paths>`, `git commit`
+- When cleanup is required, take a reversible snapshot first:
+  - `git stash push --include-untracked -m "ai-safety: snapshot before cleanup" -- <explicit paths...>`
+  - or create a safety branch and commit the WIP with explicit paths
+- Run any work-discarding git command only after explicit user approval, with the exact command shown beforehand (examples: `git restore`, `git checkout`, `git reset`, `git clean`)
+
 Test example:
 
 ```powershell
