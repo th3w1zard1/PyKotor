@@ -20,7 +20,7 @@ from pykotor.tools.resources import (
 
 
 def cmd_texture_convert(args: Namespace, logger: Logger) -> int:
-    """Convert texture files (TPC↔TGA).
+    """Convert texture files (TPC<->TGA).
 
     References:
     ----------
@@ -55,7 +55,7 @@ def cmd_texture_convert(args: Namespace, logger: Logger) -> int:
 
 
 def cmd_sound_convert(args: Namespace, logger: Logger) -> int:
-    """Convert sound files (WAV↔clean WAV).
+    """Convert sound files (WAV<->clean WAV).
 
     References:
     ----------
@@ -81,7 +81,7 @@ def cmd_sound_convert(args: Namespace, logger: Logger) -> int:
 
 
 def cmd_model_convert(args: Namespace, logger: Logger) -> int:
-    """Convert model files (MDL↔ASCII).
+    """Convert model files (MDL<->ASCII).
 
     References:
     ----------

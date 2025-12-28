@@ -33,6 +33,8 @@ from pykotor.tools.validation import (
     validate_installation,
 )
 
+from kotorcli.console import ok_fail_symbols
+
 
 def cmd_check_txi(args: Namespace, logger: Logger) -> int:
     """Check if TXI files exist for specific textures.
@@ -54,18 +56,19 @@ def cmd_check_txi(args: Namespace, logger: Logger) -> int:
     logger.info(f"Checking TXI files for {len(args.textures)} textures...")  # noqa: G004
     results = check_txi_files(installation, args.textures)
 
+    ok, fail = ok_fail_symbols()
     found_count = 0
     for tex_name, paths in results.items():
         if paths:
             found_count += 1
-            logger.info(f"✓ {tex_name}.txi: FOUND ({len(paths)} location(s))")  # noqa: G004
+            logger.info(f"{ok} {tex_name}.txi: FOUND ({len(paths)} location(s))")  # noqa: G004
             if args.verbose:
                 for path in paths[:3]:  # Show first 3 locations
                     logger.info(f"    - {path}")  # noqa: G004
                 if len(paths) > 3:
                     logger.info(f"    ... and {len(paths) - 3} more")  # noqa: G004
         else:
-            logger.warning(f"✗ {tex_name}.txi: NOT FOUND")  # noqa: G004
+            logger.warning(f"{fail} {tex_name}.txi: NOT FOUND")  # noqa: G004
 
     logger.info(f"\nSummary: {found_count}/{len(args.textures)} TXI files found")  # noqa: G004
     return 0 if found_count == len(args.textures) else 1
@@ -85,13 +88,14 @@ def cmd_check_2da(args: Namespace, logger: Logger) -> int:
 
     logger.info(f"Checking for 2DA file: {args.two_da_name}")  # noqa: G004
     found, paths = check_2da_file(installation, args.two_da_name)
+    ok, fail = ok_fail_symbols()
 
     if found:
-        logger.info(f"✓ {args.two_da_name}.2da: FOUND")  # noqa: G004
+        logger.info(f"{ok} {args.two_da_name}.2da: FOUND")  # noqa: G004
         for path in paths:
             logger.info(f"    - {path}")  # noqa: G004
         return 0
-    logger.warning(f"✗ {args.two_da_name}.2da: NOT FOUND")  # noqa: G004
+    logger.warning(f"{fail} {args.two_da_name}.2da: NOT FOUND")  # noqa: G004
     return 1
 
 
@@ -109,9 +113,10 @@ def cmd_validate_installation(args: Namespace, logger: Logger) -> int:
 
     logger.info(f"Validating installation: {installation.path()}")  # noqa: G004
     results = validate_installation(installation, check_essential_files=args.check_essential)
+    ok, _fail = ok_fail_symbols()
 
     if results["valid"]:
-        logger.info("✓ Installation is valid")
+        logger.info(f"{ok} Installation is valid")
         return 0
 
     missing_files_raw = results["missing_files"]
@@ -220,6 +225,7 @@ def cmd_check_missing_resources(args: Namespace, logger: Logger) -> int:
         missing_lightmaps=lightmaps_list,
     )
 
+    ok, fail = ok_fail_symbols()
     referenced_count = 0
     if textures_list:
         logger.info(f"\nTextures ({len(textures_list)}):")  # noqa: G004
@@ -227,9 +233,9 @@ def cmd_check_missing_resources(args: Namespace, logger: Logger) -> int:
             is_referenced = results.get(tex, False)
             if is_referenced:
                 referenced_count += 1
-                logger.info(f"  ✓ {tex}: REFERENCED")  # noqa: G004
+                logger.info(f"  {ok} {tex}: REFERENCED")  # noqa: G004
             else:
-                logger.warning(f"  ✗ {tex}: NOT REFERENCED")  # noqa: G004
+                logger.warning(f"  {fail} {tex}: NOT REFERENCED")  # noqa: G004
 
     if lightmaps_list:
         logger.info(f"\nLightmaps ({len(lightmaps_list)}):")  # noqa: G004
@@ -237,9 +243,9 @@ def cmd_check_missing_resources(args: Namespace, logger: Logger) -> int:
             is_referenced = results.get(lm, False)
             if is_referenced:
                 referenced_count += 1
-                logger.info(f"  ✓ {lm}: REFERENCED")  # noqa: G004
+                logger.info(f"  {ok} {lm}: REFERENCED")  # noqa: G004
             else:
-                logger.warning(f"  ✗ {lm}: NOT REFERENCED")  # noqa: G004
+                logger.warning(f"  {fail} {lm}: NOT REFERENCED")  # noqa: G004
 
     total = len(textures_list) + len(lightmaps_list)
     logger.info(f"\nSummary: {referenced_count}/{total} resources are referenced")  # noqa: G004

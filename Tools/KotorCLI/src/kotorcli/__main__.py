@@ -395,23 +395,24 @@ def create_parser() -> ArgumentParser:  # noqa: PLR0915
     assemble_parser.add_argument("--debug", action="store_true", help="Enable debug output")
 
     # Resource tools
-    texture_parser = subparsers.add_parser("texture-convert", help="Convert texture files (TPC↔TGA)")
+    # NOTE: Keep help output ASCII-safe for Windows terminals that default to cp1252.
+    texture_parser = subparsers.add_parser("texture-convert", help="Convert texture files (TPC<->TGA)")
     texture_parser.add_argument("input", help="Input texture file (TPC or TGA)")
     texture_parser.add_argument("--output", "-o", dest="output", help="Output texture file")
-    texture_parser.add_argument("--txi", help="TXI file path (for TPC↔TGA conversion)")
-    texture_parser.add_argument("--format", help="TPC format type (for TGA→TPC)")
+    texture_parser.add_argument("--txi", help="TXI file path (for TPC<->TGA conversion)")
+    texture_parser.add_argument("--format", help="TPC format type (for TGA->TPC)")
 
-    sound_parser = subparsers.add_parser("sound-convert", help="Convert sound files (WAV↔clean WAV)")
+    sound_parser = subparsers.add_parser("sound-convert", help="Convert sound files (WAV<->clean WAV)")
     sound_parser.add_argument("input", help="Input WAV file")
     sound_parser.add_argument("--output", "-o", dest="output", help="Output WAV file")
     sound_parser.add_argument("--to-clean", action="store_true", help="Convert to clean (deobfuscated) WAV")
     sound_parser.add_argument("--type", default="SFX", help="WAV type (SFX, VO) for game format")
 
-    model_parser = subparsers.add_parser("model-convert", help="Convert model files (MDL↔ASCII)")
+    model_parser = subparsers.add_parser("model-convert", help="Convert model files (MDL<->ASCII)")
     model_parser.add_argument("input", help="Input MDL file")
     model_parser.add_argument("--output", "-o", dest="output", help="Output MDL file")
     model_parser.add_argument("--to-ascii", action="store_true", help="Convert to ASCII format")
-    model_parser.add_argument("--mdx", help="MDX file path (for MDL↔ASCII conversion)")
+    model_parser.add_argument("--mdx", help="MDX file path (for MDL<->ASCII conversion)")
 
     # KotorDiff structured comparisons
     diff_install_parser = subparsers.add_parser(
