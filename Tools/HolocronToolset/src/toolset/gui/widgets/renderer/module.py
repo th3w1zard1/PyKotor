@@ -633,10 +633,27 @@ class ModuleRenderer(QOpenGLWidget):
         else:
             screenDelta = Vector2(screen.x - self._mouse_prev.x, screen.y - self._mouse_prev.y)
 
-        # Use the cached mouse world position computed in paintGL.
-        # Do NOT call `scene.screen_to_world()` here (no guaranteed GL context).
-        world = self._mouse_world
-        if datetime.now(tz=timezone.utc).astimezone() - self._mouse_press_time > timedelta(milliseconds=60):
+        # Update the cached mouse world position for *this* screen position before emitting.
+        # This avoids a 1-frame lag during dragging (paintGL would otherwise be one event behind).
+        #
+        # We explicitly call makeCurrent() because QOpenGLWidget only guarantees a current
+        # context inside paintGL/initializeGL. If the context isn't available, we fall
+        # back to the last cached value.
+        world: Vector3 = self._mouse_world
+        now = datetime.now(tz=timezone.utc).astimezone()
+        if now - self._mouse_press_time > timedelta(milliseconds=60) and self.isReady():
+            try:
+                self.makeCurrent()
+                x = int(screen.x)
+                y = int(screen.y)
+                if 0 <= x <= self.width() and 0 <= y <= self.height():
+                    world = self.scene.screen_to_world(x, y)
+                    self._mouse_world = world
+                    self._mouse_world_last_screen = Vector2(float(x), float(y))
+            except Exception:
+                # During teardown or when the GL context can't be made current, keep the cached value.
+                world = self._mouse_world
+        if now - self._mouse_press_time > timedelta(milliseconds=60):
             self.sig_mouse_moved.emit(screen, screenDelta, world, self._mouse_down, self._keys_down)
         self._mouse_prev = screen  # Always assign mouse_prev after emitting: allows signal handlers (e.g. ModuleDesigner, GITEditor) to handle cursor lock.
 
