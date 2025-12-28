@@ -617,7 +617,9 @@ class CaseAwarePath(InternalWindowsPath if os.name == "nt" else InternalPosixPat
 
     __slots__: tuple[str] = ("_tail_cached",)
     _original_methods: ClassVar[dict[str, Callable[..., Any]]] = {}
-    _dir_cache: ClassVar[dict[str, tuple[InternalPath, ...]]] = {}
+    # Cache directory listings for case-resolution. Must be invalidated when the directory changes
+    # (create/rename/delete updates dir mtime on POSIX/NTFS).
+    _dir_cache: ClassVar[dict[str, tuple[int | None, tuple[InternalPath, ...]]]] = {}
     _dir_cache_max_size: ClassVar[int] = 1000
 
     if sys.version_info < (3, 13):
@@ -1185,6 +1187,12 @@ class CaseAwarePath(InternalWindowsPath if os.name == "nt" else InternalPosixPat
 
         # Standard implementation (fallback or when FUSE not available)
         parts = list(pathlib_abspath.parts)
+        # Cache directory listings **within this call only**.
+        #
+        # A cross-call cache can go stale when tests (and real usage) create/rename/delete entries,
+        # and directory mtime can have coarse resolution on some filesystems. Per-call caching
+        # preserves the performance benefit (avoid repeated iterdir()) without breaking correctness.
+        dir_cache_local: dict[str, tuple[InternalPath, ...]] = {}
 
         for i in range(1, len(parts)):  # ignore the root (/, C:\\, etc)
             base_path: InternalPath = InternalPath(*parts[:i])
@@ -1199,19 +1207,13 @@ class CaseAwarePath(InternalWindowsPath if os.name == "nt" else InternalPosixPat
                 
                 # Cache directory listings to avoid repeated iterdir() calls - massive performance improvement
                 base_path_str = str(base_path)
-                if base_path_str not in cls._dir_cache:
-                    # Clear cache if it gets too large (FIFO eviction)
-                    if len(cls._dir_cache) >= cls._dir_cache_max_size:
-                        # Remove oldest 10% of entries
-                        keys_to_remove = list(cls._dir_cache.keys())[: cls._dir_cache_max_size // 10]
-                        for key in keys_to_remove:
-                            cls._dir_cache.pop(key, None)
+                if base_path_str not in dir_cache_local:
                     try:
-                        cls._dir_cache[base_path_str] = tuple(base_path.iterdir())
+                        dir_cache_local[base_path_str] = tuple(base_path.iterdir())
                     except (OSError, PermissionError):
-                        cls._dir_cache[base_path_str] = ()
-                
-                cached_items = cls._dir_cache[base_path_str]
+                        dir_cache_local[base_path_str] = ()
+                cached_items = dir_cache_local[base_path_str]
+
                 parts[i] = cls.find_closest_match(
                     parts[i],
                     (item for item in cached_items if last_part or item.is_dir()),
