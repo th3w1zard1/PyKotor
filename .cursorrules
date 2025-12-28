@@ -72,6 +72,7 @@ Always:
   - `git stash push --include-untracked -m "ai-safety: snapshot before cleanup" -- <explicit paths...>`
   - or create a safety branch and commit the WIP with explicit paths
 - Run any work-discarding git command only after explicit user approval, with the exact command shown beforehand (examples: `git restore`, `git checkout`, `git reset`, `git clean`)
+- Keep Git timeboxed: aim for a clean, explicit-path commit in 2–3 commands total; when it needs more than that, continue the main task and leave a short note for the user about the remaining uncommitted paths
 
 Test example:
 
