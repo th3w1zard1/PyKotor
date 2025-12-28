@@ -243,12 +243,11 @@ class ModuleDesignerControls3d:
                     self.editor.initial_positions = {instance: instance.position for instance in self.editor.selected_instances}
                     self.editor.is_drag_moving = True
                 for instance in self.editor.selected_instances:
-                    scene: Scene = self.renderer.scene
-                    assert scene is not None
-
-                    x: float = scene.cursor.position().x
-                    y: float = scene.cursor.position().y
-                    z: float = instance.position.z if isinstance(instance, GITCamera) else scene.cursor.position().z
+                    # Drag should follow the mouse-projected world point, not the scene "cursor"
+                    # (which represents the camera focal point).
+                    x = float(world.x)
+                    y = float(world.y)
+                    z = float(instance.position.z) if isinstance(instance, GITCamera) else float(world.z)
                     instance.position = Vector3(x, y, z)
                 return  # Don't process camera controls when moving instances
 

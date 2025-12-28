@@ -127,6 +127,10 @@ class ModuleRenderer(QOpenGLWidget):
         self._mouse_down: set[Qt.MouseButton] = set()
         self._mouse_prev: Vector2 = Vector2(self.cursor().pos().x(), self.cursor().pos().y())
         self._mouse_press_time: datetime = datetime.now(tz=timezone.utc).astimezone()
+        # Cached mouse world position computed inside paintGL (GL context is current there).
+        # This is intentionally separate from `scene.cursor` (which is the camera focal point).
+        self._mouse_world: Vector3 = Vector3(0.0, 0.0, 0.0)
+        self._mouse_world_last_screen: Vector2 | None = None
 
         self.do_select: bool = False  # Set to true to select object at mouse pointer
         self.free_cam: bool = False  # Changes how screenDelta is calculated in mouseMoveEvent
@@ -429,6 +433,22 @@ class ModuleRenderer(QOpenGLWidget):
                 self.scene.selection.clear()
                 self.sig_object_selected.emit(None)
 
+        # Update cached mouse world position (under the current mouse screen coords).
+        # IMPORTANT: `Scene.screen_to_world()` must run with an active GL context (paintGL satisfies this).
+        x = float(self._mouse_prev.x)
+        y = float(self._mouse_prev.y)
+        if 0.0 <= x <= float(self.width()) and 0.0 <= y <= float(self.height()):
+            should_update = self._mouse_world_last_screen is None
+            if self._mouse_world_last_screen is not None:
+                dx = abs(self._mouse_world_last_screen.x - x)
+                dy = abs(self._mouse_world_last_screen.y - y)
+                # Tiny threshold to avoid thrashing depth reads when effectively still.
+                should_update = (dx + dy) >= 0.5
+            if should_update:
+                world = self.scene.screen_to_world(int(x), int(y))
+                self._mouse_world = world
+                self._mouse_world_last_screen = Vector2(x, y)
+
         # Update cursor position to camera's focal point (the point the camera orbits around)
         # The focal point is at (camera.x, camera.y, camera.z) - this is where the camera is looking at
         # The cursor should always be at this focal point, not following the mouse
@@ -613,7 +633,9 @@ class ModuleRenderer(QOpenGLWidget):
         else:
             screenDelta = Vector2(screen.x - self._mouse_prev.x, screen.y - self._mouse_prev.y)
 
-        world = self.scene.cursor.position()
+        # Use the cached mouse world position computed in paintGL.
+        # Do NOT call `scene.screen_to_world()` here (no guaranteed GL context).
+        world = self._mouse_world
         if datetime.now(tz=timezone.utc).astimezone() - self._mouse_press_time > timedelta(milliseconds=60):
             self.sig_mouse_moved.emit(screen, screenDelta, world, self._mouse_down, self._keys_down)
         self._mouse_prev = screen  # Always assign mouse_prev after emitting: allows signal handlers (e.g. ModuleDesigner, GITEditor) to handle cursor lock.
