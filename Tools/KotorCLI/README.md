@@ -168,6 +168,44 @@ KotorCLI unpack
 KotorCLI unpack --file mymodule.mod
 ```
 
+### extract
+
+Extract resources from archive files (`.key`, `.bif`, `.rim`, `.erf/.mod/.sav/.hak`).
+
+**Filtering** (`--filter`) supports:
+
+- `resref` prefix (example: `p_cand` matches `p_cand.*`, `p_cand01.*`, etc.)
+- exact `resref.ext` filename (example: `p_cand.utc`)
+- glob patterns (examples: `p_cand*`, `p_bastila*`, `p_bastila.utc`)
+
+Examples (PowerShell):
+
+```powershell
+$Env:PYTHONIOENCODING='utf-8'; uv --directory="Tools/KotorCLI/src" run --module kotorcli --no-color extract --file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\data\templates.bif" --key-file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\chitin.key" --output "tmp\utc_templates" --filter "p_bastila.utc"
+$Env:PYTHONIOENCODING='utf-8'; uv --directory="Tools/KotorCLI/src" run --module kotorcli --no-color extract --file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\chitin.key" --output "tmp\utc_templates" --filter "p_cand.utc"
+$Env:PYTHONIOENCODING='utf-8'; uv --directory="Tools/KotorCLI/src" run --module kotorcli --no-color extract --file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\chitin.key" --output "tmp\utc_templates" --filter "p_cand"
+```
+
+### list-archive (ls-archive)
+
+List resources inside an archive file (`.key`, `.bif`, `.rim`, `.erf/.mod/.sav/.hak`). Use `--key-file` when listing a `.bif` if you want proper resource names.
+
+```powershell
+$Env:PYTHONIOENCODING='utf-8'; uv --directory="Tools/KotorCLI/src" run --module kotorcli --no-color list-archive --help
+$Env:PYTHONIOENCODING='utf-8'; uv --directory="Tools/KotorCLI/src" run --module kotorcli --no-color list-archive --file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\data\templates.bif" --key-file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\chitin.key" --resources --filter "p_bastila*" --verbose
+$Env:PYTHONIOENCODING='utf-8'; uv --directory="Tools/KotorCLI/src" run --module kotorcli --no-color list-archive --file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\data\templates.bif" --key-file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\chitin.key" --filter "p_bastila*"
+$Env:PYTHONIOENCODING='utf-8'; uv --directory="Tools/KotorCLI/src" run --module kotorcli --no-color list-archive --file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\chitin.key" --resources --filter "p_cand*"
+```
+
+### search-archive (grep-archive)
+
+Search for resources in an archive by name (glob patterns) or by content (`--content`).
+
+```powershell
+$Env:PYTHONIOENCODING='utf-8'; uv --directory="Tools/KotorCLI/src" run --module kotorcli --no-color search-archive --help
+$Env:PYTHONIOENCODING='utf-8'; uv --directory="Tools/KotorCLI/src" run --module kotorcli --no-color search-archive --file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\data\templates.bif" --key-file "C:\Program Files (x86)\Steam\steamapps\common\swkotor\chitin.key" "p_cand*"
+```
+
 ### convert
 
 Convert all JSON sources to their GFF counterparts.

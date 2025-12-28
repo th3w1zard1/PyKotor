@@ -30,6 +30,68 @@ if TYPE_CHECKING:
     from pykotor.resource.bioware_archive import ArchiveResource
 
 
+def _build_bif_path_lookup(search_dir: Path) -> tuple[dict[str, Path], dict[str, Path]]:
+    """Build lookup tables for BIF resolution.
+
+    KEY files may store BIF names as just a filename (e.g. ``templates.bif``) or as a
+    relative path (e.g. ``data/templates.bif``). On disk, KOTOR installs commonly
+    place BIFs under ``data/``.
+    """
+    by_basename: dict[str, Path] = {}
+    by_relposix: dict[str, Path] = {}
+
+    if not search_dir.exists():
+        return by_basename, by_relposix
+
+    # Scan once, then resolve many. This keeps KEY extraction fast even with a lot of BIFs.
+    for candidate in search_dir.rglob("*.bif"):
+        if not candidate.is_file():
+            continue
+
+        by_basename.setdefault(candidate.name.lower(), candidate)
+        try:
+            rel = candidate.relative_to(search_dir)
+        except Exception:
+            continue
+        by_relposix.setdefault(rel.as_posix().lower(), candidate)
+
+    return by_basename, by_relposix
+
+
+def _resolve_bif_path(
+    *,
+    search_dir: Path,
+    bif_name: str,
+    by_basename: dict[str, Path] | None = None,
+    by_relposix: dict[str, Path] | None = None,
+) -> Path | None:
+    """Resolve a KEY BIF entry filename to an on-disk path."""
+    normalized = bif_name.replace("\\", "/").lstrip("/").lstrip("./")
+
+    direct = search_dir / normalized
+    if direct.exists():
+        return direct
+
+    # Common install layout: <root>/data/*.bif
+    direct_data = search_dir / "data" / normalized
+    if direct_data.exists():
+        return direct_data
+
+    # Lookup by relative path or basename (case-insensitive)
+    if by_relposix is not None:
+        found = by_relposix.get(normalized.lower())
+        if found and found.exists():
+            return found
+
+    if by_basename is not None:
+        basename = Path(normalized).name.lower()
+        found = by_basename.get(basename)
+        if found and found.exists():
+            return found
+
+    return None
+
+
 def matches_filter(text: str, pattern: str) -> bool:
     """Check if text matches filter pattern (supports wildcards).
 
@@ -225,23 +287,19 @@ def extract_key_bif(
     # Find BIF files
     search_dir = bif_search_dir if bif_search_dir else key_path.parent
     bif_files: dict[int, Path] = {}
+    by_basename, by_relposix = _build_bif_path_lookup(search_dir)
 
-    for bif_entry in key_data.bif_entries:
+    for bif_index, bif_entry in enumerate(key_data.bif_entries):
         bif_name = bif_entry.filename
-        bif_path = search_dir / bif_name
-
-        if not bif_path.exists():
-            # Try case-insensitive search
-            for candidate in search_dir.iterdir():
-                if candidate.name.lower() == bif_name.lower():
-                    bif_path = candidate
-                    break
-            else:
-                continue  # Skip missing BIF files
-
-        # Store BIF path by its index
-        bif_index = key_data.bif_entries.index(bif_entry)
-        bif_files[bif_index] = bif_path
+        resolved = _resolve_bif_path(
+            search_dir=search_dir,
+            bif_name=bif_name,
+            by_basename=by_basename,
+            by_relposix=by_relposix,
+        )
+        if resolved is None:
+            continue  # Skip missing BIF files
+        bif_files[bif_index] = resolved
 
     # Extract from each BIF
     for bif_index, bif_path in bif_files.items():
@@ -665,6 +723,70 @@ def get_resource_from_archive(
             result = rim_data.get(resref, common_type)
             if result is not None:
                 return result
+
+    elif suffix == ".bif":
+        # BIFs can be read directly, but names may be numeric without a KEY.
+        key_source = archive_path.parent / "chitin.key"
+        key_path = key_source if key_source.exists() else None
+        with archive_path.open("rb") as bif_file:
+            bif_data = read_bif(bif_file, key_source=key_path)
+
+        if resource_type:
+            for resource in bif_data:
+                if resource.resref and resource.restype:
+                    if resource.resref.get().lower() == resref.lower() and resource.restype == resource_type:
+                        return resource.data
+            return None
+
+        # Try common types if not specified
+        for common_type in [ResourceType.NSS, ResourceType.DLG, ResourceType.UTC, ResourceType.UTI]:
+            for resource in bif_data:
+                if resource.resref and resource.restype:
+                    if resource.resref.get().lower() == resref.lower() and resource.restype == common_type:
+                        return resource.data
+        return None
+
+    elif suffix == ".key":
+        # KEY provides the BIF + resource indices. Resolve BIF paths relative to the KEY.
+        with archive_path.open("rb") as key_file:
+            key_data = read_key(key_file)
+
+        def _try_get_key_entry(rt: ResourceType) -> "object | None":
+            return key_data.get_resource(resref, rt)
+
+        key_entry = _try_get_key_entry(resource_type) if resource_type else None
+        if key_entry is None and resource_type is None:
+            for common_type in [ResourceType.NSS, ResourceType.DLG, ResourceType.UTC, ResourceType.UTI]:
+                key_entry = _try_get_key_entry(common_type)
+                if key_entry is not None:
+                    break
+
+        if key_entry is None:
+            return None
+
+        bif_index = key_entry.bif_index
+        res_index = key_entry.res_index
+        if bif_index < 0 or bif_index >= len(key_data.bif_entries):
+            return None
+
+        search_dir = archive_path.parent
+        by_basename, by_relposix = _build_bif_path_lookup(search_dir)
+        bif_name = key_data.bif_entries[bif_index].filename
+        bif_path = _resolve_bif_path(
+            search_dir=search_dir,
+            bif_name=bif_name,
+            by_basename=by_basename,
+            by_relposix=by_relposix,
+        )
+        if bif_path is None:
+            return None
+
+        with bif_path.open("rb") as bif_file:
+            bif_data = read_bif(bif_file, key_source=archive_path)
+        for i, resource in enumerate(bif_data):
+            if i == res_index:
+                return resource.data
+        return None
 
     return None
 

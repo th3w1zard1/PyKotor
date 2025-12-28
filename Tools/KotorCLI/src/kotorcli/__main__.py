@@ -287,7 +287,10 @@ def create_parser() -> ArgumentParser:  # noqa: PLR0915
     )
     extract_parser.add_argument("--file", dest="file", required=True, help="Archive file to extract")
     extract_parser.add_argument("--output", "-o", dest="output", help="Output directory (default: archive_name)")
-    extract_parser.add_argument("--filter", help="Filter resources by name pattern (supports wildcards)")
+    extract_parser.add_argument(
+        "--filter",
+        help="Filter resources by name (resref, resref.ext, or glob like p_cand* / p_cand.utc)",
+    )
     extract_parser.add_argument("--key-file", help="KEY file for BIF extraction (default: chitin.key)")
 
     # list-archive command
@@ -298,7 +301,10 @@ def create_parser() -> ArgumentParser:  # noqa: PLR0915
     )
     list_archive_parser.add_argument("--file", dest="file", required=True, help="Archive file to list")
     list_archive_parser.add_argument("--verbose", "-v", action="store_true", help="Show detailed resource information")
-    list_archive_parser.add_argument("--filter", help="Filter resources by name pattern (supports wildcards)")
+    list_archive_parser.add_argument(
+        "--filter",
+        help="Filter resources by name (resref, resref.ext, or glob like p_cand* / p_cand.utc)",
+    )
     list_archive_parser.add_argument("--key-file", help="KEY file for BIF listing (default: chitin.key)")
     list_archive_parser.add_argument("--bifs-only", action="store_true", help="List only BIF files (for KEY archives)")
     list_archive_parser.add_argument("--resources", action="store_true", help="List resources (for KEY archives)")
@@ -454,6 +460,7 @@ def create_parser() -> ArgumentParser:  # noqa: PLR0915
     )
     search_archive_parser.add_argument("--file", "-f", dest="file", required=True, help="Archive file to search")
     search_archive_parser.add_argument("pattern", help="Search pattern (supports wildcards)")
+    search_archive_parser.add_argument("--key-file", help="KEY file for BIF searches (optional)")
     search_archive_parser.add_argument("--case-sensitive", action="store_true", help="Case-sensitive search")
     search_archive_parser.add_argument(
         "--content", action="store_true", dest="search_content", help="Search in resource content (not just names)"

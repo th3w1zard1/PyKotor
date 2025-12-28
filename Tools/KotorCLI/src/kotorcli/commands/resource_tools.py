@@ -74,10 +74,11 @@ def cmd_sound_convert(args: Namespace, logger: Logger) -> int:
             wav_type = args.type if hasattr(args, "type") else "SFX"
             convert_clean_to_wav(input_path, output_path, wav_type=wav_type)
             logger.info(f"Converted {input_path.name} to game WAV: {output_path.name}")  # noqa: G004
-        return 0
     except Exception:
         logger.exception(f"Failed to convert sound {input_path}")  # noqa: G004
         return 1
+    else:
+        return 0
 
 
 def cmd_model_convert(args: Namespace, logger: Logger) -> int:
@@ -102,7 +103,7 @@ def cmd_model_convert(args: Namespace, logger: Logger) -> int:
             output_mdl = pathlib.Path(args.output) if args.output else input_path.with_suffix(".mdl")
             mdx_output = pathlib.Path(args.mdx) if args.mdx else None
             convert_ascii_to_mdl(input_path, output_mdl, output_mdx_path=mdx_output)
-            logger.info(f"Converted {input_path.name} to binary: {output_path.name}")  # noqa: G004
+            logger.info(f"Converted {input_path.name} to binary: {output_mdl.name}")  # noqa: G004
     except Exception:
         logger.exception(f"Failed to convert model {input_path}")  # noqa: G004
         return 1

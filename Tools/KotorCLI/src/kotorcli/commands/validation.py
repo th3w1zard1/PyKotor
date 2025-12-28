@@ -116,7 +116,7 @@ def cmd_validate_installation(args: Namespace, logger: Logger) -> int:
     ok, _fail = ok_fail_symbols()
 
     if results["valid"]:
-        logger.info(f"{ok} Installation is valid")
+        logger.info(f"{ok} Installation is valid")  # noqa: G004
         return 0
 
     missing_files_raw = results["missing_files"]
@@ -193,7 +193,7 @@ def cmd_investigate_module(args: Namespace, logger: Logger) -> int:
     return 0
 
 
-def cmd_check_missing_resources(args: Namespace, logger: Logger) -> int:
+def cmd_check_missing_resources(args: Namespace, logger: Logger) -> int:  # noqa: PLR0912
     """Check if missing resources are referenced by module models.
 
     Usage:
