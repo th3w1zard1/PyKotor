@@ -208,7 +208,15 @@ def _parse_texture_data(
             rgba_data = bytes(mm.data)
             return (
                 name,
-                IntermediateTexture(width=width, height=height, rgba_data=rgba_data, mipmap_count=1, blend_mode=blend_mode, alpha_cutoff=alpha_cutoff, has_alpha=has_alpha),
+                IntermediateTexture(
+                    width=width,
+                    height=height,
+                    rgba_data=rgba_data,
+                    mipmap_count=1,
+                    blend_mode=blend_mode,
+                    alpha_cutoff=alpha_cutoff,
+                    has_alpha=has_alpha,
+                ),
                 None,
             )
 
@@ -219,7 +227,15 @@ def _parse_texture_data(
             img = read_tga(io.BytesIO(tex_bytes))
             return (
                 name,
-                IntermediateTexture(width=img.width, height=img.height, rgba_data=bytes(img.data), mipmap_count=1, blend_mode=0, alpha_cutoff=0.01, has_alpha=True),
+                IntermediateTexture(
+                    width=img.width,
+                    height=img.height,
+                    rgba_data=bytes(img.data),
+                    mipmap_count=1,
+                    blend_mode=0,
+                    alpha_cutoff=0.01,
+                    has_alpha=True,
+                ),
                 None,
             )
 
@@ -238,7 +254,15 @@ def _parse_texture_data(
             rgba_data = bytes(mm.data)
             return (
                 name,
-                IntermediateTexture(width=width, height=height, rgba_data=rgba_data, mipmap_count=1, blend_mode=0, alpha_cutoff=0.01, has_alpha=True),
+                IntermediateTexture(
+                    width=width,
+                    height=height,
+                    rgba_data=rgba_data,
+                    mipmap_count=1,
+                    blend_mode=0,
+                    alpha_cutoff=0.01,
+                    has_alpha=True,
+                ),
                 None,
             )
 

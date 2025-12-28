@@ -10,7 +10,6 @@ from typing import TYPE_CHECKING, Sequence
 
 import qtpy
 
-from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
 from qtpy.QtCore import (
     Qt,
     Signal,  # pyright: ignore[reportPrivateImportUsage]
@@ -24,11 +23,25 @@ from qtpy.QtWidgets import (
     QUndoCommand,  # pyright: ignore[reportPrivateImportUsage]
 )
 
+from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
 from pykotor.common.misc import Color
 from pykotor.extract.installation import SearchLocation
 from pykotor.resource.formats.bwm import read_bwm
 from pykotor.resource.formats.lyt import read_lyt
-from pykotor.resource.generics.git import GIT, GITCamera, GITCreature, GITDoor, GITEncounter, GITPlaceable, GITSound, GITStore, GITTrigger, GITWaypoint, bytes_git, read_git
+from pykotor.resource.generics.git import (
+    GIT,
+    GITCamera,
+    GITCreature,
+    GITDoor,
+    GITEncounter,
+    GITPlaceable,
+    GITSound,
+    GITStore,
+    GITTrigger,
+    GITWaypoint,
+    bytes_git,
+    read_git,
+)
 from pykotor.resource.type import ResourceType
 from pykotor.tools.template import extract_name, extract_tag_from_gff
 from toolset.blender import BlenderEditorMode
@@ -52,7 +65,6 @@ from toolset.utils.window import add_window, open_resource_editor
 from utility.common.geometry import SurfaceMaterial, Vector2, Vector3, Vector4
 
 if TYPE_CHECKING:
-
     from qtpy.QtCore import QPoint
     from qtpy.QtGui import QCloseEvent, QKeyEvent
     from qtpy.QtWidgets import QCheckBox, QListWidget, QWidget
@@ -68,6 +80,7 @@ if qtpy.QT5:
     from qtpy.QtWidgets import QUndoStack
 elif qtpy.QT6:
     from qtpy.QtGui import QUndoStack
+
 
 class MoveCommand(QUndoCommand):
     def __init__(
@@ -93,10 +106,7 @@ class MoveCommand(QUndoCommand):
 
 class RotateCommand(QUndoCommand):
     def __init__(
-        self,
-        instance: GITCamera | GITCreature | GITDoor | GITPlaceable | GITStore | GITWaypoint,
-        old_orientation: Vector4 | float,
-        new_orientation: Vector4 | float
+        self, instance: GITCamera | GITCreature | GITDoor | GITPlaceable | GITStore | GITWaypoint, old_orientation: Vector4 | float, new_orientation: Vector4 | float
     ):
         RobustLogger().debug(f"Init rotatecommand with instance: {instance.identifier()}")
         super().__init__()
@@ -157,7 +167,6 @@ class DuplicateCommand(QUndoCommand):
         else:
             self.editor.enter_instance_mode()
             self.editor.rebuild_instance_list()
-
 
     def redo(self):
         for instance in self.instances:
@@ -295,7 +304,7 @@ class GITEditor(Editor, BlenderEditorMixin):
     def __init__(
         self,
         parent: QWidget | None,
-        installation: HTInstallation = None,
+        installation: HTInstallation | None = None,
         use_blender: bool = False,
     ):
         """Initializes the GIT editor.
@@ -316,6 +325,7 @@ class GITEditor(Editor, BlenderEditorMixin):
         self._use_blender_mode: bool = use_blender
 
         from toolset.uic.qtpy.editors.git import Ui_MainWindow
+
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self._setup_menus()
@@ -530,6 +540,7 @@ class GITEditor(Editor, BlenderEditorMixin):
             return
 
         from toolset.gui.common.localization import translate as tr
+
         reply = QMessageBox.question(
             self,
             tr("Confirm Exit"),
@@ -740,11 +751,11 @@ class _Mode(ABC):
     def __init__(
         self,
         editor: GITEditor | ModuleDesigner,
-        installation: HTInstallation,
+        installation: HTInstallation | None,
         git: GIT,
     ):
         self._editor: GITEditor | ModuleDesigner = editor
-        self._installation: HTInstallation = installation
+        self._installation: HTInstallation | None = installation
         self._git: GIT = git
 
         self._ui = editor.ui
@@ -805,7 +816,7 @@ class _InstanceMode(_Mode):
     def __init__(
         self,
         editor: GITEditor | ModuleDesigner,
-        installation: HTInstallation,
+        installation: HTInstallation | None,
         git: GIT,
     ):
         super().__init__(editor, installation, git)
@@ -911,7 +922,7 @@ class _InstanceMode(_Mode):
         if self.renderer2d.instance_selection.last():
             self.renderer2d.instance_selection.last()
             # TODO: Implement spawn mode (UTE)
-            #self._editor.enter_spawn_mode()
+            # self._editor.enter_spawn_mode()
 
     def add_instance(self, instance: GITInstance):
         if open_instance_dialog(self._editor, instance, self._installation):
@@ -974,6 +985,7 @@ class _InstanceMode(_Mode):
                 display_path = result.filepath.joinpath(str(instance.identifier())).relative_to(self._installation.path())
             loc_menu: QMenu = file_menu.addMenu(str(display_path))  # pyright: ignore[reportOptionalMemberAccess]
             ResourceItems(resources=[result]).build_menu(loc_menu)
+
         def more_info():
             selection_window = FileSelectionWindow(locations, self._installation)
             selection_window.show()
@@ -1191,7 +1203,9 @@ class _InstanceMode(_Mode):
                 self._git.remove(instance)
                 self.renderer2d.instance_selection.remove(instance)
         else:
-            (self._editor._controls.undo_stack if isinstance(self._editor, GITEditor) else self._editor.undo_stack).push(DeleteCommand(self._git, selection.copy(), self._editor))  # noqa: SLF001
+            (self._editor._controls.undo_stack if isinstance(self._editor, GITEditor) else self._editor.undo_stack).push(
+                DeleteCommand(self._git, selection.copy(), self._editor)
+            )  # noqa: SLF001
         self.build_list()
 
     def duplicate_selected(
@@ -1250,6 +1264,7 @@ class _InstanceMode(_Mode):
                 instance.rotate(yaw - current_angle, 0, 0)
             elif isinstance(instance, (GITCreature, GITDoor, GITPlaceable, GITStore, GITWaypoint)):
                 instance.rotate(-yaw + current_angle, 0, 0)
+
     # endregion
 
 
@@ -1257,7 +1272,7 @@ class _GeometryMode(_Mode):
     def __init__(
         self,
         editor: GITEditor | ModuleDesigner,
-        installation: HTInstallation,
+        installation: HTInstallation | None,
         git: GIT,
         *,
         hide_others: bool = True,
@@ -1293,11 +1308,9 @@ class _GeometryMode(_Mode):
         RobustLogger().debug(f"Inserting new geompoint, instance {instance.identifier()}. Total points: {len(list(instance.geometry))}")
 
     # region Interface Methods
-    def on_item_selection_changed(self, item: QListWidgetItem):
-        ...
+    def on_item_selection_changed(self, item: QListWidgetItem): ...
 
-    def on_filter_edited(self, text: str):
-        ...
+    def on_filter_edited(self, text: str): ...
 
     def update_status_bar(self, world: Vector2):
         instance: GITInstance | None = self.renderer2d.instance_selection.last()
@@ -1319,11 +1332,9 @@ class _GeometryMode(_Mode):
         menu.addSeparator()
         menu.addAction("Finish Editing").triggered.connect(self._editor.enter_instance_mode)  # pyright: ignore[reportOptionalMemberAccess]
 
-    def open_list_context_menu(self, item: QListWidgetItem, screen: QPoint):
-        ...
+    def open_list_context_menu(self, item: QListWidgetItem, screen: QPoint): ...
 
-    def update_visibility(self):
-        ...
+    def update_visibility(self): ...
 
     def select_underneath(self):
         under_mouse: list[GeomPoint] = self.renderer2d.geom_points_under_mouse()
@@ -1344,34 +1355,30 @@ class _GeometryMode(_Mode):
         RobustLogger().debug(f"Removing last geometry point for instance {instance.identifier()}")
         self.renderer2d.geometry_selection.remove(GeomPoint(instance, vertex.point))
 
-    def duplicate_selected(self, position: Vector3):
-        ...
+    def duplicate_selected(self, position: Vector3): ...
 
     def move_selected(self, x: float, y: float):
         for vertex in self.renderer2d.geometry_selection.all():
             vertex.point.x += x
             vertex.point.y += y
 
-    def rotate_selected(self, angle: float):
-        ...
+    def rotate_selected(self, angle: float): ...
 
-    def rotate_selected_to_point(self, x: float, y: float):
-        ...
+    def rotate_selected_to_point(self, x: float, y: float): ...
+
     # endregion
 
 
 class _SpawnMode(_Mode):
-    def on_item_selection_changed(self, item: QListWidgetItem):
-        ...
+    def on_item_selection_changed(self, item: QListWidgetItem): ...
 
-    def on_filter_edited(self, text: str):
-        ...
+    def on_filter_edited(self, text: str): ...
 
 
 def calculate_zoom_strength(delta_y: float, sens_setting: int) -> float:
     m = 0.00202
     b = 1
-    factor_in = (m * sens_setting + b)
+    factor_in = m * sens_setting + b
     return 1 / abs(factor_in) if delta_y < 0 else abs(factor_in)
 
 
@@ -1392,7 +1399,7 @@ class GITControlScheme:
                 return  # sometimes it'll be zero when holding middlemouse-down.
             sens_setting = ModuleDesignerSettings().zoomCameraSensitivity2d
             zoom_factor = calculate_zoom_strength(delta.y, sens_setting)
-            #RobustLogger.debug(f"on_mouse_scrolled zoom_camera (delta.y={delta.y}, zoom_factor={zoom_factor}, sensSetting={sensSetting}))")
+            # RobustLogger.debug(f"on_mouse_scrolled zoom_camera (delta.y={delta.y}, zoom_factor={zoom_factor}, sensSetting={sensSetting}))")
             self.editor.zoom_camera(zoom_factor)
 
     def on_mouse_moved(
@@ -1416,23 +1423,21 @@ class GITControlScheme:
 
         if should_pan_camera:
             moveSens = ModuleDesignerSettings().moveCameraSensitivity2d / 100
-            #RobustLogger.debug(f"on_mouse_scrolled move_camera (delta.y={screenDelta.y}, sensSetting={moveSens}))")
+            # RobustLogger.debug(f"on_mouse_scrolled move_camera (delta.y={screenDelta.y}, sensSetting={moveSens}))")
             self.editor.move_camera(-world_delta.x * moveSens, -world_delta.y * moveSens)
         if should_rotate_camera:
             self._handle_camera_rotation(screen_delta)
 
         if self.move_selected.satisfied(buttons, keys):
             if not self.is_drag_moving and isinstance(self.editor._mode, _InstanceMode):  # noqa: SLF001
-                #RobustLogger().debug("move_selected instance GITControlScheme")
+                # RobustLogger().debug("move_selected instance GITControlScheme")
                 selection: list[GITInstance] = self.editor._mode.renderer2d.instance_selection.all()  # noqa: SLF001
                 self.initial_positions = {instance: Vector3(*instance.position) for instance in selection}
                 self.is_drag_moving = True
             self.editor.move_selected(adjusted_world_delta.x, adjusted_world_delta.y)
         if self.rotate_selected_to_point.satisfied(buttons, keys):
             if (
-                not self.is_drag_rotating
-                and not self.editor.ui.lockInstancesCheck.isChecked()
-                and isinstance(self.editor._mode, _InstanceMode)  # noqa: SLF001
+                not self.is_drag_rotating and not self.editor.ui.lockInstancesCheck.isChecked() and isinstance(self.editor._mode, _InstanceMode)  # noqa: SLF001
             ):
                 self.is_drag_rotating = True
                 RobustLogger().debug("rotateSelected instance in GITControlScheme")
@@ -1448,7 +1453,7 @@ class GITControlScheme:
         direction = -1 if screen_delta.x < 0 else 1 if screen_delta.x > 0 else 0
         rotate_sens = ModuleDesignerSettings().rotateCameraSensitivity2d / 1000
         rotate_amount = delta_magnitude * rotate_sens * direction
-        #RobustLogger.debug(f"on_mouse_scrolled rotate_camera (delta_value={delta_magnitude}, rotateAmount={rotateAmount}, sensSetting={rotateSens}))")
+        # RobustLogger.debug(f"on_mouse_scrolled rotate_camera (delta_value={delta_magnitude}, rotateAmount={rotateAmount}, sensSetting={rotateSens}))")
         self.editor.rotate_camera(rotate_amount)
 
     def handle_undo_redo_from_long_action_finished(self):
@@ -1467,7 +1472,7 @@ class GITControlScheme:
 
             # Reset for the next drag operation
             self.initial_positions.clear()
-            #RobustLogger().debug("No longer drag moving GITControlScheme")
+            # RobustLogger().debug("No longer drag moving GITControlScheme")
             self.is_drag_moving = False
 
         if self.is_drag_rotating:
@@ -1483,7 +1488,7 @@ class GITControlScheme:
 
             # Reset for the next drag operation
             self.initial_rotations.clear()
-            #RobustLogger().debug("No longer drag rotating GITControlScheme")
+            # RobustLogger().debug("No longer drag rotating GITControlScheme")
             self.is_drag_rotating = False
 
     def on_mouse_pressed(self, screen: Vector2, buttons: set[Qt.MouseButton], keys: set[Qt.Key]):

@@ -126,3 +126,4 @@ profiling/
 vendor/swkotor.h
 vendor/swkotor.c
 Tools/*/.github/
+*_extract/

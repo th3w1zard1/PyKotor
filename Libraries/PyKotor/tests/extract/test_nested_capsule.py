@@ -240,28 +240,28 @@ class TestNestedCapsuleExtraction:
         fr1 = FileResource(
             resname="some_resource",
             restype=entry1.restype,
-            size=entry1.size,
-            offset=entry1.offset,
+            size=entry1.size,  # 5
+            offset=entry1.offset,  # 52
             filepath=bif_path,
         )
         assert fr1.inside_bif is True
         assert fr1.exists() is True
         assert fr1.data() == b"hello"
-        assert fr1.offset() == entry1.offset
-        assert fr1.size() == entry1.size
+        assert fr1.offset() == entry1.offset  # 52
+        assert fr1.size() == entry1.size  # 5
 
         fr2 = FileResource(
             resname="another_resource",
             restype=entry2.restype,
-            size=entry2.size,
-            offset=entry2.offset,
+            size=entry2.size,  # 5
+            offset=entry2.offset,  # 60
             filepath=bif_path,
         )
         assert fr2.inside_bif is True
         assert fr2.exists() is True
         assert fr2.data() == b"world"
-        assert fr2.offset() == entry2.offset
-        assert fr2.size() == entry2.size
+        assert fr2.offset() == entry2.offset  # 60
+        assert fr2.size() == entry2.size  # 5
 
 
 class TestResourceIdentifierFromPath:
