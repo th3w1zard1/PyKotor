@@ -346,6 +346,17 @@ class HTInstallation(Installation):
         root_menu.addMenu(file_menu)
         root_menu.addSeparator()
 
+        # Defensive: callers can (and sometimes do) pass an empty list here (e.g. when the
+        # resource type is user-selectable or not yet known). Avoid IndexError on `resref_type[0]`
+        # and present the standard (disabled) "File..." submenu instead.
+        if not resref_type:
+            file_menu.setDisabled(True)
+            for action in root_menu.actions():
+                if action.text() == "File...":
+                    action.setText("0 file(s) located")
+                    break
+            return
+
         search_order: list[SearchLocation] = order or [
             SearchLocation.CHITIN,
             SearchLocation.OVERRIDE,
