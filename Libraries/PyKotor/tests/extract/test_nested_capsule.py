@@ -221,19 +221,47 @@ class TestNestedCapsuleExtraction:
         assert result == test_data
 
     def test_file_resource_exists_inside_bif_does_not_use_lazy_capsule(self, tmp_path: Path):
-        """FileResource.exists() must not treat .bif as a capsule (Open (Windows) temp-extract depends on this)."""
-        bif_path = tmp_path / "sounds.bif"
-        bif_path.write_bytes(b"\x00" * 64)
+        """FileResource.exists() must not treat .bif as a capsule."""
+        from pykotor.common.misc import ResRef
+        from pykotor.resource.formats.bif import BIF, read_bif, write_bif
 
-        fr = FileResource(
+        bif_path = tmp_path / "sounds.bif"
+
+        bif = BIF()
+        bif.set_data(ResRef("some_resource"), ResourceType.TXT, b"hello", res_id=0)
+        bif.set_data(ResRef("another_resource"), ResourceType.TXT, b"world", res_id=1)
+        write_bif(bif, bif_path)
+
+        parsed = read_bif(bif_path)
+        assert len(parsed.resources) == 2
+        entry1 = parsed.resources[0]
+        entry2 = parsed.resources[1]
+
+        fr1 = FileResource(
             resname="some_resource",
-            restype=ResourceType.TXT,
-            size=1,
-            offset=0,
+            restype=entry1.restype,
+            size=entry1.size,
+            offset=entry1.offset,
             filepath=bif_path,
         )
-        assert fr.inside_bif is True
-        assert fr.exists() is True
+        assert fr1.inside_bif is True
+        assert fr1.exists() is True
+        assert fr1.data() == b"hello"
+        assert fr1.offset() == entry1.offset
+        assert fr1.size() == entry1.size
+
+        fr2 = FileResource(
+            resname="another_resource",
+            restype=entry2.restype,
+            size=entry2.size,
+            offset=entry2.offset,
+            filepath=bif_path,
+        )
+        assert fr2.inside_bif is True
+        assert fr2.exists() is True
+        assert fr2.data() == b"world"
+        assert fr2.offset() == entry2.offset
+        assert fr2.size() == entry2.size
 
 
 class TestResourceIdentifierFromPath:
