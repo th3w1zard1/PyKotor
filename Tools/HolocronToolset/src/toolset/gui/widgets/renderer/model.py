@@ -255,7 +255,8 @@ class ModelRenderer(QOpenGLWidget):
 
     def wheelEvent(self, e: QWheelEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
         if self._controls.moveZCameraControl.satisfied(self._mouse_down, self._keys_down):
-            strength: float = self._controls.moveCameraSensitivity3d / 20000
+            # Ctrl+wheel (default) vertical camera move was far too sensitive; reduce by 5x.
+            strength: float = self._controls.moveCameraSensitivity3d / 100000
             self.scene.camera.z -= -e.angleDelta().y() * strength
             return
 
@@ -375,11 +376,9 @@ class ModelRenderer(QOpenGLWidget):
             self.pan_camera((self._controls.moveCameraSensitivity3d / 500), 0, 0)
         if self._controls.moveCameraBackwardControl.satisfied(self._mouse_down, self._keys_down):
             self.pan_camera(-(self._controls.moveCameraSensitivity3d / 500), 0, 0)
-
-        if self._controls.zoomCameraControl.satisfied(self._mouse_down, self._keys_down):
-            self.scene.camera.distance += self._controls.zoomCameraSensitivity3d / 200
-        if self._controls.zoomCameraOutControl.satisfied(self._mouse_down, self._keys_down):
-            self.scene.camera.distance -= self._controls.zoomCameraSensitivity3d / 200
+        # IMPORTANT: Do not perform wheel-style zoom on key presses.
+        # If the zoom bind is configured as "any keys", `ControlItem.satisfied()` becomes
+        # true for *every* keypress, which caused a spurious "zoom out one tick" behavior.
         # key_name = get_qt_key_string_localized(key)
         # RobustLogger().debug(f"ModelRenderer.keyPressEvent: {self._keys_down}, e.key() '{key_name}'")
 

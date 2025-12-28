@@ -206,21 +206,17 @@ class ModuleDesignerControls3d:
         keys: set[Qt.Key],
     ):
         if self.zoom_camera.satisfied(buttons, keys):
-            # Use exponential zoom for consistent feel at all distances
-            sensitivity: float = self.settings.zoomCameraSensitivity3d / 5000.0
-            zoom_factor = 1.0 + delta.y * sensitivity
-            
-            # Clamp zoom factor to prevent extreme changes
-            zoom_factor = max(0.5, min(2.0, zoom_factor))
-            
+            # Wheel zoom MUST be constant per tick (independent of current distance).
+            # QWheelEvent.angleDelta().y() is typically ±120 per notch; we intentionally
+            # apply a fixed delta per notch rather than scaling by camera distance.
+            strength: float = self.settings.zoomCameraSensitivity3d / 30000.0
             camera = self.renderer.scene.camera
-            new_distance = camera.distance / zoom_factor
-            
-            # Clamp distance
-            camera.distance = max(0.5, min(500.0, new_distance))
+            camera.distance += -delta.y * strength
+            camera.distance = max(0.5, min(500.0, camera.distance))
             
         elif self.move_z_camera.satisfied(buttons, keys):
-            strength: float = self.settings.moveCameraSensitivity3d / 10000
+            # Ctrl+wheel (default) vertical camera move was far too sensitive; reduce by 5x.
+            strength: float = self.settings.moveCameraSensitivity3d / 50000
             self.renderer.scene.camera.z -= -delta.y * strength
 
     def on_mouse_moved(
