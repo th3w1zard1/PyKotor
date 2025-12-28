@@ -105,18 +105,22 @@ def _list_bif(bif_path: pathlib.Path, args: Namespace, logger: Logger) -> int:
         logger.info(f"BIF file: {bif_path.name}")  # noqa: G004
         logger.info(f"  Resources: {len(resources)}")  # noqa: G004
 
-        logger.info("\nResources:")
-        for i, resource in enumerate(resources):
-            resref = resource.resref.get() if resource.resref else f"resource_{i:05d}"
-            res_type = resource.restype.extension if resource.restype else "bin"
-            if args.filter and not matches_resource_name(resref, res_type, args.filter):
-                continue
+        # Backward-compat: historically, listing individual resources required --verbose.
+        # We also allow explicit opt-in via --resources, or when a --filter is provided.
+        should_print_resources = bool(args.verbose or args.resources or args.filter)
+        if should_print_resources:
+            logger.info("\nResources:")
+            for i, resource in enumerate(resources):
+                resref = resource.resref.get() if resource.resref else f"resource_{i:05d}"
+                res_type = resource.restype.extension if resource.restype else "bin"
+                if args.filter and not matches_resource_name(resref, res_type, args.filter):
+                    continue
 
-            if args.verbose:
-                size = len(resource.data) if hasattr(resource, "data") else 0
-                logger.info(f"  [{i}] {resref}.{res_type} ({size} bytes)")  # noqa: G004
-            else:
-                logger.info(f"  {resref}.{res_type}")  # noqa: G004
+                if args.verbose:
+                    size = len(resource.data) if hasattr(resource, "data") else 0
+                    logger.info(f"  [{i}] {resref}.{res_type} ({size} bytes)")  # noqa: G004
+                else:
+                    logger.info(f"  {resref}.{res_type}")  # noqa: G004
 
     except Exception:
         logger.exception("Failed to list BIF")
@@ -133,18 +137,20 @@ def _list_rim(rim_path: pathlib.Path, args: Namespace, logger: Logger) -> int:
         logger.info(f"RIM file: {rim_path.name}")  # noqa: G004
         logger.info(f"  Resources: {len(resources)}")  # noqa: G004
 
-        logger.info("\nResources:")
-        for resource in resources:
-            resref = resource.resref.get() if resource.resref else "unknown"
-            res_type = resource.restype.extension if resource.restype else "bin"
-            if args.filter and not matches_resource_name(resref, res_type, args.filter):
-                continue
+        should_print_resources = bool(args.verbose or args.resources or args.filter)
+        if should_print_resources:
+            logger.info("\nResources:")
+            for resource in resources:
+                resref = resource.resref.get() if resource.resref else "unknown"
+                res_type = resource.restype.extension if resource.restype else "bin"
+                if args.filter and not matches_resource_name(resref, res_type, args.filter):
+                    continue
 
-            if args.verbose:
-                size = len(resource.data) if hasattr(resource, "data") else 0
-                logger.info(f"  {resref}.{res_type} ({size} bytes)")  # noqa: G004
-            else:
-                logger.info(f"  {resref}.{res_type}")  # noqa: G004
+                if args.verbose:
+                    size = len(resource.data) if hasattr(resource, "data") else 0
+                    logger.info(f"  {resref}.{res_type} ({size} bytes)")  # noqa: G004
+                else:
+                    logger.info(f"  {resref}.{res_type}")  # noqa: G004
 
     except Exception:
         logger.exception("Failed to list RIM")
@@ -161,18 +167,20 @@ def _list_erf(erf_path: pathlib.Path, args: Namespace, logger: Logger) -> int:
         logger.info(f"ERF file: {erf_path.name}")  # noqa: G004
         logger.info(f"  Resources: {len(resources)}")  # noqa: G004
 
-        logger.info("\nResources:")
-        for resource in resources:
-            resref = resource.resref.get() if resource.resref else "unknown"
-            res_type = resource.restype.extension if resource.restype else "bin"
-            if args.filter and not matches_resource_name(resref, res_type, args.filter):
-                continue
+        should_print_resources = bool(args.verbose or args.resources or args.filter)
+        if should_print_resources:
+            logger.info("\nResources:")
+            for resource in resources:
+                resref = resource.resref.get() if resource.resref else "unknown"
+                res_type = resource.restype.extension if resource.restype else "bin"
+                if args.filter and not matches_resource_name(resref, res_type, args.filter):
+                    continue
 
-            if args.verbose:
-                size = len(resource.data) if hasattr(resource, "data") else 0
-                logger.info(f"  {resref}.{res_type} ({size} bytes)")  # noqa: G004
-            else:
-                logger.info(f"  {resref}.{res_type}")  # noqa: G004
+                if args.verbose:
+                    size = len(resource.data) if hasattr(resource, "data") else 0
+                    logger.info(f"  {resref}.{res_type} ({size} bytes)")  # noqa: G004
+                else:
+                    logger.info(f"  {resref}.{res_type}")  # noqa: G004
 
     except Exception:
         logger.exception("Failed to list ERF")
