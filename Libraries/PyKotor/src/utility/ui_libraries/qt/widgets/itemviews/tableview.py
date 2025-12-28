@@ -29,6 +29,7 @@ class RobustTableView(RobustAbstractItemView, QTableView):
         do_qt_init: bool = True,
     ):
         self.only_first_column_selectable: bool = True
+        self._first_column_drag_allowed: bool = True
         if do_qt_init:
             QTableView.__init__(self, parent)
         RobustAbstractItemView.__init__(self, parent, settings_name=settings_name)
@@ -264,17 +265,33 @@ class RobustTableView(RobustAbstractItemView, QTableView):
 
     def mousePressEvent(self, event: QMouseEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
         if not self.only_first_column_selectable:
+            self._first_column_drag_allowed = True
             super().mousePressEvent(event)
             return
 
         index = self.indexAt(event.pos())
         if index.isValid() and index.column() == 0:
+            self._first_column_drag_allowed = True
             super().mousePressEvent(event)
             return
 
         # Disallow selecting non-first-column cells in this mode.
+        self._first_column_drag_allowed = False
         self.clearSelection()
         event.ignore()
+
+    def mouseMoveEvent(self, event: QMouseEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
+        if not self.only_first_column_selectable:
+            super().mouseMoveEvent(event)
+            return
+
+        # If the drag didn't start in column 0, prevent drag-selection from the viewport.
+        if not self._first_column_drag_allowed:
+            self.clearSelection()
+            event.ignore()
+            return
+
+        super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QMouseEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
         if not self.only_first_column_selectable:
@@ -286,6 +303,8 @@ class RobustTableView(RobustAbstractItemView, QTableView):
             super().mouseReleaseEvent(event)
             return
 
+        # Reset drag state; ignore releases that aren't part of an allowed first-column drag.
+        self._first_column_drag_allowed = True
         event.ignore()
 
     def clearSelection(self):
