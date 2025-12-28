@@ -100,8 +100,9 @@ class AREEditor(Editor):
         self.ui.minimapRenderer.sig_mouse_moved.connect(self.on_minimap_mouse_moved)
         self.ui.minimapRenderer.sig_mouse_scrolled.connect(self.on_minimap_mouse_scrolled)
 
-        # Common zoom shortcuts (mirrors `BWMEditor` behavior).
-        QShortcut("+", self).activated.connect(lambda: self.ui.minimapRenderer.camera.nudge_zoom(1.25))
+        # Common zoom shortcuts: use "=" (base key) for zoom in, "-" for zoom out.
+        # "+" requires Shift, but "=" works without modifiers (standard keyboard behavior).
+        QShortcut("=", self).activated.connect(lambda: self.ui.minimapRenderer.camera.nudge_zoom(1.25))
         QShortcut("-", self).activated.connect(lambda: self.ui.minimapRenderer.camera.nudge_zoom(0.8))
         QShortcut("Ctrl+0", self).activated.connect(self.fit_minimap_view)
 

@@ -381,7 +381,8 @@ class GITEditor(Editor, BlenderEditorMixin):
 
     def _setup_hotkeys(self):  # TODO: use GlobalSettings() defined hotkeys
         self.ui.actionDeleteSelected.setShortcut(QKeySequence("Del"))  # type: ignore[arg-type]
-        self.ui.actionZoomIn.setShortcut(QKeySequence("+"))  # type: ignore[arg-type]
+        # Use "=" (base key) for zoom in instead of "+" (which requires Shift).
+        self.ui.actionZoomIn.setShortcut(QKeySequence("="))  # type: ignore[arg-type]
         self.ui.actionZoomOut.setShortcut(QKeySequence("-"))  # type: ignore[arg-type]
         self.ui.actionUndo.setShortcut(QKeySequence("Ctrl+Z"))  # type: ignore[arg-type]
         self.ui.actionRedo.setShortcut(QKeySequence("Ctrl+Shift+Z"))  # type: ignore[arg-type]

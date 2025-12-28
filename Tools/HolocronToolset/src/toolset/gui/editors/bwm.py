@@ -110,7 +110,8 @@ class BWMEditor(Editor):
         self.ui.renderArea.sig_mouse_moved.connect(self.on_mouse_moved)
         self.ui.renderArea.sig_mouse_scrolled.connect(self.on_mouse_scrolled)
 
-        QShortcut("+", self).activated.connect(lambda: self.ui.renderArea.camera.set_zoom(2))
+        # Use "=" (base key) for zoom in instead of "+" (which requires Shift).
+        QShortcut("=", self).activated.connect(lambda: self.ui.renderArea.camera.set_zoom(2))
         QShortcut("-", self).activated.connect(lambda: self.ui.renderArea.camera.set_zoom(-2))
 
     def rebuild_materials(self):
