@@ -8,14 +8,11 @@ from abc import abstractmethod
 from collections import defaultdict
 from concurrent.futures import Future, ProcessPoolExecutor
 from concurrent.futures.process import BrokenProcessPool
-from io import BytesIO
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, cast
 
-from loggerplus import RobustLogger  # type: ignore[import-untyped, note]  # pyright: ignore[reportMissingTypeStubs]
 from qtpy import QtCore
 from qtpy.QtCore import (
-    QFileInfo,  # pyright: ignore[reportAttributeAccessIssue, reportPrivateImportUsage]
     QModelIndex,  # pyright: ignore[reportAttributeAccessIssue, reportPrivateImportUsage]
     QObject,
     QPoint,  # pyright: ignore[reportAttributeAccessIssue, reportPrivateImportUsage]
@@ -25,9 +22,10 @@ from qtpy.QtCore import (
     Signal,  # pyright: ignore[reportAttributeAccessIssue, reportPrivateImportUsage]
     Slot,  # pyright: ignore[reportAttributeAccessIssue, reportPrivateImportUsage]
 )
-from qtpy.QtGui import QCursor, QIcon, QImage, QImageReader, QPixmap, QStandardItem, QStandardItemModel
-from qtpy.QtWidgets import QAbstractItemView, QApplication, QFileDialog, QFileIconProvider, QHeaderView, QInputDialog, QListView, QMenu, QStyle, QToolTip, QWidget
+from qtpy.QtGui import QCursor, QIcon, QImage, QPixmap, QStandardItem, QStandardItemModel
+from qtpy.QtWidgets import QAbstractItemView, QApplication, QFileDialog, QHeaderView, QInputDialog, QListView, QMenu, QStyle, QToolTip, QWidget
 
+from loggerplus import RobustLogger  # type: ignore[import-untyped, note]  # pyright: ignore[reportMissingTypeStubs]
 from pykotor.extract.file import FileResource
 from pykotor.resource.formats.tpc.tpc_auto import read_tpc, write_tpc
 from pykotor.resource.formats.tpc.tpc_data import TPCMipmap, TPCTextureFormat
@@ -36,13 +34,12 @@ from toolset.data.installation import HTInstallation
 from toolset.gui.dialogs.load_from_location_result import ResourceItems
 from toolset.gui.widgets.settings.installations import GlobalSettings
 from toolset.gui.widgets.texture_loader import TextureLoaderProcess, deserialize_mipmap
+from toolset.gui.widgets.texture_preview import load_resource_preview_mipmap, qimage_to_preview_mipmap
 
 if TYPE_CHECKING:
-    from PIL.Image import Image as PILImage
     from qtpy.QtCore import QAbstractItemModel, QModelIndex, QRect
     from qtpy.QtGui import QMouseEvent, QResizeEvent, QShowEvent
     from qtpy.QtWidgets import QScrollBar, _QMenu
-    from qtpy.sip import voidptr
 
     from pykotor.resource.formats.tpc.tpc_data import TPC
     from toolset.data.installation import HTInstallation
@@ -62,6 +59,7 @@ class MainWindowList(QWidget):
     requestConvertTPC: ClassVar[QtCore.Signal] = QtCore.Signal(object)  # pyright: ignore[reportPrivateImportUsage]
     requestConvertTGA: ClassVar[QtCore.Signal] = QtCore.Signal(object)  # pyright: ignore[reportPrivateImportUsage]
     sectionChanged: ClassVar[QtCore.Signal] = QtCore.Signal(object)  # pyright: ignore[reportPrivateImportUsage]
+
     @abstractmethod
     def selected_resources(self) -> list[FileResource]: ...
 
@@ -161,7 +159,7 @@ class ResourceList(MainWindowList):
         all_resources: list[ResourceStandardItem] = self.modules_model.all_resources_items()
         resource_set: set[FileResource] = set(resources)
         resource_item_map: dict[FileResource, ResourceStandardItem] = {item.resource: item for item in all_resources}
-        
+
         # Batch new resources for efficient addition
         new_resources: list[FileResource] = []
         for resource in resource_set:
@@ -169,11 +167,11 @@ class ResourceList(MainWindowList):
                 resource_item_map[resource].resource = resource
             else:
                 new_resources.append(resource)
-        
+
         # Use batch addition for better performance
         if new_resources:
             self.modules_model.add_resources_batch(new_resources, custom_category)
-        
+
         if clear_existing:
             for item in all_resources:
                 if not isinstance(item, ResourceStandardItem):
@@ -254,72 +252,76 @@ class ResourceList(MainWindowList):
         resources: list[FileResource] = self.selected_resources()
         if not resources:
             return
-        
+
         # Capture the tree view reference before creating menu
         tree_view = self.ui.resourceTree
         if tree_view is None:
             return
-        
+
         menu = QMenu(self)
-        
+
         # Store resources in a local variable to avoid closure issues
         local_resources = list(resources)
-        
+
         open_action = menu.addAction("Open")
+        assert open_action is not None, "Open action is None"
         open_action.triggered.connect(lambda checked=False, res=local_resources: self.sig_request_open_resource.emit(res, True))
-        
+
         if all(resource.restype().contents == "gff" for resource in resources):
             gff_action = menu.addAction("Open with GFF Editor")
+            assert gff_action is not None, "GFF action is None"
             gff_action.triggered.connect(lambda checked=False, res=local_resources: self.sig_request_open_resource.emit(res, False))
-        
+
         # Add save-specific context menu items if this is a save resource
         # Check if this resource list is from the saves widget by checking parent
         is_saves_widget = self._is_saves_widget()
         if is_saves_widget:
             menu.addSeparator()
             save_editor_action = menu.addAction("Open Save Editor")
+            assert save_editor_action is not None, "Save editor action is None"
             save_editor_action.triggered.connect(self.on_open_save_editor_from_context)
-        
+
         menu.addSeparator()
         builder = ResourceItems(resources=local_resources)
-        
+
         # Use a safer approach - store tree view reference and use method
         def get_viewport():
             return tree_view
+
         builder.viewport = get_viewport
-        
+
         try:
             builder.run_context_menu(point, menu=menu)
         except Exception as e:
             RobustLogger().exception(f"Error showing context menu: {e}")
-    
+
     def _is_saves_widget(self) -> bool:
         """Check if this widget is the saves widget.
-        
+
         This function determines if the ResourceList instance is specifically
         the saves widget used in the main window's saves tab. It checks:
         1. The widget's objectName (set during UI initialization)
         2. Parent widget hierarchy for saves-related identifiers
         3. The top-level window's UI structure for savesWidget reference
-        
+
         Returns:
             bool: True if this widget is the saves widget, False otherwise
         """
         # Direct check: savesWidget has objectName "savesWidget" set in UI
         if self.objectName() == "savesWidget":
             return True
-        
+
         # Check parent widget hierarchy for saves-related names
         parent_obj: QObject | None = self.parent()
         depth: int = 0
         max_depth: int = 10  # Prevent infinite loops
-        
+
         while parent_obj is not None and depth < max_depth:
             if isinstance(parent_obj, QWidget):
                 parent_name: str = parent_obj.objectName()
-                if 'saves' in parent_name.lower():
+                if "saves" in parent_name.lower():
                     return True
-                
+
                 # Check if parent has ui.savesWidget attribute by attempting direct access
                 try:
                     parent_ui = parent_obj.ui  # type: ignore[attr-defined]
@@ -330,16 +332,16 @@ class ResourceList(MainWindowList):
                 except AttributeError:
                     # Parent doesn't have ui attribute, continue checking
                     pass
-                
+
                 parent_obj = parent_obj.parent()
             elif isinstance(parent_obj, QObject):
                 # Parent is QObject but not QWidget, get next parent
                 parent_obj = parent_obj.parent()
             else:
                 break
-            
+
             depth += 1
-        
+
         # Check top-level window structure - use isinstance for type checking
         top_level_window: QWidget | None = self.window()
         if isinstance(top_level_window, QWidget):
@@ -353,65 +355,17 @@ class ResourceList(MainWindowList):
             except AttributeError:
                 # Window doesn't have expected structure, continue
                 pass
-        
+
         return False
-    
+
     def on_open_save_editor_from_context(self):
         """Signal the main window to open the save editor."""
         # Get the main window and call its open_save_editor method
         from toolset.gui.windows.main import ToolWindow
-        
+
         main_window = self.window()
         if isinstance(main_window, ToolWindow):
             main_window.on_open_save_editor()
-    
-    def on_fix_save_corruption_from_context(self):
-        """Signal the main window to fix save corruption."""
-        try:
-            # Get the main window and call its fix_save_corruption_for_path method
-            from toolset.gui.windows.main import ToolWindow
-            
-            main_window = self.window()
-            if not isinstance(main_window, ToolWindow) or main_window.active is None:
-                return
-            
-            # Get the selected save path from the tree
-            tree_view = self.ui.resourceTree
-            if tree_view is None:
-                return
-            
-            selected_indexes = tree_view.selectedIndexes()
-            if not selected_indexes:
-                return
-            
-            proxy_model: QAbstractItemModel | None = tree_view.model()
-            if proxy_model is None or not isinstance(proxy_model, QSortFilterProxyModel):
-                return
-            
-            for index in selected_indexes:
-                source_index: QModelIndex = proxy_model.mapToSource(index)
-                if self.modules_model is None:
-                    continue
-                item = self.modules_model.itemFromIndex(source_index)
-                
-                # Navigate up to find the save folder item (top-level item)
-                while item and item.parent():
-                    item = item.parent()
-                
-                if item:
-                    save_name = item.text()
-                    # Find the save path
-                    combo_data = self.ui.sectionCombo.currentData(Qt.ItemDataRole.UserRole)
-                    if combo_data is None:
-                        continue
-                    current_save_location = Path(combo_data)
-                    for save_path in main_window.active.saves.get(current_save_location, {}):
-                        if save_name in str(save_path):
-                            main_window.fix_save_corruption_for_path(save_path)
-                            break
-                    break
-        except Exception as e:
-            RobustLogger().exception(f"Error fixing save corruption: {e}")
 
     @Slot()
     def on_resource_double_clicked(self):
@@ -534,7 +488,7 @@ class ResourceModel(QStandardItemModel):
         custom_category: str | None = None,
     ):
         """Add multiple resources efficiently by batching operations per category.
-        
+
         This is much faster than calling add_resource() individually for each resource
         because it groups resources by category and adds them in batches.
         """
@@ -545,17 +499,19 @@ class ResourceModel(QStandardItemModel):
             if chosen_category not in resources_by_category:
                 resources_by_category[chosen_category] = []
             resources_by_category[chosen_category].append(resource)
-        
+
         # Add resources in batches per category
         for category, category_resources in resources_by_category.items():
             category_item = self._add_resource_into_category(category_resources[0].restype(), custom_category)
             # Prepare all rows for this category
             rows: list[list[QStandardItem]] = []
             for resource in category_resources:
-                rows.append([
-                    ResourceStandardItem(resource.resname(), resource=resource),
-                    QStandardItem(resource.restype().extension.upper()),
-                ])
+                rows.append(
+                    [
+                        ResourceStandardItem(resource.resname(), resource=resource),
+                        QStandardItem(resource.restype().extension.upper()),
+                    ]
+                )
             # Batch append all rows at once (more efficient)
             for row in rows:
                 category_item.appendRow(row)
@@ -629,7 +585,7 @@ class TextureList(MainWindowList):
         self._loading_resources: set[FileResource] = set()
         self._loadRequestQueue: multiprocessing.Queue[Any] = multiprocessing.Queue()
         self._loadedTextureQueue: multiprocessing.Queue[Any] = multiprocessing.Queue()
-        
+
         # Timer for polling the result queue from TextureLoaderProcess
         self._poll_timer: QTimer = QTimer(self)
         self._poll_timer.timeout.connect(self._poll_result_queue)
@@ -639,13 +595,13 @@ class TextureList(MainWindowList):
     def __del__(self):
         """Shutdown the executor when the texture list is deleted."""
         print("Shutting down executor in TextureList destructor")
-        
+
         # Stop the poll timer
         poll_timer: QTimer | None = getattr(self, "_poll_timer", None)
         if poll_timer is not None:
             with contextlib.suppress(Exception):
                 poll_timer.stop()
-        
+
         self._executor.shutdown(wait=False)
         loader: TextureLoaderProcess | None = getattr(self, "_loader", None)
         if loader is not None:
@@ -681,7 +637,7 @@ class TextureList(MainWindowList):
     def set_installation(self, installation: HTInstallation):
         """Set the installation for the resource list."""
         self._installation = installation
-        
+
         # Stop poll timer and terminate old loader if exists
         self._poll_timer.stop()
         loader: TextureLoaderProcess | None = getattr(self, "_loader", None)
@@ -689,23 +645,18 @@ class TextureList(MainWindowList):
             loader.request_shutdown()
             loader.terminate()
             self._loader = None
-        
+
         # Clear pending loads when switching installations
         self._pending_process_loads.clear()
-        
+
         if TextureLoaderProcess is None:
             RobustLogger().warning("TextureLoaderProcess is unavailable; texture loading will run on the main process via ProcessPoolExecutor")
             return
-            
+
         # Start new loader process with installation path
         if installation is not None:
             try:
-                self._loader = TextureLoaderProcess(
-                    str(installation.path()),
-                    installation.tsl,
-                    self._loadRequestQueue,
-                    self._loadedTextureQueue
-                )
+                self._loader = TextureLoaderProcess(str(installation.path()), installation.tsl, self._loadRequestQueue, self._loadedTextureQueue)
                 self._loader.start()
                 # Start polling for results at 60Hz (every ~16ms)
                 self._poll_timer.start(16)
@@ -955,7 +906,7 @@ class TextureList(MainWindowList):
         section_name: str = self.ui.sectionCombo.currentData(Qt.ItemDataRole.UserRole)
         row: int = item.row()
         context = (section_name, row)
-        
+
         # Use TextureLoaderProcess if available and running
         if self._loader is not None and self._loader.is_alive():
             try:
@@ -967,7 +918,7 @@ class TextureList(MainWindowList):
                 return
             except Exception as e:
                 RobustLogger().warning(f"Failed to queue texture load request: {e}, falling back to executor")
-        
+
         # Fall back to ProcessPoolExecutor
         try:
             future: Future[tuple[tuple[str, int], TPCMipmap]] = self._executor.submit(get_image_from_resource, context, item.resource, icon_size)
@@ -981,42 +932,42 @@ class TextureList(MainWindowList):
         """Poll the result queue for completed texture loads from TextureLoaderProcess."""
         if deserialize_mipmap is None:
             return
-            
+
         # Process up to 10 results per poll to avoid blocking the UI
         for _ in range(10):
             try:
                 result = self._loadedTextureQueue.get_nowait()
                 context, mipmap_data, error = result
-                
+
                 # Remove from pending loads
                 resource = self._pending_process_loads.pop(context, None)
                 if resource is not None:
                     self._loading_resources.discard(resource)
-                
+
                 if error is not None:
                     RobustLogger().warning(f"Texture load error: {error}")
                     continue
-                    
+
                 if mipmap_data is None:
                     continue
-                
+
                 # Deserialize the mipmap
                 try:
                     mipmap = deserialize_mipmap(mipmap_data)
                 except Exception as e:
                     RobustLogger().warning(f"Failed to deserialize mipmap: {e}")
                     continue
-                
+
                 # Update the icon
                 section_name, row = context
                 src_index: QModelIndex = self.texture_source_models[section_name].index(row, 0)
                 if not src_index.isValid():
                     continue
-                    
+
                 item: QStandardItem | None = self.texture_source_models[section_name].itemFromIndex(src_index)
                 if item is None:
                     continue
-                
+
                 image: QImage = mipmap.to_qimage()
                 y_flipped_image: QPixmap = QPixmap.fromImage(image.mirrored(False, True))
                 pixmap: QPixmap = y_flipped_image.scaled(
@@ -1025,7 +976,7 @@ class TextureList(MainWindowList):
                     Qt.TransformationMode.SmoothTransformation,
                 )
                 item.setIcon(QIcon(pixmap))
-                
+
             except Exception:
                 # Queue is empty or other error, stop polling this cycle
                 break
@@ -1081,106 +1032,25 @@ class TextureList(MainWindowList):
 T = TypeVar("T")
 
 
-def get_image_from_tpc(resource: FileResource, icon_size: int) -> TPCMipmap:
-    """Get an image from a TPC resource."""
-    tpc: TPC = read_tpc(resource.data())
-    tpc.decode()
-    best_mipmap: TPCMipmap = next(
-        (mipmap for mipmap in tpc.layers[0].mipmaps if mipmap.width <= icon_size and mipmap.height <= icon_size),
-        tpc.layers[0].mipmaps[-1],
-    )
-    mm: TPCMipmap = best_mipmap
-    assert mm.data
-    assert mm.width
-    assert mm.height
-    assert mm.tpc_format not in (TPCTextureFormat.DXT1, TPCTextureFormat.DXT3, TPCTextureFormat.DXT5)
-    return mm
-
-
-def get_image_from_pillow(resource: FileResource, icon_size: int = 64) -> TPCMipmap:
-    """Get an image using Pillow (with QImage fallback)."""
-    try:
-        from PIL import Image
-
-        with Image.open(BytesIO(resource.data())) as img:
-            rgba_img: PILImage = img.convert("RGBA")
-        return TPCMipmap(
-            icon_size,
-            icon_size,
-            TPCTextureFormat.RGBA,
-            bytearray(rgba_img.resize((icon_size, icon_size), Image.Resampling.BICUBIC).tobytes()),
-        )
-    except ImportError:
-        # Fallback to QImage
-        return get_image_from_qt(resource, icon_size)
-
-
-def get_image_from_qt(
-    resource: FileResource,
-    icon_size: int = 64,
-) -> TPCMipmap:
-    """Get an image using Qt."""
-    from qtpy.QtGui import QImage  # pylint: disable=redefined-outer-name,reimported
-
-    qimg: QImage = QImage()
-    if not qimg.loadFromData(resource.data()):
-        icon_provider: QFileIconProvider = QFileIconProvider()
-        icon: QIcon = icon_provider.icon(QFileInfo(str(resource.filepath())))
-        pixmap: QPixmap = icon.pixmap(icon_size, icon_size)
-        qimg = pixmap.toImage()
-
-    return qimg_to_tpc_get_result(qimg, icon_size)
-
-
 def get_image_from_resource(
     context: T,
     resource: FileResource,
     icon_size: int = 64,
 ) -> tuple[T, TPCMipmap]:
-    """Get an image from a resource."""
-    if resource.restype() is ResourceType.TPC:
-        return context, get_image_from_tpc(resource, icon_size)
+    """Get a displayable preview mipmap from a resource.
 
+    This delegates to `toolset.gui.widgets.texture_preview` so the Texture tab,
+    loader process, and editors share the same conversion rules (DXT->RGB/RGBA).
+    """
     try:
-        from PIL import Image
-
-        if resource.restype().extension.lower() in Image.registered_extensions():
-            return context, get_image_from_pillow(resource, icon_size)
-    except ImportError:  # noqa: S110
-        RobustLogger().warning(f"Pillow not available to load image data in resource: '{resource.path_ident()!r}'")
-
-    try:
-        from PIL import Image
-
-        if resource.restype().extension.lower() not in {x.data().decode(errors="ignore").lower() for x in QImageReader.supportedImageFormats()}:
-            RobustLogger().warning(f"Unsupported image format for resource: '{resource.path_ident()!r}'")
-            return context, get_fallback_icon(icon_size)
-        return context, get_image_from_qt(resource, icon_size)
-    except ImportError:  # noqa: S110
-        RobustLogger().warning(f"Qt not available to load image data in resource: '{resource.path_ident()!r}'")
-
-    raise ValueError(f"No suitable image processing library available to load image data in resource: '{resource.path_ident()!r}'")
-
-
-def qimg_to_tpc_get_result(qimg: QImage, icon_size: int = 64) -> TPCMipmap:
-    tex_fmt = TPCTextureFormat.RGBA
-    if qimg.format() == QImage.Format.Format_RGB888:
-        tex_fmt = TPCTextureFormat.RGB
-    elif qimg.format() != QImage.Format.Format_RGBA8888:
-        qimg = qimg.convertToFormat(QImage.Format.Format_RGBA8888, Qt.ImageConversionFlag.AutoColor)
-    if (icon_size < qimg.width() and icon_size < qimg.height()) or (icon_size > qimg.width() and icon_size > qimg.height()):
-        qimg = qimg.scaled(icon_size, icon_size, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-    const_bits: voidptr | None = qimg.constBits()
-    assert const_bits is not None
-    return TPCMipmap(icon_size, icon_size, tex_fmt, bytearray(const_bits.asarray(icon_size)))
-
-
-def get_fallback_icon(icon_size: int = 64) -> TPCMipmap:
-    app_style: QStyle | None = QApplication.style()
-    assert app_style is not None
-    pixmap: QPixmap = app_style.standardPixmap(QStyle.StandardPixmap.SP_VistaShield)
-    qimg: QImage = pixmap.toImage()
-    return qimg_to_tpc_get_result(qimg, icon_size)
+        return context, load_resource_preview_mipmap(resource, icon_size)
+    except Exception as e:  # noqa: BLE001
+        RobustLogger().warning(f"Failed to build preview icon for resource '{resource.path_ident()!r}': {e}")
+        app_style: QStyle | None = QApplication.style()
+        assert app_style is not None
+        pixmap: QPixmap = app_style.standardPixmap(QStyle.StandardPixmap.SP_VistaShield)
+        qimg: QImage = pixmap.toImage()
+        return context, qimage_to_preview_mipmap(qimg, target_size=icon_size)
 
 
 def on_open_resources(

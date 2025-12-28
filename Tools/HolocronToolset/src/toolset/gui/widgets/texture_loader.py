@@ -14,22 +14,19 @@ import multiprocessing
 import queue
 import traceback
 
-from io import BytesIO
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from loggerplus import RobustLogger
-
 from pykotor.extract.installation import Installation, SearchLocation
-from pykotor.resource.formats.tpc import TPCTextureFormat, read_tpc
+from pykotor.resource.formats.tpc import TPCTextureFormat
 from pykotor.resource.formats.tpc.tpc_data import TPCMipmap
 from pykotor.resource.type import ResourceType
+from toolset.gui.widgets.texture_preview import load_preview_mipmap_from_bytes
 
 if TYPE_CHECKING:
     from multiprocessing import Queue
     from multiprocessing.synchronize import Event as MPEvent
-
-    from pykotor.resource.formats.tpc import TPC
 
 
 class TextureLoaderProcess(multiprocessing.Process):
@@ -151,106 +148,12 @@ class TextureLoaderProcess(multiprocessing.Process):
             raise FileNotFoundError(f"Texture not found: {resref}.{restype.extension}")
 
         texture_bytes = texture_data.data
-
-        if restype is ResourceType.TPC:
-            tpc = read_tpc(texture_bytes)
-            mipmap = self._get_best_mipmap(tpc, icon_size)
-        else:
-            # TGA - try to read via TPC format or use PIL
-            try:
-                tpc = read_tpc(texture_bytes)
-                mipmap = self._get_best_mipmap(tpc, icon_size)
-            except Exception:
-                # Fall back to PIL for TGA
-                mipmap = self._load_tga_via_pil(texture_bytes, icon_size)
+        # IMPORTANT: Always convert to a Qt-displayable pixel format (DXT → RGB/RGBA),
+        # matching the TPCEditor display logic.
+        mipmap = load_preview_mipmap_from_bytes(restype, texture_bytes, icon_size)
 
         # Serialize mipmap data for cross-process transfer
         return self._serialize_mipmap(mipmap)
-
-    def _get_best_mipmap(
-        self,
-        tpc: TPC,
-        target_size: int,
-    ) -> TPCMipmap:
-        """Get the mipmap level closest to the target size."""
-        mipmaps: list[TPCMipmap] = tpc.layers[0].mipmaps
-        if not mipmaps:
-            raise ValueError("TPC has no mipmaps")
-
-        # Find mipmap closest to target size
-        best_mipmap: TPCMipmap = mipmaps[0]
-        best_diff: int = abs(best_mipmap.width - target_size)
-
-        for mipmap in mipmaps[1:]:
-            diff: int = abs(mipmap.width - target_size)
-            if diff < best_diff:
-                best_diff = diff
-                best_mipmap = mipmap
-
-        return best_mipmap
-
-    def _load_tga_via_pil(
-        self,
-        data: bytes,
-        icon_size: int,
-    ) -> TPCMipmap:
-        """Load a TGA file using PIL (with QImage fallback)."""
-        # Try PIL first
-        try:
-            from PIL import Image
-
-            img: Image.Image = Image.open(BytesIO(data))
-
-            # Convert to RGBA
-            if img.mode != "RGBA":
-                img = img.convert("RGBA")
-
-            # Resize to icon size
-            img = img.resize((icon_size, icon_size), Image.Resampling.LANCZOS)
-
-            # Create TPCMipmap
-            return TPCMipmap(
-                width=img.width,
-                height=img.height,
-                tpc_format=TPCTextureFormat.RGBA,
-                data=bytearray(img.tobytes()),
-            )
-        except ImportError:
-            # Fallback to QImage
-            from qtpy.QtGui import QImage
-            from qtpy.QtCore import Qt
-
-            qimg = QImage()
-            if not qimg.loadFromData(data):
-                raise ValueError("Failed to load TGA image data")
-            
-            # Convert to RGBA8888 format
-            if qimg.format() != QImage.Format.Format_RGBA8888:
-                qimg = qimg.convertToFormat(QImage.Format.Format_RGBA8888, Qt.ImageConversionFlag.AutoColor)
-            
-            # Resize to icon size
-            qimg = qimg.scaled(
-                icon_size,
-                icon_size,
-                Qt.AspectRatioMode.KeepAspectRatio,
-                Qt.TransformationMode.SmoothTransformation,
-            )
-
-            # Get pixel data from QImage
-            width = qimg.width()
-            height = qimg.height()
-            const_bits = qimg.constBits()
-            if const_bits is None:
-                raise ValueError("Failed to get pixel data from QImage")
-            
-            # Create TPCMipmap from QImage (RGBA = 4 bytes per pixel)
-            pixel_data = bytearray(const_bits.asarray(width * height * 4))
-            return TPCMipmap(
-                width=width,
-                height=height,
-                tpc_format=TPCTextureFormat.RGBA,
-                data=pixel_data,
-            )
 
     def _serialize_mipmap(self, mipmap: TPCMipmap) -> bytes:
         """Serialize a TPCMipmap for cross-process transfer.

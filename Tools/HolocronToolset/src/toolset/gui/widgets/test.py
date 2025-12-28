@@ -5,7 +5,6 @@ from abc import abstractmethod
 from collections import defaultdict
 from concurrent.futures import ProcessPoolExecutor
 from concurrent.futures.process import BrokenProcessPool
-from io import BytesIO
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar, cast
 
 import qtpy
@@ -16,17 +15,16 @@ from qtpy.QtGui import QCursor, QImage, QStandardItem, QStandardItemModel
 from qtpy.QtWidgets import QFileIconProvider, QHeaderView, QMenu, QToolTip, QWidget
 
 from pykotor.extract.file import FileResource
-from pykotor.resource.formats.tpc.tpc_auto import read_tpc
-from pykotor.resource.formats.tpc.tpc_data import TPCGetResult, TPCTextureFormat
 from pykotor.resource.type import ResourceType
 from toolset.gui.dialogs.load_from_location_result import ResourceItems
 from toolset.gui.widgets.settings.installations import GlobalSettings
+from toolset.gui.widgets.texture_preview import load_resource_preview_mipmap, qimage_to_preview_mipmap
 
 if TYPE_CHECKING:
     from concurrent.futures import Future
 
     from qtpy.QtCore import QAbstractItemModel, QEvent, QModelIndex, QObject
-    from qtpy.QtGui import QIcon, QMouseEvent, QPixmap, QResizeEvent, QShowEvent
+    from qtpy.QtGui import QMouseEvent, QResizeEvent, QShowEvent
     from qtpy.QtWidgets import QAbstractItemView, QScrollBar
 
     from toolset.data.installation import HTInstallation
@@ -81,24 +79,7 @@ class ResourceList(MainWindowList):
             - Sets the section model as the model for the combo box.
         """
         super().__init__(parent)
-        if qtpy.API_NAME == "PySide2":
-            from toolset.uic.pyside2.widgets.resource_list import (
-                Ui_Form,  # noqa: PLC0415  # pylint: disable=C0415
-            )
-        elif qtpy.API_NAME == "PySide6":
-            from toolset.uic.pyside6.widgets.resource_list import (
-                Ui_Form,  # noqa: PLC0415  # pylint: disable=C0415
-            )
-        elif qtpy.API_NAME == "PyQt5":
-            from toolset.uic.pyqt5.widgets.resource_list import (
-                Ui_Form,  # noqa: PLC0415  # pylint: disable=C0415
-            )
-        elif qtpy.API_NAME == "PyQt6":
-            from toolset.uic.pyqt6.widgets.resource_list import (
-                Ui_Form,  # noqa: PLC0415  # pylint: disable=C0415
-            )
-        else:
-            raise ImportError(f"Unsupported Qt bindings: {qtpy.API_NAME}")
+        from toolset.uic.qtpy.widgets.resource_list import Ui_Form  # noqa: PLC0415  # pylint: disable=C0415
 
         self.tooltip_text: str = ""
         self.tooltip_pos: QPoint = QPoint(0, 0)
@@ -479,24 +460,7 @@ class TextureList(MainWindowList):
         """Initialize the texture list."""
         super().__init__(parent)
 
-        if qtpy.API_NAME == "PySide2":
-            from toolset.uic.pyside2.widgets.texture_list import (
-                Ui_Form,  # noqa: PLC0415  # pylint: disable=C0415
-            )
-        elif qtpy.API_NAME == "PySide6":
-            from toolset.uic.pyside6.widgets.texture_list import (
-                Ui_Form,  # noqa: PLC0415  # pylint: disable=C0415
-            )
-        elif qtpy.API_NAME == "PyQt5":
-            from toolset.uic.pyqt5.widgets.texture_list import (
-                Ui_Form,  # noqa: PLC0415  # pylint: disable=C0415
-            )
-        elif qtpy.API_NAME == "PyQt6":
-            from toolset.uic.pyqt6.widgets.texture_list import (
-                Ui_Form,  # noqa: PLC0415  # pylint: disable=C0415
-            )
-        else:
-            raise ImportError(f"Unsupported Qt bindings: {qtpy.API_NAME}")
+        from toolset.uic.qtpy.widgets.texture_list import Ui_Form  # noqa: PLC0415  # pylint: disable=C0415
 
         self.ui = Ui_Form()
         self.ui.setupUi(self)
@@ -779,16 +743,19 @@ class TextureList(MainWindowList):
 
     def on_icon_loaded(
         self,
-        future: Future[tuple[tuple[str, int], TPCGetResult]],
+        future: Future[tuple[tuple[str, int], object]],
     ):
         """Handle the completion of an icon load."""
-        item_context, tpc_get_result = future.result()
+        item_context, mipmap = future.result()
         section_name, row = item_context
         item: QStandardItem | None = self.texture_models[section_name].item(row)
         if item is None:
             RobustLogger().warning("Could not find item in the texture model for row %d", row)
             return
-        item.setIcon(tpc_get_result.to_qicon())
+        if hasattr(mipmap, "to_qicon"):
+            item.setIcon(mipmap.to_qicon())
+        else:
+            RobustLogger().warning("Unexpected thumbnail result type: %s", type(mipmap).__name__)
         self.ui.resourceList.update(item.index())  # pyright: ignore[reportArgumentType]
 
     def on_resource_double_clicked(self):
@@ -807,58 +774,16 @@ def get_image_from_resource(
     context: T,
     resource: FileResource,
     desired_mipmap: int = 64,
-) -> tuple[T, TPCGetResult]:
-    """Get an image from a resource."""
-    if resource.restype() is ResourceType.TPC:
-        tpc = read_tpc(resource.data())
-        best_mipmap = next((i for i in range(tpc.mipmap_count()) if tpc.get(i).width <= desired_mipmap), 0)
-        width, height, data = tpc.convert(TPCTextureFormat.RGBA, best_mipmap)
-        return context, TPCGetResult(width, height, TPCTextureFormat.RGBA, data)
+) -> tuple[T, object]:
+    """Get a displayable preview mipmap from a resource.
 
+    Delegates to shared preview helpers so this prototype widget stays aligned with the app.
+    """
     try:
-        from PIL import Image
-
-        if resource.restype().extension.lower() in Image.registered_extensions():
-            with Image.open(BytesIO(resource.data())) as img:
-                pil_img = img.convert("RGBA")
-            return context, TPCGetResult(pil_img.width, pil_img.height, TPCTextureFormat.RGBA, pil_img.tobytes())
-    except ImportError:  # noqa: S110
-        RobustLogger().warning(f"Pillow not available for resource type: {resource.restype()!r}")
-
-    try:
-        from qtpy.QtCore import Qt  # pylint: disable=redefined-outer-name,reimported
-        from qtpy.QtGui import QImage, QImageReader  # pylint: disable=redefined-outer-name,reimported
-
-        if resource.restype().extension.lower() in [
-            bytes(x.data()).decode().lower()
-            for x in QImageReader.supportedImageFormats()
-        ]:
-            qimg = QImage()
-            if qimg.loadFromData(resource.data()):
-                qimg = qimg.convertToFormat(QImage.Format.Format_RGBA8888)
-                if (
-                    desired_mipmap < qimg.width()
-                    or desired_mipmap < qimg.height()
-                ):
-                    qimg = qimg.scaled(desired_mipmap, desired_mipmap, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-                return context, TPCGetResult(
-                    qimg.width(),
-                    qimg.height(),
-                    TPCTextureFormat.RGBA,
-                    bytes(qimg.constBits().asarray()),
-                )
-        else:  # use QFileIconProvider
-            icon_provider: QFileIconProvider = QFileIconProvider()
-            icon: QIcon = icon_provider.icon(QFileInfo(str(resource.filepath())))
-            pixmap: QPixmap = icon.pixmap(desired_mipmap, desired_mipmap)
-            qimg: QImage = pixmap.toImage().convertToFormat(QImage.Format.Format_RGBA8888)
-            return context, TPCGetResult(
-                qimg.width(),
-                qimg.height(),
-                TPCTextureFormat.RGBA,
-                bytes(qimg.constBits().asarray()),
-            )
-    except ImportError:  # noqa: S110
-        RobustLogger().warning(f"Qt not available for resource type: {resource.restype()!r}")
-
-    raise ValueError(f"No suitable image processing library available for resource type: {resource!r}")
+        return context, load_resource_preview_mipmap(resource, desired_mipmap)
+    except Exception as e:  # noqa: BLE001
+        RobustLogger().warning("Failed to build preview mipmap: %s", e)
+        icon_provider: QFileIconProvider = QFileIconProvider()
+        icon = icon_provider.icon(QFileInfo(str(resource.filepath())))
+        pixmap = icon.pixmap(desired_mipmap, desired_mipmap)
+        return context, qimage_to_preview_mipmap(pixmap.toImage(), target_size=desired_mipmap)
