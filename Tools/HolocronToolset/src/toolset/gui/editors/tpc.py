@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 try:
-    from PIL import Image
+    from PIL import Image  # pyright: ignore[reportAttributeAccessIssue]
 except ImportError:
     Image = None  # type: ignore[assignment, unused-ignore]
 
@@ -70,7 +70,7 @@ class TPCEditor(Editor):
 
         from toolset.uic.qtpy.editors.tpc import Ui_MainWindow
 
-        self.ui = Ui_MainWindow()
+        self.ui: Ui_MainWindow = Ui_MainWindow()
         self.ui.setupUi(self)
 
         self._setup_ui()
@@ -248,7 +248,7 @@ class TPCEditor(Editor):
 
     def _animate_drag_start(self) -> None:
         """Animate the texture label when starting a drag operation."""
-        original_opacity = self.ui.textureLabel.windowOpacity()
+        original_opacity: float = self.ui.textureLabel.windowOpacity()
         animation = QPropertyAnimation(self.ui.textureLabel, b"windowOpacity", self)
         animation.setDuration(150)
         animation.setStartValue(1.0)
@@ -273,7 +273,7 @@ class TPCEditor(Editor):
             return
 
         try:
-            pixmap = self._get_current_texture_pixmap()
+            pixmap: QPixmap = self._get_current_texture_pixmap()
             if pixmap.isNull():
                 return
 
@@ -293,7 +293,7 @@ class TPCEditor(Editor):
 
     def _animate_copy_action(self) -> None:
         """Animate the texture label when copying."""
-        original_style = self.ui.textureLabel.styleSheet()
+        original_style: str = self.ui.textureLabel.styleSheet()
         
         # Flash effect
         animation = QPropertyAnimation(self.ui.textureLabel, b"styleSheet", self)
@@ -318,7 +318,7 @@ class TPCEditor(Editor):
 
         if image.isNull():
             # Try getting pixmap
-            pixmap = clipboard.pixmap()
+            pixmap: QPixmap = clipboard.pixmap()
             if pixmap.isNull():
                 from toolset.gui.common.localization import translate as tr
                 QMessageBox.warning(self, tr("No Image"), tr("Clipboard does not contain an image."))
