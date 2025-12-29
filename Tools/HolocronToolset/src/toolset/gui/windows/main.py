@@ -2162,9 +2162,12 @@ class ToolWindow(QMainWindow):
                 self._extract_txi(tpc, savepath.with_suffix(".txi"))
             write_tpc(tpc, savepath, file_format)
         else:
+            # Ensure the destination directory exists before opening the output stream.
+            # (When extracting selected models, the location stem is often a new subfolder,
+            # e.g. `swpc_tex_tpa`, and opening the file would otherwise raise FileNotFoundError.)
+            savepath.parent.mkdir(parents=True, exist_ok=True)
             with location.filepath.open("rb") as r_stream, savepath.open("wb") as w_stream:
                 r_stream.seek(location.offset)
-                savepath.parent.mkdir(parents=True, exist_ok=True)
                 w_stream.write(r_stream.read(location.size))
 
     def open_from_file(self):
