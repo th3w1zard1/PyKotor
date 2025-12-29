@@ -342,14 +342,26 @@ def _open_resource_editor_impl(  # noqa: C901, PLR0913, PLR0912, PLR0915
         add_window(editor)
 
     except Exception as e:
+        RobustLogger().exception(
+            "Failed to open resource editor for '%s.%s' (filepath=%s, gff_specialized=%s)",
+            resname,
+            restype,
+            filepath,
+            gff_specialized,
+        )
+        data_signature = ""
+        if isinstance(data, (bytes, bytearray)):
+            head = bytes(data[:16])
+            if head:
+                data_signature = f"\n\nData signature (first 16 bytes): {head.hex(' ')}"
         QMessageBox(
             QMessageBox.Icon.Critical,
             tr("An unexpected error has occurred"),
-            str(universal_simplify_exception(e)),
+            f"{universal_simplify_exception(e)}{data_signature}",
             QMessageBox.StandardButton.Ok,
             parent_window_widget,
             flags=Qt.WindowType.Window | Qt.WindowType.Dialog | Qt.WindowType.WindowStaysOnTopHint,  # pyright: ignore[reportArgumentType]
         ).show()
-        raise
+        return None, None
     else:
         return filepath, editor

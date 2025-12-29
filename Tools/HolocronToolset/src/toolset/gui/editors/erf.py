@@ -27,7 +27,7 @@ from qtpy.QtWidgets import (
 )
 
 from pykotor.common.misc import ResRef
-from pykotor.extract.file import FileResource, ResourceIdentifier
+from pykotor.extract.file import ResourceIdentifier
 from pykotor.resource.formats.bif import read_bif
 from pykotor.resource.formats.erf import ERF, ERFResource, ERFType, read_erf, write_erf
 from pykotor.resource.formats.rim import RIM, read_rim, write_rim
@@ -514,9 +514,19 @@ class ERFEditor(Editor):
                 RobustLogger().info(f"Nested capsule selected for opening, appending resref/restype '{resource.resref}.{resource.restype}' to the filepath.")
                 new_filepath /= str(ResourceIdentifier(str(resource.resref), resource.restype))
 
-            offset: int = self.get_resource_offset(resource)  # FIXME(th3w1zard1): figure out how to get the offset in this context?
-            file_resource = FileResource(str(resource.resref), resource.restype, len(resource.data), offset, new_filepath)
-            _tempPath, editor = open_resource_editor(file_resource, installation, gff_specialized=gff_specialized)
+            # IMPORTANT:
+            # We already have the in-memory bytes (`resource.data`). Do NOT wrap this as a FileResource
+            # and re-read from disk using an offset; that offset can be wrong (and is currently a FIXME),
+            # which leads to opening the wrong bytes in the wrong editor (e.g. "Failed to determine GFF").
+            _tempPath, editor = open_resource_editor(
+                new_filepath,
+                str(resource.resref),
+                resource.restype,
+                resource.data,
+                installation=installation,
+                parent_window=self,
+                gff_specialized=gff_specialized,
+            )
             if saved_file_signal is not None and isinstance(editor, Editor):
                 editor.sig_saved_file.connect(saved_file_signal)
 
