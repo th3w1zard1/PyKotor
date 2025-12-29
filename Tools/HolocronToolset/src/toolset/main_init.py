@@ -9,6 +9,7 @@ import subprocess
 import sys
 import tempfile
 import threading
+import traceback
 
 from typing import TYPE_CHECKING
 
@@ -43,6 +44,41 @@ def on_app_crash(
     from loggerplus import RobustLogger  # noqa: PLC0415
     logger = RobustLogger()
     logger.critical("Uncaught exception", exc_info=(etype, exc, tback))
+
+    # If the Qt app is running, also surface a non-blocking dialog so users aren't left with a silent crash.
+    # This must be best-effort and must never raise.
+    try:
+        from qtpy.QtCore import QTimer, Qt  # type: ignore[import-not-found]
+        from qtpy.QtWidgets import QApplication, QMessageBox  # type: ignore[import-not-found]
+
+        app = QApplication.instance()
+        if app is None:
+            return
+
+        details = "".join(traceback.format_exception(etype, exc, tback))
+
+        def _show_dialog():  # noqa: ANN001
+            try:
+                box = QMessageBox()
+                box.setIcon(QMessageBox.Icon.Critical)
+                box.setWindowTitle("Unexpected error")
+                box.setText("An unexpected error occurred. The application will continue running, but may be unstable.")
+                box.setDetailedText(details)
+                box.setWindowFlags(box.windowFlags() | Qt.WindowType.WindowStaysOnTopHint)
+                box.show()
+
+                # Keep a reference to avoid GC closing the dialog immediately.
+                crash_boxes = getattr(on_app_crash, "_toolset_crash_boxes", None)
+                if crash_boxes is None:
+                    crash_boxes = []
+                    setattr(on_app_crash, "_toolset_crash_boxes", crash_boxes)
+                crash_boxes.append(box)
+            except Exception:  # noqa: BLE001
+                logger.exception("Failed to show crash dialog")
+
+        QTimer.singleShot(0, _show_dialog)
+    except Exception:  # noqa: BLE001
+        logger.exception("Failed to schedule crash dialog")
 
 
 def fix_sys_and_cwd_path():

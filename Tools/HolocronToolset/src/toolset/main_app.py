@@ -22,6 +22,7 @@ from toolset.config import CURRENT_VERSION
 from toolset.gui.windows.main import ToolWindow
 from toolset.main_init import is_running_from_temp
 from toolset.main_settings import setup_post_init_settings, setup_pre_init_settings, setup_toolset_default_env
+from toolset.utils.qt_exceptions import install_asyncio_exception_handler, install_qt_signal_slot_safety_net, install_sys_unraisablehook
 from toolset.utils.window import TOOLSET_WINDOWS
 from utility.system.app_process.shutdown import terminate_child_processes
 
@@ -265,6 +266,12 @@ def main():
     main_gui_thread: QThread | None = app.thread()
     assert main_gui_thread is not None, "Main GUI thread should not be None"
     main_gui_thread.setPriority(QThread.Priority.HighestPriority)
+
+    # Global crash resistance:
+    # - Route unraisable exceptions to sys.excepthook
+    # - Wrap Qt signal/slot connections so Python exceptions in slots are forwarded to sys.excepthook
+    install_sys_unraisablehook()
+    install_qt_signal_slot_safety_net()
     
     def cleanup_with_profiling():
         """Cleanup function that also saves profiling stats if enabled."""
@@ -314,6 +321,9 @@ def main():
         RobustLogger().debug("TRACE: qasync installed; asyncio event loop integrated with Qt")
     else:
         RobustLogger().debug("TRACE: qasync not installed, falling back to default event loop")
+
+    # Best-effort: capture asyncio task exceptions too (especially when qasync is in use).
+    install_asyncio_exception_handler()
     
     # Install event filter only when explicitly requested to avoid log spam/perf issues
     trace_events_env = os.environ.get("TOOLSET_TRACE_EVENTS", "").lower().strip()
