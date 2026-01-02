@@ -7,6 +7,6 @@ requests>=2.25.0,<2.32.0; python_version<"3.9"
 requests>=2.25.0; python_version>="3.9"
 opencv-contrib-python==4.12.0.88
 notify-py==0.3.43
-playwright>=1.30.0,<1.40
+playwright>=1.30.0,<1.58
 pyquery==2.0.1
 arabic-reshaper==3.0.0
