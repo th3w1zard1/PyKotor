@@ -19,7 +19,7 @@ from qtpy import QtCore
 from qtpy.QtCore import QEvent, QPoint, QPointF, QRectF, QSize, QTimer, Qt
 from qtpy.QtGui import QColor, QIcon, QImage, QKeyEvent, QMouseEvent, QPainter, QPainterPath, QPen, QPixmap, QShortcut, QTransform, QWheelEvent
 from qtpy.QtWidgets import (
-    QAction,
+    QAction,  # pyright: ignore[reportPrivateImportUsage]
     QApplication,
     QDialog,
     QFileDialog,
@@ -73,7 +73,7 @@ from toolset.gui.dialogs.indoor_settings import IndoorMapSettings
 from toolset.gui.widgets.settings.installations import GlobalSettings
 from toolset.gui.widgets.settings.widgets.module_designer import ModuleDesignerSettings
 from toolset.gui.windows.help import HelpWindow
-from toolset.gui.windows.indoor_builder_constants import (
+from toolset.gui.windows.indoor_builder.constants import (
     BACKGROUND_COLOR,
     COMPONENT_PREVIEW_SCALE,
     CONNECTION_LINE_COLOR,
@@ -786,7 +786,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                 main_splitter = self.centralWidget().findChild(QSplitter, "mainSplitter")  # pyright: ignore[reportOptionalMemberAccess]
             if main_splitter is not None:
                 # Store it for future access
-                self.ui.mainSplitter = main_splitter
+                self.ui.mainSplitter = main_splitter  # type: ignore[attr-defined]
 
         if main_splitter is not None:
             # Set initial splitter sizes (left panel ~250px, rest to map renderer)
