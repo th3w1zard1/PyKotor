@@ -141,7 +141,7 @@ packages = [{ include = "toolset", from = "src" }]
 python = "^3.8"
 pykotor = "^2.0.5"
 idna = "*"
-urllib3 = "~1.26"
+urllib3 = ">=1.26,<2.7"
 Markdown = ">=3.3,<3.10"
 qtpy = "*"
 send2trash = "*"
