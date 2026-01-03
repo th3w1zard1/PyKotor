@@ -335,7 +335,7 @@ class MDLAsciiWriter(ResourceWriter):
         """
         mdl = self._mdl
         self.write_line(0, "# ASCII MDL")
-        self.write_line(0, "filedependancy unknown.tga")
+        self.write_line(0, f"filedependancy {mdl.name} NULL.mlk")
         self.write_line(0, f"newmodel {mdl.name}")
         self.write_line(0, "")
         self.write_line(0, "setsupermodel " + mdl.name + " " + mdl.supermodel)
@@ -477,6 +477,13 @@ class MDLAsciiWriter(ResourceWriter):
             if mesh.dirt_texture:
                 self.write_line(indent, f"dirt_texture {mesh.dirt_texture}")
             self.write_line(indent, f"dirt_coordinate_space {mesh.dirt_coordinate_space}")
+
+        # Inverted mesh sequence counter (inv_count) - preserved for MDLOps compatibility
+        if hasattr(mesh, "inverted_counters") and mesh.inverted_counters:
+            if len(mesh.inverted_counters) >= 2:
+                self.write_line(indent, f"inv_count {mesh.inverted_counters[0]} {mesh.inverted_counters[1]}")
+            elif len(mesh.inverted_counters) >= 1:
+                self.write_line(indent, f"inv_count {mesh.inverted_counters[0]}")
 
         # Skin/dangly payload blocks come before verts/faces in MDLOps ASCII.
         if skin is not None:

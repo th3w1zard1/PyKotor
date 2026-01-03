@@ -2761,6 +2761,16 @@ class MDLMesh(ComparableMixin):
         self.dirt_coordinate_space: int = 0  # UV space for dirt
         self.hide_in_hologram: bool = False  # Don't render in hologram effect
 
+        # Inverted mesh sequence counter (array3) - used by MDLOps for inv_count
+        # vendor/mdlops/MDLOpsM.pm:2238-2243, 4187-4188
+        # Preserved for roundtrip compatibility with MDLOps
+        self.inverted_counters: list[int] = []
+        
+        # Indices arrays - preserved for roundtrip compatibility with MDLOps
+        # These arrays are typically empty but must be preserved if present in original binary
+        self.indices_counts: list[int] = []
+        self.indices_offsets: list[int] = []
+
     @property
     def vertex_uv(self) -> _Vector2ListProxy:
         """Back-compat alias for `vertex_uv1` that accepts tuple/list values."""
