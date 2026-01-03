@@ -1851,13 +1851,19 @@ class MDLBinaryReader:
             # If vertex_count is suspiciously low (0 or 1), try to determine the correct count from actual data
             # Also check faces - they reference vertex indices, so vertex_count must be at least max_vertex_index + 1
             # But we need to validate that we can actually read that many vertices from the file
-            if vcount <= 1 and bin_node.trimesh.faces_count > 0:
+            # Always check faces if vcount is suspiciously low, even if there are no faces (vcount of 0 or 1 is almost always wrong)
+            if vcount <= 1:
                 # First, check faces to determine minimum required vertex_count
-                max_vertex_index = 0
-                for face in bin_node.trimesh.faces:
-                    max_vertex_index = max(max_vertex_index, face.vertex1, face.vertex2, face.vertex3)
-                required_vertex_count = max_vertex_index + 1
-                if required_vertex_count > vcount:
+                required_vertex_count = vcount  # Start with current count
+                if bin_node.trimesh.faces_count > 0:
+                    max_vertex_index = 0
+                    for face in bin_node.trimesh.faces:
+                        max_vertex_index = max(max_vertex_index, face.vertex1, face.vertex2, face.vertex3)
+                    required_vertex_count = max_vertex_index + 1
+                
+                # If we have a required count from faces, or if vcount is 0/1 (suspicious), try to validate/read from file
+                # When there are no faces, we should still try to determine vertex count from file bounds
+                if required_vertex_count > vcount or (vcount <= 1 and bin_node.trimesh.faces_count == 0):
                     # Validate that we can actually read this many vertices from the file
                     # Start with the required count, then limit if bounds check fails
                     can_read_count = required_vertex_count
@@ -1867,26 +1873,44 @@ class MDLBinaryReader:
                         mdx_data_block_size: int = bin_node.trimesh.mdx_data_size
                         vertex_offset = bin_node.trimesh.mdx_vertex_offset
                         if mdx_data_offset not in (0, 0xFFFFFFFF) and mdx_data_block_size > 0:
-                            # Calculate max vertices that can fit in MDX
-                            max_seek_pos = mdx_data_offset + (required_vertex_count - 1) * mdx_data_block_size + vertex_offset + 12
-                            if max_seek_pos > self._reader_ext.size():
+                            # If no faces, try to determine count from available MDX data
+                            if bin_node.trimesh.faces_count == 0:
+                                # Calculate max vertices that can fit in MDX
+                                available_bytes = self._reader_ext.size() - mdx_data_offset - vertex_offset
+                                if available_bytes > 0:
+                                    can_read_count = available_bytes // mdx_data_block_size
+                                    if can_read_count < 0:
+                                        can_read_count = 0
+                            else:
+                                # Calculate max vertices that can fit in MDX for required count
+                                max_seek_pos = mdx_data_offset + (required_vertex_count - 1) * mdx_data_block_size + vertex_offset + 12
+                                if max_seek_pos > self._reader_ext.size():
+                                    # Can't read that many - limit to what fits
+                                    can_read_count = (self._reader_ext.size() - mdx_data_offset - vertex_offset) // mdx_data_block_size
+                                    if can_read_count < 0:
+                                        can_read_count = 0
+                                    can_read_count = max(vcount, min(can_read_count, required_vertex_count))
+                    elif bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
+                        # Check MDL bounds
+                        if bin_node.trimesh.faces_count == 0:
+                            # If no faces, try to determine count from available MDL data
+                            available_bytes = self._reader.size() - bin_node.trimesh.vertices_offset
+                            if available_bytes > 0:
+                                can_read_count = available_bytes // 12
+                                if can_read_count < 0:
+                                    can_read_count = 0
+                        else:
+                            vertices_bytes = required_vertex_count * 12
+                            if bin_node.trimesh.vertices_offset + vertices_bytes > self._reader.size():
                                 # Can't read that many - limit to what fits
-                                can_read_count = (self._reader_ext.size() - mdx_data_offset - vertex_offset) // mdx_data_block_size
+                                can_read_count = (self._reader.size() - bin_node.trimesh.vertices_offset) // 12
                                 if can_read_count < 0:
                                     can_read_count = 0
                                 can_read_count = max(vcount, min(can_read_count, required_vertex_count))
-                    elif bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
-                        # Check MDL bounds
-                        vertices_bytes = required_vertex_count * 12
-                        if bin_node.trimesh.vertices_offset + vertices_bytes > self._reader.size():
-                            # Can't read that many - limit to what fits
-                            can_read_count = (self._reader.size() - bin_node.trimesh.vertices_offset) // 12
-                            if can_read_count < 0:
-                                can_read_count = 0
-                            can_read_count = max(vcount, min(can_read_count, required_vertex_count))
                     
                     # Use the validated count (at least what faces require, but not more than we can read)
-                    if can_read_count > vcount:
+                    # Also use it if vcount is 0/1 and we found a reasonable count from file bounds
+                    if can_read_count > vcount or (vcount <= 1 and can_read_count > 1):
                         vcount = can_read_count
                         bin_node.trimesh.vertex_count = can_read_count
                         vcount_verified = True
