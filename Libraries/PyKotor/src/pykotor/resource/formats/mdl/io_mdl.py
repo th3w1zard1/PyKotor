@@ -1859,6 +1859,7 @@ class MDLBinaryReader:
                 if required_vertex_count > vcount:
                     # Faces require more vertices than header says - use face-based count as minimum
                     vcount = required_vertex_count
+                    bin_node.trimesh.vertex_count = required_vertex_count  # Update the binary node's count too
                     vcount_verified = True
             
             # If still suspiciously low, try to count actual vertices from file data
