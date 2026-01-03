@@ -1828,54 +1828,61 @@ class MDLBinaryReader:
             )
 
             # Vertex positions can be stored either in MDL (K1-style) or in MDX blocks.
-            # Preserve vertex_count even if the MDL vertex table wasn't readable.
+            # Verify vertex_count by checking actual data availability, not by inference.
             vcount = bin_node.trimesh.vertex_count
+            vcount_verified: bool = False
 
-            # Validate vertex_count - if it's suspiciously low (1 or 0) but we have faces, it's likely wrong
-            # Faces typically require at least 3 vertices, so vertex_count of 1 with faces is suspicious
-            vcount_corrected = False
-            if vcount <= 1 and bin_node.trimesh.faces_count > 0:
-                # Try to infer correct vertex_count from faces
-                max_vertex_index = 0
-                for face in bin_node.trimesh.faces:
-                    max_vertex_index = max(max_vertex_index, face.vertex1, face.vertex2, face.vertex3)
-                # vertex_count should be at least max_vertex_index + 1
-                if max_vertex_index + 1 > vcount:
-                    # Use the inferred count, but be conservative
-                    inferred_count = max_vertex_index + 1
-                    # Only use if it's reasonable (not more than 10x the face count, and at least 3)
-                    if 3 <= inferred_count <= bin_node.trimesh.faces_count * 10:
-                        # Also check if we can read that many vertices from the offset
-                        if bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
-                            inferred_bytes = inferred_count * 12
-                            if bin_node.trimesh.vertices_offset + inferred_bytes <= self._reader.size():
-                                vcount = inferred_count
-                                vcount_corrected = True
-                            else:
-                                # Can't read that many, so use a more conservative estimate
-                                # Try to read as many as we can
-                                available_bytes = self._reader.size() - bin_node.trimesh.vertices_offset
-                                if available_bytes >= 12:  # At least one vertex
-                                    vcount = min(inferred_count, available_bytes // 12)
-                                    vcount_corrected = True
-                        elif bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
-                            # Vertices are in MDX, use inferred count
-                            vcount = inferred_count
-                            vcount_corrected = True
+            # Verify vertex_count by checking actual data in the file
+            if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
+                # Vertices are in MDX: calculate count from MDX data size and block size
+                mdx_data_offset: int = bin_node.trimesh.mdx_data_offset
+                mdx_data_block_size: int = bin_node.trimesh.mdx_data_size
+                if mdx_data_offset not in (0, 0xFFFFFFFF) and mdx_data_block_size > 0:
+                    # Calculate how many vertex blocks can fit in the MDX file
+                    # The MDX data starts at mdx_data_offset and contains vertex data
+                    available_mdx_bytes = self._reader_ext.size() - mdx_data_offset
+                    if available_mdx_bytes > 0:
+                        # Each vertex is in a block of mdx_data_block_size bytes
+                        # Calculate max possible vertices based on available space
+                        max_vertices_from_mdx = available_mdx_bytes // mdx_data_block_size
+                        # Use the larger of the header value or calculated value, but be conservative
+                        if max_vertices_from_mdx > vcount and vcount <= 1:
+                            # Header value is suspiciously low, use calculated value
+                            vcount = max_vertices_from_mdx
+                            vcount_verified = True
+            elif bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
+                # Vertices are in MDL: count how many can actually be read
+                available_bytes = self._reader.size() - bin_node.trimesh.vertices_offset
+                if available_bytes >= 12:  # At least one vertex (12 bytes for Vector3)
+                    max_vertices_from_mdl = available_bytes // 12
+                    # If header value is suspiciously low (0 or 1) but we have space for more, verify
+                    if vcount <= 1 and max_vertices_from_mdl > 1:
+                        # Check if we have faces that reference higher vertex indices
+                        if bin_node.trimesh.faces_count > 0:
+                            max_vertex_index = 0
+                            for face in bin_node.trimesh.faces:
+                                max_vertex_index = max(max_vertex_index, face.vertex1, face.vertex2, face.vertex3)
+                            # vertex_count must be at least max_vertex_index + 1
+                            required_count = max_vertex_index + 1
+                            if required_count <= max_vertices_from_mdl:
+                                vcount = required_count
+                                vcount_verified = True
+                            elif max_vertices_from_mdl > vcount:
+                                # Use what we can read, but this might be incomplete
+                                vcount = max_vertices_from_mdl
+                                vcount_verified = True
 
             node.mesh.vertex_positions = []
             
-            # If vertices were read by read_extra and count matches (and wasn't corrected), use them directly
-            if not vcount_corrected and bin_node.trimesh.vertices and len(bin_node.trimesh.vertices) == vcount:
+            # If vertices were read by read_extra and count matches (and wasn't verified/corrected), use them directly
+            if not vcount_verified and bin_node.trimesh.vertices and len(bin_node.trimesh.vertices) == vcount:
                 node.mesh.vertex_positions = bin_node.trimesh.vertices.copy()
             elif bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
                 # Read from MDX
-                mdx_data_offset: int = bin_node.trimesh.mdx_data_offset
-                mdx_data_block_size: int = bin_node.trimesh.mdx_data_size
-                if mdx_data_offset not in (0, 0xFFFFFFFF) and mdx_data_block_size > 0 and vcount > 0:
+                if bin_node.trimesh.mdx_data_offset not in (0, 0xFFFFFFFF) and bin_node.trimesh.mdx_data_size > 0 and vcount > 0:
                     vertex_offset = bin_node.trimesh.mdx_vertex_offset
                     for i in range(vcount):
-                        seek_pos = mdx_data_offset + i * mdx_data_block_size + vertex_offset
+                        seek_pos = bin_node.trimesh.mdx_data_offset + i * bin_node.trimesh.mdx_data_size + vertex_offset
                         if seek_pos + 12 <= self._reader_ext.size():  # Need 12 bytes for Vector3
                             self._reader_ext.seek(seek_pos)
                             x, y, z = (
@@ -2821,7 +2828,7 @@ class MDLBinaryWriter:
                 print(f"DEBUG _write_all: After writing node {i}, texture1_offset={bin_node.trimesh.mdx_texture1_offset}")
 
         # Write to MDL
-        mdl_writer: BinaryWriter = BinaryWriter.to_auto(self._target)
+        mdl_writer: RawBinaryWriter = BinaryWriter.to_auto(self._target)
         mdl_writer.write_uint32(0)
         mdl_writer.write_uint32(self._writer.size())
         mdl_writer.write_uint32(self._writer_ext.size())
