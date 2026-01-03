@@ -174,8 +174,8 @@ class GITEditor(Editor, BlenderEditorMixin):
         # Undo/Redo
         # Uncomment to debug undo/redo signals
         # DO NOT remove.
-        #self.ui.actionUndo.triggered.connect(lambda: print("Undo signal") or self._controls.undo_stack.undo())
-        #self.ui.actionUndo.triggered.connect(lambda: print("Redo signal") or self._controls.undo_stack.redo())
+        # self.ui.actionUndo.triggered.connect(lambda: print("Undo signal") or self._controls.undo_stack.undo())
+        # self.ui.actionUndo.triggered.connect(lambda: print("Redo signal") or self._controls.undo_stack.redo())
 
         # View
         self.ui.actionZoomIn.triggered.connect(lambda: self.ui.renderArea.camera.nudge_zoom(1))
@@ -261,10 +261,14 @@ class GITEditor(Editor, BlenderEditorMixin):
             - Load layout if found in search locations
             - Parse git data and call _loadGIT()
         """
+        assert self._installation is not None, "Installation is required to load GITEditor layout"
         super().load(filepath, resref, restype, data)
 
-        order: list[SearchLocation] = [SearchLocation.OVERRIDE, SearchLocation.CHITIN, SearchLocation.MODULES]
-        assert self._installation is not None, "Installation is required to load GITEditor layout"
+        order = [
+            SearchLocation.OVERRIDE,
+            SearchLocation.MODULES,
+            SearchLocation.CHITIN,
+        ]
         result: ResourceResult | None = self._installation.resource(resref, ResourceType.LYT, order)
         if result:
             self._logger.debug("Found GITEditor layout for '%s'", filepath)

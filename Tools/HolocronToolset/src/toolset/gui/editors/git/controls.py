@@ -107,9 +107,7 @@ class GITControlScheme:
                 self.is_drag_moving = True
             if not self.is_drag_moving_spawn and isinstance(self.editor._mode, _SpawnMode):  # noqa: SLF001
                 sp_selection = self.editor._mode.renderer2d.spawn_selection.all()  # noqa: SLF001
-                self.initial_spawn_positions = {
-                    sp_ref.spawn: Vector3(sp_ref.spawn.x, sp_ref.spawn.y, sp_ref.spawn.z) for sp_ref in sp_selection
-                }
+                self.initial_spawn_positions = {sp_ref.spawn: Vector3(sp_ref.spawn.x, sp_ref.spawn.y, sp_ref.spawn.z) for sp_ref in sp_selection}
                 self.is_drag_moving_spawn = True
             self.editor.move_selected(adjusted_world_delta.x, adjusted_world_delta.y)
         if self.rotate_selected_to_point.satisfied(buttons, keys):
@@ -235,7 +233,7 @@ class GITControlScheme:
     ):
         self.handle_undo_redo_from_long_action_finished()
 
-    # Use @property decorators to allow Users to change their settings without restarting the editor.
+    # Use @property decorators to allow users to change settings without restarting the editor.
     @property
     def pan_camera(self) -> ControlItem:
         return ControlItem(self.settings.moveCameraBind)
