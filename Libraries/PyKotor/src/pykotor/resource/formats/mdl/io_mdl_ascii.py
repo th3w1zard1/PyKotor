@@ -1706,7 +1706,7 @@ class MDLAsciiReader(ResourceReader):
                 # Sort by bone index and create bone vertex
                 sorted_bones = sorted(bone_hash.keys())
                 bone_vertex = MDLBoneVertex()
-                bone_vertex.vertex_indices = cast("tuple[float, float, float, float]", tuple(float(b) if b in sorted_bones[:4] else -1.0 for b in range(4)))
+                bone_vertex.vertex_indices = cast("tuple[float, float, float, float]", tuple(float(sorted_bones[i]) if i < len(sorted_bones) else -1.0 for i in range(4)))
                 bone_vertex.vertex_weights = cast(
                     "tuple[float, float, float, float]", tuple(float(bone_hash.get(sorted_bones[i], 0.0)) if i < len(sorted_bones) else 0.0 for i in range(4))
                 )
