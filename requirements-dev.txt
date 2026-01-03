@@ -10,7 +10,7 @@ pytest
 pytest-html
 pytest-json-report
 pytest-xdist
-ruff
+ruff>=0.5.3
 send2trash
 snakeviz
 types-Pillow
