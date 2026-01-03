@@ -1848,60 +1848,82 @@ class MDLBinaryReader:
             vcount_verified: bool = False
 
             # Verify vertex_count by checking actual data in the file
-            if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
-                # Vertices are in MDX: calculate count from MDX data size and block size
-                mdx_data_offset: int = bin_node.trimesh.mdx_data_offset
-                mdx_data_block_size: int = bin_node.trimesh.mdx_data_size
-                if mdx_data_offset not in (0, 0xFFFFFFFF) and mdx_data_block_size > 0:
-                    # Calculate how many vertex blocks can fit in the MDX file
-                    # The MDX data starts at mdx_data_offset and contains vertex data
-                    available_mdx_bytes = self._reader_ext.size() - mdx_data_offset
-                    if available_mdx_bytes > 0:
-                        # Each vertex is in a block of mdx_data_block_size bytes
-                        # Calculate max possible vertices based on available space
-                        max_vertices_from_mdx = available_mdx_bytes // mdx_data_block_size
-                        # Use the larger of the header value or calculated value, but be conservative
-                        if max_vertices_from_mdx > vcount and vcount <= 1:
-                            # Header value is suspiciously low, use calculated value
-                            vcount = max_vertices_from_mdx
-                            vcount_verified = True
-            elif bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
-                # Vertices are in MDL: if vertex_count is suspiciously low, count actual vertices
-                available_bytes = self._reader.size() - bin_node.trimesh.vertices_offset
-                if available_bytes >= 12 and vcount <= 1:  # At least one vertex (12 bytes for Vector3)
-                    # Try to read vertices and count how many are actually present
-                    # Stop when we hit invalid data or run out of space
-                    saved_pos = self._reader.position()
-                    try:
-                        self._reader.seek(bin_node.trimesh.vertices_offset)
-                        actual_vertex_count = 0
-                        max_readable = min(available_bytes // 12, 100000)  # Safety limit
-                        
-                        # Read vertices until we can't read any more valid ones
-                        for i in range(max_readable):
-                            if self._reader.position() + 12 > self._reader.size():
-                                break
-                            try:
-                                vertex = self._reader.read_vector3()
-                                # Basic sanity check: vertices should be reasonable (not NaN, not extremely large)
-                                if (
-                                    all(-1e6 <= coord <= 1e6 for coord in (vertex.x, vertex.y, vertex.z))
-                                    and any(abs(coord) > 1e-6 for coord in (vertex.x, vertex.y, vertex.z))  # Not all zeros
-                                ):
-                                    actual_vertex_count = i + 1
-                                else:
-                                    # Hit invalid vertex data, stop counting
+            # If vertex_count is suspiciously low (0 or 1), try to determine the correct count from actual data
+            if vcount <= 1:
+                if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
+                    # Vertices are in MDX: try to count actual vertices by reading them
+                    mdx_data_offset: int = bin_node.trimesh.mdx_data_offset
+                    mdx_data_block_size: int = bin_node.trimesh.mdx_data_size
+                    vertex_offset = bin_node.trimesh.mdx_vertex_offset
+                    if mdx_data_offset not in (0, 0xFFFFFFFF) and mdx_data_block_size > 0:
+                        # Try to read vertices and count them
+                        saved_pos = self._reader_ext.position()
+                        try:
+                            actual_vertex_count = 0
+                            # Try reading up to a reasonable limit
+                            for i in range(100000):  # Safety limit
+                                seek_pos = mdx_data_offset + i * mdx_data_block_size + vertex_offset
+                                if seek_pos + 12 > self._reader_ext.size():
                                     break
-                            except Exception:
-                                # Can't read more, stop counting
-                                break
-                        
-                        # If we found more vertices than the header says, use the actual count
-                        if actual_vertex_count > vcount:
-                            vcount = actual_vertex_count
-                            vcount_verified = True
-                    finally:
-                        self._reader.seek(saved_pos)
+                                try:
+                                    self._reader_ext.seek(seek_pos)
+                                    x = self._reader_ext.read_single()
+                                    y = self._reader_ext.read_single()
+                                    z = self._reader_ext.read_single()
+                                    # Basic sanity check: reasonable float values
+                                    if (
+                                        all(-1e6 <= coord <= 1e6 for coord in (x, y, z))
+                                        and all(not (coord != coord) for coord in (x, y, z))  # Not NaN
+                                    ):
+                                        actual_vertex_count = i + 1
+                                    else:
+                                        # Hit invalid data, stop counting
+                                        break
+                                except Exception:
+                                    # Can't read more, stop counting
+                                    break
+                            
+                            # If we found vertices, use the count
+                            if actual_vertex_count > vcount:
+                                vcount = actual_vertex_count
+                                vcount_verified = True
+                        finally:
+                            self._reader_ext.seek(saved_pos)
+                elif bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
+                    # Vertices are in MDL: count actual vertices
+                    available_bytes = self._reader.size() - bin_node.trimesh.vertices_offset
+                    if available_bytes >= 12:  # At least one vertex (12 bytes for Vector3)
+                        saved_pos = self._reader.position()
+                        try:
+                            self._reader.seek(bin_node.trimesh.vertices_offset)
+                            actual_vertex_count = 0
+                            max_readable = min(available_bytes // 12, 100000)  # Safety limit
+                            
+                            # Read vertices until we can't read any more valid ones
+                            for i in range(max_readable):
+                                if self._reader.position() + 12 > self._reader.size():
+                                    break
+                                try:
+                                    vertex = self._reader.read_vector3()
+                                    # Basic sanity check: reasonable float values, not all zeros
+                                    if (
+                                        all(-1e6 <= coord <= 1e6 for coord in (vertex.x, vertex.y, vertex.z))
+                                        and all(not (coord != coord) for coord in (vertex.x, vertex.y, vertex.z))  # Not NaN
+                                    ):
+                                        actual_vertex_count = i + 1
+                                    else:
+                                        # Hit invalid vertex data, stop counting
+                                        break
+                                except Exception:
+                                    # Can't read more, stop counting
+                                    break
+                            
+                            # If we found more vertices than the header says, use the actual count
+                            if actual_vertex_count > vcount:
+                                vcount = actual_vertex_count
+                                vcount_verified = True
+                        finally:
+                            self._reader.seek(saved_pos)
 
             node.mesh.vertex_positions = []
             
