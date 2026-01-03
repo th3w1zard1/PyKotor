@@ -7,9 +7,9 @@ repos:
     rev: v6.0.0
     hooks:
       - id: trailing-whitespace
-        exclude: (vendor/|^\.venv/)
+        exclude: ^(vendor/|\.venv[^\/]*\/)
       - id: end-of-file-fixer
-        exclude: (vendor/|^\.venv/)
+        exclude: ^(vendor/|\.venv[^\/]*\/)
       - id: check-yaml
         args: [--unsafe]
       - id: check-json
