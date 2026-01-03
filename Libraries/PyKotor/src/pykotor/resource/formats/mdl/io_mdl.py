@@ -2769,11 +2769,26 @@ class MDLBinaryReader:
                 data.append(row_data)
 
         controller_type: int = bin_controller.type_id
+        # Validate controller type - function pointer values (4273776 for K1, 4285200 for K2) indicate
+        # we're reading from the wrong location (geometry header data instead of controller data).
+        # Valid controller types are small integers (< 1000), so detect invalid values.
+        # vendor/mdlops/MDLOpsM.pm:325-405 - Valid controller types are 8, 20, 36, 76, 80, 84, 88, etc.
+        if controller_type > 1000 or controller_type < 0:
+            # Invalid controller type - likely reading from wrong offset, skip this controller
+            # Return INVALID controller type to prevent crash
+            controller_type_enum = MDLControllerType.INVALID
+        else:
+            try:
+                controller_type_enum = MDLControllerType(controller_type)
+            except ValueError:
+                # Controller type not in enum, use INVALID
+                controller_type_enum = MDLControllerType.INVALID
+        
         # Handle case where we didn't read all rows due to bounds issues
         actual_row_count = min(len(time_keys), len(data), row_count)
         rows: list[MDLControllerRow] = [MDLControllerRow(time_keys[i], data[i]) for i in range(actual_row_count)]
         # vendor/mdlops/MDLOpsM.pm:1709 - Store bezier flag with controller
-        controller = MDLController(MDLControllerType(controller_type), rows, is_bezier=is_bezier)
+        controller = MDLController(controller_type_enum, rows, is_bezier=is_bezier)
         return controller
 
 
