@@ -9,7 +9,6 @@ This document provides a detailed description of the TLK (Talk Table) file forma
 ## Table of Contents
 
 - KotOR TLK File Format Documentation
-  - Table of Contents
   - [File Structure Overview](#file-structure-overview)
   - [Binary Format](#binary-format)
     - [File Header](#file-header)
@@ -31,7 +30,6 @@ TLK files store localized strings in a binary format. The game loads `dialog.tlk
 
 **Vendor References:**
 
-- [`vendor/TSLPatcher/lib/site/Bioware/TLK.pm`](https://github.com/th3w1zard1/TSLPatcher/blob/master/lib/site/Bioware/TLK.pm) - Original Perl TLK implementation from TSLPatcher
 - [`vendor/reone/src/libs/resource/format/tlkreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/tlkreader.cpp) - Complete C++ TLK reader implementation
 - [`vendor/xoreos/src/aurora/talktable.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/talktable.cpp) - Generic Aurora Talk Table implementation (shared format)
 - [`vendor/KotOR.js/src/resource/TLKObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/TLKObject.ts) - TypeScript TLK parser with localization support
@@ -41,10 +39,10 @@ TLK files store localized strings in a binary format. The game loads `dialog.tlk
 
 **See Also:**
 
-- [TSLPatcher TLKList Syntax](TSLPatcher-TLKList-Syntax) - Modding TLK files with TSLPatcher
+- [2DA File Format](2DA-File-Format) - Game tables with name/description StrRefs
 - [GFF File Format](GFF-File-Format) - Dialogue and templates that reference TLK strings
 - [SSF File Format](SSF-File-Format) - Sound sets that reference TLK entries
-- [2DA File Format](2DA-File-Format) - Game tables with name/description StrRefs
+- [TSLPatcher TLKList Syntax](TSLPatcher-TLKList-Syntax) - Modding TLK files with TSLPatcher
 
 ---
 
@@ -179,8 +177,6 @@ The game can load multiple TLK files:
 
 Priority: Custom TLKs → dialogf.tlk → `dialog.tlk`
 
-**Reference**: [`vendor/TSLPatcher/lib/site/Bioware/TLK.pm:31-123`](https://github.com/th3w1zard1/TSLPatcher/blob/master/lib/site/Bioware/TLK.pm#L31-L123)
-
 ---
 
 ## Localization
@@ -201,7 +197,7 @@ TLK files support multiple languages through the Language ID field:
 
 **Note**: KotOR games typically ignore the Language ID field and always use `dialog.tlk`. The field is primarily used by modding tools to identify language.
 
-**Reference**: [`vendor/Kotor.NET/Kotor.NET/Formats/KotorTLK/TLKBinaryStructure.cs:63`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/KotorTLK/TLKBinaryStructure.cs#L63)
+**Note**: Windows-1252 is a single byte encoding, meaning only 256 characters are supported. This occasionally is known as "ISO-8859-1" or *cp1252*.
 
 ---
 
@@ -212,6 +208,10 @@ TLK files support multiple languages through the Language ID field:
 **Binary Writing**: [`Libraries/PyKotor/src/pykotor/resource/formats/tlk/io_tlk.py:117-178`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tlk/io_tlk.py#L117-L178)
 
 **TLK Class**: [`Libraries/PyKotor/src/pykotor/resource/formats/tlk/tlk_data.py:56-291`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/tlk/tlk_data.py#L56-L291)
+
+**Kotor.NET** (C#):
+
+- structure: [`vendor/Kotor.NET/Kotor.NET/Formats/KotorTLK/TLKBinaryStructure.cs`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/KotorTLK/TLKBinaryStructure.cs)
 
 ---
 
