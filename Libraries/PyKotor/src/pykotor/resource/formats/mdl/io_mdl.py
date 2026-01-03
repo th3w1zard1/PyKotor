@@ -1940,7 +1940,10 @@ class MDLBinaryReader:
 
         if bin_node.trimesh is not None:
             node.mesh = MDLMesh()
-            node.node_type = MDLNodeType.TRIMESH
+            # Only set TRIMESH type if AABB flag is not set (AABB takes precedence for walkmesh nodes)
+            # A node can have both MESH and AABB flags (walkmesh with visible geometry)
+            if not (bin_node.header.type_id & MDLNodeFlags.AABB):
+                node.node_type = MDLNodeType.TRIMESH
             node.mesh.shadow = bool(bin_node.trimesh.has_shadow)
             node.mesh.render = bool(bin_node.trimesh.render)
             node.mesh.background_geometry = bool(bin_node.trimesh.background)
