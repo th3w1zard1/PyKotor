@@ -863,7 +863,6 @@ class _TrimeshHeader:
 
             # Only run recovery if vertex_count is invalid AND vertices are not in MDX
             # If mdx_data_offset is valid, vertices are in MDX, so vertices_offset being 0/0xFFFFFFFF is expected
-            # TODO: ensure accuracy here though.
             mdx_valid = self.mdx_data_offset not in (0, 0xFFFFFFFF) and self.mdx_data_offset <= reader.size()
             vertex_count_invalid = self.vertex_count < 0 or self.vertex_count > 1_000_000
 
@@ -871,12 +870,26 @@ class _TrimeshHeader:
                 # Prefer the legacy MDLOps-style offsets first, then our writer's layout.
                 for off_vc, off_mdx in ((304, 324), (300, 352)):
                     vc, tc, mo, vo = _try_offsets(off_vc, off_mdx)
-                    if _valid(int(vc), int(vo)):
+                    # Reject recovered values that are suspiciously low (0 or 1) unless we can verify they're correct
+                    # A vertex_count of 1 is almost always wrong for a mesh with geometry
+                    if _valid(int(vc), int(vo)) and vc > 1:
                         self.vertex_count = vc
                         self.texture_count = tc
                         self.mdx_data_offset = mo
                         self.vertices_offset = vo
                         break
+                    elif _valid(int(vc), int(vo)) and vc == 1:
+                        # vertex_count of 1 is suspicious - only use if vertices_offset is clearly invalid
+                        # and this is the only valid alternative we can find
+                        if not _valid(int(self.vertex_count), int(self.vertices_offset)):
+                            # Original is invalid, and this is the only alternative, so use it
+                            # But this will be corrected later during vertex reading
+                            self.vertex_count = vc
+                            self.texture_count = tc
+                            self.mdx_data_offset = mo
+                            self.vertices_offset = vo
+                            # Don't break - continue to look for better alternatives
+                            continue
 
             reader.seek(end_pos)
         return self
@@ -1851,26 +1864,42 @@ class MDLBinaryReader:
                             vcount = max_vertices_from_mdx
                             vcount_verified = True
             elif bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
-                # Vertices are in MDL: count how many can actually be read
+                # Vertices are in MDL: if vertex_count is suspiciously low, count actual vertices
                 available_bytes = self._reader.size() - bin_node.trimesh.vertices_offset
-                if available_bytes >= 12:  # At least one vertex (12 bytes for Vector3)
-                    max_vertices_from_mdl = available_bytes // 12
-                    # If header value is suspiciously low (0 or 1) but we have space for more, verify
-                    if vcount <= 1 and max_vertices_from_mdl > 1:
-                        # Check if we have faces that reference higher vertex indices
-                        if bin_node.trimesh.faces_count > 0:
-                            max_vertex_index = 0
-                            for face in bin_node.trimesh.faces:
-                                max_vertex_index = max(max_vertex_index, face.vertex1, face.vertex2, face.vertex3)
-                            # vertex_count must be at least max_vertex_index + 1
-                            required_count = max_vertex_index + 1
-                            if required_count <= max_vertices_from_mdl:
-                                vcount = required_count
-                                vcount_verified = True
-                            elif max_vertices_from_mdl > vcount:
-                                # Use what we can read, but this might be incomplete
-                                vcount = max_vertices_from_mdl
-                                vcount_verified = True
+                if available_bytes >= 12 and vcount <= 1:  # At least one vertex (12 bytes for Vector3)
+                    # Try to read vertices and count how many are actually present
+                    # Stop when we hit invalid data or run out of space
+                    saved_pos = self._reader.position()
+                    try:
+                        self._reader.seek(bin_node.trimesh.vertices_offset)
+                        actual_vertex_count = 0
+                        max_readable = min(available_bytes // 12, 100000)  # Safety limit
+                        
+                        # Read vertices until we can't read any more valid ones
+                        for i in range(max_readable):
+                            if self._reader.position() + 12 > self._reader.size():
+                                break
+                            try:
+                                vertex = self._reader.read_vector3()
+                                # Basic sanity check: vertices should be reasonable (not NaN, not extremely large)
+                                if (
+                                    all(-1e6 <= coord <= 1e6 for coord in (vertex.x, vertex.y, vertex.z))
+                                    and any(abs(coord) > 1e-6 for coord in (vertex.x, vertex.y, vertex.z))  # Not all zeros
+                                ):
+                                    actual_vertex_count = i + 1
+                                else:
+                                    # Hit invalid vertex data, stop counting
+                                    break
+                            except Exception:
+                                # Can't read more, stop counting
+                                break
+                        
+                        # If we found more vertices than the header says, use the actual count
+                        if actual_vertex_count > vcount:
+                            vcount = actual_vertex_count
+                            vcount_verified = True
+                    finally:
+                        self._reader.seek(saved_pos)
 
             node.mesh.vertex_positions = []
             
