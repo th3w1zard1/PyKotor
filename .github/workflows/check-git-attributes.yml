@@ -35,4 +35,3 @@ jobs:
               fi
             done || echo "✓ .gitattributes format is valid"
           fi
-

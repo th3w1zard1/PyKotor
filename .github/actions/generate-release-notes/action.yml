@@ -22,14 +22,13 @@ runs:
         # This would use a script to generate notes from commits/PRs
         NOTES=$(cat <<EOF
         # Release ${{ inputs.tag }}
-        
+
         ## Changes
-        
+
         Generated from commits and pull requests.
-        
+
         EOF
         )
         echo "notes<<EOF" >> $GITHUB_OUTPUT
         echo "$NOTES" >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
-

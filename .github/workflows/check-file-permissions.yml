@@ -28,4 +28,3 @@ jobs:
           find scripts -name "*.sh" -not -perm +111 | while read file; do
             echo "⚠️ Shell script not executable: $file"
           done || echo "All shell scripts are executable"
-

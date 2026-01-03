@@ -22,4 +22,3 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           configuration-path: .github/labels.yml
           dry-run: false
-

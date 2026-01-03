@@ -100,4 +100,3 @@ void main() {
 	DelayCommand(0.1, sub2(oKas_rulan_party0_jump, oKas_rulan_party1_jump, oKas_rulan_party2_jump));
 	DelayCommand(0.5, AssignCommand(intGLOB_24, SetFacingPoint(GetPosition(intGLOB_25))));
 }
-

@@ -93,7 +93,7 @@ test-v1.0.99-translator   → Translator (TEST)
 ## 📚 Documentation
 
 - **RELEASE_WORKFLOW.md** - Complete guide
-- **QUICK_TEST_GUIDE.md** - Safe testing  
+- **QUICK_TEST_GUIDE.md** - Safe testing
 - **TESTING_RELEASES.md** - Advanced testing
 - **README.md** - Overview
 

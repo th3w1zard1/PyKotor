@@ -115,7 +115,7 @@ foreach ($workflow in $requiredWorkflows + $testWorkflows) {
     if (-not (Test-Path $workflow)) {
         continue
     }
-    
+
     try {
         # Try to parse YAML (requires PowerShell-YAML module)
         if (Get-Module -ListAvailable -Name PowerShell-YAML) {
@@ -153,7 +153,7 @@ foreach ($t in $tools) {
     }
     if (Test-Path $file) {
         Write-Host "  ✅ $toolLabel version file exists: $file" -ForegroundColor Green
-        
+
         $content = Get-Content $file -Raw
         if ($content -match '"currentVersion"' -or $content -match 'CURRENT_VERSION' -or $content -match '__version__') {
             Write-Host "     ✅ Found version field" -ForegroundColor Green
@@ -176,9 +176,9 @@ foreach ($workflow in $requiredWorkflows) {
     if (-not (Test-Path $workflow)) {
         continue
     }
-    
+
     $content = Get-Content $workflow -Raw
-    
+
     # Check for required jobs
     $requiredJobs = @("validate", "update_version_pre_build", "setup", "build", "package", "finalize")
     foreach ($job in $requiredJobs) {
@@ -188,7 +188,7 @@ foreach ($workflow in $requiredWorkflows) {
             $errors += "$workflow missing job: $job"
         }
     }
-    
+
     # Check for release trigger
     if ($content -match "types:\s*\[prereleased\]") {
         # Correct trigger
@@ -225,7 +225,7 @@ if ($errors.Count -eq 0 -and $warnings.Count -eq 0) {
         }
         Write-Host ""
     }
-    
+
     if ($warnings.Count -gt 0) {
         Write-Host "⚠️  WARNINGS ($($warnings.Count)):" -ForegroundColor Yellow
         foreach ($warning in $warnings) {
@@ -233,9 +233,8 @@ if ($errors.Count -eq 0 -and $warnings.Count -eq 0) {
         }
         Write-Host ""
     }
-    
+
     Write-Host "Please fix errors before proceeding." -ForegroundColor Red
     Write-Host ""
     exit 1
 }
-

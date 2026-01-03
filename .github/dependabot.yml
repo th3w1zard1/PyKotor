@@ -38,83 +38,12 @@ updates:
     prefix: chore(pykotor)
     include: scope
 - package-ecosystem: pip
-  directory: /Tools/BatchPatcher
+  directories:
+    - /Tools/*
   schedule:
     interval: weekly
     day: monday
   open-pull-requests-limit: 5
   commit-message:
-    prefix: chore(batchpatcher)
-    include: scope
-- package-ecosystem: pip
-  directory: /Tools/HolocronAI
-  schedule:
-    interval: weekly
-    day: monday
-  open-pull-requests-limit: 5
-  commit-message:
-    prefix: chore(holocronai)
-    include: scope
-- package-ecosystem: pip
-  directory: /Tools/HolocronToolset
-  schedule:
-    interval: weekly
-    day: monday
-  open-pull-requests-limit: 5
-  commit-message:
-    prefix: chore(holocrontoolset)
-    include: scope
-- package-ecosystem: pip
-  directory: /Tools/HoloGenerator
-  schedule:
-    interval: weekly
-    day: monday
-  open-pull-requests-limit: 5
-  commit-message:
-    prefix: chore(hologenerator)
-    include: scope
-- package-ecosystem: pip
-  directory: /Tools/HoloPatcher
-  schedule:
-    interval: weekly
-    day: monday
-  open-pull-requests-limit: 5
-  commit-message:
-    prefix: chore(holopatcher)
-    include: scope
-- package-ecosystem: pip
-  directory: /Tools/HoloPazaak
-  schedule:
-    interval: weekly
-    day: monday
-  open-pull-requests-limit: 5
-  commit-message:
-    prefix: chore(holopazaak)
-    include: scope
-- package-ecosystem: pip
-  directory: /Tools/KotorCLI
-  schedule:
-    interval: weekly
-    day: monday
-  open-pull-requests-limit: 5
-  commit-message:
-    prefix: chore(kotorcli)
-    include: scope
-- package-ecosystem: pip
-  directory: /Tools/KotorDiff
-  schedule:
-    interval: weekly
-    day: monday
-  open-pull-requests-limit: 5
-  commit-message:
-    prefix: chore(kotordiff)
-    include: scope
-- package-ecosystem: pip
-  directory: /Tools/KotorMCP
-  schedule:
-    interval: weekly
-    day: monday
-  open-pull-requests-limit: 5
-  commit-message:
-    prefix: chore(kotormcp)
+    prefix: chore
     include: scope

@@ -47,4 +47,3 @@ If you accidentally created a public issue:
 ## Thank You
 
 Thank you for responsibly reporting security vulnerabilities!
-

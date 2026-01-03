@@ -186,9 +186,9 @@ jobs:
       - name: Check tag availability
         run: |
           TAG="${{ steps.config.outputs.tag_name }}"
-          
+
           git fetch --tags --quiet
-          
+
           if git rev-parse "refs/tags/$TAG" >/dev/null 2>&1; then
             echo "⚠️  Warning: Tag $TAG already exists and will be overwritten"
           else
@@ -216,7 +216,7 @@ jobs:
           VERSION="${{ github.event.inputs.version }}"
           CONFIG_FILE="${{ needs.validate.outputs.config_file }}"
           VERSION_KEY="${{ needs.validate.outputs.version_key }}"
-          
+
           echo "Updating $CONFIG_FILE to version $VERSION"
           python3 << 'PYTHON_SCRIPT'
           import os
@@ -261,7 +261,7 @@ jobs:
           TOOL="${{ needs.validate.outputs.build_name }}"
           VERSION="${{ github.event.inputs.version }}"
           CONFIG_FILE="${{ needs.validate.outputs.config_file }}"
-          
+
           git add "$CONFIG_FILE"
           git commit -m "chore($TOOL): bump version to $VERSION"
           git push origin master
@@ -281,14 +281,14 @@ jobs:
       - name: Create tag
         run: |
           TAG="${{ needs.validate.outputs.tag_name }}"
-          
+
           # Pull latest changes (in case version was bumped)
           git pull origin master
-          
+
           # Create/update tag
           git tag -f "$TAG"
           git push origin "refs/tags/$TAG" --force
-          
+
           echo "✓ Tag $TAG created"
         shell: bash
 
@@ -298,7 +298,7 @@ jobs:
           VERSION="${{ github.event.inputs.version }}"
           DISPLAY_NAME="${{ needs.validate.outputs.display_name }}"
           USER_NOTES="${{ github.event.inputs.release_notes }}"
-          
+
           if [ -n "$USER_NOTES" ]; then
             NOTES="$USER_NOTES"
           else
@@ -316,7 +316,7 @@ Download the appropriate archive for your platform:
 - **Linux x64**: \`${DISPLAY_NAME}_Linux_x64.zip\`
 - **macOS x64**: \`${DISPLAY_NAME}_Mac_x64.zip\`"
           fi
-          
+
           # Save to file to preserve newlines
           echo "$NOTES" > release_notes.md
         shell: bash
@@ -328,12 +328,12 @@ Download the appropriate archive for your platform:
           TAG="${{ needs.validate.outputs.tag_name }}"
           DISPLAY_NAME="${{ needs.validate.outputs.display_name }}"
           VERSION="${{ github.event.inputs.version }}"
-          
+
           gh release create "$TAG" \
             --prerelease \
             --title "$DISPLAY_NAME v$VERSION" \
             --notes-file release_notes.md
-          
+
           echo "✓ Pre-release created: $TAG"
           echo ""
           echo "🚀 The release workflow will now run automatically!"
@@ -354,16 +354,16 @@ Download the appropriate archive for your platform:
           echo "**Version:** ${{ github.event.inputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "**Tag:** ${{ needs.validate.outputs.tag_name }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           echo "## Status" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           if [ "${{ needs.validate.result }}" = "success" ]; then
             echo "- ✅ Validation passed" >> $GITHUB_STEP_SUMMARY
           else
             echo "- ❌ Validation failed" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           if [ "${{ github.event.inputs.skip_version_bump }}" = "true" ]; then
             echo "- ⏭️ Version bump skipped (already updated)" >> $GITHUB_STEP_SUMMARY
           elif [ "${{ needs.bump-version.result }}" = "success" ]; then
@@ -371,15 +371,15 @@ Download the appropriate archive for your platform:
           else
             echo "- ❌ Version bump failed" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           if [ "${{ needs.create-release.result }}" = "success" ]; then
             echo "- ✅ Pre-release created" >> $GITHUB_STEP_SUMMARY
           else
             echo "- ❌ Pre-release creation failed" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           if [ "${{ needs.create-release.result }}" = "success" ]; then
             echo "## Next Steps" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
@@ -394,4 +394,3 @@ Download the appropriate archive for your platform:
             echo "Check the failed job logs above for details." >> $GITHUB_STEP_SUMMARY
           fi
         shell: bash
-

@@ -97,4 +97,3 @@ jobs:
           name: safety-dependency-report
           path: safety-report.json
           retention-days: 30
-

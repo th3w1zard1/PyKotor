@@ -20,4 +20,3 @@ jobs:
         with:
           config: .typos.toml
         continue-on-error: true
-

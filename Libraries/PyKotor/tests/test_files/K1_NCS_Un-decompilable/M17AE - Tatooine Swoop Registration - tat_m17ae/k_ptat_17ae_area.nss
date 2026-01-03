@@ -343,4 +343,3 @@ void main() {
 	AssignCommand(oSittingBith, ActionPlayAnimation(204, 1.0, 1000.0));
 	AssignCommand(oSittingRodian, ActionPlayAnimation(204, 1.0, 1000.0));
 }
-

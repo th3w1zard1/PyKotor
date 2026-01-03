@@ -45,7 +45,7 @@
 "files.eol": "\r\n",
 "launch": {
   "justMyCode": true,
-  "debugStdLib": false,
+  "debugStdLib": false
 },
 "debug.allowBreakpointsEverywhere": false,
 "debugStdLib": false,
@@ -60,6 +60,5 @@
   "--listen",
   "5678",
   "--wait-for-client"
-],
+]
 }
-

@@ -202,13 +202,13 @@ jobs:
       - name: Check if tag already exists
         run: |
           TAG="${{ needs.validate-version.outputs.tag_name }}"
-          
+
           git fetch --tags
-          
+
           if git rev-parse "refs/tags/$TAG" >/dev/null 2>&1; then
             echo "⚠️  Warning: Tag $TAG already exists"
             echo "   This tag will be overwritten if you proceed with the release"
-            
+
             TAG_COMMIT=$(git rev-list -n 1 "refs/tags/$TAG" 2>/dev/null || echo "unknown")
             echo "   Current tag commit: $TAG_COMMIT"
           else
@@ -233,10 +233,10 @@ jobs:
         run: |
           TOOL_DIR="${{ needs.validate-version.outputs.tool_dir }}"
           CONFIG_FILE="${{ needs.validate-version.outputs.config_file }}"
-          
+
           pip install -e "Libraries/PyKotor[all]" --quiet
           pip install -e "Tools/${TOOL_DIR}" --quiet 2>/dev/null || true
-          
+
           python3 << 'PYTHON_SCRIPT'
           import re
           from pathlib import Path
@@ -268,7 +268,7 @@ jobs:
       - name: Verify compile scripts exist
         run: |
           BUILD_NAME="${{ needs.validate-version.outputs.build_name }}"
-          
+
           CANDIDATES=(
             "compile/compile_${BUILD_NAME}.ps1"
             "compile/compile_${BUILD_NAME}.sh"
@@ -279,9 +279,9 @@ jobs:
             "compile/deps_${BUILD_NAME}.sh"
             "compile/deps_${BUILD_NAME}.bat"
           )
-          
+
           echo "=== Checking compile scripts for ${BUILD_NAME} ==="
-          
+
           FOUND_COMPILE=""
           for c in "${CANDIDATES[@]}"; do
             if [ -f "$c" ]; then
@@ -290,12 +290,12 @@ jobs:
               break
             fi
           done
-          
+
           if [ -z "$FOUND_COMPILE" ]; then
             echo "❌ Compile script NOT found for ${BUILD_NAME}"
             exit 1
           fi
-          
+
           FOUND_DEPS="false"
           for d in "${DEPS_CANDIDATES[@]}"; do
             if [ -f "$d" ]; then
@@ -304,7 +304,7 @@ jobs:
               break
             fi
           done
-          
+
           if [ "$FOUND_DEPS" = "false" ]; then
             echo "⚠️  Dependencies script not found (may not be required)"
           fi
@@ -386,44 +386,44 @@ jobs:
           echo "**Version:** ${{ github.event.inputs.version }}" >> $GITHUB_STEP_SUMMARY
           echo "**Tag:** ${{ needs.validate-version.outputs.tag_name }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           echo "## Checklist" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           if [ "${{ needs.validate-version.result }}" = "success" ]; then
             echo "- ✅ Version format validated" >> $GITHUB_STEP_SUMMARY
           else
             echo "- ❌ Version validation failed" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           if [ "${{ needs.check-tag.result }}" = "success" ]; then
             echo "- ✅ Tag availability checked" >> $GITHUB_STEP_SUMMARY
           else
             echo "- ❌ Tag check failed" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           if [ "${{ needs.check-dependencies.result }}" = "success" ]; then
             echo "- ✅ Dependencies validated" >> $GITHUB_STEP_SUMMARY
           else
             echo "- ❌ Dependencies check failed" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           if [ "${{ needs.check-compile-scripts.result }}" = "success" ]; then
             echo "- ✅ Compile scripts found" >> $GITHUB_STEP_SUMMARY
           else
             echo "- ❌ Compile scripts check failed" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           if [ "${{ needs.dry-run-build.result }}" = "success" ]; then
             echo "- ✅ Build validation passed" >> $GITHUB_STEP_SUMMARY
           else
             echo "- ❌ Build validation failed" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Next Steps" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           ALL_PASSED="true"
           if [ "${{ needs.validate-version.result }}" != "success" ] || \
              [ "${{ needs.check-dependencies.result }}" != "success" ] || \
@@ -431,7 +431,7 @@ jobs:
              [ "${{ needs.dry-run-build.result }}" != "success" ]; then
             ALL_PASSED="false"
           fi
-          
+
           if [ "$ALL_PASSED" = "true" ]; then
             echo "🎉 **All checks passed!** You're ready to release." >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY

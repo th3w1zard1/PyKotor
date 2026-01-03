@@ -41,4 +41,3 @@ jobs:
             fi
           done
         continue-on-error: true
-

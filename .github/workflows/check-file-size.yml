@@ -29,7 +29,7 @@ jobs:
             });
 
             const largeFiles = files.filter(file => file.additions > 0 && file.changes > 1000);
-            
+
             if (largeFiles.length > 0) {
               const fileList = largeFiles.map(f => `- ${f.filename} (${f.changes} changes)`).join('\n');
               await github.rest.issues.createComment({
@@ -39,4 +39,3 @@ jobs:
                 body: `⚠️ **Large files detected**\n\nThe following files have significant changes (>1000 lines):\n\n${fileList}\n\nPlease consider splitting large changes into smaller, more manageable PRs.`,
               });
             }
-

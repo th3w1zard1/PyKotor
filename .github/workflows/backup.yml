@@ -38,4 +38,3 @@ jobs:
           name: repository-backup-$(date +%Y%m%d)
           path: pykotor-backup-*.tar.gz
           retention-days: 90
-

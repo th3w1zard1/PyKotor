@@ -9,4 +9,3 @@ contact_links:
   - name: 🐛 Security Vulnerability
     url: https://github.com/OldRepublicDevs/PyKotor/security/advisories/new
     about: Report a security vulnerability (please do not create a public issue)
-

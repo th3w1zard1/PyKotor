@@ -247,13 +247,13 @@ Detailed logs show:
   - Is `PYPI_API_TOKEN` secret set in repository settings?
   - Is the token valid and not expired?
   - Does the token have permissions for the package you're publishing?
-  
+
 - **If using OIDC (trusted publishing):**
   - Is PyPI trusted publishing configured correctly?
   - Check that the workflow path matches: `.github/workflows/publish-pypi-auto.yml`
   - Check that the repository name matches: `th3w1zard1/PyKotor`
   - Ensure OIDC is enabled in repository settings
-  
+
 - **General:**
   - Check `publish-packages` job logs for authentication errors
   - Verify the `pypi` environment exists (if using OIDC)

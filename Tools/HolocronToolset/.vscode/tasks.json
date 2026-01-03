@@ -337,7 +337,7 @@
       "options": {
         "cwd": "src",
         "env": {
-          "PYTHONOPTIMIZE": "1",
+          "PYTHONOPTIMIZE": "1"
         }
       },
       "group": {

@@ -1464,7 +1464,7 @@ string sub51(int intParam1) {
 												}
 												else {
 													if ((intParam1 == intGLOB_51)) {
-														return "SW_COMBO_SUPRESS_DEBILITATE_DESTROY";
+														return "SW_COMBO_SUPPRESS_DEBILITATE_DESTROY";
 													}
 													else {
 														if ((intParam1 == intGLOB_52)) {
@@ -3523,4 +3523,3 @@ void main() {
 	DelayCommand(8.3, AssignCommand(GetObjectByTag("rulan_ter", 0), sub3(OBJECT_INVALID)));
 	DelayCommand(7.2, SetGlobalFadeIn(1.0, 1.0, 0.0, 0.0, 0.0));
 }
-

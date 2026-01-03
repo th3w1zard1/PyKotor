@@ -20,7 +20,7 @@ jobs:
           # Check that all pyproject.toml files have consistent versions
           ROOT_VERSION=$(grep -E '^version\s*=' pyproject.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')
           echo "Root version: $ROOT_VERSION"
-          
+
           for pyproject in Libraries/*/pyproject.toml Tools/*/pyproject.toml; do
             if [ -f "$pyproject" ]; then
               VERSION=$(grep -E '^version\s*=' "$pyproject" | head -1 | sed 's/.*"\(.*\)".*/\1/')
@@ -28,4 +28,3 @@ jobs:
               # Add version validation logic here
             fi
           done
-

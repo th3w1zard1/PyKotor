@@ -42,7 +42,7 @@
                 "-Xdev"
             ],
             "autoReload": {
-                "enable": true,
+                "enable": true
             },
         },
         {
@@ -63,7 +63,7 @@
             "console": "integratedTerminal",
             "justMyCode": false,
             "autoReload": {
-                "enable": true,
+                "enable": true
             },
         },
         {
@@ -84,7 +84,7 @@
             "console": "integratedTerminal",
             "justMyCode": false,
             "autoReload": {
-                "enable": true,
+                "enable": true
             },
         },
         {
@@ -103,7 +103,7 @@
             ],
             "justMyCode": false,
             "autoReload": {
-                "enable": true,
+                "enable": true
             },
         },
         {
@@ -120,7 +120,7 @@
             },
             "justMyCode": true,
             "autoReload": {
-                "enable": true,
+                "enable": true
             },
         },
         {
@@ -137,7 +137,7 @@
             },
             "justMyCode": true,
             "autoReload": {
-                "enable": true,
+                "enable": true
             },
         },
     ]

@@ -29,4 +29,3 @@ How should it be improved?
 
 ## Additional Context
 Add any other context, examples, or screenshots about the documentation issue.
-

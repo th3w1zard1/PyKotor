@@ -37,4 +37,3 @@ jobs:
           name: license-report
           path: license-report.json
           retention-days: 30
-

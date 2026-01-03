@@ -1,6 +1,1 @@
-charset-normalizer>=2.0,<3.5  # auto-detect encoding of INI/RTF files
-pycryptodome  # for autoupdate feature.
-# NOTE: pykotor is provided via PYTHONPATH (../../Libraries/PyKotor/src) for development.
-# For standalone installation, pykotor is specified in pyproject.toml dependencies.
-requests>=2.25.0,<2.32.0; python_version<"3.9"  # 3.8 doesn't support 2.32.0
-requests>=2.25.0; python_version>="3.9"  # 3.9+ supports 2.32.0 and above
+

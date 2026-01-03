@@ -39,13 +39,13 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Package | Size | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|---------|------|--------|" >> $GITHUB_STEP_SUMMARY
-          
+
           for dist_file in Libraries/*/dist/*.whl Tools/*/dist/*.whl; do
             if [ -f "$dist_file" ]; then
               size=$(du -h "$dist_file" | cut -f1)
               size_bytes=$(stat -f%z "$dist_file" 2>/dev/null || stat -c%s "$dist_file" 2>/dev/null)
               size_mb=$(echo "scale=2; $size_bytes / 1024 / 1024" | bc)
-              
+
               if (( $(echo "$size_mb > 50" | bc -l) )); then
                 status="⚠️ Large"
               elif (( $(echo "$size_mb > 100" | bc -l) )); then
@@ -53,9 +53,8 @@ jobs:
               else
                 status="✓ OK"
               fi
-              
+
               pkg_name=$(basename "$dist_file")
               echo "| $pkg_name | $size ($size_mb MB) | $status |" >> $GITHUB_STEP_SUMMARY
             fi
           done
-

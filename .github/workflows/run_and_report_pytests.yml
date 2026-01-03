@@ -9,7 +9,7 @@ env:
   PYTHON_VERSIONS_JSON: '["3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]'
   ARCHITECTURES_JSON: '["x86", "x64"]'
   INTERPRETERS_JSON: '["python"]'
-  
+
 on:
 #  push:
 #  pull_request:
@@ -146,7 +146,7 @@ jobs:
     needs: runtests
     if: ${{ success() || failure() }}
     runs-on: ubuntu-latest
-    concurrency: 
+    concurrency:
       group: add-test-status-badges-${{ github.ref }}
       cancel-in-progress: true
     steps:
