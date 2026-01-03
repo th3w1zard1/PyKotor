@@ -1863,7 +1863,8 @@ class MDLBinaryReader:
                 
                 # If we have a required count from faces, or if vcount is 0/1 (suspicious), try to validate/read from file
                 # When there are no faces, we should still try to determine vertex count from file bounds
-                if required_vertex_count > vcount or (vcount <= 1 and bin_node.trimesh.faces_count == 0):
+                # Always run validation if vcount is suspiciously low (0 or 1) OR if faces require more vertices
+                if vcount <= 1 or required_vertex_count > vcount:
                     # Validate that we can actually read this many vertices from the file
                     # Start with the required count, then limit if bounds check fails
                     can_read_count = required_vertex_count
