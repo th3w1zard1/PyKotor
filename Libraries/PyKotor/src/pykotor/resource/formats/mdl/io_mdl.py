@@ -2056,8 +2056,9 @@ class MDLBinaryReader:
                             vcount = final_count
                             bin_node.trimesh.vertex_count = final_count
                             vcount_verified = True
-                    elif can_read_count > 1 and can_read_count > vcount:
-                        # No faces, but we found a reasonable count from file bounds
+                    elif can_read_count > 0 and can_read_count > vcount:
+                        # No faces, but we found a count from file bounds (even if it's 1, use it if vcount is 0)
+                        # This ensures we don't leave vcount at 0 when vertices exist in the file
                         vcount = can_read_count
                         bin_node.trimesh.vertex_count = can_read_count
                         vcount_verified = True
