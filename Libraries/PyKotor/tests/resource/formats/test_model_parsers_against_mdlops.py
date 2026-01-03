@@ -55,7 +55,7 @@ def mdlops_exe() -> Path:
     """Find and return the path to mdlops.exe."""
     # Try multiple possible locations
     test_file = Path(__file__).resolve()
-    repo_root = test_file.parents[4]  # From tests/resource/formats/ to repo root
+    repo_root = test_file.parents[5]  # From Libraries/PyKotor/tests/resource/formats/ to repo root
     possible_paths = [
         repo_root / "vendor" / "MDLOps" / "mdlops.exe",
         repo_root / "MDLOps" / "mdlops.exe",
