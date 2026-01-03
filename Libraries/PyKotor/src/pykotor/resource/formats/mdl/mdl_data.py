@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 from pykotor.common.misc import Color
 from pykotor.resource.formats._base import ComparableMixin
-from pykotor.resource.formats.mdl.mdl_types import MDLClassification, MDLGeometryType, MDLNodeType
+from pykotor.resource.formats.mdl.mdl_types import MDLClassification, MDLGeometryType, MDLNodeFlags, MDLNodeType
 from pykotor.resource.type import ResourceType
 from utility.common.geometry import Vector2, Vector3, Vector4
 
@@ -314,7 +314,8 @@ def _norm_value(v: Any, *, ignore_keys: set[str] | None = None) -> Any:
 
 
 def _mdl_eq(a: Any, b: Any, *, ignore_keys: set[str] | None = None) -> bool:
-    # NOTE: Kept for backwards-compat callers, but routed through the faster streaming comparator.
+    # NOTE: Kept for backwards-compatibility with callers that expect a direct equality check,
+    # but it internally routes through the faster streaming comparator for performance reasons.
     return _mdl_deep_eq(a, b, ignore_keys=ignore_keys)
 
 
@@ -1782,20 +1783,6 @@ class MDLEvent(ComparableMixin):
 
 
 # endregion
-
-
-# region Node Headers
-class MDLNodeFlags(IntFlag):
-    HEADER = 0x00000001
-    LIGHT = 0x00000002
-    EMITTER = 0x00000004
-    CAMERA = 0x00000008
-    REFERENCE = 0x00000010
-    MESH = 0x00000020
-    SKIN = 0x00000040
-    DANGLY = 0x00000100
-    AABB = 0x00000200
-    SABER = 0x00000800
 
 
 class MDLNode(ComparableMixin):
