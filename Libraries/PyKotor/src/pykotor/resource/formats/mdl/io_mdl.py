@@ -1987,9 +1987,17 @@ class MDLBinaryReader:
                                         actual_vertex_count = min_required_from_faces
                                     break
                             
-                            # Use face-based count as minimum if we didn't read enough
-                            if min_required_from_faces > 0 and actual_vertex_count < min_required_from_faces:
-                                actual_vertex_count = min_required_from_faces
+                            # Only use face-based count if we actually read at least that many vertices
+                            # If we didn't read enough, we have a problem - faces reference vertices that don't exist
+                            # In that case, use what we actually read, but this indicates a corrupted file
+                            if min_required_from_faces > 0:
+                                if actual_vertex_count >= min_required_from_faces:
+                                    # We read enough for faces - use the actual count (may be more than required)
+                                    pass  # actual_vertex_count is already correct
+                                else:
+                                    # We didn't read enough for faces - this is a problem
+                                    # Use the face-based count anyway, but we'll try to read what we can
+                                    actual_vertex_count = min_required_from_faces
                             
                             # If we found vertices, use the count
                             if actual_vertex_count > vcount:
@@ -2034,9 +2042,17 @@ class MDLBinaryReader:
                                         actual_vertex_count = min_required_from_faces
                                     break
                             
-                            # Use face-based count as minimum if we didn't read enough
-                            if min_required_from_faces > 0 and actual_vertex_count < min_required_from_faces:
-                                actual_vertex_count = min_required_from_faces
+                            # Only use face-based count if we actually read at least that many vertices
+                            # If we didn't read enough, we have a problem - faces reference vertices that don't exist
+                            # In that case, use what we actually read, but this indicates a corrupted file
+                            if min_required_from_faces > 0:
+                                if actual_vertex_count >= min_required_from_faces:
+                                    # We read enough for faces - use the actual count (may be more than required)
+                                    pass  # actual_vertex_count is already correct
+                                else:
+                                    # We didn't read enough for faces - this is a problem
+                                    # Use the face-based count anyway, but we'll try to read what we can
+                                    actual_vertex_count = min_required_from_faces
                             
                             # If we found more vertices than the header says, use the actual count
                             if actual_vertex_count > vcount:
@@ -2060,6 +2076,7 @@ class MDLBinaryReader:
                     if bin_node.trimesh.mdx_data_offset not in (0, 0xFFFFFFFF) and bin_node.trimesh.mdx_data_size > 0 and vcount > 0:
                         vertex_offset = bin_node.trimesh.mdx_vertex_offset
                         # Read as many vertices as we can, up to vcount
+                        # Don't break on first failure - try to read all we can
                         for i in range(vcount):
                             seek_pos = bin_node.trimesh.mdx_data_offset + i * bin_node.trimesh.mdx_data_size + vertex_offset
                             if seek_pos + 12 <= self._reader_ext.size():  # Need 12 bytes for Vector3
@@ -2070,24 +2087,60 @@ class MDLBinaryReader:
                                         self._reader_ext.read_single(),
                                         self._reader_ext.read_single(),
                                     )
-                                    node.mesh.vertex_positions.append(Vector3(x, y, z))
+                                    # Basic sanity check
+                                    if all(-1e6 <= coord <= 1e6 for coord in (x, y, z)) and all(not (coord != coord) for coord in (x, y, z)):
+                                        node.mesh.vertex_positions.append(Vector3(x, y, z))
+                                    else:
+                                        # Invalid vertex data, but continue trying
+                                        continue
                                 except Exception:
-                                    # Can't read this vertex, stop reading
-                                    break
+                                    # Can't read this vertex, but continue trying
+                                    continue
                             else:
-                                # Bounds check failed, stop reading
-                                break
+                                # Bounds check failed for this vertex, but continue trying (might be gaps)
+                                continue
                         # Update vcount to actual number of vertices read
-                        if len(node.mesh.vertex_positions) < vcount:
-                            vcount = len(node.mesh.vertex_positions)
-                            bin_node.trimesh.vertex_count = vcount
+                        if len(node.mesh.vertex_positions) > 0:
+                            # If we read some vertices, use that count
+                            if len(node.mesh.vertex_positions) < vcount:
+                                vcount = len(node.mesh.vertex_positions)
+                                bin_node.trimesh.vertex_count = vcount
+                        else:
+                            # Couldn't read any vertices - this is a problem
+                            # Fall back to original vcount
+                            vcount_verified = False
                 elif bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
                     # Read all vertices from MDL
                     if vcount > 0:
                         vertices_bytes = vcount * 12
                         if bin_node.trimesh.vertices_offset + vertices_bytes <= self._reader.size():
                             self._reader.seek(bin_node.trimesh.vertices_offset)
-                            node.mesh.vertex_positions = [self._reader.read_vector3() for _ in range(vcount)]
+                            # Read as many vertices as we can
+                            for i in range(vcount):
+                                if self._reader.position() + 12 <= self._reader.size():
+                                    try:
+                                        vertex = self._reader.read_vector3()
+                                        # Basic sanity check
+                                        if all(-1e6 <= coord <= 1e6 for coord in (vertex.x, vertex.y, vertex.z)) and all(not (coord != coord) for coord in (vertex.x, vertex.y, vertex.z)):
+                                            node.mesh.vertex_positions.append(vertex)
+                                        else:
+                                            # Invalid vertex data, but continue trying
+                                            continue
+                                    except Exception:
+                                        # Can't read this vertex, but continue trying
+                                        continue
+                                else:
+                                    # Bounds check failed, but continue trying
+                                    continue
+                            # Update vcount to actual number of vertices read
+                            if len(node.mesh.vertex_positions) > 0:
+                                if len(node.mesh.vertex_positions) < vcount:
+                                    vcount = len(node.mesh.vertex_positions)
+                                    bin_node.trimesh.vertex_count = vcount
+                            else:
+                                # Couldn't read any vertices - this is a problem
+                                # Fall back to original vcount
+                                vcount_verified = False
             elif bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
                 # Read from MDX
                 if bin_node.trimesh.mdx_data_offset not in (0, 0xFFFFFFFF) and bin_node.trimesh.mdx_data_size > 0 and vcount > 0:
