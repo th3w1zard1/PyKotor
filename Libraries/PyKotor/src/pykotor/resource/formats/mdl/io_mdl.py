@@ -2630,10 +2630,10 @@ class MDLBinaryWriter:
         for bin_node, mdl_node, orig_idx, node_id in node_pairs_sorted:
             if bin_node.trimesh:
                 if _DEBUG_MDL:
-                    print(f"DEBUG _write_all: Calling _update_mdx for node {mdl_node.name} (node_id={node_id}, orig_idx={orig_idx})")
+                    print(f"DEBUG _write_all: Calling _update_mdx for node {mdl_node.name} (node_id={node_id}, orig_idx={orig_idx}, bin_node_id={id(bin_node)}, trimesh_id={id(bin_node.trimesh)})")
                 self._update_mdx(bin_node, mdl_node)
                 if _DEBUG_MDL and bin_node.trimesh.texture1:
-                    print(f"DEBUG _write_all: After _update_mdx, node {mdl_node.name} has tex1_off={bin_node.trimesh.mdx_texture1_offset}")
+                    print(f"DEBUG _write_all: After _update_mdx, node {mdl_node.name} has tex1_off={bin_node.trimesh.mdx_texture1_offset} (trimesh_id={id(bin_node.trimesh)})")
 
         self._file_header.geometry.function_pointer0 = _GeometryHeader.K1_FUNCTION_POINTER0
         self._file_header.geometry.function_pointer1 = _GeometryHeader.K1_FUNCTION_POINTER1
