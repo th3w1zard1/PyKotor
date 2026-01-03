@@ -1208,6 +1208,7 @@ class _SaberHeader:
         self.offset_to_texcoords: int = 0
         self.offset_to_normals: int = 0
         self.unknown0: int = 0  # TODO: what is this?
+        self.unknown1: int = 0  # TODO: what is this?
 
     def read(
         self,
@@ -1228,6 +1229,7 @@ class _SaberHeader:
         writer.write_uint32(self.offset_to_texcoords)
         writer.write_uint32(self.offset_to_normals)
         writer.write_uint32(self.unknown0)  # TODO: what is this?
+        writer.write_uint32(self.unknown1)  # TODO: what is this?
 
 
 class _LightHeader:
@@ -1248,6 +1250,7 @@ class _LightHeader:
         self.flare_colors_count2: int = 0
         self.offset_to_flare_textures: int = 0
         self.flare_textures_count: int = 0
+        self.flare_textures_count2: int = 0
         self.flare_radius: float = 0.0
         self.light_priority: int = 0
         self.ambient_only: int = 0
@@ -1275,7 +1278,7 @@ class _LightHeader:
         self.flare_colors_count2 = reader.read_uint32()
         self.offset_to_flare_textures = reader.read_uint32()
         self.flare_textures_count = reader.read_uint32()
-        self.flare_colors_count2 = reader.read_uint32()
+        self.flare_textures_count2 = reader.read_uint32()
         self.flare_radius = reader.read_single()
         self.light_priority = reader.read_uint32()
         self.ambient_only = reader.read_uint32()
@@ -1304,7 +1307,7 @@ class _LightHeader:
         writer.write_uint32(self.flare_colors_count2)
         writer.write_uint32(self.offset_to_flare_textures)
         writer.write_uint32(self.flare_textures_count)
-        writer.write_uint32(self.flare_colors_count2)
+        writer.write_uint32(self.flare_textures_count2)
         writer.write_single(self.flare_radius)
         writer.write_uint32(self.light_priority)
         writer.write_uint32(self.ambient_only)
@@ -1928,9 +1931,9 @@ class MDLBinaryReader:
                             # If no faces, try to determine count from available MDX data
                             if bin_node.trimesh.faces_count == 0:
                                 # Calculate max vertices that can fit in MDX
-                                available_bytes = self._reader_ext.size() - mdx_data_offset - vertex_offset
+                                available_bytes = self._reader_ext.size() - mdx_vertex_data_offset - vertex_offset
                                 if available_bytes > 0:
-                                    can_read_count = available_bytes // mdx_data_block_size
+                                    can_read_count = available_bytes // mdx_vertex_data_block_size
                                     if can_read_count < 0:
                                         can_read_count = 0
                             else:
@@ -2002,8 +2005,8 @@ class MDLBinaryReader:
             if vcount <= 1:
                 if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
                     # Vertices are in MDX: try to count actual vertices by reading them
-                    mdx_vertex_data_offset: int = bin_node.trimesh.mdx_data_offset
-                    mdx_vertex_data_block_size: int = bin_node.trimesh.mdx_data_size
+                    mdx_vertex_data_offset = bin_node.trimesh.mdx_data_offset
+                    mdx_vertex_data_block_size = bin_node.trimesh.mdx_data_size
                     vertex_offset = bin_node.trimesh.mdx_vertex_offset
                     if mdx_vertex_data_offset not in (0, 0xFFFFFFFF) and mdx_vertex_data_block_size > 0:
                         # Try to read vertices and count them
@@ -2814,10 +2817,8 @@ class MDLBinaryWriter:
         bin_node.trimesh.mdx_data_bitmap = 0
 
         suboffset = 0
-        if mdl_node.mesh.vertex_positions:
-            bin_node.trimesh.mdx_vertex_offset = suboffset
-            bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.VERTEX
-            suboffset += 12
+        # Vertices are stored in MDL, not MDX. MDX only contains per-vertex data like normals, UVs, and skin data.
+        bin_node.trimesh.mdx_vertex_offset = 0xFFFFFFFF
 
         if mdl_node.mesh.vertex_normals:
             bin_node.trimesh.mdx_normal_offset = suboffset
@@ -2847,9 +2848,8 @@ class MDLBinaryWriter:
         elif has_texture1 and vcount > 0:
             # Texture name exists but no valid UV data - generate default UV coordinates
             # This ensures MDLOps can find tverts data when it reads the binary
-            if not hasattr(mdl_node.mesh, "_default_uv1_generated"):
+            if not mdl_node.mesh.vertex_uv1 or len(mdl_node.mesh.vertex_uv1) != vcount:
                 mdl_node.mesh.vertex_uv1 = [Vector2(0.0, 0.0) for _ in range(vcount)]
-                mdl_node.mesh._default_uv1_generated = True
             bin_node.trimesh.mdx_texture1_offset = suboffset
             bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.TEXTURE1
             if _DEBUG_MDL:
@@ -2867,9 +2867,8 @@ class MDLBinaryWriter:
             suboffset += 8
         elif has_texture2 and vcount > 0:
             # Texture name exists but no valid UV data - generate default UV coordinates
-            if not hasattr(mdl_node.mesh, "_default_uv2_generated"):
+            if not mdl_node.mesh.vertex_uv2 or len(mdl_node.mesh.vertex_uv2) != vcount:
                 mdl_node.mesh.vertex_uv2 = [Vector2(0.0, 0.0) for _ in range(vcount)]
-                mdl_node.mesh._default_uv2_generated = True
             bin_node.trimesh.mdx_texture2_offset = suboffset
             bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.TEXTURE2
             suboffset += 8
@@ -2921,8 +2920,7 @@ class MDLBinaryWriter:
 
         # Why does the mdl/mdx format have this? I have no idea.
         # Write padding based on bitmap flags to match the data structure above
-        if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX:
-            self._writer_ext.write_vector3(Vector3(10000000, 10000000, 10000000))
+        # Vertices are in MDL, not MDX, so no vertex padding needed
         if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.NORMAL:
             self._writer_ext.write_vector3(Vector3.from_null())
         if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE1:
@@ -3168,7 +3166,7 @@ class MDLBinaryWriter:
                 print(f"DEBUG _write_all: After writing node {i}, texture1_offset={bin_node.trimesh.mdx_texture1_offset}")
 
         # Write to MDL
-        mdl_writer: RawBinaryWriter = BinaryWriter.to_auto(self._target)
+        mdl_writer = BinaryWriter.to_auto(self._target)
         mdl_writer.write_uint32(0)
         mdl_writer.write_uint32(self._writer.size())
         mdl_writer.write_uint32(self._writer_ext.size())
