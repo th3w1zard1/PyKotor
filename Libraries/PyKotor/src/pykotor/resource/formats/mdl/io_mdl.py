@@ -362,6 +362,8 @@ class _Node:
         self.header: _NodeHeader | None = _NodeHeader()
         self.trimesh: _TrimeshHeader | None = None
         self.skin: _SkinmeshHeader | None = None
+        self.light: _LightHeader | None = None
+        self.emitter: _EmitterHeader | None = None
         self.children_offsets: list[int] = []
 
         self.w_children = []
@@ -380,6 +382,12 @@ class _Node:
 
         if self.header.type_id & MDLNodeFlags.SKIN:
             self.skin = _SkinmeshHeader().read(reader)
+
+        if self.header.type_id & MDLNodeFlags.LIGHT:
+            self.light = _LightHeader().read(reader)
+
+        if self.header.type_id & MDLNodeFlags.EMITTER:
+            self.emitter = _EmitterHeader().read(reader)
 
         if self.trimesh:
             self.trimesh.read_extra(reader)
@@ -1816,6 +1824,49 @@ class MDLBinaryReader:
             if node.aabb is None:
                 node.aabb = MDLWalkmesh()
 
+        # Check for LIGHT flag - nodes with LIGHT flag should be marked as LIGHT type
+        if bin_node.header.type_id & MDLNodeFlags.LIGHT:
+            node.node_type = MDLNodeType.LIGHT
+            from pykotor.resource.formats.mdl.mdl_data import MDLLight, MDLDynamicType
+
+            if bin_node.light is not None:
+                node.light = MDLLight()
+                node.light.ambient_only = bool(bin_node.light.ambient_only)
+                node.light.dynamic_type = MDLDynamicType(bin_node.light.dynamic_type)
+                node.light.shadow = bool(bin_node.light.shadow)
+                node.light.flare = bool(bin_node.light.flare)
+                node.light.light_priority = bin_node.light.light_priority
+                node.light.fading_light = bool(bin_node.light.fading_light)
+                node.light.flare_radius = bin_node.light.flare_radius
+                # TODO: Read flare data (sizes, positions, colors, textures) if needed
+
+        # Check for EMITTER flag - nodes with EMITTER flag should be marked as EMITTER type
+        if bin_node.header.type_id & MDLNodeFlags.EMITTER:
+            node.node_type = MDLNodeType.EMITTER
+            from pykotor.resource.formats.mdl.mdl_data import MDLEmitter
+
+            if bin_node.emitter is not None:
+                node.emitter = MDLEmitter()
+                node.emitter.dead_space = bin_node.emitter.dead_space
+                node.emitter.blast_radius = bin_node.emitter.blast_radius
+                node.emitter.blast_length = bin_node.emitter.blast_length
+                node.emitter.branch_count = bin_node.emitter.branch_count
+                node.emitter.control_point_smoothing = bin_node.emitter.smoothing
+                node.emitter.x_grid = int(bin_node.emitter.grid.x)
+                node.emitter.y_grid = int(bin_node.emitter.grid.y)
+                node.emitter.update = bin_node.emitter.update
+                node.emitter.render = bin_node.emitter.render
+                node.emitter.blend = bin_node.emitter.blend
+                node.emitter.texture = bin_node.emitter.texture
+                node.emitter.chunk_name = bin_node.emitter.chunk_name
+                node.emitter.two_sided_texture = bin_node.emitter.twosided_texture
+                node.emitter.loop = bin_node.emitter.loop
+                node.emitter.render_order = bin_node.emitter.render_order
+                node.emitter.frame_blender = bin_node.emitter.frame_blending
+                node.emitter.depth_texture = bin_node.emitter.depth_texture
+                node.emitter.flags = bin_node.emitter.flags
+                # TODO: Read additional emitter data if needed
+
         if bin_node.trimesh is not None:
             node.mesh = MDLMesh()
             node.node_type = MDLNodeType.TRIMESH
@@ -1870,10 +1921,10 @@ class MDLBinaryReader:
                     can_read_count = required_vertex_count
                     if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
                         # Check MDX bounds
-                        mdx_data_offset: int = bin_node.trimesh.mdx_data_offset
-                        mdx_data_block_size: int = bin_node.trimesh.mdx_data_size
+                        mdx_vertex_data_offset: int = bin_node.trimesh.mdx_data_offset
+                        mdx_vertex_data_block_size: int = bin_node.trimesh.mdx_data_size
                         vertex_offset = bin_node.trimesh.mdx_vertex_offset
-                        if mdx_data_offset not in (0, 0xFFFFFFFF) and mdx_data_block_size > 0:
+                        if mdx_vertex_data_offset not in (0, 0xFFFFFFFF) and mdx_vertex_data_block_size > 0:
                             # If no faces, try to determine count from available MDX data
                             if bin_node.trimesh.faces_count == 0:
                                 # Calculate max vertices that can fit in MDX
@@ -1951,10 +2002,10 @@ class MDLBinaryReader:
             if vcount <= 1:
                 if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
                     # Vertices are in MDX: try to count actual vertices by reading them
-                    mdx_data_offset: int = bin_node.trimesh.mdx_data_offset
-                    mdx_data_block_size: int = bin_node.trimesh.mdx_data_size
+                    mdx_vertex_data_offset: int = bin_node.trimesh.mdx_data_offset
+                    mdx_vertex_data_block_size: int = bin_node.trimesh.mdx_data_size
                     vertex_offset = bin_node.trimesh.mdx_vertex_offset
-                    if mdx_data_offset not in (0, 0xFFFFFFFF) and mdx_data_block_size > 0:
+                    if mdx_vertex_data_offset not in (0, 0xFFFFFFFF) and mdx_vertex_data_block_size > 0:
                         # Try to read vertices and count them
                         saved_pos = self._reader_ext.position()
                         try:
@@ -1962,7 +2013,7 @@ class MDLBinaryReader:
                             # Try reading up to a reasonable limit, but at least what faces require
                             max_to_read = max(min_required_from_faces, 100000) if min_required_from_faces > 0 else 100000
                             for i in range(max_to_read):
-                                seek_pos = mdx_data_offset + i * mdx_data_block_size + vertex_offset
+                                seek_pos = mdx_vertex_data_offset + i * mdx_vertex_data_block_size + vertex_offset
                                 if seek_pos + 12 > self._reader_ext.size():
                                     break
                                 try:
@@ -1999,7 +2050,7 @@ class MDLBinaryReader:
                                     # Check if we can read at least min_required_from_faces vertices
                                     can_read_required = True
                                     for i in range(actual_vertex_count, min_required_from_faces):
-                                        seek_pos = mdx_data_offset + i * mdx_data_block_size + vertex_offset
+                                        seek_pos = mdx_vertex_data_offset + i * mdx_vertex_data_block_size + vertex_offset
                                         if seek_pos + 12 > self._reader_ext.size():
                                             can_read_required = False
                                             break
