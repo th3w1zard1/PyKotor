@@ -334,6 +334,7 @@ donemodel test
         self.assertEqual(len(mdl.all_nodes()), 2)  # root + dummy
         dummy = mdl.get("test_node")
         self.assertIsNotNone(dummy)
+        assert dummy is not None  # Type narrowing
         self.assertEqual(dummy.node_type, MDLNodeType.DUMMY)
 
     def test_write_trimesh_node(self):
@@ -390,7 +391,9 @@ donemodel test
 
         mesh_node = mdl.get("mesh_node")
         self.assertIsNotNone(mesh_node)
+        assert mesh_node is not None  # Type narrowing
         self.assertIsNotNone(mesh_node.mesh)
+        assert mesh_node.mesh is not None  # Type narrowing
         self.assertEqual(len(mesh_node.mesh.vertex_positions), 3)
         self.assertEqual(len(mesh_node.mesh.faces), 1)
 
@@ -444,7 +447,9 @@ donemodel test
 
         light_node = mdl.get("light_node")
         self.assertIsNotNone(light_node)
+        assert light_node is not None  # Type narrowing
         self.assertIsNotNone(light_node.light)
+        assert light_node.light is not None  # Type narrowing
         self.assertEqual(light_node.light.radius, 10.0)
 
     def test_write_emitter_node(self):
@@ -497,7 +502,9 @@ donemodel test
 
         emitter_node = mdl.get("emitter_node")
         self.assertIsNotNone(emitter_node)
+        assert emitter_node is not None  # Type narrowing
         self.assertIsNotNone(emitter_node.emitter)
+        assert emitter_node.emitter is not None  # Type narrowing
         self.assertEqual(emitter_node.emitter.update, "fountain")
 
     def test_write_reference_node(self):
@@ -548,7 +555,9 @@ donemodel test
 
         ref_node = mdl.get("ref_node")
         self.assertIsNotNone(ref_node)
+        assert ref_node is not None  # Type narrowing
         self.assertIsNotNone(ref_node.reference)
+        assert ref_node.reference is not None  # Type narrowing
         self.assertEqual(ref_node.reference.model, "test_ref.mdl")
 
     def test_write_saber_node(self):
@@ -556,7 +565,7 @@ donemodel test
         mdl = create_test_mdl("saber_test")
         node = create_test_node("saber_node", MDLNodeType.SABER)
         node.saber = MDLSaber()
-        node.saber.length = 1.0
+        node.saber.saber_length = 1.0
         mdl.root.children.append(node)
 
         output = io.StringIO()
@@ -598,9 +607,11 @@ donemodel test
         mdl = reader.load()
 
         saber_node = mdl.get("saber_node")
-        self.assertIsNotNone(saber_node)
+        self.assertIsNotNone(saber_node,     )
+        assert saber_node is not None  # Type narrowing
         self.assertIsNotNone(saber_node.saber)
-        self.assertEqual(saber_node.saber.length, 1.0)
+        assert saber_node.saber is not None  # Type narrowing
+        self.assertEqual(saber_node.saber.saber_length, 1.0)
 
     def test_write_aabb_node(self):
         """Test writing AABB/walkmesh node."""
@@ -648,7 +659,9 @@ donemodel test
 
         aabb_node = mdl.get("aabb_node")
         self.assertIsNotNone(aabb_node)
+        assert aabb_node is not None  # Type narrowing
         self.assertIsNotNone(aabb_node.aabb)
+        assert aabb_node.aabb is not None  # Type narrowing
 
 
 # ============================================================================
@@ -708,6 +721,7 @@ donemodel test
 
         node = mdl.get("test_node")
         self.assertIsNotNone(node)
+        assert node is not None  # Type narrowing
         self.assertEqual(len(node.controllers), 1)
         self.assertEqual(node.controllers[0].controller_type, MDLControllerType.POSITION)
 
@@ -760,6 +774,7 @@ donemodel test
 
         node = mdl.get("test_node")
         self.assertIsNotNone(node)
+        assert node is not None  # Type narrowing
         self.assertEqual(len(node.controllers), 1)
         self.assertEqual(node.controllers[0].controller_type, MDLControllerType.ORIENTATION)
 
@@ -827,6 +842,7 @@ donemodel test
 
         node = mdl.get("test_node")
         self.assertIsNotNone(node)
+        assert node is not None  # Type narrowing
         self.assertEqual(len(node.controllers), 1)
         self.assertTrue(node.controllers[0].is_bezier)
 
@@ -977,7 +993,9 @@ donemodel test
 
         mesh_node = mdl.get("mesh_node")
         self.assertIsNotNone(mesh_node)
+        assert mesh_node is not None  # Type narrowing
         self.assertIsNotNone(mesh_node.mesh)
+        assert mesh_node.mesh is not None  # Type narrowing
         self.assertEqual(len(mesh_node.mesh.vertex_positions), 3)
 
     def test_write_mesh_faces(self):
@@ -1050,7 +1068,9 @@ donemodel test
 
         mesh_node = mdl.get("mesh_node")
         self.assertIsNotNone(mesh_node)
+        assert mesh_node is not None  # Type narrowing
         self.assertIsNotNone(mesh_node.mesh)
+        assert mesh_node.mesh is not None  # Type narrowing
         self.assertEqual(len(mesh_node.mesh.faces), 2)
 
     def test_write_mesh_tverts(self):
@@ -1115,7 +1135,9 @@ donemodel test
 
         mesh_node = mdl.get("mesh_node")
         self.assertIsNotNone(mesh_node)
+        assert mesh_node is not None  # Type narrowing
         self.assertIsNotNone(mesh_node.mesh)
+        assert mesh_node.mesh is not None  # Type narrowing
         self.assertEqual(len(mesh_node.mesh.vertex_uvs), 3)
 
     def test_write_skin_mesh(self):
@@ -1127,13 +1149,15 @@ donemodel test
         # Create skin data
         skin = MDLSkin()
         skin.bonemap = [0, 1]
-        skin.bones = [0, 1]
+        # Note: bone_indices is a fixed 16-element tuple, set via qbones/tbones length
+        skin.qbones = [Vector4(0, 0, 0, 1), Vector4(0, 0, 0, 1)]
+        skin.tbones = [Vector3(0, 0, 0), Vector3(0, 0, 0)]
 
         # Add bone vertices
         bone_vert = MDLBoneVertex()
-        bone_vert.weights = [1.0, 0.0, 0.0, 0.0]
-        bone_vert.bones = [0, 0, 0, 0]
-        skin.bone_vertices = [bone_vert]
+        bone_vert.vertex_weights = (1.0, 0.0, 0.0, 0.0)
+        bone_vert.vertex_indices = (0.0, -1.0, -1.0, -1.0)
+        skin.vertex_bones = [bone_vert]
 
         node.mesh = skin
         mdl.root.children.append(node)
@@ -1195,9 +1219,9 @@ donemodel test
 
         # Create dangly data
         dangly = MDLDangly()
-        dangly.displacement = 0.1
-        dangly.tightness = 0.5
-        dangly.period = 1.0
+        # Note: displacement, tightness, and period are not direct attributes of MDLDangly
+        # They may be stored as controller data or node-level properties
+        # For now, we'll just test constraints which are the main dangly feature
 
         # Add constraint
         constraint = MDLConstraint()
@@ -1522,6 +1546,7 @@ class TestMDLAsciiRoundTrip(unittest.TestCase):
         # Verify controllers
         node2 = mdl2.get("test_node")
         self.assertIsNotNone(node2)
+        assert node2 is not None  # Type narrowing
         self.assertEqual(len(node2.controllers), 4)
 
     def test_ascii_with_animations_roundtrip(self):
@@ -1800,7 +1825,9 @@ donemodel test
 
         mesh_node = mdl.get("large_mesh")
         self.assertIsNotNone(mesh_node)
+        assert mesh_node is not None  # Type narrowing
         self.assertIsNotNone(mesh_node.mesh)
+        assert mesh_node.mesh is not None  # Type narrowing
         self.assertEqual(len(mesh_node.mesh.vertex_positions), 100)
         self.assertEqual(len(mesh_node.mesh.faces), 50)
 
@@ -2063,6 +2090,7 @@ class TestMDLAsciiComprehensive(unittest.TestCase):
         self.assertIsNotNone(mdl2.get("level3"))
 
         level1_node = mdl2.get("level1")
+        assert level1_node is not None  # Type narrowing
         self.assertEqual(len(level1_node.children), 1)
         self.assertEqual(len(level1_node.controllers), 1)
 
@@ -2262,7 +2290,7 @@ def _compare_components(
 
     if isinstance(a, (list, tuple)) and isinstance(b, (list, tuple)):
         test_case.assertEqual(len(a), len(b), f"{context}: sequence length mismatch")
-        for i, (ai, bi) in enumerate(zip(a, b, strict=False)):
+        for i, (ai, bi) in enumerate(zip(a, b)):
             _compare_components(test_case, ai, bi, context=f"{context}[{i}]", visited=visited)
         return
 
