@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import math
 
-from typing import TYPE_CHECKING, overload
+from typing import TYPE_CHECKING, Any, overload
 
 import numpy as np
 
@@ -20,7 +20,25 @@ if TYPE_CHECKING:
     from numpy import ndarray
 
 try:
-    import glm  # noqa: F401  # pyright: ignore[reportMissingImports, reportUnusedImport]
+    import pyglm  # noqa: F401  # pyright: ignore[reportMissingImports, reportUnusedImport]
+
+    from pyglm.glm import (
+        cross,
+        decompose,
+        eulerAngles,
+        inverse,
+        mat4,
+        mat4_cast,
+        normalize,
+        perspective,
+        quat,
+        rotate,
+        translate,
+        unProject,
+        value_ptr,
+        vec3,
+        vec4,
+    )
 except ImportError:
     class vec3:  # noqa: N801
         """3D vector class compatible with PyGLM vec3."""
@@ -248,298 +266,401 @@ except ImportError:
             return hash(tuple(self._data.flatten()))
 
 
-def translate(v: vec3) -> mat4:
-    """Create a translation matrix."""
-    result = mat4()
-    result._data[3, 0] = v.x
-    result._data[3, 1] = v.y
-    result._data[3, 2] = v.z
-    return result
+    @overload
+    def translate(v: vec3, /) -> mat4: ...
+    
+    @overload
+    def translate(v: Any, /) -> Any: ...
+    
+    def translate(v: Any, /) -> Any:
+        """Create a translation matrix."""
+        if not isinstance(v, vec3):
+            raise TypeError(f"translate requires vec3, got {type(v)}")
+        result = mat4()
+        result._data[3, 0] = v.x
+        result._data[3, 1] = v.y
+        result._data[3, 2] = v.z
+        return result
 
 
-def rotate(m: mat4, angle: float, axis: vec3) -> mat4:
-    """Rotate a matrix by angle (radians) around axis."""
-    # Normalize axis
-    axis_length = math.sqrt(axis.x**2 + axis.y**2 + axis.z**2)
-    if axis_length == 0:
-        return mat4(m)
+    @overload
+    def rotate(m: mat4, angle: float, axis: vec3, /) -> mat4: ...
+    
+    @overload
+    def rotate(m: Any, angle: float, axis: Any, /) -> Any: ...
+    
+    def rotate(m: Any, angle: float, axis: Any, /) -> Any:
+        """Rotate a matrix by angle (radians) around axis."""
+        if not isinstance(m, mat4) or not isinstance(axis, vec3):
+            raise TypeError(f"rotate requires mat4, float, vec3, got {type(m)}, {type(axis)}")
+        # Normalize axis
+        axis_length = math.sqrt(axis.x**2 + axis.y**2 + axis.z**2)
+        if axis_length == 0:
+            return mat4(m)
 
-    x = axis.x / axis_length
-    y = axis.y / axis_length
-    z = axis.z / axis_length
+        x = axis.x / axis_length
+        y = axis.y / axis_length
+        z = axis.z / axis_length
 
-    c = math.cos(angle)
-    s = math.sin(angle)
-    t = 1 - c
+        c = math.cos(angle)
+        s = math.sin(angle)
+        t = 1 - c
 
-    # Rotation matrix
-    rot = mat4()
-    rot._data[0, 0] = t * x * x + c
-    rot._data[0, 1] = t * x * y + s * z
-    rot._data[0, 2] = t * x * z - s * y
-    rot._data[1, 0] = t * x * y - s * z
-    rot._data[1, 1] = t * y * y + c
-    rot._data[1, 2] = t * y * z + s * x
-    rot._data[2, 0] = t * x * z + s * y
-    rot._data[2, 1] = t * y * z - s * x
-    rot._data[2, 2] = t * z * z + c
+        # Rotation matrix
+        rot = mat4()
+        rot._data[0, 0] = t * x * x + c
+        rot._data[0, 1] = t * x * y + s * z
+        rot._data[0, 2] = t * x * z - s * y
+        rot._data[1, 0] = t * x * y - s * z
+        rot._data[1, 1] = t * y * y + c
+        rot._data[1, 2] = t * y * z + s * x
+        rot._data[2, 0] = t * x * z + s * y
+        rot._data[2, 1] = t * y * z - s * x
+        rot._data[2, 2] = t * z * z + c
 
-    return m * rot
-
-
-def mat4_cast(q: quat) -> mat4:
-    """Convert a quaternion to a 4x4 rotation matrix."""
-    result = mat4()
-
-    qw, qx, qy, qz = q.w, q.x, q.y, q.z
-
-    result._data[0, 0] = 1 - 2 * qy * qy - 2 * qz * qz
-    result._data[0, 1] = 2 * qx * qy + 2 * qz * qw
-    result._data[0, 2] = 2 * qx * qz - 2 * qy * qw
-
-    result._data[1, 0] = 2 * qx * qy - 2 * qz * qw
-    result._data[1, 1] = 1 - 2 * qx * qx - 2 * qz * qz
-    result._data[1, 2] = 2 * qy * qz + 2 * qx * qw
-
-    result._data[2, 0] = 2 * qx * qz + 2 * qy * qw
-    result._data[2, 1] = 2 * qy * qz - 2 * qx * qw
-    result._data[2, 2] = 1 - 2 * qx * qx - 2 * qy * qy
-
-    return result
+        return m * rot
 
 
-def inverse(m: mat4) -> mat4:
-    """Calculate the inverse of a matrix."""
-    result = mat4()
-    try:
-        result._data = np.linalg.inv(m._data)
-    except np.linalg.LinAlgError:
-        # Return identity matrix if singular
-        result._data = np.eye(4, dtype=np.float32)
-    return result
+    @overload
+    def mat4_cast(x: quat, /) -> mat4: ...
+    
+    @overload
+    def mat4_cast(x: Any, /) -> Any: ...
+    
+    def mat4_cast(x: Any, /) -> Any:
+        """Convert a quaternion to a 4x4 rotation matrix."""
+        if not isinstance(x, quat):
+            raise TypeError(f"mat4_cast requires quat, got {type(x)}")
+        q = x
+        result = mat4()
+
+        qw, qx, qy, qz = q.w, q.x, q.y, q.z
+
+        result._data[0, 0] = 1 - 2 * qy * qy - 2 * qz * qz
+        result._data[0, 1] = 2 * qx * qy + 2 * qz * qw
+        result._data[0, 2] = 2 * qx * qz - 2 * qy * qw
+
+        result._data[1, 0] = 2 * qx * qy - 2 * qz * qw
+        result._data[1, 1] = 1 - 2 * qx * qx - 2 * qz * qz
+        result._data[1, 2] = 2 * qy * qz + 2 * qx * qw
+
+        result._data[2, 0] = 2 * qx * qz + 2 * qy * qw
+        result._data[2, 1] = 2 * qy * qz - 2 * qx * qw
+        result._data[2, 2] = 1 - 2 * qx * qx - 2 * qy * qy
+
+        return result
 
 
-def perspective(fov: float, aspect: float, near: float, far: float) -> mat4:
-    """Create a perspective projection matrix.
-
-    Args:
-    ----
-        fov: Field of view in degrees
-        aspect: Aspect ratio (width/height)
-        near: Near clipping plane
-        far: Far clipping plane
-
-    Returns:
-    -------
-        mat4: Perspective projection matrix
-
-    """
-    result = mat4(0.0)
-
-    fov_rad = math.radians(fov)
-    tan_half_fov = math.tan(fov_rad / 2.0)
-
-    result._data[0, 0] = 1.0 / (aspect * tan_half_fov)
-    result._data[1, 1] = 1.0 / tan_half_fov
-    result._data[2, 2] = -(far + near) / (far - near)
-    result._data[2, 3] = -1.0
-    result._data[3, 2] = -(2.0 * far * near) / (far - near)
-
-    return result
+    @overload
+    def inverse(m: mat4, /) -> mat4: ...
+    
+    @overload
+    def inverse(m: Any, /) -> Any: ...
+    
+    def inverse(m: Any, /) -> Any:
+        """Calculate the inverse of a matrix."""
+        if not isinstance(m, mat4):
+            raise TypeError(f"inverse requires mat4, got {type(m)}")
+        result = mat4()
+        try:
+            result._data = np.linalg.inv(m._data)
+        except np.linalg.LinAlgError:
+            # Return identity matrix if singular
+            result._data = np.eye(4, dtype=np.float32)
+        return result
 
 
-def normalize(v: vec3) -> vec3:
-    """Normalize a vector."""
-    length = math.sqrt(v.x**2 + v.y**2 + v.z**2)
-    if length == 0:
-        return vec3(0, 0, 0)
-    return vec3(v.x / length, v.y / length, v.z / length)
+    def perspective(fovy: float, aspect: float, near: float, far: float, /) -> mat4:
+        """Create a perspective projection matrix.
+
+        Args:
+        ----
+            fovy: Field of view in degrees
+            aspect: Aspect ratio (width/height)
+            near: Near clipping plane
+            far: Far clipping plane
+
+        Returns:
+        -------
+            mat4: Perspective projection matrix
+
+        """
+        result = mat4(0.0)
+
+        fov_rad = math.radians(fovy)
+        tan_half_fov = math.tan(fov_rad / 2.0)
+
+        result._data[0, 0] = 1.0 / (aspect * tan_half_fov)
+        result._data[1, 1] = 1.0 / tan_half_fov
+        result._data[2, 2] = -(far + near) / (far - near)
+        result._data[2, 3] = -1.0
+        result._data[3, 2] = -(2.0 * far * near) / (far - near)
+
+        return result
 
 
-def cross(a: vec3, b: vec3) -> vec3:
-    """Calculate the cross product of two vectors."""
-    return vec3(
-        a.y * b.z - a.z * b.y,
-        a.z * b.x - a.x * b.z,
-        a.x * b.y - a.y * b.x,
-    )
+    @overload
+    def normalize(x: vec3, /) -> vec3: ...
+    
+    @overload
+    def normalize(x: Any, /) -> Any: ...
+    
+    def normalize(x: Any, /) -> Any:
+        """Normalize a vector."""
+        if not isinstance(x, vec3):
+            raise TypeError(f"normalize requires vec3, got {type(x)}")
+        v = x
+        length = math.sqrt(v.x**2 + v.y**2 + v.z**2)
+        if length == 0:
+            return vec3(0, 0, 0)
+        return vec3(v.x / length, v.y / length, v.z / length)
 
 
-def decompose(
-    transform: mat4,
-    scale: vec3,
-    rotation: quat,
-    translation: vec3,
-    skew: vec3,  # noqa: ARG001
-    perspective: vec4,  # noqa: ARG001
-) -> bool:
-    """Decompose a transformation matrix into its components.
+    @overload
+    def cross(x: vec3, y: vec3, /) -> vec3: ...
+    
+    @overload
+    def cross(x: Any, y: Any, /) -> Any: ...
+    
+    def cross(x: Any, y: Any, /) -> Any:
+        """Calculate the cross product of two vectors."""
+        if isinstance(x, vec3) and isinstance(y, vec3):
+            return vec3(
+                x.y * y.z - x.z * y.y,
+                x.z * y.x - x.x * y.z,
+                x.x * y.y - x.y * y.x,
+            )
+        raise TypeError(f"Unsupported types for cross: {type(x)}, {type(y)}")
 
-    Args:
-    ----
-        transform: The transformation matrix to decompose
-        scale: Output scale vector
-        rotation: Output rotation quaternion
-        translation: Output translation vector
-        skew: Output skew vector (not implemented)
-        perspective: Output perspective vector (not implemented)
 
-    Returns:
-    -------
-        bool: True if decomposition was successful
+    @overload
+    def decompose(
+        modelMatrix: mat4,
+        scale: vec3,
+        orientation: quat,
+        translation: vec3,
+        skew: vec3,
+        perspective: vec4,
+        /,
+    ) -> bool: ...
+    
+    @overload
+    def decompose(
+        modelMatrix: Any,
+        scale: Any,
+        orientation: Any,
+        translation: Any,
+        skew: Any,
+        perspective: Any,
+        /,
+    ) -> bool: ...
+    
+    def decompose(
+        modelMatrix: Any,
+        scale: Any,
+        orientation: Any,
+        translation: Any,
+        skew: Any,
+        perspective: Any,
+        /,
+    ) -> bool:
+        """Decompose a transformation matrix into its components.
 
-    """
-    m = transform._data
+        Args:
+        ----
+            modelMatrix: The transformation matrix to decompose
+            scale: Output scale vector
+            orientation: Output rotation quaternion
+            translation: Output translation vector
+            skew: Output skew vector (not implemented)
+            perspective: Output perspective vector (not implemented)
 
-    # Extract translation
-    translation.x = float(m[3, 0])
-    translation.y = float(m[3, 1])
-    translation.z = float(m[3, 2])
+        Returns:
+        -------
+            bool: True if decomposition was successful
 
-    # Extract scale
-    scale_x = math.sqrt(m[0, 0]**2 + m[0, 1]**2 + m[0, 2]**2)
-    scale_y = math.sqrt(m[1, 0]**2 + m[1, 1]**2 + m[1, 2]**2)
-    scale_z = math.sqrt(m[2, 0]**2 + m[2, 1]**2 + m[2, 2]**2)
+        """
+        if not isinstance(modelMatrix, mat4) or not isinstance(scale, vec3) or not isinstance(orientation, quat) or not isinstance(translation, vec3) or not isinstance(skew, vec3) or not isinstance(perspective, vec4):
+            raise TypeError("decompose requires mat4, vec3, quat, vec3, vec3, vec4 arguments")
+        m = modelMatrix._data
+        rotation = orientation
 
-    scale.x = scale_x
-    scale.y = scale_y
-    scale.z = scale_z
+        # Extract translation
+        translation.x = float(m[3, 0])
+        translation.y = float(m[3, 1])
+        translation.z = float(m[3, 2])
 
-    # Normalize matrix to extract rotation
-    if scale_x == 0 or scale_y == 0 or scale_z == 0:
-        rotation.w = 1.0
-        rotation.x = 0.0
-        rotation.y = 0.0
-        rotation.z = 0.0
+        # Extract scale
+        scale_x = math.sqrt(m[0, 0]**2 + m[0, 1]**2 + m[0, 2]**2)
+        scale_y = math.sqrt(m[1, 0]**2 + m[1, 1]**2 + m[1, 2]**2)
+        scale_z = math.sqrt(m[2, 0]**2 + m[2, 1]**2 + m[2, 2]**2)
+
+        scale.x = scale_x
+        scale.y = scale_y
+        scale.z = scale_z
+
+        # Normalize matrix to extract rotation
+        if scale_x == 0 or scale_y == 0 or scale_z == 0:
+            rotation.w = 1.0
+            rotation.x = 0.0
+            rotation.y = 0.0
+            rotation.z = 0.0
+            return True
+
+        rot_matrix = np.array([
+            [m[0, 0] / scale_x, m[0, 1] / scale_x, m[0, 2] / scale_x],
+            [m[1, 0] / scale_y, m[1, 1] / scale_y, m[1, 2] / scale_y],
+            [m[2, 0] / scale_z, m[2, 1] / scale_z, m[2, 2] / scale_z],
+        ], dtype=np.float32)
+
+        # Convert rotation matrix to quaternion
+        trace = rot_matrix[0, 0] + rot_matrix[1, 1] + rot_matrix[2, 2]
+
+        if trace > 0:
+            s = math.sqrt(trace + 1.0) * 2
+            rotation.w = 0.25 * s
+            rotation.x = (rot_matrix[2, 1] - rot_matrix[1, 2]) / s
+            rotation.y = (rot_matrix[0, 2] - rot_matrix[2, 0]) / s
+            rotation.z = (rot_matrix[1, 0] - rot_matrix[0, 1]) / s
+        elif rot_matrix[0, 0] > rot_matrix[1, 1] and rot_matrix[0, 0] > rot_matrix[2, 2]:
+            s = math.sqrt(1.0 + rot_matrix[0, 0] - rot_matrix[1, 1] - rot_matrix[2, 2]) * 2
+            rotation.w = (rot_matrix[2, 1] - rot_matrix[1, 2]) / s
+            rotation.x = 0.25 * s
+            rotation.y = (rot_matrix[0, 1] + rot_matrix[1, 0]) / s
+            rotation.z = (rot_matrix[0, 2] + rot_matrix[2, 0]) / s
+        elif rot_matrix[1, 1] > rot_matrix[2, 2]:
+            s = math.sqrt(1.0 + rot_matrix[1, 1] - rot_matrix[0, 0] - rot_matrix[2, 2]) * 2
+            rotation.w = (rot_matrix[0, 2] - rot_matrix[2, 0]) / s
+            rotation.x = (rot_matrix[0, 1] + rot_matrix[1, 0]) / s
+            rotation.y = 0.25 * s
+            rotation.z = (rot_matrix[1, 2] + rot_matrix[2, 1]) / s
+        else:
+            s = math.sqrt(1.0 + rot_matrix[2, 2] - rot_matrix[0, 0] - rot_matrix[1, 1]) * 2
+            rotation.w = (rot_matrix[1, 0] - rot_matrix[0, 1]) / s
+            rotation.x = (rot_matrix[0, 2] + rot_matrix[2, 0]) / s
+            rotation.y = (rot_matrix[1, 2] + rot_matrix[2, 1]) / s
+            rotation.z = 0.25 * s
+
         return True
 
-    rot_matrix = np.array([
-        [m[0, 0] / scale_x, m[0, 1] / scale_x, m[0, 2] / scale_x],
-        [m[1, 0] / scale_y, m[1, 1] / scale_y, m[1, 2] / scale_y],
-        [m[2, 0] / scale_z, m[2, 1] / scale_z, m[2, 2] / scale_z],
-    ], dtype=np.float32)
 
-    # Convert rotation matrix to quaternion
-    trace = rot_matrix[0, 0] + rot_matrix[1, 1] + rot_matrix[2, 2]
+    @overload
+    def eulerAngles(x: quat, /) -> vec3: ...
+    
+    @overload
+    def eulerAngles(x: Any, /) -> Any: ...
+    
+    def eulerAngles(x: Any, /) -> Any:
+        """Convert a quaternion to Euler angles (in radians).
 
-    if trace > 0:
-        s = math.sqrt(trace + 1.0) * 2
-        rotation.w = 0.25 * s
-        rotation.x = (rot_matrix[2, 1] - rot_matrix[1, 2]) / s
-        rotation.y = (rot_matrix[0, 2] - rot_matrix[2, 0]) / s
-        rotation.z = (rot_matrix[1, 0] - rot_matrix[0, 1]) / s
-    elif rot_matrix[0, 0] > rot_matrix[1, 1] and rot_matrix[0, 0] > rot_matrix[2, 2]:
-        s = math.sqrt(1.0 + rot_matrix[0, 0] - rot_matrix[1, 1] - rot_matrix[2, 2]) * 2
-        rotation.w = (rot_matrix[2, 1] - rot_matrix[1, 2]) / s
-        rotation.x = 0.25 * s
-        rotation.y = (rot_matrix[0, 1] + rot_matrix[1, 0]) / s
-        rotation.z = (rot_matrix[0, 2] + rot_matrix[2, 0]) / s
-    elif rot_matrix[1, 1] > rot_matrix[2, 2]:
-        s = math.sqrt(1.0 + rot_matrix[1, 1] - rot_matrix[0, 0] - rot_matrix[2, 2]) * 2
-        rotation.w = (rot_matrix[0, 2] - rot_matrix[2, 0]) / s
-        rotation.x = (rot_matrix[0, 1] + rot_matrix[1, 0]) / s
-        rotation.y = 0.25 * s
-        rotation.z = (rot_matrix[1, 2] + rot_matrix[2, 1]) / s
-    else:
-        s = math.sqrt(1.0 + rot_matrix[2, 2] - rot_matrix[0, 0] - rot_matrix[1, 1]) * 2
-        rotation.w = (rot_matrix[1, 0] - rot_matrix[0, 1]) / s
-        rotation.x = (rot_matrix[0, 2] + rot_matrix[2, 0]) / s
-        rotation.y = (rot_matrix[1, 2] + rot_matrix[2, 1]) / s
-        rotation.z = 0.25 * s
+        Args:
+        ----
+            x: Input quaternion
 
-    return True
+        Returns:
+        -------
+            vec3: Euler angles (roll, pitch, yaw) in radians
 
+        """
+        if not isinstance(x, quat):
+            raise TypeError(f"eulerAngles requires quat, got {type(x)}")
+        q = x
+        # Roll (x-axis rotation)
+        sinr_cosp = 2 * (q.w * q.x + q.y * q.z)
+        cosr_cosp = 1 - 2 * (q.x * q.x + q.y * q.y)
+        roll = math.atan2(sinr_cosp, cosr_cosp)
 
-def eulerAngles(q: quat) -> vec3:
-    """Convert a quaternion to Euler angles (in radians).
+        # Pitch (y-axis rotation)
+        sinp = 2 * (q.w * q.y - q.z * q.x)
+        if abs(sinp) >= 1:
+            pitch = math.copysign(math.pi / 2, sinp)
+        else:
+            pitch = math.asin(sinp)
 
-    Args:
-    ----
-        q: Input quaternion
+        # Yaw (z-axis rotation)
+        siny_cosp = 2 * (q.w * q.z + q.x * q.y)
+        cosy_cosp = 1 - 2 * (q.y * q.y + q.z * q.z)
+        yaw = math.atan2(siny_cosp, cosy_cosp)
 
-    Returns:
-    -------
-        vec3: Euler angles (roll, pitch, yaw) in radians
-
-    """
-    # Roll (x-axis rotation)
-    sinr_cosp = 2 * (q.w * q.x + q.y * q.z)
-    cosr_cosp = 1 - 2 * (q.x * q.x + q.y * q.y)
-    roll = math.atan2(sinr_cosp, cosr_cosp)
-
-    # Pitch (y-axis rotation)
-    sinp = 2 * (q.w * q.y - q.z * q.x)
-    if abs(sinp) >= 1:
-        pitch = math.copysign(math.pi / 2, sinp)
-    else:
-        pitch = math.asin(sinp)
-
-    # Yaw (z-axis rotation)
-    siny_cosp = 2 * (q.w * q.z + q.x * q.y)
-    cosy_cosp = 1 - 2 * (q.y * q.y + q.z * q.z)
-    yaw = math.atan2(siny_cosp, cosy_cosp)
-
-    return vec3(roll, pitch, yaw)
+        return vec3(roll, pitch, yaw)
 
 
-def value_ptr(obj: mat4 | vec3 | vec4) -> np.ndarray:
-    """Get a pointer to the underlying data (returns flattened numpy array).
+    @overload
+    def value_ptr(x: mat4, /) -> np.ndarray: ...
+    
+    @overload
+    def value_ptr(x: vec3, /) -> np.ndarray: ...
+    
+    @overload
+    def value_ptr(x: vec4, /) -> np.ndarray: ...
+    
+    @overload
+    def value_ptr(x: Any, /) -> Any: ...
+    
+    def value_ptr(x: Any, /) -> Any:
+        """Get a pointer to the underlying data (returns flattened numpy array).
 
-    Args:
-    ----
-        obj: Matrix or vector to get pointer from
+        Args:
+        ----
+            x: Matrix or vector to get pointer from
 
-    Returns:
-    -------
-        np.ndarray: Flattened array of the data
+        Returns:
+        -------
+            np.ndarray: Flattened array of the data
 
-    """
-    if isinstance(obj, mat4):
-        # OpenGL expects column-major order
-        return np.ascontiguousarray(obj._data.T.flatten())
-    return np.ascontiguousarray(obj._data.flatten())
+        """
+        if isinstance(x, mat4):
+            # OpenGL expects column-major order
+            return np.ascontiguousarray(x._data.T.flatten())
+        if isinstance(x, (vec3, vec4)):
+            return np.ascontiguousarray(x._data.flatten())
+        raise TypeError(f"value_ptr requires mat4, vec3, or vec4, got {type(x)}")
 
 
-def unProject(
-    win: vec3,
-    model: mat4,
-    proj: mat4,
-    viewport: tuple[int, int, int, int],
-) -> vec3:
-    """Unproject a window coordinate to world coordinates.
+    @overload
+    def unProject(obj: vec3, model: mat4, proj: mat4, viewport: vec4, /) -> vec3: ...
+    
+    @overload
+    def unProject(obj: Any, model: Any, proj: Any, viewport: Any, /) -> Any: ...
+    
+    def unProject(obj: Any, model: Any, proj: Any, viewport: Any, /) -> Any:
+        """Unproject a window coordinate to world coordinates.
 
-    Args:
-    ----
-        win: Window coordinates (x, y, z where z is depth)
-        model: Model-view matrix
-        proj: Projection matrix
-        viewport: Viewport as (x, y, width, height)
+        Args:
+        ----
+            obj: Window coordinates (x, y, z where z is depth)
+            model: Model-view matrix
+            proj: Projection matrix
+            viewport: Viewport as vec4 (x, y, width, height)
 
-    Returns:
-    -------
-        vec3: World coordinates
+        Returns:
+        -------
+            vec3: World coordinates
 
-    """
-    # Compute the inverse of model * projection
-    m: mat4 = proj * model  # type: ignore[assignment]
-    inv_m: mat4 = inverse(m)
+        """
+        if not isinstance(obj, vec3) or not isinstance(model, mat4) or not isinstance(proj, mat4) or not isinstance(viewport, vec4):
+            raise TypeError(f"unProject requires vec3, mat4, mat4, vec4, got {type(obj)}, {type(model)}, {type(proj)}, {type(viewport)}")
+        win = obj
+        # Compute the inverse of model * projection
+        m: mat4 = proj * model  # type: ignore[assignment]
+        inv_m: mat4 = inverse(m)
 
-    # Normalize window coordinates to NDC [-1, 1]
-    ndc = vec4(
-        (win.x - viewport[0]) / viewport[2] * 2.0 - 1.0,
-        (win.y - viewport[1]) / viewport[3] * 2.0 - 1.0,
-        2.0 * win.z - 1.0,
-        1.0,
-    )
+        # Normalize window coordinates to NDC [-1, 1]
+        ndc = vec4(
+            (win.x - viewport.x) / viewport.z * 2.0 - 1.0,
+            (win.y - viewport.y) / viewport.w * 2.0 - 1.0,
+            2.0 * win.z - 1.0,
+            1.0,
+        )
 
-    # Transform NDC to world coordinates
-    world: vec4 = inv_m * ndc  # type: ignore[assignment]
+        # Transform NDC to world coordinates
+        world: vec4 = inv_m * ndc  # type: ignore[assignment]
 
-    # Perspective divide
-    if world.w != 0:
-        world.x /= world.w
-        world.y /= world.w
-        world.z /= world.w
+        # Perspective divide
+        if world.w != 0:
+            world.x /= world.w
+            world.y /= world.w
+            world.z /= world.w
 
-    return vec3(world.x, world.y, world.z)
+        return vec3(world.x, world.y, world.z)
 
