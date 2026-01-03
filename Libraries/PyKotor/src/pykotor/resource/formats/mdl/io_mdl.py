@@ -2712,12 +2712,16 @@ class MDLBinaryReader:
         # Orientation data stored in controllers is sometimes compressed into 4 bytes. We need to check for that and
         # uncompress the quaternion if that is the case.
         # vendor/mdlops/MDLOpsM.pm:1714-1719 - Compressed quaternion detection
+        # Compressed quaternions use column_count=2, which means 2 floats per row: compressed uint32 + padding float
+        # When reading, we read the uint32 directly (not as float), then skip the padding float
         if bin_controller.type_id == MDLControllerType.ORIENTATION and bin_controller.column_count == 2:
             # Detected compressed quaternions - set the model flag
             self._mdl.compress_quaternions = 1
             data: list[list[float]] = []
             for _ in range(bin_controller.row_count):
                 compressed: int = self._reader.read_uint32()
+                # Skip padding float that comes after each compressed uint32
+                _ = self._reader.read_single()
                 decompressed: Vector4 = Vector4.from_compressed(compressed)
                 data.append([decompressed.x, decompressed.y, decompressed.z, decompressed.w])
         else:
