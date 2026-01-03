@@ -1841,7 +1841,75 @@ class MDLBinaryReader:
                 node.light.light_priority = bin_node.light.light_priority
                 node.light.fading_light = bool(bin_node.light.fading_light)
                 node.light.flare_radius = bin_node.light.flare_radius
-                # TODO: Read flare data (sizes, positions, colors, textures) if needed
+                
+                # Read flare data (sizes, positions, colors, textures)
+                # Reference: vendor/MDLOps/MDLOpsM.pm:1875-1954 (flare data reading)
+                light_header = bin_node.light
+                
+                # Flare textures: array of string pointers, each pointing to a 12-byte null-terminated string
+                if light_header.flare_textures_count > 0 and light_header.offset_to_flare_textures not in (0, 0xFFFFFFFF):
+                    node.light.flare_textures = []
+                    saved_pos = self._reader.position()
+                    try:
+                        # Read texture name pointers (each pointer is 4 bytes)
+                        self._reader.seek(light_header.offset_to_flare_textures)
+                        texture_pointers: list[int] = []
+                        for _ in range(light_header.flare_textures_count):
+                            if self._reader.position() + 4 <= self._reader.size():
+                                ptr = self._reader.read_uint32()
+                                if ptr not in (0, 0xFFFFFFFF):
+                                    texture_pointers.append(ptr)
+                        
+                        # Read texture names from pointers
+                        for texture_ptr in texture_pointers:
+                            if texture_ptr <= self._reader.size() - 12:
+                                self._reader.seek(texture_ptr)
+                                texture_name = self._reader.read_terminated_string("\0", 12)
+                                if texture_name:
+                                    node.light.flare_textures.append(texture_name)
+                    finally:
+                        self._reader.seek(saved_pos)
+                
+                # Flare sizes: array of floats (4 bytes each)
+                if light_header.flare_sizes_count > 0 and light_header.offset_to_flare_sizes not in (0, 0xFFFFFFFF):
+                    node.light.flare_sizes = []
+                    saved_pos = self._reader.position()
+                    try:
+                        self._reader.seek(light_header.offset_to_flare_sizes)
+                        for _ in range(light_header.flare_sizes_count):
+                            if self._reader.position() + 4 <= self._reader.size():
+                                size = self._reader.read_single()
+                                node.light.flare_sizes.append(size)
+                    finally:
+                        self._reader.seek(saved_pos)
+                
+                # Flare positions: array of floats (4 bytes each)
+                if light_header.flare_positions_count > 0 and light_header.offset_to_flare_positions not in (0, 0xFFFFFFFF):
+                    node.light.flare_positions = []
+                    saved_pos = self._reader.position()
+                    try:
+                        self._reader.seek(light_header.offset_to_flare_positions)
+                        for _ in range(light_header.flare_positions_count):
+                            if self._reader.position() + 4 <= self._reader.size():
+                                position = self._reader.read_single()
+                                node.light.flare_positions.append(position)
+                    finally:
+                        self._reader.seek(saved_pos)
+                
+                # Flare color shifts: array of Vector3 (12 bytes each = 3 floats)
+                if light_header.flare_colors_count > 0 and light_header.offset_to_flare_colors not in (0, 0xFFFFFFFF):
+                    node.light.flare_color_shifts = []
+                    saved_pos = self._reader.position()
+                    try:
+                        self._reader.seek(light_header.offset_to_flare_colors)
+                        for _ in range(light_header.flare_colors_count):
+                            if self._reader.position() + 12 <= self._reader.size():
+                                r = self._reader.read_single()
+                                g = self._reader.read_single()
+                                b = self._reader.read_single()
+                                node.light.flare_color_shifts.append((r, g, b))
+                    finally:
+                        self._reader.seek(saved_pos)
 
         # Check for EMITTER flag - nodes with EMITTER flag should be marked as EMITTER type
         if bin_node.header.type_id & MDLNodeFlags.EMITTER:
