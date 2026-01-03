@@ -1854,7 +1854,7 @@ class MDLBinaryReader:
             # Always check faces if vcount is suspiciously low, even if there are no faces (vcount of 0 or 1 is almost always wrong)
             if vcount <= 1:
                 # First, check faces to determine minimum required vertex_count
-                required_vertex_count = vcount  # Start with current count
+                required_vertex_count = 0  # Start with 0, will be updated from faces or file bounds
                 if bin_node.trimesh.faces_count > 0:
                     max_vertex_index = 0
                     for face in bin_node.trimesh.faces:
