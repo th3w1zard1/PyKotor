@@ -412,6 +412,12 @@ class _Node:
         if self.skin:
             self.skin.write(writer)
 
+        if self.light:
+            self.light.write(writer)
+
+        if self.emitter:
+            self.emitter.write(writer)
+
         if self.trimesh:
             self._write_trimesh_data(writer)
         if self.skin:
@@ -422,8 +428,48 @@ class _Node:
         for controller in self.w_controllers:
             controller.write(writer)
 
-        for controller_data in self.w_controller_data:
-            writer.write_single(controller_data)
+        # Write controller data - compressed quaternions need special handling
+        # Compressed quaternions are stored as uint32s, not floats
+        # We need to iterate through controllers to identify which data entries are compressed quaternions
+        data_idx = 0
+        for controller in self.w_controllers:
+            # Write time keys (floats)
+            for _ in range(controller.row_count):
+                if data_idx < len(self.w_controller_data):
+                    writer.write_single(self.w_controller_data[data_idx])
+                    data_idx += 1
+            # Write data values
+            # Check if this is a compressed quaternion controller (type 20, column_count 2)
+            is_compressed_quat = (
+                controller.type_id == int(MDLControllerType.ORIENTATION)
+                and controller.column_count == 2
+            )
+            if is_compressed_quat:
+                # Compressed quaternions: write as uint32s (2 floats per row: compressed uint32 + padding)
+                for _ in range(controller.row_count):
+                    if data_idx < len(self.w_controller_data):
+                        # Convert float back to uint32 for compressed quaternion
+                        compressed_uint32 = int(self.w_controller_data[data_idx])
+                        writer.write_uint32(compressed_uint32)
+                        data_idx += 1
+                    if data_idx < len(self.w_controller_data):
+                        # Padding float (should be 0.0)
+                        writer.write_single(self.w_controller_data[data_idx])
+                        data_idx += 1
+            else:
+                # Regular controller data: write as floats
+                # Calculate number of floats per row from column_count
+                # Bezier flag is encoded in bit 4 (0x10) of column_count
+                is_bezier = bool(controller.column_count & 0x10)
+                floats_per_row = controller.column_count & ~0x10  # Strip bezier flag if present
+                if is_bezier:
+                    # Bezier controllers: 3 floats per column
+                    floats_per_row = floats_per_row * 3
+                for _ in range(controller.row_count):
+                    for _ in range(floats_per_row):
+                        if data_idx < len(self.w_controller_data):
+                            writer.write_single(self.w_controller_data[data_idx])
+                            data_idx += 1
 
         if len(self.children_offsets) != self.header.children_count:
             msg = f"Number of child offsets in array does not match header count in {self.header.name_id} ({len(self.children_offsets)} vs {self.header.children_count})."
@@ -482,6 +528,9 @@ class _Node:
             size += _TrimeshHeader.K1_SIZE if game == Game.K1 else _TrimeshHeader.K2_SIZE
         if self.skin:
             size += _SkinmeshHeader.SIZE
+        if self.emitter:
+            # Emitter header size: 3 floats + 1 uint32 + 1 float + 1 Vector2 + 5*32-byte strings + 4 uint32s + 1 uint8 + 3 padding + 1 uint32 = 212 bytes
+            size += 212
         return size
 
     def indices_counts_offset(
@@ -2815,6 +2864,29 @@ class MDLBinaryWriter:
             bin_node.skin.offset_to_mdx_bones = 0
             bin_node.skin.offset_to_mdx_weights = 0
 
+        # Emitter header data
+        if mdl_node.emitter:
+            bin_node.emitter = _EmitterHeader()
+            emitter = mdl_node.emitter
+            bin_node.emitter.dead_space = emitter.dead_space
+            bin_node.emitter.blast_radius = emitter.blast_radius
+            bin_node.emitter.blast_length = emitter.blast_length
+            bin_node.emitter.branch_count = emitter.branch_count
+            bin_node.emitter.smoothing = emitter.control_point_smoothing
+            bin_node.emitter.grid = Vector2(float(emitter.x_grid), float(emitter.y_grid))
+            bin_node.emitter.update = emitter.update
+            bin_node.emitter.render = emitter.render
+            bin_node.emitter.blend = emitter.blend
+            bin_node.emitter.texture = emitter.texture
+            bin_node.emitter.chunk_name = emitter.chunk_name
+            bin_node.emitter.twosided_texture = emitter.two_sided_texture
+            bin_node.emitter.loop = emitter.loop
+            bin_node.emitter.render_order = emitter.render_order
+            bin_node.emitter.frame_blending = emitter.frame_blender
+            bin_node.emitter.depth_texture = emitter.depth_texture
+            bin_node.emitter.unknown0 = 0  # TODO: preserve if available
+            bin_node.emitter.flags = emitter.flags
+
         # Controller key/data offsets are stored as uint16 *byte offsets* relative to the start of
         # the controller-data block (header.offset_to_controller_data).
         #
@@ -2837,9 +2909,18 @@ class MDLBinaryWriter:
             if data_floats_per_row < 0:
                 data_floats_per_row = 0
 
+            # Handle compressed quaternions for orientation controllers
+            # If compress_quaternions is set and this is an orientation controller with 4 floats per row,
+            # set column_count to 2 (compressed quaternions use 2 columns: compressed uint32 + padding)
+            if (
+                self._mdl.compress_quaternions == 1
+                and mdl_controller.controller_type == MDLControllerType.ORIENTATION
+                and data_floats_per_row == 4
+            ):
+                bin_controller.column_count = 2  # Compressed quaternions use 2 columns
             # Encode bezier flag in column_count bit 4 (16) as per mdlops.
             # For bezier controllers, each logical column stores 3 floats per row.
-            if getattr(mdl_controller, "is_bezier", False):
+            elif getattr(mdl_controller, "is_bezier", False):
                 logical_cols = data_floats_per_row // 3 if data_floats_per_row >= 3 else data_floats_per_row
                 bin_controller.column_count = int(logical_cols) | 16
             else:
@@ -2849,7 +2930,17 @@ class MDLBinaryWriter:
             bin_controller.key_offset = cur_float_offset
             bin_controller.data_offset = cur_float_offset + bin_controller.row_count
 
-            cur_float_offset += bin_controller.row_count + (bin_controller.row_count * data_floats_per_row)
+            # Adjust float offset calculation for compressed quaternions
+            # Compressed quaternions use 2 floats per row instead of 4
+            if (
+                self._mdl.compress_quaternions == 1
+                and mdl_controller.controller_type == MDLControllerType.ORIENTATION
+                and data_floats_per_row == 4
+            ):
+                # Compressed quaternions: 2 floats per row (compressed uint32 + padding)
+                cur_float_offset += bin_controller.row_count + (bin_controller.row_count * 2)
+            else:
+                cur_float_offset += bin_controller.row_count + (bin_controller.row_count * data_floats_per_row)
             bin_node.w_controllers.append(bin_controller)
 
         bin_node.w_controller_data = []
@@ -2857,7 +2948,22 @@ class MDLBinaryWriter:
             for row in controller.rows:
                 bin_node.w_controller_data.append(row.time)
             for row in controller.rows:
-                bin_node.w_controller_data.extend(row.data)
+                # Handle compressed quaternions for orientation controllers
+                # If compress_quaternions is set and this is an orientation controller with 4 floats per row,
+                # compress the quaternion data
+                if (
+                    self._mdl.compress_quaternions == 1
+                    and controller.controller_type == MDLControllerType.ORIENTATION
+                    and len(row.data) == 4
+                ):
+                    # Compress quaternion (x, y, z, w) into a single uint32
+                    quat = Vector4(row.data[0], row.data[1], row.data[2], row.data[3])
+                    compressed = _compress_quaternion(quat)
+                    # Write as uint32 (4 bytes) - column_count will be 2 for compressed quaternions
+                    bin_node.w_controller_data.append(float(compressed))
+                    bin_node.w_controller_data.append(0.0)  # Second column for compressed quaternions
+                else:
+                    bin_node.w_controller_data.extend(row.data)
 
         bin_node.header.controller_count = bin_node.header.controller_count2 = len(mdl_node.controllers)
         bin_node.header.controller_data_length = bin_node.header.controller_data_length2 = len(bin_node.w_controller_data)
