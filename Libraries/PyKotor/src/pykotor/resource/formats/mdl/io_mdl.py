@@ -1770,6 +1770,8 @@ class MDLBinaryReader:
         self._mdl.fog = bool(model_header.fog)
         # model_type corresponds to classification
         self._mdl.classification = MDLClassification(model_header.model_type)
+        # unknown0 corresponds to classification_unk1
+        self._mdl.classification_unk1 = model_header.unknown0
         self._mdl.animation_scale = model_header.anim_scale
 
         self._load_names(model_header)
@@ -2944,10 +2946,13 @@ class MDLBinaryWriter:
             bin_node.skin.offset_to_mdx_weights = suboffset
             suboffset += 16
 
+        # mdx_data_size is the size of ONE vertex's MDX data block (used for calculating offsets when reading)
+        # This includes all per-vertex data (normals, UVs, skin data) but NOT padding
         bin_node.trimesh.mdx_data_size = suboffset
 
         # Write MDX data based on bitmap flags, not just list existence
         # This ensures we only write data that's actually in the MDX structure
+        # Write per-vertex data for all vertices
         for i, position in enumerate(mdl_node.mesh.vertex_positions):
             if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX:
                 self._writer_ext.write_vector3(position)
@@ -2982,9 +2987,9 @@ class MDLBinaryWriter:
                 for w in wts:
                     self._writer_ext.write_single(float(w))
 
-        # Why does the mdl/mdx format have this? I have no idea.
-        # Write padding based on bitmap flags to match the data structure above
-        # Vertices are in MDL, not MDX, so no vertex padding needed
+        # MDX format includes padding after all vertex data blocks
+        # Write padding based on bitmap flags to match MDLOps output
+        # Padding is one extra element of each data type (normal, UV1, UV2)
         if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.NORMAL:
             self._writer_ext.write_vector3(Vector3.from_null())
         if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE1:
@@ -3196,6 +3201,8 @@ class MDLBinaryWriter:
         # Preserve basic model header fields needed for roundtrip tests.
         # `model_type` corresponds to classification in practice.
         self._file_header.model_type = int(self._mdl.classification)
+        # unknown0 corresponds to classification_unk1
+        self._file_header.unknown0 = self._mdl.classification_unk1
         self._file_header.fog = 1 if self._mdl.fog else 0
         self._file_header.animation_count = self._file_header.animation_count2 = len(self._mdl.anims)
         self._file_header.bounding_box_min = self._mdl.bmin
