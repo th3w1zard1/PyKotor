@@ -2417,6 +2417,10 @@ class MDLBinaryReader:
                 node.mesh.indices_counts = bin_node.trimesh.indices_counts.copy()
             if bin_node.trimesh.indices_offsets:
                 node.mesh.indices_offsets = bin_node.trimesh.indices_offsets.copy()
+            # Preserve original indices_offsets_count from binary header even if array is empty
+            # This is needed for MDLOps compatibility when the count > 0 but array couldn't be read
+            if not hasattr(node.mesh, "indices_offsets_count") or getattr(node.mesh, "indices_offsets_count", None) is None:
+                node.mesh.indices_offsets_count = bin_node.trimesh.indices_offsets_count
 
             # Deterministically derive binary-only face payload from mesh geometry so
             # binary and ASCII parse paths converge (no ASCII syntax extensions).
@@ -2739,7 +2743,16 @@ class MDLBinaryWriter:
             else:
                 bin_node.trimesh.indices_offsets = []
             bin_node.trimesh.indices_counts_count = bin_node.trimesh.indices_counts_count2 = len(bin_node.trimesh.indices_counts)
-            bin_node.trimesh.indices_offsets_count = bin_node.trimesh.indices_offsets_count2 = len(bin_node.trimesh.indices_offsets)
+            # Preserve original indices_offsets_count from binary header if available, otherwise use array length
+            if hasattr(mdl_node.mesh, "indices_offsets_count") and getattr(mdl_node.mesh, "indices_offsets_count", None) is not None:
+                original_count = getattr(mdl_node.mesh, "indices_offsets_count")
+                # Use original count if it's > 0, otherwise use array length
+                if original_count > 0:
+                    bin_node.trimesh.indices_offsets_count = bin_node.trimesh.indices_offsets_count2 = original_count
+                else:
+                    bin_node.trimesh.indices_offsets_count = bin_node.trimesh.indices_offsets_count2 = len(bin_node.trimesh.indices_offsets)
+            else:
+                bin_node.trimesh.indices_offsets_count = bin_node.trimesh.indices_offsets_count2 = len(bin_node.trimesh.indices_offsets)
 
             bin_node.trimesh.faces_count = bin_node.trimesh.faces_count2 = len(mdl_node.mesh.faces)
             for face in mdl_node.mesh.faces:
