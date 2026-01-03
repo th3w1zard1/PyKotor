@@ -398,8 +398,27 @@ class _Node:
         if self.skin:
             self.skin.read_extra(reader)
 
-        reader.seek(self.header.offset_to_children)
-        self.children_offsets = [reader.read_uint32() for _ in range(self.header.children_count)]
+        # Validate children_count and offset_to_children before reading
+        # If offset_to_children is invalid (0xFFFFFFFF) or out of bounds, or children_count is suspiciously large,
+        # set children_count to 0 to prevent reading garbage data
+        if (
+            self.header.offset_to_children == 0xFFFFFFFF
+            or self.header.offset_to_children >= reader.size()
+            or self.header.children_count > 0x7FFFFFFF  # Prevent negative values when interpreted as signed
+            or self.header.children_count * 4 + self.header.offset_to_children > reader.size()
+        ):
+            self.header.children_count = 0
+            self.header.children_count2 = 0
+            self.children_offsets = []
+        else:
+            try:
+                reader.seek(self.header.offset_to_children)
+                self.children_offsets = [reader.read_uint32() for _ in range(self.header.children_count)]
+            except Exception:
+                # If reading fails, set to empty to prevent corruption
+                self.header.children_count = 0
+                self.header.children_count2 = 0
+                self.children_offsets = []
         return self
 
     def write(
@@ -2818,7 +2837,12 @@ class MDLBinaryWriter:
         bin_node.header.type_id = self._node_type(mdl_node)
         bin_node.header.position = mdl_node.position
         bin_node.header.orientation = mdl_node.orientation
-        bin_node.header.children_count = bin_node.header.children_count2 = len(mdl_node.children)
+        # Clamp children_count to prevent Perl from interpreting it as negative (values >= 2^31)
+        # MDLOps reads this as a signed integer, so we must ensure it's < 2^31
+        children_count = len(mdl_node.children)
+        if children_count > 0x7FFFFFFF:
+            children_count = 0x7FFFFFFF
+        bin_node.header.children_count = bin_node.header.children_count2 = children_count
         if mdl_node.name not in self._names:
             self._names.append(mdl_node.name)
         bin_node.header.name_id = self._names.index(mdl_node.name)
