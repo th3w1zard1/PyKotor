@@ -63,6 +63,14 @@ except ImportError:
                 return NotImplemented
             return bool(np.allclose(self._data, other._data))
 
+        def __sub__(self, other: vec3) -> vec3:
+            """Subtract another vec3 from this vec3."""
+            if not isinstance(other, vec3):
+                return NotImplemented
+            result = vec3()
+            result._data = self._data - other._data
+            return result
+
         def __hash__(self) -> int:
             return hash(tuple(self._data.flatten()))
 
