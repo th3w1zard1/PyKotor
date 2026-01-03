@@ -1,14 +1,12 @@
 from __future__ import annotations
 
 import io
-import os
 import re
 
 from math import cos, sin, sqrt
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from pykotor.common.misc import Color
-from pykotor.common.stream import BinaryReader
 from pykotor.resource.formats.mdl.mdl_data import (
     MDL,
     MDLAnimation,
@@ -29,9 +27,13 @@ from pykotor.resource.formats.mdl.mdl_data import (
     MDLWalkmesh,
 )
 from pykotor.resource.formats.mdl.mdl_types import MDLClassification, MDLControllerType, MDLNodeType
+from pykotor.resource.type import ResourceReader, ResourceWriter, autoclose
+from pykotor.tools.encoding import decode_bytes_with_fallbacks
 from utility.common.geometry import Vector2, Vector3, Vector4
 
 if TYPE_CHECKING:
+    from typing_extensions import Literal
+
     from pykotor.resource.type import SOURCE_TYPES, TARGET_TYPES
 
 
@@ -272,7 +274,7 @@ def _normalize_vector(vec: list[float]) -> list[float]:
     return [0.0, 0.0, 0.0]
 
 
-class MDLAsciiWriter:
+class MDLAsciiWriter(ResourceWriter):
     """Writer for ASCII MDL files.
 
     Reference: vendor/mdlops/MDLOpsM.pm:3004-3900 (writeasciimdl)
@@ -289,26 +291,16 @@ class MDLAsciiWriter:
             mdl: The MDL data to write
             target: The target to write to (file path, stream, or bytes buffer)
         """
+        super().__init__(target)
         self._mdl = mdl
-
-        # Open the target file/stream for writing
-        if isinstance(target, (str, bytes, os.PathLike)):
-            self._writer = open(target, "w", encoding="utf-8", newline="\n")
-        elif isinstance(target, io.TextIOBase):
-            self._writer = target
-        elif isinstance(target, (bytearray, io.BytesIO)):
-            # For bytearray/bytes, create a StringIO and we'll convert at the end
-            self._writer = io.StringIO()
-            self._target_bytes = target
-        else:
-            # Try to treat as file-like object
-            self._writer = target
+        self._text_buffer = io.StringIO()
 
     def write_line(self, indent: int, line: str) -> None:
         """Write a line with indentation."""
-        self._writer.write("  " * indent + line + "\n")
+        self._text_buffer.write("  " * indent + line + "\n")
 
-    def write(self) -> None:
+    @autoclose
+    def write(self, *, auto_close: bool = True) -> None:  # noqa: FBT001, FBT002, ARG002
         """Write MDL data to ASCII format.
 
         Reference: vendor/mdlops/MDLOpsM.pm:3004-3900 (writeasciimdl)
@@ -349,14 +341,9 @@ class MDLAsciiWriter:
         self.write_line(0, "")
         self.write_line(0, "donemodel " + mdl.name)
 
-        # If writing to bytearray/bytes, convert StringIO to bytes
-        if "_target_bytes" in self.__dict__:
-            content = self._writer.getvalue()
-            if isinstance(self._target_bytes, bytearray):
-                self._target_bytes.clear()
-                self._target_bytes.extend(content.encode("utf-8"))
-            elif isinstance(self._target_bytes, io.BytesIO):
-                self._target_bytes.write(content.encode("utf-8"))
+        # Write the text content as bytes
+        content = self._text_buffer.getvalue()
+        self._writer.write_bytes(content.encode("utf-8"))
 
     def _write_node(self, indent: int, node: MDLNode, parent: MDLNode | None = None) -> None:
         """Write a node and its children."""
@@ -478,7 +465,7 @@ class MDLAsciiWriter:
         if bone_vertices:
             self.write_line(indent, "weights " + str(len(bone_vertices)))
             for bv in bone_vertices:
-                pairs: list[tuple[int, float]] = list(zip(bv.vertex_indices, bv.vertex_weights))
+                pairs: list[tuple[float, float]] = list(zip(bv.vertex_indices, bv.vertex_weights))
 
                 # Filter out unused entries
                 filtered: list[tuple[int, float]] = []
@@ -505,50 +492,53 @@ class MDLAsciiWriter:
 
     def _write_light(self, indent: int, light: MDLLight) -> None:
         """Write light data.
-        
+
         Reference: vendor/mdlops/MDLOpsM.pm:3228-3266
         """
         # Light color/radius/multiplier are controller properties, not direct attributes.
         # They are written via controllers in the node's controller list.
 
         # Write flare data arrays if present (vendor/mdlops/MDLOpsM.pm:3235-3256)
-        has_flares: bool = light.flare and (
-            (light.flare_textures and len(light.flare_textures) > 0) or
-            (light.flare_positions and len(light.flare_positions) > 0) or
-            (light.flare_sizes and len(light.flare_sizes) > 0) or
-            (light.flare_color_shifts and len(light.flare_color_shifts) > 0)
+        has_flares: bool = bool(
+            light.flare
+            and (
+                (light.flare_textures and len(light.flare_textures) > 0)
+                or (light.flare_positions and len(light.flare_positions) > 0)
+                or (light.flare_sizes and len(light.flare_sizes) > 0)
+                or (light.flare_color_shifts and len(light.flare_color_shifts) > 0)
+            )
         )
-        
+
         if has_flares:
             # Write lensflares count (vendor/mdlops/MDLOpsM.pm:3233)
             if light.flare_positions:
                 self.write_line(indent, f"lensflares {len(light.flare_positions)}")
-            
+
             # Write texturenames (vendor/mdlops/MDLOpsM.pm:3235-3239)
             if light.flare_textures and len(light.flare_textures) > 0:
                 self.write_line(indent, f"texturenames {len(light.flare_textures)}")
                 for texture in light.flare_textures:
                     self.write_line(indent + 1, texture)
-            
+
             # Write flarepositions (vendor/mdlops/MDLOpsM.pm:3240-3244)
             if light.flare_positions and len(light.flare_positions) > 0:
                 self.write_line(indent, f"flarepositions {len(light.flare_positions)}")
                 for pos in light.flare_positions:
                     self.write_line(indent + 1, f"{pos:.7g}")
-            
+
             # Write flaresizes (vendor/mdlops/MDLOpsM.pm:3245-3249)
             if light.flare_sizes and len(light.flare_sizes) > 0:
                 self.write_line(indent, f"flaresizes {len(light.flare_sizes)}")
                 for size in light.flare_sizes:
                     self.write_line(indent + 1, f"{size:.7g}")
-            
+
             # Write flarecolorshifts (vendor/mdlops/MDLOpsM.pm:3250-3256)
             if light.flare_color_shifts and len(light.flare_color_shifts) > 0:
                 self.write_line(indent, f"flarecolorshifts {len(light.flare_color_shifts)}")
                 for color_shift in light.flare_color_shifts:
                     if isinstance(color_shift, (list, tuple)) and len(color_shift) >= 3:
                         self.write_line(indent + 1, f"{color_shift[0]:.7g} {color_shift[1]:.7g} {color_shift[2]:.7g}")
-        
+
         self.write_line(indent, f"flareradius {light.flare_radius:.7g}")
         self.write_line(indent, f"priority {light.light_priority}")
         if light.ambient_only:
@@ -562,7 +552,7 @@ class MDLAsciiWriter:
 
     def _write_emitter(self, indent: int, emitter: MDLEmitter) -> None:
         """Write emitter data.
-        
+
         Reference: vendor/mdlops/MDLOpsM.pm:3268-3307
         """
         self.write_line(indent, f"deadspace {emitter.dead_space:.7g}")
@@ -590,11 +580,12 @@ class MDLAsciiWriter:
         self.write_line(indent, f"m_bFrameBlending {emitter.frame_blender}")
         # mdlops writes m_sDepthTextureName as string (vendor/mdlops/MDLOpsM.pm:3290)
         self.write_line(indent, f"m_sDepthTextureName {emitter.depth_texture or ''}")
-        
+
         # Write emitter flags (vendor/mdlops/MDLOpsM.pm:3295-3307)
         from pykotor.resource.formats.mdl.mdl_types import MDLEmitterFlags
+
         flags = emitter.flags
-        
+
         self.write_line(indent, f"p2p {1 if (flags & MDLEmitterFlags.P2P) else 0}")
         self.write_line(indent, f"p2p_sel {1 if (flags & MDLEmitterFlags.P2P_SEL) else 0}")
         self.write_line(indent, f"affectedByWind {1 if (flags & MDLEmitterFlags.AFFECTED_WIND) else 0}")
@@ -752,7 +743,7 @@ class MDLAsciiWriter:
         self.write_line(indent, "endnode")
 
 
-class MDLAsciiReader:
+class MDLAsciiReader(ResourceReader):
     """Reader for ASCII MDL files matching mdlops implementation exactly.
 
     Reference: vendor/mdlops/MDLOpsM.pm:3916-5970 (readasciimdl)
@@ -771,32 +762,8 @@ class MDLAsciiReader:
             offset: The byte offset within the source
             size: Size of the data to read (0 = read all)
         """
-        # Open the file and seek to offset
-        # NOTE: bytes-like sources are ASCII MDL *content*, not filesystem paths.
-        if isinstance(source, (os.PathLike, str)):
-            with open(source, "r", encoding="utf-8", errors="ignore") as f:
-                if offset > 0:
-                    f.seek(offset)
-                content = f.read(size if size > 0 else None)
-                self._reader = io.StringIO(content)
-        elif isinstance(source, (memoryview, bytes, bytearray)):
-            data = bytes(source)
-            if offset:
-                data = data[offset:]
-            if size and size > 0:
-                data = data[:size]
-            self._reader = io.StringIO(data.decode("utf-8", errors="ignore"))
-        elif isinstance(source, io.TextIOBase):
-            self._reader = source
-            if offset > 0:
-                self._reader.seek(offset)
-        else:
-            # Try to read as binary and decode
-            reader = BinaryReader.from_auto(source, offset)
-            content = reader.read_bytes(size if size > 0 else reader.size())
-            self._reader = io.StringIO(content.decode("utf-8", errors="ignore"))
-
-        self._mdl: MDL = MDL()
+        super().__init__(source, offset, size if size > 0 else None)
+        self._mdl: MDL | None = None
         self._node_index: dict[str, int] = {"null": -1}
         self._nodes: list[MDLNode] = []
         self._current_node: MDLNode | None = None
@@ -804,14 +771,15 @@ class MDLAsciiReader:
         self._is_animation: bool = False
         self._in_node: bool = False
         self._current_anim_num: int = 0
-        self._task: str = ""
+        self._task: Literal["verts", "faces", "tverts", "tverts1", "lightmaptverts", "bones", "flarecolorshifts", "weights", "constraints", "aabb"] = ""
         self._task_count: int = 0
         self._task_total: int = 0
         self._anim_node_index: dict[str, MDLNode] = {}
         self._anim_nodes: list[list[MDLNode]] = []
         self._saw_any_content: bool = False
 
-    def load(self) -> MDL:
+    @autoclose
+    def load(self, *, auto_close: bool = True) -> MDL:  # noqa: FBT001, FBT002, ARG002
         """Load the ASCII MDL file.
 
         Returns:
@@ -819,6 +787,14 @@ class MDLAsciiReader:
 
         Reference: vendor/mdlops/MDLOpsM.pm:3916-5970
         """
+        self._mdl = MDL()
+
+        # Read bytes and decode to text
+        data = self._reader.read_bytes(self._reader.size())
+        text_content = decode_bytes_with_fallbacks(data)
+        text_reader = io.StringIO(text_content)
+        self._line_iterator = iter(text_reader)
+
         # Set defaults matching mdlops (vendor/mdlops/MDLOpsM.pm:4017-4024)
         self._mdl.name = ""
         self._mdl.supermodel = "null"
@@ -831,7 +807,7 @@ class MDLAsciiReader:
         self._mdl.radius = 7.0
 
         # Parse the file line by line
-        for line in self._reader:
+        for line in self._line_iterator:
             line = str(line).rstrip()
             if not line or line.strip().startswith("#"):
                 continue
@@ -1011,7 +987,7 @@ class MDLAsciiReader:
         animation's root/node tree. These should not be added to the model's geometry nodes.
         """
         match = re.match(r"^\s*node\s+(\S+)\s+(\S+)", line, re.IGNORECASE)
-        if not match or not self._mdl.anims:
+        if not match or self._mdl is None or not self._mdl.anims:
             return
 
         node_name: str = match.group(2)
@@ -1039,7 +1015,7 @@ class MDLAsciiReader:
 
     def _build_animation_hierarchy(self) -> None:
         """Build per-animation node hierarchies from 'parent <name>' relationships."""
-        if not self._mdl.anims:
+        if self._mdl is None or not self._mdl.anims:
             return
 
         for anim_idx, anim in enumerate(self._mdl.anims):
@@ -1064,11 +1040,11 @@ class MDLAsciiReader:
 
             # Choose a better root if the initial one was simply the first encountered node.
             root_candidates = [
-                n for n in nodes
+                n
+                for n in nodes
                 # Treat missing parents AND parents that are external to this animation node list
                 # (e.g. model root name, animroot name) as top-level animation nodes.
-                if (not isinstance(n.__dict__.get("_parent_name"), str))
-                or (isinstance(n.__dict__.get("_parent_name"), str) and n.__dict__.get("_parent_name") not in by_name)
+                if (not isinstance(n.__dict__.get("_parent_name"), str)) or (isinstance(n.__dict__.get("_parent_name"), str) and n.__dict__.get("_parent_name") not in by_name)
             ]
             if root_candidates:
                 # Prefer the candidate that actually has children.
@@ -1107,7 +1083,7 @@ class MDLAsciiReader:
         if re.match(r"^\s*parent\s+(\S+)", line, re.IGNORECASE):
             match = re.match(r"^\s*parent\s+(\S+)", line, re.IGNORECASE)
             if match:
-                if self._is_animation and self._mdl.anims:
+                if self._is_animation and self._mdl is not None and self._mdl.anims:
                     # Animation nodes: MDLOps may emit parent as either a node name OR a numeric node index.
                     parent_token = match.group(1).strip()
                     parent_lc = parent_token.lower()
@@ -1124,7 +1100,7 @@ class MDLAsciiReader:
 
                         if parent_idx >= 0 and self._current_anim_num >= 0 and self._current_anim_num < len(self._anim_nodes):
                             # Try node_id match first (more robust than list index).
-                            cand_nodes = self._anim_nodes[self._current_anim_num]
+                            cand_nodes: list[MDLNode] = self._anim_nodes[self._current_anim_num]
                             for cand in cand_nodes:
                                 if cand.node_id == parent_idx:
                                     resolved_parent_name = cand.name.lower()
@@ -1228,7 +1204,7 @@ class MDLAsciiReader:
                     keyed_pattern = rf"^\s*{re.escape(controller_name)}(bezier)?key"
                     if re.match(keyed_pattern, line, re.IGNORECASE):
                         match = re.match(keyed_pattern, line, re.IGNORECASE)
-                        is_bezier = match and match.group(1) and match.group(1).lower() == "bezier"
+                        is_bezier = bool(match and match.group(1) and match.group(1).lower() == "bezier")
                         # Check for old format with count: "positionkey 4"
                         count_match = re.search(r"key\s+(\d+)$", line, re.IGNORECASE)
                         total = int(count_match.group(1)) if count_match else 0
@@ -1240,7 +1216,7 @@ class MDLAsciiReader:
                         # Read rows until endlist or count reached
                         for _ in range(total if total > 0 else 10000):  # Large limit for safety
                             try:
-                                row_line = next(self._reader).strip()
+                                row_line = next(self._line_iterator).strip()
                                 if not row_line or re.match(r"^\s*endlist", row_line, re.IGNORECASE):
                                     break
 
@@ -1302,7 +1278,7 @@ class MDLAsciiReader:
 
         Reference: vendor/mdlops/MDLOpsM.pm:4304-4413
         """
-        if not self._current_node or not self._current_node.mesh:
+        if self._current_node is None or self._current_node.mesh is None:
             return False
 
         mesh = self._current_node.mesh
@@ -1730,8 +1706,10 @@ class MDLAsciiReader:
                 # Sort by bone index and create bone vertex
                 sorted_bones = sorted(bone_hash.keys())
                 bone_vertex = MDLBoneVertex()
-                bone_vertex.vertex_indices = tuple(float(b) if b in sorted_bones[:4] else -1.0 for b in range(4))
-                bone_vertex.vertex_weights = tuple(bone_hash.get(sorted_bones[i], 0.0) if i < len(sorted_bones) else 0.0 for i in range(4))
+                bone_vertex.vertex_indices = cast("tuple[float, float, float, float]", tuple(float(b) if b in sorted_bones[:4] else -1.0 for b in range(4)))
+                bone_vertex.vertex_weights = cast(
+                    "tuple[float, float, float, float]", tuple(float(bone_hash.get(sorted_bones[i], 0.0)) if i < len(sorted_bones) else 0.0 for i in range(4))
+                )
 
                 skin.vertex_bones.append(bone_vertex)
                 self._task_count += 1
@@ -1824,25 +1802,25 @@ class MDLAsciiReader:
         if re.match(r"^\s*ambientonly(\s+(\S+))?\s*$", line, re.IGNORECASE):
             match = re.match(r"^\s*ambientonly(\s+(\S+))?\s*$", line, re.IGNORECASE)
             if match:
-                light.ambient_only = int(match.group(2)) if match.group(2) is not None else 1
+                light.ambient_only = bool(int(match.group(2)) if match.group(2) is not None else 1)
             return True
 
         if re.match(r"^\s*shadow(\s+(\S+))?\s*$", line, re.IGNORECASE):
             match = re.match(r"^\s*shadow(\s+(\S+))?\s*$", line, re.IGNORECASE)
             if match:
-                light.shadow = int(match.group(2)) if match.group(2) is not None else 1
+                light.shadow = bool(int(match.group(2)) if match.group(2) is not None else 1)
             return True
 
         if re.match(r"^\s*flare(\s+(\S+))?\s*$", line, re.IGNORECASE):
             match = re.match(r"^\s*flare(\s+(\S+))?\s*$", line, re.IGNORECASE)
             if match:
-                light.flare = int(match.group(2)) if match.group(2) is not None else 1
+                light.flare = bool(int(match.group(2)) if match.group(2) is not None else 1)
             return True
 
         if re.match(r"^\s*fadinglight(\s+(\S+))?\s*$", line, re.IGNORECASE):
             match = re.match(r"^\s*fadinglight(\s+(\S+))?\s*$", line, re.IGNORECASE)
             if match:
-                light.fading_light = int(match.group(2)) if match.group(2) is not None else 1
+                light.fading_light = bool(int(match.group(2)) if match.group(2) is not None else 1)
             return True
 
         # Parse flare data arrays
@@ -1905,7 +1883,7 @@ class MDLAsciiReader:
         if self._task == "flarecolorshifts":
             parts = line.split()
             if len(parts) >= 3:
-                light.flare_color_shifts.append([float(parts[0]), float(parts[1]), float(parts[2])])
+                light.flare_color_shifts.append((float(parts[0]), float(parts[1]), float(parts[2])))
                 self._task_count += 1
                 if self._task_count >= self._task_total:
                     self._task = ""

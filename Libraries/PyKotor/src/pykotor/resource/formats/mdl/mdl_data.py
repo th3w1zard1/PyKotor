@@ -2156,7 +2156,7 @@ class MDLLight(ComparableMixin):
         
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:30,89
         # Color shift values for each flare element
-        self.flare_color_shifts: list[float] = []
+        self.flare_color_shifts: list[tuple[float, float, float]] = []
         
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:27,88
         # Texture names for lens flare elements (e.g. "flaretex01")
