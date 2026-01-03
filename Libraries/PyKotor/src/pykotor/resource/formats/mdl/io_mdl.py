@@ -2041,7 +2041,7 @@ class MDLBinaryReader:
                 if vcount <= 1 or required_vertex_count > vcount:
                     # Validate that we can actually read this many vertices from the file
                     # Start with the required count, then limit if bounds check fails
-                    can_read_count = required_vertex_count
+                    can_read_count = required_vertex_count if required_vertex_count > 0 else 0
                     if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
                         # Check MDX bounds
                         mdx_vertex_data_offset: int = bin_node.trimesh.mdx_data_offset
@@ -2069,29 +2069,24 @@ class MDLBinaryReader:
                                     if max_vertices_from_mdx < 0:
                                         max_vertices_from_mdx = 0
                                     # Use the minimum of required count and what we can actually read
-                                    can_read_count = min(required_vertex_count, max_vertices_from_mdx)
+                                    can_read_count = min(required_vertex_count, max_vertices_from_mdx) if required_vertex_count > 0 else max_vertices_from_mdx
                                 else:
                                     can_read_count = 0
                     elif bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
                         # Check MDL bounds
-                        if bin_node.trimesh.faces_count == 0:
-                            # If no faces, try to determine count from available MDL data
-                            available_bytes = self._reader.size() - bin_node.trimesh.vertices_offset
-                            if available_bytes > 0:
-                                can_read_count = available_bytes // 12
-                                if can_read_count < 0:
-                                    can_read_count = 0
-                        else:
-                            # Always calculate the actual count we can read, even if bounds check passes
-                            available_bytes = self._reader.size() - bin_node.trimesh.vertices_offset
-                            if available_bytes > 0:
-                                max_vertices_from_mdl = available_bytes // 12
-                                if max_vertices_from_mdl < 0:
-                                    max_vertices_from_mdl = 0
-                                # Use the minimum of required count and what we can actually read
-                                can_read_count = min(required_vertex_count, max_vertices_from_mdl)
+                        available_bytes = self._reader.size() - bin_node.trimesh.vertices_offset
+                        if available_bytes > 0:
+                            max_vertices_from_mdl = available_bytes // 12
+                            if max_vertices_from_mdl < 0:
+                                max_vertices_from_mdl = 0
+                            if bin_node.trimesh.faces_count == 0:
+                                # If no faces, use what we can read from MDL
+                                can_read_count = max_vertices_from_mdl
                             else:
-                                can_read_count = 0
+                                # Use the minimum of required count and what we can actually read
+                                can_read_count = min(required_vertex_count, max_vertices_from_mdl) if required_vertex_count > 0 else max_vertices_from_mdl
+                        else:
+                            can_read_count = 0
                     
                     # Use the validated count (at least what faces require, but not more than we can read)
                     # Also use it if vcount is 0/1 and we found a reasonable count from file bounds
@@ -2103,7 +2098,12 @@ class MDLBinaryReader:
                         # This prevents stream boundary errors while still prioritizing face-based count
                         # If can_read_count is 0, we still need to use required_vertex_count (faces are authoritative)
                         # But we'll verify we can actually read that many vertices later
-                        final_count = min(required_vertex_count, can_read_count) if can_read_count > 0 else required_vertex_count
+                        if can_read_count > 0:
+                            final_count = min(required_vertex_count, can_read_count)
+                        else:
+                            # can_read_count is 0, but faces require vertices - use required_vertex_count
+                            # We'll verify we can actually read that many vertices in the second recovery pass
+                            final_count = required_vertex_count
                         # Always update vcount if faces require more vertices OR if vcount is suspiciously low (0 or 1)
                         # This ensures we fix vcount even when it's 1 (which is almost always wrong for meshes with geometry)
                         if final_count > vcount or vcount <= 1:
