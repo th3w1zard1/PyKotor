@@ -14,11 +14,9 @@ from qtpy.QtCore import (
 from qtpy.QtGui import QColor, QKeySequence
 from qtpy.QtWidgets import (
     QListWidgetItem,
-    QMenu,
     QMessageBox,  # pyright: ignore[reportPrivateImportUsage]
 )
 
-from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
 from pykotor.common.misc import Color
 from pykotor.extract.installation import SearchLocation
 from pykotor.resource.formats.bwm import read_bwm
@@ -34,26 +32,25 @@ from toolset.blender import BlenderEditorMode
 from toolset.blender.integration import BlenderEditorMixin
 from toolset.gui.editor import Editor
 from toolset.gui.editors.git.controls import GITControlScheme
-from toolset.gui.editors.git.mode import _GeometryMode, _InstanceMode, _Mode, _SpawnMode, open_instance_dialog
+from toolset.gui.editors.git.mode import _GeometryMode, _InstanceMode, _Mode
 from toolset.gui.widgets.settings.editor_settings.git import GITSettings
 from utility.common.geometry import SurfaceMaterial, Vector2, Vector3
 
 if TYPE_CHECKING:
     from qtpy.QtCore import QPoint
     from qtpy.QtGui import QCloseEvent, QKeyEvent
-    from qtpy.QtWidgets import QCheckBox, QListWidget, QWidget
+    from qtpy.QtWidgets import QCheckBox, QWidget
 
-    from pykotor.extract.file import LocationResult, ResourceIdentifier, ResourceResult
+    from pykotor.extract.file import ResourceIdentifier, ResourceResult
     from pykotor.resource.formats.bwm import BWM
     from pykotor.resource.formats.lyt import LYT
     from pykotor.resource.generics.git import GITInstance
     from toolset.data.installation import HTInstallation
-    from toolset.gui.windows.module_designer import ModuleDesigner
 
 if qtpy.QT5:
-    from qtpy.QtWidgets import QUndoStack
+    pass
 elif qtpy.QT6:
-    from qtpy.QtGui import QUndoStack
+    pass
 
 
 class GITEditor(Editor, BlenderEditorMixin):
@@ -96,8 +93,8 @@ class GITEditor(Editor, BlenderEditorMixin):
         self._controls: GITControlScheme = GITControlScheme(self)
         self._geom_instance: GITInstance | None = None  # Used to track which trigger/encounter you are editing
 
-        self.ui.actionUndo.triggered.connect(lambda: print("Undo signal") or self._controls.undo_stack.undo())
-        self.ui.actionRedo.triggered.connect(lambda: print("Redo signal") or self._controls.undo_stack.redo())
+        self.ui.actionUndo.triggered.connect(self._controls.undo_stack.undo)
+        self.ui.actionRedo.triggered.connect(self._controls.undo_stack.redo)
 
         self.settings = GITSettings()
 
@@ -177,10 +174,6 @@ class GITEditor(Editor, BlenderEditorMixin):
         self.ui.viewWaypointCheck.mouseDoubleClickEvent = lambda a0: self.on_instance_visibility_double_click(self.ui.viewWaypointCheck)  # noqa: ARG005  # pyright: ignore[reportAttributeAccessIssue]
         self.ui.viewCameraCheck.mouseDoubleClickEvent = lambda a0: self.on_instance_visibility_double_click(self.ui.viewCameraCheck)  # noqa: ARG005  # pyright: ignore[reportAttributeAccessIssue]
         self.ui.viewStoreCheck.mouseDoubleClickEvent = lambda a0: self.on_instance_visibility_double_click(self.ui.viewStoreCheck)  # noqa: ARG005  # pyright: ignore[reportAttributeAccessIssue]
-
-        # Undo/Redo
-        self.ui.actionUndo.triggered.connect(lambda: print("Undo signal") or self._controls.undo_stack.undo())
-        self.ui.actionUndo.triggered.connect(lambda: print("Redo signal") or self._controls.undo_stack.redo())
 
         # View
         self.ui.actionZoomIn.triggered.connect(lambda: self.ui.renderArea.camera.nudge_zoom(1))
@@ -509,4 +502,3 @@ class GITEditor(Editor, BlenderEditorMixin):
         self.ui.renderArea.keyReleaseEvent(e)
 
     # endregion
-
