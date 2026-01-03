@@ -21,7 +21,7 @@ from pykotor.resource.formats.mdl.mdl_data import (
     MDLSkin,
     _mdl_recompute_mesh_face_payload,
 )
-from pykotor.resource.formats.mdl.mdl_types import MDLControllerType, MDLNodeType
+from pykotor.resource.formats.mdl.mdl_types import MDLClassification, MDLControllerType, MDLNodeType
 from utility.common.geometry import Vector2, Vector3, Vector4
 
 # Debug logging: Enable via environment variable PYKOTOR_DEBUG_MDL=1
@@ -423,14 +423,23 @@ class _Node:
 
     def _write_trimesh_data(self, writer: BinaryWriter):
         assert self.trimesh is not None
-        # NOTE:
-        # Real-world K1/K2 MDL nodes store the face structs and vertex array as the core geometry payload.
-        # The various index/count tables are not required for successful parsing in this codebase and
-        # are not currently consumed by the reader. To keep offsets consistent, we write:
-        #   - faces (full _Face structs)
-        #   - vertices (Vector3 array)
+        # Write indices counts array
+        for count in self.trimesh.indices_counts:
+            writer.write_uint32(count)
+        
+        # Write indices offsets array
+        for offset in self.trimesh.indices_offsets:
+            writer.write_uint32(offset)
+        
+        # Write inverted counters array (array3)
+        for counter in self.trimesh.inverted_counters:
+            writer.write_uint32(counter)
+        
+        # Write faces (full _Face structs)
         for face in self.trimesh.faces:
             face.write(writer)
+        
+        # Write vertices (Vector3 array)
         for vertex in self.trimesh.vertices:
             writer.write_vector3(vertex)
 
@@ -870,19 +879,40 @@ class _TrimeshHeader:
         self,
         reader: BinaryReader,
     ):
-        # Vertices
-        if self.vertices_offset not in (0, 0xFFFFFFFF) and self.vertex_count > 0:
-            vertices_bytes = self.vertex_count * 12  # Vector3 of floats
-            if self.vertices_offset <= reader.size() and (self.vertices_offset + vertices_bytes) <= reader.size():
-                reader.seek(self.vertices_offset)
-                self.vertices = [reader.read_vector3() for _ in range(self.vertex_count)]
-
+        # Indices counts array
+        if self.offset_to_indices_counts not in (0, 0xFFFFFFFF) and self.indices_counts_count > 0:
+            counts_bytes = self.indices_counts_count * 4  # uint32 per count
+            if self.offset_to_indices_counts <= reader.size() and (self.offset_to_indices_counts + counts_bytes) <= reader.size():
+                reader.seek(self.offset_to_indices_counts)
+                self.indices_counts = [reader.read_uint32() for _ in range(self.indices_counts_count)]
+        
+        # Indices offsets array
+        if self.offset_to_indices_offset not in (0, 0xFFFFFFFF) and self.indices_offsets_count > 0:
+            offsets_bytes = self.indices_offsets_count * 4  # uint32 per offset
+            if self.offset_to_indices_offset <= reader.size() and (self.offset_to_indices_offset + offsets_bytes) <= reader.size():
+                reader.seek(self.offset_to_indices_offset)
+                self.indices_offsets = [reader.read_uint32() for _ in range(self.indices_offsets_count)]
+        
+        # Inverted counters (array3) - read from offset_to_counters when counters_count > 0
+        if self.offset_to_counters not in (0, 0xFFFFFFFF) and self.counters_count > 0:
+            counters_bytes = self.counters_count * 4  # uint32 per counter
+            if self.offset_to_counters <= reader.size() and (self.offset_to_counters + counters_bytes) <= reader.size():
+                reader.seek(self.offset_to_counters)
+                self.inverted_counters = [reader.read_uint32() for _ in range(self.counters_count)]
+        
         # Faces
         if self.offset_to_faces not in (0, 0xFFFFFFFF) and self.faces_count > 0:
             faces_bytes = self.faces_count * _Face.SIZE
             if self.offset_to_faces <= reader.size() and (self.offset_to_faces + faces_bytes) <= reader.size():
                 reader.seek(self.offset_to_faces)
                 self.faces = [_Face().read(reader) for _ in range(self.faces_count)]
+
+        # Vertices
+        if self.vertices_offset not in (0, 0xFFFFFFFF) and self.vertex_count > 0:
+            vertices_bytes = self.vertex_count * 12  # Vector3 of floats
+            if self.vertices_offset <= reader.size() and (self.vertices_offset + vertices_bytes) <= reader.size():
+                reader.seek(self.vertices_offset)
+                self.vertices = [reader.read_vector3() for _ in range(self.vertex_count)]
 
     def write(
         self,
@@ -1706,6 +1736,9 @@ class MDLBinaryReader:
         self._mdl.name = model_header.geometry.model_name
         self._mdl.supermodel = model_header.supermodel
         self._mdl.fog = bool(model_header.fog)
+        # model_type corresponds to classification
+        self._mdl.classification = MDLClassification(model_header.model_type)
+        self._mdl.animation_scale = model_header.anim_scale
 
         self._load_names(model_header)
         self._mdl.root = self._load_node(model_header.geometry.root_node_offset)
@@ -1751,6 +1784,16 @@ class MDLBinaryReader:
         node.orientation = bin_node.header.orientation
         node.node_type = MDLNodeType.DUMMY
 
+        # Check for AABB flag - nodes with AABB flag should be marked as AABB type
+        # A node can have both MESH and AABB flags (walkmesh with visible geometry)
+        if bin_node.header.type_id & MDLNodeFlags.AABB:
+            node.node_type = MDLNodeType.AABB
+            # TODO: Read AABB/walkmesh data from binary when AABB flag is set
+            # For now, create empty walkmesh to preserve the AABB node type
+            from pykotor.resource.formats.mdl.mdl_data import MDLWalkmesh
+            if node.aabb is None:
+                node.aabb = MDLWalkmesh()
+
         if bin_node.trimesh is not None:
             node.mesh = MDLMesh()
             node.node_type = MDLNodeType.TRIMESH
@@ -1781,29 +1824,44 @@ class MDLBinaryReader:
             # Preserve vertex_count even if the MDL vertex table wasn't readable.
             vcount = bin_node.trimesh.vertex_count
             node.mesh.vertex_positions = []
-            if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
+            
+            # If vertices were read by read_extra, use them directly
+            if bin_node.trimesh.vertices and len(bin_node.trimesh.vertices) == vcount:
+                node.mesh.vertex_positions = bin_node.trimesh.vertices
+            elif bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
+                # Read from MDX
                 mdx_data_offset: int = bin_node.trimesh.mdx_data_offset
                 mdx_data_block_size: int = bin_node.trimesh.mdx_data_size
-                for i in range(vcount):
-                    self._reader_ext.seek(mdx_data_offset + i * mdx_data_block_size + bin_node.trimesh.mdx_vertex_offset)
-                    x, y, z = (
-                        self._reader_ext.read_single(),
-                        self._reader_ext.read_single(),
-                        self._reader_ext.read_single(),
-                    )
-                    node.mesh.vertex_positions.append(Vector3(x, y, z))
+                if mdx_data_offset not in (0, 0xFFFFFFFF) and mdx_data_block_size > 0 and vcount > 0:
+                    for i in range(vcount):
+                        seek_pos = mdx_data_offset + i * mdx_data_block_size + bin_node.trimesh.mdx_vertex_offset
+                        if seek_pos < self._reader_ext.size():
+                            self._reader_ext.seek(seek_pos)
+                            x, y, z = (
+                                self._reader_ext.read_single(),
+                                self._reader_ext.read_single(),
+                                self._reader_ext.read_single(),
+                            )
+                            node.mesh.vertex_positions.append(Vector3(x, y, z))
             else:
-                # Prefer the MDL vertex table if present; otherwise fall back to reading it directly.
-                if bin_node.trimesh.vertices:
-                    node.mesh.vertex_positions = bin_node.trimesh.vertices
-                elif vcount > 0 and bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
+                # Read from MDL vertex table
+                if vcount > 0 and bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
                     # `read_extra` might have skipped vertices due to a conservative bounds check;
                     # try again here using the advertised vertex_count.
-                    if bin_node.trimesh.vertices_offset + (vcount * 12) <= self._reader.size():
+                    vertices_bytes = vcount * 12
+                    if bin_node.trimesh.vertices_offset + vertices_bytes <= self._reader.size():
                         self._reader.seek(bin_node.trimesh.vertices_offset)
                         node.mesh.vertex_positions = [self._reader.read_vector3() for _ in range(vcount)]
-                if not node.mesh.vertex_positions and vcount > 0:
-                    node.mesh.vertex_positions = [Vector3.from_null() for _ in range(vcount)]
+                    elif bin_node.trimesh.vertices:
+                        # Use whatever vertices were read by read_extra, even if incomplete
+                        node.mesh.vertex_positions = bin_node.trimesh.vertices
+                elif bin_node.trimesh.vertices:
+                    # Use vertices read by read_extra
+                    node.mesh.vertex_positions = bin_node.trimesh.vertices
+                    
+            # Fallback: create null vertices if we couldn't read any
+            if not node.mesh.vertex_positions and vcount > 0:
+                node.mesh.vertex_positions = [Vector3.from_null() for _ in range(vcount)]
 
             if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.NORMAL) and self._reader_ext:
                 node.mesh.vertex_normals = []
@@ -1867,6 +1925,14 @@ class MDLBinaryReader:
                 packed = bin_face.material
                 face.material = packed & 0x1F
                 face.smoothgroup = packed >> 5
+
+            # Preserve inverted_counters and indices arrays for roundtrip compatibility
+            if bin_node.trimesh.inverted_counters:
+                node.mesh.inverted_counters = bin_node.trimesh.inverted_counters.copy()
+            if bin_node.trimesh.indices_counts:
+                node.mesh.indices_counts = bin_node.trimesh.indices_counts.copy()
+            if bin_node.trimesh.indices_offsets:
+                node.mesh.indices_offsets = bin_node.trimesh.indices_offsets.copy()
 
             # Deterministically derive binary-only face payload from mesh geometry so
             # binary and ASCII parse paths converge (no ASCII syntax extensions).
@@ -2167,16 +2233,27 @@ class MDLBinaryWriter:
             bin_node.trimesh.vertex_count = len(mdl_node.mesh.vertex_positions)
             bin_node.trimesh.vertices = mdl_node.mesh.vertex_positions
 
-            # These index/count tables are not required by the current reader and are intentionally omitted
-            # from the written node payload to keep offsets stable across roundtrips.
-            bin_node.trimesh.indices_counts = []
-            bin_node.trimesh.indices_counts_count = bin_node.trimesh.indices_counts_count2 = 0
+            # Preserve indices arrays and inverted_counters if they were read from the original binary
+            # These are needed for MDLOps compatibility
+            if hasattr(mdl_node.mesh, "inverted_counters") and mdl_node.mesh.inverted_counters:
+                bin_node.trimesh.inverted_counters = list(mdl_node.mesh.inverted_counters)
+                bin_node.trimesh.counters_count = bin_node.trimesh.counters_count2 = len(bin_node.trimesh.inverted_counters)
+            else:
+                # If not preserved, use empty arrays (MDLOps will regenerate them)
+                bin_node.trimesh.inverted_counters = []
+                bin_node.trimesh.counters_count = bin_node.trimesh.counters_count2 = 0
 
-            bin_node.trimesh.indices_offsets = []
-            bin_node.trimesh.indices_offsets_count = bin_node.trimesh.indices_offsets_count2 = 0
-
-            bin_node.trimesh.inverted_counters = []
-            bin_node.trimesh.counters_count = bin_node.trimesh.counters_count2 = 0
+            # Preserve indices arrays if available from original binary
+            if hasattr(mdl_node.mesh, "indices_counts") and mdl_node.mesh.indices_counts:
+                bin_node.trimesh.indices_counts = list(mdl_node.mesh.indices_counts)
+            else:
+                bin_node.trimesh.indices_counts = []
+            if hasattr(mdl_node.mesh, "indices_offsets") and mdl_node.mesh.indices_offsets:
+                bin_node.trimesh.indices_offsets = list(mdl_node.mesh.indices_offsets)
+            else:
+                bin_node.trimesh.indices_offsets = []
+            bin_node.trimesh.indices_counts_count = bin_node.trimesh.indices_counts_count2 = len(bin_node.trimesh.indices_counts)
+            bin_node.trimesh.indices_offsets_count = bin_node.trimesh.indices_offsets_count2 = len(bin_node.trimesh.indices_offsets)
 
             bin_node.trimesh.faces_count = bin_node.trimesh.faces_count2 = len(mdl_node.mesh.faces)
             for face in mdl_node.mesh.faces:
