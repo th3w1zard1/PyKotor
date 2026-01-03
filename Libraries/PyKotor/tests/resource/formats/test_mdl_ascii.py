@@ -16,13 +16,20 @@ Test files are located in Libraries/PyKotor/tests/test_files/mdl/
 from __future__ import annotations
 
 import io
+import os
+import re
 import shutil
 import subprocess
 import tempfile
+import time
 import unittest
 from pathlib import Path
 
+import pytest
+
 from pykotor.common.misc import Color
+from pykotor.extract.chitin import Chitin
+from pykotor.extract.file import FileResource
 from pykotor.resource.formats.mdl import (
     MDL,
     MDLAnimation,
@@ -2404,8 +2411,8 @@ class TestMDLRoundTripAsciiToBinaryToAscii(unittest.TestCase):
 
     def test_roundtrip_character_model_reverse(self):
         """Test ASCII -> Binary -> ASCII round-trip with character model."""
-        mdl_path = self.test_dir / self.test_models["character"][0]
-        mdx_path = self.test_dir / self.test_models["character"][1]
+        mdl_path: Path = self.test_dir / self.test_models["character"][0]
+        mdx_path: Path = self.test_dir / self.test_models["character"][1]
 
         if not mdl_path.exists():
             self.skipTest("Test file c_dewback.mdl not found")
@@ -2420,12 +2427,12 @@ class TestMDLRoundTripAsciiToBinaryToAscii(unittest.TestCase):
         write_mdl(mdl_from_ascii_original, mdl_bytes, ResourceType.MDL, target_ext=mdx_bytes)
 
         # Decompile with MDLOps back to ASCII (authoritative) and compare parsed models.
-        ascii_bytes_round = _run_mdlops_decompile_bytes(
+        ascii_bytes_round: bytes = _run_mdlops_decompile_bytes(
             mdl_bytes=bytes(mdl_bytes),
             mdx_bytes=bytes(mdx_bytes),
             stem="c_dewback",
         )
-        mdl_from_ascii_round = read_mdl(ascii_bytes_round, file_format=ResourceType.MDL_ASCII)
+        mdl_from_ascii_round: MDL = read_mdl(ascii_bytes_round, file_format=ResourceType.MDL_ASCII)
 
         compare_mdl_basic(mdl_from_ascii_original, mdl_from_ascii_round, self, "Character model: MDLOps ASCII compare")
         compare_mdl_nodes(mdl_from_ascii_original, mdl_from_ascii_round, self, "Character model: MDLOps ASCII compare")
@@ -2483,4 +2490,220 @@ class TestMDLEqualityAndHashing(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# ============================================================================
+# Installation-Backed Tests: Roundtrip everything in models.bif (K1/K2)
+# ============================================================================
+
+
+def _safe_filename(stem: str) -> str:
+    stem = stem.strip().replace(" ", "_")
+    stem = re.sub(r"[^A-Za-z0-9_.-]+", "_", stem)
+    return stem or "mdl"
+
+
+def _collect_mdl_entries_for_game(game_label: str, game_root: Path) -> list[tuple[str, FileResource, FileResource | None]]:
+    """Collect all MDL entries from models.bif for a given game installation.
+
+    Returns:
+        List of tuples: (resref, mdl_resource, mdx_resource_or_none)
+    """
+    chitin = Chitin(key_path=game_root / "chitin.key", base_path=game_root)
+
+    models_bif_key = next(
+        (
+            bif_key
+            for bif_key in chitin._resource_dict.keys()  # noqa: SLF001 - test-only introspection
+            if Path(bif_key).name.lower() == "models.bif"
+        ),
+        None,
+    )
+    if not models_bif_key:
+        return []
+
+    models_resources: list[FileResource] = chitin._resource_dict[models_bif_key]  # noqa: SLF001 - test-only introspection
+    if not models_resources:
+        return []
+
+    by_key: dict[tuple[str, ResourceType], FileResource] = {}
+    for fileres in models_resources:
+        by_key[(fileres.resname(), fileres.restype())] = fileres
+
+    mdl_entries: list[FileResource] = [r for r in models_resources if r.restype() == ResourceType.MDL]
+    if not mdl_entries:
+        return []
+
+    mdl_entries = sorted(mdl_entries, key=lambda r: r.resname().lower())
+    limit = int(os.environ.get("PYKOTOR_MODELS_BIF_LIMIT", "0"))
+    if limit > 0:
+        mdl_entries = mdl_entries[:limit]
+
+    result: list[tuple[str, FileResource, FileResource | None]] = []
+    for mdl_res in mdl_entries:
+        resref = mdl_res.resname()
+        mdx_res = by_key.get((resref, ResourceType.MDX))
+        result.append((resref, mdl_res, mdx_res))
+
+    return result
+
+
+def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
+    """Parametrize test_models_bif_roundtrip_eq_hash_pytest with MDL entries.
+
+    This generates test cases for each (game_install_root, mdl_entry) combination.
+    Since game_install_root is already parametrized by conftest, pytest will create
+    a cartesian product. The test function filters to only run matching combinations.
+    """
+    if "mdl_entry" not in metafunc.fixturenames:
+        return
+
+    # Get game install roots using the same logic as conftest
+    # We duplicate the logic here to avoid import issues at collection time
+    roots: list[tuple[str, Path]] = []
+    seen: set[str] = set()
+
+    def _add(label: str, value: str | None):
+        if not value:
+            return
+        p = Path(value).expanduser()
+        key = str(p.resolve()) if p.exists() else str(p)
+        if key in seen:
+            return
+        seen.add(key)
+        roots.append((label, p))
+
+    _add("k1", os.environ.get("K1_PATH"))
+    _add("k2", os.environ.get("TSL_PATH") or os.environ.get("K2_PATH"))
+
+    if not roots:
+        metafunc.parametrize(
+            "mdl_entry",
+            [
+                pytest.param(
+                    None,
+                    marks=pytest.mark.skip(
+                        reason="Requires K1_PATH and/or TSL_PATH/K2_PATH to be set to a game installation root.",
+                    ),
+                    id="missing-install",
+                ),
+            ],
+        )
+        return
+
+    # Collect MDL entries for each game install root
+    # We create params that include the game_label so the test can filter
+    params: list = []
+    for game_label, game_root in roots:
+        mdl_entries = _collect_mdl_entries_for_game(game_label, game_root)
+        if not mdl_entries:
+            # Add a skip marker if no MDL entries found
+            params.append(
+                pytest.param(
+                    (game_label, game_root, None, None, None),
+                    marks=pytest.mark.skip(
+                        reason=f"{game_label}: no MDL entries found in models.bif",
+                    ),
+                    id=f"{game_label}-no-models",
+                ),
+            )
+        else:
+            for resref, mdl_res, mdx_res in mdl_entries:
+                safe_resref = _safe_filename(resref)
+                params.append(
+                    pytest.param(
+                        (game_label, game_root, resref, mdl_res, mdx_res),
+                        id=f"{game_label}-{safe_resref}",
+                    ),
+                )
+
+    metafunc.parametrize("mdl_entry", params)
+
+
+def test_models_bif_roundtrip_eq_hash_pytest(
+    game_install_root: tuple[str, Path],
+    mdl_entry: tuple[str, Path, str | None, FileResource | None, FileResource | None] | None,
+    tmp_path: Path,
+):
+    """Roundtrip each MDL in models.bif using Chitin (KEY/BIF) enumeration (pytest-parametrized).
+
+    This test is parametrized by:
+    - `game_install_root` from `Libraries/PyKotor/tests/conftest.py`
+    - `mdl_entry` from `pytest_generate_tests` in this module
+
+    Each model gets its own test case with the model name as a suffix.
+
+    Pipeline per resref:
+      - Read binary MDL (+ optional MDX) from models.bif via Chitin
+      - Parse binary -> MDL object
+      - Write ASCII to a temporary file (disk)
+      - Read ASCII -> MDL object
+      - Validate __eq__/__hash__ + deep component-wise equality
+      - Convert back to binary and re-parse, validating stability
+    """
+    if mdl_entry is None:
+        pytest.skip("No MDL entry provided")
+
+    game_label_from_entry, game_root_from_entry, resref, mdl_res, mdx_res = mdl_entry
+    game_label, game_root = game_install_root
+
+    # Verify game_install_root matches mdl_entry (skip if mismatch due to cartesian product)
+    if game_label != game_label_from_entry or game_root != game_root_from_entry:
+        pytest.skip(f"Mismatch between game_install_root ({game_label}) and mdl_entry ({game_label_from_entry})")
+
+    # Handle skip case where no MDL entries were found
+    if resref is None or mdl_res is None:
+        pytest.skip("No MDL entry provided")
+
+    eqhash_budget_s = float(os.environ.get("PYKOTOR_MODELS_BIF_EQHASH_BUDGET_S", "2.0"))
+
+    out_dir: Path = tmp_path / f"pykotor-models-bif-{game_label}"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    mdl_bytes = mdl_res.data()
+    mdx_bytes = mdx_res.data() if mdx_res is not None else b""
+
+    mdl_bin = read_mdl(
+        mdl_bytes,
+        source_ext=mdx_bytes if mdx_bytes else None,
+        file_format=ResourceType.MDL,
+    )
+
+    ascii_bytes = bytes_mdl(mdl_bin, ResourceType.MDL_ASCII)
+    ascii_path = out_dir / f"{_safe_filename(resref)}.mdl.ascii"
+    ascii_path.write_bytes(ascii_bytes)
+
+    mdl_ascii = read_mdl(ascii_path.read_bytes(), file_format=ResourceType.MDL_ASCII)
+
+    assert mdl_bin == mdl_ascii, "binary->ascii parse mismatch (MDL __eq__)"
+    assert hash(mdl_bin) == hash(mdl_ascii), "MDL __hash__ must align with __eq__"
+    assert {mdl_bin} == {mdl_ascii}, "MDL must be usable in hash-based collections"
+    _compare_components(pytest, mdl_bin, mdl_ascii, context=f"{game_label}:{resref}:binary_vs_ascii")  # type: ignore[arg-type]
+
+    out_mdl = bytearray()
+    out_mdx = bytearray()
+    write_mdl(mdl_ascii, out_mdl, ResourceType.MDL, target_ext=out_mdx)
+
+    mdl_bin_round = read_mdl(
+        bytes(out_mdl),
+        source_ext=bytes(out_mdx) if out_mdx else None,
+        file_format=ResourceType.MDL,
+    )
+
+    assert mdl_bin == mdl_bin_round, "binary->ascii->binary parse mismatch (MDL __eq__)"
+    assert hash(mdl_bin) == hash(mdl_bin_round), "MDL hash changed after roundtrip"
+    _compare_components(pytest, mdl_bin, mdl_bin_round, context=f"{game_label}:{resref}:binary_vs_binary_round")  # type: ignore[arg-type]
+
+    t0 = time.perf_counter()
+    for _ in range(3):
+        assert mdl_bin == mdl_ascii
+        assert mdl_bin == mdl_bin_round
+        _ = hash(mdl_bin)
+        _ = hash(mdl_ascii)
+        _ = hash(mdl_bin_round)
+    elapsed = time.perf_counter() - t0
+    assert elapsed < eqhash_budget_s, (
+        f"eq/hash perf regression for {game_label}:{resref} ({elapsed:.3f}s > {eqhash_budget_s:.3f}s). "
+        "Tune with PYKOTOR_MODELS_BIF_EQHASH_BUDGET_S."
+    )
 
