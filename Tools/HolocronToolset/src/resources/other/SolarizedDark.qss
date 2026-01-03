@@ -1,1 +1,50 @@
+/* Solarized Dark Theme */
 
+QWidget {
+    background-color: #002B36;
+    color: #93A1A1;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+    selection-background-color: #073642;
+    selection-color: #268BD2;
+}
+
+QPushButton {
+    background-color: #073642;
+    color: #93A1A1;
+    border: 2px solid #586E75;
+    border-radius: 6px;
+    padding: 8px 16px;
+}
+
+QPushButton:hover {
+    background-color: #073642;
+    color: #268BD2;
+}
+
+QLineEdit, QTextEdit {
+    background-color: #073642;
+    color: #93A1A1;
+    border: 2px solid #586E75;
+    border-radius: 6px;
+    padding: 8px;
+}
+
+QComboBox {
+    background-color: #073642;
+    color: #93A1A1;
+    border: 2px solid #586E75;
+    border-radius: 6px;
+}
+
+QTabBar::tab {
+    background-color: #073642;
+    color: #93A1A1;
+    border: 2px solid #586E75;
+    border-radius: 6px;
+    padding: 8px 16px;
+}
+
+QTabBar::tab:selected {
+    background-color: #073642;
+    color: #268BD2;
+} 

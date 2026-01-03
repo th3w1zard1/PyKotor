@@ -1,1 +1,12 @@
-
+{
+	"folders": [
+		{
+			"name": "HoloPatcher",
+			"path": ".",
+		},
+		{
+			"name": "PyKotor",
+			"path": "../../Libraries/PyKotor"
+		},
+	],
+}

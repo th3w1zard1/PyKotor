@@ -1,1 +1,12 @@
-
+# NOTE: pykotor is provided via PYTHONPATH for development.
+# For standalone installation, these are specified in pyproject.toml dependencies.
+setuptools>=67.8.0
+deep_translator==1.11.4
+deepl-cli==1.1.1
+requests>=2.25.0,<2.32.0; python_version<"3.9"
+requests>=2.25.0; python_version>="3.9"
+opencv-contrib-python==4.12.0.88
+notify-py==0.3.43
+playwright>=1.30.0,<1.58
+pyquery==2.0.1
+arabic-reshaper==3.0.0
