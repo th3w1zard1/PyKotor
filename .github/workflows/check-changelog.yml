@@ -25,8 +25,8 @@ jobs:
               pull_number: context.issue.number,
             });
 
-            const hasChangelog = files.some(file => 
-              file.filename.includes('CHANGELOG') || 
+            const hasChangelog = files.some(file =>
+              file.filename.includes('CHANGELOG') ||
               file.filename.includes('changelog') ||
               file.filename.includes('RELEASE_NOTES')
             );
@@ -43,4 +43,3 @@ jobs:
                 body: `📝 **Changelog Entry Reminder**\n\nThis PR doesn't appear to include a changelog entry. Please consider adding one if this change affects users.\n\nChangelog files:\n- \`CHANGELOG.md\`\n- \`RELEASE_NOTES.md\`\n\nIf this is a chore, documentation, or CI-only change, you can ignore this message.`,
               });
             }
-

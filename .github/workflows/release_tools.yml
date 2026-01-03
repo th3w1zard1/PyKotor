@@ -85,31 +85,31 @@ jobs:
                 4. src/<toolnamelower>/__init__.py (contains __version__)
               """
               src_dir = tool_dir / "src" / tool_name_lower
-              
+
               # Check for config.py directly in src/<tool>/
               config_py = src_dir / "config.py"
               if config_py.exists():
                   return config_py
-              
+
               # Check for config/config_info.py
               config_info_py = src_dir / "config" / "config_info.py"
               if config_info_py.exists():
                   return config_info_py
-              
+
               # Check for __main__.py with CURRENT_VERSION (e.g. KotorDiff, Translator)
               main_py = src_dir / "__main__.py"
               if main_py.exists():
                   content = main_py.read_text()
                   if 'CURRENT_VERSION' in content:
                       return main_py
-              
+
               # Check for __init__.py with __version__ (e.g. Tools/KotorDiff/src/kotordiff/__init__.py)
               init_py = src_dir / "__init__.py"
               if init_py.exists():
                   content = init_py.read_text()
                   if '__version__' in content:
                       return init_py
-              
+
               return None
 
           def extract_version_from_config(config_path: Path) -> tuple[str | None, str]:
@@ -119,22 +119,22 @@ jobs:
               """
               try:
                   content = config_path.read_text()
-                  
+
                   # Look for "currentVersion": "X.X.X" (JSON-style in Python dict)
                   match = re.search(r'"currentVersion":\s*"([^"]+)"', content)
                   if match:
                       return match.group(1), "currentVersion"
-                  
+
                   # Look for CURRENT_VERSION = "X.X.X"
                   match = re.search(r'CURRENT_VERSION\s*=\s*["\']([^"\']+)["\']', content)
                   if match:
                       return match.group(1), "CURRENT_VERSION"
-                  
+
                   # Look for __version__ = "X.X.X" (KitGenerator and others)
                   match = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', content)
                   if match:
                       return match.group(1), "__version__"
-                  
+
                   return None, ""
               except Exception as e:
                   print(f"Error reading {config_path}: {e}")
@@ -163,17 +163,17 @@ jobs:
               etc.
               """
               name_lower = tool_name.lower()
-              
+
               # Handle known special cases for backward compatibility
               special_mappings = {
                   "holocrontoolset": "toolset",
                   "holopatcher": "patcher",
                   "batchpatcher": "translator",  # Legacy name
               }
-              
+
               if name_lower in special_mappings:
                   return special_mappings[name_lower]
-              
+
               # Default: use the tool name in lowercase
               return name_lower
 
@@ -181,20 +181,20 @@ jobs:
               """Get all possible tag patterns for a tool (for matching existing tags)."""
               suffix = derive_tag_suffix(tool_name)
               patterns = [suffix]
-              
+
               # Add aliases for backward compatibility
               if tool_name.lower() == "holopatcher":
                   patterns.append("holopatcher")
               elif tool_name.lower() == "batchpatcher":
                   patterns.append("batchpatcher")
-              
+
               return patterns
 
           def get_latest_release_version(tool_name: str) -> tuple[str | None, str | None]:
               """Get the latest release tag and version for a tool from git tags."""
               patterns = get_tag_patterns(tool_name)
               all_tags = []
-              
+
               for pattern in patterns:
                   try:
                       result = subprocess.run(
@@ -205,13 +205,13 @@ jobs:
                       all_tags.extend(tags)
                   except Exception as e:
                       print(f"Error getting tags for {tool_name} pattern {pattern}: {e}")
-              
+
               if not all_tags:
                   return None, None
-              
+
               # Remove duplicates
               all_tags = list(set(all_tags))
-              
+
               # Parse versions from tags (format: v{version}-{suffix})
               versions = []
               for tag in all_tags:
@@ -219,17 +219,17 @@ jobs:
                   match = re.match(r'v([\d.]+(?:a\d+|b\d+|rc\d+)?)-\w+', tag)
                   if match:
                       versions.append((tag, match.group(1)))
-              
+
               if not versions:
                   return None, None
-              
+
               # Sort by version using packaging library
               try:
                   from packaging import version as pkg_version
                   versions.sort(key=lambda x: pkg_version.parse(x[1]), reverse=True)
               except:
                   versions.sort(key=lambda x: x[1], reverse=True)
-              
+
               return versions[0]  # (tag, version)
 
           def version_is_newer(file_version: str, released_version: str | None) -> bool:
@@ -238,7 +238,7 @@ jobs:
                   return True  # No release exists
               if not file_version:
                   return False
-              
+
               try:
                   from packaging import version as pkg_version
                   return pkg_version.parse(file_version) > pkg_version.parse(released_version)
@@ -263,7 +263,7 @@ jobs:
                   "install_vc_redist_2015": False,
                   "install_vc_redist_2019": False,
               }
-              
+
               # Check requirements.txt for Qt dependencies
               req_file = tool_dir / "requirements.txt"
               if req_file.exists():
@@ -273,67 +273,67 @@ jobs:
                       features["qt_versions"] = ["PyQt5"]  # Default to PyQt5
                       if "pyqt6" in content:
                           features["qt_versions"].append("PyQt6")
-              
+
               # Check if there's a deps script (indicates more complex dependencies)
               deps_script = Path(f"compile/deps_{tool_name_lower}.ps1")
               if deps_script.exists():
                   features["install_vc_redist_2015"] = True
                   features["install_vc_redist_2019"] = True
-              
+
               return features
 
           def find_compile_script(tool_name: str, tool_name_lower: str) -> str | None:
               """Find the compile script for a tool."""
               compile_dir = Path("compile")
-              
+
               # Try various naming patterns
               patterns = [
                   f"compile_{tool_name_lower}.ps1",
                   f"compile_{tool_name}.ps1",
                   f"compile_{tool_name_lower.replace('_', '')}.ps1",
               ]
-              
+
               # Special cases for naming mismatches between folder and script names
               special_mappings = {
                   "batchpatcher": ["compile_batchpatcher.ps1"],
                   "translator": ["compile_batchpatcher.ps1"],  # Translator folder uses batchpatcher script
               }
-              
+
               if tool_name_lower in special_mappings:
                   for script_name in special_mappings[tool_name_lower]:
                       patterns.insert(0, script_name)
-              
+
               for pattern in patterns:
                   script_path = compile_dir / pattern
                   if script_path.exists():
                       return str(script_path)
-              
+
               return None
 
           def find_deps_script(tool_name_lower: str) -> str | None:
               """Find the deps script for a tool if it exists."""
               compile_dir = Path("compile")
-              
+
               patterns = [
                   f"deps_{tool_name_lower}.ps1",
                   f"deps_{tool_name_lower.replace('_', '')}.ps1",
               ]
-              
+
               # Special cases for naming mismatches between folder and script names
               special_mappings = {
                   "translator": ["deps_batchpatcher.ps1"],  # Translator folder uses batchpatcher deps
                   "holocrontoolset": ["deps_toolset.ps1"],  # Toolset uses deps_toolset.ps1
               }
-              
+
               if tool_name_lower in special_mappings:
                   for script_name in special_mappings[tool_name_lower]:
                       patterns.insert(0, script_name)
-              
+
               for pattern in patterns:
                   script_path = compile_dir / pattern
                   if script_path.exists():
                       return str(script_path)
-              
+
               return None
 
           # ===================
@@ -362,51 +362,51 @@ jobs:
           for tool_dir in sorted(tools_dir.iterdir()):
               if not tool_dir.is_dir():
                   continue
-              
+
               tool_name = tool_dir.name
               tool_name_lower = tool_name.lower()
-              
+
               # Apply tool filter if specified
               if tool_filter and tool_name.lower() != tool_filter.lower():
                   continue
-              
+
               print(f"=== Checking {tool_name} ===")
-              
+
               # Check 1: pyproject.toml must exist
               pyproject = tool_dir / "pyproject.toml"
               if not pyproject.exists():
                   print(f"  SKIP: No pyproject.toml")
                   continue
-              
+
               # Check 2: Find config file (src/<tool>/config.py or src/<tool>/config/config_info.py)
               config_file = find_config_file(tool_dir, tool_name_lower)
               if not config_file:
                   print(f"  SKIP: No config file found at src/{tool_name_lower}/config.py or src/{tool_name_lower}/config/config_info.py")
                   continue
-              
+
               print(f"  Config file: {config_file}")
-              
+
               # Check 3: Find compile script
               compile_script = find_compile_script(tool_name, tool_name_lower)
               if not compile_script:
                   print(f"  SKIP: No compile script found in ./compile/")
                   continue
-              
+
               print(f"  Compile script: {compile_script}")
-              
+
               # Extract version from config
               file_version, version_key = extract_version_from_config(config_file)
               print(f"  Config version: {file_version or '(not found)'} (key: {version_key})")
-              
+
               # Get latest release
               latest_tag, released_version = get_latest_release_version(tool_name)
               print(f"  Latest release: {latest_tag or '(none)'} (version: {released_version or 'N/A'})")
-              
+
               # Determine if we should build this tool
               should_build = False
               target_tag = None
               target_version = None
-              
+
               if is_release_trigger:
                   # Release trigger: build ONLY if tag matches this tool
                   if tag_matches_tool(release_tag, tool_name):
@@ -436,13 +436,13 @@ jobs:
                       print(f"  -> WILL BUILD (version {file_version} > {released_version or 'none'})")
                   else:
                       print(f"  -> SKIP (version {file_version} not newer than {released_version})")
-              
+
               if should_build and target_version:
                   # Detect tool features
                   features = detect_tool_features(tool_dir, tool_name_lower)
                   deps_script = find_deps_script(tool_name_lower)
                   latest_version_key = extract_latest_version_key(config_file, tool_name_lower)
-                  
+
                   tool_info = {
                       "name": tool_name,
                       "name_lower": tool_name_lower,
@@ -462,7 +462,7 @@ jobs:
                       "is_release_trigger": is_release_trigger,
                   }
                   tools_to_build.append(tool_info)
-              
+
               print()
 
           # Output results
@@ -550,7 +550,7 @@ jobs:
 
           if [ -f "$CONFIG_FILE" ]; then
             echo "Updating $CONFIG_FILE with $VERSION_KEY to $VERSION (pre-build)"
-            
+
             # Update based on version key pattern
             case "$VERSION_KEY" in
               "currentVersion")
@@ -578,7 +578,7 @@ jobs:
                 sed -i "s/__version__ = \"[^\"]*\"/__version__ = \"$VERSION\"/" "$CONFIG_FILE"
                 ;;
             esac
-            
+
             echo "Config file after update:"
             head -30 "$CONFIG_FILE" || true
           else
@@ -810,12 +810,12 @@ jobs:
             $env:LD_LIBRARY_PATH = "/usr/local/lib:$env:LD_LIBRARY_PATH"
             $toolName = "${{ matrix.tool.name }}"
             $venvName = ".venv_${toolName}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
-            
+
             . ./install_python_venv.ps1 -noprompt -venv_name $venvName -force_python_version ${{ matrix.python-version }}
             Write-Host "Python executable path: $pythonExePath"
-            
+
             & $pythonExePath -m pip install --upgrade pip
-            
+
             # Install pyinstaller with appropriate version for the Python version
             if ("${{ runner.os }}" -eq "Windows") {
               if ("${{ matrix.python-version }}" -eq "3.12") {
@@ -829,7 +829,7 @@ jobs:
             } else {
               pip install pyinstaller -U --prefer-binary
             }
-            
+
             # Run tool-specific deps script if it exists
             $depsScript = "${{ matrix.tool.deps_script }}"
             if ($depsScript -and (Test-Path -LiteralPath $depsScript -ErrorAction SilentlyContinue)) {
@@ -847,13 +847,13 @@ jobs:
                 exit 1
               }
             }
-            
+
             # Additional Qt tool setup
             if ("${{ matrix.tool.has_qt }}" -eq "true") {
               pip install "setuptools==69.5.1"  # 70.0.0+ breaks pyinstaller
               pip install qdarkstyle -U
             }
-            
+
             Add-Content -Path $env:GITHUB_OUTPUT -Value "success=true"
           } catch {
             Write-Host -ForegroundColor Red "Error: $($_.Exception.Message)"
@@ -1122,7 +1122,7 @@ jobs:
               name = "${{ matrix.tool.name }} v${{ matrix.tool.version }}"
               draft = $true
             } | ConvertTo-Json
-            
+
             $createUri = "https://api.github.com/repos/${{ github.repository }}/releases"
             $response = Invoke-RestMethod -Uri $createUri -Method Post -Headers $headers -Body $body -ContentType "application/json"
             $releaseId = $response.id
@@ -1173,7 +1173,7 @@ jobs:
                 Write-Host "Failed to upload $fileName : $($_.Exception.Message)"
                 Write-Host -ForegroundColor Red "Detailed Error Report:"
                 Write-Host -ForegroundColor Red "Message: $($_.Exception.Message)"
-                
+
                 # Attempt to provide a more detailed location of the error
                 if ($_.InvocationInfo -and $_.InvocationInfo.MyCommand) {
                     Write-Host -ForegroundColor Red "Command Name: $($_.InvocationInfo.MyCommand.Name)"
@@ -1183,7 +1183,7 @@ jobs:
                 } else {
                     Write-Host -ForegroundColor Red "No invocation information available."
                 }
-            
+
                 # Extract and display the script stack trace if available
                 if ($_.ScriptStackTrace) {
                     Write-Host -ForegroundColor Red "Script Stack Trace:"
@@ -1196,7 +1196,7 @@ jobs:
           } catch {
             Write-Host -ForegroundColor Red "Detailed Error Report:"
             Write-Host -ForegroundColor Red "Message: $($_.Exception.Message)"
-            
+
             # Attempt to provide a more detailed location of the error
             if ($_.InvocationInfo -and $_.InvocationInfo.MyCommand) {
                 Write-Host -ForegroundColor Red "Command Name: $($_.InvocationInfo.MyCommand.Name)"
@@ -1251,23 +1251,23 @@ jobs:
 
           if [ -n "$LATEST_KEY" ] && [ -f "$CONFIG_FILE" ]; then
             echo "Updating $LATEST_KEY to $VERSION in $CONFIG_FILE"
-            
+
             # Update the latest version key
             sed -i "s/\"$LATEST_KEY\": \"[^\"]*\"/\"$LATEST_KEY\": \"$VERSION\"/" "$CONFIG_FILE"
-            
+
             # Also update beta version key if it exists (replace "Latest" with "LatestBeta")
             BETA_KEY=$(echo "$LATEST_KEY" | sed 's/Latest/LatestBeta/')
             if grep -q "\"$BETA_KEY\"" "$CONFIG_FILE"; then
               sed -i "s/\"$BETA_KEY\": \"[^\"]*\"/\"$BETA_KEY\": \"$VERSION\"/" "$CONFIG_FILE"
             fi
-            
+
             # Update notes if release has body
             NOTES="${{ github.event.release.body }}"
             if [ -n "$NOTES" ]; then
               NOTES_KEY=$(echo "$LATEST_KEY" | sed 's/Version/Notes/')
               BETA_NOTES_KEY=$(echo "$NOTES_KEY" | sed 's/Latest/LatestBeta/')
               ESCAPED_NOTES=$(echo "$NOTES" | head -n 1 | sed 's/[&/\]/\\&/g' | sed 's/"/\\"/g')
-              
+
               if grep -q "\"$NOTES_KEY\"" "$CONFIG_FILE"; then
                 sed -i "s/\"$NOTES_KEY\": \"[^\"]*\"/\"$NOTES_KEY\": \"$ESCAPED_NOTES\"/" "$CONFIG_FILE"
               fi
@@ -1275,10 +1275,10 @@ jobs:
                 sed -i "s/\"$BETA_NOTES_KEY\": \"[^\"]*\"/\"$BETA_NOTES_KEY\": \"$ESCAPED_NOTES\"/" "$CONFIG_FILE"
               fi
             fi
-            
+
             echo "Updated config:"
             grep -E "(LatestVersion|LatestBetaVersion)" "$CONFIG_FILE" || true
-            
+
             git add "$CONFIG_FILE"
             if ! git diff --staged --quiet; then
               git commit -m "chore($TOOL_NAME): Update latest version to $VERSION (post-release)"

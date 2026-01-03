@@ -29,7 +29,7 @@ jobs:
             const body = context.payload.issue?.body || '';
             const labels = [];
             const lcBody = body.toLowerCase();
-            
+
             // Discover tools dynamically from Tools/ (HolocronToolset -> toolset)
             const toolsDir = path.join(process.cwd(), 'Tools');
             let tools = [];
@@ -46,7 +46,7 @@ jobs:
                   build: deriveBuildName(d.name),
                 }));
             }
-            
+
             // Label based on title prefixes
             if (title.startsWith('[BUG]') || title.startsWith('[bug]')) {
               labels.push('bug');
@@ -66,7 +66,7 @@ jobs:
             if (title.startsWith('[SECURITY]') || title.startsWith('[security]')) {
               labels.push('security');
             }
-            
+
             // Label based on package mentions (dynamic tools + known packages)
             const addPackageLabel = (pkg) => labels.push(`package: ${pkg}`);
 
@@ -84,7 +84,7 @@ jobs:
                 addPackageLabel(t.build);
               }
             }
-            
+
             if (labels.length > 0) {
               await github.rest.issues.addLabels({
                 owner: context.repo.owner,
@@ -104,13 +104,13 @@ jobs:
           script: |
             const issue = context.payload.issue;
             if (!issue) return;
-            
+
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: issue.number,
             });
-            
+
             // Check if this is the user's first issue
             const { data: userIssues } = await github.rest.issues.listForRepo({
               owner: context.repo.owner,
@@ -118,9 +118,9 @@ jobs:
               creator: issue.user.login,
               state: 'all',
             });
-            
+
             const isFirstIssue = userIssues.filter(i => i.number < issue.number).length === 0;
-            
+
             if (isFirstIssue && issue.user.type === 'User') {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
@@ -129,4 +129,3 @@ jobs:
                 body: `👋 Welcome to PyKotor, @${issue.user.login}! Thanks for your first issue. We appreciate your contribution! 🎉\n\nPlease make sure to:\n- Check [CONTRIBUTING.md](https://github.com/OldRepublicDevs/PyKotor/blob/master/CONTRIBUTING.md) for guidelines\n- Review the [documentation](https://github.com/OldRepublicDevs/PyKotor/tree/master/docs) if needed\n\nWe'll review your issue soon!`,
               });
             }
-

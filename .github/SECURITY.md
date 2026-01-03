@@ -96,4 +96,3 @@ Security updates will be:
 ## Thank You
 
 We appreciate your help in keeping PyKotor secure. Thank you for responsibly reporting vulnerabilities!
-

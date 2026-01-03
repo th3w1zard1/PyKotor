@@ -34,4 +34,3 @@ jobs:
           pip install pydocstyle
           pydocstyle Libraries/PyKotor/src/pykotor --config=pyproject.toml || true
         continue-on-error: true
-

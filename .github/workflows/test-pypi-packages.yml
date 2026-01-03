@@ -57,18 +57,18 @@ jobs:
         with:
           sparse-checkout: |
             tests/test_pypi
-      
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      
+
       - name: Install system dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y libgl1-mesa-glx libgl1-mesa-dev xvfb
-      
+
       - name: Determine package index
         id: index
         shell: bash
@@ -79,13 +79,13 @@ jobs:
           else
             echo "url=" >> $GITHUB_OUTPUT
           fi
-      
+
       - name: Install package
         run: |
           python -m pip install --upgrade pip
           pip install ${{ matrix.package }} ${{ steps.index.outputs.url }}
         shell: bash
-      
+
       - name: Test import
         run: |
           python -c "
@@ -93,10 +93,10 @@ jobs:
               'pykotor': ['pykotor', 'pykotor.common', 'pykotor.resource', 'pykotor.extract'],
               'pykotorgl': ['pykotor.gl', 'pykotor.gl.scene'],
           }
-          
+
           package = '${{ matrix.package }}'
           imports = package_imports.get(package, [package])
-          
+
           for imp in imports:
               try:
                   __import__(imp)
@@ -105,33 +105,33 @@ jobs:
                   print(f'✗ Failed to import {imp}: {e}')
                   exit(1)
           "
-      
+
       - name: Run basic functionality tests
         run: |
           python -c "
           package = '${{ matrix.package }}'
-          
+
           if package == 'pykotor':
               # Test basic pykotor functionality
               from pykotor.common.language import LocalizedString, Language, Gender
               from pykotor.resource.type import ResourceType
-              
+
               # Test LocalizedString
               ls = LocalizedString.from_english('Hello World')
               assert ls.get(Language.ENGLISH, Gender.MALE) == 'Hello World'
               print('✓ LocalizedString works')
-              
+
               # Test ResourceType
               assert ResourceType.TPC.extension == 'tpc'
               print('✓ ResourceType works')
-              
+
           elif package == 'pykotorgl':
               # Basic GL import test (no rendering without display)
               from pykotor.gl import scene
               print('✓ GL scene module loaded')
-              
+
           # No separate font package.
-          
+
           print(f'✓ All {package} functionality tests passed')
           "
 
@@ -149,12 +149,12 @@ jobs:
           - kotorcli
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      
+
       - name: Determine package index
         id: index
         shell: bash
@@ -165,13 +165,13 @@ jobs:
           else
             echo "url=" >> $GITHUB_OUTPUT
           fi
-      
+
       - name: Install tool
         run: |
           python -m pip install --upgrade pip
           pip install ${{ matrix.tool }} ${{ steps.index.outputs.url }}
         shell: bash
-      
+
       - name: Test CLI entry point
         shell: bash
         run: |
@@ -194,43 +194,43 @@ jobs:
     needs: [test-installation]
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Install all packages
         run: |
           python -m pip install --upgrade pip
-          
+
           SOURCE="${{ inputs.source || 'pypi' }}"
           INDEX=""
           if [[ "$SOURCE" == "testpypi" ]]; then
             INDEX="--index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/"
           fi
-          
+
           # Install core library with all extensions
           pip install "pykotor[all]" $INDEX
         shell: bash
-      
+
       - name: Run integration tests
         run: |
           python -c "
           print('=== PyKotor Integration Test ===')
-          
+
           # Test 1: Core functionality
           print('\\n1. Testing core imports...')
           import pykotor
           from pykotor.common.language import LocalizedString, Language, Gender
           from pykotor.resource.type import ResourceType
           print('   ✓ Core imports successful')
-          
+
           # Test 2: Resource types
           print('\\n2. Testing resource types...')
           for rt in [ResourceType.UTC, ResourceType.UTI, ResourceType.DLG, ResourceType.TPC]:
               print(f'   ✓ {rt.name}: {rt.extension}')
-          
+
           # Test 3: LocalizedString operations
           print('\\n3. Testing LocalizedString...')
           ls = LocalizedString()
@@ -238,7 +238,7 @@ jobs:
           result = ls.get(Language.ENGLISH, Gender.MALE)
           assert result == 'Test String', f'Expected \"Test String\", got \"{result}\"'
           print('   ✓ LocalizedString operations work')
-          
+
           # Test 4: Optional extensions
           print('\\n4. Testing optional extensions...')
           try:
@@ -246,13 +246,13 @@ jobs:
               print('   ✓ PyKotorGL available')
           except ImportError:
               print('   ○ PyKotorGL not installed')
-          
+
           try:
               from pykotor.font import draw
               print('   ✓ PyKotorFont available')
           except ImportError:
               print('   ○ PyKotorFont not installed')
-          
+
           print('\\n=== All integration tests passed ===')
           "
 
@@ -272,7 +272,7 @@ jobs:
           echo "| Tool CLI Tests | ${{ needs.test-tools.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Integration Tests | ${{ needs.test-integration.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           if [[ "${{ needs.test-installation.result }}" == "success" && \
                 "${{ needs.test-tools.result }}" == "success" && \
                 "${{ needs.test-integration.result }}" == "success" ]]; then
@@ -280,4 +280,3 @@ jobs:
           else
             echo "⚠️ **Some tests failed. Please review the logs.**" >> $GITHUB_STEP_SUMMARY
           fi
-

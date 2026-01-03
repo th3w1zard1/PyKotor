@@ -48,4 +48,3 @@ jobs:
           name: benchmark-results-py${{ matrix.python-version }}
           path: benchmark.json
           retention-days: 30
-

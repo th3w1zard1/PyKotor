@@ -48,4 +48,3 @@ jobs:
           name: dependency-report
           path: dependency-report.md
           retention-days: 7
-

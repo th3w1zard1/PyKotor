@@ -127,10 +127,10 @@ runs:
       if: runner.os == 'Windows' && inputs.dry_run != 'true'
       shell: pwsh
       run: |
-        $redistUrl = if ("${{ inputs.architecture }}" -eq "x86") { 
-          "https://aka.ms/vs/17/release/vc_redist.x86.exe" 
-        } else { 
-          "https://aka.ms/vs/17/release/vc_redist.x64.exe" 
+        $redistUrl = if ("${{ inputs.architecture }}" -eq "x86") {
+          "https://aka.ms/vs/17/release/vc_redist.x86.exe"
+        } else {
+          "https://aka.ms/vs/17/release/vc_redist.x64.exe"
         }
         Invoke-WebRequest -Uri $redistUrl -OutFile "vc_redist.exe"
         Start-Process "vc_redist.exe" -ArgumentList '/install', '/quiet', '/norestart' -Wait
@@ -143,11 +143,11 @@ runs:
         try {
           $toolName = "${{ inputs.tool_name }}".ToLower()
           $venvName = ".venv_${toolName}_${{ runner.os }}_${{ inputs.python_version }}_${{ inputs.architecture }}"
-          
+
           . ./install_python_venv.ps1 -noprompt -venv_name $venvName -force_python_version ${{ inputs.python_version }}
-          
+
           & $pythonExePath -m pip install --upgrade pip
-          
+
           # Install PyInstaller
           if ("${{ runner.os }}" -eq "Windows") {
             $pyVersion = "${{ inputs.python_version }}"
@@ -160,7 +160,7 @@ runs:
           } else {
             pip install pyinstaller -U --prefer-binary
           }
-          
+
           # Install tool-specific dependencies
           $depsScript = "./compile/deps_$toolName.ps1"
           if (Test-Path $depsScript) {
@@ -169,13 +169,13 @@ runs:
             }
             . $depsScript -noprompt -venv_name $venvName 2>&1 | ForEach-Object { Write-Output $_.ToString() }
           }
-          
+
           # Additional deps for toolset
           if ("${{ inputs.tool_name }}" -eq "toolset") {
             pip install "setuptools==69.5.1"
             pip install qdarkstyle -U
           }
-          
+
           echo "success=true" >> $env:GITHUB_OUTPUT
           echo "venv_name=$venvName" >> $env:GITHUB_OUTPUT
         } catch {
@@ -190,19 +190,19 @@ runs:
       run: |
         $toolName = "${{ inputs.tool_name }}".ToLower()
         $compileScript = "./compile/compile_$toolName.ps1"
-        
+
         Write-Host "=== DRY RUN: Validating build configuration ==="
-        
+
         # Check compile script exists
         if (-not (Test-Path $compileScript)) {
           Write-Error "Compile script not found: $compileScript"
           exit 1
         }
         Write-Host "✓ Compile script exists: $compileScript"
-        
+
         # Verify dependencies installed
         . ./install_python_venv.ps1 -noprompt -venv_name "${{ steps.deps.outputs.venv_name }}"
-        
+
         # Check PyInstaller
         $pyinstallerVersion = pip show pyinstaller 2>$null | Select-String "Version"
         if ($pyinstallerVersion) {
@@ -211,7 +211,7 @@ runs:
           Write-Error "PyInstaller not found"
           exit 1
         }
-        
+
         # Validate imports
         $toolPaths = @{
           "toolset" = "toolset"
@@ -231,7 +231,7 @@ runs:
             exit 1
           }
         }
-        
+
         Write-Host ""
         Write-Host "=== DRY RUN COMPLETE: Build configuration validated ==="
 
@@ -245,18 +245,18 @@ runs:
           $venvName = "${{ steps.deps.outputs.venv_name }}"
           $upxDir = $env:UPX_DIR
           $compileScript = "./compile/compile_$toolName.ps1"
-          
+
           if (-not (Test-Path $compileScript)) {
             Write-Error "Compile script not found: $compileScript"
             echo "success=false" >> $env:GITHUB_OUTPUT
             exit 1
           }
-          
+
           $env:PYTHONOPTIMIZE = "1"
           if ("${{ inputs.tool_name }}" -eq "toolset") {
             $env:QT_API = "${{ inputs.qt_version }}"
           }
-          
+
           $output = ""
           $errorLines = @()
           . $compileScript -noprompt -venv_name $venvName -upx_dir $upxDir 2>&1 | ForEach-Object {
@@ -266,7 +266,7 @@ runs:
               $errorLines += $_.ToString()
             }
           }
-          
+
           $warningCount = 0
           $output -split "`n" | ForEach-Object {
             if ($_ -match 'WARNING: Library not found: could not resolve' -or
@@ -277,7 +277,7 @@ runs:
               $warningCount++
             }
           }
-          
+
           if ($errorLines.Count -gt 0) {
             $errorLines | ForEach-Object { Write-Error $_ }
             echo "success=false" >> $env:GITHUB_OUTPUT
@@ -302,4 +302,3 @@ runs:
         name: ${{ steps.artifact_name.outputs.name }}
         path: ./dist/**
         retention-days: ${{ inputs.artifact_retention_days }}
-

@@ -76,7 +76,7 @@ jobs:
                       # Skip 'tests' directory - it's not a tool
                       if tool_path.name.lower() == "tests":
                           continue
-                      
+
                       # In test mode, only process the specified tool (or first tool if none specified)
                       if test_mode:
                           if test_tool:
@@ -86,9 +86,9 @@ jobs:
                               # Only process first tool in test mode if no specific tool specified
                               if len(tools) > 0:
                                   continue
-                      
+
                       build_name = derive_build_name(tool_path.name)
-                      
+
                       # Check if tool has a compile script OR can use compile_tool.py
                       if has_compile_script(build_name):
                           # Has explicit compile script
@@ -120,7 +120,7 @@ jobs:
           print(f"Tools matrix JSON: {tools_json}")
           print(f"Number of tools: {len(tools)}")
           print(f"JSON length: {len(tools_json)}")
-          
+
           # GitHub Actions outputs: use simple single-line format (same as build-pr.yml)
           # fromJson() can parse single-line JSON arrays
           # CRITICAL: Ensure no newlines in the JSON string
@@ -129,18 +129,18 @@ jobs:
 
           with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
               fh.write(f"tools_matrix={tools_json_clean}\n")
-          
+
           print(f"✓ Output written to GITHUB_OUTPUT")
           print(f"  Key: tools_matrix")
           print(f"  Value (first 200 chars): {tools_json_clean[:200]}...")
-          
+
           # Also generate full build matrix for easier fromJSON() parsing
           # This creates a single matrix with all combinations
           import os as os_module
           os_runners = json.loads(os_module.environ.get("OS_RUNNERS_JSON", '["windows-latest", "ubuntu-latest", "macos-latest"]'))
           python_versions = json.loads(os_module.environ.get("PYTHON_VERSIONS_JSON", '["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]'))
           architectures = json.loads(os_module.environ.get("ARCHITECTURES_JSON", '["x86", "x64"]'))
-          
+
           # Generate full matrix
           full_matrix = []
           for tool in tools:
@@ -164,14 +164,14 @@ jobs:
                                   "vc_redist-latest": f"https://aka.ms/vs/17/release/vc_redist.{'x86' if arch == 'x86' else 'x64'}.exe",
                                   "vc_redist2019": f"https://aka.ms/vs/17/release/vc_redist.{'x86' if arch == 'x86' else 'x64'}.exe"
                               })
-          
+
           full_matrix_json = json.dumps(full_matrix)
           full_matrix_json_clean = full_matrix_json.replace("\n", "").replace("\r", "")
           print(f"Full matrix: {len(full_matrix)} combinations")
-          
+
           with open(os.environ["GITHUB_OUTPUT"], "a") as fh:
               fh.write(f"full_matrix={full_matrix_json_clean}\n")
-          
+
           print(f"✓ Full matrix written to GITHUB_OUTPUT")
           PYTHON_SCRIPT
         env:
@@ -204,7 +204,7 @@ jobs:
         run: |
           # In test mode, limit matrix to speed up testing
           $testMode = $Env:ACT_TEST_MODE -eq "true"
-          
+
           if ($testMode) {
               $osJson = '["ubuntu-latest"]'
               $pythonJson = '["3.13"]'
@@ -215,7 +215,7 @@ jobs:
               $pythonJson = '${{ env.PYTHON_VERSIONS_JSON }}'
               $archJson = '${{ env.ARCHITECTURES_JSON }}'
           }
-          
+
           # Use simple format (no EOF delimiters) to match detect-tools job format
           # This ensures fromJSON() can parse the outputs correctly
           $singleLineJson = $osJson -replace "`r", "" -replace "`n", ""
@@ -415,10 +415,10 @@ jobs:
           $buildName = "${{ matrix.tool.build_name }}"
           $toolDir = "${{ matrix.tool.tool_dir }}"
           $useCompileTool = "${{ matrix.tool.use_compile_tool }}" -eq "True"
-          
+
           $compileScript = ""
           $depsScript = ""
-          
+
           if ($useCompileTool) {
             # Use compile_tool.py dynamically
             $compileScript = "compile/compile_tool.py"
@@ -432,12 +432,12 @@ jobs:
           foreach ($c in $compileCandidates) { if (Test-Path $c) { $compileScript = $c; break } }
           foreach ($d in $depsCandidates) { if (Test-Path $d) { $depsScript = $d; break } }
           }
-          
-          if (-not $compileScript -or -not (Test-Path $compileScript)) { 
-            Write-Error "Compile script not found for $buildName (use_compile_tool=$useCompileTool)"; 
-            exit 1 
+
+          if (-not $compileScript -or -not (Test-Path $compileScript)) {
+            Write-Error "Compile script not found for $buildName (use_compile_tool=$useCompileTool)";
+            exit 1
           }
-          
+
           echo "compile_script=$compileScript" >> $Env:GITHUB_OUTPUT
           echo "deps_script=$depsScript" >> $Env:GITHUB_OUTPUT
           echo "use_compile_tool=$useCompileTool" >> $Env:GITHUB_OUTPUT
@@ -453,20 +453,20 @@ jobs:
           # This prevents install_python_venv.ps1 from failing and prompting for input
           PYTHON_VERSION="${{ matrix.python-version }}"
           PYTHON_MAJOR_MINOR=$(echo $PYTHON_VERSION | cut -d. -f1,2)
-          
+
           echo "Adding deadsnakes PPA for Python $PYTHON_VERSION..."
           sudo apt-get update -qq
           sudo apt-get install -y software-properties-common
           sudo add-apt-repository -y ppa:deadsnakes/ppa || true
           sudo apt-get update -qq
-          
+
           echo "Pre-installing Python $PYTHON_VERSION packages (without pip package)..."
           sudo apt-get install -y \
             python${PYTHON_MAJOR_MINOR} \
             python${PYTHON_MAJOR_MINOR}-dev \
             python${PYTHON_MAJOR_MINOR}-venv \
             libpython${PYTHON_MAJOR_MINOR}-dev || true
-          
+
           # Verify Python is available
           python${PYTHON_MAJOR_MINOR} --version || (echo "Failed to install Python $PYTHON_VERSION" && exit 1)
 
@@ -514,12 +514,12 @@ jobs:
           $buildName = "${{ matrix.tool.build_name }}"
           $venvName = ".venv_${buildName}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
           $Env:PYKOTOR_VENV_NAME = $venvName
-          
+
           # Set LD_LIBRARY_PATH for Linux (needed for some Python installations)
           if ("${{ runner.os }}" -eq "Linux") {
             $Env:LD_LIBRARY_PATH = "/usr/local/lib" + ":" + $Env:LD_LIBRARY_PATH
           }
-          
+
           try {
             Write-Host "Sourcing install_python_venv.ps1 (venv_name=$venvName, python=${{ matrix.python-version }}, arch=${{ matrix.architecture }}, os=${{ runner.os }})"
             . ./install_python_venv.ps1 -noprompt -forceInstall -venv_name $venvName -force_python_version ${{ matrix.python-version }} -logLevel Debug
@@ -543,7 +543,7 @@ jobs:
             Add-Content -Path $Env:GITHUB_STEP_SUMMARY -Value "### Python/Venv"
             Add-Content -Path $Env:GITHUB_STEP_SUMMARY -Value "- Venv: `$venvName`"
             Add-Content -Path $Env:GITHUB_STEP_SUMMARY -Value "- Python: `$($Env:pythonExePath)`"
-            
+
             # On Linux and macOS, ensure pip is available (bootstrap if needed)
             if ("${{ runner.os }}" -eq "Linux" -or "${{ runner.os }}" -eq "macOS") {
               # Try to bootstrap pip if it's not available
@@ -557,13 +557,13 @@ jobs:
                 }
               }
             }
-            
+
             & $Env:pythonExePath -m pip install --upgrade pip
             if ($LASTEXITCODE -ne 0) {
               Write-Error "Failed to upgrade pip"
               exit 1
             }
-            
+
             if ("${{ runner.os }}" -eq "Windows") {
               if ("${{ matrix.python-version }}" -eq "3.12" -or "${{ matrix.python-version }}" -eq "3.11") {
                 & $Env:pythonExePath -m pip install "pyinstaller==5.13.2" --prefer-binary
@@ -573,7 +573,7 @@ jobs:
             } else {
               & $Env:pythonExePath -m pip install pyinstaller -U --prefer-binary
             }
-            
+
             if ($LASTEXITCODE -ne 0) {
               Write-Error "Failed to install pyinstaller"
               exit 1
@@ -592,14 +592,14 @@ jobs:
           $script = "${{ steps.locate-scripts.outputs.deps_script }}"
           $buildName = "${{ matrix.tool.build_name }}"
           $venvName = ".venv_${buildName}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
-          
+
           if (-not $Env:pythonExePath) {
             Write-Error "env:pythonExePath is missing. Expected Create virtual environment step to populate GITHUB_ENV."
             Write-Host "Available environment variables:" -ForegroundColor Yellow
             Get-ChildItem Env: | Where-Object { $_.Name -like "*python*" -or $_.Name -like "*venv*" } | ForEach-Object { Write-Host "  $($_.Name)=$($_.Value)" }
             exit 1
           }
-          
+
           # Add Python to PATH for deps scripts
           $pythonDir = Split-Path -Parent $Env:pythonExePath
           if ("${{ runner.os }}" -eq "Windows") {
@@ -607,12 +607,12 @@ jobs:
           } else {
             $Env:PATH = "$pythonDir" + ":" + $Env:PATH
           }
-          
+
           Write-Host "Running deps script $script"
           Write-Host "Venv name: $venvName"
           Write-Host "pythonExePath=$Env:pythonExePath"
           Write-Host "Python directory added to PATH: $pythonDir"
-          
+
           try {
             if ($script.EndsWith(".ps1")) {
               . "./$script" -noprompt -venv_name $venvName
@@ -624,7 +624,7 @@ jobs:
               Write-Error "Unknown deps script type: $script"
               exit 1
             }
-            
+
             if ($LASTEXITCODE -ne 0) {
               Write-Error "Deps script failed with exit code $LASTEXITCODE"
               exit $LASTEXITCODE
@@ -646,7 +646,7 @@ jobs:
           $venvName = ".venv_${buildName}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
           $upxDir = $Env:UPX_DIR
           $Env:PYTHONOPTIMIZE = "1"
-          
+
           # Set LD_LIBRARY_PATH for Linux
           if ("${{ runner.os }}" -eq "Linux") {
             $Env:LD_LIBRARY_PATH = "/usr/local/lib" + ":" + $Env:LD_LIBRARY_PATH
@@ -658,7 +658,7 @@ jobs:
             Get-ChildItem Env: | Where-Object { $_.Name -like "*python*" -or $_.Name -like "*venv*" } | ForEach-Object { Write-Host "  $($_.Name)=$($_.Value)" }
             exit 1
           }
-          
+
           # Add Python to PATH for compilation
           $pythonDir = Split-Path -Parent $Env:pythonExePath
           if ("${{ runner.os }}" -eq "Windows") {
@@ -666,29 +666,29 @@ jobs:
           } else {
             $Env:PATH = "$pythonDir" + ":" + $Env:PATH
           }
-          
+
           Write-Host "Using compile script $compile"
           Write-Host "Venv name: $venvName"
           Write-Host "UPX directory: $upxDir"
           Write-Host "pythonExePath=$Env:pythonExePath"
           Write-Host "Python directory added to PATH: $pythonDir"
-          
+
           $useCompileTool = "${{ steps.locate-scripts.outputs.use_compile_tool }}" -eq "True"
           $toolDir = "${{ steps.locate-scripts.outputs.tool_dir }}"
-          
+
           try {
             if ($useCompileTool -and $compile.EndsWith(".py")) {
               # Use compile_tool.py dynamically
               $toolPath = "Tools/$toolDir"
               $entrypoint = ""
-              
+
               # Find the entrypoint (src/<toolname>/__main__.py)
               $toolNameLower = $toolDir.ToLower()
               $possibleEntrypoints = @(
                 "$toolNameLower/__main__.py",
                 "$toolDir/__main__.py"
               )
-              
+
               foreach ($ep in $possibleEntrypoints) {
                 $epPath = Join-Path $toolPath "src/$ep"
                 if (Test-Path $epPath) {
@@ -696,7 +696,7 @@ jobs:
                   break
                 }
               }
-              
+
               # If not found, search for any __main__.py in src subdirectories
               if (-not $entrypoint) {
                 $srcDir = Join-Path $toolPath "src"
@@ -708,14 +708,14 @@ jobs:
                   }
                 }
               }
-              
+
               if (-not $entrypoint) {
                 Write-Error "Could not find __main__.py entrypoint for tool $toolDir"
                 exit 1
               }
-              
+
               Write-Host "Using compile_tool.py with entrypoint: $entrypoint"
-              
+
               # Build compile_tool.py command using the Python from venv
               # We've already created the venv, so skip venv creation in compile_tool.py
               # Ensure pythonExePath is quoted if it contains spaces
@@ -724,7 +724,7 @@ jobs:
               } else {
                 $Env:pythonExePath
               }
-              
+
               $compileArgs = @(
                 "$compile",
                 "--tool-path", $toolPath,
@@ -734,18 +734,18 @@ jobs:
                 "--python-exe", $pythonExePathQuoted,
                 "--noprompt"
               )
-              
+
               if ($upxDir) {
                 $compileArgs += @("--upx-dir", $upxDir)
               }
-              
+
               Write-Host "Running: $Env:pythonExePath $($compileArgs -join ' ')"
               Write-Host "Python executable exists: $(Test-Path $Env:pythonExePath)"
               if (-not (Test-Path $Env:pythonExePath)) {
                 Write-Error "Python executable not found at: $Env:pythonExePath"
                 exit 1
               }
-              
+
               # Execute compile_tool.py with explicit error handling
               $exitCode = 0
               try {
@@ -756,7 +756,7 @@ jobs:
                 Write-Host -ForegroundColor Red "Stack trace: $($_.ScriptStackTrace)"
                 $exitCode = 1
               }
-              
+
               if ($exitCode -ne 0) {
                 Write-Error "compile_tool.py failed with exit code $exitCode"
                 exit $exitCode
@@ -781,7 +781,7 @@ jobs:
               Write-Error "Unknown compile script type: $compile"
               exit 1
             }
-            
+
             if ($LASTEXITCODE -ne 0) {
               Write-Error "Compilation failed with exit code $LASTEXITCODE"
               exit $LASTEXITCODE
@@ -850,12 +850,12 @@ jobs:
           $buildName = "${{ matrix.tool.build_name }}"
           $venvName = ".venv_${buildName}_${{ matrix.os }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
           $toolDir = "Tools/${{ matrix.tool.tool_dir }}"
-          
+
           # Set LD_LIBRARY_PATH for Linux
           if ("${{ runner.os }}" -eq "Linux") {
             $Env:LD_LIBRARY_PATH = "/usr/local/lib" + ":" + $Env:LD_LIBRARY_PATH
           }
-          
+
           # Use pythonExePath from GITHUB_ENV (set by Create virtual environment step)
           if (-not $Env:pythonExePath) {
             Write-Host "env:pythonExePath not found, constructing from venv name..." -ForegroundColor Yellow
@@ -868,12 +868,12 @@ jobs:
           } else {
             $pythonExePath = $Env:pythonExePath
           }
-          
+
           if (-not (Test-Path $pythonExePath)) {
             Write-Host "Python executable not found at $pythonExePath, skipping tests" -ForegroundColor Yellow
             exit 0
           }
-          
+
           # Add Python to PATH
           $pythonDir = Split-Path -Parent $pythonExePath
           if ("${{ runner.os }}" -eq "Windows") {
@@ -881,39 +881,39 @@ jobs:
           } else {
             $Env:PATH = "$pythonDir" + ":" + $Env:PATH
           }
-          
+
           Write-Host "Running tests for ${{ matrix.tool.display_name }}"
           Write-Host "Tool directory: $toolDir"
           Write-Host "Python executable: $pythonExePath"
-          
+
           # Check if tests directory exists
           $testsPath = Join-Path $toolDir "tests"
           if (-not (Test-Path $testsPath)) {
             Write-Host "No tests directory found at $testsPath, skipping tests"
             exit 0
           }
-          
+
           # Install test dependencies if needed
           $pyprojectPath = Join-Path $toolDir "pyproject.toml"
           if (Test-Path $pyprojectPath) {
             Write-Host "Installing test dependencies from pyproject.toml..."
             & $pythonExePath -m pip install -e "$toolDir[dev]" --quiet 2>&1 | Out-Null
           }
-          
+
           # Install pytest-timeout if available
           & $pythonExePath -m pip install pytest-timeout --quiet 2>&1 | Out-Null
-          
+
           # Run tests with timeout (2 minutes for individual tests)
           Write-Host "Running pytest tests..."
           try {
             $pytestArgs = @("$testsPath", "-v", "--tb=short")
-            
+
             # Add timeout if pytest-timeout is available
             $timeoutCheck = & $pythonExePath -m pytest --help 2>&1 | Select-String "timeout"
             if ($timeoutCheck) {
               $pytestArgs += @("--timeout=120", "--timeout-method=thread")
             }
-            
+
             if ("${{ runner.os }}" -eq "Linux") {
               # Use xvfb for GUI tests on Linux if available
               if (Get-Command xvfb-run -ErrorAction SilentlyContinue) {
@@ -925,7 +925,7 @@ jobs:
             } else {
               & $pythonExePath -m pytest $pytestArgs
             }
-            
+
             if ($LASTEXITCODE -ne 0) {
               Write-Host -ForegroundColor Yellow "Tests completed with exit code $LASTEXITCODE (some tests may have failed)"
               # Don't fail the build if tests fail, but report it
@@ -964,7 +964,7 @@ jobs:
               Write-Host "No artifacts directory found - creating empty directory" -ForegroundColor Yellow
               New-Item -ItemType Directory -Force -Path $artifactsDir
           }
-          
+
           # Check if there are any artifacts
           $artifactCount = (Get-ChildItem -Path $artifactsDir -Filter "publish_*" -ErrorAction SilentlyContinue | Measure-Object).Count
           if ($artifactCount -eq 0) {

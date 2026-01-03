@@ -28,4 +28,3 @@ jobs:
           pip install linkchecker
           linkchecker --check-extern --no-warnings docs/ || true
         continue-on-error: true
-

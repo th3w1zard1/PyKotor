@@ -27,4 +27,3 @@ jobs:
             python -m py_compile "$file" || exit 1
           done
           echo "✓ All Python files have valid syntax"
-

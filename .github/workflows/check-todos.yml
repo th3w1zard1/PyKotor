@@ -19,19 +19,18 @@ jobs:
         run: |
           echo "## TODO and FIXME Report" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           TODOS=$(grep -r "TODO\|FIXME" Libraries/ Tools/ --include="*.py" | grep -v vendor | wc -l)
           FIXMES=$(grep -r "FIXME" Libraries/ Tools/ --include="*.py" | grep -v vendor | wc -l)
-          
+
           echo "Found $TODOS TODO/FIXME comments" >> $GITHUB_STEP_SUMMARY
           echo "Found $FIXMES FIXME comments" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           if [ "$TODOS" -gt 100 ]; then
             echo "⚠️ High number of TODOs detected. Consider addressing technical debt." >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # List some examples
           echo "### Sample TODOs/FIXMEs:" >> $GITHUB_STEP_SUMMARY
           grep -r "TODO\|FIXME" Libraries/ Tools/ --include="*.py" | grep -v vendor | head -10 >> $GITHUB_STEP_SUMMARY || echo "None found" >> $GITHUB_STEP_SUMMARY
-

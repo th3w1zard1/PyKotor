@@ -3,15 +3,15 @@
 libraries:
   - changed-files:
     - any-glob-to-any-file: 'Libraries/**/*'
-  
+
 tools:
   - changed-files:
     - any-glob-to-any-file: 'Tools/**/*'
-  
+
 tests:
   - changed-files:
     - any-glob-to-any-file: 'tests/**/*'
-  
+
 docs:
   - changed-files:
     - any-glob-to-any-file:

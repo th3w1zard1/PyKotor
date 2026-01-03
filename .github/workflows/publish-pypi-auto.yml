@@ -1,5 +1,5 @@
 # PyPI Auto-Publish Workflow
-# 
+#
 # This workflow automatically publishes packages to PyPI when:
 # 1. Code is pushed to the default branch (dynamically determined)
 # 2. The version in pyproject.toml is greater than what's currently on PyPI
@@ -39,7 +39,7 @@ jobs:
         with:
           fetch-depth: 1
           ref: ${{ github.ref }}
-      
+
       - name: Detect default branch
         id: detect
         run: |
@@ -50,19 +50,19 @@ jobs:
           else
             AUTH_HEADER=""
           fi
-          
+
           DEFAULT_BRANCH=$(curl -s -H "Accept: application/vnd.github.v3+json" \
             ${AUTH_HEADER:+-H "$AUTH_HEADER"} \
             "https://api.github.com/repos/${{ github.repository }}" | \
             jq -r '.default_branch')
-          
+
           if [ -z "$DEFAULT_BRANCH" ] || [ "$DEFAULT_BRANCH" = "null" ]; then
             echo "Error: Could not determine default branch from GitHub API"
             exit 1
           fi
-          
+
           echo "default_branch=$DEFAULT_BRANCH" >> $GITHUB_OUTPUT
-          
+
           # If workflow_dispatch (manual), always run regardless of branch/tag
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "should_run=true" >> $GITHUB_OUTPUT
@@ -87,17 +87,17 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install packaging requests tomli tomli-w
-      
+
       - name: Discover packages and compare versions
         id: discover
         run: |
@@ -110,7 +110,7 @@ jobs:
           from packaging import version as pkg_version
           import requests
           import tomli
-          
+
           def get_package_info(pyproject_path):
               """Extract package name and version from pyproject.toml"""
               try:
@@ -123,7 +123,7 @@ jobs:
               except Exception as e:
                   print(f"Error reading {pyproject_path}: {e}", file=sys.stderr)
                   return None, None
-          
+
           def get_pypi_version(package_name):
               """Get latest version from PyPI"""
               try:
@@ -153,36 +153,36 @@ jobs:
               except Exception as e:
                   print(f"Error checking PyPI for {package_name}: {e}", file=sys.stderr)
                   return None
-          
+
           # Scan Libraries and Tools directories
           packages_to_publish = []
-          
+
           for base_dir in ['Libraries', 'Tools']:
               base_path = Path(base_dir)
               if not base_path.exists():
                   print(f"Directory {base_dir} does not exist, skipping", file=sys.stderr)
                   continue
-              
+
               # Get first-level subdirectories only
               for item in base_path.iterdir():
                   if not item.is_dir():
                       continue
-                  
+
                   pyproject_path = item / 'pyproject.toml'
                   if not pyproject_path.exists():
                       continue
-                  
+
                   package_name, local_version = get_package_info(pyproject_path)
                   if not package_name or not local_version:
                       print(f"Skipping {item.name}: could not parse pyproject.toml", file=sys.stderr)
                       continue
-                  
+
                   print(f"Found package: {package_name} at {item}")
                   print(f"  Local version: {local_version}")
-                  
+
                   # Get PyPI version
                   pypi_version = get_pypi_version(package_name)
-                  
+
                   if pypi_version:
                       print(f"  PyPI version: {pypi_version}")
                       try:
@@ -208,11 +208,11 @@ jobs:
                           'version': local_version,
                           'pypi_version': None
                       })
-          
+
           # Output as JSON
           packages_json = json.dumps(packages_to_publish)
           print(f"\nPackages to publish: {packages_json}")
-          
+
           # Set output
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
               f.write(f"packages={packages_json}\n")
@@ -229,17 +229,17 @@ jobs:
         package: ${{ fromJson(needs.discover-packages.outputs.packages) }}
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Install build tools
         run: |
           python -m pip install --upgrade pip
           pip install build twine setuptools wheel
-      
+
       - name: Build package ${{ matrix.package.name }}
         working-directory: ${{ matrix.package.path }}
         run: |
@@ -247,12 +247,12 @@ jobs:
           echo "Path: ${{ matrix.package.path }}"
           echo "Current PyPI version: ${{ matrix.package.pypi_version || 'none' }}"
           python -m build
-      
+
       - name: Check package with twine
         working-directory: ${{ matrix.package.path }}
         run: |
           twine check dist/*
-      
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -280,14 +280,14 @@ jobs:
         with:
           name: dist-${{ matrix.package.name }}
           path: dist/
-      
+
       - name: Publish ${{ matrix.package.name }} to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           password: ${{ secrets.PYPI_API_TOKEN }}
           skip-existing: true
           print-hash: true
-      
+
       - name: Verify publication
         run: |
           echo "Published ${{ matrix.package.name }} version ${{ matrix.package.version }}"
@@ -303,14 +303,14 @@ jobs:
         run: |
           echo "## PyPI Auto-Publish Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           if [ "${{ needs.check-default-branch.outputs.should_run }}" != "true" ]; then
             echo "⏭️ Skipped - not running on default branch" >> $GITHUB_STEP_SUMMARY
             exit 0
           fi
-          
+
           PACKAGES='${{ needs.discover-packages.outputs.packages }}'
-          
+
           if [ "$PACKAGES" = "[]" ]; then
             echo "✅ No packages needed publishing (all versions are up-to-date or older)" >> $GITHUB_STEP_SUMMARY
           else
@@ -328,4 +328,3 @@ jobs:
             fi
             echo "$PACKAGES" | jq -r --arg status "$STATUS" '.[] | "| \\(.name) | \\(.version) | \\(.pypi_version // \"none\") | \\($status) |"' >> $GITHUB_STEP_SUMMARY
           fi
-

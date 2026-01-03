@@ -76,13 +76,13 @@ $finalizeStep = @"
       - name: Add TEST warning to release description
         run: |
           TAG="`${{ needs.validate.outputs.tag_name }}"
-          
+
           # Get the release
           RELEASE_JSON=`$(curl -s -H "Authorization: token `${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/repos/`${{ github.repository }}/releases/tags/`$TAG")
           RELEASE_ID=`$(echo "`$RELEASE_JSON" | jq -r '.id')
           CURRENT_BODY=`$(echo "`$RELEASE_JSON" | jq -r '.body')
-          
+
           # Prepend warning to body
           NEW_BODY="⚠️ **THIS IS A TEST RELEASE** ⚠️
 
@@ -94,7 +94,7 @@ This release was created using the TEST workflow and should not be used in produ
 ---
 
 `$CURRENT_BODY"
-          
+
           # Update release body
           ESCAPED_BODY=`$(echo "`$NEW_BODY" | jq -Rs .)
           curl -X PATCH \
@@ -102,7 +102,7 @@ This release was created using the TEST workflow and should not be used in produ
             -H "Accept: application/vnd.github.v3+json" \
             "https://api.github.com/repos/`${{ github.repository }}/releases/`$RELEASE_ID" \
             -d "{\"body\": `$ESCAPED_BODY}"
-          
+
           echo "Added TEST warning to release description"
         shell: bash
 
@@ -130,4 +130,3 @@ Write-Host "To cleanup:"
 Write-Host "  gh release delete test-v3.1.3-$ToolName --yes"
 Write-Host "  git push origin --delete test-v3.1.3-$ToolName"
 Write-Host "  git push origin --delete test-release"
-

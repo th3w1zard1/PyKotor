@@ -22,4 +22,3 @@ jobs:
           license: LGPL-3.0
           exclude: vendor .venv venv __pycache__ dist build
         continue-on-error: true
-

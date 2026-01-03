@@ -123,10 +123,10 @@ void main() {
 		SetPlanetAvailable(9, 0);
 		SetPlanetSelectable(9, 0);
 		SetPlanetAvailable(2, 0);
-        
+
         SetPlanetAvailable(15, 1);
 		SetPlanetSelectable(15, 1); //Rhen Var?
-        
+
 		SetPlanetSelectable(2, 0); //PLANET_HARBINGER
 		int int11 = sub1();
 		if (((GetGlobalNumber("003EBO_BACKGROUND") == 8) || (GetGlobalNumber("003EBO_BACKGROUND") == 10))) {
