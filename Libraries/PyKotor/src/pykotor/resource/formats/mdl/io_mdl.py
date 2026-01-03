@@ -1849,6 +1849,19 @@ class MDLBinaryReader:
 
             # Verify vertex_count by checking actual data in the file
             # If vertex_count is suspiciously low (0 or 1), try to determine the correct count from actual data
+            # Also check faces - they reference vertex indices, so vertex_count must be at least max_vertex_index + 1
+            if vcount <= 1 and bin_node.trimesh.faces_count > 0:
+                # First, check faces to determine minimum required vertex_count
+                max_vertex_index = 0
+                for face in bin_node.trimesh.faces:
+                    max_vertex_index = max(max_vertex_index, face.vertex1, face.vertex2, face.vertex3)
+                required_vertex_count = max_vertex_index + 1
+                if required_vertex_count > vcount:
+                    # Faces require more vertices than header says - use face-based count as minimum
+                    vcount = required_vertex_count
+                    vcount_verified = True
+            
+            # If still suspiciously low, try to count actual vertices from file data
             if vcount <= 1:
                 if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
                     # Vertices are in MDX: try to count actual vertices by reading them
