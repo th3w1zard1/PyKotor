@@ -55,7 +55,7 @@ def mdlops_exe() -> Path:
     """Find and return the path to mdlops.exe."""
     # Try multiple possible locations
     test_file = Path(__file__).resolve()
-    repo_root = test_file.parents[5]  # From Libraries/PyKotor/tests/resource/formats/ to repo root
+    repo_root = test_file.parents[4]  # From tests/resource/formats/ to repo root
     possible_paths = [
         repo_root / "vendor" / "MDLOps" / "mdlops.exe",
         repo_root / "MDLOps" / "mdlops.exe",
@@ -205,7 +205,18 @@ def _test_single_model(
                 encoding="utf-8", errors="replace"
             )
 
-            if mdlops_ascii == pykotor_ascii:
+            # Normalize filedependancy lines - MDLOps uses filename, so PyKotor output
+            # will have "-pykotor" suffix in filename, which MDLOps reads and uses
+            # Replace "-pykotor" suffix in filedependancy lines for comparison
+            import re
+            pykotor_ascii_normalized = re.sub(
+                r"^filedependancy (.+)-pykotor (NULL\.mlk)$",
+                r"filedependancy \1 \2",
+                pykotor_ascii,
+                flags=re.MULTILINE
+            )
+
+            if mdlops_ascii == pykotor_ascii_normalized:
                 print("         -> PASS: Outputs match exactly")
                 return True, "OK"
 
@@ -213,7 +224,7 @@ def _test_single_model(
             diff_lines = list(
                 difflib.unified_diff(
                     mdlops_ascii.splitlines(keepends=True),
-                    pykotor_ascii.splitlines(keepends=True),
+                    pykotor_ascii_normalized.splitlines(keepends=True),
                     fromfile="MDLOps (original)",
                     tofile="MDLOps (PyKotor binary)",
                     lineterm="",
