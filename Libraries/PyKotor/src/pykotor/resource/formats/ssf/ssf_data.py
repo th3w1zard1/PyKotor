@@ -7,14 +7,7 @@ to entries in dialog.tlk which contain the actual WAV file references.
 
 References:
 ----------
-    vendor/reone/include/reone/resource/format/ssfreader.h:27-41 - SsfReader class
-    vendor/reone/src/libs/resource/format/ssfreader.cpp:26-32 - SSF loading implementation
-    vendor/Kotor.NET/Kotor.NET/Formats/KotorSSF/SSFBinaryStructure.cs:10-91 - Binary structure
-    vendor/KotOR_IO/KotOR_IO/File Formats/SSF.cs:19-171 - C# SSF implementation
-    vendor/KotOR.js/src/resource/SSFObject.ts:15-65 - TypeScript SSF implementation
-    vendor/KotOR.js/src/enums/resource/SSFType.ts:11-40 - SSFType enum definitions
-    vendor/xoreos/src/aurora/ssffile.cpp:38-112 - SSF file handling
-    vendor/KotOR-Bioware-Libs/SSF.pm:1-189 - Perl SSF library
+    SSF file format specification
 
 Binary Format:
 -------------
@@ -58,12 +51,7 @@ class SSF(ComparableMixin):
     
     References:
     ----------
-        vendor/reone/include/reone/resource/format/ssfreader.h:35 (soundSet() method)
-        vendor/reone/src/libs/resource/format/ssfreader.cpp:31 (_soundSet vector)
-        vendor/Kotor.NET/Kotor.NET/Formats/KotorSSF/SSFBinaryStructure.cs:67 (SoundStringRefs array)
-        vendor/KotOR_IO/KotOR_IO/File Formats/SSF.cs:66 (StringTable dictionary)
-        vendor/KotOR.js/src/resource/SSFObject.ts:17 (sound_refs array)
-        vendor/xoreos/src/aurora/ssffile.h:40-75 - SSFFile class
+        SSF file format specification
         
     Attributes:
     ----------
@@ -84,7 +72,6 @@ class SSF(ComparableMixin):
     def __init__(
         self,
     ):
-        # vendor/reone/src/libs/resource/format/ssfreader.cpp:31
         # vendor/Kotor.NET/Kotor.NET/Formats/KotorSSF/SSFBinaryStructure.cs:67
         # vendor/KotOR_IO/KotOR_IO/File Formats/SSF.cs:51-54
         # vendor/KotOR.js/src/resource/SSFObject.ts:17,42-44

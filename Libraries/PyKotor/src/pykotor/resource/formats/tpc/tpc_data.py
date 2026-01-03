@@ -4,13 +4,6 @@ TPC is KotOR's proprietary texture format supporting various compression and col
 
 References:
 ----------
-    vendor/reone/src/libs/graphics/texture.cpp - TPC texture handling
-    vendor/reone/include/reone/graphics/texture.h - TPC texture structures
-    vendor/tga2tpc - TGA to TPC conversion tool
-    vendor/xoreos-tools/src/graphics/tpc.cpp - TPC parser
-    vendor/KotOR.js/src/loaders/TextureLoader.ts - TypeScript TPC loader
-    vendor/kotorblender/io_scene_kotor/format/tpc/ - Blender TPC exporter
-    vendor/KotOR-Bioware-Libs/TPC.pm - Perl TPC handling
     Note: TPC supports DXT1, DXT3, DXT5, and uncompressed RGB/RGBA formats
 """
 

@@ -83,10 +83,6 @@ class KModuleType(Enum):
     
     References:
     ----------
-        vendor/reone/src/libs/resource/provider.cpp (module resource loading)
-        vendor/KotOR.js/src/module/Module.ts:63 (archives array: RIMObject|ERFObject[])
-        vendor/KotOR.js/src/module/Module.ts:150-200 (module loading from archives)
-        vendor/xoreos/src/aurora/modfile.cpp (module file handling)
         Original BioWare Odyssey Engine (module archive structure)
         Note: Module file organization varies between KotOR 1 and KotOR 2
     
@@ -376,18 +372,11 @@ class Module:  # noqa: PLR0904
     
     References:
     ----------
-        vendor/reone/include/reone/game/object/module.h:51-106 (Module class)
-        vendor/reone/src/libs/game/object/module.cpp (Module loading and management)
-        vendor/KotOR.js/src/module/Module.ts:42-999 (Module class implementation)
-        vendor/KotOR.js/src/module/Module.ts:63 (archives: RIMObject|ERFObject[])
-        vendor/KotOR.js/src/module/Module.ts:46-49 (ifo, areaName, area, areas properties)
-        vendor/xoreos/src/aurora/modfile.cpp (module file handling)
         Original BioWare Odyssey Engine (module resource management)
     
     Attributes:
     ----------
         resources: Dictionary mapping ResourceIdentifier to ModuleResource.
-            Reference: KotOR.js/Module.ts:150-200 (resource loading from archives)
             All resources available in this module, keyed by identifier for uniqueness.
         
         dot_mod: Whether this module uses .mod override format.
@@ -395,23 +384,18 @@ class Module:  # noqa: PLR0904
             If True, uses <root>.mod archive; if False, uses .rim/_s.rim/_dlg.erf archives.
         
         _installation: Cached Installation instance for resource lookups.
-            Reference: reone/module.h:65 (load method with resource provider)
             Used to resolve resources from chitin, override, and other locations.
         
         _root: Root module name (without extensions).
-            Reference: KotOR.js/Module.ts:150 (module name extraction)
             Extracted from filename, used to construct archive filenames.
         
         _cached_mod_id: Cached module ResRef identifier.
-            Reference: reone/module.h:73 (_name field)
-            Reference: KotOR.js/Module.ts:46 (ifo property)
             Module identifier extracted from IFO or archive filenames.
         
         _cached_sort_id: Cached sort identifier for module ordering.
             PyKotor-specific: Used for module sorting/ordering in tools.
         
         _capsules: Dictionary of module archive capsules.
-            Reference: KotOR.js/Module.ts:63 (archives array)
             Contains ModuleLinkPiece, ModuleDataPiece, ModuleDLGPiece, or ModuleFullOverridePiece
             depending on module type and available files.
     """
@@ -1736,8 +1720,6 @@ class Module:  # noqa: PLR0904
         References:
         ----------
             wiki/2DA-loadscreens.md - loadscreens.2da structure and bmpresref column
-            vendor/reone/src/libs/resource/parser/gff/are.cpp:339 - LoadScreenID field parsing
-            vendor/reone/src/libs/game/gui/loadscreen.cpp:49-50 - loadscreen image loading
 
         Returns:
         -------
@@ -1833,37 +1815,28 @@ class ModuleResource(Generic[T]):
     
     References:
     ----------
-        vendor/reone/src/libs/resource/provider.cpp (resource location resolution)
-        vendor/KotOR.js/src/resource/ResourceLoader.ts (resource loading)
-        vendor/xoreos/src/aurora/resman.cpp (resource manager with location priority)
         Original BioWare Odyssey Engine (resource search order: Override > Module > Chitin)
     
     Attributes:
     ----------
         _resname: Resource name (ResRef) without extension.
-            Reference: reone/resref.h (ResRef structure)
             The name of the resource (e.g., "module", "danm13").
         
         _restype: Resource type identifier.
-            Reference: reone/resource/types.h (ResourceType enum)
             The type of resource (e.g., ResourceType.IFO, ResourceType.ARE).
         
         _installation: Installation instance for resource lookups.
-            Reference: reone/resource/provider.cpp (resource provider)
             Used to resolve resources from chitin and other locations.
         
         _active: Currently active file path for this resource.
-            Reference: xoreos/resman.cpp (active resource location)
             The file path currently being used to load this resource.
             None if no location has been activated yet.
         
         _resource_obj: Cached loaded resource object.
-            Reference: KotOR.js/ResourceLoader.ts (resource caching)
             The parsed resource object (e.g., IFO, ARE, UTC).
             None until resource() is called for the first time.
         
         _locations: List of all file paths where this resource exists.
-            Reference: xoreos/resman.cpp (resource location tracking)
             All known locations for this resource, ordered by priority.
             Search order: Override > Custom Modules > Chitin
         

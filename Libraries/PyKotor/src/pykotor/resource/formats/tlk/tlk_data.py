@@ -6,14 +6,7 @@ to localized text and associated voice-over audio files.
 
 References:
 ----------
-    vendor/TSLPatcher/lib/site/Bioware/TLK.pm:1-533 - Complete TLK implementation
-    vendor/Kotor.NET/Kotor.NET/Formats/KotorTLK/TLKBinaryStructure.cs:11-132 - Binary format
-    vendor/KotOR_IO/KotOR_IO/File Formats/TLK.cs:10-227 - C# TLK reader/writer
-    vendor/KotOR-Bioware-Libs/TLK.pm - Perl TLK library
-    vendor/reone/src/libs/resource/format/tlkreader.cpp:31-84 - TLK parsing
-    vendor/xoreos/src/aurora/talktable.cpp:42-176 - Talk table implementation
-    vendor/KotOR.js/src/resource/TalkTable.ts:13-195 - TypeScript implementation
-    vendor/sotor/core/src/formats/tlk/read.rs:11-89 - Rust TLK reader
+    TLK file format specification
 
 Binary Format:
 -------------
@@ -61,10 +54,7 @@ class TLK(ComparableMixin):
     
     References:
     ----------
-        vendor/TSLPatcher/lib/site/Bioware/TLK.pm:31-123 - string_from_resref() lookup function
-        vendor/Kotor.NET/Kotor.NET/Formats/KotorTLK/TLKBinaryStructure.cs:13-55 - FileRoot class
-        vendor/KotOR_IO/KotOR_IO/File Formats/TLK.cs:19-93 - TLK class with indexer
-        vendor/reone/src/libs/resource/format/tlkreader.cpp:31-46 - TalkTable loading
+        TLK file format specification
         
     Attributes:
     ----------
@@ -91,8 +81,6 @@ class TLK(ComparableMixin):
         self,
         language: Language = Language.ENGLISH,
     ):
-        # vendor/Kotor.NET/Kotor.NET/Formats/KotorTLK/TLKBinaryStructure.cs:16
-        # vendor/KotOR_IO/KotOR_IO/File Formats/TLK.cs:93
         # List of string entries indexed by StrRef (0-based array index)
         self.entries: list[TLKEntry] = []
         

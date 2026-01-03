@@ -86,8 +86,6 @@ class TPCTGAReader(ResourceReader):
     
     References:
     ----------
-        vendor/tga2tpc/TGALoader.js:72-577 (TGA parsing, RLE handling)
-        vendor/reone/test/graphics/format/tgareader.cpp (TGA reading tests)
         Standard TGA specification for header format
     """
     def __init__(
@@ -243,7 +241,6 @@ class TPCTGAWriter(ResourceWriter):
     
     References:
     ----------
-        vendor/tga2tpc/TGALoader.js (TGA format reference)
         Standard TGA specification for header format
     """
     def __init__(

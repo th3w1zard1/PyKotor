@@ -5,10 +5,6 @@ that can be found in both games. Resource types are identified by numeric IDs an
 
 References:
 ----------
-    vendor/reone/src/libs/resource/type.h (Resource type definitions)
-    vendor/xoreos/src/aurora/types.h (FileType enum definitions)
-    vendor/xoreos-tools/src/common/types.h (Resource type constants)
-    vendor/KotOR.js/src/types/ResourceType.ts (TypeScript resource type definitions)
     Original BioWare Odyssey Engine (resource type IDs from game binaries)
 """
 

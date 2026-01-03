@@ -7,13 +7,7 @@ localized strings for descriptions in multiple languages.
 
 References:
 ----------
-    vendor/reone/include/reone/resource/format/erfreader.h:29-65 - ErfReader class
-    vendor/reone/src/libs/resource/format/erfreader.cpp:24-106 - ERF loading implementation
-    vendor/Kotor.NET/Kotor.NET/Formats/KotorERF/ERFBinaryStructure.cs:11-170 - Binary structure
-    vendor/KotOR_IO/KotOR_IO/File Formats/ERF.cs:19-308 - C# ERF implementation
-    vendor/KotOR.js/src/resource/ERFObject.ts:11-353 - TypeScript ERF implementation
-    vendor/xoreos/src/aurora/erffile.cpp:44-229 - ERF file handling
-    vendor/KotOR-Bioware-Libs/ERF.pm:1-347 - Perl ERF library
+    ERF file format specification
 
 Binary Format:
 -------------

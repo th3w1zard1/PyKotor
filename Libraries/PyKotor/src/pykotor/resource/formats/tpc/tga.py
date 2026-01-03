@@ -5,8 +5,6 @@ true-color and grayscale images. Used for texture conversion to/from TPC format.
 
 References:
 ----------
-    vendor/tga2tpc/TGALoader.js:72-577 (TGA parsing implementation)
-    vendor/reone/test/graphics/format/tgareader.cpp (TGA reading tests)
     Standard TGA specification (Truevision TGA File Format Specification)
 """
 

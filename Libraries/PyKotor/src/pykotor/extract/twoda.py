@@ -442,59 +442,53 @@ class TwoDARegistry:
     
     References:
     ----------
-        vendor/reone/src/libs/resource/format/2dareader.cpp (2DA reading)
-        vendor/reone/include/reone/resource/format/2dareader.h (2DA structure)
-        vendor/xoreos-tools/src/xml/2dadumper.cpp (2DA to XML conversion)
-        vendor/Kotor.NET/Kotor.NET/Formats/Kotor2DA/Kotor2DA.cs (2DA structure)
-        vendor/KotOR.js/src/resource/TwoDAObject.ts (2DA loading)
         Note: This registry is PyKotor-specific for tooling and modding purposes.
-        Vendor implementations typically read 2DA files directly without such metadata.
     """
 
     # Canonical 2DA file names (single source of truth)
-    PORTRAITS: ClassVar[str] = "portraits"
     APPEARANCES: ClassVar[str] = "appearance"
-    SUBRACES: ClassVar[str] = "subrace"
-    SPEEDS: ClassVar[str] = "creaturespeed"
-    SOUNDSETS: ClassVar[str] = "soundset"
-    FACTIONS: ClassVar[str] = "repute"
-    GENDERS: ClassVar[str] = "gender"
-    PERCEPTIONS: ClassVar[str] = "ranges"
-    CLASSES: ClassVar[str] = "classes"
-    FEATS: ClassVar[str] = "feat"
-    POWERS: ClassVar[str] = "spells"
     BASEITEMS: ClassVar[str] = "baseitems"
-    PLACEABLES: ClassVar[str] = "placeables"
-    DOORS: ClassVar[str] = "genericdoors"
+    CAMERAS: ClassVar[str] = "camerastyle"
+    CLASSES: ClassVar[str] = "classes"
     CURSORS: ClassVar[str] = "cursors"
-    TRAPS: ClassVar[str] = "traps"
-    RACES: ClassVar[str] = "racialtypes"
-    SKILLS: ClassVar[str] = "skills"
-    UPGRADES: ClassVar[str] = "upgrade"
+    DIALOG_ANIMS: ClassVar[str] = "dialoganimations"
+    DOORS: ClassVar[str] = "genericdoors"
+    EMOTIONS: ClassVar[str] = "emotion"
     ENC_DIFFICULTIES: ClassVar[str] = "encdifficulty"
-    ITEM_PROPERTIES: ClassVar[str] = "itempropdef"
-    IPRP_PARAMTABLE: ClassVar[str] = "iprp_paramtable"
-    IPRP_COSTTABLE: ClassVar[str] = "iprp_costtable"
+    EXPRESSIONS: ClassVar[str] = "facialanim"
+    FACTIONS: ClassVar[str] = "repute"
+    FEATS: ClassVar[str] = "feat"
+    GENDERS: ClassVar[str] = "gender"
     IPRP_ABILITIES: ClassVar[str] = "iprp_abilities"
-    IPRP_ALIGNGRP: ClassVar[str] = "iprp_aligngrp"
-    IPRP_COMBATDAM: ClassVar[str] = "iprp_combatdam"
-    IPRP_DAMAGETYPE: ClassVar[str] = "iprp_damagetype"
-    IPRP_PROTECTION: ClassVar[str] = "iprp_protection"
     IPRP_ACMODTYPE: ClassVar[str] = "iprp_acmodtype"
+    IPRP_ALIGNGRP: ClassVar[str] = "iprp_aligngrp"
+    IPRP_AMMOTYPE: ClassVar[str] = "iprp_ammotype"
+    IPRP_COMBATDAM: ClassVar[str] = "iprp_combatdam"
+    IPRP_COSTTABLE: ClassVar[str] = "iprp_costtable"
+    IPRP_DAMAGETYPE: ClassVar[str] = "iprp_damagetype"
     IPRP_IMMUNITY: ClassVar[str] = "iprp_immunity"
+    IPRP_MONSTERHIT: ClassVar[str] = "iprp_mosterhit"
+    IPRP_ONHIT: ClassVar[str] = "iprp_onhit"
+    IPRP_PARAMTABLE: ClassVar[str] = "iprp_paramtable"
+    IPRP_PROTECTION: ClassVar[str] = "iprp_protection"
     IPRP_SAVEELEMENT: ClassVar[str] = "iprp_saveelement"
     IPRP_SAVINGTHROW: ClassVar[str] = "iprp_savingthrow"
-    IPRP_ONHIT: ClassVar[str] = "iprp_onhit"
-    IPRP_AMMOTYPE: ClassVar[str] = "iprp_ammotype"
-    IPRP_MONSTERHIT: ClassVar[str] = "iprp_mosterhit"
     IPRP_WALK: ClassVar[str] = "iprp_walk"
-    EMOTIONS: ClassVar[str] = "emotion"
-    EXPRESSIONS: ClassVar[str] = "facialanim"
-    VIDEO_EFFECTS: ClassVar[str] = "videoeffects"
-    DIALOG_ANIMS: ClassVar[str] = "dialoganimations"
+    ITEM_PROPERTIES: ClassVar[str] = "itempropdef"
+    PERCEPTIONS: ClassVar[str] = "ranges"
+    PLACEABLES: ClassVar[str] = "placeables"
     PLANETS: ClassVar[str] = "planetary"
     PLOT: ClassVar[str] = "plot"
-    CAMERAS: ClassVar[str] = "camerastyle"
+    PORTRAITS: ClassVar[str] = "portraits"
+    POWERS: ClassVar[str] = "spells"
+    RACES: ClassVar[str] = "racialtypes"
+    SKILLS: ClassVar[str] = "skills"
+    SOUNDSETS: ClassVar[str] = "soundset"
+    SPEEDS: ClassVar[str] = "creaturespeed"
+    SUBRACES: ClassVar[str] = "subrace"
+    TRAPS: ClassVar[str] = "traps"
+    UPGRADES: ClassVar[str] = "upgrade"
+    VIDEO_EFFECTS: ClassVar[str] = "videoeffects"
 
     _STRREF_COLUMNS: ClassVar[dict[str, set[str]]] = {}
     _RESREF_COLUMNS: ClassVar[dict[str, set[str]]] = {}
@@ -519,78 +513,78 @@ class TwoDARegistry:
 
         # Centralize the GFF field mapping here
         cls._GFF_FIELD_TO_2DA = {
-            "SoundSetFile": ResourceIdentifier(cls.SOUNDSETS, ResourceType.TwoDA),
-            "PortraitId": ResourceIdentifier(cls.PORTRAITS, ResourceType.TwoDA),
-            "Appearance_Type": ResourceIdentifier(cls.APPEARANCES, ResourceType.TwoDA),
-            "Phenotype": ResourceIdentifier("phenotype", ResourceType.TwoDA),
-            "FactionID": ResourceIdentifier(cls.FACTIONS, ResourceType.TwoDA),
-            "Faction": ResourceIdentifier(cls.FACTIONS, ResourceType.TwoDA),
-            "Subrace": ResourceIdentifier(cls.SUBRACES, ResourceType.TwoDA),
-            "SubraceIndex": ResourceIdentifier(cls.SUBRACES, ResourceType.TwoDA),
-            "Race": ResourceIdentifier(cls.RACES, ResourceType.TwoDA),
-            "Class": ResourceIdentifier(cls.CLASSES, ResourceType.TwoDA),
-            "Gender": ResourceIdentifier(cls.GENDERS, ResourceType.TwoDA),
-            "PerceptionRange": ResourceIdentifier(cls.PERCEPTIONS, ResourceType.TwoDA),
-            "WalkRate": ResourceIdentifier(cls.SPEEDS, ResourceType.TwoDA),
-            "PaletteID": ResourceIdentifier("palette", ResourceType.TwoDA),
-            "BodyBag": ResourceIdentifier("bodybag", ResourceType.TwoDA),
-            "BaseItem": ResourceIdentifier(cls.BASEITEMS, ResourceType.TwoDA),
-            "ModelVariation": ResourceIdentifier(cls.BASEITEMS, ResourceType.TwoDA),
-            "BodyVariation": ResourceIdentifier("bodyvariation", ResourceType.TwoDA),
-            "TextureVar": ResourceIdentifier("textures", ResourceType.TwoDA),
-            "UpgradeType": ResourceIdentifier(cls.UPGRADES, ResourceType.TwoDA),
-            "Appearance": ResourceIdentifier(cls.PLACEABLES, ResourceType.TwoDA),
-            "GenericType": ResourceIdentifier(cls.DOORS, ResourceType.TwoDA),
-            "Cursor": ResourceIdentifier(cls.CURSORS, ResourceType.TwoDA),
-            "MusicDay": ResourceIdentifier("ambientmusic", ResourceType.TwoDA),
-            "MusicNight": ResourceIdentifier("ambientmusic", ResourceType.TwoDA),
-            "MusicBattle": ResourceIdentifier("ambientmusic", ResourceType.TwoDA),
-            "MusicDelay": ResourceIdentifier("ambientmusic", ResourceType.TwoDA),
-            "LoadScreenID": ResourceIdentifier("loadscreens", ResourceType.TwoDA),
-            "CameraStyle": ResourceIdentifier(cls.CAMERAS, ResourceType.TwoDA),
-            "Animation": ResourceIdentifier(cls.DIALOG_ANIMS, ResourceType.TwoDA),
-            "Emotion": ResourceIdentifier(cls.EMOTIONS, ResourceType.TwoDA),
-            "FacialAnim": ResourceIdentifier(cls.EXPRESSIONS, ResourceType.TwoDA),
-            "AlienRaceOwner": ResourceIdentifier(cls.RACES, ResourceType.TwoDA),
-            "AlienRaceNode": ResourceIdentifier(cls.RACES, ResourceType.TwoDA),
-            "CamVidEffect": ResourceIdentifier(cls.VIDEO_EFFECTS, ResourceType.TwoDA),
-            "CameraID": ResourceIdentifier(cls.CAMERAS, ResourceType.TwoDA),
-            "Subtype": ResourceIdentifier(cls.POWERS, ResourceType.TwoDA),
-            "SpellId": ResourceIdentifier(cls.POWERS, ResourceType.TwoDA),
-            "Spell": ResourceIdentifier(cls.POWERS, ResourceType.TwoDA),
-            "FeatID": ResourceIdentifier(cls.FEATS, ResourceType.TwoDA),
-            "Feat": ResourceIdentifier(cls.FEATS, ResourceType.TwoDA),
-            "SkillID": ResourceIdentifier(cls.SKILLS, ResourceType.TwoDA),
-            "MarkUp": ResourceIdentifier("merchants", ResourceType.TwoDA),
-            "MarkDown": ResourceIdentifier("merchants", ResourceType.TwoDA),
-            "Difficulty": ResourceIdentifier(cls.ENC_DIFFICULTIES, ResourceType.TwoDA),
-            "DifficultyIndex": ResourceIdentifier(cls.ENC_DIFFICULTIES, ResourceType.TwoDA),
-            "TrapType": ResourceIdentifier(cls.TRAPS, ResourceType.TwoDA),
-            "PlanetID": ResourceIdentifier(cls.PLANETS, ResourceType.TwoDA),
-            "PlotIndex": ResourceIdentifier(cls.PLOT, ResourceType.TwoDA),
-            "VideoResRef": ResourceIdentifier(cls.VIDEO_EFFECTS, ResourceType.TwoDA),
+            "ACModifierType": ResourceIdentifier(cls.IPRP_ACMODTYPE, ResourceType.TwoDA),
             "AIStyle": ResourceIdentifier("ai_styles", ResourceType.TwoDA),
+            "AlienRaceNode": ResourceIdentifier(cls.RACES, ResourceType.TwoDA),
+            "AlienRaceOwner": ResourceIdentifier(cls.RACES, ResourceType.TwoDA),
+            "Animation": ResourceIdentifier(cls.DIALOG_ANIMS, ResourceType.TwoDA),
+            "Appearance_Type": ResourceIdentifier(cls.APPEARANCES, ResourceType.TwoDA),
+            "Appearance": ResourceIdentifier(cls.PLACEABLES, ResourceType.TwoDA),
+            "AttackModifier": ResourceIdentifier("iprp_attackmod", ResourceType.TwoDA),
+            "BaseItem": ResourceIdentifier(cls.BASEITEMS, ResourceType.TwoDA),
+            "BodyBag": ResourceIdentifier("bodybag", ResourceType.TwoDA),
+            "BodyVariation": ResourceIdentifier("bodyvariation", ResourceType.TwoDA),
+            "BonusFeatID": ResourceIdentifier("iprp_bonusfeat", ResourceType.TwoDA),
+            "CameraID": ResourceIdentifier(cls.CAMERAS, ResourceType.TwoDA),
+            "CameraStyle": ResourceIdentifier(cls.CAMERAS, ResourceType.TwoDA),
+            "CamVidEffect": ResourceIdentifier(cls.VIDEO_EFFECTS, ResourceType.TwoDA),
+            "CastSpell": ResourceIdentifier("iprp_spells", ResourceType.TwoDA),
+            "Class": ResourceIdentifier(cls.CLASSES, ResourceType.TwoDA),
+            "Cursor": ResourceIdentifier(cls.CURSORS, ResourceType.TwoDA),
+            "DamageReduction": ResourceIdentifier("iprp_damagered", ResourceType.TwoDA),
             "DamageType": ResourceIdentifier(cls.IPRP_DAMAGETYPE, ResourceType.TwoDA),
             "DamageVsType": ResourceIdentifier("iprp_damagevs", ResourceType.TwoDA),
-            "AttackModifier": ResourceIdentifier("iprp_attackmod", ResourceType.TwoDA),
-            "ACModifierType": ResourceIdentifier(cls.IPRP_ACMODTYPE, ResourceType.TwoDA),
-            "BonusFeatID": ResourceIdentifier("iprp_bonusfeat", ResourceType.TwoDA),
-            "CastSpell": ResourceIdentifier("iprp_spells", ResourceType.TwoDA),
+            "Difficulty": ResourceIdentifier(cls.ENC_DIFFICULTIES, ResourceType.TwoDA),
+            "DifficultyIndex": ResourceIdentifier(cls.ENC_DIFFICULTIES, ResourceType.TwoDA),
+            "Emotion": ResourceIdentifier(cls.EMOTIONS, ResourceType.TwoDA),
+            "FacialAnim": ResourceIdentifier(cls.EXPRESSIONS, ResourceType.TwoDA),
+            "Faction": ResourceIdentifier(cls.FACTIONS, ResourceType.TwoDA),
+            "FactionID": ResourceIdentifier(cls.FACTIONS, ResourceType.TwoDA),
+            "Feat": ResourceIdentifier(cls.FEATS, ResourceType.TwoDA),
+            "FeatID": ResourceIdentifier(cls.FEATS, ResourceType.TwoDA),
+            "Gender": ResourceIdentifier(cls.GENDERS, ResourceType.TwoDA),
+            "GenericType": ResourceIdentifier(cls.DOORS, ResourceType.TwoDA),
+            "ImmunityType": ResourceIdentifier(cls.IPRP_IMMUNITY, ResourceType.TwoDA),
             "LightColor": ResourceIdentifier("iprp_lightcol", ResourceType.TwoDA),
+            "LoadScreenID": ResourceIdentifier("loadscreens", ResourceType.TwoDA),
+            "MarkDown": ResourceIdentifier("merchants", ResourceType.TwoDA),
+            "MarkUp": ResourceIdentifier("merchants", ResourceType.TwoDA),
+            "ModelVariation": ResourceIdentifier(cls.BASEITEMS, ResourceType.TwoDA),
             "MonsterDamage": ResourceIdentifier("iprp_monstdam", ResourceType.TwoDA),
+            "MusicBattle": ResourceIdentifier("ambientmusic", ResourceType.TwoDA),
+            "MusicDay": ResourceIdentifier("ambientmusic", ResourceType.TwoDA),
+            "MusicDelay": ResourceIdentifier("ambientmusic", ResourceType.TwoDA),
+            "MusicNight": ResourceIdentifier("ambientmusic", ResourceType.TwoDA),
             "OnHit": ResourceIdentifier(cls.IPRP_ONHIT, ResourceType.TwoDA),
+            "PaletteID": ResourceIdentifier("palette", ResourceType.TwoDA),
             "Param1": ResourceIdentifier(cls.IPRP_PARAMTABLE, ResourceType.TwoDA),
             "Param1Value": ResourceIdentifier(cls.IPRP_PARAMTABLE, ResourceType.TwoDA),
-            "SkillBonus": ResourceIdentifier("iprp_skillcost", ResourceType.TwoDA),
-            "SpecialWalk": ResourceIdentifier(cls.IPRP_WALK, ResourceType.TwoDA),
-            "WeightIncrease": ResourceIdentifier("iprp_weightinc", ResourceType.TwoDA),
-            "Trap": ResourceIdentifier("iprp_traptype", ResourceType.TwoDA),
-            "DamageReduction": ResourceIdentifier("iprp_damagered", ResourceType.TwoDA),
-            "ImmunityType": ResourceIdentifier(cls.IPRP_IMMUNITY, ResourceType.TwoDA),
+            "PerceptionRange": ResourceIdentifier(cls.PERCEPTIONS, ResourceType.TwoDA),
+            "Phenotype": ResourceIdentifier("phenotype", ResourceType.TwoDA),
+            "PlanetID": ResourceIdentifier(cls.PLANETS, ResourceType.TwoDA),
+            "PlotIndex": ResourceIdentifier(cls.PLOT, ResourceType.TwoDA),
+            "PortraitId": ResourceIdentifier(cls.PORTRAITS, ResourceType.TwoDA),
+            "Race": ResourceIdentifier(cls.RACES, ResourceType.TwoDA),
             "SavedGame": ResourceIdentifier("saves", ResourceType.TwoDA),
             "SaveType": ResourceIdentifier(cls.IPRP_SAVEELEMENT, ResourceType.TwoDA),
+            "SkillBonus": ResourceIdentifier("iprp_skillcost", ResourceType.TwoDA),
+            "SkillID": ResourceIdentifier(cls.SKILLS, ResourceType.TwoDA),
+            "SoundSetFile": ResourceIdentifier(cls.SOUNDSETS, ResourceType.TwoDA),
+            "SpecialWalk": ResourceIdentifier(cls.IPRP_WALK, ResourceType.TwoDA),
+            "Spell": ResourceIdentifier(cls.POWERS, ResourceType.TwoDA),
+            "SpellId": ResourceIdentifier(cls.POWERS, ResourceType.TwoDA),
             "SpellResistance": ResourceIdentifier("iprp_spellres", ResourceType.TwoDA),
+            "Subrace": ResourceIdentifier(cls.SUBRACES, ResourceType.TwoDA),
+            "SubraceIndex": ResourceIdentifier(cls.SUBRACES, ResourceType.TwoDA),
+            "Subtype": ResourceIdentifier(cls.POWERS, ResourceType.TwoDA),
+            "TextureVar": ResourceIdentifier("textures", ResourceType.TwoDA),
+            "Trap": ResourceIdentifier("iprp_traptype", ResourceType.TwoDA),
+            "TrapType": ResourceIdentifier(cls.TRAPS, ResourceType.TwoDA),
+            "UpgradeType": ResourceIdentifier(cls.UPGRADES, ResourceType.TwoDA),
+            "VideoResRef": ResourceIdentifier(cls.VIDEO_EFFECTS, ResourceType.TwoDA),
             "VisualType": ResourceIdentifier("visualeffects", ResourceType.TwoDA),
+            "WalkRate": ResourceIdentifier(cls.SPEEDS, ResourceType.TwoDA),
+            "WeightIncrease": ResourceIdentifier("iprp_weightinc", ResourceType.TwoDA),
         }
 
     @classmethod
@@ -617,8 +611,6 @@ class TwoDAManager:
     
     References:
     ----------
-        vendor/reone/src/libs/resource/format/2dareader.cpp (2DA reading)
-        vendor/xoreos-tools/src/xml/2dadumper.cpp (2DA extraction)
         Note: This manager is PyKotor-specific for tooling and modding purposes.
     """
     def __init__(self, installation: Installation):

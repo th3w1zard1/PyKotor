@@ -16,9 +16,7 @@ The implementation is intentionally self-contained and converts through the
 
 References:
 ----------
-    vendor/tga2tpc/ (Original tga2tpc web-based tool)
-    vendor/tga2tpc/main.js (TPC conversion logic)
-    vendor/tga2tpc/tpc.js (TPC format handling)
+    TPC format specification
 """
 
 from __future__ import annotations

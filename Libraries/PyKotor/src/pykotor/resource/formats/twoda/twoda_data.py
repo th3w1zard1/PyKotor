@@ -7,14 +7,7 @@ and string-based cells that are parsed as integers, floats, or other types as ne
 
 References:
 ----------
-    vendor/TSLPatcher/lib/site/Bioware/TwoDA.pm:1-945 - Complete 2DA implementation
-    vendor/Kotor.NET/Kotor.NET/Formats/Kotor2DA/TwoDABinaryStructure.cs:10-139 - Binary format
-    vendor/KotOR_IO/KotOR_IO/File Formats/TwoDA.cs:20-288 - C# 2DA reader/writer
-    vendor/KotOR-Bioware-Libs/TwoDA.pm - Perl 2DA library
-    vendor/reone/include/reone/resource/2da.h:28-107 - C++ 2DA class
-    vendor/xoreos/src/aurora/2dafile.cpp:38-376 - 2DA file handling
-    vendor/KotOR.js/src/resource/TwoDAObject.ts:9-276 - TypeScript implementation
-    vendor/sotor/core/src/formats/twoda/read.rs:13-127 - Rust 2DA reader
+    2DA file format specification
 
 Binary Format (Version 2.b):
 ----------------------------
@@ -86,11 +79,7 @@ class TwoDA(ComparableMixin):
 
     References:
     ----------
-        vendor/TSLPatcher/lib/site/Bioware/TwoDA.pm:48-71 - get_cell() implementation
-        vendor/Kotor.NET/Kotor.NET/Formats/Kotor2DA/TwoDABinaryStructure.cs:12-112 - FileRoot class
-        vendor/KotOR_IO/KotOR_IO/File Formats/TwoDA.cs:20-152 - TwoDA class structure
-        vendor/reone/include/reone/resource/2da.h:28-107 - TwoDA C++ class
-        vendor/xoreos/src/aurora/2dafile.h:40-108 - 2DAFile class
+        2DA file format specification
 
     Attributes:
     ----------
@@ -127,8 +116,6 @@ class TwoDA(ComparableMixin):
         self,
         headers: list[str] | None = None,
     ):
-        # vendor/Kotor.NET/Kotor.NET/Formats/Kotor2DA/TwoDABinaryStructure.cs:17
-        # vendor/KotOR_IO/KotOR_IO/File Formats/TwoDA.cs:152
         # vendor/TSLPatcher/lib/site/Bioware/TwoDA.pm:70
         # Internal storage: list of dicts, each dict is a row mapping column headers to cell values
         self._rows: list[dict[str, str]] = []

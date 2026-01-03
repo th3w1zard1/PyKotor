@@ -6,14 +6,7 @@ chitin.key as the main KEY file which references all game BIF files.
 
 References:
 ----------
-    vendor/reone/include/reone/resource/format/keyreader.h:30-68 - KeyReader class
-    vendor/reone/src/libs/resource/format/keyreader.cpp:24-128 - KEY loading implementation
-    vendor/Kotor.NET/Kotor.NET/Formats/KotorKEY/KEYBinaryStructure.cs:13-114 - Binary structure
-    vendor/KotOR_IO/KotOR_IO/File Formats/KEY.cs:19-227 - C# KEY implementation
-    vendor/KotOR-dotNET/AuroraParsers/KEYObject.cs:10-95 - Simple KEY parser
-    vendor/KotOR.js/src/resource/KEYObject.ts:21-148 - TypeScript KEY implementation
-    vendor/xoreos/src/aurora/keyfile.cpp:39-194 - KEY file handling
-    vendor/KotOR-Bioware-Libs/KEY.pm:1-289 - Perl KEY library
+    KEY file format specification
 
 Binary Format:
 -------------

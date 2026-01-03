@@ -7,13 +7,7 @@ KEY file. BZF files are LZMA-compressed BIF files used in some game distribution
 
 References:
 ----------
-    vendor/reone/include/reone/resource/format/bifreader.h:27-58 - BifReader class
-    vendor/reone/src/libs/resource/format/bifreader.cpp:24-73 - BIF loading implementation
-    vendor/Kotor.NET/Kotor.NET/Formats/KotorBIF/BIFBinaryStructure.cs:13-67 - Binary structure
-    vendor/KotOR_IO/KotOR_IO/File Formats/BIF.cs:20-306 - C# BIF implementation
-    vendor/KotOR-Bioware-Libs/BIF.pm:1-252 - Perl BIF library
-    vendor/xoreos/src/aurora/biffile.cpp:40-164 - BIF file handling
-    vendor/KotOR.js/src/resource/BIFObject.ts:11-152 - TypeScript implementation
+    BIF file format specification
 
 Binary Format:
 -------------

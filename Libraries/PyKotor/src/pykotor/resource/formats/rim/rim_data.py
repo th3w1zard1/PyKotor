@@ -7,12 +7,7 @@ RIM files store all resources inline with metadata, making them self-contained a
 
 References:
 ----------
-    vendor/reone/include/reone/resource/format/rimreader.h:29-57 - RimReader class
-    vendor/reone/src/libs/resource/format/rimreader.cpp:24-100 - RIM loading implementation
-    vendor/Kotor.NET/Kotor.NET/Formats/KotorRIM/RIMBinaryStructure.cs:11-121 - Binary structure
-    vendor/KotOR_IO/KotOR_IO/File Formats/RIM.cs:20-260 - C# RIM implementation
-    vendor/xoreos/src/aurora/rimfile.cpp:40-160 - RIM file handling
-    vendor/KotOR-Bioware-Libs/RIM.pm:1-280 - Perl RIM library
+    RIM file format specification
 
 Binary Format:
 -------------

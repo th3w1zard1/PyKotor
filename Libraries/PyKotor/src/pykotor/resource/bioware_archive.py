@@ -39,10 +39,7 @@ class ArchiveResource:
     
     References:
     ----------
-        vendor/KotOR-Bioware-Libs/ERF.pm (Perl ERF resource handling)
-        vendor/KotOR-Bioware-Libs/RIM.pm (Perl RIM resource handling)
-        vendor/KotOR_IO/KotOR_IO/File Formats/ERF.cs (C# ERF implementation)
-        vendor/reone/src/libs/resource/format/erfreader.cpp (ERF reading)
+        BioWare archive format specification
     """
     def __init__(
         self,
@@ -83,10 +80,7 @@ class BiowareArchive(ComparableMixin, ABC):
     
     References:
     ----------
-        vendor/KotOR-Bioware-Libs/ (Perl implementations: ERF.pm, RIM.pm, BIF.pm)
-        vendor/KotOR_IO/KotOR_IO/File Formats/ (C# archive implementations)
-        vendor/reone/src/libs/resource/format/ (C++ archive readers)
-        vendor/xoreos-tools/src/ (Archive extraction tools)
+        BioWare archive format specification
     """
     BINARY_TYPE: ClassVar[ResourceType]
     ARCHIVE_TYPE: type[ArchiveResource] = ArchiveResource

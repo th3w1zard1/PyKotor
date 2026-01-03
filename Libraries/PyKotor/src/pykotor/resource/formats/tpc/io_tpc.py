@@ -90,8 +90,7 @@ class TPCBinaryReader(ResourceReader):
     
     References:
     ----------
-        vendor/reone/src/libs/graphics/format/tpcreader.cpp (TPC reading)
-        vendor/tga2tpc/ (TPC conversion tool)
+        TPC file format specification
     """
     MAX_DIMENSIONS: Literal[0x8000] = 0x8000
     IMG_DATA_START_OFFSET: Literal[0x80] = 0x80
@@ -305,9 +304,7 @@ class TPCBinaryWriter(ResourceWriter):
     
     References:
     ----------
-        vendor/reone/src/libs/graphics/format/tpcwriter.cpp (TPC writing)
-        vendor/tga2tpc/tpc.js (TPC format handling)
-        vendor/KotOR-Bioware-Libs/TPC.pm (Perl TPC implementation)
+        TPC file format specification
     """
 
     MAX_DIMENSIONS: Literal[0x8000] = TPCBinaryReader.MAX_DIMENSIONS

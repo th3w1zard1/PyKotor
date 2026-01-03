@@ -5,14 +5,6 @@ game data, including character templates, areas, dialogs, and more.
 
 References:
 ----------
-    vendor/reone/src/libs/resource/gff.cpp - GFF parsing and writing
-    vendor/reone/include/reone/resource/gff.h - GFF data structures
-    vendor/xoreos-tools/src/resource/gff.cpp - GFF format parser
-    vendor/xoreos-docs/specs/gff.html - GFF format specification
-    vendor/KotOR.js/src/resource/GFFStruct.ts - TypeScript GFF handling
-    vendor/KotOR-dotNET/GFFStruct.cs - C# GFF implementation
-    vendor/KotOR-Bioware-Libs/GFF.pm - Perl GFF parser
-    vendor/sotor/core/src/formats/gff/ - Rust GFF implementation
     Note: GFF is used for all structured game data; critical to understand for modding
 """
 
@@ -218,8 +210,7 @@ class GFFFieldType(IntEnum):
 class GFFFieldView:
     """Lightweight view over a GFF field (label, type, value).
 
-    Mirrors vendor/KotOR.js/src/resource/GFFStruct.ts:151-168 (getFields) but returns
-    immutable tuples instead of exposing internal storage directly.
+    Returns immutable tuples instead of exposing internal storage directly.
     """
 
     label: str
@@ -308,9 +299,7 @@ class GFF(ComparableMixin):
     def fields(self) -> list[GFFFieldView]:
         """Return the root struct fields in insertion order.
 
-        vendor/KotOR.js/src/resource/GFFStruct.ts:151-168 exposes getFields() on the
-        struct; we mirror that surface at the file level for convenience while returning
-        immutable views.
+        Returns immutable views at the file level for convenience.
         """
         return self.root.fields()
 
@@ -454,15 +443,7 @@ class GFFStruct(ComparableMixin, dict):
     
     References:
     ----------
-        vendor/TSLPatcher/lib/site/Bioware/GFF.pm:87-99 - Struct constructor
-        vendor/Kotor.NET/Kotor.NET/Formats/KotorGFF/GFFBinaryStructure.cs:148-172 - Binary struct definition
-        vendor/Kotor.NET/Kotor.NET/Formats/KotorGFF/GFF.cs:72-77 - GFFStruct class
-        vendor/KotOR_IO/KotOR_IO/File Formats/GFF.cs:20-29 - STRUCT top level
-        vendor/KotOR-Bioware-Libs/GFF.pm - Perl GFF struct implementation
-        vendor/reone/include/reone/resource/gff.h:40-68 - GffStruct class
-        vendor/xoreos/src/aurora/gff3file.h:65-138 - GFF3Struct class
-        vendor/KotOR.js/src/resource/GFFStruct.ts:18-245 - TypeScript struct implementation
-        vendor/sotor/core/src/formats/gff/mod.rs:45-128 - Rust GFF struct
+        GFF struct format specification
     
     Attributes:
     ----------
@@ -501,14 +482,9 @@ class GFFStruct(ComparableMixin, dict):
         # Initialize dict first
         super().__init__()
 
-        # vendor/TSLPatcher/lib/site/Bioware/GFF.pm:90 - 'ID'=>-1
-        # vendor/Kotor.NET/Kotor.NET/Formats/KotorGFF/GFF.cs:74 - uint ID
         # User-defined struct type identifier (uint32 in binary)
         self.struct_id: int = struct_id
 
-        # vendor/TSLPatcher/lib/site/Bioware/GFF.pm:94 - Main struct
-        # vendor/Kotor.NET/Kotor.NET/Formats/KotorGFF/GFF.cs:75 - List<GFFField> Fields
-        # vendor/reone/include/reone/resource/gff.h:57 - std::unordered_map<std::string, Field>
         # Ordered dictionary of field labels to field instances
         self._fields: dict[str, _GFFField] = {}
 
@@ -644,9 +620,7 @@ class GFFStruct(ComparableMixin, dict):
     def fields(self) -> list[GFFFieldView]:
         """Return lightweight field views preserving insertion order.
 
-        vendor/KotOR.js/src/resource/GFFStruct.ts:151-168 exposes getFields() that
-        returns the underlying array; we instead project to immutable views so callers
-        cannot mutate `_fields` directly.
+        Returns immutable views so callers cannot mutate `_fields` directly.
         """
         return [GFFFieldView(label or "", field.field_type(), field.value()) for label, field in self._fields.items()]
 
