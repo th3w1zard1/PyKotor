@@ -1940,6 +1940,14 @@ class MDLBinaryReader:
                             vcount_verified = True
             
             # If still suspiciously low, try to count actual vertices from file data
+            # Use face-based count as minimum if faces exist
+            min_required_from_faces = 0
+            if bin_node.trimesh.faces_count > 0:
+                max_vertex_index = 0
+                for face in bin_node.trimesh.faces:
+                    max_vertex_index = max(max_vertex_index, face.vertex1, face.vertex2, face.vertex3)
+                min_required_from_faces = max_vertex_index + 1
+            
             if vcount <= 1:
                 if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
                     # Vertices are in MDX: try to count actual vertices by reading them
@@ -1951,8 +1959,9 @@ class MDLBinaryReader:
                         saved_pos = self._reader_ext.position()
                         try:
                             actual_vertex_count = 0
-                            # Try reading up to a reasonable limit
-                            for i in range(100000):  # Safety limit
+                            # Try reading up to a reasonable limit, but at least what faces require
+                            max_to_read = max(min_required_from_faces, 100000) if min_required_from_faces > 0 else 100000
+                            for i in range(max_to_read):
                                 seek_pos = mdx_data_offset + i * mdx_data_block_size + vertex_offset
                                 if seek_pos + 12 > self._reader_ext.size():
                                     break
@@ -1968,15 +1977,24 @@ class MDLBinaryReader:
                                     ):
                                         actual_vertex_count = i + 1
                                     else:
-                                        # Hit invalid data, stop counting
+                                        # Hit invalid data, but if we've read enough for faces, use that
+                                        if min_required_from_faces > 0 and actual_vertex_count >= min_required_from_faces:
+                                            actual_vertex_count = min_required_from_faces
                                         break
                                 except Exception:
-                                    # Can't read more, stop counting
+                                    # Can't read more, but if we've read enough for faces, use that
+                                    if min_required_from_faces > 0 and actual_vertex_count >= min_required_from_faces:
+                                        actual_vertex_count = min_required_from_faces
                                     break
+                            
+                            # Use face-based count as minimum if we didn't read enough
+                            if min_required_from_faces > 0 and actual_vertex_count < min_required_from_faces:
+                                actual_vertex_count = min_required_from_faces
                             
                             # If we found vertices, use the count
                             if actual_vertex_count > vcount:
                                 vcount = actual_vertex_count
+                                bin_node.trimesh.vertex_count = actual_vertex_count
                                 vcount_verified = True
                         finally:
                             self._reader_ext.seek(saved_pos)
@@ -1989,6 +2007,9 @@ class MDLBinaryReader:
                             self._reader.seek(bin_node.trimesh.vertices_offset)
                             actual_vertex_count = 0
                             max_readable = min(available_bytes // 12, 100000)  # Safety limit
+                            # But at least what faces require
+                            if min_required_from_faces > 0:
+                                max_readable = max(max_readable, min_required_from_faces)
                             
                             # Read vertices until we can't read any more valid ones
                             for i in range(max_readable):
@@ -2003,15 +2024,24 @@ class MDLBinaryReader:
                                     ):
                                         actual_vertex_count = i + 1
                                     else:
-                                        # Hit invalid vertex data, stop counting
+                                        # Hit invalid vertex data, but if we've read enough for faces, use that
+                                        if min_required_from_faces > 0 and actual_vertex_count >= min_required_from_faces:
+                                            actual_vertex_count = min_required_from_faces
                                         break
                                 except Exception:
-                                    # Can't read more, stop counting
+                                    # Can't read more, but if we've read enough for faces, use that
+                                    if min_required_from_faces > 0 and actual_vertex_count >= min_required_from_faces:
+                                        actual_vertex_count = min_required_from_faces
                                     break
+                            
+                            # Use face-based count as minimum if we didn't read enough
+                            if min_required_from_faces > 0 and actual_vertex_count < min_required_from_faces:
+                                actual_vertex_count = min_required_from_faces
                             
                             # If we found more vertices than the header says, use the actual count
                             if actual_vertex_count > vcount:
                                 vcount = actual_vertex_count
+                                bin_node.trimesh.vertex_count = actual_vertex_count
                                 vcount_verified = True
                         finally:
                             self._reader.seek(saved_pos)
