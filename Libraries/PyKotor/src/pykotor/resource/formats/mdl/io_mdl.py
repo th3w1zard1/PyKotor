@@ -861,7 +861,13 @@ class _TrimeshHeader:
                 vo = reader.read_uint32()
                 return vc, tc, mo, vo
 
-            if not _valid(int(self.vertex_count), int(self.vertices_offset)):
+            # Only run recovery if vertex_count is invalid AND vertices are not in MDX
+            # If mdx_data_offset is valid, vertices are in MDX, so vertices_offset being 0/0xFFFFFFFF is expected
+            # TODO: ensure the comparison still happen
+            mdx_valid = self.mdx_data_offset not in (0, 0xFFFFFFFF) and self.mdx_data_offset <= reader.size()
+            vertex_count_invalid = self.vertex_count < 0 or self.vertex_count > 1_000_000
+            
+            if vertex_count_invalid or (not _valid(int(self.vertex_count), int(self.vertices_offset)) and not mdx_valid):
                 # Prefer the legacy MDLOps-style offsets first, then our writer's layout.
                 for off_vc, off_mdx in ((304, 324), (300, 352)):
                     vc, tc, mo, vo = _try_offsets(off_vc, off_mdx)
@@ -2273,7 +2279,7 @@ class MDLBinaryWriter:
             bin_node.trimesh.background = mdl_node.mesh.background_geometry
             bin_node.trimesh.has_shadow = mdl_node.mesh.shadow
             bin_node.trimesh.beaming = mdl_node.mesh.beaming
-            bin_node.trimesh.render = mdl_node.mesh.render
+            # render is already set above, no need to set it again
             bin_node.trimesh.dirt_enabled = mdl_node.mesh.dirt_enabled
             bin_node.trimesh.dirt_texture = mdl_node.mesh.dirt_texture
             bin_node.trimesh.dirt_coordinate_space = mdl_node.mesh.dirt_coordinate_space
