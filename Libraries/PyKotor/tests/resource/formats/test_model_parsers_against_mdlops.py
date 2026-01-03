@@ -9,7 +9,6 @@ import tempfile
 from pathlib import Path
 
 import pytest
-
 from pykotor.common.misc import Game
 from pykotor.extract.file import FileResource
 from pykotor.extract.installation import Installation
@@ -94,7 +93,7 @@ def _test_single_model(
     mdlops_exe: Path,
 ) -> tuple[bool, str]:
     """Test a single model with MDLOps and compare with PyKotor output.
-    
+
     Returns:
         Tuple of (success: bool, message: str)
     """
@@ -176,8 +175,14 @@ def _test_single_model(
                 # Show more context for MDLOps errors
                 full_error = error_msg
                 if len(error_msg) > 1000:
-                    full_error = error_msg[:1000] + f"\n... ({len(error_msg) - 1000} more characters)"
-                return False, f"MDLOps failed to decompile PyKotor output:\n{full_error}"
+                    full_error = (
+                        error_msg[:1000]
+                        + f"\n... ({len(error_msg) - 1000} more characters)"
+                    )
+                return (
+                    False,
+                    f"MDLOps failed to decompile PyKotor output:\n{full_error}",
+                )
 
             pykotor_ascii_path = td_path / f"{pykotor_mdl.stem}-ascii.mdl"
             if not pykotor_ascii_path.exists():
@@ -302,3 +307,13 @@ def test_k2_models_random_sample(
     print(f"{'=' * 70}")
     print(f"Summary: {passed} passed, {failed} failed out of {test_count} tested")
     print(f"{'=' * 70}\n")
+
+
+def main():
+    print("Running tests...")
+    pytest.main(["-v", __file__])
+    print("Tests completed.")
+
+
+if __name__ == "__main__":
+    main()
