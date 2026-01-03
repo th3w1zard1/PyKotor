@@ -83,7 +83,7 @@ class DuplicateCommand(QUndoCommand):
         self.editor.enter_instance_mode()
         for instance in self.instances:
             if instance not in self.git.instances():
-                print(f"{instance!r} not found in instances: no duplicate to undo.")
+                RobustLogger().warning(f"{instance!r} not found in instances: no duplicate to undo.")
                 continue
             RobustLogger().debug(f"Undo duplicate: {instance.identifier()}")
             if isinstance(self.editor, GITEditor):
@@ -109,7 +109,7 @@ class DuplicateCommand(QUndoCommand):
 
         for instance in self.instances:
             if instance in self.git.instances():
-                print(f"{instance!r} already found in instances: no duplicate to redo.")
+                RobustLogger().warning(f"{instance!r} already found in instances: no duplicate to redo.")
                 continue
             RobustLogger().debug(f"Redo duplicate: {instance.identifier()}")
             self.git.add(instance)
@@ -136,7 +136,7 @@ class DeleteCommand(QUndoCommand):
         RobustLogger().debug(f"Undo delete: {[repr(instance) for instance in self.instances]}")
         for instance in self.instances:
             if instance in self.git.instances():
-                print(f"{instance!r} already found in instances: no deletecommand to undo.")
+                RobustLogger().warning(f"{instance!r} already found in instances: no deletecommand to undo.")
                 continue
             self.git.add(instance)
         self.rebuild_instance_list()
@@ -157,7 +157,7 @@ class DeleteCommand(QUndoCommand):
         self.editor.enter_instance_mode()
         for instance in self.instances:
             if instance not in self.git.instances():
-                print(f"{instance!r} not found in instances: no deletecommand to redo.")
+                RobustLogger().warning(f"{instance!r} not found in instances: no deletecommand to redo.")
                 continue
             RobustLogger().debug(f"Redo delete: {instance!r}")
             if isinstance(self.editor, GITEditor):
@@ -203,7 +203,7 @@ class InsertCommand(QUndoCommand):
 
     def redo(self):
         if self._first_run is True:
-            print("Skipping first redo of InsertCommand.")
+            RobustLogger().debug("Skipping first redo of InsertCommand.")
             self._first_run = False
             return
         RobustLogger().debug(f"Redo insert: {self.instance.identifier()}")
