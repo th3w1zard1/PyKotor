@@ -27,9 +27,9 @@ repos:
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix]
-        exclude: ^(vendor/|\.venv/)
+        exclude: (vendor/|^\.|/\.)
       - id: ruff-format
-        exclude: ^(vendor/|\.venv/)
+        exclude: (vendor/|^\.|/\.)
 
   - repo: https://github.com/crate-ci/typos
     rev: v1.20.4
