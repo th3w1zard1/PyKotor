@@ -1936,13 +1936,13 @@ class MDLBinaryReader:
                             else:
                                 # Calculate max vertices that can fit in MDX for required count
                                 # Always calculate the actual count we can read, even if bounds check passes
-                                # For vertex i, position is: mdx_data_offset + i * mdx_data_block_size + vertex_offset
-                                # For the last vertex (index vcount-1), we need: mdx_data_offset + (vcount-1) * mdx_data_block_size + vertex_offset + 12 <= size
-                                # Solving: (vcount-1) * mdx_data_block_size <= size - mdx_data_offset - vertex_offset - 12
-                                # vcount <= (size - mdx_data_offset - vertex_offset - 12) / mdx_data_block_size + 1
-                                available_for_vertices = self._reader_ext.size() - mdx_data_offset - vertex_offset - 12
+                                # For vertex i, position is: mdx_vertex_data_offset + i * mdx_vertex_data_block_size + vertex_offset
+                                # For the last vertex (index vcount-1), we need: mdx_vertex_data_offset + (vcount-1) * mdx_vertex_data_block_size + vertex_offset + 12 <= size
+                                # Solving: (vcount-1) * mdx_vertex_data_block_size <= size - mdx_vertex_data_offset - vertex_offset - 12
+                                # vcount <= (size - mdx_vertex_data_offset - vertex_offset - 12) / mdx_vertex_data_block_size + 1
+                                available_for_vertices = self._reader_ext.size() - mdx_vertex_data_offset - vertex_offset - 12
                                 if available_for_vertices > 0:
-                                    max_vertices_from_mdx = (available_for_vertices // mdx_data_block_size) + 1
+                                    max_vertices_from_mdx = (available_for_vertices // mdx_vertex_data_block_size) + 1
                                     if max_vertices_from_mdx < 0:
                                         max_vertices_from_mdx = 0
                                     # Use the minimum of required count and what we can actually read
