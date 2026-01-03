@@ -1859,6 +1859,7 @@ class MDLBinaryReader:
                 required_vertex_count = max_vertex_index + 1
                 if required_vertex_count > vcount:
                     # Validate that we can actually read this many vertices from the file
+                    # Start with the required count, then limit if bounds check fails
                     can_read_count = required_vertex_count
                     if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
                         # Check MDX bounds
@@ -1870,7 +1871,9 @@ class MDLBinaryReader:
                             max_seek_pos = mdx_data_offset + (required_vertex_count - 1) * mdx_data_block_size + vertex_offset + 12
                             if max_seek_pos > self._reader_ext.size():
                                 # Can't read that many - limit to what fits
-                                can_read_count = (self._reader_ext.size() - mdx_data_offset - vertex_offset) // mdx_data_block_size + 1
+                                can_read_count = (self._reader_ext.size() - mdx_data_offset - vertex_offset) // mdx_data_block_size
+                                if can_read_count < 0:
+                                    can_read_count = 0
                                 can_read_count = max(vcount, min(can_read_count, required_vertex_count))
                     elif bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
                         # Check MDL bounds
@@ -1878,6 +1881,8 @@ class MDLBinaryReader:
                         if bin_node.trimesh.vertices_offset + vertices_bytes > self._reader.size():
                             # Can't read that many - limit to what fits
                             can_read_count = (self._reader.size() - bin_node.trimesh.vertices_offset) // 12
+                            if can_read_count < 0:
+                                can_read_count = 0
                             can_read_count = max(vcount, min(can_read_count, required_vertex_count))
                     
                     # Use the validated count (at least what faces require, but not more than we can read)
