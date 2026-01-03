@@ -13,6 +13,7 @@ Rules:
 - NEVER use wildcards: no `git add .`, no `git add *`
 - IGNORE any file that you DID NOT modify (another simultaneous ai agent may be working with)
 - DO NOT run `git status` or `git diff`. DO NOT run ANY git command besides `git add <file1> <file2>; git commit -m <message>`.
+- **NEVER bypass pre-commit hooks**: `--no-verify`, `--no-gpg-sign`, `--no-edit`, or any other flag that skips validation is STRICTLY FORBIDDEN. Pre-commit hooks MUST run and MUST pass before any commit.
 - Use conventional commits: `fix:`, `feat:`, `refactor:`, `docs:`, `chore:`, `test:`
 - Do not derail work on core tasks by fighting git mechanics early.
 - When committing, still follow the explicit-path, chained-command rule which is: `git add <file1> <file2>; git commit -m <message>`. Do not split the command into multiple steps!
@@ -240,6 +241,7 @@ options:
 - Excludes: folders starting with `.`, `vendor/` folder at root
 - **ANY TYPE ERROR CAUSES NON-ZERO EXIT CODE**
 - **COMMITS BLOCKED UNTIL ALL ERRORS ARE RESOLVED**
+- **NEVER use `git commit --no-verify` or any flag that bypasses pre-commit hooks**
 - Agents must fix type errors, not suppress them
 
 ## Final Rule
