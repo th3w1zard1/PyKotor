@@ -2353,33 +2353,46 @@ class MDLBinaryReader:
                 if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.NORMAL) and self._reader_ext:
                     if node.mesh.vertex_normals is None:
                         node.mesh.vertex_normals = []
-                    self._reader_ext.seek(mdx_offset + i * mdx_block_size + bin_node.trimesh.mdx_normal_offset)
-                    x, y, z = (
-                        self._reader_ext.read_single(),
-                        self._reader_ext.read_single(),
-                        self._reader_ext.read_single(),
-                    )
-                    node.mesh.vertex_normals.append(Vector3(x, y, z))
+                    normal_pos = mdx_offset + i * mdx_block_size + bin_node.trimesh.mdx_normal_offset
+                    if normal_pos + 12 <= self._reader_ext.size():  # Need 12 bytes for Vector3
+                        self._reader_ext.seek(normal_pos)
+                        x, y, z = (
+                            self._reader_ext.read_single(),
+                            self._reader_ext.read_single(),
+                            self._reader_ext.read_single(),
+                        )
+                        node.mesh.vertex_normals.append(Vector3(x, y, z))
+                    else:
+                        # Bounds check failed - use null normal
+                        node.mesh.vertex_normals.append(Vector3.from_null())
 
                 if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE1 and self._reader_ext:
                     assert node.mesh.vertex_uv1 is not None
-                    self._reader_ext.seek(mdx_offset + i * mdx_block_size + bin_node.trimesh.mdx_texture1_offset)
-                    u, v = (
-                        self._reader_ext.read_single(),
-                        self._reader_ext.read_single(),
-                    )
-                    node.mesh.vertex_uv1.append(Vector2(u, v))
+                    uv1_pos = mdx_offset + i * mdx_block_size + bin_node.trimesh.mdx_texture1_offset
+                    if uv1_pos + 8 <= self._reader_ext.size():  # Need 8 bytes for Vector2
+                        self._reader_ext.seek(uv1_pos)
+                        u, v = (
+                            self._reader_ext.read_single(),
+                            self._reader_ext.read_single(),
+                        )
+                        node.mesh.vertex_uv1.append(Vector2(u, v))
+                    else:
+                        # Bounds check failed - use null UV
+                        node.mesh.vertex_uv1.append(Vector2(0.0, 0.0))
 
                 if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE2 and self._reader_ext:
                     assert node.mesh.vertex_uv2 is not None
-                    self._reader_ext.seek(
-                        mdx_offset + i * mdx_block_size + bin_node.trimesh.mdx_texture2_offset,
-                    )
-                    u, v = (
-                        self._reader_ext.read_single(),
-                        self._reader_ext.read_single(),
-                    )
-                    node.mesh.vertex_uv2.append(Vector2(u, v))
+                    uv2_pos = mdx_offset + i * mdx_block_size + bin_node.trimesh.mdx_texture2_offset
+                    if uv2_pos + 8 <= self._reader_ext.size():  # Need 8 bytes for Vector2
+                        self._reader_ext.seek(uv2_pos)
+                        u, v = (
+                            self._reader_ext.read_single(),
+                            self._reader_ext.read_single(),
+                        )
+                        node.mesh.vertex_uv2.append(Vector2(u, v))
+                    else:
+                        # Bounds check failed - use null UV
+                        node.mesh.vertex_uv2.append(Vector2(0.0, 0.0))
 
             # If we couldn't load normals (no MDX or no NORMAL flag), keep a sane default.
             if node.mesh.vertex_normals is None:
