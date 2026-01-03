@@ -2103,13 +2103,15 @@ class MDLBinaryReader:
                         # If can_read_count is 0, we still need to use required_vertex_count (faces are authoritative)
                         # But we'll verify we can actually read that many vertices later
                         final_count = min(required_vertex_count, can_read_count) if can_read_count > 0 else required_vertex_count
-                        if final_count > vcount or (vcount == 0 and final_count > 0):
+                        # Always update vcount if faces require more vertices OR if vcount is suspiciously low (0 or 1)
+                        # This ensures we fix vcount even when it's 1 (which is almost always wrong for meshes with geometry)
+                        if final_count > vcount or vcount <= 1:
                             vcount = final_count
                             bin_node.trimesh.vertex_count = final_count
                             vcount_verified = True
-                    elif can_read_count > 0 and can_read_count > vcount:
-                        # No faces, but we found a count from file bounds (even if it's 1, use it if vcount is 0)
-                        # This ensures we don't leave vcount at 0 when vertices exist in the file
+                    elif can_read_count > 0 and (can_read_count > vcount or vcount <= 1):
+                        # No faces, but we found a count from file bounds (even if it's 1, use it if vcount is 0 or 1)
+                        # This ensures we don't leave vcount at 0 or 1 when vertices exist in the file
                         vcount = can_read_count
                         bin_node.trimesh.vertex_count = can_read_count
                         vcount_verified = True

@@ -55,18 +55,20 @@ def mdlops_exe() -> Path:
     """Find and return the path to mdlops.exe."""
     # Try multiple possible locations
     test_file = Path(__file__).resolve()
-    repo_root = test_file.parents[4]  # From tests/resource/formats/ to repo root
-    possible_paths = [
-        repo_root / "vendor" / "MDLOps" / "mdlops.exe",
-        repo_root / "MDLOps" / "mdlops.exe",
-        Path("vendor/MDLOps/mdlops.exe").resolve(),
-    ]
+    # Try different parent levels to find repo root (vendor/MDLOps should be at repo root)
+    possible_roots = [test_file.parents[i] for i in range(4, 8)]
+    possible_paths = []
+    for repo_root in possible_roots:
+        possible_paths.append(repo_root / "vendor" / "MDLOps" / "mdlops.exe")
+        possible_paths.append(repo_root / "MDLOps" / "mdlops.exe")
+    # Also try relative to current working directory
+    possible_paths.append(Path("vendor/MDLOps/mdlops.exe").resolve())
 
     for path in possible_paths:
         if path.exists():
             return path
 
-    pytest.skip(f"MDLOps not found. Checked: {[str(p) for p in possible_paths]}")
+    pytest.skip(f"MDLOps not found. Checked: {[str(p) for p in possible_paths[:10]]}")
 
 
 @pytest.fixture(scope="session")
