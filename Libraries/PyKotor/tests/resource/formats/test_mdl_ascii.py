@@ -2596,7 +2596,8 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
         return
     
     # Extract game label from test ID (format: k1-modelname or k2-modelname)
-    test_id = item.callspec.id if hasattr(item, "callspec") and item.callspec else ""
+    callspec = getattr(item, "callspec", None)
+    test_id = callspec.id if callspec else ""
     if "-" in test_id:
         game_label = test_id.split("-")[0]
         if game_label in _models_bif_failure_state and _models_bif_failure_state[game_label]:
@@ -2610,7 +2611,8 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo) -> None:
     
     if call.when == "call" and call.excinfo is not None:
         # Test failed - extract game label and mark it
-        test_id = item.callspec.id if hasattr(item, "callspec") and item.callspec else ""
+        callspec = getattr(item, "callspec", None)
+        test_id = callspec.id if callspec else ""
         if "-" in test_id:
             game_label = test_id.split("-")[0]
             _models_bif_failure_state[game_label] = True
