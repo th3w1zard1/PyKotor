@@ -2007,6 +2007,7 @@ class MDLBinaryReader:
             node.mesh.radius = bin_node.trimesh.radius
             node.mesh.average = bin_node.trimesh.average
             node.mesh.area = bin_node.trimesh.total_area
+            node.mesh.transparency_hint = bin_node.trimesh.transparency_hint
             # Stored as 8 raw bytes in the binary trimesh header; normalize to a tuple[int,...] for MDLMesh.
             node.mesh.saber_unknowns = cast(
                 "tuple[int, int, int, int, int, int, int, int]",
