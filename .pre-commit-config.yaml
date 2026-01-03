@@ -7,9 +7,9 @@ repos:
     rev: v6.0.0
     hooks:
       - id: trailing-whitespace
-        exclude: ^(vendor/|\.venv/)
+        exclude: (vendor/|^\.venv/)
       - id: end-of-file-fixer
-        exclude: ^(vendor/|\.venv/)
+        exclude: (vendor/|^\.venv/)
       - id: check-yaml
         args: [--unsafe]
       - id: check-json
@@ -35,3 +35,22 @@ repos:
     rev: v1.20.4
     hooks:
       - id: typos
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.13.0
+    hooks:
+      - id: mypy
+        args: [--strict, --show-error-codes, --no-error-summary]
+        exclude: (vendor/|^\.|/\.)
+        pass_filenames: true
+
+  - repo: local
+    hooks:
+      - id: pyright
+        name: pyright
+        entry: pyright
+        language: system
+        types: [python]
+        exclude: (vendor/|^\.|/\.)
+        pass_filenames: false
+        args: []

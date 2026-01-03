@@ -20,8 +20,8 @@ Rules:
 
 ## 2. Documentation
 
-New .md files → only in `docs/`  
-Content → only public-facing, end-user or developer info  
+New .md files → only in `docs/`
+Content → only public-facing, end-user or developer info
 NEVER write progress reports or TODOs
 
 ### Verification rule (MUST follow)
@@ -207,7 +207,42 @@ options:
 - K2 → `$Env:K2_PATH` or `$Env:TSL_PATH`
 - Run from repo root so `Libraries/` is on `PYTHONPATH`
 
+## 9. Static Type Checking – MANDATORY AND NON-BYPASSABLE
+
+**PRE-COMMIT HOOKS RUN MYPY AND PYRIGHT ON ALL `.py` FILES.**
+
+**AGENTS CANNOT BYPASS TYPE CHECKING UNDER ANY CIRCUMSTANCES.**
+
+**ALL TYPE ERRORS MUST BE FIXED BEFORE COMMITS CAN PROCEED.**
+
+**THE FOLLOWING BYPASS MECHANISMS ARE BANNED EXCEPT IN EXPLICITLY APPROVED SCENARIOS:**
+
+- `# type: ignore` comments
+- `# pyright: ignore` comments
+- `# type: ignore[...]` comments (mypy error code ignores)
+- `getattr()` calls (prefer proper type annotations and `isinstance()` checks)
+- `hasattr()` calls (prefer proper type annotations and `isinstance()` checks)
+- `__dict__` attribute access for dynamic attributes
+- `object.__getattr__()` usage
+- `typing.cast()` calls (prefer proper type narrowing)
+- `typing.Any` type annotations (except in approved scenarios)
+- `# noqa` comments for type-related issues
+
+**APPROVED SCENARIOS (require explicit justification in code comments):**
+
+- Interfacing with untyped third-party libraries where proper stubs don't exist
+- Legacy code migration (temporary, must include TODO with migration plan)
+- Runtime type introspection that cannot be statically typed (extremely rare)
+
+**ENFORCEMENT:**
+
+- Pre-commit hooks run `mypy --strict` and `pyright` on all `.py` files
+- Excludes: folders starting with `.`, `vendor/` folder at root
+- **ANY TYPE ERROR CAUSES NON-ZERO EXIT CODE**
+- **COMMITS BLOCKED UNTIL ALL ERRORS ARE RESOLVED**
+- Agents must fix type errors, not suppress them
+
 ## Final Rule
 
-Follow these rules exactly.  
+Follow these rules exactly.
 Every deviation is a violation.

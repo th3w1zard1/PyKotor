@@ -1,5 +1,8 @@
 [build-system]
-requires = ["setuptools>=67.8.0", "wheel"]
+requires = [
+    "setuptools>=67.8.0",
+    "wheel",
+]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -217,10 +220,11 @@ exclude = [
     "**/build/**",
     "**/dist/**",
     "**/venv/**",
-    "**/__pycache__/**",
+    "**/.venv/**",
+    "**/vendor/**",
+    "**/.*/**",
 ]
 extraPaths = [
-    "Engines/PyKotorEngine/src",
     "Libraries/PyKotor/src",
     "Tools/BatchPatcher/src",
     "Tools/HolocronAI/src",
