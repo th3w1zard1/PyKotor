@@ -11,7 +11,7 @@ env:
   INTERPRETERS_JSON: '["python"]'
   QT_VERSIONS_JSON: '["PyQt5"]'
   UPX_VERSION: '4.2.2'
-  
+
 on:
   release:
     types: [prereleased]
@@ -28,6 +28,9 @@ jobs:
       should_run: ${{ steps.check_tag.outputs.should_run }}
       version: ${{ steps.extract_version.outputs.version }}
       tag_name: ${{ steps.determine_tag.outputs.tag_name }}
+      tool_name: ${{ steps.discover_tool.outputs.tool_name }}
+      tool_name_lower: ${{ steps.discover_tool.outputs.tool_name_lower }}
+      config_file: ${{ steps.discover_tool.outputs.config_file }}
     steps:
       - uses: actions/checkout@v4
 
@@ -46,25 +49,99 @@ jobs:
           echo "Using tag: $TAG"
         shell: bash
 
-      - name: Check if tag contains 'test' and 'toolset'
+      - name: Check if tag contains 'test' and discover tool
         id: check_tag
         run: |
           TAG="${{ steps.determine_tag.outputs.tag_name }}"
-          if [[ "$TAG" == test-*toolset* ]]; then
+          if [[ "$TAG" == test-* ]]; then
             echo "should_run=true" >> $GITHUB_OUTPUT
-            echo "Tag '$TAG' matches TEST toolset pattern"
+            echo "Tag '$TAG' matches TEST pattern"
           else
             echo "should_run=false" >> $GITHUB_OUTPUT
-            echo "Tag '$TAG' does not match TEST toolset pattern (test-*toolset*), skipping"
+            echo "Tag '$TAG' does not match TEST pattern (test-*), skipping"
           fi
+        shell: bash
+
+      - name: Discover tool from tag
+        id: discover_tool
+        if: steps.check_tag.outputs.should_run == 'true'
+        run: |
+          TAG="${{ steps.determine_tag.outputs.tag_name }}"
+          # Extract tool suffix from tag (e.g., test-v3.1.2-toolset -> toolset)
+          TAG_SUFFIX=$(echo "$TAG" | sed 's/^test-v[^-]*-//' | sed 's/^test-[^-]*-//' | sed 's/^test-v//' | sed 's/^test-//' | sed 's/^v[^-]*-//')
+          
+          # Map tag suffix to tool name
+          case "$TAG_SUFFIX" in
+            toolset)
+              TOOL_NAME="HolocronToolset"
+              TOOL_NAME_LOWER="toolset"
+              ;;
+            patcher|holopatcher)
+              TOOL_NAME="HoloPatcher"
+              TOOL_NAME_LOWER="holopatcher"
+              ;;
+            kotordiff)
+              TOOL_NAME="KotorDiff"
+              TOOL_NAME_LOWER="kotordiff"
+              ;;
+            batchpatcher|translator)
+              TOOL_NAME="BatchPatcher"
+              TOOL_NAME_LOWER="batchpatcher"
+              ;;
+            kotorcli)
+              TOOL_NAME="KotorCLI"
+              TOOL_NAME_LOWER="kotorcli"
+              ;;
+            *)
+              # Try to find tool by matching suffix to directory name
+              TOOL_NAME=""
+              for tool_dir in Tools/*/; do
+                if [ -d "$tool_dir" ]; then
+                  tool_basename=$(basename "$tool_dir")
+                  tool_lower=$(echo "$tool_basename" | tr '[:upper:]' '[:lower:]')
+                  if [ "$tool_lower" = "$TAG_SUFFIX" ] || [ "$tool_lower" = "${TAG_SUFFIX}toolset" ] || [ "$tool_lower" = "${TAG_SUFFIX}patcher" ]; then
+                    TOOL_NAME="$tool_basename"
+                    TOOL_NAME_LOWER="$tool_lower"
+                    break
+                  fi
+                fi
+              done
+              if [ -z "$TOOL_NAME" ]; then
+                echo "Could not determine tool from tag suffix: $TAG_SUFFIX"
+                exit 1
+              fi
+              ;;
+          esac
+          
+          # Find config file dynamically
+          CONFIG_FILE=""
+          if [ -f "Tools/$TOOL_NAME/src/$TOOL_NAME_LOWER/config.py" ]; then
+            CONFIG_FILE="Tools/$TOOL_NAME/src/$TOOL_NAME_LOWER/config.py"
+          elif [ -f "Tools/$TOOL_NAME/src/$TOOL_NAME_LOWER/config/config_info.py" ]; then
+            CONFIG_FILE="Tools/$TOOL_NAME/src/$TOOL_NAME_LOWER/config/config_info.py"
+          elif [ -f "Tools/$TOOL_NAME/src/$TOOL_NAME_LOWER/__main__.py" ]; then
+            CONFIG_FILE="Tools/$TOOL_NAME/src/$TOOL_NAME_LOWER/__main__.py"
+          elif [ -f "Tools/$TOOL_NAME/src/$TOOL_NAME_LOWER/__init__.py" ]; then
+            CONFIG_FILE="Tools/$TOOL_NAME/src/$TOOL_NAME_LOWER/__init__.py"
+          fi
+          
+          if [ -z "$CONFIG_FILE" ]; then
+            echo "Could not find config file for $TOOL_NAME"
+            exit 1
+          fi
+          
+          echo "tool_name=$TOOL_NAME" >> $GITHUB_OUTPUT
+          echo "tool_name_lower=$TOOL_NAME_LOWER" >> $GITHUB_OUTPUT
+          echo "config_file=$CONFIG_FILE" >> $GITHUB_OUTPUT
+          echo "Discovered tool: $TOOL_NAME (config: $CONFIG_FILE)"
         shell: bash
 
       - name: Extract version from tag
         id: extract_version
         run: |
           TAG="${{ steps.determine_tag.outputs.tag_name }}"
-          # Remove 'test-v' prefix and '-toolset' suffix to get version (e.g., test-v3.1.2-toolset -> 3.1.2)
-          VERSION=$(echo "$TAG" | sed 's/^test-v//' | sed 's/^test-//' | sed 's/^v//' | sed 's/-toolset$//')
+          # Remove 'test-v' prefix and tool suffix to get version (e.g., test-v3.1.2-toolset -> 3.1.2)
+          VERSION=$(echo "$TAG" | sed 's/^test-v//' | sed 's/^test-//' | sed 's/^v//' | sed 's/-[^-]*$//')
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Extracted version: $VERSION"
         shell: bash
@@ -98,25 +175,37 @@ jobs:
           fi
         shell: bash
 
-      - name: Update currentVersion in config_info.py (TEST BRANCH ONLY)
+      - name: Update currentVersion in config file (TEST BRANCH ONLY)
         run: |
           VERSION="${{ needs.validate.outputs.version }}"
-          CONFIG_FILE="Tools/HolocronToolset/src/toolset/config/config_info.py"
-          
+          CONFIG_FILE="${{ needs.validate.outputs.config_file }}"
+          TOOL_NAME="${{ needs.validate.outputs.tool_name }}"
+
           echo "⚠️  TEST MODE: Updating $CONFIG_FILE currentVersion to $VERSION on test-release branch"
           echo "⚠️  This will NOT affect master or production auto-updates"
-          
-          # Update currentVersion only
-          sed -i "s/\"currentVersion\": \"[^\"]*\"/\"currentVersion\": \"$VERSION\"/" "$CONFIG_FILE"
-          
-          echo "Updated currentVersion:"
-          grep "currentVersion" "$CONFIG_FILE"
+
+          # Update currentVersion, CURRENT_VERSION, or __version__ based on file content
+          if grep -q '"currentVersion"' "$CONFIG_FILE"; then
+            sed -i "s/\"currentVersion\": \"[^\"]*\"/\"currentVersion\": \"$VERSION\"/" "$CONFIG_FILE"
+            echo "Updated currentVersion:"
+            grep "currentVersion" "$CONFIG_FILE"
+          elif grep -q 'CURRENT_VERSION' "$CONFIG_FILE"; then
+            sed -i "s/CURRENT_VERSION = \"[^\"]*\"/CURRENT_VERSION = \"$VERSION\"/" "$CONFIG_FILE"
+            echo "Updated CURRENT_VERSION:"
+            grep "CURRENT_VERSION" "$CONFIG_FILE"
+          elif grep -q '__version__' "$CONFIG_FILE"; then
+            sed -i "s/__version__ = \"[^\"]*\"/__version__ = \"$VERSION\"/" "$CONFIG_FILE"
+            echo "Updated __version__:"
+            grep "__version__" "$CONFIG_FILE"
+          fi
         shell: bash
 
       - name: Commit and push to test-release branch
         run: |
-          git add Tools/HolocronToolset/src/toolset/config/config_info.py
-          git commit -m "chore: [TEST] Bump currentVersion to ${{ needs.validate.outputs.version }} (pre-build)"
+          CONFIG_FILE="${{ needs.validate.outputs.config_file }}"
+          TOOL_NAME="${{ needs.validate.outputs.tool_name }}"
+          git add "$CONFIG_FILE"
+          git commit -m "chore($TOOL_NAME): [TEST] Bump version to ${{ needs.validate.outputs.version }} (pre-build)"
           git push origin test-release
         shell: bash
 
@@ -234,7 +323,7 @@ jobs:
     - uses: actions/checkout@v4
       with:
         ref: test-release
-    
+
     - name: Test Powershell installer
       if: ${{ runner.os != 'Windows' }}
       id: setup-powershell
@@ -248,7 +337,7 @@ jobs:
       with:
         python-version: ${{ env.PYTHON_VERSION }}
         architecture: ${{ matrix.architecture }}
-    
+
     - name: Reset APT sources to default
       if: ${{ runner.os == 'Linux' }}
       run: |
@@ -281,7 +370,7 @@ jobs:
           $archiveName = "upx-${{ env.UPX_VERSION }}-src.tar.xz"
         }
         $url = "https://github.com/upx/upx/releases/download/v${{ env.UPX_VERSION }}/$archiveName"
-    
+
         # Write to the GITHUB_OUTPUT environment file
         Add-Content -Path $env:GITHUB_OUTPUT -Value "build=$build"
         Add-Content -Path $env:GITHUB_OUTPUT -Value "url=$url"
@@ -290,7 +379,7 @@ jobs:
 
     - name: Download and prepare UPX
       if: runner.os != 'macOS'
-      run: |        
+      run: |
         $ext = "${{ runner.os }}" -eq "Windows" ? "zip" : "tar.xz"
         $url = "${{ steps.upx_setup.outputs.url }}"
         $archiveName = "${{ steps.upx_setup.outputs.archiveName }}"
@@ -302,7 +391,7 @@ jobs:
         } elseif ("${{ runner.os }}" -eq "Linux") {
           curl -L $url -o $archiveName
         }
-        
+
         New-Item -ItemType Directory -Force -Path "upx-dir" -ErrorAction SilentlyContinue
         if ("${{ runner.os }}" -ne "macOS") {
           if ($ext -eq "zip") {
@@ -317,7 +406,7 @@ jobs:
           } else {
             tar -xvf $archiveName --strip-components=1 -C "upx-dir"
           }
-    
+
           Remove-Item $archiveName # Clean up downloaded archive
         }
       shell: pwsh
@@ -368,15 +457,19 @@ jobs:
       run: echo "QT_API=${{ matrix.qt_version }}" >> $GITHUB_ENV
       shell: bash
 
-    - name: Install Holocron Toolset dependencies
+    - name: Install tool dependencies
       if: ${{ success() || failure() }}
       env:
         MATRIX_ARCH: ${{ matrix.architecture }}
         QT_API: ${{ matrix.qt_version }}
-      id: toolset_deps
+      id: tool_deps
       run: |
+        $toolName = "${{ needs.validate.outputs.tool_name }}"
+        $toolNameLower = "${{ needs.validate.outputs.tool_name_lower }}"
+        $venvName = ".venv_${toolNameLower}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
+        
         try {
-          . ./install_python_venv.ps1 -noprompt -venv_name .venv_toolset_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }} -force_python_version ${{ matrix.python-version }}
+          . ./install_python_venv.ps1 -noprompt -venv_name $venvName -force_python_version ${{ matrix.python-version }}
           Write-Host "Python executable path: $pythonExePath"
           & $pythonExePath -m pip install --upgrade pip
           if ("${{ runner.os }}" -eq "Windows") {
@@ -394,13 +487,28 @@ jobs:
           $env:QT_API = "${{ matrix.qt_version }}"
           $output = ""
           $errorLines = @()
-          . ./compile/deps_toolset.ps1 -noprompt -venv_name .venv_toolset_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }} 2>&1 | ForEach-Object {
-            Write-Output $_.ToString()
-            $output += $_.ToString() + "`n"
-            if($_ -match 'ERROR:') {
-              $errorLines += $_.ToString()
+          
+          # Find deps script dynamically
+          $depsScript = ""
+          if (Test-Path "compile/deps_${toolNameLower}.ps1") {
+            $depsScript = "compile/deps_${toolNameLower}.ps1"
+          } elseif (Test-Path "compile/deps_${toolName}.ps1") {
+            $depsScript = "compile/deps_${toolName}.ps1"
+          } elseif ($toolNameLower -eq "toolset" -and (Test-Path "compile/deps_toolset.ps1")) {
+            $depsScript = "compile/deps_toolset.ps1"
+          }
+          
+          if ($depsScript -and (Test-Path $depsScript)) {
+            Write-Host "Running deps script: $depsScript"
+            . ./$depsScript -noprompt -venv_name $venvName 2>&1 | ForEach-Object {
+              Write-Output $_.ToString()
+              $output += $_.ToString() + "`n"
+              if($_ -match 'ERROR:') {
+                $errorLines += $_.ToString()
+              }
             }
           }
+          
           if ($errorLines.Count -gt 0) {
             $errorLines | ForEach-Object { Write-Error $_ }
             Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
@@ -408,8 +516,12 @@ jobs:
           } else {
             Add-Content -Path $env:GITHUB_OUTPUT -Value "success=true"
           }
-          pip install "setuptools==69.5.1"
-          pip install qdarkstyle -U
+          
+          # Install Qt dependencies if needed
+          if ($toolNameLower -eq "toolset" -or $toolNameLower -eq "holocrontoolset") {
+            pip install "setuptools==69.5.1"
+            pip install qdarkstyle -U
+          }
         } catch {
           Write-Host -ForegroundColor Red "Detailed Error Report:"
           Write-Host -ForegroundColor Red "Message: $($_.Exception.Message)"
@@ -418,18 +530,38 @@ jobs:
         }
       shell: pwsh
 
-    - name: Compile Holocron Toolset
-      if: ${{ (success() || failure()) && steps.toolset_deps.outputs.success == 'true' }}
+    - name: Compile tool
+      if: ${{ (success() || failure()) && steps.tool_deps.outputs.success == 'true' }}
       env:
         MATRIX_ARCH: ${{ matrix.architecture }}
         QT_API: ${{ matrix.qt_version }}
       run: |
+        $toolName = "${{ needs.validate.outputs.tool_name }}"
+        $toolNameLower = "${{ needs.validate.outputs.tool_name_lower }}"
+        $venvName = ".venv_${toolNameLower}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
         $upxDir = $env:UPX_DIR
         Write-Host "Using UPX directory at '$upxDir'"
         $output = ""
         $env:PYTHONOPTIMIZE = "1"
         $env:QT_API = "${{ matrix.qt_version }}"
-        . ./compile/compile_toolset.ps1 -noprompt -venv_name .venv_toolset_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }} -upx_dir $upxDir 2>&1 | ForEach-Object {
+        
+        # Find compile script dynamically
+        $compileScript = ""
+        if (Test-Path "compile/compile_${toolNameLower}.ps1") {
+          $compileScript = "compile/compile_${toolNameLower}.ps1"
+        } elseif (Test-Path "compile/compile_${toolName}.ps1") {
+          $compileScript = "compile/compile_${toolName}.ps1"
+        } elseif ($toolNameLower -eq "toolset" -and (Test-Path "compile/compile_toolset.ps1")) {
+          $compileScript = "compile/compile_toolset.ps1"
+        }
+        
+        if (-not $compileScript -or -not (Test-Path $compileScript)) {
+          Write-Error "Could not find compile script for $toolName"
+          exit 1
+        }
+        
+        Write-Host "Running compile script: $compileScript"
+        . ./$compileScript -noprompt -venv_name $venvName -upx_dir $upxDir 2>&1 | ForEach-Object {
           Write-Output $_.ToString()
           $output += $_.ToString() + "`n"
           if($_ -match 'ERROR:') {
@@ -459,11 +591,11 @@ jobs:
         }
       shell: pwsh
 
-    - name: Upload HolocronToolset binaries
+    - name: Upload tool binaries
       if: ${{ success() || failure() }}
       uses: actions/upload-artifact@v4
       with:
-        name: HolocronToolset_TEST_${{ runner.os }}_${{ matrix.qt_version}}_${{ matrix.architecture }}
+        name: ${{ needs.validate.outputs.tool_name }}_TEST_${{ runner.os }}_${{ matrix.qt_version}}_${{ matrix.architecture }}
         path: ./dist/**
         retention-days: 7  # Shorter retention for test builds
 
@@ -478,8 +610,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: published_workflow_builds/
-          pattern: HolocronToolset_TEST_*
-      
+          pattern: ${{ needs.validate.outputs.tool_name }}_TEST_*
+
       - name: Compress into archives
         run: |
           $originalDir = Get-Location
@@ -492,7 +624,7 @@ jobs:
           }
           Set-Location $originalDir
         shell: pwsh
-      
+
       - name: Upload artifacts to TEST release
         uses: softprops/action-gh-release@v2
         with:
@@ -516,34 +648,55 @@ jobs:
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
 
-      - name: Update toolsetLatestVersion and toolsetLatestBetaVersion (TEST BRANCH ONLY)
+      - name: Update latest version keys (TEST BRANCH ONLY)
         run: |
           VERSION="${{ needs.validate.outputs.version }}"
-          CONFIG_FILE="Tools/HolocronToolset/src/toolset/config/config_info.py"
-          
+          CONFIG_FILE="${{ needs.validate.outputs.config_file }}"
+          TOOL_NAME="${{ needs.validate.outputs.tool_name }}"
+          TOOL_NAME_LOWER="${{ needs.validate.outputs.tool_name_lower }}"
+
           echo "⚠️  TEST MODE: Updating Latest versions on test-release branch"
           echo "⚠️  This will NOT affect master or production auto-updates"
+
+          # Try to find and update latest version keys dynamically
+          LATEST_KEY="${TOOL_NAME_LOWER}LatestVersion"
+          BETA_KEY="${TOOL_NAME_LOWER}LatestBetaVersion"
           
-          # Update toolsetLatestVersion and toolsetLatestBetaVersion
-          sed -i "s/\"toolsetLatestVersion\": \"[^\"]*\"/\"toolsetLatestVersion\": \"$VERSION\"/" "$CONFIG_FILE"
-          sed -i "s/\"toolsetLatestBetaVersion\": \"[^\"]*\"/\"toolsetLatestBetaVersion\": \"$VERSION\"/" "$CONFIG_FILE"
+          if grep -q "\"$LATEST_KEY\"" "$CONFIG_FILE"; then
+            sed -i "s/\"$LATEST_KEY\": \"[^\"]*\"/\"$LATEST_KEY\": \"$VERSION\"/" "$CONFIG_FILE"
+            echo "Updated $LATEST_KEY"
+          fi
           
-          # Update notes
+          if grep -q "\"$BETA_KEY\"" "$CONFIG_FILE"; then
+            sed -i "s/\"$BETA_KEY\": \"[^\"]*\"/\"$BETA_KEY\": \"$VERSION\"/" "$CONFIG_FILE"
+            echo "Updated $BETA_KEY"
+          fi
+
+          # Update notes if release has body
           NOTES="${{ github.event.release.body }}"
           if [ -n "$NOTES" ]; then
             ESCAPED_NOTES=$(echo "$NOTES" | head -n 1 | sed 's/[&/\]/\\&/g' | sed 's/"/\\"/g')
-            sed -i "s/\"toolsetLatestNotes\": \"[^\"]*\"/\"toolsetLatestNotes\": \"[TEST] $ESCAPED_NOTES\"/" "$CONFIG_FILE"
-            sed -i "s/\"toolsetLatestBetaNotes\": \"[^\"]*\"/\"toolsetLatestBetaNotes\": \"[TEST] $ESCAPED_NOTES\"/" "$CONFIG_FILE"
+            NOTES_KEY="${TOOL_NAME_LOWER}LatestNotes"
+            BETA_NOTES_KEY="${TOOL_NAME_LOWER}LatestBetaNotes"
+            
+            if grep -q "\"$NOTES_KEY\"" "$CONFIG_FILE"; then
+              sed -i "s/\"$NOTES_KEY\": \"[^\"]*\"/\"$NOTES_KEY\": \"[TEST] $ESCAPED_NOTES\"/" "$CONFIG_FILE"
+            fi
+            if grep -q "\"$BETA_NOTES_KEY\"" "$CONFIG_FILE"; then
+              sed -i "s/\"$BETA_NOTES_KEY\": \"[^\"]*\"/\"$BETA_NOTES_KEY\": \"[TEST] $ESCAPED_NOTES\"/" "$CONFIG_FILE"
+            fi
           fi
-          
-          echo "Updated config_info.py:"
-          grep -A 5 "toolsetLatestVersion" "$CONFIG_FILE"
+
+          echo "Updated config file:"
+          grep -E "(LatestVersion|LatestBetaVersion)" "$CONFIG_FILE" || true
         shell: bash
 
       - name: Commit and push to test-release branch
         run: |
-          git add Tools/HolocronToolset/src/toolset/config/config_info.py
-          git commit -m "chore: [TEST] Update toolset latest versions to ${{ needs.validate.outputs.version }} (post-release)"
+          CONFIG_FILE="${{ needs.validate.outputs.config_file }}"
+          TOOL_NAME="${{ needs.validate.outputs.tool_name }}"
+          git add "$CONFIG_FILE"
+          git commit -m "chore($TOOL_NAME): [TEST] Update latest versions to ${{ needs.validate.outputs.version }} (post-release)"
           git push origin test-release
         shell: bash
 
@@ -559,25 +712,16 @@ jobs:
       - name: Add TEST warning to release description
         run: |
           TAG="${{ needs.validate.outputs.tag_name }}"
-          
+
           # Get the release
           RELEASE_JSON=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
             "https://api.github.com/repos/${{ github.repository }}/releases/tags/$TAG")
           RELEASE_ID=$(echo "$RELEASE_JSON" | jq -r '.id')
           CURRENT_BODY=$(echo "$RELEASE_JSON" | jq -r '.body')
-          
+
           # Prepend warning to body
-          NEW_BODY="⚠️ **THIS IS A TEST RELEASE** ⚠️
+          NEW_BODY="⚠️ **THIS IS A TEST RELEASE** ⚠️"$'\n\n'"This release was created using the TEST workflow and should not be used in production."$'\n'"- Version updates are on test-release branch only"$'\n'"- Master branch is NOT modified"$'\n'"- Auto-update will NOT be triggered for end users"$'\n\n'"---"$'\n\n'"$CURRENT_BODY"
 
-This release was created using the TEST workflow and should not be used in production.
-- Version updates are on test-release branch only
-- Master branch is NOT modified
-- Auto-update will NOT be triggered for end users
-
----
-
-$CURRENT_BODY"
-          
           # Update release body
           ESCAPED_BODY=$(echo "$NEW_BODY" | jq -Rs .)
           curl -X PATCH \
@@ -585,7 +729,7 @@ $CURRENT_BODY"
             -H "Accept: application/vnd.github.v3+json" \
             "https://api.github.com/repos/${{ github.repository }}/releases/$RELEASE_ID" \
             -d "{\"body\": $ESCAPED_BODY}"
-          
+
           echo "Added TEST warning to release description"
         shell: bash
 
@@ -595,4 +739,3 @@ $CURRENT_BODY"
           echo "⚠️  Delete this release and tag when done testing"
           echo "⚠️  Run 'git branch -D test-release && git push origin --delete test-release' to cleanup"
         shell: bash
-

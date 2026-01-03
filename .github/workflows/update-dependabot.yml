@@ -1,0 +1,168 @@
+name: Update Dependabot Configuration
+
+on:
+  push:
+    paths:
+      - 'Tools/**/requirements.txt'
+      - 'Tools/**/pyproject.toml'
+      - '.github/workflows/update-dependabot.yml'
+  workflow_dispatch:
+  schedule:
+    # Run weekly on Monday at 00:00 UTC
+    - cron: '0 0 * * 1'
+
+permissions:
+  contents: write
+
+jobs:
+  update-dependabot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install PyYAML
+        run: pip install pyyaml
+
+      - name: Generate dependabot.yml
+        run: |
+          python3 << 'PYTHON_SCRIPT'
+          import yaml
+          from pathlib import Path
+
+          def generate_dependabot_config():
+              """Generate dependabot.yml dynamically by scanning Tools/ directory."""
+              
+              # Base configuration
+              config = {
+                  "version": 2,
+                  "updates": [
+                      {
+                          "package-ecosystem": "github-actions",
+                          "directory": "/",
+                          "schedule": {
+                              "interval": "weekly",
+                              "day": "monday"
+                          },
+                          "open-pull-requests-limit": 10,
+                          "commit-message": {
+                              "prefix": "chore",
+                              "include": "scope"
+                          }
+                      },
+                      {
+                          "package-ecosystem": "pip",
+                          "directory": "/",
+                          "schedule": {
+                              "interval": "weekly",
+                              "day": "monday"
+                          },
+                          "open-pull-requests-limit": 10,
+                          "commit-message": {
+                              "prefix": "chore",
+                              "include": "scope"
+                          },
+                          "ignore": [
+                              {
+                                  "dependency-name": "ply",
+                                  "update-types": ["version-update:semver-major"]
+                              },
+                              {
+                                  "dependency-name": "numpy",
+                                  "update-types": ["version-update:semver-major"]
+                              },
+                              {
+                                  "dependency-name": "PyOpenGL",
+                                  "update-types": ["version-update:semver-major"]
+                              }
+                          ]
+                      },
+                      {
+                          "package-ecosystem": "pip",
+                          "directory": "/Libraries/PyKotor",
+                          "schedule": {
+                              "interval": "weekly",
+                              "day": "monday"
+                          },
+                          "open-pull-requests-limit": 5,
+                          "commit-message": {
+                              "prefix": "chore(pykotor)",
+                              "include": "scope"
+                          }
+                      }
+                  ]
+              }
+
+              # Dynamically discover tools in Tools/ directory
+              tools_dir = Path("Tools")
+              if tools_dir.exists():
+                  for tool_dir in sorted(tools_dir.iterdir()):
+                      if not tool_dir.is_dir():
+                          continue
+                      
+                      tool_name = tool_dir.name
+                      
+                      # Check if this directory has dependency files
+                      has_requirements = (tool_dir / "requirements.txt").exists()
+                      has_pyproject = (tool_dir / "pyproject.toml").exists()
+                      
+                      if has_requirements or has_pyproject:
+                          # Derive prefix from tool name (convert to lowercase)
+                          tool_name_lower = tool_name.lower()
+                          prefix = f"chore({tool_name_lower})"
+                          
+                          tool_entry = {
+                              "package-ecosystem": "pip",
+                              "directory": f"/Tools/{tool_name}",
+                              "schedule": {
+                                  "interval": "weekly",
+                                  "day": "monday"
+                              },
+                              "open-pull-requests-limit": 5,
+                              "commit-message": {
+                                  "prefix": prefix,
+                                  "include": "scope"
+                              }
+                          }
+                          config["updates"].append(tool_entry)
+                          print(f"Added dependabot entry for Tools/{tool_name}")
+
+              return config
+
+          config = generate_dependabot_config()
+          
+          # Write to file
+          output_file = Path(".github/dependabot.yml")
+          output_file.parent.mkdir(parents=True, exist_ok=True)
+          
+          with open(output_file, 'w') as f:
+              yaml.dump(config, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+          
+          print(f"Generated {output_file}")
+          print(f"Total entries: {len(config['updates'])}")
+          PYTHON_SCRIPT
+
+      - name: Check for changes
+        id: check
+        run: |
+          if [ -n "$(git status --porcelain .github/dependabot.yml)" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and push changes
+        if: steps.check.outputs.changed == 'true'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .github/dependabot.yml
+          git commit -m "chore: update dependabot configuration dynamically"
+          git push

@@ -25,6 +25,15 @@ jobs:
         run: |
           pip install pre-commit
 
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install pyright
+        run: |
+          npm install -g pyright
+
       - name: Run pre-commit
         run: |
           pre-commit run --all-files

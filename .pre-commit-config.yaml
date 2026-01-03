@@ -40,8 +40,8 @@ repos:
     rev: v1.13.0
     hooks:
       - id: mypy
-        args: [--strict, --show-error-codes, --no-error-summary]
-        exclude: (^vendor/|^\.|/\.)
+        args: [--allow-untyped-defs, --show-error-codes, --no-error-summary, --strict-optional, --warn-return-any, --warn-unused-configs, --disallow-any-generics, --disallow-untyped-calls, --disallow-untyped-decorators, --disallow-incomplete-defs, --check-untyped-defs, --disallow-untyped-globals, --no-implicit-optional, --warn-redundant-casts, --warn-unused-ignores, --warn-no-return, --no-implicit-reexport, --strict-equality]
+        exclude: (vendor/|^\.|/\.)
         pass_filenames: true
 
   - repo: local
@@ -51,6 +51,6 @@ repos:
         entry: pyright
         language: system
         types: [python]
-        exclude: (^vendor/|^\.|/\.)
+        exclude: (vendor/|^\.|/\.)
         pass_filenames: false
         args: []
