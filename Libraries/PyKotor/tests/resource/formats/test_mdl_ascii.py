@@ -283,7 +283,8 @@ class TestMDLAsciiBasicIO(unittest.TestCase):
 
         buffer = io.BytesIO()
         writer = MDLAsciiWriter(mdl, buffer)
-        writer.write()
+        # Writer auto-closes targets by default; keep the buffer open for assertions.
+        writer.write(auto_close=False)
 
         buffer.seek(0)
         content = buffer.read().decode("utf-8")
@@ -998,7 +999,7 @@ endmodelgeom test
 
 donemodel test
 """
-        reader = MDLAsciiReader(io.StringIO(ascii_content))
+        reader = MDLAsciiReader(_encode_ascii(ascii_content))
         mdl = reader.load()
 
         mesh_node = mdl.get("mesh_node")
@@ -1215,7 +1216,7 @@ endmodelgeom test
 
 donemodel test
 """
-        reader = MDLAsciiReader(io.StringIO(ascii_content))
+        reader = MDLAsciiReader(_encode_ascii(ascii_content))
         mdl = reader.load()
 
         skin_node = mdl.get("skin_node")
@@ -2674,7 +2675,7 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
 
     # Collect MDL entries for each game install root and create combined parameters
     # This avoids the cartesian product by combining game_install_root and mdl_entry
-    params: list[pytest.ParamSpec] = []
+    params: list = []
     for game_label, game_root in roots:
         mdl_entries = _collect_mdl_entries_for_game(game_label, game_root)
         if not mdl_entries:
@@ -2769,7 +2770,7 @@ def test_models_bif_roundtrip_eq_hash_pytest(
     assert mdl_bin == mdl_ascii, "binary->ascii parse mismatch (MDL __eq__)"
     assert hash(mdl_bin) == hash(mdl_ascii), "MDL __hash__ must align with __eq__"
     assert {mdl_bin} == {mdl_ascii}, "MDL must be usable in hash-based collections"
-    _compare_components(pytest, mdl_bin, mdl_ascii, context=f"{game_label}:{resref}:binary_vs_ascii")  # type: ignore[arg-type]
+    _compare_components(unittest.TestCase(), mdl_bin, mdl_ascii, context=f"{game_label}:{resref}:binary_vs_ascii")
 
     out_mdl = bytearray()
     out_mdx = bytearray()
@@ -2783,7 +2784,7 @@ def test_models_bif_roundtrip_eq_hash_pytest(
 
     assert mdl_bin == mdl_bin_round, "binary->ascii->binary parse mismatch (MDL __eq__)"
     assert hash(mdl_bin) == hash(mdl_bin_round), "MDL hash changed after roundtrip"
-    _compare_components(pytest, mdl_bin, mdl_bin_round, context=f"{game_label}:{resref}:binary_vs_binary_round")  # type: ignore[arg-type]
+    _compare_components(unittest.TestCase(), mdl_bin, mdl_bin_round, context=f"{game_label}:{resref}:binary_vs_binary_round")
 
     t0 = time.perf_counter()
     for _ in range(3):
