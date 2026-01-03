@@ -17,6 +17,7 @@ from pykotor.resource.formats.mdl.mdl_data import (
     MDLNode,
     MDLNodeFlags,
     MDLSkin,
+    _mdl_recompute_mesh_face_payload,
 )
 from pykotor.resource.formats.mdl.mdl_types import MDLControllerType, MDLNodeType
 from utility.common.geometry import Vector2, Vector3, Vector4
@@ -396,6 +397,8 @@ class _Node:
 
         if self.trimesh:
             self._write_trimesh_data(writer)
+        if self.skin:
+            self._write_skin_extra(writer)
         for child_offset in self.children_offsets:
             writer.write_uint32(child_offset)
 
@@ -421,6 +424,28 @@ class _Node:
             face.write(writer)
         for vertex in self.trimesh.vertices:
             writer.write_vector3(vertex)
+
+    def _write_skin_extra(self, writer: BinaryWriter) -> None:
+        """Write variable-length skin blocks referenced by _SkinmeshHeader offsets."""
+        assert self.skin is not None
+        # Layout we write (immediately after trimesh vertex array):
+        #   bonemap (float32 * count)
+        #   qbones  (Vector4 * count)
+        #   tbones  (Vector3 * count)
+        #   unknown0 (float32 * count) [currently unused]
+        if self.skin.bonemap_count and self.skin.bonemap:
+            for v in self.skin.bonemap[: self.skin.bonemap_count]:
+                writer.write_single(float(v))
+        if self.skin.qbones_count and self.skin.qbones:
+            for q in self.skin.qbones[: self.skin.qbones_count]:
+                writer.write_vector4(q)
+        if self.skin.tbones_count and self.skin.tbones:
+            for t in self.skin.tbones[: self.skin.tbones_count]:
+                writer.write_vector3(t)
+        if self.skin.unknown0_count:
+            # Not currently modeled; write zeros to match declared count.
+            for _ in range(int(self.skin.unknown0_count)):
+                writer.write_single(0.0)
 
     def all_headers_size(
         self,
@@ -488,10 +513,12 @@ class _Node:
         self,
         game: Game,
     ) -> int:
-        # Children offsets follow the vertex array.
+        # Children offsets follow the vertex array and any skin extra blocks (bonemap/qbones/tbones).
         size = self.vertices_offset(game)
         if self.trimesh:
             size += self.trimesh.vertices_size()
+        if self.skin:
+            size += self.skin_extra_size()
         return size
 
     def children_offsets_size(
@@ -521,6 +548,17 @@ class _Node:
         self,
     ) -> int:
         return len(self.w_controller_data) * 4
+
+    def skin_extra_size(self) -> int:
+        """Size of variable-length skin payload blocks written after vertices (MDL, not MDX)."""
+        if not self.skin:
+            return 0
+        bonemap_bytes = int(self.skin.bonemap_count) * 4
+        qbones_bytes = int(self.skin.qbones_count) * 16
+        tbones_bytes = int(self.skin.tbones_count) * 12
+        # unknown0 block currently not modeled; keep stable at 0 unless counts are set.
+        unknown0_bytes = int(self.skin.unknown0_count) * 4
+        return bonemap_bytes + qbones_bytes + tbones_bytes + unknown0_bytes
 
     def calc_size(
         self,
@@ -1712,7 +1750,11 @@ class MDLBinaryReader:
             node.mesh.radius = bin_node.trimesh.radius
             node.mesh.average = bin_node.trimesh.average
             node.mesh.area = bin_node.trimesh.total_area
-            node.mesh.saber_unknowns = cast("tuple[int, int, int, int, int, int, int, int]", bin_node.trimesh.saber_unknowns)
+            # Stored as 8 raw bytes in the binary trimesh header; normalize to a tuple[int,...] for MDLMesh.
+            node.mesh.saber_unknowns = cast(
+                "tuple[int, int, int, int, int, int, int, int]",
+                tuple(int(b) for b in bin_node.trimesh.saber_unknowns),
+            )
 
             # Vertex positions can be stored either in MDL (K1-style) or in MDX blocks.
             # Preserve vertex_count even if the MDL vertex table wasn't readable.
@@ -1746,6 +1788,7 @@ class MDLBinaryReader:
                 node.mesh.vertex_normals = []
             if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE1) and self._reader_ext:
                 node.mesh.vertex_uv1 = []
+                node.mesh.vertex_uvs = node.mesh.vertex_uv1
             if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE2) and self._reader_ext:
                 node.mesh.vertex_uv2 = []
 
@@ -1803,6 +1846,11 @@ class MDLBinaryReader:
                 packed = bin_face.material
                 face.material = packed & 0x1F
                 face.smoothgroup = packed >> 5
+
+            # Deterministically derive binary-only face payload from mesh geometry so
+            # binary and ASCII parse paths converge (no ASCII syntax extensions).
+            if not self._fast_load:
+                _mdl_recompute_mesh_face_payload(node.mesh)
 
         if bin_node.skin:
             node.skin = MDLSkin()
@@ -2127,6 +2175,41 @@ class MDLBinaryWriter:
                 bin_face.plane_coefficient = face.coefficient
                 bin_face.normal = face.normal
 
+        # Skin header + extra blocks (bonemap/qbones/tbones) + per-vertex MDX bones/weights.
+        if mdl_node.skin:
+            bin_node.skin = _SkinmeshHeader()
+            skin = mdl_node.skin
+
+            # Bone indices table in header is fixed-size (16 uint16).
+            bones = list(getattr(skin, "bone_indices", []))
+            bones16: list[int] = [(int(b) if i < len(bones) else -1) for i, b in enumerate(bones[:16] + [-1] * 16)]
+            bin_node.skin.bones = tuple(int(b) for b in bones16[:16])
+
+            # Bonemap + bind pose transforms.
+            bonemap = list(getattr(skin, "bonemap", []))
+            bin_node.skin.bonemap = [float(x) for x in bonemap]
+            bin_node.skin.bonemap_count = bin_node.skin.bonemap_count2 = len(bin_node.skin.bonemap)
+
+            qbones = list(getattr(skin, "qbones", []))
+            tbones = list(getattr(skin, "tbones", []))
+            bin_node.skin.qbones = list(qbones)
+            bin_node.skin.tbones = list(tbones)
+            bin_node.skin.qbones_count = bin_node.skin.qbones_count2 = len(bin_node.skin.qbones)
+            bin_node.skin.tbones_count = bin_node.skin.tbones_count2 = len(bin_node.skin.tbones)
+
+            # Unknown0 block currently not modeled.
+            bin_node.skin.unknown0_count = bin_node.skin.unknown0_count2 = 0
+            bin_node.skin.offset_to_unknown0 = 0
+
+            # Offsets to bonemap/qbones/tbones are filled in _calc_skin_offsets().
+            bin_node.skin.offset_to_bonemap = 0
+            bin_node.skin.offset_to_qbones = 0
+            bin_node.skin.offset_to_tbones = 0
+
+            # MDX per-vertex bones/weights offsets are filled in _update_mdx().
+            bin_node.skin.offset_to_mdx_bones = 0
+            bin_node.skin.offset_to_mdx_weights = 0
+
         # Controller key/data offsets are stored as uint16 *byte offsets* relative to the start of
         # the controller-data block (header.offset_to_controller_data).
         #
@@ -2245,6 +2328,13 @@ class MDLBinaryWriter:
             bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.TEXTURE2
             suboffset += 8
 
+        # Skin nodes store per-vertex bone indices + weights (4 floats each) in MDX.
+        if mdl_node.skin and bin_node.skin is not None:
+            bin_node.skin.offset_to_mdx_bones = suboffset
+            suboffset += 16
+            bin_node.skin.offset_to_mdx_weights = suboffset
+            suboffset += 16
+
         bin_node.trimesh.mdx_data_size = suboffset
 
         for i, position in enumerate(mdl_node.mesh.vertex_positions):
@@ -2256,6 +2346,24 @@ class MDLBinaryWriter:
                 self._writer_ext.write_vector2(mdl_node.mesh.vertex_uv1[i])
             if mdl_node.mesh.vertex_uv2:
                 self._writer_ext.write_vector2(mdl_node.mesh.vertex_uv2[i])
+
+            if mdl_node.skin and bin_node.skin is not None:
+                # Bone indices/weights are stored as 4 floats each.
+                vb = None
+                try:
+                    vb = mdl_node.skin.vertex_bones[i]
+                except Exception:
+                    vb = None
+                if vb is None:
+                    idxs = (-1.0, -1.0, -1.0, -1.0)
+                    wts = (0.0, 0.0, 0.0, 0.0)
+                else:
+                    idxs = tuple(float(x) for x in vb.vertex_indices)
+                    wts = tuple(float(x) for x in vb.vertex_weights)
+                for x in idxs:
+                    self._writer_ext.write_single(float(x))
+                for w in wts:
+                    self._writer_ext.write_single(float(w))
 
         # Why does the mdl/mdx format have this? I have no idea.
         if mdl_node.mesh.vertex_positions:
@@ -2362,6 +2470,44 @@ class MDLBinaryWriter:
 
             if bin_node.trimesh:
                 self._calc_trimesh_offsets(node_offset, bin_node)
+            if bin_node.skin:
+                self._calc_skin_offsets(node_offset, bin_node)
+
+    def _calc_skin_offsets(
+        self,
+        node_offset: int,
+        bin_node: _Node,
+    ) -> None:
+        assert bin_node.skin is not None
+        # Place skin variable payload blocks immediately after the vertex array.
+        after_vertices = node_offset + bin_node.vertices_offset(self.game)
+        if bin_node.trimesh:
+            after_vertices += bin_node.trimesh.vertices_size()
+
+        cur = after_vertices
+        if bin_node.skin.bonemap_count:
+            bin_node.skin.offset_to_bonemap = cur
+            cur += int(bin_node.skin.bonemap_count) * 4
+        else:
+            bin_node.skin.offset_to_bonemap = 0
+
+        if bin_node.skin.qbones_count:
+            bin_node.skin.offset_to_qbones = cur
+            cur += int(bin_node.skin.qbones_count) * 16
+        else:
+            bin_node.skin.offset_to_qbones = 0
+
+        if bin_node.skin.tbones_count:
+            bin_node.skin.offset_to_tbones = cur
+            cur += int(bin_node.skin.tbones_count) * 12
+        else:
+            bin_node.skin.offset_to_tbones = 0
+
+        if bin_node.skin.unknown0_count:
+            bin_node.skin.offset_to_unknown0 = cur
+            cur += int(bin_node.skin.unknown0_count) * 4
+        else:
+            bin_node.skin.offset_to_unknown0 = 0
 
     def _calc_trimesh_offsets(
         self,

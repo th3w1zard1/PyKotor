@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+
 from enum import IntFlag
 from typing import TYPE_CHECKING, Any
 
@@ -18,7 +19,7 @@ if TYPE_CHECKING:
 # Toolchains (MDLOps vs PyKotor vs game binaries) routinely differ at ~1e-6 due to formatting
 # and IEEE754 round-trip; 1e-5 keeps comparisons stable while remaining strict for MDL data.
 _MDL_FLOAT_DECIMALS: int = 3
-_MDL_FLOAT_SCALE: float = 10 ** _MDL_FLOAT_DECIMALS
+_MDL_FLOAT_SCALE: float = 10**_MDL_FLOAT_DECIMALS
 
 # Keys that should not be compared *as raw values* because they are aliases, redundant,
 # or derived caches. See the ID-equivalence checks below for how node_id/parent_id are
@@ -224,10 +225,6 @@ def _qfloat(v: float) -> int:
     return int(round(v * _MDL_FLOAT_SCALE))
 
 
-def _is_vector_like(v: Any) -> bool:
-    return hasattr(v, "x") and hasattr(v, "y") and (hasattr(v, "z") or hasattr(v, "w"))
-
-
 class _Vector2ListProxy:
     """List-like adapter for UV lists.
 
@@ -273,29 +270,31 @@ def _norm_value(v: Any, *, ignore_keys: set[str] | None = None) -> Any:
     if isinstance(v, float):
         return ("f", _qfloat(v))
 
-    if _is_vector_like(v):
+    if isinstance(v, (Vector2, Vector3, Vector4)):
         parts: list[Any] = [("f", _qfloat(float(v.x))), ("f", _qfloat(float(v.y)))]
-        if hasattr(v, "z"):
+        if isinstance(v, (Vector3, Vector4)):
             parts.append(("f", _qfloat(float(v.z))))
-        if hasattr(v, "w"):
+        if isinstance(v, Vector4):
             parts.append(("f", _qfloat(float(v.w))))
         return ("vec", tuple(parts))
 
     if isinstance(v, Color):
-        chans: list[Any] = []
-        for ch in ("r", "g", "b", "a"):
-            cv = getattr(v, ch)
-            chans.append(("f", _qfloat(float(cv))) if isinstance(cv, float) else cv)
-        return ("color", tuple(chans))
+        # Explicit component access (avoid getattr/hasattr patterns).
+        return (
+            "color",
+            (
+                ("f", _qfloat(float(v.r))),
+                ("f", _qfloat(float(v.g))),
+                ("f", _qfloat(float(v.b))),
+                ("f", _qfloat(float(v.a))),
+            ),
+        )
 
     if isinstance(v, (list, tuple)):
         return tuple(_norm_value(x, ignore_keys=ignore_keys) for x in v)
 
     if isinstance(v, dict):
-        return tuple(
-            (k, _norm_value(val, ignore_keys=ignore_keys))
-            for k, val in sorted(v.items(), key=lambda kv: str(kv[0]))
-        )
+        return tuple((k, _norm_value(val, ignore_keys=ignore_keys)) for k, val in sorted(v.items(), key=lambda kv: str(kv[0])))
 
     dct = v.__dict__
     if isinstance(dct, dict):
@@ -419,10 +418,9 @@ def _mdl_ids_equivalent_subtree(a_root: MDLNode, b_root: MDLNode) -> bool:
         for name, node in by_name.items():
             expected_parent_name = parent_name_map.get(name)
             pid = int(node.parent_id or -1)
-            # Root: allow missing/negative parent_id; if present it must still be negative.
+            # Subtree root: the chosen comparison root may not be the true model root, so its
+            # parent_id can legitimately point outside this subtree. Do not constrain it here.
             if expected_parent_name is None:
-                if pid >= 0:
-                    return False
                 continue
 
             # Non-root: if parent_id is present and both node+parent have ids assigned, it must match.
@@ -452,9 +450,7 @@ def _mdl_ids_equivalent_subtree(a_root: MDLNode, b_root: MDLNode) -> bool:
             a_pid = int(a_node.parent_id or -1)
             b_pid = int(b_node.parent_id or -1)
             if a_parent_name[name] is None:
-                # root
-                if a_pid >= 0 or b_pid >= 0:
-                    return False
+                # subtree root: parent_id may point outside the subtree
                 continue
             # Many pipelines (notably ASCII animation nodes) do not populate parent_id at all,
             # because parent relationships are tracked by name. Only enforce parent_id mapping
@@ -646,35 +642,50 @@ def _mdl_mesh_validate_aliases(mesh: MDLMesh) -> bool:
 
 
 def _mdl_mesh_equal(a: MDLMesh, b: MDLMesh) -> bool:
-    """Canonical mesh equality for MDLOps compatibility.
-
-    MDLOps ASCII frequently omits per-vertex normals even though they exist in binary MDX.
-    Normals are therefore treated as *optional derived data*:
-    - if both have normals populated, compare them
-    - if either side lacks normals, do not fail equality on that field
-    """
+    """Canonical mesh equality."""
     if not (_mdl_mesh_validate_aliases(a) and _mdl_mesh_validate_aliases(b)):
         return False
 
     # Common scalar fields that materially affect rendering and are present in ASCII.
-    for k in (
-        "texture_1",
-        "texture_2",
-        "transparency_hint",
-        "has_lightmap",
-        "rotate_texture",
-        "background_geometry",
-        "shadow",
-        "beaming",
-        "render",
-        "dirt_enabled",
-        "dirt_texture",
-        "dirt_coordinate_space",
-    ):
-        if getattr(a, k) != getattr(b, k):
-            return False
+    if a.texture_1 != b.texture_1:
+        return False
+    if a.texture_2 != b.texture_2:
+        return False
+    if a.transparency_hint != b.transparency_hint:
+        return False
+    if a.has_lightmap != b.has_lightmap:
+        return False
+    if a.rotate_texture != b.rotate_texture:
+        return False
+    if a.background_geometry != b.background_geometry:
+        return False
+    if a.shadow != b.shadow:
+        return False
+    if a.beaming != b.beaming:
+        return False
+    if a.render != b.render:
+        return False
+    if a.dirt_enabled != b.dirt_enabled:
+        return False
+    if a.dirt_texture != b.dirt_texture:
+        return False
+    if a.dirt_coordinate_space != b.dirt_coordinate_space:
+        return False
 
-    # Colors + bbox/average/radius/area
+    # Skin-specific data
+    if isinstance(a, MDLSkin) and isinstance(b, MDLSkin):
+        if not _mdl_deep_eq(a.qbones, b.qbones, ignore_keys=_MDL_EQ_IGNORE_KEYS):
+            return False
+        if not _mdl_deep_eq(a.tbones, b.tbones, ignore_keys=_MDL_EQ_IGNORE_KEYS):
+            return False
+        if not _mdl_deep_eq(a.bone_indices, b.bone_indices, ignore_keys=_MDL_EQ_IGNORE_KEYS):
+            return False
+        if not _mdl_deep_eq(a.vertex_bones, b.vertex_bones, ignore_keys=_MDL_EQ_IGNORE_KEYS):
+            return False
+    elif isinstance(a, MDLSkin) != isinstance(b, MDLSkin):
+        return False
+
+    # Colors (present in ASCII and materially affect rendering).
     if not _mdl_deep_eq(a.diffuse, b.diffuse, ignore_keys=_MDL_EQ_IGNORE_KEYS):
         return False
     if not _mdl_deep_eq(a.ambient, b.ambient, ignore_keys=_MDL_EQ_IGNORE_KEYS):
@@ -694,12 +705,9 @@ def _mdl_mesh_equal(a: MDLMesh, b: MDLMesh) -> bool:
     if not _mdl_deep_eq(a.vertex_positions, b.vertex_positions, ignore_keys=_MDL_EQ_IGNORE_KEYS):
         return False
 
-    # Optional per-vertex normals (derived / omitted by MDLOps ASCII sometimes)
-    an = a.vertex_normals or []
-    bn = b.vertex_normals or []
-    if an and bn:
-        if not _mdl_deep_eq(an, bn, ignore_keys=_MDL_EQ_IGNORE_KEYS):
-            return False
+    # Per-vertex normals
+    if not _mdl_deep_eq(a.vertex_normals or [], b.vertex_normals or [], ignore_keys=_MDL_EQ_IGNORE_KEYS):
+        return False
 
     # UVs (can be empty lists)
     if not _mdl_deep_eq(a.vertex_uv1, b.vertex_uv1, ignore_keys=_MDL_EQ_IGNORE_KEYS):
@@ -715,21 +723,25 @@ def _mdl_mesh_equal(a: MDLMesh, b: MDLMesh) -> bool:
 
 
 def _mdl_mesh_hash(mesh: MDLMesh) -> int:
-    """Hash consistent with _mdl_mesh_equal (excludes optional missing normals)."""
+    """Hash consistent with _mdl_mesh_equal."""
     h = hash(("mesh", mesh.texture_1, mesh.texture_2))
-    for k in (
-        "transparency_hint",
-        "has_lightmap",
-        "rotate_texture",
-        "background_geometry",
-        "shadow",
-        "beaming",
-        "render",
-        "dirt_enabled",
-        "dirt_texture",
-        "dirt_coordinate_space",
-    ):
-        h ^= hash((k, getattr(mesh, k)))
+    h ^= hash(("background_geometry", mesh.background_geometry))
+    h ^= hash(("beaming", mesh.beaming))
+    h ^= hash(("dirt_coordinate_space", mesh.dirt_coordinate_space))
+    h ^= hash(("dirt_enabled", mesh.dirt_enabled))
+    h ^= hash(("dirt_texture", mesh.dirt_texture))
+    h ^= hash(("has_lightmap", mesh.has_lightmap))
+    h ^= hash(("render", mesh.render))
+    h ^= hash(("rotate_texture", mesh.rotate_texture))
+    h ^= hash(("shadow", mesh.shadow))
+    h ^= hash(("transparency_hint", mesh.transparency_hint))
+
+    # Skin-specific data
+    if isinstance(mesh, MDLSkin):
+        h ^= _mdl_deep_hash(mesh.qbones, ignore_keys=_MDL_EQ_IGNORE_KEYS)
+        h ^= _mdl_deep_hash(mesh.tbones, ignore_keys=_MDL_EQ_IGNORE_KEYS)
+        h ^= _mdl_deep_hash(mesh.bone_indices, ignore_keys=_MDL_EQ_IGNORE_KEYS)
+        h ^= _mdl_deep_hash(mesh.vertex_bones, ignore_keys=_MDL_EQ_IGNORE_KEYS)
 
     h ^= _mdl_deep_hash(mesh.diffuse, ignore_keys=_MDL_EQ_IGNORE_KEYS)
     h ^= _mdl_deep_hash(mesh.ambient, ignore_keys=_MDL_EQ_IGNORE_KEYS)
@@ -741,10 +753,7 @@ def _mdl_mesh_hash(mesh: MDLMesh) -> int:
 
     h ^= _mdl_deep_hash(mesh.vertex_positions, ignore_keys=_MDL_EQ_IGNORE_KEYS)
 
-    # Only include normals if present (consistent with equality).
-    vn = mesh.vertex_normals or []
-    if vn:
-        h ^= _mdl_deep_hash(vn, ignore_keys=_MDL_EQ_IGNORE_KEYS)
+    h ^= _mdl_deep_hash(mesh.vertex_normals or [], ignore_keys=_MDL_EQ_IGNORE_KEYS)
 
     h ^= _mdl_deep_hash(mesh.vertex_uv1, ignore_keys=_MDL_EQ_IGNORE_KEYS)
     h ^= _mdl_deep_hash(mesh.vertex_uv2, ignore_keys=_MDL_EQ_IGNORE_KEYS)
@@ -897,6 +906,7 @@ def _mdl_animation_equal(
         return False
     return True
 
+
 def _mdl_float_eq(
     a: float,
     b: float,
@@ -950,37 +960,65 @@ def _mdl_deep_eq(
         return _mdl_float_eq(a, b)
 
     # Vector-like (Vector2/3/4 etc)
-    if _is_vector_like(a) or _is_vector_like(b):
-        if not (_is_vector_like(a) and _is_vector_like(b)):
+    if isinstance(a, (Vector2, Vector3, Vector4)) and isinstance(b, (Vector2, Vector3, Vector4)):
+        if type(a) is not type(b):
             return False
         # Compare component-wise with the same quantization used for hashing.
-        for comp in ("x", "y", "z", "w"):
-            if hasattr(a, comp) != hasattr(b, comp):
+        if not _mdl_float_eq(float(a.x), float(b.x)):
+            return False
+        if not _mdl_float_eq(float(a.y), float(b.y)):
+            return False
+        if isinstance(a, (Vector3, Vector4)):
+            if not _mdl_float_eq(float(a.z), float(b.z)):
                 return False
-            if hasattr(a, comp):
-                av = float(getattr(a, comp))
-                bv = float(getattr(b, comp))
-                if not _mdl_float_eq(av, bv):
-                    return False
+        if isinstance(a, Vector4):
+            if not _mdl_float_eq(float(a.w), float(b.w)):
+                return False
         return True
+    elif isinstance(a, (Vector2, Vector3, Vector4)) or isinstance(b, (Vector2, Vector3, Vector4)):
+        return False
+
+    # MDLFace: specialized canonical equality (ignoring lossy fields)
+    if isinstance(a, MDLFace) and isinstance(b, MDLFace):
+        if a.v1 != b.v1 or a.v2 != b.v2 or a.v3 != b.v3:
+            return False
+        if a.material != b.material:
+            return False
+        if a.smoothgroup != b.smoothgroup:
+            return False
+        # Canon t-verts
+        at1 = a.v1 if a.t1 < 0 else a.t1
+        bt1 = b.v1 if b.t1 < 0 else b.t1
+        if at1 != bt1:
+            return False
+
+        at2 = a.v2 if a.t2 < 0 else a.t2
+        bt2 = b.v2 if b.t2 < 0 else b.t2
+        if at2 != bt2:
+            return False
+
+        at3 = a.v3 if a.t3 < 0 else a.t3
+        bt3 = b.v3 if b.t3 < 0 else b.t3
+        if at3 != bt3:
+            return False
+
+        return True
+    elif isinstance(a, MDLFace) or isinstance(b, MDLFace):
+        return False
 
     # Color (pykotor.common.misc.Color)
-    if isinstance(a, Color) or isinstance(b, Color):
-        if not (isinstance(a, Color) and isinstance(b, Color)):
+    if isinstance(a, Color) and isinstance(b, Color):
+        if not _mdl_float_eq(float(a.r), float(b.r)):
             return False
-        for ch in ("r", "g", "b", "a"):
-            if hasattr(a, ch) != hasattr(b, ch):
-                return False
-            if hasattr(a, ch):
-                av = getattr(a, ch)
-                bv = getattr(b, ch)
-                if isinstance(av, float) and isinstance(bv, float):
-                    if not _mdl_float_eq(float(av), float(bv)):
-                        return False
-                else:
-                    if av != bv:
-                        return False
+        if not _mdl_float_eq(float(a.g), float(b.g)):
+            return False
+        if not _mdl_float_eq(float(a.b), float(b.b)):
+            return False
+        if not _mdl_float_eq(float(a.a), float(b.a)):
+            return False
         return True
+    elif isinstance(a, Color) or isinstance(b, Color):
+        return False
 
     # Sequences
     if isinstance(a, (list, tuple)) or isinstance(b, (list, tuple)):
@@ -1008,8 +1046,10 @@ def _mdl_deep_eq(
         # Special case: animations list is semantically keyed by (name, root_model)
         if _ctx == _CTX_ANIMS and a:
             try:
+
                 def _akey(x: Any) -> tuple[str, str]:
                     return (str(x.name), str(x.root_model))
+
                 map_a = {_akey(x): x for x in a}
                 map_b = {_akey(x): x for x in b}
             except Exception:
@@ -1026,8 +1066,10 @@ def _mdl_deep_eq(
         # Special case: controller rows list is semantically keyed by time
         if _ctx == _CTX_ROWS and a:
             try:
+
                 def _tkey(x: Any) -> int:
                     return _qfloat(float(x.time))
+
                 rows_a = sorted(a, key=_tkey)
                 rows_b = sorted(b, key=_tkey)
             except Exception:
@@ -1114,119 +1156,129 @@ def _mdl_deep_hash(
     if v is None:
         return hash(None)
 
+    # Cycle protection: treat _visited as the *active recursion stack*, not a global "seen" set.
+    # This keeps hashing consistent with deep equality even when graphs differ only by aliasing.
     if _visited is None:
         _visited = set()
     vid = id(v)
     if vid in _visited:
-        # Cycle breaker: treat repeated references as a constant marker.
-        return hash(("cycle",))
+        return hash(("cycle", type(v).__name__))
     _visited.add(vid)
+    try:
+        # Primitives
+        if isinstance(v, (bool, int, str)):
+            return hash(v)
+        if isinstance(v, IntFlag):
+            return hash(int(v))
+        if isinstance(v, float):
+            return hash(("f", _qfloat(v)))
 
-    # Primitives
-    if isinstance(v, (bool, int, str)):
+        # Vector-like
+        if isinstance(v, (Vector2, Vector3, Vector4)):
+            vec_parts: list[int] = [_qfloat(float(v.x)), _qfloat(float(v.y))]
+            if isinstance(v, (Vector3, Vector4)):
+                vec_parts.append(_qfloat(float(v.z)))
+            if isinstance(v, Vector4):
+                vec_parts.append(_qfloat(float(v.w)))
+            return hash(("vec", tuple(vec_parts)))
+
+        # MDLFace
+        if isinstance(v, MDLFace):
+            return hash(("face", v.v1, v.v2, v.v3, v.material, v.smoothgroup, v.v1 if v.t1 < 0 else v.t1, v.v2 if v.t2 < 0 else v.t2, v.v3 if v.t3 < 0 else v.t3))
+
+        # Color
+        if isinstance(v, Color):
+            return hash(("color", (_qfloat(float(v.r)), _qfloat(float(v.g)), _qfloat(float(v.b)), _qfloat(float(v.a)))))
+
+        # Sequences
+        if isinstance(v, (list, tuple)):
+            # Special: children list order-insensitive by node name
+            if _ctx == _CTX_CHILDREN and v and isinstance(v[0], MDLNode):
+                try:
+                    child_items = sorted(((str(x.name), x) for x in v), key=lambda kv: str(kv[0]).lower())
+                    return hash(("children", tuple((n, _mdl_deep_hash(x, ignore_keys=ignore_keys, _visited=_visited, _ctx=_CTX_NONE)) for n, x in child_items)))
+                except Exception:
+                    pass
+
+            # Special: anim list order-insensitive by (name, root_model)
+            if _ctx == _CTX_ANIMS and v and isinstance(v[0], MDLAnimation):
+                try:
+
+                    def _akey(x: Any) -> tuple[str, str]:
+                        return (str(x.name), str(x.root_model))
+
+                    anim_items = sorted(((_akey(x), x) for x in v), key=lambda kv: str(kv[0]).lower())
+                    return hash(("anims", tuple((k, _mdl_deep_hash(x, ignore_keys=ignore_keys, _visited=_visited, _ctx=_CTX_NONE)) for k, x in anim_items)))
+                except Exception:
+                    pass
+
+            # Special: controller rows order-insensitive by time
+            if _ctx == _CTX_ROWS and v and isinstance(v[0], MDLControllerRow):
+                try:
+
+                    def _tkey(x: Any) -> int:
+                        return _qfloat(float(x.time))
+
+                    row_items = sorted(v, key=_tkey)
+                    return hash(("rows", tuple(_mdl_deep_hash(x, ignore_keys=ignore_keys, _visited=_visited, _ctx=_CTX_NONE) for x in row_items)))
+                except Exception:
+                    pass
+
+            return hash(("seq", len(v), tuple(_mdl_deep_hash(x, ignore_keys=ignore_keys, _visited=_visited, _ctx=_CTX_NONE) for x in v)))
+
+        # Dicts
+        if isinstance(v, dict):
+            dict_items = tuple(
+                sorted(((k, _mdl_deep_hash(val, ignore_keys=ignore_keys, _visited=_visited, _ctx=_CTX_NONE)) for k, val in v.items()), key=lambda kv: str(kv[0]).lower())
+            )
+            return hash(("dict", dict_items))
+
+        # Object __dict__
+        dct = v.__dict__
+        if isinstance(dct, dict):
+            ignore = ignore_keys or set()
+            items: list[tuple[str, int]] = []
+            for k in sorted(dct.keys()):
+                if str(k).startswith("_") or k in ignore:
+                    continue
+                next_ctx = _CTX_NONE
+                if k == "children":
+                    next_ctx = _CTX_CHILDREN
+                elif k == "anims":
+                    next_ctx = _CTX_ANIMS
+                elif k == "rows":
+                    next_ctx = _CTX_ROWS
+                elif k == "controllers":
+                    next_ctx = _CTX_CONTROLLERS
+
+                # Special-case canonical position/orientation on MDLNode.
+                if isinstance(v, MDLNode) and k in ("position", "orientation"):
+                    if k == "position":
+                        items.append((k, hash(("pos", _mdl_node_canonical_position(v)))))
+                        continue
+                    if k == "orientation":
+                        items.append((k, hash(("ori", _mdl_node_canonical_orientation(v)))))
+                        continue
+
+                # Special-case controllers on MDLNode: hash canonicalized effective controllers.
+                if next_ctx == _CTX_CONTROLLERS and isinstance(v, MDLNode):
+                    ctrls = _mdl_node_effective_controllers(v)
+                    # Order-insensitive commutative combine (no sorting).
+                    acc = 0
+                    for (ctype, is_bezier), ctrl in ctrls.items():
+                        h_key = hash((int(ctype) if ctype is not None else None, bool(is_bezier)))
+                        h_rows = _mdl_deep_hash(ctrl.rows, ignore_keys=ignore_keys, _visited=_visited, _ctx=_CTX_ROWS)
+                        acc ^= hash((h_key, h_rows))
+                    items.append((k, hash((len(ctrls), acc))))
+                    continue
+
+                items.append((k, _mdl_deep_hash(dct[k], ignore_keys=ignore_keys, _visited=_visited, _ctx=next_ctx)))
+            return hash((v.__class__.__name__, tuple(items)))
+
         return hash(v)
-    if isinstance(v, IntFlag):
-        return hash(int(v))
-    if isinstance(v, float):
-        return hash(("f", _qfloat(v)))
+    finally:
+        _visited.discard(vid)
 
-    # Vector-like
-    if _is_vector_like(v):
-        vec_parts: list[int] = []
-        for comp in ("x", "y", "z", "w"):
-            if hasattr(v, comp):
-                vec_parts.append(_qfloat(float(getattr(v, comp))))
-        return hash(("vec", tuple(vec_parts)))
-
-    # Color
-    if isinstance(v, Color):
-        color_parts: list[tuple[str, int]] = []
-        for ch in ("r", "g", "b", "a"):
-            if hasattr(v, ch):
-                cv = getattr(v, ch)
-                color_parts.append(("f", _qfloat(float(cv))) if isinstance(cv, float) else (str(cv), hash(cv)))
-        return hash(("color", tuple(color_parts)))
-
-    # Sequences
-    if isinstance(v, (list, tuple)):
-        # Special: children list order-insensitive by node name
-        if _ctx == _CTX_CHILDREN and v and hasattr(v[0], "name"):
-            try:
-                child_items = sorted(((str(x.name), x) for x in v), key=lambda kv: str(kv[0]).lower())
-                return hash(("children", tuple((n, _mdl_deep_hash(x, ignore_keys=ignore_keys, _visited=_visited, _ctx=_CTX_NONE)) for n, x in child_items)))
-            except Exception:
-                pass
-
-        # Special: anim list order-insensitive by (name, root_model)
-        if _ctx == _CTX_ANIMS and v and hasattr(v[0], "name") and hasattr(v[0], "root_model"):
-            try:
-                def _akey(x: Any) -> tuple[str, str]:
-                    return (str(x.name), str(x.root_model))
-                anim_items = sorted(((_akey(x), x) for x in v), key=lambda kv: str(kv[0]).lower())
-                return hash(("anims", tuple((k, _mdl_deep_hash(x, ignore_keys=ignore_keys, _visited=_visited, _ctx=_CTX_NONE)) for k, x in anim_items)))
-            except Exception:
-                pass
-
-        # Special: controller rows order-insensitive by time
-        if _ctx == _CTX_ROWS and v and hasattr(v[0], "time"):
-            try:
-                def _tkey(x: Any) -> int:
-                    return _qfloat(float(x.time))
-                row_items = sorted(v, key=_tkey)
-                return hash(("rows", tuple(_mdl_deep_hash(x, ignore_keys=ignore_keys, _visited=_visited, _ctx=_CTX_NONE) for x in row_items)))
-            except Exception:
-                pass
-
-        return hash(("seq", len(v), tuple(_mdl_deep_hash(x, ignore_keys=ignore_keys, _visited=_visited, _ctx=_CTX_NONE) for x in v)))
-
-    # Dicts
-    if isinstance(v, dict):
-        dict_items = tuple(sorted(((k, _mdl_deep_hash(val, ignore_keys=ignore_keys, _visited=_visited, _ctx=_CTX_NONE)) for k, val in v.items()), key=lambda kv: str(kv[0]).lower()))
-        return hash(("dict", dict_items))
-
-    # Object __dict__
-    dct = v.__dict__
-    if isinstance(dct, dict):
-        ignore = ignore_keys or set()
-        items: list[tuple[str, int]] = []
-        for k in sorted(dct.keys()):
-            if str(k).startswith("_") or k in ignore:
-                continue
-            next_ctx = _CTX_NONE
-            if k == "children":
-                next_ctx = _CTX_CHILDREN
-            elif k == "anims":
-                next_ctx = _CTX_ANIMS
-            elif k == "rows":
-                next_ctx = _CTX_ROWS
-            elif k == "controllers":
-                next_ctx = _CTX_CONTROLLERS
-
-            # Special-case canonical position/orientation on MDLNode.
-            if isinstance(v, MDLNode) and k in ("position", "orientation"):
-                if k == "position":
-                    items.append((k, hash(("pos", _mdl_node_canonical_position(v)))))
-                    continue
-                if k == "orientation":
-                    items.append((k, hash(("ori", _mdl_node_canonical_orientation(v)))))
-                    continue
-
-            # Special-case controllers on MDLNode: hash canonicalized effective controllers.
-            if next_ctx == _CTX_CONTROLLERS and isinstance(v, MDLNode):
-                ctrls = _mdl_node_effective_controllers(v)
-                # Order-insensitive commutative combine (no sorting).
-                acc = 0
-                for (ctype, is_bezier), ctrl in ctrls.items():
-                    h_key = hash((int(ctype) if ctype is not None else None, bool(is_bezier)))
-                    h_rows = _mdl_deep_hash(ctrl.rows, ignore_keys=ignore_keys, _visited=_visited, _ctx=_CTX_ROWS)
-                    acc ^= hash((h_key, h_rows))
-                items.append((k, hash((len(ctrls), acc))))
-                continue
-
-            items.append((k, _mdl_deep_hash(dct[k], ignore_keys=ignore_keys, _visited=_visited, _ctx=next_ctx)))
-        return hash((v.__class__.__name__, tuple(items)))
-
-    return hash(v)
 
 class MDL(ComparableMixin):
     """Represents a MDL/MDX file.
@@ -1238,7 +1290,7 @@ class MDL(ComparableMixin):
         name: The model name.
         fog: If fog affects the model.
         supermodel: Name of another model resource to import extra data from.
-    
+
     References:
     ----------
         vendor/reone/src/libs/graphics/model.cpp - Model structure and rendering
@@ -1264,6 +1316,7 @@ class MDL(ComparableMixin):
         "radius",
         "headlink",
         "compress_quaternions",
+        "root",
     )
     COMPARABLE_SEQUENCE_FIELDS = ("anims",)
 
@@ -1322,9 +1375,17 @@ class MDL(ComparableMixin):
             return False
         if _qfloat(float(self.radius)) != _qfloat(float(other.radius)):
             return False
-        if _qfloat(float(self.bmin.x)) != _qfloat(float(other.bmin.x)) or _qfloat(float(self.bmin.y)) != _qfloat(float(other.bmin.y)) or _qfloat(float(self.bmin.z)) != _qfloat(float(other.bmin.z)):
+        if (
+            _qfloat(float(self.bmin.x)) != _qfloat(float(other.bmin.x))
+            or _qfloat(float(self.bmin.y)) != _qfloat(float(other.bmin.y))
+            or _qfloat(float(self.bmin.z)) != _qfloat(float(other.bmin.z))
+        ):
             return False
-        if _qfloat(float(self.bmax.x)) != _qfloat(float(other.bmax.x)) or _qfloat(float(self.bmax.y)) != _qfloat(float(other.bmax.y)) or _qfloat(float(self.bmax.z)) != _qfloat(float(other.bmax.z)):
+        if (
+            _qfloat(float(self.bmax.x)) != _qfloat(float(other.bmax.x))
+            or _qfloat(float(self.bmax.y)) != _qfloat(float(other.bmax.y))
+            or _qfloat(float(self.bmax.z)) != _qfloat(float(other.bmax.z))
+        ):
             return False
         if self.headlink != other.headlink:
             return False
@@ -1361,6 +1422,7 @@ class MDL(ComparableMixin):
         # Animations matched by (name, root_model)
         def _akey(anim: MDLAnimation) -> tuple[str, str]:
             return (anim.name, anim.root_model)
+
         if len(self.anims) != len(other.anims):
             return False
         a_anims = {_akey(a): a for a in self.anims}
@@ -1403,15 +1465,50 @@ class MDL(ComparableMixin):
             h ^= hash(_mdl_node_header_orientation(n))
             h ^= hash(_mdl_canonical_controllers_hashable(n, drop_transform_controllers=True))
             # attachments hashed via deep hash
-            for part in ("light", "emitter", "reference", "mesh", "skin", "dangly", "aabb", "saber"):
-                if part == "mesh" and n.mesh is not None:
-                    h ^= hash((part, _mdl_mesh_hash(n.mesh)))
-                else:
-                    h ^= hash((part, _mdl_deep_hash(getattr(n, part), ignore_keys=_MDL_EQ_IGNORE_KEYS)))
+            if n.light is not None:
+                h ^= hash(("light", _mdl_deep_hash(n.light, ignore_keys=_MDL_EQ_IGNORE_KEYS)))
+            else:
+                h ^= hash(("light", _mdl_deep_hash(None)))
+
+            if n.emitter is not None:
+                h ^= hash(("emitter", _mdl_deep_hash(n.emitter, ignore_keys=_MDL_EQ_IGNORE_KEYS)))
+            else:
+                h ^= hash(("emitter", _mdl_deep_hash(None)))
+
+            if n.reference is not None:
+                h ^= hash(("reference", _mdl_deep_hash(n.reference, ignore_keys=_MDL_EQ_IGNORE_KEYS)))
+            else:
+                h ^= hash(("reference", _mdl_deep_hash(None)))
+
+            if n.mesh is not None:
+                h ^= hash(("mesh", _mdl_mesh_hash(n.mesh)))
+            else:
+                h ^= hash(("mesh", _mdl_deep_hash(None)))
+
+            if n.skin is not None:
+                h ^= hash(("skin", _mdl_deep_hash(n.skin, ignore_keys=_MDL_EQ_IGNORE_KEYS)))
+            else:
+                h ^= hash(("skin", _mdl_deep_hash(None)))
+
+            if n.dangly is not None:
+                h ^= hash(("dangly", _mdl_deep_hash(n.dangly, ignore_keys=_MDL_EQ_IGNORE_KEYS)))
+            else:
+                h ^= hash(("dangly", _mdl_deep_hash(None)))
+
+            if n.aabb is not None:
+                h ^= hash(("aabb", _mdl_deep_hash(n.aabb, ignore_keys=_MDL_EQ_IGNORE_KEYS)))
+            else:
+                h ^= hash(("aabb", _mdl_deep_hash(None)))
+
+            if n.saber is not None:
+                h ^= hash(("saber", _mdl_deep_hash(n.saber, ignore_keys=_MDL_EQ_IGNORE_KEYS)))
+            else:
+                h ^= hash(("saber", _mdl_deep_hash(None)))
 
         # Animations hashed by key
         def _akey(anim: MDLAnimation) -> tuple[str, str]:
             return (anim.name, anim.root_model)
+
         for k in sorted((_akey(a) for a in self.anims)):
             anim = next(a for a in self.anims if _akey(a) == k)
             h ^= hash(("anim", k, _qfloat(float(anim.anim_length)), _qfloat(float(anim.transition_length))))
@@ -1548,11 +1645,7 @@ class MDL(ComparableMixin):
         -------
             set[str]: A set containing all unique texture names used in meshes
         """
-        return {
-            node.mesh.texture_1
-            for node in self.all_nodes()
-            if (node.mesh and node.mesh.texture_1 != "NULL" and node.mesh.texture_1)
-        }
+        return {node.mesh.texture_1 for node in self.all_nodes() if (node.mesh and node.mesh.texture_1 != "NULL" and node.mesh.texture_1)}
 
     def all_lightmaps(
         self,
@@ -1567,24 +1660,20 @@ class MDL(ComparableMixin):
         -------
             set[str]: A set of all lightmap texture names used in nodes
         """
-        return {
-            node.mesh.texture_2
-            for node in self.all_nodes()
-            if (node.mesh and node.mesh.texture_2 != "NULL" and node.mesh.texture_2)
-        }
-    
+        return {node.mesh.texture_2 for node in self.all_nodes() if (node.mesh and node.mesh.texture_2 != "NULL" and node.mesh.texture_2)}
+
     def prepare_skin_meshes(self) -> None:
         """Prepare bone lookup tables for all skinned meshes in the model.
-        
+
         This method should be called after loading the model and before rendering or
         manipulating skinned meshes. It creates bone serial and node number lookup
         tables for efficient bone matrix computation during skeletal animation.
-        
+
         References:
         ----------
             vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:703-723 - prepareSkinMeshes()
             Called after model loading to initialize skin mesh bone mappings
-        
+
         Notes:
         -----
             This is essential for multi-part character models where body parts
@@ -1607,17 +1696,17 @@ class MDL(ComparableMixin):
 # region Animation Data
 class MDLAnimation(ComparableMixin):
     """Animation data for model animations.
-    
+
     Animations in KotOR contain a full node hierarchy with controller keyframe data.
     Each animation can override positions, rotations, and other properties of nodes
     over time to create character movement, attacks, expressions, etc.
-    
+
     References:
     ----------
         vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:736-779 (animation reading)
         vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:653-699 (animation loading)
         vendor/mdlops/MDLOpsM.pm:4052-4090 (animation reading from ASCII)
-    
+
     Attributes:
     ----------
         name: Animation name (e.g. "c_imp_walk01", "g_dance01")
@@ -1636,31 +1725,34 @@ class MDLAnimation(ComparableMixin):
             Reference: reone:757, kotorblender:700-767
             Contains controller keyframe data for all animated nodes
     """
-    COMPARABLE_FIELDS = ("name", "root_model", "anim_length", "transition_length")
+
+    COMPARABLE_FIELDS = ("name", "root_model", "anim_length", "transition_length", "root")
+    COMPARABLE_SEQUENCE_FIELDS = ("events",)
+
     def __init__(
         self,
     ):
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:742
         # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:660
         self.name: str = ""
-        
+
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:752
         # vendor/mdlops/MDLOpsM.pm:4069 - animroot
         self.root_model: str = ""
-        
+
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:751
         # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:662
         self.anim_length: float = 0.0
-        
+
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:752
         # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:663
         self.transition_length: float = 0.0
-        
+
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:760-769
         # vendor/mdlops/MDLOpsM.pm:4078-4081
         # Animation events (footsteps, attack hits, sounds, etc.)
         self.events: list[MDLEvent] = []
-        
+
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:757
         # Animation node hierarchy with controller keyframes
         self.root: MDLNode = MDLNode()
@@ -1733,17 +1825,17 @@ class MDLAnimation(ComparableMixin):
 
 class MDLEvent(ComparableMixin):
     """Animation event that triggers at a specific time during animation playback.
-    
+
     Events are used to synchronize sound effects, particle effects, or gameplay logic
     with animation timing. Common uses include footstep sounds, weapon swing sounds,
     attack damage timing, and special effect triggers.
-    
+
     References:
     ----------
         vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:764-768 (event reading)
         vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:686-698 (event loading)
         vendor/mdlops/MDLOpsM.pm:4078-4081 (event parsing from ASCII)
-    
+
     Attributes:
     ----------
         activation_time: Time in seconds when event triggers (0.0 to anim_length)
@@ -1751,13 +1843,14 @@ class MDLEvent(ComparableMixin):
         name: Event name/identifier (e.g. "snd_footstep", "snd_hit", "detonate")
             Reference: reone:766, kotorblender:695
             Game code uses event names to trigger appropriate actions
-    
+
     Examples:
     --------
         footstep event at 0.5s: triggers footstep sound effect
         hit event at 1.2s: deals damage when attack animation reaches strike
         detonate event: triggers explosion for grenades/mines
     """
+
     COMPARABLE_FIELDS = ("activation_time", "name")
 
     def __init__(
@@ -1767,7 +1860,7 @@ class MDLEvent(ComparableMixin):
         # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:694
         # Time in seconds when event fires (0.0 to animation length)
         self.activation_time: float = 0.0
-        
+
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:766
         # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:695
         # Event name used by game code to trigger actions
@@ -1787,11 +1880,11 @@ class MDLEvent(ComparableMixin):
 
 class MDLNode(ComparableMixin):
     """A node in the MDL tree that can store additional nodes or some extra data related to the model such as geometry or lighting.
-    
+
     Model nodes form a hierarchical tree structure where each node can contain geometric data
     (mesh, skin, dangly, saber, walkmesh), light sources, particle emitters, or serve as
     positioning dummies. Controller keyframes can animate node properties over time.
-    
+
     References:
     ----------
         vendor/reone/include/reone/graphics/modelnode.h:31-287 - ModelNode class definition
@@ -1809,25 +1902,25 @@ class MDLNode(ComparableMixin):
         children: List of child nodes in hierarchy
             Reference: reone:modelnode.h:219, xoreos:modelnode.h:241, KotOR.js:37
             Child nodes inherit parent transforms and can be enumerated for rendering
-            
+
         controllers: Animation controller keyframe data
             Reference: reone:modelnode.h:34, xoreos:modelnode.h:178-196, kotorblender:reader.py:498-526
             Controllers animate position, orientation, scale, color, alpha, and other properties
             See MDLControllerType enum for complete list of controllable properties
-            
+
         name: Node name (ASCII string, max 32 chars)
             Reference: reone:mdlmdxreader.cpp:212, xoreos:model_kotor.cpp:311, kotorblender:reader.py:416
             Used to reference nodes by name for attachment points, bone lookups, and parenting
-            
+
         node_id: Unique node number within model for quick lookups
             Reference: reone:mdlmdxreader.cpp:202-203, xoreos:model_kotor.cpp:305, kotorblender:reader.py:413
             Stored as uint16 in binary format, used for parent/child relationships and bone references
-            
+
         position: Local position relative to parent (x, y, z)
             Reference: reone:modelnode.h:243, xoreos:modelnode.h:89, KotOR.js:42, kotorblender:reader.py:427
             Combined with parent transforms to compute world-space position
             Can be animated via position controller (type 8)
-            
+
         orientation: Local rotation as quaternion (x, y, z, w)
             Reference: reone:modelnode.h:244, xoreos:modelnode.h:92-93, KotOR.js:43, kotorblender:reader.py:428
             Quaternion format ensures smooth interpolation for animation
@@ -1838,41 +1931,41 @@ class MDLNode(ComparableMixin):
             Reference: reone:modelnode.h:116-127, xoreos:modelnode.h:204-211, kotorblender/light.py:33-124
             Present when node type includes LIGHT flag (0x02)
             See MDLLight class for detailed light properties
-            
+
         emitter: Particle emitter data (spawn rate, velocity, textures)
             Reference: reone:modelnode.h:129-153, xoreos:modelnode.h:213-221, kotorblender/emitter.py:39-286
             Present when node type includes EMITTER flag (0x04)
             See MDLEmitter class for particle system properties
-            
+
         reference: Reference node (links to external model)
             Reference: reone:modelnode.h:155-158, xoreos:modelnode.h:223-224
             Present when node type includes REFERENCE flag (0x10)
             Used for equippable items, attached weapons, etc.
-            
+
         mesh: Triangle mesh geometry data (vertices, faces, materials)
             Reference: reone:modelnode.h:70-91, xoreos:modelnode.h:197-202, kotorblender/trimesh.py:44-242
             Present when node type includes MESH flag (0x20)
             Contains vertex data in companion MDX file
             See MDLMesh class for geometry details
-            
+
         skin: Skinned mesh with bone weighting for character animation
             Reference: reone:modelnode.h:36-41, xoreos:modelnode.h:226-232, kotorblender/skinmesh.py:33-189
             Present when node type includes SKIN flag (0x40)
             Vertices deform based on bone transforms using weight maps
             See MDLSkin class for bone binding details
-            
+
         dangly: Cloth/hair physics mesh with constraint simulation
             Reference: reone:modelnode.h:47-53, xoreos:modelnode.h:234-237, kotorblender:reader.py:451-466
             Present when node type includes DANGLY flag (0x100)
             Vertices constrained by displacement, tightness, period values
             See MDLDangly class for physics properties
-            
+
         aabb: Axis-aligned bounding box tree for walkmesh collision
             Reference: reone:modelnode.h:55-68, xoreos:modelnode.h:239-240, kotorblender/reader.py:469-487
             Present when node type includes AABB flag (0x200)
             Used for pathfinding and collision detection
             See MDLWalkmesh class for collision geometry
-            
+
         saber: Lightsaber blade mesh with special rendering
             Reference: reone:modelnode.h:99, xoreos:modelnode.h:202, kotorblender:reader.py:446-448
             Present when node type includes SABER flag (0x800)
@@ -1897,31 +1990,31 @@ class MDLNode(ComparableMixin):
         # vendor/KotOR.js/src/odyssey/OdysseyModelNode.ts:37
         # Child nodes inherit transforms and participate in rendering hierarchy
         self.children: list[MDLNode] = []
-        
+
         # vendor/reone/include/reone/graphics/modelnode.h:34
         # vendor/xoreos/src/graphics/aurora/modelnode.h:178-196
         # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:498-526
         # Animation keyframe data for position, orientation, scale, color, etc.
         self.controllers: list[MDLController] = []
-        
+
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:212
         # vendor/xoreos/src/graphics/aurora/model_kotor.cpp:311
         # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:416
         # ASCII string identifier (max 32 chars in binary format)
         self.name: str = ""
-        
+
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:202-203
         # vendor/xoreos/src/graphics/aurora/model_kotor.cpp:305
         # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:413
         # Unique node number (uint16) for quick lookups and bone references
         self.node_id: int = -1
-        
+
         # vendor/reone/include/reone/graphics/modelnode.h:243
         # vendor/xoreos/src/graphics/aurora/modelnode.h:89
         # vendor/KotOR.js/src/odyssey/OdysseyModelNode.ts:42
         # Local position (x,y,z) relative to parent node
         self.position: Vector3 = Vector3.from_null()
-        
+
         # vendor/reone/include/reone/graphics/modelnode.h:244
         # vendor/xoreos/src/graphics/aurora/modelnode.h:92-93
         # vendor/KotOR.js/src/odyssey/OdysseyModelNode.ts:43
@@ -1931,38 +2024,38 @@ class MDLNode(ComparableMixin):
         # vendor/reone/include/reone/graphics/modelnode.h:116-127
         # Light source with flares, shadows, dynamic properties (node type & 0x02)
         self.light: MDLLight | None = None
-        
+
         # vendor/reone/include/reone/graphics/modelnode.h:129-153
         # Particle emitter for effects like smoke, sparks, fire (node type & 0x04)
         self.emitter: MDLEmitter | None = None
-        
+
         # vendor/reone/include/reone/graphics/modelnode.h:155-158
         # Reference to external model for equipment/attachments (node type & 0x10)
         self.reference: MDLReference | None = None
-        
+
         # vendor/reone/include/reone/graphics/modelnode.h:70-91
         # Triangle mesh geometry with materials (node type & 0x20)
         self.mesh: MDLMesh | None = None
-        
+
         # vendor/reone/include/reone/graphics/modelnode.h:36-41
         # Skinned mesh with bone weights for character animation (node type & 0x40)
         self.skin: MDLSkin | None = None
-        
+
         # vendor/reone/include/reone/graphics/modelnode.h:47-53
         # Cloth/hair physics mesh with constraints (node type & 0x100)
         self.dangly: MDLDangly | None = None
-        
+
         # vendor/reone/include/reone/graphics/modelnode.h:55-68
         # Walkmesh AABB tree for collision/pathfinding (node type & 0x200)
         self.aabb: MDLWalkmesh | None = None
-        
+
         # vendor/reone/include/reone/graphics/modelnode.h:99
         # Lightsaber blade mesh with special rendering (node type & 0x800)
         self.saber: MDLSaber | None = None
-        
+
         # Node type for ASCII MDL format compatibility
         self.node_type: MDLNodeType = MDLNodeType.DUMMY
-        
+
         # Parent ID for ASCII MDL format compatibility
         self.parent_id: int = -1
 
@@ -2049,16 +2142,16 @@ class MDLNode(ComparableMixin):
 
 class MDLLight(ComparableMixin):
     """Light data that can be attached to a node.
-    
+
     Lights in KotOR can have lens flares, shadows, dynamic properties, and various
     rendering modes. They use controller keyframes for animated properties like color,
     radius, and multiplier (intensity).
-    
+
     References:
     ----------
         vendor/reone/src/libs/scene/node/light.cpp:43-86 (light scene node implementation)
         vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:33-124 (light properties)
-    
+
     Attributes:
     ----------
         flare_radius: Radius around light source where lens flares are visible
@@ -2092,7 +2185,7 @@ class MDLLight(ComparableMixin):
         flare_textures: List of texture names for each flare element
             Reference: kotorblender:27,88
             Common: "flaretex01" through "flaretex16"
-    
+
     Controller Properties (animated via keyframes):
     -----------------------------------------------
         color: RGB color (Vector3) - controller type 76
@@ -2104,7 +2197,7 @@ class MDLLight(ComparableMixin):
         multiplier: Intensity multiplier - controller type 140
             Reference: reone:46, kotorblender:40,72,99
             Combined with radius to calculate light power
-    
+
     Notes:
     -----
         Negative color values indicate a "negative light" that subtracts illumination
@@ -2120,52 +2213,52 @@ class MDLLight(ComparableMixin):
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:48,80,107
         # Radius for lens flare visibility (0.0 = disabled, typical range 0.0-10.0)
         self.flare_radius: float = 0.0
-        
+
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:41,76,103
         # Light priority for dynamic light culling (0-5, higher = more important)
         self.light_priority: int = 0
-        
+
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:43,74,101
         # 1 = ambient-only (no diffuse), 0 = full lighting
         self.ambient_only: bool = False
-        
+
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:44,78,105
         # Dynamic behavior: 0=static, 1=dynamic, 2=animated
         self.dynamic_type: MDLDynamicType = MDLDynamicType.STATIC
-        
+
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:38,63-66,75,102
         # 1 = casts shadows, 0 = no shadows
         self.shadow: bool = False
-        
+
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:47,83-84,110
         # 1 = lens flares enabled, 0 = disabled
         self.flare: bool = False
-        
+
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:46,77,104
         # vendor/reone/src/libs/scene/node/light.cpp:40,52-66
         # 1 = fades in/out at 2.0 units/sec, 0 = instant toggle
         self.fading_light: bool = False
-        
+
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:28,90
         # Lens flare element sizes (one per flare texture)
         self.flare_sizes: list[float] = []
-        
+
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:29,91
         # Flare positions along view ray: 0.0=light, negative=toward camera, positive=away
         self.flare_positions: list[float] = []
-        
+
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:30,89
         # Color shift values for each flare element
         self.flare_color_shifts: list[tuple[float, float, float]] = []
-        
+
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:27,88
         # Texture names for lens flare elements (e.g. "flaretex01")
         self.flare_textures: list[str] = []
-        
+
         # RGB color stored as Vector3 (controller type 76)
         # Reference: reone:44, docstring line 2098
         self._color: Vector3 = Vector3(1.0, 1.0, 1.0)
-        
+
         # vendor/reone/src/libs/scene/node/light.cpp:46
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:40,72,99
         # Intensity multiplier (controller type 140)
@@ -2174,7 +2267,7 @@ class MDLLight(ComparableMixin):
     @property
     def radius(self) -> float:
         return self.flare_radius
-    
+
     @radius.setter
     def radius(self, value: float) -> None:
         self.flare_radius = value
@@ -2182,17 +2275,17 @@ class MDLLight(ComparableMixin):
     @property
     def color(self) -> Color:
         """RGB color of the light.
-        
+
         Returns:
         -------
             Color instance representing the light's RGB color.
         """
         return Color.from_rgb_vector3(self._color)
-    
+
     @color.setter
     def color(self, value: Color) -> None:
         """Set the RGB color of the light.
-        
+
         Args:
         ----
             value: Color instance to set as the light's color.
@@ -2213,16 +2306,16 @@ class MDLLight(ComparableMixin):
 
 class MDLEmitter(ComparableMixin):
     """Particle emitter data for special effects.
-    
+
     Emitters generate particle effects like smoke, fire, sparks, lightning, explosions,
     and force fields. They support multiple update modes (fountain, single, explosion,
     lightning), rendering modes, and extensive particle appearance/physics properties.
-    
+
     References:
     ----------
         vendor/reone/src/libs/scene/node/emitter.cpp:44-319 (emitter scene node)
         vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:27-305 (emitter properties)
-    
+
     Update Modes (update field):
     ---------------------------
         "Fountain" - Continuous particle stream at birthrate
@@ -2233,7 +2326,7 @@ class MDLEmitter(ComparableMixin):
             Reference: kotorblender:236
         "Lightning" - Lightning bolt effects with branching
             Reference: reone:147-151, kotorblender:236
-    
+
     Render Modes (render field):
     ----------------------------
         "Normal" - Standard billboard particles
@@ -2244,20 +2337,20 @@ class MDLEmitter(ComparableMixin):
         "Aligned_to_Particle_Dir" - Particles face movement direction
         "Motion_Blur" - Particles with motion blur trails
             Reference: kotorblender:244-259, reone:41
-    
+
     Spawn Types (spawn_type field):
     -------------------------------
         0 = "Normal" - Spawn at emitter position
         1 = "Trail" - Spawn along particle path
             Reference: kotorblender:229-233
-    
+
     Blend Modes (blend field):
     --------------------------
         "Normal" - Standard alpha blending
         "Punch-Through" - Binary alpha (0 or 1)
         "Lighten" - Additive blending (common for fire/energy)
             Reference: kotorblender:260-267
-    
+
     Attributes:
     ----------
         dead_space: Inner radius where no particles spawn (meters)
@@ -2301,7 +2394,7 @@ class MDLEmitter(ComparableMixin):
             Flags include: p2p, p2p_sel, affected_by_wind, tinted, bounce,
                           random, inherit, inheritvel, inherit_local, splat,
                           inherit_part, depth_texture
-    
+
     Controller Properties (animated via keyframes):
     -----------------------------------------------
         birthrate: Particles spawned per second
@@ -2332,7 +2425,7 @@ class MDLEmitter(ComparableMixin):
             Reference: reone:79-81, kotorblender:145-147
         lightningDelay/Radius/Scale/SubDiv: Lightning effect parameters
             Reference: reone:64-71, kotorblender:174-178
-    
+
     Notes:
     -----
         Particles transition through three lifecycle stages: Start -> Mid -> End
@@ -2340,83 +2433,105 @@ class MDLEmitter(ComparableMixin):
         Reference: reone:73-81, kotorblender:163-165
     """
 
+    COMPARABLE_FIELDS = (
+        "dead_space",
+        "blast_radius",
+        "blast_length",
+        "branch_count",
+        "control_point_smoothing",
+        "x_grid",
+        "y_grid",
+        "spawn_type",
+        "update",
+        "render",
+        "blend",
+        "texture",
+        "chunk_name",
+        "two_sided_texture",
+        "loop",
+        "render_order",
+        "frame_blender",
+        "depth_texture",
+        "flags",
+    )
+
     def __init__(
         self,
     ):
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:113
         # Inner dead zone radius where no particles spawn
         self.dead_space: float = 0.0
-        
+
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:114
         # Outer blast/explosion radius
         self.blast_radius: float = 0.0
-        
+
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:115
         # Blast wave propagation length
         self.blast_length: float = 0.0
-        
+
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:116
         # Number of lightning branches
         self.branch_count: int = 0
-        
+
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:117
         # Control point path smoothing factor
         self.control_point_smoothing: float = 0.0
-        
+
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:118
         # Texture atlas grid width
         self.x_grid: int = 0
-        
+
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:119
         # Texture atlas grid height
         self.y_grid: int = 0
-        
+
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:120,229-233
         # Spawn location: 0=Normal (at emitter), 1=Trail (along path)
         self.spawn_type: int = 0
-        
+
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:121,234-242
         # vendor/reone/src/libs/scene/node/emitter.cpp:131-151
         # Update mode: "Fountain", "Single", "Explosion", "Lightning"
         self.update: str = ""
-        
+
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:122,244-259
         # Render mode: "Normal", "Linked", "Billboard_to_Local_Z", etc.
         self.render: str = ""
-        
+
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:123,260-267
         # Blend mode: "Normal", "Punch-Through", "Lighten"
         self.blend: str = ""
-        
+
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:124
         # Main particle texture name
         self.texture: str = ""
-        
+
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:125
         # Chunk model name for mesh-based particles
         self.chunk_name: str = ""
-        
+
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:126
         # 1 = two-sided rendering, 0 = single-sided
         self.two_sided_texture: int = 0
-        
+
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:127
         # vendor/reone/src/libs/scene/node/emitter.cpp:142
         # 1 = loop emission, 0 = emit once
         self.loop: int = 0
-        
+
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:128
         # Rendering priority/sorting order
         self.render_order: int = 0
-        
+
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:129
         # 1 = blend animation frames, 0 = snap between frames
         self.frame_blender: int = 0
-        
+
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:130,146
         # Depth texture for soft particle effects
         self.depth_texture: str = ""
-        
+
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:131-143
         # Behavior flags (see MDLEmitterFlags)
         self.flags: int = 0
@@ -2432,23 +2547,23 @@ class MDLEmitter(ComparableMixin):
 
 class MDLReference(ComparableMixin):
     """Reference node data for attaching external model resources.
-    
+
     Reference nodes allow models to dynamically attach other models at specific
     attachment points. This is commonly used for:
     - Equipping weapons, armor, and accessories on characters
     - Attaching placeable items to character hands
     - Mounting riders on creatures
     - Adding modular parts to placeables
-    
+
     The referenced model is loaded and attached at runtime when needed, enabling
     dynamic equipment systems without requiring every equipment combination to be
     a separate model file.
-    
+
     References:
     ----------
         vendor/kotorblender/io_scene_kotor/scene/modelnode/reference.py:25-57
         vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:545-561 (reference reading)
-    
+
     Attributes:
     ----------
         model: Name of the external model resource to attach (without file extension)
@@ -2459,7 +2574,7 @@ class MDLReference(ComparableMixin):
             Reference: kotorblender:31, reone:553
             True = can swap models (e.g. changing equipped weapons)
             False = permanent attachment
-    
+
     Common Reference Node Names:
     ---------------------------
         rhand - Right hand attachment point (weapons, tools)
@@ -2467,7 +2582,7 @@ class MDLReference(ComparableMixin):
         head - Head attachment point (helmets, masks)
         back - Back attachment point (backpacks, cloaks)
         hook - Generic attachment point (various items)
-        
+
     Example Usage:
     -------------
         Character model has "rhand" reference node
@@ -2476,6 +2591,8 @@ class MDLReference(ComparableMixin):
         If reattachable=True, can swap to different weapon model
     """
 
+    COMPARABLE_FIELDS = ("model", "reattachable")
+
     def __init__(
         self,
     ):
@@ -2483,7 +2600,7 @@ class MDLReference(ComparableMixin):
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:552
         # External model resource name to attach at this node
         self.model: str = ""
-        
+
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/reference.py:31
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:553
         # True = can swap models dynamically, False = permanent attachment
@@ -2503,17 +2620,17 @@ class MDLReference(ComparableMixin):
 
 class MDLMesh(ComparableMixin):
     """Mesh geometry data including vertices, faces, textures, and rendering properties.
-    
+
     Meshes are the core geometry data in MDL models. They contain vertex positions, normals,
     UV coordinates, faces/triangles, textures, and various rendering properties. KotOR supports
     several advanced mesh features including UV animation, bump mapping, and lightmaps.
-    
+
     References:
     ----------
         vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:148-487 (mesh reading)
         vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:415-466 (trimesh loading)
         vendor/mdlops/MDLOpsM.pm:1600-1750 (mesh processing)
-    
+
     Key Features:
     ------------
         - UV Animation: Texture scrolling for water, lava, holograms
@@ -2522,6 +2639,37 @@ class MDLMesh(ComparableMixin):
         - Transparency: Alpha blending and transparency hints
     """
 
+    COMPARABLE_FIELDS = (
+        "diffuse",
+        "ambient",
+        "transparency_hint",
+        "texture_1",
+        "texture_2",
+        "saber_unknowns",
+        "animate_uv",
+        "uv_direction_x",
+        "uv_direction_y",
+        "uv_jitter",
+        "uv_jitter_speed",
+        "has_lightmap",
+        "rotate_texture",
+        "background_geometry",
+        "shadow",
+        "beaming",
+        "render",
+        "dirt_enabled",
+        "dirt_texture",
+        "dirt_coordinate_space",
+        "hide_in_hologram",
+    )
+    COMPARABLE_SEQUENCE_FIELDS = (
+        "faces",
+        "vertex_positions",
+        "vertex_normals",
+        "vertex_uv1",
+        "vertex_uv2",
+    )
+
     def __init__(
         self,
     ):
@@ -2529,28 +2677,28 @@ class MDLMesh(ComparableMixin):
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:386-416
         # vendor/mdlops/MDLOpsM.pm:1650-1700
         self.faces: list[MDLFace] = []
-        
+
         # Material properties
         # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:435-438
         self.diffuse: Color = Color.WHITE
         self.ambient: Color = Color.WHITE
         self.transparency_hint: int = 0
-        
+
         # Textures
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:461-467
         # texture_1 is diffuse map, texture_2 is lightmap
         self.texture_1: str = ""
         self.texture_2: str = ""
-        
+
         # Saber-specific unknowns (not fully documented in vendors)
         self.saber_unknowns: tuple[int, int, int, int, int, int, int, int] = (3, 0, 0, 0, 0, 0, 0, 0)
-        
+
         # UV Animation for scrolling textures (water, lava, holograms, forcefields)
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:457-460
         # vendor/mdlops/MDLOpsM.pm:3204-3210
         # When animate_uv is true, texture coordinates scroll in uv_direction at runtime
         self.animate_uv: bool = False
-        
+
         # Bounding geometry for culling and collision
         # vendor/mdlops/MDLOpsM.pm:1685-1695
         self.radius: float = 0.0
@@ -2558,38 +2706,38 @@ class MDLMesh(ComparableMixin):
         self.bb_max: Vector3 = Vector3.from_null()
         self.average: Vector3 = Vector3.from_null()
         self.area: float = 0.0
-        
+
         # UV Animation direction and jitter parameters
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:459
         # Direction vector for texture scrolling (units per second)
         # Used for animated water, lava flows, hologram scan lines, etc.
         self.uv_direction_x: float = 0.0
         self.uv_direction_y: float = 0.0
-        
+
         # UV jitter for random texture offset variations
         # Creates shimmering/wavering effect on textures
         self.uv_jitter: float = 0.0
         self.uv_jitter_speed: float = 0.0
-        
+
         # Rendering flags
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:475-478
         # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:439-444
-        self.has_lightmap: bool = False        # Has pre-baked lighting (texture_2)
-        self.rotate_texture: bool = False       # Rotate texture 90 degrees
+        self.has_lightmap: bool = False  # Has pre-baked lighting (texture_2)
+        self.rotate_texture: bool = False  # Rotate texture 90 degrees
         self.background_geometry: bool = False  # Render in background pass
-        self.shadow: bool = False               # Cast shadows
-        self.beaming: bool = False              # Special hologram effect
-        self.render: bool = True                # Should be rendered
-        
+        self.shadow: bool = False  # Cast shadows
+        self.beaming: bool = False  # Special hologram effect
+        self.render: bool = True  # Should be rendered
+
         # Vertex data arrays
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:381-384
         # All vertex arrays must have same length (1:1 correspondence)
         self.vertex_positions: list[Vector3] = []
-        
+
         # vendor/mdlops/MDLOpsM.pm:5603-5791 (vertex normal calculation)
         # Normals can be area/angle weighted for smooth shading
         self.vertex_normals: list[Vector3] = []
-        
+
         # UV texture coordinates (2D)
         # uv1 is diffuse texture coords, uv2 is lightmap coords
         self.vertex_uv1: list[Vector2] = []
@@ -2598,28 +2746,27 @@ class MDLMesh(ComparableMixin):
         # Back-compat alias used by older code/tests.
         # Treat as the primary UV set (same object as vertex_uv1).
         self.vertex_uvs: list[Vector2] = [] if self.vertex_uv1 is None else self.vertex_uv1
-        
+
         # NOTE: Tangent space data (for bump/normal mapping) is stored separately in MDX
         # vendor/mdlops/MDLOpsM.pm:5379-5597 (tangent space calculation)
         # vendor/mdlops/MDLOpsM.pm:256 (MDX_TANGENT_SPACE = 0x00000080)
         # Each vertex with tangent space has: bitangent (3 floats) + tangent (3 floats)
         # Total 6 additional floats per vertex for bump mapping support
         # Tangent space enables advanced lighting (normal maps, parallax, etc.)
-        
+
         # KotOR 2 Only - Enhanced effects
         # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:445-448
-        self.dirt_enabled: bool = False          # Dirt/weathering overlay texture
-        self.dirt_texture: str = ""              # Dirt texture name
-        self.dirt_coordinate_space: int = 0      # UV space for dirt
-        self.hide_in_hologram: bool = False      # Don't render in hologram effect
+        self.dirt_enabled: bool = False  # Dirt/weathering overlay texture
+        self.dirt_texture: str = ""  # Dirt texture name
+        self.dirt_coordinate_space: int = 0  # UV space for dirt
+        self.hide_in_hologram: bool = False  # Don't render in hologram effect
 
     @property
     def vertex_uv(self) -> _Vector2ListProxy:
         """Back-compat alias for `vertex_uv1` that accepts tuple/list values."""
         return _Vector2ListProxy(self.vertex_uv1)
 
-    def gen_normals(self):
-        ...
+    def gen_normals(self): ...
 
     def __eq__(self, other):
         if not isinstance(other, MDLMesh):
@@ -2641,24 +2788,24 @@ class MDLMesh(ComparableMixin):
 
 class MDLSkin(MDLMesh):
     """Skin data for skeletal animation (skinned mesh).
-    
+
     Skinned meshes are meshes whose vertices are influenced by multiple bones in a skeleton,
     allowing for smooth deformation during character animation. Each vertex can be weighted
     to up to 4 bones, and the mesh deforms based on bone transformations.
-    
+
     References:
     ----------
         vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:703-723 (prepareSkinMeshes)
         vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:468-485 (skin loading)
         vendor/mdlops/MDLOpsM.pm:1755-1820 (skin node processing)
-    
+
     Attributes:
     ----------
         bone_indices: Fixed array of 16 bone indices that this skin references
             Reference: mdlops:1760 - bone index array
         qbones: Quaternion rotations for each bone's bind pose
             Reference: mdlops:1765 - bone orientations
-        tbones: Translation vectors for each bone's bind pose  
+        tbones: Translation vectors for each bone's bind pose
             Reference: mdlops:1768 - bone positions
         bonemap: Maps local bone indices to global skeleton bone numbers
             Reference: reone:709-720 - bone mapping preparation
@@ -2669,6 +2816,20 @@ class MDLSkin(MDLMesh):
             Each vertex can be influenced by up to 4 bones with normalized weights
     """
 
+    COMPARABLE_FIELDS = (
+        *MDLMesh.COMPARABLE_FIELDS,
+        "bone_indices",
+    )
+    COMPARABLE_SEQUENCE_FIELDS = (
+        *MDLMesh.COMPARABLE_SEQUENCE_FIELDS,
+        "qbones",
+        "tbones",
+        "vertex_bones",
+        "bonemap",
+        "bone_serial",
+        "bone_node_number",
+    )
+
     def __init__(
         self,
     ):
@@ -2678,45 +2839,45 @@ class MDLSkin(MDLMesh):
 
         # vendor/mdlops/MDLOpsM.pm:1760 - Fixed 16-bone index array
         self.bone_indices: tuple[int, ...] = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-        
+
         # vendor/mdlops/MDLOpsM.pm:1765 - Bone quaternion orientations (bind pose)
         self.qbones: list[Vector4] = []
-        
+
         # vendor/mdlops/MDLOpsM.pm:1768 - Bone translation positions (bind pose)
         self.tbones: list[Vector3] = []
-        
+
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:709-720
         # Maps local bone index to global skeleton bone number
         # Critical for multi-part models where each part references the full skeleton
         self.bonemap: list[int] = []
-        
+
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:261-268
         # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:478-485
         # Per-vertex skinning data: up to 4 bone influences per vertex
         self.vertex_bones: list[MDLBoneVertex] = []
-        
+
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:712-713
         # Prepared lookup tables for bone serial numbers and node numbers
         # These are computed from bonemap during skin mesh preparation
         self.bone_serial: list[int] = []  # Maps bone index to serial number in model
         self.bone_node_number: list[int] = []  # Maps bone index to node number in hierarchy
-    
+
     def prepare_bone_lookups(self, nodes: list[MDLNode]) -> None:
         """Prepare bone serial and node number lookup tables from the bone map.
-        
+
         This method creates lookup tables that map bone indices to their serial positions
         and node numbers in the model hierarchy. This is essential for multi-part character
         models where each part needs to reference bones in the full skeleton.
-        
+
         Args:
         ----
             nodes: List of all nodes in the model, in order
-        
+
         References:
         ----------
             vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:703-723 - prepareSkinMeshes()
             Algorithm: For each bone in bonemap, store its serial position and node number
-        
+
         Notes:
         -----
             This should be called after loading the skin data and before rendering.
@@ -2769,8 +2930,11 @@ class MDLSkin(MDLMesh):
         self.vertex_bones = v
 
 
-class MDLConstraint:
+class MDLConstraint(ComparableMixin):
     """Constraint data that can be attached to a node."""
+
+    COMPARABLE_FIELDS = ("name", "type", "target", "target_node")
+
     def __init__(
         self,
     ):
@@ -2790,17 +2954,17 @@ class MDLConstraint:
 
 class MDLDangly(MDLMesh):
     """Dangly mesh physics data for cloth, hair, and soft body simulation.
-    
+
     Dangly meshes are special meshes that simulate cloth or hair physics in KotOR.
     They use a simplified physics model with constraints and vertex positions that
     update based on movement and gravity. Common uses include capes, robes, and hair.
-    
+
     References:
     ----------
         vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:276-291 (dangly reading)
         vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:487-497 (dangly loading)
         vendor/mdlops/MDLOpsM.pm:1823-1870 (dangly node processing)
-    
+
     Attributes:
     ----------
         constraints: List of constraint data defining how vertices can move
@@ -2814,6 +2978,14 @@ class MDLDangly(MDLMesh):
             Used as reference for resetting or calculating displacement
     """
 
+    COMPARABLE_FIELDS = MDLMesh.COMPARABLE_FIELDS
+    COMPARABLE_SEQUENCE_FIELDS = (
+        *MDLMesh.COMPARABLE_SEQUENCE_FIELDS,
+        "constraints",
+        "verts",
+        "verts_original",
+    )
+
     def __init__(
         self,
     ):
@@ -2825,12 +2997,12 @@ class MDLDangly(MDLMesh):
         # vendor/mdlops/MDLOpsM.pm:1835-1850
         # Constraints define how vertices can move (springs, limits, etc.)
         self.constraints: list[MDLConstraint] = []
-        
+
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:283
         # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:491-493
         # Current positions updated by physics simulation
         self.verts: list[Vector3] = []
-        
+
         # vendor/mdlops/MDLOpsM.pm:1860 - Original bind pose positions
         self.verts_original: list[Vector3] = []
 
@@ -2838,25 +3010,24 @@ class MDLDangly(MDLMesh):
         return f"{self.__class__.__name__}(constraints={self.constraints!r}, verts={self.verts!r}, verts_original={self.verts_original!r})"
 
 
-
 class MDLWalkmesh(ComparableMixin):
     """Walkmesh collision data using Axis-Aligned Bounding Box (AABB) tree.
-    
+
     Walkmeshes define where characters can walk in a level. They use an AABB tree
     (binary space partitioning tree) for efficient collision detection. Each node
     in the tree represents a bounding volume that can be tested for intersection.
-    
+
     The AABB tree is a hierarchical structure where:
     - Leaf nodes contain actual collision faces/triangles
     - Branch nodes subdivide space and have left/right children
     - Most significant plane axis determines split direction
-    
+
     References:
     ----------
         vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:489-509 (AABB tree reading)
         vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:499-520 (AABB loading)
         vendor/mdlops/MDLOpsM.pm:1873-1935 (walkmesh/AABB processing)
-    
+
     Attributes:
     ----------
         aabbs: List of AABB tree nodes forming the collision hierarchy
@@ -2866,13 +3037,16 @@ class MDLWalkmesh(ComparableMixin):
             - Face index (for leaf nodes, -1 for branch nodes)
             - Most significant plane (split axis)
             - Left/right child offsets (for branch nodes)
-    
+
     Notes:
     -----
         The AABB tree enables O(log n) collision detection instead of O(n).
         Reone implements efficient tree traversal with early rejection.
         Reference: reone:490-496 for bounding box format
     """
+
+    COMPARABLE_SEQUENCE_FIELDS = ("aabbs",)
+
     def __init__(
         self,
     ):
@@ -2893,20 +3067,20 @@ class MDLWalkmesh(ComparableMixin):
 
 class MDLSaber(ComparableMixin):
     """Lightsaber blade mesh data.
-    
+
     Lightsaber blades are special procedurally-generated meshes in KotOR that
     create the iconic glowing blade effect. The blade geometry is generated
     at runtime based on parameters like length, width, color, and type.
-    
+
     Saber meshes have a fixed vertex count (176 vertices) and use a specific
     vertex layout optimized for the blade effect with transparency and glow.
-    
+
     References:
     ----------
         vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:308-378 (saber generation)
         vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:522-540 (saber loading)
         vendor/mdlops/MDLOpsM.pm:1937-2010 (saber node processing)
-    
+
     Attributes:
     ----------
         saber_type: Type of lightsaber (single, double-bladed, etc.)
@@ -2915,13 +3089,13 @@ class MDLSaber(ComparableMixin):
             Reference: mdlops:1947, reone:319-320
         saber_length: Length of the blade in meters
             Reference: mdlops:1948, reone:312-314
-        saber_width: Width/thickness of the blade  
+        saber_width: Width/thickness of the blade
             Reference: mdlops:1949
         saber_flare_color: Color of the blade's lens flare effect
             Reference: mdlops:1950
         saber_flare_radius: Radius of the lens flare effect
             Reference: mdlops:1951
-    
+
     Notes:
     -----
         Saber vertices are generated procedurally with 176 vertices total:
@@ -2930,26 +3104,36 @@ class MDLSaber(ComparableMixin):
         - Faces are generated from predefined indices
         Reference: reone:32-33, reone:327-449 for generation algorithm
     """
+
+    COMPARABLE_FIELDS = (
+        "saber_type",
+        "saber_color",
+        "saber_length",
+        "saber_width",
+        "saber_flare_color",
+        "saber_flare_radius",
+    )
+
     def __init__(
         self,
     ):
         # vendor/mdlops/MDLOpsM.pm:1945 - Saber type (single/double-bladed)
         self.saber_type: int = 0
-        
+
         # vendor/mdlops/MDLOpsM.pm:1947 - Blade color
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:319-320
         self.saber_color: int = 0
-        
+
         # vendor/mdlops/MDLOpsM.pm:1948 - Blade length in meters
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:312-314
         self.saber_length: float = 0.0
-        
+
         # vendor/mdlops/MDLOpsM.pm:1949 - Blade width/thickness
         self.saber_width: float = 0.0
-        
+
         # vendor/mdlops/MDLOpsM.pm:1950 - Lens flare color
         self.saber_flare_color: int = 0
-        
+
         # vendor/mdlops/MDLOpsM.pm:1951 - Lens flare radius
         self.saber_flare_radius: float = 0.0
 
@@ -2968,21 +3152,21 @@ class MDLSaber(ComparableMixin):
 # region Geometry Data
 class MDLBoneVertex(ComparableMixin):
     """Per-vertex skinning data for skeletal animation.
-    
+
     Each vertex in a skinned mesh can be influenced by up to 4 bones with different
     weights. The weights are normalized (sum to 1.0) and determine how much each bone's
     transformation affects the vertex position during animation.
-    
+
     This is the core data structure for smooth character deformation in skeletal animation.
     When a character animates, each vertex position is computed as:
         final_pos = w0*bone0*orig_pos + w1*bone1*orig_pos + w2*bone2*orig_pos + w3*bone3*orig_pos
-    
+
     References:
     ----------
         vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:261-268 (vertex bone reading)
         vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:478-485 (bone weight loading)
         vendor/mdlops/MDLOpsM.pm:1785-1800 (vertex skinning data)
-    
+
     Attributes:
     ----------
         vertex_weights: Normalized weights for up to 4 bone influences (w0, w1, w2, w3)
@@ -2993,13 +3177,14 @@ class MDLBoneVertex(ComparableMixin):
             Reference: reone:261-263, kotorblender:478-480
             Indices reference bones in the skin's bonemap array
             Unused indices are set to -1.0 (yes, stored as float in MDX)
-    
+
     Notes:
     -----
         KotOR uses up to 4 bones per vertex for smooth deformation.
         The game engine performs hardware-accelerated vertex skinning on GPU.
         Weight normalization is critical for avoiding visual artifacts.
     """
+
     COMPARABLE_FIELDS = ("vertex_weights", "vertex_indices")
 
     def __init__(
@@ -3009,7 +3194,7 @@ class MDLBoneVertex(ComparableMixin):
         # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:481-483
         # Normalized blend weights (must sum to 1.0)
         self.vertex_weights: tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0)
-        
+
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:261-263
         # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:478-480
         # Bone indices into skin's bonemap (-1.0 = unused)
@@ -3038,14 +3223,9 @@ class MDLFace(ComparableMixin):
         "v3",
         "material",
         "smoothgroup",
-        "t1",
-        "t2",
-        "t3",
-        "a1",
-        "a2",
-        "a3",
-        "coefficient",
-        "normal",
+        "_canon_t1",
+        "_canon_t2",
+        "_canon_t3",
     )
 
     def __init__(
@@ -3077,6 +3257,18 @@ class MDLFace(ComparableMixin):
         self.coefficient: int = 0
         self.normal: Vector3 = Vector3.from_null()
 
+    @property
+    def _canon_t1(self) -> int:
+        return self.v1 if self.t1 < 0 else self.t1
+
+    @property
+    def _canon_t2(self) -> int:
+        return self.v2 if self.t2 < 0 else self.t2
+
+    @property
+    def _canon_t3(self) -> int:
+        return self.v3 if self.t3 < 0 else self.t3
+
     def __eq__(self, other):
         if not isinstance(other, MDLFace):
             return NotImplemented
@@ -3086,28 +3278,138 @@ class MDLFace(ComparableMixin):
         return _mdl_hash(self, ignore_keys=_MDL_EQ_IGNORE_KEYS)
 
 
+def _mdl_recompute_mesh_face_payload(mesh: "MDLMesh") -> None:
+    """Recompute derived per-face payload (adjacency, plane coefficient, normal) from mesh geometry.
+
+    MDLOps-style ASCII does not carry these binary-only fields. To keep roundtrips idempotent
+    without inventing new ASCII syntax, we deterministically derive them from:
+    - mesh.vertex_positions
+    - mesh.faces (v1/v2/v3 indices)
+
+    This function is intentionally side-effecting and does NOT cache results.
+    """
+    try:
+        faces = mesh.faces
+        verts = mesh.vertex_positions
+    except Exception:
+        return
+
+    if not faces or not verts:
+        return
+
+    # Map vertex index -> list of faces that reference it.
+    nverts = len(verts)
+    faces_by_vertex: list[list[int]] = [[] for _ in range(nverts)]
+    for fi, f in enumerate(faces):
+        try:
+            faces_by_vertex[int(f.v1)].append(fi)
+            faces_by_vertex[int(f.v2)].append(fi)
+            faces_by_vertex[int(f.v3)].append(fi)
+        except Exception:
+            continue
+
+    # Tolerant position keying inspired by MDLOps (vendor/MDLOps/MDLOpsM.pm adjacency routine):
+    # it groups vertices by formatted position so overlapping geometry still links.
+    verts_by_pos: dict[str, list[int]] = {}
+    pos_key_of_vert: list[str] = [""] * nverts
+    for vi, p in enumerate(verts):
+        try:
+            key = f"{float(p.x):.4g},{float(p.y):.4g},{float(p.z):.4g}"
+        except Exception:
+            key = "0,0,0"
+        pos_key_of_vert[vi] = key
+        verts_by_pos.setdefault(key, []).append(vi)
+
+    def _vec_sub(a: Vector3, b: Vector3) -> Vector3:
+        return Vector3(float(a.x) - float(b.x), float(a.y) - float(b.y), float(a.z) - float(b.z))
+
+    def _vec_cross(a: Vector3, b: Vector3) -> Vector3:
+        ax, ay, az = float(a.x), float(a.y), float(a.z)
+        bx, by, bz = float(b.x), float(b.y), float(b.z)
+        return Vector3(ay * bz - az * by, az * bx - ax * bz, ax * by - ay * bx)
+
+    def _vec_len(a: Vector3) -> float:
+        ax, ay, az = float(a.x), float(a.y), float(a.z)
+        return (ax * ax + ay * ay + az * az) ** 0.5
+
+    def _vec_norm(a: Vector3) -> Vector3:
+        l = _vec_len(a)
+        if l == 0.0:
+            return Vector3.from_null()
+        inv = 1.0 / l
+        return Vector3(float(a.x) * inv, float(a.y) * inv, float(a.z) * inv)
+
+    # For each face, compute:
+    # - normal: normalized cross((p2-p1),(p3-p1))
+    # - coefficient: int(-dot(n,p1)) (deterministic; matches our binary rounding/truncation style)
+    # - adjacency: for each edge, choose the smallest neighbor face index that shares that edge
+    for fi, f in enumerate(faces):
+        try:
+            v1 = int(f.v1)
+            v2 = int(f.v2)
+            v3 = int(f.v3)
+            if v1 < 0 or v2 < 0 or v3 < 0 or v1 >= nverts or v2 >= nverts or v3 >= nverts:
+                continue
+            p1 = verts[v1]
+            p2 = verts[v2]
+            p3 = verts[v3]
+        except Exception:
+            continue
+
+        # Normal + plane coefficient
+        n = _vec_norm(_vec_cross(_vec_sub(p2, p1), _vec_sub(p3, p1)))
+        f.normal = n
+        try:
+            d = -(float(n.x) * float(p1.x) + float(n.y) * float(p1.y) + float(n.z) * float(p1.z))
+        except Exception:
+            d = 0.0
+        f.coefficient = int(d)
+
+        # Adjacency via "faces touching each (position-tolerant) vertex"
+        corner_verts = (v1, v2, v3)
+        vsets: list[set[int]] = []
+        for cv in corner_verts:
+            key = pos_key_of_vert[cv]
+            s: set[int] = set()
+            for ov in verts_by_pos.get(key, (cv,)):
+                for face_idx in faces_by_vertex[ov]:
+                    if face_idx != fi:
+                        s.add(face_idx)
+            vsets.append(s)
+
+        # Edge (v1,v2), (v2,v3), (v3,v1) -> a1,a2,a3
+        def _pick_neighbor(a: set[int], b: set[int]) -> int:
+            inter = a & b
+            return min(inter) if inter else 0
+
+        f.a1 = _pick_neighbor(vsets[0], vsets[1])
+        f.a2 = _pick_neighbor(vsets[1], vsets[2])
+        f.a3 = _pick_neighbor(vsets[2], vsets[0])
+
+
 # endregion
+
 
 class MDLController(ComparableMixin):
     """Controller for animating node properties over time.
-    
+
     Controllers define how node properties (position, orientation, color, etc.) change over time.
     They can use either linear interpolation (default) or bezier interpolation for smooth curves.
-    
+
     References:
     ----------
         vendor/mdlops/MDLOpsM.pm:1649-1778 - Controller data structure and bezier flag detection
         vendor/mdlops/MDLOpsM.pm:1704-1710 - Bezier flag extraction from column count (bit 4)
         vendor/mdlops/MDLOpsM.pm:3764-3802 - ASCII controller reading with bezier support
         vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:664-690 - Binary controller reading
-    
+
     Attributes:
     ----------
         controller_type: The type of controller (position, orientation, color, etc.)
         rows: List of keyframe data rows (time + values)
         is_bezier: True if using bezier interpolation, False for linear interpolation
             Reference: mdlops:1704-1710 - Detected from column_count & 16 flag
-    
+
     Notes:
     -----
         Bezier controllers store 3 values per column instead of 1:
@@ -3129,7 +3431,7 @@ class MDLController(ComparableMixin):
         # vendor/mdlops/MDLOpsM.pm:1666-1673 - Controller type and data rows
         self.controller_type: MDLControllerType = controller_type
         self.rows: list[MDLControllerRow] = rows
-        
+
         # vendor/mdlops/MDLOpsM.pm:1704-1710 - Bezier flag from column count bit 4
         # vendor/mdlops/MDLOpsM.pm:3764-3770 - Bezier detection in ASCII reading
         # Some parsers historically passed None here; normalize to strict bool.

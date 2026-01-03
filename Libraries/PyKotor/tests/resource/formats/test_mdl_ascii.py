@@ -23,6 +23,7 @@ import subprocess
 import tempfile
 import time
 import unittest
+
 from pathlib import Path
 
 import pytest
@@ -55,12 +56,12 @@ from pykotor.resource.formats.mdl import (
     read_mdl,
     write_mdl,
 )
+from pykotor.resource.formats.mdl.mdl_data import _qfloat
 from pykotor.resource.formats.mdl.mdl_types import (
     MDLClassification,
     MDLControllerType,
     MDLNodeType,
 )
-from pykotor.resource.formats.mdl.mdl_data import _qfloat
 from pykotor.resource.type import ResourceType
 from utility.common.geometry import Vector2, Vector3, Vector4
 
@@ -364,6 +365,63 @@ donemodel test
         self.assertIn("verts", content.lower())
         self.assertIn("faces", content.lower())
 
+    def test_roundtrip_face_payload_is_derived_deterministically(self):
+        """Ensure binary-only MDLFace payload is derived from geometry (no ASCII syntax extensions)."""
+        mdl = create_test_mdl("face_payload_test")
+        node = create_test_node("mesh_node", MDLNodeType.TRIMESH)
+        mesh = MDLMesh()
+        mesh.texture_1 = "test_texture"
+        mesh.render = True
+        mesh.shadow = False
+        mesh.vertex_positions = [
+            Vector3(0.0, 0.0, 0.0),  # 0
+            Vector3(1.0, 0.0, 0.0),  # 1
+            Vector3(1.0, 1.0, 0.0),  # 2
+            Vector3(0.0, 1.0, 0.0),  # 3
+        ]
+
+        # Two triangles sharing an edge (0,2).
+        f0 = MDLFace()
+        f0.v1, f0.v2, f0.v3 = 0, 1, 2
+        f0.material = 2
+        f0.smoothgroup = 0
+        f0.t1 = f0.t2 = f0.t3 = -1
+
+        f1 = MDLFace()
+        f1.v1, f1.v2, f1.v3 = 0, 2, 3
+        f1.material = 2
+        f1.smoothgroup = 0
+        f1.t1 = f1.t2 = f1.t3 = -1
+
+        mesh.faces = [f0, f1]
+        node.mesh = mesh
+        mdl.root.children.append(node)
+
+        # Roundtrip through our ASCII writer/reader.
+        output = bytearray()
+        MDLAsciiWriter(mdl, output).write()
+        mdl2 = MDLAsciiReader(_encode_ascii(_decode_ascii(output))).load()
+
+        mesh2 = mdl2.get("mesh_node").mesh
+        assert mesh2 is not None
+        self.assertEqual(len(mesh2.faces), 2)
+
+        # Sentinel tverts must remain -1 (not substituted).
+        self.assertEqual(mesh2.faces[0].t1, -1)
+        self.assertEqual(mesh2.faces[0].t2, -1)
+        self.assertEqual(mesh2.faces[0].t3, -1)
+
+        # Adjacency should be derived deterministically from shared edges.
+        # With our mapping (v1,v2),(v2,v3),(v3,v1) -> (a1,a2,a3):
+        # - face0 shares edge (v3,v1) == (2,0) with face1 -> a3 = 1
+        # - face1 shares edge (v1,v2) == (0,2) with face0 -> a1 = 0
+        self.assertEqual(mesh2.faces[0].a3, 1)
+        self.assertEqual(mesh2.faces[1].a1, 0)
+
+        # Plane is z=0 so coefficient should be 0 and normal should be +/-Z depending on winding.
+        self.assertEqual(mesh2.faces[0].coefficient, 0)
+        self.assertEqual(mesh2.faces[1].coefficient, 0)
+
     def test_read_trimesh_node(self):
         """Test reading trimesh node."""
         ascii_content = """# ASCII MDL
@@ -618,7 +676,9 @@ donemodel test
         mdl = reader.load()
 
         saber_node = mdl.get("saber_node")
-        self.assertIsNotNone(saber_node,     )
+        self.assertIsNotNone(
+            saber_node,
+        )
         assert saber_node is not None  # Type narrowing
         self.assertIsNotNone(saber_node.saber)
         assert saber_node.saber is not None  # Type narrowing
@@ -1507,9 +1567,7 @@ class TestMDLAsciiRoundTrip(unittest.TestCase):
         aabb = create_test_node("aabb", MDLNodeType.AABB)
         aabb.aabb = MDLWalkmesh()
 
-        mdl1.root.children.extend([
-            dummy, trimesh, light, emitter, reference, saber, aabb
-        ])
+        mdl1.root.children.extend([dummy, trimesh, light, emitter, reference, saber, aabb])
 
         # Round-trip
         output = bytearray()
@@ -1760,10 +1818,7 @@ donemodel test
         mesh = MDLMesh()
 
         # Create 1000 vertices
-        mesh.vertex_positions = [
-            Vector3(float(i), float(i), float(i))
-            for i in range(1000)
-        ]
+        mesh.vertex_positions = [Vector3(float(i), float(i), float(i)) for i in range(1000)]
 
         # Create 500 faces
         mesh.faces = []
@@ -1819,15 +1874,17 @@ donemodel test
         lines.append("    faces 50")
         # Add 50 faces
         for i in range(50):
-            lines.append(f"      {i*2} {i*2+1} {(i*2+2)%100} 0")
+            lines.append(f"      {i * 2} {i * 2 + 1} {(i * 2 + 2) % 100} 0")
 
-        lines.extend([
-            "  }",
-            "",
-            "endmodelgeom test",
-            "",
-            "donemodel test",
-        ])
+        lines.extend(
+            [
+                "  }",
+                "",
+                "endmodelgeom test",
+                "",
+                "donemodel test",
+            ]
+        )
 
         ascii_content = "\n".join(lines)
 
@@ -1884,17 +1941,19 @@ donemodel test
         for i in range(5):
             lines.append(f"  node dummy level_{i}")
             lines.append("  {")
-            lines.append(f"    parent {'level_' + str(i-1) if i > 0 else 'null'}")
+            lines.append(f"    parent {'level_' + str(i - 1) if i > 0 else 'null'}")
             lines.append("    position 0 0 0")
             lines.append("    orientation 0 0 0 1")
             lines.append("  }")
 
-        lines.extend([
-            "",
-            "endmodelgeom test",
-            "",
-            "donemodel test",
-        ])
+        lines.extend(
+            [
+                "",
+                "endmodelgeom test",
+                "",
+                "donemodel test",
+            ]
+        )
 
         ascii_content = "\n".join(lines)
 
@@ -2216,12 +2275,14 @@ class TestMDLAsciiPerformance(unittest.TestCase):
             lines.append("    orientation 0 0 0 1")
             lines.append("  }")
 
-        lines.extend([
-            "",
-            "endmodelgeom test",
-            "",
-            "donemodel test",
-        ])
+        lines.extend(
+            [
+                "",
+                "endmodelgeom test",
+                "",
+                "donemodel test",
+            ]
+        )
 
         ascii_content = "\n".join(lines)
 
@@ -2594,7 +2655,7 @@ _models_bif_failure_state: dict[str, bool] = {}
 @pytest.fixture(scope="session")
 def models_bif_failure_tracker(request: pytest.FixtureRequest) -> dict[str, bool]:
     """Track failures per game installation to enable fast-fail behavior.
-    
+
     If any test fails for a given game installation, all subsequent tests
     for that installation will be skipped.
     """
@@ -2605,7 +2666,7 @@ def pytest_runtest_setup(item: pytest.Item) -> None:
     """Skip test if a previous test in the same game installation has failed."""
     if "test_models_bif_roundtrip_eq_hash_pytest" not in item.name:
         return
-    
+
     # Extract game label from test ID (format: k1-modelname or k2-modelname)
     callspec = getattr(item, "callspec", None)  # type: ignore[attr-defined]
     test_id = callspec.id if callspec else ""  # type: ignore[attr-defined]
@@ -2619,7 +2680,7 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo) -> None:
     """Track failures when tests fail."""
     if "test_models_bif_roundtrip_eq_hash_pytest" not in item.name:
         return
-    
+
     if call.when == "call" and call.excinfo is not None:
         # Test failed - extract game label and mark it
         callspec = getattr(item, "callspec", None)  # type: ignore[attr-defined]
@@ -2634,9 +2695,18 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
 
     This generates test cases for each model, combining game_install_root and mdl_entry
     into a single parametrization to avoid cartesian product duplication.
+
+    The parent conftest.py also has a pytest_generate_tests hook that parametrizes
+    game_install_root, but it explicitly skips this test function to avoid conflicts.
+    We handle both fixtures here to ensure they are properly paired.
     """
-    # Only handle our test function
+    # Only handle our specific test function - both fixtures must be present
     if "mdl_entry" not in metafunc.fixturenames or "game_install_root" not in metafunc.fixturenames:
+        return
+
+    # Explicitly check that this is the right test function to avoid conflicts
+    # The conftest hook also checks this and returns early, but we verify here too
+    if "test_models_bif_roundtrip_eq_hash_pytest" not in metafunc.definition.name:
         return
 
     # Get game install roots using the same logic as conftest
@@ -2729,11 +2799,11 @@ def test_models_bif_roundtrip_eq_hash_pytest(
       - Convert back to binary and re-parse, validating stability
     """
     game_label, game_root = game_install_root
-    
+
     # Fast-fail check: skip if a previous test for this game installation failed
     if models_bif_failure_tracker.get(game_label, False):
         pytest.skip(f"Fast-fail: Previous test failed for {game_label} installation")
-    
+
     if mdl_entry is None:
         pytest.skip("No MDL entry provided")
 
@@ -2767,7 +2837,9 @@ def test_models_bif_roundtrip_eq_hash_pytest(
 
     mdl_ascii = read_mdl(ascii_path.read_bytes(), file_format=ResourceType.MDL_ASCII)
 
-    assert mdl_bin == mdl_ascii, "binary->ascii parse mismatch (MDL __eq__)"
+    if mdl_bin != mdl_ascii:
+        mdl_bin.compare(mdl_ascii)
+        assert mdl_bin == mdl_ascii, "binary->ascii parse mismatch (MDL __eq__)"
     assert hash(mdl_bin) == hash(mdl_ascii), "MDL __hash__ must align with __eq__"
     assert {mdl_bin} == {mdl_ascii}, "MDL must be usable in hash-based collections"
     _compare_components(unittest.TestCase(), mdl_bin, mdl_ascii, context=f"{game_label}:{resref}:binary_vs_ascii")
@@ -2795,7 +2867,5 @@ def test_models_bif_roundtrip_eq_hash_pytest(
         _ = hash(mdl_bin_round)
     elapsed = time.perf_counter() - t0
     assert elapsed < eqhash_budget_s, (
-        f"eq/hash perf regression for {game_label}:{resref} ({elapsed:.3f}s > {eqhash_budget_s:.3f}s). "
-        "Tune with PYKOTOR_MODELS_BIF_EQHASH_BUDGET_S."
+        f"eq/hash perf regression for {game_label}:{resref} ({elapsed:.3f}s > {eqhash_budget_s:.3f}s). Tune with PYKOTOR_MODELS_BIF_EQHASH_BUDGET_S."
     )
-

@@ -1148,10 +1148,10 @@ class Installation:
         return self._female_talktable
 
     @overload
-    def resource(self, resname: str, restype: ResourceType, order: Sequence[SearchLocation] | None = None, *, capsules: Sequence[Capsule] | None = None, folders: list[Path] | None = None, module_root: str | None = None, logger: Callable[[str], None] | None = None):
+    def resource(self, resname: str, restype: ResourceType, order: Sequence[SearchLocation] | None = None, *, capsules: Sequence[Capsule] | None = None, folders: list[Path] | None = None, module_root: str | None = None, logger: Callable[[str], None] | None = None) -> ResourceResult | None:
         ...
     @overload
-    def resource(self, resname: str, restype: Sequence[ResourceType], order: Sequence[SearchLocation] | None = None, *, capsules: Sequence[Capsule] | None = None, folders: list[Path] | None = None, module_root: str | None = None, logger: Callable[[str], None] | None = None):
+    def resource(self, resname: str, restype: Sequence[ResourceType], order: Sequence[SearchLocation] | None = None, *, capsules: Sequence[Capsule] | None = None, folders: list[Path] | None = None, module_root: str | None = None, logger: Callable[[str], None] | None = None) -> ResourceResult | None:
         ...
     def resource(  # noqa: PLR0913
         self,

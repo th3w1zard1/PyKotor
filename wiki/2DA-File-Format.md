@@ -454,17 +454,6 @@ See [spells.2da](2DA-spells) for detailed documentation.
 
 See [itemprops.2da](2DA-itemprops) for detailed documentation.
 
-### iprp_feats.2da
-
-See [iprp_feats.2da](2DA-iprp_feats) for detailed documentation.
-
-### iprp_spells.2da
-
-See [iprp_spells.2da](2DA-iprp_spells) for detailed documentation.
-
-### iprp_ammocost.2da
-
-See [iprp_ammocost.2da](2DA-iprp_ammocost) for detailed documentation.
 
 ### iprp_damagecost.2da
 
@@ -508,23 +497,7 @@ See [heads.2da](2DA-heads) for detailed documentation.
 
 See [classpowergain.2da](2DA-classpowergain) for detailed documentation.
 
-### cls_atk_*.2da
-
-See [cls_atk_*.2da](2DA-cls_atk__pattern) for detailed documentation.
-
-### cls_savthr_*.2da
-
-See [cls_savthr_*.2da](2DA-cls_savthr__pattern) for detailed documentation.
-
 ## Name Generation 2DA files
-
-### humanfirst.2da
-
-See [humanfirst.2da](2DA-humanfirst) for detailed documentation.
-
-### humanlast.2da
-
-See [humanlast.2da](2DA-humanlast) for detailed documentation.
 
 ### Other Name Generation files
 
@@ -623,9 +596,6 @@ See [guisounds.2da](2DA-guisounds) for detailed documentation.
 
 See [dialoganimations.2da](2DA-dialoganimations) for detailed documentation.
 
-### tilecolor.2da
-
-See [tilecolor.2da](2DA-tilecolor) for detailed documentation.
 
 ### forceshields.2da
 
@@ -759,22 +729,6 @@ See [iprp_mosterhit.2da](2DA-iprp_mosterhit) for detailed documentation.
 
 See [iprp_walk.2da](2DA-iprp_walk) for detailed documentation.
 
-### ai_styles.2da
-
-See [ai_styles.2da](2DA-ai_styles) for detailed documentation.
-
-### iprp_damagevs.2da
-
-See [iprp_damagevs.2da](2DA-iprp_damagevs) for detailed documentation.
-
-### iprp_attackmod.2da
-
-See [iprp_attackmod.2da](2DA-iprp_attackmod) for detailed documentation.
-
-### iprp_bonusfeat.2da
-
-See [iprp_bonusfeat.2da](2DA-iprp_bonusfeat) for detailed documentation.
-
 ### iprp_lightcol.2da
 
 See [iprp_lightcol.2da](2DA-iprp_lightcol) for detailed documentation.
@@ -782,34 +736,6 @@ See [iprp_lightcol.2da](2DA-iprp_lightcol) for detailed documentation.
 ### iprp_monstdam.2da
 
 See [iprp_monstdam.2da](2DA-iprp_monstdam) for detailed documentation.
-
-### iprp_skillcost.2da
-
-See [iprp_skillcost.2da](2DA-iprp_skillcost) for detailed documentation.
-
-### iprp_weightinc.2da
-
-See [iprp_weightinc.2da](2DA-iprp_weightinc) for detailed documentation.
-
-### iprp_traptype.2da
-
-See [iprp_traptype.2da](2DA-iprp_traptype) for detailed documentation.
-
-### iprp_damagered.2da
-
-See [iprp_damagered.2da](2DA-iprp_damagered) for detailed documentation.
-
-### iprp_spellres.2da
-
-See [iprp_spellres.2da](2DA-iprp_spellres) for detailed documentation.
-
-### rumble.2da
-
-See [rumble.2da](2DA-rumble) for detailed documentation.
-
-### musictable.2da
-
-See [musictable.2da](2DA-musictable) for detailed documentation.
 
 ### difficultyopt.2da
 
@@ -827,10 +753,6 @@ See [featgain.2da](2DA-featgain) for detailed documentation.
 
 See [effecticon.2da](2DA-effecticon) for detailed documentation.
 
-### itempropsdef.2da
-
-See [itempropsdef.2da](2DA-itempropsdef) for detailed documentation.
-
 ### pazaakdecks.2da
 
 See [pazaakdecks.2da](2DA-pazaakdecks) for detailed documentation.
@@ -843,10 +765,6 @@ See [acbonus.2da](2DA-acbonus) for detailed documentation.
 
 See [keymap.2da](2DA-keymap) for detailed documentation.
 
-### soundeax.2da
-
-See [soundeax.2da](2DA-soundeax) for detailed documentation.
-
 ### poison.2da
 
 See [poison.2da](2DA-poison) for detailed documentation.
@@ -854,10 +772,6 @@ See [poison.2da](2DA-poison) for detailed documentation.
 ### feedbacktext.2da
 
 See [feedbacktext.2da](2DA-feedbacktext) for detailed documentation.
-
-### creaturesize.2da
-
-See [creaturesize.2da](2DA-creaturesize) for detailed documentation.
 
 ### appearancesndset.2da
 
@@ -867,69 +781,17 @@ See [appearancesndset.2da](2DA-appearancesndset) for detailed documentation.
 
 See [texpacks.2da](2DA-texpacks) for detailed documentation.
 
-### videoquality.2da
-
-See [videoquality.2da](2DA-videoquality) for detailed documentation.
-
 ### loadscreens.2da
 
 See [loadscreens.2da](2DA-loadscreens) for detailed documentation.
-
-### phenotype.2da
-
-See [phenotype.2da](2DA-phenotype) for detailed documentation.
-
-### palette.2da
-
-See [palette.2da](2DA-palette) for detailed documentation.
-
-### bodyvariation.2da
-
-See [bodyvariation.2da](2DA-bodyvariation) for detailed documentation.
-
-### [textures](TPC-File-Format).2da
-
-See [textures.2da](2DA-textures) for detailed documentation.
-
-### merchants.2da
-
-See [merchants.2da](2DA-merchants) for detailed documentation.
-
-### actions.2da
-
-See [actions.2da](2DA-actions) for detailed documentation.
-
-### aiscripts.2da
-
-See [aiscripts.2da](2DA-aiscripts) for detailed documentation.
-
-### bindablekeys.2da
-
-See [bindablekeys.2da](2DA-bindablekeys) for detailed documentation.
-
-### crtemplates.2da
-
-See [crtemplates.2da](2DA-crtemplates) for detailed documentation.
-
-### environment.2da
-
-See [environment.2da](2DA-environment) for detailed documentation.
 
 ### fractionalcr.2da
 
 See [fractionalcr.2da](2DA-fractionalcr) for detailed documentation.
 
-### gamespyrooms.2da
+### bindablekeys.2da
 
-See [gamespyrooms.2da](2DA-gamespyrooms) for detailed documentation.
-
-### hen_companion.2da
-
-See [hen_companion.2da](2DA-hen_companion) for detailed documentation.
-
-### hen_familiar.2da
-
-See [hen_familiar.2da](2DA-hen_familiar) for detailed documentation.
+See [bindablekeys.2da](2DA-bindablekeys) for detailed documentation.
 
 ### masterfeats.2da
 
@@ -943,14 +805,6 @@ See [movies.2da](2DA-movies) for detailed documentation.
 
 See [stringtokens.2da](2DA-stringtokens) for detailed documentation.
 
-### tutorial_old.2da
-
-See [tutorial_old.2da](2DA-tutorial_old) for detailed documentation.
-
-### credits.2da
-
-See [credits.2da](2DA-credits) for detailed documentation.
-
 ### disease.2da
 
 See [disease.2da](2DA-disease) for detailed documentation.
@@ -959,25 +813,9 @@ See [disease.2da](2DA-disease) for detailed documentation.
 
 See [droiddischarge.2da](2DA-droiddischarge) for detailed documentation.
 
-### minglobalrim.2da
-
-See [minglobalrim.2da](2DA-minglobalrim) for detailed documentation.
-
 ### upcrystals.2da
 
 See [upcrystals.2da](2DA-upcrystals) for detailed documentation.
-
-### chargenclothes.2da
-
-See [chargenclothes.2da](2DA-chargenclothes) for detailed documentation.
-
-### aliensound.2da
-
-See [aliensound.2da](2DA-aliensound) for detailed documentation.
-
-### alienvo.2da
-
-See [alienvo.2da](2DA-alienvo) for detailed documentation.
 
 ### grenadesnd.2da
 
@@ -986,10 +824,6 @@ See [grenadesnd.2da](2DA-grenadesnd) for detailed documentation.
 ### inventorysnds.2da
 
 See [inventorysnds.2da](2DA-inventorysnds) for detailed documentation.
-
-### areaeffects.2da
-
-See [areaeffects.2da](2DA-areaeffects) for detailed documentation.
 
 ## Implementation Details
 
