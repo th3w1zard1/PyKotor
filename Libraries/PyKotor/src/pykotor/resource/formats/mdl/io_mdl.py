@@ -2287,6 +2287,8 @@ class MDLBinaryReader:
         # uncompress the quaternion if that is the case.
         # vendor/mdlops/MDLOpsM.pm:1714-1719 - Compressed quaternion detection
         if bin_controller.type_id == MDLControllerType.ORIENTATION and bin_controller.column_count == 2:
+            # Detected compressed quaternions - set the model flag
+            self._mdl.compress_quaternions = 1
             data: list[list[float]] = []
             for _ in range(bin_controller.row_count):
                 compressed: int = self._reader.read_uint32()
