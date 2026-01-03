@@ -1944,6 +1944,40 @@ class MDLBinaryReader:
             # If vertices were read by read_extra and count matches (and wasn't verified/corrected), use them directly
             if not vcount_verified and bin_node.trimesh.vertices and len(bin_node.trimesh.vertices) == vcount:
                 node.mesh.vertex_positions = bin_node.trimesh.vertices.copy()
+            # If vcount was verified/corrected, we need to re-read vertices with the corrected count
+            elif vcount_verified and bin_node.trimesh.vertices and len(bin_node.trimesh.vertices) < vcount:
+                # Start with what we have from read_extra, then read the rest
+                node.mesh.vertex_positions = bin_node.trimesh.vertices.copy()
+                # Continue reading from where read_extra left off
+                if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
+                    # Read remaining vertices from MDX
+                    mdx_data_offset: int = bin_node.trimesh.mdx_data_offset
+                    mdx_data_block_size: int = bin_node.trimesh.mdx_data_size
+                    vertex_offset = bin_node.trimesh.mdx_vertex_offset
+                    if mdx_data_offset not in (0, 0xFFFFFFFF) and mdx_data_block_size > 0:
+                        start_idx = len(bin_node.trimesh.vertices)
+                        for i in range(start_idx, vcount):
+                            seek_pos = mdx_data_offset + i * mdx_data_block_size + vertex_offset
+                            if seek_pos + 12 <= self._reader_ext.size():
+                                self._reader_ext.seek(seek_pos)
+                                x, y, z = (
+                                    self._reader_ext.read_single(),
+                                    self._reader_ext.read_single(),
+                                    self._reader_ext.read_single(),
+                                )
+                                node.mesh.vertex_positions.append(Vector3(x, y, z))
+                            else:
+                                break
+                elif bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
+                    # Read remaining vertices from MDL
+                    start_idx = len(bin_node.trimesh.vertices)
+                    remaining = vcount - start_idx
+                    if remaining > 0:
+                        remaining_bytes = remaining * 12
+                        read_pos = bin_node.trimesh.vertices_offset + (start_idx * 12)
+                        if read_pos + remaining_bytes <= self._reader.size():
+                            self._reader.seek(read_pos)
+                            node.mesh.vertex_positions.extend([self._reader.read_vector3() for _ in range(remaining)])
             elif bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
                 # Read from MDX
                 if bin_node.trimesh.mdx_data_offset not in (0, 0xFFFFFFFF) and bin_node.trimesh.mdx_data_size > 0 and vcount > 0:
