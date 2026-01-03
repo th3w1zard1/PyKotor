@@ -1884,13 +1884,19 @@ class MDLBinaryReader:
                             else:
                                 # Calculate max vertices that can fit in MDX for required count
                                 # Always calculate the actual count we can read, even if bounds check passes
-                                available_bytes = self._reader_ext.size() - mdx_data_offset - vertex_offset
-                                if available_bytes > 0:
-                                    max_vertices_from_mdx = available_bytes // mdx_data_block_size
+                                # For vertex i, position is: mdx_data_offset + i * mdx_data_block_size + vertex_offset
+                                # For the last vertex (index vcount-1), we need: mdx_data_offset + (vcount-1) * mdx_data_block_size + vertex_offset + 12 <= size
+                                # Solving: (vcount-1) * mdx_data_block_size <= size - mdx_data_offset - vertex_offset - 12
+                                # vcount <= (size - mdx_data_offset - vertex_offset - 12) / mdx_data_block_size + 1
+                                available_for_vertices = self._reader_ext.size() - mdx_data_offset - vertex_offset - 12
+                                if available_for_vertices > 0:
+                                    max_vertices_from_mdx = (available_for_vertices // mdx_data_block_size) + 1
                                     if max_vertices_from_mdx < 0:
                                         max_vertices_from_mdx = 0
                                     # Use the minimum of required count and what we can actually read
                                     can_read_count = min(required_vertex_count, max_vertices_from_mdx)
+                                else:
+                                    can_read_count = 0
                                 else:
                                     can_read_count = 0
                     elif bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
