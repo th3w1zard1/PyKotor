@@ -1,4 +1,15 @@
-"""Type definitions and data structures for MDL/MDX files."""
+"""Type definitions for MDL/MDX files.
+
+This module primarily contains enums/flags used across the MDL stack.
+
+Note:
+    The canonical *runtime* MDL object model used by readers/writers and most callers lives in
+    `pykotor.resource.formats.mdl.mdl_data`.
+
+    Some legacy/struct-like dataclasses also live here for historical reasons. Prefer importing
+    `MDL`, `MDLNode`, `MDLMesh`, etc. from `pykotor.resource.formats.mdl` (or `mdl_data`) unless you
+    explicitly need the legacy dataclass representation.
+"""
 
 from __future__ import annotations
 
@@ -18,6 +29,13 @@ class MDLGeometryType(IntEnum):
     GEOMETRY_SKINNED = 2
     GEOMETRY_DANGLY = 3
     GEOMETRY_SABER = 4
+
+    # Back-compat aliases (older engine/tooling code used PascalCase names).
+    # Keep these as enum aliases so `MDLGeometryType.Model` continues to work.
+    Model = GEOMETRY_NORMAL
+    Skinned = GEOMETRY_SKINNED
+    Dangly = GEOMETRY_DANGLY
+    Saber = GEOMETRY_SABER
 
 
 class MDLClassification(IntEnum):
@@ -187,6 +205,15 @@ class MDLControllerType(IntEnum):
     ALPHAMID_emitter = ALPHAMID
     SIZEMID_emitter = SIZEMID
     DETONATE_emitter = DETONATE
+
+    # Additional back-compat aliases (PascalCase) used by PyKotorEngine tests/tooling.
+    Position = POSITION
+    Orientation = ORIENTATION
+    Scale = SCALE
+    Alpha = ALPHA
+    Color = COLOR
+    Radius = RADIUS
+    Multiplier = MULTIPLIER
 
     # Note: Some controller IDs that were previously defined have been removed or
     # corrected based on vendor analysis. See fx_flame01.mdl analysis in mdlops:352-355

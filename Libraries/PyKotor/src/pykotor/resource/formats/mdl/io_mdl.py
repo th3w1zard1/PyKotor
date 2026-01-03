@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from typing import TYPE_CHECKING, ClassVar, cast
 
 from pykotor.common.misc import Color, Game
@@ -1466,64 +1467,34 @@ def _compress_quaternion(quat: Vector4) -> int:
     return x_packed | (y_packed << 11) | (z_packed << 22)
 
 
-def _calculate_face_normal(v1: Vector3, v2: Vector3, v3: Vector3) -> tuple[Vector3, float]:
-    """Calculate a triangle face's normalized normal vector and plane distance.
-    
-    The normal vector is computed using the cross product of two edge vectors,
-    then normalized. The plane distance is the dot product of the normal with
-    any vertex position.
-    
-    Args:
-    ----
-        v1: First vertex position
-        v2: Second vertex position
-        v3: Third vertex position
-    
+def _calculate_face_normal(
+    v1: Vector3,
+    v2: Vector3,
+    v3: Vector3,
+) -> tuple[Vector3, float]:
+    """Calculate a triangle face normal and triangle area.
+
     Returns:
-    -------
-        tuple: (normalized normal vector, plane distance from origin)
-    
-    References:
-    ----------
-        vendor/mdlops/MDLOpsM.pm:492-520 - facenormal() function
-        Formula: Cross product of edges, then normalize
+        (normal, area) where:
+        - normal is a unit-length Vector3 (or zero-vector if degenerate)
+        - area is the triangle area (always non-negative)
     """
-    import math
-    
-    # Calculate unnormalized normal using cross product formula (mdlops:497-500)
-    # This is the determinant form of cross product: (v2-v3) × (v1-v3)
-    normal_x = (
-        v1.y * (v2.z - v3.z) +
-        v2.y * (v3.z - v1.z) +
-        v3.y * (v1.z - v2.z)
-    )
-    
-    normal_y = (
-        v1.z * (v2.x - v3.x) +
-        v2.z * (v3.x - v1.x) +
-        v3.z * (v1.x - v2.x)
-    )
-    
-    normal_z = (
-        v1.x * (v2.y - v3.y) +
-        v2.x * (v3.y - v1.y) +
-        v3.x * (v1.y - v2.y)
-    )
-    
-    # Normalize the normal vector (mdlops:502-509)
-    length = math.sqrt(normal_x ** 2 + normal_y ** 2 + normal_z ** 2)
-    
-    if length > 0.0:
-        normal_x /= length
-        normal_y /= length
-        normal_z /= length
-    
-    normal = Vector3(normal_x, normal_y, normal_z)
-    
-    # Calculate plane distance (dot product with vertex) (mdlops:511)
-    plane_distance = -(normal_x * v1.x + normal_y * v1.y + normal_z * v1.z)
-    
-    return normal, plane_distance
+    # Edges
+    e1 = Vector3(v2.x - v1.x, v2.y - v1.y, v2.z - v1.z)
+    e2 = Vector3(v3.x - v1.x, v3.y - v1.y, v3.z - v1.z)
+
+    # Cross product e1 x e2
+    cx = (e1.y * e2.z) - (e1.z * e2.y)
+    cy = (e1.z * e2.x) - (e1.x * e2.z)
+    cz = (e1.x * e2.y) - (e1.y * e2.x)
+
+    mag = math.sqrt((cx * cx) + (cy * cy) + (cz * cz))
+    area = 0.5 * mag
+    if mag <= 0.0:
+        return Vector3.from_null(), 0.0
+
+    inv = 1.0 / mag
+    return Vector3(cx * inv, cy * inv, cz * inv), area
 
 
 def _calculate_tangent_space(
@@ -1535,127 +1506,62 @@ def _calculate_tangent_space(
     uv2: tuple[float, float],
     face_normal: Vector3,
 ) -> tuple[Vector3, Vector3]:
-    """Calculate tangent and bitangent vectors for a triangle face for normal mapping.
-    
-    This function computes the tangent space basis vectors required for bump/normal mapping.
-    The calculation is based on the OpenGL tutorial method with KotOR-specific modifications
-    for handedness and texture mirroring.
-    
-    The tangent space forms a coordinate system at each vertex:
-    - Tangent (T): Points along the U texture axis in 3D space
-    - Bitangent/Binormal (B): Points along the V texture axis in 3D space  
-    - Normal (N): The surface normal
-    
-    KotOR expects the tangent space to NOT form a right-handed coordinate system,
-    meaning dot(cross(N,T), B) should be negative. The function also handles texture
-    mirroring by detecting the orientation of the UV triangle.
-    
-    Args:
-    ----
-        v0: First vertex position
-        v1: Second vertex position  
-        v2: Third vertex position
-        uv0: First vertex texture coordinates (u, v)
-        uv1: Second vertex texture coordinates (u, v)
-        uv2: Third vertex texture coordinates (u, v)
-        face_normal: The triangle's surface normal vector
-    
-    Returns:
-    -------
-        tuple: (tangent vector, bitangent vector) - both normalized
-    
-    References:
-    ----------
-        vendor/mdlops/MDLOpsM.pm:5477-5596 - Tangent space calculation
-        Based on: http://www.opengl-tutorial.org/intermediate-tutorials/tutorial-13-normal-mapping/
-        with key differences for KotOR's coordinate system requirements
-        
-    Notes:
-    -----
-        - Handles overlapping texture vertices by using a magic fallback value (mdlops:5510-5512)
-        - Fixes zero vectors from degenerate UVs to [1.0, 0.0, 0.0] (mdlops:5536-5539, 5563-5566)
-        - Corrects handedness to match KotOR's left-handed tangent space (mdlops:5570-5587)
-        - Inverts both vectors when texture is mirrored (mdlops:5588-5596)
+    """Calculate tangent and binormal vectors for a triangle face.
+
+    Uses the standard UV-derivative method and returns normalized vectors. For degenerate
+    UVs, returns a stable fallback basis.
     """
-    import math
-    
-    # Calculate position deltas between vertices (mdlops:5491-5492)
-    deltaPos1 = Vector3(v1.x - v0.x, v1.y - v0.y, v1.z - v0.z)
-    deltaPos2 = Vector3(v2.x - v0.x, v2.y - v0.y, v2.z - v0.z)
-    
-    # Calculate UV deltas (mdlops:5493-5494)
-    deltaUV1 = (uv1[0] - uv0[0], uv1[1] - uv0[1])
-    deltaUV2 = (uv2[0] - uv0[0], uv2[1] - uv0[1])
-    
-    # Calculate texture normal's Z component to detect mirroring (mdlops:5495-5502)
-    # This is the Z (or W) component of cross(uv0-uv1, uv2-uv1) in 2D texture space
-    tNz = (uv0[0] - uv1[0]) * (uv2[1] - uv1[1]) - (uv0[1] - uv1[1]) * (uv2[0] - uv1[0])
-    
-    # Calculate the divisor for tangent/bitangent formulas (mdlops:5504)
-    r = deltaUV1[0] * deltaUV2[1] - deltaUV1[1] * deltaUV2[0]
-    
-    # Handle divide-by-zero from overlapping texture vertices (mdlops:5505-5515)
-    if abs(r) < 1e-10:  # Near-zero check
-        # Magic factor determined algebraically from p_g0t01.mdl analysis (mdlops:5510-5512)
-        r = 2406.6388
+    # Position deltas
+    dp1 = Vector3(v1.x - v0.x, v1.y - v0.y, v1.z - v0.z)
+    dp2 = Vector3(v2.x - v0.x, v2.y - v0.y, v2.z - v0.z)
+
+    # UV deltas
+    duv1x, duv1y = (uv1[0] - uv0[0]), (uv1[1] - uv0[1])
+    duv2x, duv2y = (uv2[0] - uv0[0]), (uv2[1] - uv0[1])
+
+    det = (duv1x * duv2y) - (duv1y * duv2x)
+    if abs(det) < 1e-12:
+        return Vector3(1.0, 0.0, 0.0), Vector3(0.0, 1.0, 0.0)
+
+    r = 1.0 / det
+    tx = (dp1.x * duv2y - dp2.x * duv1y) * r
+    ty = (dp1.y * duv2y - dp2.y * duv1y) * r
+    tz = (dp1.z * duv2y - dp2.z * duv1y) * r
+    bx = (dp2.x * duv1x - dp1.x * duv2x) * r
+    by = (dp2.y * duv1x - dp1.y * duv2x) * r
+    bz = (dp2.z * duv1x - dp1.z * duv2x) * r
+
+    # Orthonormalize tangent against normal
+    dot_nt = (face_normal.x * tx) + (face_normal.y * ty) + (face_normal.z * tz)
+    tx -= face_normal.x * dot_nt
+    ty -= face_normal.y * dot_nt
+    tz -= face_normal.z * dot_nt
+
+    tlen = math.sqrt((tx * tx) + (ty * ty) + (tz * tz))
+    if tlen <= 1e-12:
+        tangent = Vector3(1.0, 0.0, 0.0)
     else:
-        r = 1.0 / r
-    
-    # Compute face tangent vector (mdlops:5516-5521)
-    tangent_x = (deltaPos1.x * deltaUV2[1] - deltaPos2.x * deltaUV1[1]) * r
-    tangent_y = (deltaPos1.y * deltaUV2[1] - deltaPos2.y * deltaUV1[1]) * r
-    tangent_z = (deltaPos1.z * deltaUV2[1] - deltaPos2.z * deltaUV1[1]) * r
-    
-    # Normalize tangent vector (mdlops:5522-5534)
-    tangent_length = math.sqrt(tangent_x**2 + tangent_y**2 + tangent_z**2)
-    if tangent_length > 1e-10:
-        tangent_x /= tangent_length
-        tangent_y /= tangent_length
-        tangent_z /= tangent_length
-    
-    # Fix zero vectors from degenerate UVs (mdlops:5535-5540)
-    if abs(tangent_x) < 1e-10 and abs(tangent_y) < 1e-10 and abs(tangent_z) < 1e-10:
-        tangent_x, tangent_y, tangent_z = 1.0, 0.0, 0.0
-    
-    tangent = Vector3(tangent_x, tangent_y, tangent_z)
-    
-    # Compute face bitangent vector (mdlops:5543-5548)
-    bitangent_x = (deltaPos2.x * deltaUV1[0] - deltaPos1.x * deltaUV2[0]) * r
-    bitangent_y = (deltaPos2.y * deltaUV1[0] - deltaPos1.y * deltaUV2[0]) * r
-    bitangent_z = (deltaPos2.z * deltaUV1[0] - deltaPos1.z * deltaUV2[0]) * r
-    
-    # Normalize bitangent vector (mdlops:5549-5561)
-    bitangent_length = math.sqrt(bitangent_x**2 + bitangent_y**2 + bitangent_z**2)
-    if bitangent_length > 1e-10:
-        bitangent_x /= bitangent_length
-        bitangent_y /= bitangent_length
-        bitangent_z /= bitangent_length
-    
-    # Fix zero vectors from degenerate UVs (mdlops:5562-5567)
-    if abs(bitangent_x) < 1e-10 and abs(bitangent_y) < 1e-10 and abs(bitangent_z) < 1e-10:
-        bitangent_x, bitangent_y, bitangent_z = 1.0, 0.0, 0.0
-    
-    bitangent = Vector3(bitangent_x, bitangent_y, bitangent_z)
-    
-    # Fix tangent space handedness (mdlops:5570-5587)
-    # KotOR wants dot(cross(N,T), B) < 0 (NOT a right-handed system)
-    # Calculate cross(normal, tangent) (mdlops:5573-5580)
-    cross_nt_x = face_normal.y * tangent.z - face_normal.z * tangent.y
-    cross_nt_y = face_normal.z * tangent.x - face_normal.x * tangent.z
-    cross_nt_z = face_normal.x * tangent.y - face_normal.y * tangent.x
-    
-    # Check if dot(cross(N,T), B) > 0, if so flip tangent (mdlops:5581-5587)
-    dot_product = cross_nt_x * bitangent.x + cross_nt_y * bitangent.y + cross_nt_z * bitangent.z
-    if dot_product > 0.0:
-        tangent = Vector3(-tangent.x, -tangent.y, -tangent.z)
-    
-    # Handle texture mirroring (mdlops:5588-5596)
-    # If texture is mirrored (tNz > 0), invert both tangent and bitangent
-    if tNz > 0.0:
-        tangent = Vector3(-tangent.x, -tangent.y, -tangent.z)
-        bitangent = Vector3(-bitangent.x, -bitangent.y, -bitangent.z)
-    
-    return tangent, bitangent
+        inv = 1.0 / tlen
+        tangent = Vector3(tx * inv, ty * inv, tz * inv)
+
+    # Orthonormalize binormal against normal and tangent
+    dot_nb = (face_normal.x * bx) + (face_normal.y * by) + (face_normal.z * bz)
+    bx -= face_normal.x * dot_nb
+    by -= face_normal.y * dot_nb
+    bz -= face_normal.z * dot_nb
+    dot_tb = (tangent.x * bx) + (tangent.y * by) + (tangent.z * bz)
+    bx -= tangent.x * dot_tb
+    by -= tangent.y * dot_tb
+    bz -= tangent.z * dot_tb
+
+    blen = math.sqrt((bx * bx) + (by * by) + (bz * bz))
+    if blen <= 1e-12:
+        binormal = Vector3(0.0, 1.0, 0.0)
+    else:
+        inv = 1.0 / blen
+        binormal = Vector3(bx * inv, by * inv, bz * inv)
+
+    return tangent, binormal
 
 
 class MDLBinaryReader:
@@ -1813,10 +1719,10 @@ class MDLBinaryReader:
             vcount = bin_node.trimesh.vertex_count
             node.mesh.vertex_positions = []
             if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
-                mdx_offset: int = bin_node.trimesh.mdx_data_offset
-                mdx_block_size: int = bin_node.trimesh.mdx_data_size
+                mdx_data_offset: int = bin_node.trimesh.mdx_data_offset
+                mdx_data_block_size: int = bin_node.trimesh.mdx_data_size
                 for i in range(vcount):
-                    self._reader_ext.seek(mdx_offset + i * mdx_block_size + bin_node.trimesh.mdx_vertex_offset)
+                    self._reader_ext.seek(mdx_data_offset + i * mdx_data_block_size + bin_node.trimesh.mdx_vertex_offset)
                     x, y, z = (
                         self._reader_ext.read_single(),
                         self._reader_ext.read_single(),
@@ -2080,13 +1986,13 @@ class MDLBinaryWriter:
         self,
         auto_close: bool = True,
     ):
-        self._mdl_nodes: list[MDLNode] = self._mdl.all_nodes()
-        self._bin_nodes: list[_Node] = [_Node() for _ in self._mdl_nodes]
-        self._bin_anims: list[_Animation] = [_Animation() for _ in self._mdl.anims]
+        self._mdl_nodes[:] = self._mdl.all_nodes()
+        self._bin_nodes[:] = [_Node() for _ in self._mdl_nodes]
+        self._bin_anims[:] = [_Animation() for _ in self._mdl.anims]
         # Name table must cover *all* nodes referenced by the file: geometry nodes + animation nodes.
         # Some round-trip paths construct animation roots independently, so build this as a de-duped,
         # insertion-ordered list.
-        self._names = []
+        self._names.clear()
         def _add_name(n: str) -> None:
             if n and n not in self._names:
                 self._names.append(n)
@@ -2097,9 +2003,9 @@ class MDLBinaryWriter:
             for node in anim.all_nodes():
                 _add_name(node.name)
 
-        self._anim_offsets: list[int] = [0 for _ in self._bin_anims]
-        self._node_offsets: list[int] = [0 for _ in self._bin_nodes]
-        self._file_header: _ModelHeader = _ModelHeader()
+        self._anim_offsets[:] = [0 for _ in self._bin_anims]
+        self._node_offsets[:] = [0 for _ in self._bin_nodes]
+        self._file_header = _ModelHeader()
 
         self._update_all_data()
 
@@ -2110,12 +2016,10 @@ class MDLBinaryWriter:
 
         if auto_close:
             self._writer.close()
-            if self._writer_ext:
+            if self._writer_ext is not None:
                 self._writer_ext.close()
 
-    def _update_all_data(
-        self,
-    ):
+    def _update_all_data(self):
         for i, bin_node in enumerate(self._bin_nodes):
             self._update_node(bin_node, self._mdl_nodes[i], node_id_override=i)
 
@@ -2436,7 +2340,9 @@ class MDLBinaryWriter:
                 if child_idx is not None:
                     parent_by_idx[child_idx] = parent_idx
 
-        for i, (bin_node, mdl_node) in enumerate(zip(bin_nodes, mdl_nodes, strict=False)):
+        for i in range(len(bin_nodes)):
+            bin_node = bin_nodes[i]
+            mdl_node = mdl_nodes[i]
             node_offset = bin_offsets[i]
 
             # Child offsets from the MDL node tree
@@ -2542,7 +2448,7 @@ class MDLBinaryWriter:
             bin_node.write(self._writer, self.game)
 
         # Write to MDL
-        mdl_writer: BinaryWriter = BinaryWriter.to_auto(self._target)
+        mdl_writer = BinaryWriter.to_auto(self._target)
         mdl_writer.write_uint32(0)
         mdl_writer.write_uint32(self._writer.size())
         mdl_writer.write_uint32(self._writer_ext.size())

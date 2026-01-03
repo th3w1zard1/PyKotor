@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING
 from utility.common.geometry import Vector3
 
 if TYPE_CHECKING:
-    from pykotor.resource.formats.mdl.mdl_data import MDLMesh
+    from pykotor.resource.formats.mdl.mdl_data import MDLMesh, MDLSkin
 
 
 def compute_per_vertex_tangent_space(
@@ -57,12 +57,12 @@ def compute_per_vertex_tangent_space(
         v2 = mesh.vertex_positions[face.v2]
         v3 = mesh.vertex_positions[face.v3]
         
-        if face.v1 >= len(mesh.vertex_uv) or face.v2 >= len(mesh.vertex_uv) or face.v3 >= len(mesh.vertex_uv):
+        if face.v1 >= len(mesh.vertex_uvs) or face.v2 >= len(mesh.vertex_uvs) or face.v3 >= len(mesh.vertex_uvs):
             continue
         
-        uv1 = mesh.vertex_uv[face.v1]
-        uv2 = mesh.vertex_uv[face.v2]
-        uv3 = mesh.vertex_uv[face.v3]
+        uv1 = mesh.vertex_uvs[face.v1]
+        uv2 = mesh.vertex_uvs[face.v2]
+        uv3 = mesh.vertex_uvs[face.v3]
         
         face_normal, _ = _calculate_face_normal(v1, v2, v3)
         tangent, binormal = _calculate_tangent_space(v1, v2, v3, uv1, uv2, uv3, face_normal)
@@ -131,10 +131,10 @@ def determine_vertex_format_requirements(mesh: MDLMesh) -> dict[str, bool]:
         vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:1169-1197 - Geometry attributes
     """
     return {
-        "has_normals": len(mesh.vertex_normals) > 0,
-        "has_tangent_space": len(mesh.vertex_normals) > 0 and len(mesh.faces) > 0 and len(mesh.vertex_uv) > 0,
-        "has_lightmap": mesh.has_lightmap and len(mesh.vertex_uv2) > 0,
-        "has_skinning": mesh.skin is not None,
-        "has_uv2": len(mesh.vertex_uv2) > 0,
+        "has_normals": len(mesh.vertex_normals) > 0 if mesh.vertex_normals is not None else False,
+        "has_tangent_space": len(mesh.vertex_normals) > 0 if mesh.vertex_normals is not None else False and len(mesh.faces) > 0 and len(mesh.vertex_uv) > 0,
+        "has_lightmap": mesh.has_lightmap and len(mesh.vertex_uv2) > 0 if mesh.vertex_uv2 is not None else False,
+        "has_skinning": isinstance(mesh, MDLSkin) and mesh is not None,
+        "has_uv2": len(mesh.vertex_uv2) > 0 if mesh.vertex_uv2 is not None else False,
     }
 
