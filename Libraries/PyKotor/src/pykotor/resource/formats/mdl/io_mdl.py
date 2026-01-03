@@ -711,8 +711,13 @@ class _NodeHeader:
         self.orientation.y = reader.read_single()
         self.orientation.z = reader.read_single()
         self.offset_to_children = reader.read_uint32()
-        self.children_count = reader.read_uint32()
-        self.children_count2 = reader.read_uint32()
+        # Clamp children_count to prevent Perl from interpreting it as negative (values >= 2^31)
+        # MDLOps reads this as a signed integer, so we must ensure it's < 2^31
+        children_count_raw = reader.read_uint32()
+        if children_count_raw > 0x7FFFFFFF:
+            children_count_raw = 0x7FFFFFFF
+        self.children_count = children_count_raw
+        self.children_count2 = children_count_raw
         self.offset_to_controllers = reader.read_uint32()
         self.controller_count = reader.read_uint32()
         self.controller_count2 = reader.read_uint32()
