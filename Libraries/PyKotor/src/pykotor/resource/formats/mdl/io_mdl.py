@@ -2051,8 +2051,10 @@ class MDLBinaryReader:
                     if required_vertex_count > 0:
                         # Faces exist - use face-based count, but cap to what we can actually read
                         # This prevents stream boundary errors while still prioritizing face-based count
+                        # If can_read_count is 0, we still need to use required_vertex_count (faces are authoritative)
+                        # But we'll verify we can actually read that many vertices later
                         final_count = min(required_vertex_count, can_read_count) if can_read_count > 0 else required_vertex_count
-                        if final_count > vcount:
+                        if final_count > vcount or (vcount == 0 and final_count > 0):
                             vcount = final_count
                             bin_node.trimesh.vertex_count = final_count
                             vcount_verified = True
@@ -2711,13 +2713,15 @@ class MDLBinaryWriter:
             bin_node.trimesh.uv_speed = mdl_node.mesh.uv_jitter_speed
             bin_node.trimesh.uv_direction.x = mdl_node.mesh.uv_direction_x
             bin_node.trimesh.uv_direction.y = mdl_node.mesh.uv_direction_y
-            bin_node.trimesh.has_lightmap = mdl_node.mesh.has_lightmap
-            bin_node.trimesh.rotate_texture = mdl_node.mesh.rotate_texture
-            bin_node.trimesh.background = mdl_node.mesh.background_geometry
-            bin_node.trimesh.has_shadow = mdl_node.mesh.shadow
-            bin_node.trimesh.beaming = mdl_node.mesh.beaming
+            # Flags are stored as uint8 in binary (0 or 1), convert from bool to int
+            # Ensure we preserve the exact value: False -> 0, True -> 1
+            bin_node.trimesh.has_lightmap = 1 if mdl_node.mesh.has_lightmap else 0
+            bin_node.trimesh.rotate_texture = 1 if mdl_node.mesh.rotate_texture else 0
+            bin_node.trimesh.background = 1 if mdl_node.mesh.background_geometry else 0
+            bin_node.trimesh.has_shadow = 1 if mdl_node.mesh.shadow else 0
+            bin_node.trimesh.beaming = 1 if mdl_node.mesh.beaming else 0
             # render is already set above, no need to set it again
-            bin_node.trimesh.dirt_enabled = mdl_node.mesh.dirt_enabled
+            bin_node.trimesh.dirt_enabled = 1 if mdl_node.mesh.dirt_enabled else 0
             bin_node.trimesh.dirt_texture = mdl_node.mesh.dirt_texture
             bin_node.trimesh.dirt_coordinate_space = mdl_node.mesh.dirt_coordinate_space
             bin_node.trimesh.saber_unknowns = bytes(mdl_node.mesh.saber_unknowns)
