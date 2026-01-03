@@ -2621,11 +2621,24 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo) -> None:
 def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     """Parametrize test_models_bif_roundtrip_eq_hash_pytest with MDL entries.
 
-    This generates test cases for each model, combining game_install_root and mdl_entry
-    into a single parametrization to avoid cartesian product duplication.
+    This generates test cases for each model. Since game_install_root is already
+    parametrized by conftest.py, we only parametrize mdl_entry here and match
+    them in the test function to avoid cartesian product duplication.
     """
     # Only handle our test function
-    if "mdl_entry" not in metafunc.fixturenames or "game_install_root" not in metafunc.fixturenames:
+    if "mdl_entry" not in metafunc.fixturenames:
+        return
+    
+    # Check if game_install_root is already parametrized (by conftest)
+    # If it is, we should NOT parametrize it again
+    game_install_root_parametrized = (
+        "game_install_root" in metafunc.fixturenames
+        and hasattr(metafunc, "parametrize")
+        and any("game_install_root" in str(getattr(metafunc, "callspec", None) or ""))
+    )
+    
+    # If game_install_root is not in fixturenames, we can't proceed
+    if "game_install_root" not in metafunc.fixturenames:
         return
 
     # Get game install roots using the same logic as conftest
@@ -2647,11 +2660,11 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     _add("k2", os.environ.get("TSL_PATH") or os.environ.get("K2_PATH"))
 
     if not roots:
+        # Only parametrize mdl_entry since game_install_root is handled by conftest
         metafunc.parametrize(
-            "game_install_root,mdl_entry",
+            "mdl_entry",
             [
                 pytest.param(
-                    ("missing", Path(".")),
                     None,
                     marks=pytest.mark.skip(
                         reason="Requires K1_PATH and/or TSL_PATH/K2_PATH to be set to a game installation root.",
@@ -2662,8 +2675,9 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
         )
         return
 
-    # Collect MDL entries for each game install root and create combined parameters
-    # This avoids the cartesian product by combining game_install_root and mdl_entry
+    # Collect MDL entries for each game install root
+    # Since game_install_root is already parametrized by conftest, we create
+    # mdl_entry params that include the game_label for matching in the test
     params: list = []
     for game_label, game_root in roots:
         mdl_entries = _collect_mdl_entries_for_game(game_label, game_root)
@@ -2671,7 +2685,6 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
             # Add a skip marker if no MDL entries found
             params.append(
                 pytest.param(
-                    (game_label, game_root),
                     (game_label, game_root, None, None, None),
                     marks=pytest.mark.skip(
                         reason=f"{game_label}: no MDL entries found in models.bif",
@@ -2684,13 +2697,13 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
                 safe_resref = _safe_filename(resref)
                 params.append(
                     pytest.param(
-                        (game_label, game_root),
                         (game_label, game_root, resref, mdl_res, mdx_res),
                         id=f"{game_label}-{safe_resref}",
                     ),
                 )
 
-    metafunc.parametrize("game_install_root,mdl_entry", params)
+    # Only parametrize mdl_entry - game_install_root is already parametrized by conftest
+    metafunc.parametrize("mdl_entry", params)
 
 
 def test_models_bif_roundtrip_eq_hash_pytest(
