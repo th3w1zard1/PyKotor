@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+import os
 from typing import TYPE_CHECKING, ClassVar, cast
 
 from pykotor.common.misc import Color, Game
@@ -21,6 +22,9 @@ from pykotor.resource.formats.mdl.mdl_data import (
 )
 from pykotor.resource.formats.mdl.mdl_types import MDLControllerType, MDLNodeType
 from utility.common.geometry import Vector2, Vector3, Vector4
+
+# Debug logging: Enable via environment variable PYKOTOR_DEBUG_MDL=1
+_DEBUG_MDL = os.environ.get("PYKOTOR_DEBUG_MDL", "").strip() in ("1", "true", "True", "TRUE", "yes", "Yes", "YES")
 
 if TYPE_CHECKING:
     from typing_extensions import Literal  # pyright: ignore[reportMissingModuleSource]
@@ -911,11 +915,28 @@ class _TrimeshHeader:
         writer.write_single(self.uv_jitter)
         writer.write_single(self.uv_speed)
         writer.write_uint32(self.mdx_data_size)
+        if _DEBUG_MDL:
+            print(f"DEBUG _TrimeshHeader.write: texture1={self.texture1} bitmap=0x{self.mdx_data_bitmap:08X} TEXTURE1={bool(self.mdx_data_bitmap & _MDXDataFlags.TEXTURE1)} texture1_offset={self.mdx_texture1_offset}")
+            pos_before = writer.position()
+            print(f"DEBUG _TrimeshHeader.write: Writing mdx_data_bitmap at position {pos_before}")
         writer.write_uint32(self.mdx_data_bitmap)
         writer.write_uint32(self.mdx_vertex_offset)
         writer.write_uint32(self.mdx_normal_offset)
         writer.write_uint32(self.mdx_color_offset)
         writer.write_uint32(self.mdx_texture1_offset)
+        if _DEBUG_MDL:
+            import struct
+            _pos_after = writer.position()
+            # Read back what we just wrote
+            if hasattr(writer, 'data') and callable(getattr(writer, 'data', None)):
+                data = writer.data()
+                if pos_before + 20 <= len(data):
+                    bitmap_written = struct.unpack('<I', data[pos_before:pos_before+4])[0]
+                    vertex_off_written = struct.unpack('<I', data[pos_before+4:pos_before+8])[0]
+                    _normal_off_written = struct.unpack('<I', data[pos_before+8:pos_before+12])[0]
+                    _color_off_written = struct.unpack('<I', data[pos_before+12:pos_before+16])[0]
+                    tex1_off_written = struct.unpack('<I', data[pos_before+16:pos_before+20])[0]
+                    print(f"DEBUG _TrimeshHeader.write: Verified - bitmap=0x{bitmap_written:08X} (expected 0x{self.mdx_data_bitmap:08X}) vertex_off={vertex_off_written} (expected {self.mdx_vertex_offset}) tex1_off={tex1_off_written} (expected {self.mdx_texture1_offset})")
         writer.write_uint32(self.mdx_texture2_offset)
         writer.write_uint32(self.mdx_unknown_offset)  # Offset to unknown data in MDX (always -1)
         writer.write_uint32(self.mdx_uv3_offset)  # Offset to tertiary UV data in MDX (always -1)
@@ -2320,12 +2341,56 @@ class MDLBinaryWriter:
             bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.NORMAL
             suboffset += 12
 
-        if mdl_node.mesh.vertex_uv1:
+        # MDLOps requires texture vertex data in MDX if texture name is set
+        # Check both list existence and non-empty to ensure we have valid UV data
+        vcount = len(mdl_node.mesh.vertex_positions) if mdl_node.mesh.vertex_positions else 0
+        uv1_len = len(mdl_node.mesh.vertex_uv1) if mdl_node.mesh.vertex_uv1 else 0
+        uv2_len = len(mdl_node.mesh.vertex_uv2) if mdl_node.mesh.vertex_uv2 else 0
+        has_uv1 = mdl_node.mesh.vertex_uv1 is not None and uv1_len == vcount and vcount > 0
+        has_uv2 = mdl_node.mesh.vertex_uv2 is not None and uv2_len == vcount and vcount > 0
+        
+        # Only set TEXTURE1 flag if texture name is valid (not None, not empty, not "NULL")
+        has_texture1 = (
+            mdl_node.mesh.texture_1 is not None
+            and mdl_node.mesh.texture_1.strip() != ""
+            and mdl_node.mesh.texture_1.upper() != "NULL"
+        )
+        
+        if has_uv1:
             bin_node.trimesh.mdx_texture1_offset = suboffset
             bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.TEXTURE1
+            if _DEBUG_MDL:
+                print(f"DEBUG _update_mdx: Node {mdl_node.name} has_uv1=True texture1={mdl_node.mesh.texture_1} bitmap=0x{bin_node.trimesh.mdx_data_bitmap:08X} TEXTURE1={bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE1)} texture1_offset={bin_node.trimesh.mdx_texture1_offset}")
+            assert bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE1, f"Failed to set TEXTURE1 flag for node {mdl_node.name}"
+            suboffset += 8
+        elif has_texture1 and vcount > 0:
+            # Texture name exists but no valid UV data - generate default UV coordinates
+            # This ensures MDLOps can find tverts data when it reads the binary
+            if not hasattr(mdl_node.mesh, '_default_uv1_generated'):
+                mdl_node.mesh.vertex_uv1 = [Vector2(0.0, 0.0) for _ in range(vcount)]
+                mdl_node.mesh._default_uv1_generated = True
+            bin_node.trimesh.mdx_texture1_offset = suboffset
+            bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.TEXTURE1
+            if _DEBUG_MDL:
+                print(f"DEBUG _update_mdx: Node {mdl_node.name} has_uv1=False texture1={mdl_node.mesh.texture_1} vcount={vcount} generated default UVs bitmap=0x{bin_node.trimesh.mdx_data_bitmap:08X} TEXTURE1={bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE1)}")
             suboffset += 8
 
-        if mdl_node.mesh.vertex_uv2:
+        # Only set TEXTURE2 flag if texture name is valid (not None, not empty, not "NULL")
+        has_texture2 = (
+            mdl_node.mesh.texture_2 is not None
+            and mdl_node.mesh.texture_2.strip() != ""
+            and mdl_node.mesh.texture_2.upper() != "NULL"
+        )
+        
+        if has_uv2:
+            bin_node.trimesh.mdx_texture2_offset = suboffset
+            bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.TEXTURE2
+            suboffset += 8
+        elif has_texture2 and vcount > 0:
+            # Texture name exists but no valid UV data - generate default UV coordinates
+            if not hasattr(mdl_node.mesh, '_default_uv2_generated'):
+                mdl_node.mesh.vertex_uv2 = [Vector2(0.0, 0.0) for _ in range(vcount)]
+                mdl_node.mesh._default_uv2_generated = True
             bin_node.trimesh.mdx_texture2_offset = suboffset
             bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.TEXTURE2
             suboffset += 8
@@ -2339,15 +2404,23 @@ class MDLBinaryWriter:
 
         bin_node.trimesh.mdx_data_size = suboffset
 
+        # Write MDX data based on bitmap flags, not just list existence
+        # This ensures we only write data that's actually in the MDX structure
         for i, position in enumerate(mdl_node.mesh.vertex_positions):
-            if mdl_node.mesh.vertex_positions:
+            if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX:
                 self._writer_ext.write_vector3(position)
-            if mdl_node.mesh.vertex_normals:
-                self._writer_ext.write_vector3(mdl_node.mesh.vertex_normals[i])
-            if mdl_node.mesh.vertex_uv1:
-                self._writer_ext.write_vector2(mdl_node.mesh.vertex_uv1[i])
-            if mdl_node.mesh.vertex_uv2:
-                self._writer_ext.write_vector2(mdl_node.mesh.vertex_uv2[i])
+            if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.NORMAL:
+                # Only write normals if they're actually in MDX (bitmap flag set)
+                norm = mdl_node.mesh.vertex_normals[i] if (mdl_node.mesh.vertex_normals and i < len(mdl_node.mesh.vertex_normals)) else Vector3.from_null()
+                self._writer_ext.write_vector3(norm)
+            if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE1:
+                # Only write UV1 if it's actually in MDX (bitmap flag set)
+                uv1 = mdl_node.mesh.vertex_uv1[i] if (mdl_node.mesh.vertex_uv1 and i < len(mdl_node.mesh.vertex_uv1)) else Vector2(0.0, 0.0)
+                self._writer_ext.write_vector2(uv1)
+            if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE2:
+                # Only write UV2 if it's actually in MDX (bitmap flag set)
+                uv2 = mdl_node.mesh.vertex_uv2[i] if (mdl_node.mesh.vertex_uv2 and i < len(mdl_node.mesh.vertex_uv2)) else Vector2(0.0, 0.0)
+                self._writer_ext.write_vector2(uv2)
 
             if mdl_node.skin and bin_node.skin is not None:
                 # Bone indices/weights are stored as 4 floats each.
@@ -2368,13 +2441,14 @@ class MDLBinaryWriter:
                     self._writer_ext.write_single(float(w))
 
         # Why does the mdl/mdx format have this? I have no idea.
-        if mdl_node.mesh.vertex_positions:
+        # Write padding based on bitmap flags to match the data structure above
+        if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX:
             self._writer_ext.write_vector3(Vector3(10000000, 10000000, 10000000))
-        if mdl_node.mesh.vertex_normals:
+        if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.NORMAL:
             self._writer_ext.write_vector3(Vector3.from_null())
-        if mdl_node.mesh.vertex_uv1:
+        if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE1:
             self._writer_ext.write_vector2(Vector2.from_null())
-        if mdl_node.mesh.vertex_uv2:
+        if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE2:
             self._writer_ext.write_vector2(Vector2.from_null())
 
     def _calc_top_offsets(
@@ -2553,9 +2627,22 @@ class MDLBinaryWriter:
     def _write_all(
         self,
     ):
-        for i, bin_node in enumerate(self._bin_nodes):
+        # CRITICAL: MDX data must be written in node_id order to match the original binary file structure.
+        # The all_nodes() traversal returns nodes in a different order than they appear in the binary,
+        # so we need to sort by node_id before writing MDX data.
+        # Create a list of (bin_node, mdl_node, original_index) tuples sorted by node_id
+        node_pairs = [(self._bin_nodes[i], self._mdl_nodes[i], i, getattr(self._mdl_nodes[i], 'node_id', i)) 
+                      for i in range(len(self._bin_nodes))]
+        node_pairs_sorted = sorted(node_pairs, key=lambda x: x[3])  # Sort by node_id
+        
+        # Write MDX data in node_id order
+        for bin_node, mdl_node, orig_idx, node_id in node_pairs_sorted:
             if bin_node.trimesh:
-                self._update_mdx(bin_node, self._mdl_nodes[i])
+                if _DEBUG_MDL:
+                    print(f"DEBUG _write_all: Calling _update_mdx for node {mdl_node.name} (node_id={node_id}, orig_idx={orig_idx})")
+                self._update_mdx(bin_node, mdl_node)
+                if _DEBUG_MDL and bin_node.trimesh.texture1:
+                    print(f"DEBUG _write_all: After _update_mdx, node {mdl_node.name} has tex1_off={bin_node.trimesh.mdx_texture1_offset}")
 
         self._file_header.geometry.function_pointer0 = _GeometryHeader.K1_FUNCTION_POINTER0
         self._file_header.geometry.function_pointer1 = _GeometryHeader.K1_FUNCTION_POINTER1
@@ -2593,6 +2680,8 @@ class MDLBinaryWriter:
         for bin_anim in self._bin_anims:
             bin_anim.write(self._writer, self.game)
         for bin_node in self._bin_nodes:
+            if _DEBUG_MDL and bin_node.trimesh and bin_node.trimesh.texture1:
+                print(f"DEBUG _write_all: Node {bin_node.header.name_id if bin_node.header else '?'} texture1={bin_node.trimesh.texture1} bitmap=0x{bin_node.trimesh.mdx_data_bitmap:08X} TEXTURE1={bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE1)} texture1_offset={bin_node.trimesh.mdx_texture1_offset}")
             bin_node.write(self._writer, self.game)
 
         # Write to MDL
@@ -2600,7 +2689,19 @@ class MDLBinaryWriter:
         mdl_writer.write_uint32(0)
         mdl_writer.write_uint32(self._writer.size())
         mdl_writer.write_uint32(self._writer_ext.size())
-        mdl_writer.write_bytes(self._writer.data())
+        writer_data = self._writer.data()
+        
+        if _DEBUG_MDL:
+            # Check writer_data BEFORE writing to file
+            import struct
+            # Check the first trimesh header at position 23890
+            if len(writer_data) >= 23890 + 32:  # 32 bytes for the MDX offsets section
+                bitmap_at_23890 = struct.unpack('<I', writer_data[23890:23894])[0]
+                tex1_off_at_23890 = struct.unpack('<I', writer_data[23890 + 16:23890 + 20])[0]
+                print(f"DEBUG _write_all: BEFORE file write - at position 23890: bitmap=0x{bitmap_at_23890:08X} tex1_off={tex1_off_at_23890}")
+        
+        mdl_writer.write_bytes(writer_data)
+        
 
         # Write to MDX
         if self._target_ext is not None:
