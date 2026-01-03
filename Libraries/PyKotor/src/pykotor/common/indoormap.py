@@ -18,7 +18,7 @@ import json
 import math
 
 from copy import copy, deepcopy
-from typing import TYPE_CHECKING, Any, NamedTuple
+from typing import TYPE_CHECKING, Any, NamedTuple, TypedDict
 
 from loggerplus import RobustLogger
 from pykotor.common.indoorkit import Kit, KitComponent, KitComponentHook, KitDoor
@@ -44,16 +44,10 @@ if TYPE_CHECKING:
     import os
 
 
-#
-# NOTE: We intentionally do not embed `.indoor` JSON inside built modules.
-# The roundtrip and correctness story must come from real module resources.
-#
-
-
 class DoorInsertion(NamedTuple):
     door: KitDoor
-    room: "IndoorMapRoom"
-    room2: "IndoorMapRoom | None"
+    room: IndoorMapRoom
+    room2: IndoorMapRoom | None
     static: bool
     position: Vector3
     rotation: float
@@ -72,6 +66,53 @@ class MissingRoomInfo(NamedTuple):
     kit_name: str
     component_name: str | None
     reason: str  # "kit_missing" or "component_missing"
+
+
+class HookDataDict(TypedDict):
+    position: list[float]
+    rotation: float
+    edge: int
+
+
+class EmbeddedComponentDataDict(TypedDict):
+    id: str
+    name: str
+    bwm: str  # base64 encoded
+    mdl: str  # base64 encoded
+    mdx: str  # base64 encoded
+    hooks: list[HookDataDict]
+
+
+class RoomDataDictBase(TypedDict):
+    position: list[float]
+    rotation: float
+    flip_x: bool
+    flip_y: bool
+    kit: str
+    component: str
+
+
+class RoomDataDict(RoomDataDictBase, total=False):
+    module_root: str
+    walkmesh_override: str  # base64 encoded
+
+
+class NameDataDict(TypedDict):
+    stringref: int
+
+
+class IndoorMapDataDictBase(TypedDict):
+    module_id: str
+    name: NameDataDict | dict[str, Any]  # dict for dynamic numeric keys
+    lighting: list[float]
+    skybox: str
+    warp: str
+    rooms: list[RoomDataDict]
+
+
+class IndoorMapDataDict(IndoorMapDataDictBase, total=False):
+    target_game_type: bool
+    embedded_components: list[EmbeddedComponentDataDict]
 
 
 _EMBEDDED_KIT_ID = "__embedded__"
@@ -116,7 +157,7 @@ class IndoorMap:
 
     def __init__(
         self,
-        rooms: list["IndoorMapRoom"] | None = None,
+        rooms: list[IndoorMapRoom] | None = None,
         module_id: str | None = None,
         name: LocalizedString | None = None,
         lighting: Color | None = None,
@@ -544,23 +585,25 @@ class IndoorMap:
         write_erf(self.mod, output_path)
 
     def write(self) -> bytes:
-        data: dict[str, Any] = {"module_id": self.module_id, "name": {}}
-
-        data["name"]["stringref"] = self.name.stringref
+        name_data: NameDataDict | dict[str, Any] = {"stringref": self.name.stringref}
         for language, gender, text in self.name:
             stringid = LocalizedString.substring_id(language, gender)
-            data["name"][stringid] = text
+            name_data[stringid] = text
 
-        data["lighting"] = [self.lighting.r, self.lighting.g, self.lighting.b]
-        data["skybox"] = self.skybox
-        data["warp"] = self.module_id
+        data: IndoorMapDataDict = {
+            "module_id": self.module_id,
+            "name": name_data,
+            "lighting": [self.lighting.r, self.lighting.g, self.lighting.b],
+            "skybox": self.skybox,
+            "warp": self.module_id,
+            "rooms": [],
+        }
         if self.target_game_type is not None:
             data["target_game_type"] = self.target_game_type
 
-        data["rooms"] = []
-        embedded_components: dict[str, dict[str, Any]] = {}
+        embedded_components: dict[str, EmbeddedComponentDataDict] = {}
         for room in self.rooms:
-            room_data: dict[str, Any] = {
+            room_data: RoomDataDict = {
                 "position": [*room.position],
                 "rotation": room.rotation,
                 "flip_x": room.flip_x,
@@ -608,7 +651,7 @@ class IndoorMap:
         module_kit_manager: ModuleKitManager | None = None,
     ) -> list[MissingRoomInfo]:
         self.reset()
-        data: dict[str, Any] = json.loads(raw)
+        data: IndoorMapDataDict = json.loads(raw)  # type: ignore[assignment]
         try:
             return self._load_data(data, kits, module_kit_manager)
         except KeyError as e:
@@ -617,16 +660,18 @@ class IndoorMap:
 
     def _load_data(
         self,
-        data: dict[str, Any],
+        data: IndoorMapDataDict,
         kits: list[Kit],
         module_kit_manager: ModuleKitManager | None = None,
     ) -> list[MissingRoomInfo]:
         missing_rooms: list[MissingRoomInfo] = []
 
-        self.name = LocalizedString(data["name"]["stringref"])
-        for substring_id in (key for key in data["name"] if str(key).isnumeric()):
-            language, gender = LocalizedString.substring_pair(int(substring_id))
-            self.name.set_data(language, gender, data["name"][substring_id])
+        name_dict = data["name"]
+        if isinstance(name_dict, dict):
+            self.name = LocalizedString(name_dict["stringref"])
+            for substring_id in (key for key in name_dict if str(key).isnumeric()):
+                language, gender = LocalizedString.substring_pair(int(substring_id))
+                self.name.set_data(language, gender, name_dict[substring_id])  # type: ignore[index]
 
         self.lighting.r = data["lighting"][0]
         self.lighting.g = data["lighting"][1]
@@ -756,7 +801,7 @@ class IndoorMapRoom:
             pos = pos + self.position
         return pos
 
-    def rebuild_connections(self, rooms: list["IndoorMapRoom"]):
+    def rebuild_connections(self, rooms: list[IndoorMapRoom]):
         self.hooks = [None] * len(self.component.hooks)
         for hook in self.component.hooks:
             hook_index = self.component.hooks.index(hook)
