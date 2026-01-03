@@ -1824,9 +1824,9 @@ class MDLBinaryReader:
             # Preserve vertex_count even if the MDL vertex table wasn't readable.
             vcount = bin_node.trimesh.vertex_count
             
-            # Validate vertex_count - if it's suspiciously low (1) but we have faces, it's likely wrong
+            # Validate vertex_count - if it's suspiciously low (1 or 0) but we have faces, it's likely wrong
             # Faces typically require at least 3 vertices, so vertex_count of 1 with faces is suspicious
-            if vcount == 1 and bin_node.trimesh.faces_count > 0:
+            if vcount <= 1 and bin_node.trimesh.faces_count > 0:
                 # Try to infer correct vertex_count from faces
                 max_vertex_index = 0
                 for face in bin_node.trimesh.faces:
@@ -1835,9 +1835,20 @@ class MDLBinaryReader:
                 if max_vertex_index + 1 > vcount:
                     # Use the inferred count, but be conservative
                     inferred_count = max_vertex_index + 1
-                    # Only use if it's reasonable (not more than 10x the face count)
-                    if inferred_count <= bin_node.trimesh.faces_count * 10:
+                    # Only use if it's reasonable (not more than 10x the face count, and at least 3)
+                    if 3 <= inferred_count <= bin_node.trimesh.faces_count * 10:
                         vcount = inferred_count
+                        # Also check if we can read that many vertices from the offset
+                        if bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
+                            inferred_bytes = inferred_count * 12
+                            if bin_node.trimesh.vertices_offset + inferred_bytes > self._reader.size():
+                                # Can't read that many, so use a more conservative estimate
+                                # Try to read as many as we can
+                                available_bytes = self._reader.size() - bin_node.trimesh.vertices_offset
+                                if available_bytes >= 12:  # At least one vertex
+                                    vcount = min(inferred_count, available_bytes // 12)
+                                else:
+                                    vcount = inferred_count  # Use inferred anyway, will fail gracefully
             
             node.mesh.vertex_positions = []
             
