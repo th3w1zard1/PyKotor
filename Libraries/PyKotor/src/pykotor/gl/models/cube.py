@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import numpy as np
 
 from pykotor.gl.compat import has_pyopengl, missing_constant, missing_gl_func, safe_gl_error_module
-from glm import vec3
+from pykotor.gl.glm_compat import vec3
 
 HAS_PYOPENGL = has_pyopengl()
 gl_error = safe_gl_error_module()
@@ -40,7 +40,7 @@ else:
     GL_STATIC_DRAW = missing_constant("GL_STATIC_DRAW")
 
 if TYPE_CHECKING:
-    from glm import mat4
+    from pykotor.gl.glm_compat import mat4
 
     from pykotor.gl.scene import Scene
     from pykotor.gl.shader import Shader

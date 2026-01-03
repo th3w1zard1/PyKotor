@@ -36,7 +36,12 @@ from utility.common.geometry import Vector3, Vector4
 # ============================================================================
 
 
-def compare_mdl_basic(mdl1: MDL, mdl2: MDL, test_case: unittest.TestCase, context: str = ""):
+def compare_mdl_basic(
+    mdl1: MDL,
+    mdl2: MDL,
+    test_case: unittest.TestCase,
+    context: str = "",
+):
     """Compare basic MDL properties between two models.
 
     Args:
@@ -55,7 +60,12 @@ def compare_mdl_basic(mdl1: MDL, mdl2: MDL, test_case: unittest.TestCase, contex
     test_case.assertEqual(mdl1.animation_scale, mdl2.animation_scale, f"{msg_prefix}Animation scales should match")
 
 
-def compare_mdl_nodes(mdl1: MDL, mdl2: MDL, test_case: unittest.TestCase, context: str = ""):
+def compare_mdl_nodes(
+    mdl1: MDL,
+    mdl2: MDL,
+    test_case: unittest.TestCase,
+    context: str = "",
+):
     """Compare node hierarchies between two models.
 
     Args:
@@ -91,7 +101,12 @@ def compare_mdl_nodes(mdl1: MDL, mdl2: MDL, test_case: unittest.TestCase, contex
         test_case.assertEqual(len(node1.children), len(node2.children), f"{msg_prefix}Node {name} child counts should match")
 
 
-def compare_mdl_animations(mdl1: MDL, mdl2: MDL, test_case: unittest.TestCase, context: str = ""):
+def compare_mdl_animations(
+    mdl1: MDL,
+    mdl2: MDL,
+    test_case: unittest.TestCase,
+    context: str = "",
+):
     """Compare animation data between two models.
 
     Args:

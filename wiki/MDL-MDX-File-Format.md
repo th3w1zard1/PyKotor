@@ -95,6 +95,13 @@ KotOR models [ARE](GFF-File-Format#are-area) defined using two files:
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/mdl/`](https://github.com/OldRepublicDevs/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/mdl/)
 
+### PyKotor code structure (Python)
+
+- **Canonical runtime model classes**: `mdl_data.py` (`MDL`, `MDLNode`, `MDLMesh`, `MDLAnimation`, controllers, etc.)
+- **Binary I/O**: `io_mdl.py` (reads/writes binary MDL/MDX into the `mdl_data` object model)
+- **ASCII I/O**: `io_mdl_ascii.py` (reads/writes MDLOps-style ASCII MDL into the `mdl_data` object model)
+- **Enums/flags + legacy dataclasses**: `mdl_types.py` (shared enums/flags; also contains legacy struct-like dataclasses for historical reasons)
+
 **Vendor References:**
 
 - [`vendor/reone/src/libs/graphics/format/mdlreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/mdlreader.cpp) - Complete C++ MDL/MDX parser with [animation](MDL-MDX-File-Format#animation-header) support
@@ -499,6 +506,8 @@ The Light header follows the [node](MDL-MDX-File-Format#node-structures) header 
 **Reference**: [`vendor/mdlops/MDLOpsM.pm:175`](https://github.com/th3w1zard1/mdlops/blob/master/MDLOpsM.pm#L175) - Light header structure definition  
 **Reference**: [`vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/graphics/format/mdlmdxreader.cpp) - Light [node](MDL-MDX-File-Format#node-structures) reading (see light processing)  
 **Reference**: [`vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:227-250`](https://github.com/th3w1zard1/kotorblender/blob/master/io_scene_kotor/format/mdl/reader.py#L227-L250) - Light header reading and flare list processing
+
+TODO: Document the ASCII MDLOps `flarecolorshifts` block (keyword + per-entry data layout) once at least 3 independent sources are collected.
 
 ### Emitter header
 

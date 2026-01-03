@@ -9,10 +9,11 @@
 
 
 from qtpy import QtCore, QtGui, QtWidgets
+from qtpy.QtWidgets import QMainWindow
 
 
 class Ui_MainWindow(object):
-    def setupUi(self, MainWindow):
+    def setupUi(self, MainWindow: QMainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1024, 768)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
@@ -21,9 +22,9 @@ class Ui_MainWindow(object):
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.mapRenderer = IndoorMapRenderer(self.centralwidget)
         self.mapRenderer.setMouseTracking(True)
-        self.mapRenderer.setFocusPolicy(QtCore.Qt.StrongFocus)
-        self.mapRenderer.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.mapRenderer.setFocusPolicy(QtCore.Qt.FocusPolicy.StrongFocus)
+        self.mapRenderer.setContextMenuPolicy(QtCore.Qt.ContextMenuPolicy.CustomContextMenu)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
         sizePolicy.setHorizontalStretch(4)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.mapRenderer.sizePolicy().hasHeightForWidth())
@@ -32,10 +33,10 @@ class Ui_MainWindow(object):
         self.horizontalLayout.addWidget(self.mapRenderer)
         MainWindow.setCentralWidget(self.centralwidget)
         self.leftDockWidget = QtWidgets.QDockWidget(MainWindow)
-        self.leftDockWidget.setAllowedAreas(QtCore.Qt.LeftDockWidgetArea|QtCore.Qt.RightDockWidgetArea)
+        self.leftDockWidget.setAllowedAreas(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea|QtCore.Qt.DockWidgetArea.RightDockWidgetArea)
         self.leftDockWidget.setObjectName("leftDockWidget")
         self.leftContainer = QtWidgets.QWidget()
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Expanding)
         sizePolicy.setHorizontalStretch(1)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.leftContainer.sizePolicy().hasHeightForWidth())
@@ -52,7 +53,7 @@ class Ui_MainWindow(object):
         self.previewImage = QtWidgets.QLabel(self.previewBox)
         self.previewImage.setText("")
         self.previewImage.setScaledContents(True)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.previewImage.sizePolicy().hasHeightForWidth())
@@ -62,8 +63,8 @@ class Ui_MainWindow(object):
         self.leftContainerLayout.addWidget(self.previewBox)
         self.leftScrollArea = QtWidgets.QScrollArea(self.leftContainer)
         self.leftScrollArea.setWidgetResizable(True)
-        self.leftScrollArea.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.leftScrollArea.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(1)
         sizePolicy.setHeightForWidth(self.leftScrollArea.sizePolicy().hasHeightForWidth())
@@ -107,17 +108,17 @@ class Ui_MainWindow(object):
         self.moduleComponentList.setObjectName("moduleComponentList")
         self.modulesLayout.addWidget(self.moduleComponentList)
         self.leftScrollLayout.addWidget(self.modulesGroupBox)
-        spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Expanding)
         self.leftScrollLayout.addItem(spacerItem)
         self.leftScrollArea.setWidget(self.leftScrollContents)
         self.leftContainerLayout.addWidget(self.leftScrollArea)
         self.leftDockWidget.setWidget(self.leftContainer)
         MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(1), self.leftDockWidget)
         self.rightDockWidget = QtWidgets.QDockWidget(MainWindow)
-        self.rightDockWidget.setAllowedAreas(QtCore.Qt.LeftDockWidgetArea|QtCore.Qt.RightDockWidgetArea)
+        self.rightDockWidget.setAllowedAreas(QtCore.Qt.DockWidgetArea.LeftDockWidgetArea|QtCore.Qt.DockWidgetArea.RightDockWidgetArea)
         self.rightDockWidget.setObjectName("rightDockWidget")
         self.rightContainer = QtWidgets.QWidget()
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Expanding)
         sizePolicy.setHorizontalStretch(1)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.rightContainer.sizePolicy().hasHeightForWidth())
@@ -129,8 +130,8 @@ class Ui_MainWindow(object):
         self.rightContainerLayout.setObjectName("rightContainerLayout")
         self.rightScrollArea = QtWidgets.QScrollArea(self.rightContainer)
         self.rightScrollArea.setWidgetResizable(True)
-        self.rightScrollArea.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
+        self.rightScrollArea.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(1)
         sizePolicy.setHeightForWidth(self.rightScrollArea.sizePolicy().hasHeightForWidth())
@@ -212,16 +213,16 @@ class Ui_MainWindow(object):
         self.resetPaintButton = QtWidgets.QPushButton(self.walkmeshBox)
         self.resetPaintButton.setObjectName("resetPaintButton")
         self.walkmeshButtonsLayout.addWidget(self.resetPaintButton)
-        spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+        spacerItem1 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Policy.Expanding, QtWidgets.QSizePolicy.Policy.Minimum)
         self.walkmeshButtonsLayout.addItem(spacerItem1)
         self.walkmeshLayout.addLayout(self.walkmeshButtonsLayout)
         self.rightScrollLayout.addWidget(self.walkmeshBox)
-        spacerItem2 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        spacerItem2 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Policy.Minimum, QtWidgets.QSizePolicy.Policy.Expanding)
         self.rightScrollLayout.addItem(spacerItem2)
         self.rightScrollArea.setWidget(self.rightScrollContents)
         self.rightContainerLayout.addWidget(self.rightScrollArea)
         self.rightDockWidget.setWidget(self.rightContainer)
-        MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea(2), self.rightDockWidget)
+        MainWindow.addDockWidget(QtCore.Qt.DockWidgetArea.RightDockWidgetArea, self.rightDockWidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1024, 22))
         self.menubar.setObjectName("menubar")
@@ -239,50 +240,50 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
         self.toolBar = QtWidgets.QToolBar(MainWindow)
         self.toolBar.setObjectName("toolBar")
-        MainWindow.addToolBar(QtCore.Qt.TopToolBarArea, self.toolBar)
-        self.actionOpen = QtWidgets.QAction(MainWindow)
+        MainWindow.addToolBar(QtCore.Qt.ToolBarArea.TopToolBarArea, self.toolBar)
+        self.actionOpen = QtWidgets.QAction(MainWindow)  # type: ignore[reportPrivateImportUsage]
         self.actionOpen.setObjectName("actionOpen")
-        self.actionSave = QtWidgets.QAction(MainWindow)
+        self.actionSave = QtWidgets.QAction(MainWindow)  # type: ignore[reportPrivateImportUsage]
         self.actionSave.setObjectName("actionSave")
-        self.actionSaveAs = QtWidgets.QAction(MainWindow)
+        self.actionSaveAs = QtWidgets.QAction(MainWindow)  # type: ignore[reportPrivateImportUsage]
         self.actionSaveAs.setObjectName("actionSaveAs")
-        self.actionNew = QtWidgets.QAction(MainWindow)
+        self.actionNew = QtWidgets.QAction(MainWindow)  # type: ignore[reportPrivateImportUsage]
         self.actionNew.setObjectName("actionNew")
-        self.actionExit = QtWidgets.QAction(MainWindow)
+        self.actionExit = QtWidgets.QAction(MainWindow)  # type: ignore[reportPrivateImportUsage]
         self.actionExit.setObjectName("actionExit")
-        self.actionBuild = QtWidgets.QAction(MainWindow)
+        self.actionBuild = QtWidgets.QAction(MainWindow)  # type: ignore[reportPrivateImportUsage]
         self.actionBuild.setObjectName("actionBuild")
-        self.actionSettings = QtWidgets.QAction(MainWindow)
+        self.actionSettings = QtWidgets.QAction(MainWindow)  # type: ignore[reportPrivateImportUsage]
         self.actionSettings.setObjectName("actionSettings")
-        self.actionDeleteSelected = QtWidgets.QAction(MainWindow)
+        self.actionDeleteSelected = QtWidgets.QAction(MainWindow)  # type: ignore[reportPrivateImportUsage]
         self.actionDeleteSelected.setObjectName("actionDeleteSelected")
-        self.actionDownloadKits = QtWidgets.QAction(MainWindow)
+        self.actionDownloadKits = QtWidgets.QAction(MainWindow)  # type: ignore[reportPrivateImportUsage]
         self.actionDownloadKits.setObjectName("actionDownloadKits")
-        self.actionInstructions = QtWidgets.QAction(MainWindow)
+        self.actionInstructions = QtWidgets.QAction(MainWindow)  # type: ignore[reportPrivateImportUsage]
         self.actionInstructions.setObjectName("actionInstructions")
-        self.actionUndo = QtWidgets.QAction(MainWindow)
+        self.actionUndo = QtWidgets.QAction(MainWindow)  # type: ignore[reportPrivateImportUsage]
         self.actionUndo.setObjectName("actionUndo")
-        self.actionRedo = QtWidgets.QAction(MainWindow)
+        self.actionRedo = QtWidgets.QAction(MainWindow)  # type: ignore[reportPrivateImportUsage]
         self.actionRedo.setObjectName("actionRedo")
-        self.actionCut = QtWidgets.QAction(MainWindow)
+        self.actionCut = QtWidgets.QAction(MainWindow)  # type: ignore[reportPrivateImportUsage]
         self.actionCut.setObjectName("actionCut")
-        self.actionCopy = QtWidgets.QAction(MainWindow)
+        self.actionCopy = QtWidgets.QAction(MainWindow)  # type: ignore[reportPrivateImportUsage]
         self.actionCopy.setObjectName("actionCopy")
-        self.actionPaste = QtWidgets.QAction(MainWindow)
+        self.actionPaste = QtWidgets.QAction(MainWindow)  # type: ignore[reportPrivateImportUsage]
         self.actionPaste.setObjectName("actionPaste")
-        self.actionDuplicate = QtWidgets.QAction(MainWindow)
+        self.actionDuplicate = QtWidgets.QAction(MainWindow)  # type: ignore[reportPrivateImportUsage]
         self.actionDuplicate.setObjectName("actionDuplicate")
-        self.actionSelectAll = QtWidgets.QAction(MainWindow)
+        self.actionSelectAll = QtWidgets.QAction(MainWindow)  # type: ignore[reportPrivateImportUsage]
         self.actionSelectAll.setObjectName("actionSelectAll")
-        self.actionDeselectAll = QtWidgets.QAction(MainWindow)
+        self.actionDeselectAll = QtWidgets.QAction(MainWindow)  # type: ignore[reportPrivateImportUsage]
         self.actionDeselectAll.setObjectName("actionDeselectAll")
-        self.actionZoomIn = QtWidgets.QAction(MainWindow)
+        self.actionZoomIn = QtWidgets.QAction(MainWindow)  # type: ignore[reportPrivateImportUsage]
         self.actionZoomIn.setObjectName("actionZoomIn")
-        self.actionZoomOut = QtWidgets.QAction(MainWindow)
+        self.actionZoomOut = QtWidgets.QAction(MainWindow)  # type: ignore[reportPrivateImportUsage]
         self.actionZoomOut.setObjectName("actionZoomOut")
-        self.actionResetView = QtWidgets.QAction(MainWindow)
+        self.actionResetView = QtWidgets.QAction(MainWindow)  # type: ignore[reportPrivateImportUsage]
         self.actionResetView.setObjectName("actionResetView")
-        self.actionCenterOnSelection = QtWidgets.QAction(MainWindow)
+        self.actionCenterOnSelection = QtWidgets.QAction(MainWindow)  # type: ignore[reportPrivateImportUsage]
         self.actionCenterOnSelection.setObjectName("actionCenterOnSelection")
         self.menuFile.addAction(self.actionNew)
         self.menuFile.addAction(self.actionOpen)

@@ -619,12 +619,12 @@ class IndoorMap:
             data["rooms"].append(room_data)
 
             # Persist embedded components (used by Toolset merge-room workflows).
-            if getattr(room.component.kit, "id", None) == _EMBEDDED_KIT_ID:
+            if room.component.kit.id == _EMBEDDED_KIT_ID:
                 cid = str(room.component.id)
                 if cid not in embedded_components:
-                    embedded_components[cid] = {
+                    embedded_component: EmbeddedComponentDataDict = {
                         "id": cid,
-                        "name": str(getattr(room.component, "name", cid)),
+                        "name": str(room.component.name),
                         "bwm": base64.b64encode(bytes_bwm(room.component.bwm)).decode("ascii"),
                         "mdl": base64.b64encode(bytes(room.component.mdl)).decode("ascii"),
                         "mdx": base64.b64encode(bytes(room.component.mdx)).decode("ascii"),
@@ -637,6 +637,7 @@ class IndoorMap:
                             for h in room.component.hooks
                         ],
                     }
+                    embedded_components[cid] = embedded_component
 
         if embedded_components:
             # JSON-friendly list form for stable ordering.
@@ -746,7 +747,7 @@ class IndoorMap:
             room = IndoorMapRoom(
                 s_component,
                 Vector3(room_data["position"][0], room_data["position"][1], room_data["position"][2]),
-                room_data["rotation"],
+                float(room_data["rotation"]),
                 flip_x=bool(room_data.get("flip_x", False)),
                 flip_y=bool(room_data.get("flip_y", False)),
             )
@@ -786,7 +787,12 @@ class IndoorMapRoom:
         self.flip_y: bool = flip_y
         self.walkmesh_override: BWM | None = None
 
-    def hook_position(self, hook: KitComponentHook, *, world_offset: bool = True) -> Vector3:
+    def hook_position(
+        self,
+        hook: KitComponentHook,
+        *,
+        world_offset: bool = True,
+    ) -> Vector3:
         pos: Vector3 = copy(hook.position)
         pos.x = -pos.x if self.flip_x else pos.x
         pos.y = -pos.y if self.flip_y else pos.y

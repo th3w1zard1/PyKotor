@@ -4,13 +4,13 @@ import ctypes
 
 from typing import TYPE_CHECKING
 
-import glm
 from pykotor.gl.compat import (
     has_pyopengl,
     missing_constant,
     missing_gl_func,
     safe_gl_error_module,
 )
+from pykotor.gl.glm_compat import mat4, vec3, vec4, value_ptr
 
 HAS_PYOPENGL = has_pyopengl()
 gl_error = safe_gl_error_module()
@@ -49,7 +49,7 @@ else:
 from pykotor.gl.native import fastmath
 
 if TYPE_CHECKING:
-    from glm import mat4
+    from pykotor.gl.glm_compat import mat4
 
     from pykotor.gl.models.node import Node
     from pykotor.gl.scene import Scene
@@ -192,29 +192,29 @@ class Mesh:
     def _fast_bounds(
         self,
         transform: mat4,
-    ) -> tuple[glm.vec3, glm.vec3] | None:
+    ) -> tuple[vec3, vec3] | None:
         if not fastmath.available() or self.mdx_size <= 0:
             return None
         vertex_count = len(self.vertex_data) // self.mdx_size
         if vertex_count == 0:
             return None
         mv = memoryview(self.vertex_data)
-        matrix_values = [glm.value_ptr(transform)[i] for i in range(16)]
+        matrix_values = [value_ptr(transform)[i] for i in range(16)]
         bounds_min, bounds_max = fastmath.transform_bounds(
             mv, vertex_count, self.mdx_size, self.mdx_vertex, matrix_values
         )
-        return glm.vec3(*bounds_min), glm.vec3(*bounds_max)
+        return vec3(*bounds_min), vec3(*bounds_max)
 
     def bounds(
         self,
         transform: mat4,
-    ) -> tuple[glm.vec3, glm.vec3]:
+    ) -> tuple[vec3, vec3]:
         fast = self._fast_bounds(transform)
         if fast is not None:
             return fast
 
-        min_point = glm.vec3(100000, 100000, 100000)
-        max_point = glm.vec3(-100000, -100000, -100000)
+        min_point = vec3(100000, 100000, 100000)
+        max_point = vec3(-100000, -100000, -100000)
         vertex_count = len(self.vertex_data) // self.mdx_size
         if vertex_count == 0:
             return min_point, max_point
@@ -224,7 +224,7 @@ class Mesh:
         for idx in range(vertex_count):
             offset = idx * self.mdx_size + self.mdx_vertex
             x, y, z = struct.unpack_from("<3f", self.vertex_data, offset)
-            world = transform * glm.vec4(x, y, z, 1.0)
+            world = transform * vec4(x, y, z, 1.0)
             min_point.x = min(min_point.x, world.x)
             min_point.y = min(min_point.y, world.y)
             min_point.z = min(min_point.z, world.z)

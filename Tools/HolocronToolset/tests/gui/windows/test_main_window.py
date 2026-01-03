@@ -4,6 +4,8 @@ Comprehensive tests for ToolWindow - testing EVERY possible manipulation and beh
 Each test focuses on a specific functionality and validates it thoroughly.
 Tests are extremely granular and numerous to ensure comprehensive coverage.
 """
+from __future__ import annotations
+
 import os
 import tempfile
 import shutil
@@ -25,6 +27,7 @@ from qtpy.QtGui import QStandardItem
 
 if TYPE_CHECKING:
     from toolset.data.installation import HTInstallation
+    from pytestqt.qtbot import QtBot
 
 from toolset.gui.windows.main import ToolWindow
 from toolset.data.installation import HTInstallation
@@ -34,7 +37,7 @@ from pykotor.resource.type import ResourceType
 # INITIALIZATION TESTS
 # ============================================================================
 
-def test_main_window_initialization(qtbot):
+def test_main_window_initialization(qtbot: QtBot):
     """Test that the main window initializes correctly with all required attributes."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -55,7 +58,7 @@ def test_main_window_initialization(qtbot):
     assert isinstance(window._pending_override_changes, list)
     assert window._watcher_debounce_timer is not None
 
-def test_main_window_ui_initialization(qtbot):
+def test_main_window_ui_initialization(qtbot: QtBot):
     """Test that all UI elements are properly initialized."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -70,7 +73,7 @@ def test_main_window_ui_initialization(qtbot):
     assert window.ui.savesWidget is not None
     assert window.ui.menubar is not None
 
-def test_main_window_file_watcher_initialization(qtbot):
+def test_main_window_file_watcher_initialization(qtbot: QtBot):
     """Test that file system watcher is properly initialized."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -82,7 +85,7 @@ def test_main_window_file_watcher_initialization(qtbot):
     assert window._watcher_debounce_timer.isSingleShot()
     assert window._watcher_debounce_timer.interval() == 500
 
-def test_main_window_window_title(qtbot):
+def test_main_window_window_title(qtbot: QtBot):
     """Test that window title is set correctly."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -90,7 +93,7 @@ def test_main_window_window_title(qtbot):
     
     assert "Holocron Toolset" in window.windowTitle()
 
-def test_main_window_initial_game_combo(qtbot):
+def test_main_window_initial_game_combo(qtbot: QtBot):
     """Test that game combo box starts with [None] option."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -98,7 +101,7 @@ def test_main_window_initial_game_combo(qtbot):
     assert window.ui.gameCombo.count() >= 1
     assert window.ui.gameCombo.itemText(0) == "[None]"
 
-def test_main_window_initial_resource_tabs_disabled(qtbot):
+def test_main_window_initial_resource_tabs_disabled(qtbot: QtBot):
     """Test that resource tabs are initially disabled."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -109,7 +112,7 @@ def test_main_window_initial_resource_tabs_disabled(qtbot):
 # INSTALLATION MANAGEMENT TESTS
 # ============================================================================
 
-def test_main_window_unset_installation_initial_state(qtbot):
+def test_main_window_unset_installation_initial_state(qtbot: QtBot):
     """Test unset_installation clears all installation-related state."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -122,7 +125,7 @@ def test_main_window_unset_installation_initial_state(qtbot):
     assert len(window._file_watcher.directories()) == 0
     assert len(window._file_watcher.files()) == 0
 
-def test_main_window_change_installation_to_none(qtbot):
+def test_main_window_change_installation_to_none(qtbot: QtBot):
     """Test changing installation to [None] clears installation."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -133,7 +136,7 @@ def test_main_window_change_installation_to_none(qtbot):
     assert window.active is None
     assert window.previous_game_combo_index == 0
 
-def test_main_window_reload_installations(qtbot):
+def test_main_window_reload_installations(qtbot: QtBot):
     """Test reloading installations updates the combo box."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -191,7 +194,7 @@ def test_main_window_set_installation_from_combo(qtbot, installation: HTInstalla
 # FILE SYSTEM WATCHER TESTS
 # ============================================================================
 
-def test_main_window_setup_file_watcher_no_installation(qtbot):
+def test_main_window_setup_file_watcher_no_installation(qtbot: QtBot):
     """Test that setup_file_watcher does nothing when no installation is active."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -271,7 +274,7 @@ def test_main_window_on_watched_directory_changed_override_path(qtbot, installat
     assert len(window._pending_override_changes) > 0
     assert override_path in window._pending_override_changes
 
-def test_main_window_on_watched_directory_changed_no_installation(qtbot):
+def test_main_window_on_watched_directory_changed_no_installation(qtbot: QtBot):
     """Test that directory change handler does nothing without active installation."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -321,7 +324,7 @@ def test_main_window_on_watched_file_changed_override_file(qtbot, installation: 
     assert len(window._pending_override_changes) > 0
     assert test_file in window._pending_override_changes
 
-def test_main_window_on_watched_file_changed_no_installation(qtbot):
+def test_main_window_on_watched_file_changed_no_installation(qtbot: QtBot):
     """Test that file change handler does nothing without active installation."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -331,7 +334,7 @@ def test_main_window_on_watched_file_changed_no_installation(qtbot):
     assert len(window._pending_module_changes) == 0
     assert len(window._pending_override_changes) == 0
 
-def test_main_window_process_pending_changes_no_changes(qtbot):
+def test_main_window_process_pending_changes_no_changes(qtbot: QtBot):
     """Test that process_pending_changes does nothing when there are no changes."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -339,7 +342,7 @@ def test_main_window_process_pending_changes_no_changes(qtbot):
     # Should not raise exception
     window._process_pending_file_changes()
 
-def test_main_window_process_pending_changes_no_installation(qtbot):
+def test_main_window_process_pending_changes_no_installation(qtbot: QtBot):
     """Test that process_pending_changes does nothing without active installation."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -537,7 +540,7 @@ def test_main_window_file_watcher_integration_delete_module_file(qtbot, installa
 # TAB MANAGEMENT TESTS
 # ============================================================================
 
-def test_main_window_get_active_tab_index_initial(qtbot):
+def test_main_window_get_active_tab_index_initial(qtbot: QtBot):
     """Test getting active tab index when no tab is selected."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -546,7 +549,7 @@ def test_main_window_get_active_tab_index_initial(qtbot):
     assert isinstance(index, int)
     assert index >= 0
 
-def test_main_window_get_active_resource_tab_initial(qtbot):
+def test_main_window_get_active_resource_tab_initial(qtbot: QtBot):
     """Test getting active resource tab widget."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -554,7 +557,7 @@ def test_main_window_get_active_resource_tab_initial(qtbot):
     tab = window.get_active_resource_tab()
     assert tab is not None
 
-def test_main_window_get_active_resource_widget_core(qtbot):
+def test_main_window_get_active_resource_widget_core(qtbot: QtBot):
     """Test getting active resource widget for core tab."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -564,7 +567,7 @@ def test_main_window_get_active_resource_widget_core(qtbot):
     
     assert widget == window.ui.coreWidget
 
-def test_main_window_get_active_resource_widget_modules(qtbot):
+def test_main_window_get_active_resource_widget_modules(qtbot: QtBot):
     """Test getting active resource widget for modules tab."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -574,7 +577,7 @@ def test_main_window_get_active_resource_widget_modules(qtbot):
     
     assert widget == window.ui.modulesWidget
 
-def test_main_window_get_active_resource_widget_override(qtbot):
+def test_main_window_get_active_resource_widget_override(qtbot: QtBot):
     """Test getting active resource widget for override tab."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -584,7 +587,7 @@ def test_main_window_get_active_resource_widget_override(qtbot):
     
     assert widget == window.ui.overrideWidget
 
-def test_main_window_get_active_resource_widget_textures(qtbot):
+def test_main_window_get_active_resource_widget_textures(qtbot: QtBot):
     """Test getting active resource widget for textures tab."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -594,7 +597,7 @@ def test_main_window_get_active_resource_widget_textures(qtbot):
     
     assert widget == window.ui.texturesWidget
 
-def test_main_window_get_active_resource_widget_saves(qtbot):
+def test_main_window_get_active_resource_widget_saves(qtbot: QtBot):
     """Test getting active resource widget for saves tab."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -604,7 +607,7 @@ def test_main_window_get_active_resource_widget_saves(qtbot):
     
     assert widget == window.ui.savesWidget
 
-def test_main_window_tab_switching(qtbot):
+def test_main_window_tab_switching(qtbot: QtBot):
     """Test switching between different tabs."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -626,7 +629,7 @@ def test_main_window_tab_switching(qtbot):
 # MENU ACTIONS TESTS
 # ============================================================================
 
-def test_main_window_menu_actions_initial_state(qtbot):
+def test_main_window_menu_actions_initial_state(qtbot: QtBot):
     """Test initial state of menu actions."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -654,7 +657,7 @@ def test_main_window_menu_actions_with_installation(qtbot, installation: HTInsta
     assert window.ui.actionModuleDesigner.isEnabled()
     assert window.ui.actionIndoorMapBuilder.isEnabled()
 
-def test_main_window_menu_actions_always_enabled(qtbot):
+def test_main_window_menu_actions_always_enabled(qtbot: QtBot):
     """Test menu actions that should always be enabled."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -681,7 +684,7 @@ def test_main_window_update_menus_updates_icons(qtbot, installation: HTInstallat
 # REFRESH/RELOAD TESTS
 # ============================================================================
 
-def test_main_window_refresh_module_list_no_installation(qtbot):
+def test_main_window_refresh_module_list_no_installation(qtbot: QtBot):
     """Test refreshing module list when no installation is active."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -698,7 +701,7 @@ def test_main_window_refresh_module_list_with_installation(qtbot, installation: 
     # Should not crash
     window.refresh_module_list(reload=False)
 
-def test_main_window_refresh_override_list_no_installation(qtbot):
+def test_main_window_refresh_override_list_no_installation(qtbot: QtBot):
     """Test refreshing override list when no installation is active."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -715,7 +718,7 @@ def test_main_window_refresh_override_list_with_installation(qtbot, installation
     # Should not crash
     window.refresh_override_list(reload=False)
 
-def test_main_window_refresh_core_list_no_installation(qtbot):
+def test_main_window_refresh_core_list_no_installation(qtbot: QtBot):
     """Test refreshing core list when no installation is active."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -732,7 +735,7 @@ def test_main_window_refresh_core_list_with_installation(qtbot, installation: HT
     # Should not crash
     window.refresh_core_list(reload=False)
 
-def test_main_window_refresh_saves_list_no_installation(qtbot):
+def test_main_window_refresh_saves_list_no_installation(qtbot: QtBot):
     """Test refreshing saves list when no installation is active."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -944,7 +947,7 @@ def test_main_window_on_save_refresh(qtbot, installation: HTInstallation):
 # MODULE LIST OPERATIONS TESTS
 # ============================================================================
 
-def test_main_window_get_modules_list_no_installation(qtbot):
+def test_main_window_get_modules_list_no_installation(qtbot: QtBot):
     """Test getting modules list when no installation is active."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -975,7 +978,7 @@ def test_main_window_change_module(qtbot, installation: HTInstallation):
 # OVERRIDE LIST OPERATIONS TESTS
 # ============================================================================
 
-def test_main_window_get_override_list_no_installation(qtbot):
+def test_main_window_get_override_list_no_installation(qtbot: QtBot):
     """Test getting override list when no installation is active."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -1005,7 +1008,7 @@ def test_main_window_change_override_folder(qtbot, installation: HTInstallation)
 # TEXTURE LIST OPERATIONS TESTS
 # ============================================================================
 
-def test_main_window_get_texture_pack_list_no_installation(qtbot):
+def test_main_window_get_texture_pack_list_no_installation(qtbot: QtBot):
     """Test getting texture pack list when no installation is active."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -1063,7 +1066,7 @@ def test_main_window_open_settings_dialog(qtbot, monkeypatch):
 # TRANSLATION TESTS
 # ============================================================================
 
-def test_main_window_apply_translations(qtbot):
+def test_main_window_apply_translations(qtbot: QtBot):
     """Test that apply_translations updates all UI strings."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -1082,7 +1085,7 @@ def test_main_window_apply_translations(qtbot):
 # UTILITY METHOD TESTS
 # ============================================================================
 
-def test_main_window_reload_settings(qtbot):
+def test_main_window_reload_settings(qtbot: QtBot):
     """Test reload_settings method."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -1090,7 +1093,7 @@ def test_main_window_reload_settings(qtbot):
     # Should not crash
     window.reload_settings()
 
-def test_main_window_on_tab_changed(qtbot):
+def test_main_window_on_tab_changed(qtbot: QtBot):
     """Test on_tab_changed callback."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -1129,7 +1132,7 @@ def test_main_window_on_tab_changed(qtbot):
 # EVENT HANDLER TESTS
 # ============================================================================
 
-def test_main_window_close_event(qtbot):
+def test_main_window_close_event(qtbot: QtBot):
     """Test close event handler."""
     window = ToolWindow()
     qtbot.addWidget(window)
@@ -1226,7 +1229,7 @@ def test_main_window_file_watcher_invalid_path(qtbot, installation: HTInstallati
     window._on_watched_file_changed("")
     window._on_watched_file_changed("/nonexistent/file.mod")
 
-def test_main_window_file_watcher_nonexistent_directories(qtbot):
+def test_main_window_file_watcher_nonexistent_directories(qtbot: QtBot):
     """Test file watcher setup with nonexistent directories."""
     # Create a mock installation with nonexistent paths
     from unittest.mock import MagicMock

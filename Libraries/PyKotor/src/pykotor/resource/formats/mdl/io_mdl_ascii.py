@@ -771,7 +771,7 @@ class MDLAsciiReader(ResourceReader):
         self._is_animation: bool = False
         self._in_node: bool = False
         self._current_anim_num: int = 0
-        self._task: Literal["verts", "faces", "tverts", "tverts1", "lightmaptverts", "bones", "flarecolorshifts", "weights", "constraints", "aabb"] = ""
+        self._task: Literal["verts", "faces", "tverts", "tverts1", "lightmaptverts", "bones", "flarecolorshifts", "weights", "constraints", "aabb", ""] = ""
         self._task_count: int = 0
         self._task_total: int = 0
         self._anim_node_index: dict[str, MDLNode] = {}
@@ -1648,7 +1648,7 @@ class MDLAsciiReader(ResourceReader):
                 self._task_count = 0
                 skin.qbones = []
                 skin.tbones = []
-                skin.bone_indices = []
+                skin.bone_indices = ()
             return True
 
         # Parse weights declaration
@@ -1830,7 +1830,7 @@ class MDLAsciiReader(ResourceReader):
                 task_name = match.group(1).lower()
                 count = int(match.group(2))
                 if count > 0:
-                    self._task = task_name
+                    self._task = cast("Literal['verts', 'faces', 'tverts', 'tverts1', 'lightmaptverts', 'bones', 'flarecolorshifts', 'weights', 'constraints', 'aabb', '']", task_name.lower())
                     self._task_total = count
                     self._task_count = 0
                     if task_name == "flarepositions":
@@ -2147,6 +2147,7 @@ class MDLAsciiReader(ResourceReader):
         """
         if not self._nodes:
             return
+        assert self._mdl is not None, "MDL is not set"
 
         # If the ASCII contains an explicit root node, prefer that as the real root.
         # MDLOps uses a real node as the root of the geometry tree (no extra implicit container node).
@@ -2157,8 +2158,8 @@ class MDLAsciiReader(ResourceReader):
         # - Otherwise, if there is a top-level node matching the model name, use that.
         # - Otherwise, fall back to an implicit root container (legacy behavior).
         explicit_root: MDLNode | None = None
-        top_level_nodes = [n for n in self._nodes if n.parent_id == -1]
-        if self._mdl.name:
+        top_level_nodes: list[MDLNode] = [n for n in self._nodes if n.parent_id == -1]
+        if (self._mdl.name or "").strip():
             for n in top_level_nodes:
                 if n.name and n.name.lower() == self._mdl.name.lower():
                     explicit_root = n

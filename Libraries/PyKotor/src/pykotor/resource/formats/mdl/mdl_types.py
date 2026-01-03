@@ -337,4 +337,10 @@ class MDLSaberFlags(IntFlag):
     TRAIL = 0x0004  # Has motion trail
 
 
+class MDLDynamicType(IntEnum):
+    """Dynamic types for lights."""
+    STATIC = 0
+    DYNAMIC = 1
+    ANIMATED = 2
+
 # endregion

@@ -27,6 +27,7 @@ try:
         decompose,
         eulerAngles,
         inverse,
+        length,
         mat4,
         mat4_cast,
         normalize,
@@ -267,10 +268,10 @@ except ImportError:
 
 
     @overload
-    def translate(v: vec3, /) -> mat4: ...
+    def translate(v: Any, /) -> Any: ...
     
     @overload
-    def translate(v: Any, /) -> Any: ...
+    def translate(v: vec3, /) -> mat4: ...
     
     def translate(v: Any, /) -> Any:
         """Create a translation matrix."""
@@ -284,10 +285,10 @@ except ImportError:
 
 
     @overload
-    def rotate(m: mat4, angle: float, axis: vec3, /) -> mat4: ...
+    def rotate(m: Any, angle: float, axis: Any, /) -> Any: ...
     
     @overload
-    def rotate(m: Any, angle: float, axis: Any, /) -> Any: ...
+    def rotate(m: mat4, angle: float, axis: vec3, /) -> mat4: ...
     
     def rotate(m: Any, angle: float, axis: Any, /) -> Any:
         """Rotate a matrix by angle (radians) around axis."""
@@ -322,10 +323,10 @@ except ImportError:
 
 
     @overload
-    def mat4_cast(x: quat, /) -> mat4: ...
+    def mat4_cast(x: Any, /) -> Any: ...
     
     @overload
-    def mat4_cast(x: Any, /) -> Any: ...
+    def mat4_cast(x: quat, /) -> mat4: ...
     
     def mat4_cast(x: Any, /) -> Any:
         """Convert a quaternion to a 4x4 rotation matrix."""
@@ -352,10 +353,10 @@ except ImportError:
 
 
     @overload
-    def inverse(m: mat4, /) -> mat4: ...
+    def inverse(m: Any, /) -> Any: ...
     
     @overload
-    def inverse(m: Any, /) -> Any: ...
+    def inverse(m: mat4, /) -> mat4: ...
     
     def inverse(m: Any, /) -> Any:
         """Calculate the inverse of a matrix."""
@@ -400,10 +401,10 @@ except ImportError:
 
 
     @overload
-    def normalize(x: vec3, /) -> vec3: ...
+    def normalize(x: Any, /) -> Any: ...
     
     @overload
-    def normalize(x: Any, /) -> Any: ...
+    def normalize(x: vec3, /) -> vec3: ...
     
     def normalize(x: Any, /) -> Any:
         """Normalize a vector."""
@@ -417,10 +418,10 @@ except ImportError:
 
 
     @overload
-    def cross(x: vec3, y: vec3, /) -> vec3: ...
+    def cross(x: Any, y: Any, /) -> Any: ...
     
     @overload
-    def cross(x: Any, y: Any, /) -> Any: ...
+    def cross(x: vec3, y: vec3, /) -> vec3: ...
     
     def cross(x: Any, y: Any, /) -> Any:
         """Calculate the cross product of two vectors."""
@@ -545,10 +546,10 @@ except ImportError:
 
 
     @overload
-    def eulerAngles(x: quat, /) -> vec3: ...
+    def eulerAngles(x: Any, /) -> Any: ...
     
     @overload
-    def eulerAngles(x: Any, /) -> Any: ...
+    def eulerAngles(x: quat, /) -> vec3: ...
     
     def eulerAngles(x: Any, /) -> Any:
         """Convert a quaternion to Euler angles (in radians).
@@ -618,10 +619,10 @@ except ImportError:
 
 
     @overload
-    def unProject(obj: vec3, model: mat4, proj: mat4, viewport: vec4, /) -> vec3: ...
+    def unProject(obj: Any, model: Any, proj: Any, viewport: Any, /) -> Any: ...
     
     @overload
-    def unProject(obj: Any, model: Any, proj: Any, viewport: Any, /) -> Any: ...
+    def unProject(obj: vec3, model: mat4, proj: mat4, viewport: vec4, /) -> vec3: ...
     
     def unProject(obj: Any, model: Any, proj: Any, viewport: Any, /) -> Any:
         """Unproject a window coordinate to world coordinates.
@@ -664,3 +665,8 @@ except ImportError:
 
         return vec3(world.x, world.y, world.z)
 
+    def length(x: Any, /) -> Any:
+        """Calculate the length of a vector."""
+        if not isinstance(x, vec3):
+            raise TypeError(f"length requires vec3, got {type(x)}")
+        return math.sqrt(x.x**2 + x.y**2 + x.z**2)

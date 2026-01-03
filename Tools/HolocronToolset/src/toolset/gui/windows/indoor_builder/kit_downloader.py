@@ -172,7 +172,7 @@ class KitDownloader(QDialog):
             print(format_exception_with_variables(e, message="Failed to extract kits"))
             return False
         finally:
-            if kits_zip_path.is_file():
+            if kits_zip_path.exists() and kits_zip_path.is_file():
                 kits_zip_path.unlink()
 
         return True
@@ -278,7 +278,7 @@ class KitDownloader(QDialog):
             print(format_exception_with_variables(e, message=f"Failed to extract kit {kit_id}"))
             return False
         finally:
-            if kits_zip_path.is_file():
+            if kits_zip_path.exists() and kits_zip_path.is_file():
                 kits_zip_path.unlink()
 
         return True

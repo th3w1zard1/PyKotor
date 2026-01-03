@@ -2,14 +2,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import glm
-
-from glm import mat4, vec3
+from pykotor.gl.glm_compat import mat4, mat4_cast, translate, vec3
 
 if TYPE_CHECKING:
     from pykotor.gl.models.node import Node
     from pykotor.gl.scene import Scene
     from pykotor.gl.shader import Shader
+
 
 class Model:
     def __init__(self, scene: Scene, root: Node):
@@ -70,8 +69,8 @@ class Model:
         min_point: vec3,
         max_point: vec3,
     ):
-        local_transform = transform * glm.translate(node._position)  # noqa: SLF001
-        local_transform = local_transform * glm.mat4_cast(node._rotation)  # noqa: SLF001
+        local_transform = transform * translate(node._position)  # noqa: SLF001
+        local_transform = local_transform * mat4_cast(node._rotation)  # noqa: SLF001
 
         if node.mesh and node.render:
             mesh_min, mesh_max = node.mesh.bounds(local_transform)

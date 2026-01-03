@@ -5,10 +5,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 # Handle optional pykotor.gl dependency (required by module_designer)
-try:
-    from pykotor.gl.scene import Camera  # noqa: F401
-except ImportError:
-    pytest.skip("pykotor.gl not available", allow_module_level=True)
+from pykotor.gl.scene import Camera  # noqa: F401
 
 from qtpy.QtWidgets import QWidget, QMainWindow
 from unittest.mock import MagicMock, patch

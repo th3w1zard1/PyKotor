@@ -5,12 +5,9 @@ import math
 from copy import copy
 from typing import TYPE_CHECKING, ClassVar, TypeVar
 
-import glm
-
-from glm import quat, vec3
 from loggerplus import RobustLogger
-
 from pykotor.extract.installation import SearchLocation
+from pykotor.gl.glm_compat import eulerAngles, quat, vec3
 from pykotor.gl.models.mdl import Boundary
 from pykotor.gl.scene import RenderObject
 from pykotor.resource.generics.git import GIT, GITCamera, GITCreature, GITDoor, GITEncounter, GITPlaceable, GITSound, GITStore, GITTrigger, GITWaypoint
@@ -21,7 +18,7 @@ from pykotor.resource.type import ResourceType
 
 if TYPE_CHECKING:
     from pykotor.gl.scene.scene import Scene
-    from pykotor.resource.formats.lyt.lyt_data import LYTRoom
+    from pykotor.resource.formats.lyt import LYTRoom
     from pykotor.resource.generics.git import GIT, GITInstance
 
 T = TypeVar("T")
@@ -31,15 +28,15 @@ SEARCH_ORDER: list[SearchLocation] = [SearchLocation.OVERRIDE, SearchLocation.CH
 
 class SceneCache:
     """Optimized scene cache with incremental updates.
-    
+
     Performance optimizations:
     - Only rebuilds when cache buffer has changes or clear_cache is True
     - Tracks last GIT/LYT state to detect changes without full iteration
     - Position/rotation updates are O(1) for existing objects
-    
+
     Reference: Standard game engine practice - incremental scene graph updates
     """
-    
+
     # Class-level tracking for change detection
     _last_git_hash: ClassVar[dict[int, int]] = {}  # scene id -> git hash
     _last_layout_hash: ClassVar[dict[int, int]] = {}  # scene id -> layout hash
@@ -114,14 +111,10 @@ class SceneCache:
                                 )
                         else:
                             RobustLogger().warning(
-                                f"Door '{door.resref}.utd' references appearance_id {utd.appearance_id} "
-                                f"which does not exist in doors.2da. Using default model 'unknown'."
+                                f"Door '{door.resref}.utd' references appearance_id {utd.appearance_id} " f"which does not exist in doors.2da. Using default model 'unknown'."
                             )
                 except (IndexError, KeyError) as e:
-                    RobustLogger().warning(
-                        f"Could not get the model name from the UTD '{door.resref}.utd' "
-                        f"and/or the doors.2da: {e}. Using default model 'unknown'."
-                    )
+                    RobustLogger().warning(f"Could not get the model name from the UTD '{door.resref}.utd' " f"and/or the doors.2da: {e}. Using default model 'unknown'.")
                 except Exception:  # noqa: BLE001
                     RobustLogger().exception(f"Could not get the model name from the UTD '{door.resref}.utd' and/or the appearance.2da")
                 if utd is None:
@@ -161,8 +154,7 @@ class SceneCache:
                             )
                 except (IndexError, KeyError) as e:
                     RobustLogger().warning(
-                        f"Could not get the model name from the UTP '{placeable.resref}.utp' "
-                        f"and/or the placeables.2da: {e}. Using default model 'unknown'."
+                        f"Could not get the model name from the UTP '{placeable.resref}.utp' " f"and/or the placeables.2da: {e}. Using default model 'unknown'."
                     )
                 except Exception:  # noqa: BLE001
                     RobustLogger().exception(f"Could not get the model name from the UTP '{placeable.resref}.utp' and/or the appearance.2da")
@@ -285,7 +277,7 @@ class SceneCache:
                 scene.objects[camera] = obj
 
             scene.objects[camera].set_position(camera.position.x, camera.position.y, camera.position.z + camera.height)
-            euler: vec3 = glm.eulerAngles(quat(camera.orientation.w, camera.orientation.x, camera.orientation.y, camera.orientation.z))
+            euler: vec3 = eulerAngles(quat(camera.orientation.w, camera.orientation.x, camera.orientation.y, camera.orientation.z))
             scene.objects[camera].set_rotation(
                 euler.y,
                 euler.z - math.pi / 2 + math.radians(camera.pitch),

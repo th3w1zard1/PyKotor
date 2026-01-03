@@ -2,9 +2,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import glm
+from pykotor.gl.glm_compat import mat4, vec3, vec4, value_ptr
 
-from pykotor.gl.compat import MissingPyOpenGLError, has_pyopengl, missing_constant, missing_gl_func
+from pykotor.gl.compat import (
+    MissingPyOpenGLError,
+    has_pyopengl,
+    missing_constant,
+    missing_gl_func,
+)
 
 HAS_PYOPENGL = has_pyopengl()
 
@@ -26,8 +31,7 @@ else:
     GL_VERTEX_SHADER = missing_constant("GL_VERTEX_SHADER")
 
 if TYPE_CHECKING:
-    from glm import mat4, vec3, vec4
-
+    from pykotor.gl.glm_compat import mat4, vec3, vec4
 
 
 KOTOR_VSHADER = """
@@ -207,21 +211,21 @@ class Shader:
         uniform: str,
         matrix: mat4,
     ):
-        glUniformMatrix4fv(self.uniform(uniform), 1, GL_FALSE, glm.value_ptr(matrix))
+        glUniformMatrix4fv(self.uniform(uniform), 1, GL_FALSE, value_ptr(matrix))
 
     def set_vector4(
         self,
         uniform: str,
         vector: vec4,
     ):
-        glUniform4fv(self.uniform(uniform), 1, glm.value_ptr(vector))
+        glUniform4fv(self.uniform(uniform), 1, value_ptr(vector))
 
     def set_vector3(
         self,
         uniform: str,
         vector: vec3,
     ):
-        glUniform3fv(self.uniform(uniform), 1, glm.value_ptr(vector))
+        glUniform3fv(self.uniform(uniform), 1, value_ptr(vector))
 
     def set_bool(self, uniform: str, boolean: bool):  # noqa: FBT001
         glUniform1i(self.uniform(uniform), boolean)

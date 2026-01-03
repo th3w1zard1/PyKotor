@@ -17,9 +17,8 @@ from __future__ import annotations
 import math
 import unittest
 
-import glm
+from pykotor.gl.glm_compat import mat4, vec3
 
-from glm import mat4, vec3
 
 # Handle optional pykotor.gl dependency
 try:

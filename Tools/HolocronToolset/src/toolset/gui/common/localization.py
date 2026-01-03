@@ -3,6 +3,7 @@
 Provides translation functionality for all user-facing strings in the toolset.
 Supports multiple languages matching the KotOR game languages.
 """
+
 from __future__ import annotations
 
 from enum import IntEnum
@@ -86,7 +87,6 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Instructions": "Instructions",
         "Check For Updates": "Check For Updates",
         "Discord": "Discord",
-        "Holocron Toolset": "Holocron Toolset",
         "KOTOR Community Portal": "KOTOR Community Portal",
         "Deadly Stream": "Deadly Stream",
         # Resource types
@@ -166,9 +166,7 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Apply": "Apply",
         "Close": "Close",
         "Save": "Save",
-        "Open": "Open",
         "Delete": "Delete",
-        "Edit": "Edit",
         "Add": "Add",
         "Remove": "Remove",
         "Browse": "Browse",
@@ -213,12 +211,6 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         # Theme Manager strings
         "Theme not found": "Theme not found",
         "QDarkStyle is not installed in this environment.": "QDarkStyle is not installed in this environment.",
-        # Find/Replace widget
-        "Find:": "Find:",
-        "Replace:": "Replace:",
-        # NSS Editor
-        "Decompile or Download": "Decompile or Download",
-        "Would you like to decompile this script, or download it from <a href='{url}'>Vanilla Source Repository</a>?": "Would you like to decompile this script, or download it from <a href='{url}'>Vanilla Source Repository</a>?",
         # Window.py messages
         "Failed to get the file data.": "Failed to get the file data.",
         "An error occurred while attempting to read the data of the file.": "An error occurred while attempting to read the data of the file.",
@@ -356,8 +348,6 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         # Tree Widget strings
         "What's This?": "What's This?",
         "Enter 'What's This?' mode.": "Enter 'What's This?' mode.",
-        # Installations Widget strings
-        "New": "New",
         # Insert Instance Dialog strings
         "Choose an instance": "Choose an instance",
         "You must choose an instance, use the radial buttons to determine where/how to create the GIT instance.": "You must choose an instance, use the radial buttons to determine where/how to create the GIT instance.",
@@ -371,7 +361,6 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         # Select Update Dialog strings
         "Include Pre-releases": "Include Pre-releases",
         "Fetch Releases": "Fetch Releases",
-        "Select Fork:": "Select Fork:",
         "Select Release:": "Select Release:",
         "Install Selected": "Install Selected",
         "Update to Latest": "Update to Latest",
@@ -386,7 +375,6 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Browse...": "Browse...",
         "Create New": "Create New",
         "<b>Files to Package:</b>": "<b>Files to Package:</b>",
-        "File": "File",
         "Status": "Status",
         "Add File": "Add File",
         "Select Files to Add": "Select Files to Add",
@@ -404,8 +392,6 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Configuration saved to:\n{path}": "Configuration saved to:\n{path}",
         "Generated": "Generated",
         "TSLPatchData generated at:\n{path}\n\nYou can now distribute this folder with HoloPatcher/TSLPatcher.": "TSLPatchData generated at:\n{path}\n\nYou can now distribute this folder with HoloPatcher/TSLPatcher.",
-        # Module Designer strings
-        "Module Designer": "Module Designer",
         "Really quit the module designer? You may lose unsaved changes.": "Really quit the module designer? You may lose unsaved changes.",
         # Indoor Map Builder strings
         "No installation - Map Builder": "No installation - Map Builder",
@@ -481,7 +467,6 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Instructions": "Instructions",
         "Check For Updates": "Vérifier les mises à jour",
         "Discord": "Discord",
-        "Holocron Toolset": "Holocron Toolset",
         "KOTOR Community Portal": "Portail communautaire KOTOR",
         "Deadly Stream": "Deadly Stream",
         # Resource types
@@ -623,7 +608,6 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Instructions": "Anleitung",
         "Check For Updates": "Auf Updates prüfen",
         "Discord": "Discord",
-        "Holocron Toolset": "Holocron Toolset",
         "KOTOR Community Portal": "KOTOR Community Portal",
         "Deadly Stream": "Deadly Stream",
         # Resource types
@@ -765,7 +749,6 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Instructions": "Istruzioni",
         "Check For Updates": "Controlla aggiornamenti",
         "Discord": "Discord",
-        "Holocron Toolset": "Holocron Toolset",
         "KOTOR Community Portal": "Portale comunitario KOTOR",
         "Deadly Stream": "Deadly Stream",
         # Resource types
@@ -907,7 +890,6 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Instructions": "Instrucciones",
         "Check For Updates": "Buscar actualizaciones",
         "Discord": "Discord",
-        "Holocron Toolset": "Holocron Toolset",
         "KOTOR Community Portal": "Portal de la comunidad KOTOR",
         "Deadly Stream": "Deadly Stream",
         # Resource types
@@ -1049,7 +1031,6 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Instructions": "Instrukcje",
         "Check For Updates": "Sprawdź aktualizacje",
         "Discord": "Discord",
-        "Holocron Toolset": "Holocron Toolset",
         "KOTOR Community Portal": "Portal społeczności KOTOR",
         "Deadly Stream": "Deadly Stream",
         # Resource types
@@ -1256,16 +1237,16 @@ def tr(text: str, fallback: str | None = None) -> str:
 
 def trf(text: str, **kwargs) -> str:
     """Translate and format a string with placeholders.
-    
+
     Args:
     ----
         text: The English text template with {placeholders}
         **kwargs: Values to format into the placeholders
-    
+
     Returns:
     -------
         The translated and formatted string
-        
+
     Example:
     -------
         trf("Failed to save {count} files!", count=5)
@@ -1276,4 +1257,3 @@ def trf(text: str, **kwargs) -> str:
     except KeyError:
         # If formatting fails, return translated text without formatting
         return translated
-

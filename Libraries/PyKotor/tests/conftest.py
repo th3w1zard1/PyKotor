@@ -13,6 +13,7 @@ skipped during collection when their prerequisites are absent.
 from __future__ import annotations
 
 import sys
+import os
 
 from pathlib import Path
 
@@ -40,3 +41,69 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
         # Skip the one test that depends on the vanilla script source submodule.
         if "test_ncs.py::TestNCSRoundtrip::test_nss_roundtrip" in item.nodeid:
             item.add_marker(skip_roundtrip)
+
+
+def _discover_game_install_roots() -> list[tuple[str, Path]]:
+    """Discover game install roots from env vars.
+
+    - K1: K1_PATH
+    - K2: TSL_PATH (preferred) or K2_PATH
+
+    Returned list is stable and de-duplicated.
+    """
+    roots: list[tuple[str, Path]] = []
+    seen: set[str] = set()
+
+    def _add(label: str, value: str | None):
+        if not value:
+            return
+        p = Path(value).expanduser()
+        key = str(p.resolve()) if p.exists() else str(p)
+        if key in seen:
+            return
+        seen.add(key)
+        roots.append((label, p))
+
+    _add("k1", os.environ.get("K1_PATH"))
+    _add("k2", os.environ.get("TSL_PATH") or os.environ.get("K2_PATH"))
+    return roots
+
+
+def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
+    """Parametrize tests that request `game_install_root`.
+
+    This keeps installation-backed tests pytest-native and ensures that if both
+    K1 and K2 are configured, tests run once per install.
+    """
+    if "game_install_root" not in metafunc.fixturenames:
+        return
+
+    roots = _discover_game_install_roots()
+    if not roots:
+        metafunc.parametrize(
+            "game_install_root",
+            [
+                pytest.param(
+                    ("missing", Path(".")),
+                    marks=pytest.mark.skip(
+                        reason="Requires K1_PATH and/or TSL_PATH/K2_PATH to be set to a game installation root.",
+                    ),
+                    id="missing-install",
+                ),
+            ],
+            indirect=True,
+        )
+        return
+
+    params = [pytest.param(r, id=r[0]) for r in roots]
+    metafunc.parametrize("game_install_root", params, indirect=True)
+
+
+@pytest.fixture
+def game_install_root(request: pytest.FixtureRequest) -> tuple[str, Path]:
+    """(label, root_path) for a game installation, parameterized via pytest_generate_tests."""
+    label, root = request.param
+    key_path = root / "chitin.key"
+    if not key_path.exists():
+        pytest.skip(f"{label}: missing chitin.key at {key_path}")
+    return label, root

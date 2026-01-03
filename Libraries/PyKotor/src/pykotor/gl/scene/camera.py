@@ -4,9 +4,7 @@ import math
 
 from typing import TYPE_CHECKING, Literal, Union
 
-import glm
-
-from glm import mat4, vec3
+from pykotor.gl.glm_compat import mat4, vec3, translate, rotate, inverse, perspective, normalize, cross
 
 if TYPE_CHECKING:
     from utility.common.geometry import Vector3
@@ -188,7 +186,7 @@ class Camera:
             return self._cached_view
         
         up: vec3 = vec3(0, 0, 1)
-        pitch_axis: vec3 = glm.vec3(1, 0, 0)
+        pitch_axis: vec3 = vec3(1, 0, 0)
 
         x, y, z = self.x, self.y, self.z
         cos_yaw = math.cos(self.yaw)
@@ -201,11 +199,11 @@ class Camera:
         y += sin_yaw * cos_pitch * self.distance
         z += sin_pitch * self.distance
 
-        camera: mat4 = mat4() * glm.translate(vec3(x, y, z))
-        camera = glm.rotate(camera, self.yaw + math.pi / 2, up)
-        camera = glm.rotate(camera, math.pi - self.pitch, pitch_axis)
+        camera: mat4 = mat4() * translate(vec3(x, y, z))
+        camera = rotate(camera, self.yaw + math.pi / 2, up)
+        camera = rotate(camera, math.pi - self.pitch, pitch_axis)
         
-        self._cached_view = glm.inverse(camera)
+        self._cached_view = inverse(camera)
         self._view_dirty = False
         return self._cached_view
 
@@ -220,7 +218,7 @@ class Camera:
         # Prevent division by zero - use 1.0 aspect ratio if height is 0
         aspect_ratio = self.width / self.height if self.height > 0 else 1.0
         
-        self._cached_projection = glm.perspective(
+        self._cached_projection = perspective(
             self.fov,
             aspect_ratio,
             0.1,
@@ -287,14 +285,14 @@ class Camera:
         eye_x: float = math.cos(self.yaw) * math.cos(self.pitch - math.pi / 2)
         eye_y: float = math.sin(self.yaw) * math.cos(self.pitch - math.pi / 2)
         eye_z: Union[float, Literal[0]] = 0 if ignore_z else math.sin(self.pitch - math.pi / 2)
-        return glm.normalize(-vec3(eye_x, eye_y, eye_z))
+        return normalize(-vec3(eye_x, eye_y, eye_z))
 
     def sideward(
         self,
         *,
         ignore_z: bool = True,
     ) -> vec3:
-        return glm.normalize(glm.cross(self.forward(ignore_z=ignore_z), vec3(0.0, 0.0, 1.0)))
+        return normalize(cross(self.forward(ignore_z=ignore_z), vec3(0.0, 0.0, 1.0)))
 
     def upward(
         self,
@@ -302,11 +300,11 @@ class Camera:
         ignore_xy: bool = True,
     ) -> vec3:
         if ignore_xy:
-            return glm.normalize(vec3(0, 0, 1))
+            return normalize(vec3(0, 0, 1))
         forward: vec3 = self.forward(ignore_z=False)
         sideward: vec3 = self.sideward(ignore_z=False)
-        cross: vec3 = glm.cross(forward, sideward)
-        return glm.normalize(cross)
+        cross_product: vec3 = cross(forward, sideward)
+        return normalize(cross_product)
 
     def true_position(self) -> vec3:
         cos_yaw: float = math.cos(self.yaw)

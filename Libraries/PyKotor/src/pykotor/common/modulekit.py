@@ -178,7 +178,10 @@ class ModuleKit(Kit):
 
         return component
 
-    def _get_room_walkmesh(self, model_name: str) -> BWM | None:
+    def _get_room_walkmesh(
+        self,
+        model_name: str,
+    ) -> BWM | None:
         """Get the walkmesh for a room from the module.
 
         Returns the parsed walkmesh (BWM) exactly as read from the module's WOK resource.
@@ -199,7 +202,11 @@ class ModuleKit(Kit):
             RobustLogger().warning("Failed to read WOK for '%s' in module '%s'", model_name, self.module_root)
             return None
 
-    def _get_room_model(self, model_name: str, restype: ResourceType) -> bytes | None:
+    def _get_room_model(
+        self,
+        model_name: str,
+        restype: ResourceType,
+    ) -> bytes | None:
         if self._module is None:
             return None
         res = self._module.resource(model_name, restype)

@@ -8,8 +8,7 @@ from __future__ import annotations
 
 # Try to import PyGLM, fall back to our compatibility layer
 try:
-    import glm  # type: ignore[import-not-found]
-    from glm import mat4, quat, vec3, vec4  # type: ignore[import-not-found]
+    from pyglm import mat4, quat, vec3, vec4  # type: ignore[import-not-found]
     GLM_AVAILABLE = True
 except ImportError:
     from pykotor.gl.glm_compat import (  # type: ignore[assignment]

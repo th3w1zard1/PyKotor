@@ -16,10 +16,20 @@ from typing import TYPE_CHECKING, Any, Callable
 try:
     import certifi  # pyright: ignore[reportMissingImports]
 except ImportError:
-    certifi = None  # type: ignore[assignment, unused-ignore]
+    if not TYPE_CHECKING:
+        certifi = None  # type: ignore[assignment, unused-ignore]
 
-import requests
-import urllib3
+try:
+    import requests
+except ImportError:
+    if not TYPE_CHECKING:
+        requests = None  # type: ignore[assignment, unused-ignore]
+
+try:
+    import urllib3
+except ImportError:
+    if not TYPE_CHECKING:
+        urllib3 = None  # type: ignore[assignment, unused-ignore]
 
 from loggerplus import RobustLogger
 
@@ -98,7 +108,7 @@ class FileDownloader:
         self.log = logger or RobustLogger()
 
         self.file_binary_data: list = []  # Hold all binary data once file has been downloaded
-        self.file_binary_path: Path = self.filepath.add_suffix(".part")  # Temporary file to hold large download data
+        self.file_binary_path: Path = Path(f"{self.filepath}.part")  # Temporary file to hold large download data
 
         if not urls:
             raise FileDownloaderError("No urls provided", expected=True)
@@ -257,7 +267,7 @@ class FileDownloader:
                     f.write(block)
         else:
             filepath = Path(self.filepath)
-            if filepath.safe_exists():
+            if filepath.exists():
                 filepath.unlink(missing_ok=True)
             self.file_binary_path.rename(self.filepath)
 
@@ -438,7 +448,7 @@ def _download_file(
                 try:
                     ph(status)
                 except Exception as err:  # noqa: PERF203
-                    log.exception("Exception in callback: %s", ph.__name__)
+                    log.exception("Exception in callback '%s': %s", ph.__name__, err)
         log.debug(f"Status - {file_info.st_size / file_size * 100:.2f} downloaded")  # noqa: G004
         log.debug(f"{file_info.st_size} of {file_size} downloaded")  # noqa: G004
 

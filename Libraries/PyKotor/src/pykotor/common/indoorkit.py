@@ -26,6 +26,8 @@ if TYPE_CHECKING:
     from pykotor.resource.formats.bwm import BWM
     from pykotor.resource.generics.utd import UTD
     from utility.common.geometry import Vector3
+    from qtpy.QtGui import QImage  # pyright: ignore[reportMissingImports, reportPrivateImportUsage, reportMissingTypeStubs]  # type: ignore[import-not-found, import-untyped]
+    from PIL.Image import Image  # pyright: ignore[reportMissingImports, reportPrivateImportUsage, reportMissingTypeStubs]  # type: ignore[import-not-found, import-untyped]
 
 
 class Kit:
@@ -53,7 +55,15 @@ class Kit:
 
 
 class KitComponent:
-    def __init__(self, kit: Kit, name: str, component_id: str, bwm: BWM, mdl: bytes, mdx: bytes):
+    def __init__(
+        self,
+        kit: Kit,
+        name: str,
+        component_id: str,
+        bwm: BWM,
+        mdl: bytes,
+        mdx: bytes,
+    ):
         self.kit: Kit = kit
         self.id: str = component_id
         self.name: str = name
@@ -71,11 +81,17 @@ class KitComponent:
         # ---- Toolset UI metadata ----
         # Toolset attaches a Qt QImage preview for display. We deliberately type this as `object | None`
         # to keep `pykotor.common` free of Qt dependencies, while still making the attribute explicit.
-        self.image: object | None = None
+        self.image: QImage | Image | None = None
 
 
 class KitComponentHook:
-    def __init__(self, position: Vector3, rotation: float, edge: int, door: KitDoor):
+    def __init__(
+        self,
+        position: Vector3,
+        rotation: float,
+        edge: int,
+        door: KitDoor,
+    ):
         self.position: Vector3 = position
         self.rotation: float = rotation
         self.edge: int = edge

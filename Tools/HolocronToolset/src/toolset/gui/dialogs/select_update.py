@@ -19,12 +19,13 @@ try:
 except ImportError:
     requests = None  # type: ignore[assignment, unused-ignore]
 
-from loggerplus import RobustLogger
 from qtpy.QtCore import QThread, Qt
 from qtpy.QtGui import QFont
 from qtpy.QtWidgets import QApplication, QCheckBox, QComboBox, QDialog, QFormLayout, QHBoxLayout, QLabel, QMessageBox, QPushButton, QStyle, QTextEdit, QVBoxLayout
 
+from loggerplus import RobustLogger
 from toolset.config import LOCAL_PROGRAM_INFO, is_remote_version_newer, toolset_tag_to_version, version_to_toolset_tag
+from toolset.gui.common.localization import translate as tr
 from toolset.gui.dialogs.asyncloader import ProgressDialog
 from utility.misc import ProcessorArchitecture
 from utility.system.app_process.shutdown import terminate_child_processes
@@ -324,7 +325,7 @@ class UpdateDialog(QDialog):
             result = QMessageBox(  # noqa: F841
                 QMessageBox.Icon.Question,
                 tr("No asset found for this release."),
-                trf("There are no binaries available for download for release '{tag}'.", tag=release.tag_name),  # Would you like to compile this release from source instead?",
+                tr("There are no binaries available for download for release '{tag}'.", tag=release.tag_name),  # Would you like to compile this release from source instead?",
                 QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
                 None,
                 flags=Qt.WindowType.Window | Qt.WindowType.Dialog | Qt.WindowType.WindowStaysOnTopHint,

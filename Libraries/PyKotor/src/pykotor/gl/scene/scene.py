@@ -2,10 +2,6 @@ from __future__ import annotations
 
 from typing import TypeVar, cast
 
-import glm
-
-from glm import mat4, vec3, vec4
-
 from pykotor.common.module import Module
 from pykotor.extract.installation import Installation, SearchLocation
 from pykotor.gl.compat import (
@@ -22,14 +18,15 @@ from pykotor.gl.compat import (
     GL_SRC_ALPHA,
     GL_UNSIGNED_INT_8_8_8_8,
     HAS_PYOPENGL,
+    glBlendFunc,
     glClear,
     glClearColor,
-    glBlendFunc,
     glDepthFunc,
     glDisable,
     glEnable,
     glReadPixels,
 )
+from pykotor.gl.glm_compat import mat4, vec3, vec4, unProject
 from pykotor.gl.models.mdl import Model
 from pykotor.gl.scene.frustum import CullingStats, Frustum
 from pykotor.gl.scene.scene_base import RenderObject, SceneBase
@@ -196,35 +193,35 @@ class Scene(SceneBase):
             return
 
         try:
-        # Poll for completed async resources (non-blocking) - MAIN PROCESS ONLY
+            # Poll for completed async resources (non-blocking) - MAIN PROCESS ONLY
             self.poll_async_resources()
 
-        # ALWAYS build cache - it updates object positions for existing objects!
-        # SceneCache.build_cache updates positions (set_position/set_rotation)
-        # even for objects already in scene.objects. Skipping this causes:
-        # 1. Objects not moving when dragged
-        # 2. Camera snapping not working until rotation
+            # ALWAYS build cache - it updates object positions for existing objects!
+            # SceneCache.build_cache updates positions (set_position/set_rotation)
+            # even for objects already in scene.objects. Skipping this causes:
+            # 1. Objects not moving when dragged
+            # 2. Camera snapping not working until rotation
             SceneCache.build_cache(self)
 
-        # Rebuild object lists if objects changed (cheap check)
+            # Rebuild object lists if objects changed (cheap check)
             if self._objects_dirty or len(self.objects) != self._last_objects_count:
                 self._rebuild_object_caches()
 
-        # Update camera matrices once per frame
+            # Update camera matrices once per frame
             self._update_camera_matrices()
 
-        # Update frustum for culling
+            # Update frustum for culling
             if self.enable_frustum_culling:
                 self.frustum.update_from_camera(self.camera)
 
             if self.enable_frustum_culling:
                 self.culling_stats.reset()
 
-        # Prepare GL state and main shader
+            # Prepare GL state and main shader
             self._prepare_gl_and_shader_optimized()
             self.shader.set_bool("enableLightmap", self.use_lightmap)
 
-        # Render regular objects (models)
+            # Render regular objects (models)
             assert self._cached_regular_objects is not None
             identity = mat4()  # Create once, reuse
             for obj in self._cached_regular_objects:
@@ -234,7 +231,7 @@ class Scene(SceneBase):
                 self.culling_stats.record_object(visible=True)
                 self._render_object(self.shader, obj, identity)
 
-        # Setup plain shader for special objects (once)
+            # Setup plain shader for special objects (once)
             glEnable(GL_BLEND)
             self.plain_shader.use()
             assert self._cached_view is not None and self._cached_projection is not None
@@ -242,7 +239,7 @@ class Scene(SceneBase):
             self.plain_shader.set_matrix4("projection", self._cached_projection)
             self.plain_shader.set_vector4("color", vec4(0.0, 0.0, 1.0, 0.4))
 
-        # Render special objects (icons)
+            # Render special objects (icons)
             assert self._cached_special_objects is not None
             for obj in self._cached_special_objects:
                 if self.enable_frustum_culling and not self._is_object_visible(obj):
@@ -251,18 +248,18 @@ class Scene(SceneBase):
                 self.culling_stats.record_object(visible=True)
                 self._render_object(self.plain_shader, obj, identity)
 
-        # Draw bounding box for selected objects
+            # Draw bounding box for selected objects
             self.plain_shader.set_vector4("color", vec4(1.0, 0.0, 0.0, 0.4))
             for obj in self.selection:
                 obj.cube(self).draw(self.plain_shader, obj.transform())
 
-        # Draw boundary for selected objects
+            # Draw boundary for selected objects
             glDisable(GL_CULL_FACE)
             self.plain_shader.set_vector4("color", vec4(0.0, 1.0, 0.0, 0.8))
             for obj in self.selection:
                 obj.boundary(self).draw(self.plain_shader, obj.transform())
 
-        # Draw non-selected boundaries (only if visible and enabled)
+            # Draw non-selected boundaries (only if visible and enabled)
             if not self.hide_sound_boundaries:
                 assert self._cached_sound_objects is not None
                 for obj in self._cached_sound_objects:
@@ -285,7 +282,7 @@ class Scene(SceneBase):
                 self.plain_shader.set_vector4("color", vec4(1.0, 0.0, 0.0, 0.4))
                 self._render_object(self.plain_shader, self.cursor, identity)
 
-        # End frame statistics
+            # End frame statistics
             if self.enable_frustum_culling:
                 self.culling_stats.end_frame()
         except Exception as exc:  # noqa: BLE001
@@ -513,7 +510,7 @@ class Scene(SceneBase):
             GL_FLOAT,
         )[0][0]  # type: ignore[]
 
-        cursor: vec3 = glm.unProject(
+        cursor: vec3 = unProject(
             vec3(x, self.camera.height - y, zpos),
             view,
             projection,

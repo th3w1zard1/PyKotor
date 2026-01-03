@@ -821,19 +821,11 @@ class IndoorMapRenderer(QWidget):
         alpha: int | None = None,
     ) -> QColor:
         """Resolve the display color for a face."""
+        assert isinstance(material, SurfaceMaterial)
         if self._colorize_materials and material in self._material_colors:
-            color = QColor(self._material_colors[material])
+            color = self._material_colors[material]
         else:
-            if isinstance(material, SurfaceMaterial):
-                is_walkable = material.is_walkable()
-            else:
-                material_value = int(material)
-                try:
-                    material_enum = SurfaceMaterial(material_value)
-                    is_walkable = material_enum in self._walkable_values
-                except ValueError:
-                    # Invalid material value - treat as non-walkable
-                    is_walkable = False
+            is_walkable = material.is_walkable()
             color = QColor(180, 180, 180) if is_walkable else QColor(120, 120, 120)
         if alpha is not None:
             color.setAlpha(alpha)
@@ -1644,7 +1636,12 @@ class IndoorMapRenderer(QWidget):
         """Handle focus out - cancel operations that require focus (standard Windows behavior)."""
         super().focusOutEvent(e)
         # Cancel drag operations when focus is lost (prevents stuck states)
-        if self._dragging or self._dragging_hook or self._dragging_warp or self._marquee_active:
+        if (
+            self._dragging
+            or self._dragging_hook
+            or self._dragging_warp
+            or self._marquee_active
+        ):
             self.end_drag()
             self._dragging_hook = False
             self._dragging_warp = False
