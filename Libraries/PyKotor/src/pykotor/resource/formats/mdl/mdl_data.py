@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any
 
 from pykotor.common.misc import Color
 from pykotor.resource.formats._base import ComparableMixin
-from pykotor.resource.formats.mdl.mdl_types import MDLClassification, MDLGeometryType, MDLNodeFlags, MDLNodeType
+from pykotor.resource.formats.mdl.mdl_types import MDLClassification, MDLDynamicType, MDLGeometryType, MDLNodeFlags, MDLNodeType
 from pykotor.resource.type import ResourceType
 from utility.common.geometry import Vector2, Vector3, Vector4
 
@@ -2111,7 +2111,7 @@ class MDLLight(ComparableMixin):
         Reference: kotorblender:60,62,81,98,108,120-121
     """
 
-    COMPARABLE_FIELDS = ("flare_radius", "light_priority", "ambient_only", "dynamic_type", "shadow", "flare", "fading_light")
+    COMPARABLE_FIELDS = ("flare_radius", "light_priority", "ambient_only", "dynamic_type", "shadow", "flare", "fading_light", "multiplier")
     COMPARABLE_SEQUENCE_FIELDS = ("flare_sizes", "flare_positions", "flare_color_shifts", "flare_textures")
 
     def __init__(
@@ -2127,24 +2127,24 @@ class MDLLight(ComparableMixin):
         
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:43,74,101
         # 1 = ambient-only (no diffuse), 0 = full lighting
-        self.ambient_only: int = 0
+        self.ambient_only: bool = False
         
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:44,78,105
         # Dynamic behavior: 0=static, 1=dynamic, 2=animated
-        self.dynamic_type: int = 0
+        self.dynamic_type: MDLDynamicType = MDLDynamicType.STATIC
         
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:38,63-66,75,102
         # 1 = casts shadows, 0 = no shadows
-        self.shadow: int = 0
+        self.shadow: bool = False
         
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:47,83-84,110
         # 1 = lens flares enabled, 0 = disabled
-        self.flare: int = 0
+        self.flare: bool = False
         
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:46,77,104
         # vendor/reone/src/libs/scene/node/light.cpp:40,52-66
         # 1 = fades in/out at 2.0 units/sec, 0 = instant toggle
-        self.fading_light: int = 0
+        self.fading_light: bool = False
         
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:28,90
         # Lens flare element sizes (one per flare texture)
@@ -2165,6 +2165,19 @@ class MDLLight(ComparableMixin):
         # RGB color stored as Vector3 (controller type 76)
         # Reference: reone:44, docstring line 2098
         self._color: Vector3 = Vector3(1.0, 1.0, 1.0)
+        
+        # vendor/reone/src/libs/scene/node/light.cpp:46
+        # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:40,72,99
+        # Intensity multiplier (controller type 140)
+        self.multiplier: float = 1.0
+
+    @property
+    def radius(self) -> float:
+        return self.flare_radius
+    
+    @radius.setter
+    def radius(self, value: float) -> None:
+        self.flare_radius = value
 
     @property
     def color(self) -> Color:
