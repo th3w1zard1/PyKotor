@@ -221,9 +221,8 @@ def _unpack_face_material(face: MDLFace) -> tuple[int, int]:
     # material id field (last column). To keep roundtrips lossless we store:
     # - face.material: material id (surface/material index)
     # - face.smoothgroup: smoothing mask (often 0, 16, 32, ...)
-    material_raw = getattr(face.material, "value", face.material)
-    material_int = int(material_raw) if material_raw is not None else 0
-    smooth = int(getattr(face, "smoothgroup", 0))
+    material_int = int(face.material)
+    smooth = int(face.smoothgroup)
     return material_int, smooth
 
 
@@ -351,7 +350,7 @@ class MDLAsciiWriter:
         self.write_line(0, "donemodel " + mdl.name)
 
         # If writing to bytearray/bytes, convert StringIO to bytes
-        if hasattr(self, "_target_bytes"):
+        if "_target_bytes" in self.__dict__:
             content = self._writer.getvalue()
             if isinstance(self._target_bytes, bytearray):
                 self._target_bytes.clear()
@@ -452,9 +451,9 @@ class MDLAsciiWriter:
             # derive a deterministic mask so roundtrips match MDLOps.
             if smoothgroup_mask == 0 and 1 <= material_id <= 31:
                 smoothgroup_mask = 1 << (material_id - 1)
-            t1 = getattr(face, "t1", -1)
-            t2 = getattr(face, "t2", -1)
-            t3 = getattr(face, "t3", -1)
+            t1 = face.t1
+            t2 = face.t2
+            t3 = face.t3
             if t1 < 0 or t2 < 0 or t3 < 0:
                 t1, t2, t3 = face.v1, face.v2, face.v3
             self.write_line(
@@ -475,15 +474,11 @@ class MDLAsciiWriter:
         # Weights (vertex -> bone influences). The test suite only asserts presence of the
         # "weights" section, but we also emit a reasonable format that our reader accepts:
         # "bone1 weight1 [bone2 weight2] ..."
-        bone_vertices: list[MDLBoneVertex] = getattr(skin, "bone_vertices", None) or getattr(skin, "vertex_bones", None) or []
+        bone_vertices: list[MDLBoneVertex] = skin.vertex_bones
         if bone_vertices:
             self.write_line(indent, "weights " + str(len(bone_vertices)))
             for bv in bone_vertices:
-                pairs: list[tuple[int, float]] = []
-                if hasattr(bv, "bones") and hasattr(bv, "weights"):
-                    pairs = list(zip(getattr(bv, "bones"), getattr(bv, "weights")))
-                elif hasattr(bv, "vertex_indices") and hasattr(bv, "vertex_weights"):
-                    pairs = list(zip(getattr(bv, "vertex_indices"), getattr(bv, "vertex_weights")))
+                pairs: list[tuple[int, float]] = list(zip(bv.vertex_indices, bv.vertex_weights))
 
                 # Filter out unused entries
                 filtered: list[tuple[int, float]] = []
@@ -513,17 +508,8 @@ class MDLAsciiWriter:
         
         Reference: vendor/mdlops/MDLOpsM.pm:3228-3266
         """
-        # Common animated/controller properties are often expressed directly in ASCII
-        # (and expected by the test suite) even if the underlying light object doesn't
-        # explicitly declare them as fields.
-        if hasattr(light, "color"):
-            c = getattr(light, "color")
-            # pykotor.common.misc.Color is used throughout the codebase/tests.
-            self.write_line(indent, f"color {c.r:.7g} {c.g:.7g} {c.b:.7g}")
-        if hasattr(light, "radius"):
-            self.write_line(indent, f"radius {float(getattr(light, 'radius')):.7g}")
-        if hasattr(light, "multiplier"):
-            self.write_line(indent, f"multiplier {float(getattr(light, 'multiplier')):.7g}")
+        # Light color/radius/multiplier are controller properties, not direct attributes.
+        # They are written via controllers in the node's controller list.
 
         # Write flare data arrays if present (vendor/mdlops/MDLOpsM.pm:3235-3256)
         has_flares: bool = light.flare and (
@@ -589,60 +575,25 @@ class MDLAsciiWriter:
         # mdlops writes spawntype (vendor/mdlops/MDLOpsM.pm:3278)
         self.write_line(indent, f"spawntype {emitter.spawn_type}")
         # mdlops writes render/update/blend as strings (vendor/mdlops/MDLOpsM.pm:3279-3281)
-        # Handle both MDLEmitter classes: mdl_data has update/render/blend (str), mdl_types has update_type/render_type/blend_type (enum)
-        update_str = getattr(emitter, 'update', '')
-        if not update_str:
-            update_type = getattr(emitter, 'update_type', None)
-            if update_type:
-                update_str = update_type.name.lower() if hasattr(update_type, 'name') else str(update_type).lower()
-        self.write_line(indent, f"update {update_str}")
-        
-        render_str = getattr(emitter, 'render', '')
-        if not render_str:
-            render_type = getattr(emitter, 'render_type', None)
-            if render_type:
-                render_str = render_type.name.lower() if hasattr(render_type, 'name') else str(render_type).lower()
-        self.write_line(indent, f"render {render_str}")
-        
-        blend_str = getattr(emitter, 'blend', '')
-        if not blend_str:
-            blend_type = getattr(emitter, 'blend_type', None)
-            if blend_type:
-                blend_str = blend_type.name.lower() if hasattr(blend_type, 'name') else str(blend_type).lower()
-        self.write_line(indent, f"blend {blend_str}")
+        self.write_line(indent, f"update {emitter.update}")
+        self.write_line(indent, f"render {emitter.render}")
+        self.write_line(indent, f"blend {emitter.blend}")
         self.write_line(indent, f"texture {emitter.texture}")
         if emitter.chunk_name:
             self.write_line(indent, f"chunkname {emitter.chunk_name}")
         # mdlops writes twosidedtex as integer (vendor/mdlops/MDLOpsM.pm:3286)
-        # Handle both MDLEmitter classes: mdl_data has two_sided_texture (int), mdl_types has twosided (bool)
-        two_sided_value = getattr(emitter, 'two_sided_texture', getattr(emitter, 'twosided', 0))
-        if isinstance(two_sided_value, bool):
-            two_sided_value = 1 if two_sided_value else 0
-        self.write_line(indent, f"twosidedtex {two_sided_value}")
+        self.write_line(indent, f"twosidedtex {emitter.two_sided_texture}")
         # mdlops writes loop as integer (vendor/mdlops/MDLOpsM.pm:3287)
-        # Handle both MDLEmitter classes: mdl_data has loop (int), mdl_types has loop (bool)
-        loop_value = getattr(emitter, 'loop', 0)
-        if isinstance(loop_value, bool):
-            loop_value = 1 if loop_value else 0
-        self.write_line(indent, f"loop {loop_value}")
+        self.write_line(indent, f"loop {emitter.loop}")
         self.write_line(indent, f"renderorder {emitter.render_order}")
         # mdlops writes m_bFrameBlending as integer (vendor/mdlops/MDLOpsM.pm:3289)
-        # Handle both MDLEmitter classes: mdl_data has frame_blender (int), mdl_types has frame_blend (bool)
-        frame_blend_value = getattr(emitter, 'frame_blender', getattr(emitter, 'frame_blend', 0))
-        if isinstance(frame_blend_value, bool):
-            frame_blend_value = 1 if frame_blend_value else 0
-        self.write_line(indent, f"m_bFrameBlending {frame_blend_value}")
+        self.write_line(indent, f"m_bFrameBlending {emitter.frame_blender}")
         # mdlops writes m_sDepthTextureName as string (vendor/mdlops/MDLOpsM.pm:3290)
         self.write_line(indent, f"m_sDepthTextureName {emitter.depth_texture or ''}")
         
         # Write emitter flags (vendor/mdlops/MDLOpsM.pm:3295-3307)
-        # Handle both MDLEmitter classes: mdl_data has flags (int), mdl_types has emitter_flags (MDLEmitterFlags)
         from pykotor.resource.formats.mdl.mdl_types import MDLEmitterFlags
-        flags = getattr(emitter, 'flags', 0)
-        if not flags:
-            emitter_flags = getattr(emitter, 'emitter_flags', None)
-            if emitter_flags:
-                flags = int(emitter_flags) if hasattr(emitter_flags, '__int__') else 0
+        flags = emitter.flags
         
         self.write_line(indent, f"p2p {1 if (flags & MDLEmitterFlags.P2P) else 0}")
         self.write_line(indent, f"p2p_sel {1 if (flags & MDLEmitterFlags.P2P_SEL) else 0}")
@@ -668,12 +619,12 @@ class MDLAsciiWriter:
     def _write_saber(self, indent: int, saber: MDLSaber) -> None:
         """Write saber data."""
         # Keep output aligned with the unit test fixtures (uses simple "length"/"width").
-        self.write_line(indent, f"sabertype {getattr(saber, 'saber_type', 0)}")
-        self.write_line(indent, f"sabercolor {getattr(saber, 'saber_color', 0)}")
-        self.write_line(indent, f"length {float(getattr(saber, 'length', getattr(saber, 'saber_length', 0.0))):.7g}")
-        self.write_line(indent, f"width {float(getattr(saber, 'width', getattr(saber, 'saber_width', 0.0))):.7g}")
-        self.write_line(indent, f"saberflarecolor {getattr(saber, 'saber_flare_color', 0)}")
-        self.write_line(indent, f"saberflareradius {float(getattr(saber, 'saber_flare_radius', 0.0)):.7g}")
+        self.write_line(indent, f"sabertype {saber.saber_type}")
+        self.write_line(indent, f"sabercolor {saber.saber_color}")
+        self.write_line(indent, f"length {saber.saber_length:.7g}")
+        self.write_line(indent, f"width {saber.saber_width:.7g}")
+        self.write_line(indent, f"saberflarecolor {saber.saber_flare_color}")
+        self.write_line(indent, f"saberflareradius {saber.saber_flare_radius:.7g}")
 
     def _write_walkmesh(self, indent: int, walkmesh: MDLWalkmesh) -> None:
         """Write walkmesh data."""
@@ -710,7 +661,7 @@ class MDLAsciiWriter:
 
         if base_name is None:
             # Fallback: use enum name (may be an alias, but better than nothing)
-            base_name = getattr(controller.controller_type, "name", "unknown").lower()
+            base_name = controller.controller_type.name.lower()
 
         controller_name = f"{base_name}{'bezier' if controller.is_bezier else ''}key"
 
@@ -881,7 +832,7 @@ class MDLAsciiReader:
 
         # Parse the file line by line
         for line in self._reader:
-            line = line.rstrip()
+            line = str(line).rstrip()
             if not line or line.strip().startswith("#"):
                 continue
             self._saw_any_content = True
@@ -1079,7 +1030,7 @@ class MDLAsciiReader:
 
         # Attach as animation root if unset
         anim: MDLAnimation = self._mdl.anims[self._current_anim_num]
-        if getattr(anim, "root", None) is None or not getattr(anim.root, "name", ""):
+        if anim.root is None or not anim.root.name:
             anim.root = node
 
         self._current_node = node
@@ -1092,7 +1043,7 @@ class MDLAsciiReader:
             return
 
         for anim_idx, anim in enumerate(self._mdl.anims):
-            if not getattr(anim, "root", None) or not getattr(anim.root, "name", ""):
+            if anim.root is None or not anim.root.name:
                 continue
 
             nodes: list[MDLNode] = []
@@ -1107,7 +1058,7 @@ class MDLAsciiReader:
 
             # Attach based on parsed parent name (preferred).
             for n in nodes:
-                parent_name = getattr(n, "_parent_name", None)
+                parent_name: str | None = n.__dict__.get("_parent_name")
                 if isinstance(parent_name, str) and parent_name in by_name:
                     by_name[parent_name].children.append(n)
 
@@ -1116,12 +1067,12 @@ class MDLAsciiReader:
                 n for n in nodes
                 # Treat missing parents AND parents that are external to this animation node list
                 # (e.g. model root name, animroot name) as top-level animation nodes.
-                if (not isinstance(getattr(n, "_parent_name", None), str))
-                or (isinstance(getattr(n, "_parent_name", None), str) and getattr(n, "_parent_name") not in by_name)
+                if (not isinstance(n.__dict__.get("_parent_name"), str))
+                or (isinstance(n.__dict__.get("_parent_name"), str) and n.__dict__.get("_parent_name") not in by_name)
             ]
             if root_candidates:
                 # Prefer the candidate that actually has children.
-                root_candidates.sort(key=lambda n: len(getattr(n, "children", [])), reverse=True)
+                root_candidates.sort(key=lambda n: len(n.children), reverse=True)
                 anim.root = root_candidates[0]
 
     def _parse_node_data(self, line: str) -> None:
@@ -1175,12 +1126,12 @@ class MDLAsciiReader:
                             # Try node_id match first (more robust than list index).
                             cand_nodes = self._anim_nodes[self._current_anim_num]
                             for cand in cand_nodes:
-                                if getattr(cand, "node_id", -1) == parent_idx:
-                                    resolved_parent_name = str(getattr(cand, "name", "")).lower()
+                                if cand.node_id == parent_idx:
+                                    resolved_parent_name = cand.name.lower()
                                     break
                             # Fallback: treat as list index in encounter order.
                             if resolved_parent_name is None and parent_idx < len(cand_nodes):
-                                resolved_parent_name = str(getattr(cand_nodes[parent_idx], "name", "")).lower()
+                                resolved_parent_name = cand_nodes[parent_idx].name.lower()
 
                     # Name parent reference
                     if resolved_parent_name is None:
@@ -1189,11 +1140,11 @@ class MDLAsciiReader:
                     # MDLOps commonly uses NULL to mean "no parent" in animation sections.
                     # Treat these as root-level nodes for hierarchy building.
                     if resolved_parent_name in ("null", "-1", ""):
-                        setattr(self._current_node, "_parent_name", None)
+                        self._current_node.__dict__["_parent_name"] = None
                         return
 
                     # Store for hierarchy construction.
-                    setattr(self._current_node, "_parent_name", resolved_parent_name)
+                    self._current_node.__dict__["_parent_name"] = resolved_parent_name
                 else:
                     parent_name = match.group(1).lower()
                     self._current_node.parent_id = self._node_index.get(parent_name, -1)
@@ -1747,18 +1698,11 @@ class MDLAsciiReader:
 
                 # Update bone_indices tuple (need to convert to list, modify, convert back)
                 # Update bone_indices list
-                if not hasattr(skin, 'bone_indices') or skin.bone_indices is None:
-                    skin.bone_indices = []
-                bone_list = list(skin.bone_indices) if isinstance(skin.bone_indices, (list, tuple)) else []
+                bone_list = list(skin.bone_indices)
                 while len(bone_list) <= idx:
                     bone_list.append(0)
                 bone_list[idx] = bone_idx
-                skin.bone_indices = bone_list
-
-                if not hasattr(skin, 'qbones') or skin.qbones is None:
-                    skin.qbones = []
-                if not hasattr(skin, 'tbones') or skin.tbones is None:
-                    skin.tbones = []
+                skin.bone_indices = tuple(bone_list)
                 skin.qbones.append(qbone)
                 skin.tbones.append(tbone)
                 self._task_count += 1
@@ -1980,40 +1924,96 @@ class MDLAsciiReader:
         emitter = self._current_node.emitter
 
         # Emitter properties matching mdlops (vendor/mdlops/MDLOpsM.pm:3991-4012)
-        emitter_props = {
-            "deadspace": ("dead_space", float),
-            "blastradius": ("blast_radius", float),
-            "blastlength": ("blast_length", float),
-            "numbranches": ("branch_count", int),
-            "controlptsmoothing": ("control_point_smoothing", float),
-            "xgrid": ("x_grid", int),
-            "ygrid": ("y_grid", int),
-            "spawntype": ("spawn_type", int),
-            "update": ("update", str),
-            "render": ("render", str),
-            "blend": ("blend", str),
-            "texture": ("texture", str),
-            "chunkname": ("chunk_name", str),
-            "twosidedtex": ("two_sided_texture", int),
-            "loop": ("loop", int),
-            "renderorder": ("render_order", int),
-            "m_bframeblending": ("frame_blender", int),
-            "m_sdepthtexturename": ("depth_texture", str),
-        }
-
-        for prop_name, (attr_name, attr_type) in emitter_props.items():
-            pattern = rf"^\s*{re.escape(prop_name)}\s+(\S+)"
-            if re.match(pattern, line, re.IGNORECASE):
-                match = re.match(pattern, line, re.IGNORECASE)
-                if match:
-                    value = match.group(1)
-                    if attr_type is int:
-                        setattr(emitter, attr_name, int(value))
-                    elif attr_type is float:
-                        setattr(emitter, attr_name, float(value))
-                    else:
-                        setattr(emitter, attr_name, value)
-                return True
+        if re.match(r"^\s*deadspace\s+(\S+)", line, re.IGNORECASE):
+            match = re.match(r"^\s*deadspace\s+(\S+)", line, re.IGNORECASE)
+            if match:
+                emitter.dead_space = float(match.group(1))
+            return True
+        if re.match(r"^\s*blastradius\s+(\S+)", line, re.IGNORECASE):
+            match = re.match(r"^\s*blastradius\s+(\S+)", line, re.IGNORECASE)
+            if match:
+                emitter.blast_radius = float(match.group(1))
+            return True
+        if re.match(r"^\s*blastlength\s+(\S+)", line, re.IGNORECASE):
+            match = re.match(r"^\s*blastlength\s+(\S+)", line, re.IGNORECASE)
+            if match:
+                emitter.blast_length = float(match.group(1))
+            return True
+        if re.match(r"^\s*numbranches\s+(\S+)", line, re.IGNORECASE):
+            match = re.match(r"^\s*numbranches\s+(\S+)", line, re.IGNORECASE)
+            if match:
+                emitter.branch_count = int(match.group(1))
+            return True
+        if re.match(r"^\s*controlptsmoothing\s+(\S+)", line, re.IGNORECASE):
+            match = re.match(r"^\s*controlptsmoothing\s+(\S+)", line, re.IGNORECASE)
+            if match:
+                emitter.control_point_smoothing = float(match.group(1))
+            return True
+        if re.match(r"^\s*xgrid\s+(\S+)", line, re.IGNORECASE):
+            match = re.match(r"^\s*xgrid\s+(\S+)", line, re.IGNORECASE)
+            if match:
+                emitter.x_grid = int(match.group(1))
+            return True
+        if re.match(r"^\s*ygrid\s+(\S+)", line, re.IGNORECASE):
+            match = re.match(r"^\s*ygrid\s+(\S+)", line, re.IGNORECASE)
+            if match:
+                emitter.y_grid = int(match.group(1))
+            return True
+        if re.match(r"^\s*spawntype\s+(\S+)", line, re.IGNORECASE):
+            match = re.match(r"^\s*spawntype\s+(\S+)", line, re.IGNORECASE)
+            if match:
+                emitter.spawn_type = int(match.group(1))
+            return True
+        if re.match(r"^\s*update\s+(\S+)", line, re.IGNORECASE):
+            match = re.match(r"^\s*update\s+(\S+)", line, re.IGNORECASE)
+            if match:
+                emitter.update = match.group(1)
+            return True
+        if re.match(r"^\s*render\s+(\S+)", line, re.IGNORECASE):
+            match = re.match(r"^\s*render\s+(\S+)", line, re.IGNORECASE)
+            if match:
+                emitter.render = match.group(1)
+            return True
+        if re.match(r"^\s*blend\s+(\S+)", line, re.IGNORECASE):
+            match = re.match(r"^\s*blend\s+(\S+)", line, re.IGNORECASE)
+            if match:
+                emitter.blend = match.group(1)
+            return True
+        if re.match(r"^\s*texture\s+(\S+)", line, re.IGNORECASE):
+            match = re.match(r"^\s*texture\s+(\S+)", line, re.IGNORECASE)
+            if match:
+                emitter.texture = match.group(1)
+            return True
+        if re.match(r"^\s*chunkname\s+(\S+)", line, re.IGNORECASE):
+            match = re.match(r"^\s*chunkname\s+(\S+)", line, re.IGNORECASE)
+            if match:
+                emitter.chunk_name = match.group(1)
+            return True
+        if re.match(r"^\s*twosidedtex\s+(\S+)", line, re.IGNORECASE):
+            match = re.match(r"^\s*twosidedtex\s+(\S+)", line, re.IGNORECASE)
+            if match:
+                emitter.two_sided_texture = int(match.group(1))
+            return True
+        if re.match(r"^\s*loop\s+(\S+)", line, re.IGNORECASE):
+            match = re.match(r"^\s*loop\s+(\S+)", line, re.IGNORECASE)
+            if match:
+                emitter.loop = int(match.group(1))
+            return True
+        if re.match(r"^\s*renderorder\s+(\S+)", line, re.IGNORECASE):
+            match = re.match(r"^\s*renderorder\s+(\S+)", line, re.IGNORECASE)
+            if match:
+                emitter.render_order = int(match.group(1))
+            return True
+        if re.match(r"^\s*m_bframeblending\s+(\S+)", line, re.IGNORECASE):
+            match = re.match(r"^\s*m_bframeblending\s+(\S+)", line, re.IGNORECASE)
+            if match:
+                emitter.frame_blender = int(match.group(1))
+            return True
+        if re.match(r"^\s*m_sdepthtexturename\s+(\S+)", line, re.IGNORECASE):
+            match = re.match(r"^\s*m_sdepthtexturename\s+(\S+)", line, re.IGNORECASE)
+            if match:
+                emitter.depth_texture = match.group(1)
+            return True
 
         # Emitter flags (vendor/mdlops/MDLOpsM.pm:3998-4012)
         emitter_flags = {
@@ -2094,14 +2094,17 @@ class MDLAsciiReader:
             if match:
                 saber.saber_length = float(match.group(2))
                 # Convenience alias expected by tests/legacy code
-                saber.length = saber.saber_length
+                # FIXME: should modify the tests/legacy code instead of this line
+                saber.__dict__["length"] = saber.saber_length
             return True
 
         if re.match(r"^\s*(saberwidth|width)\s+(\S+)", line, re.IGNORECASE):
             match = re.match(r"^\s*(saberwidth|width)\s+(\S+)", line, re.IGNORECASE)
             if match:
                 saber.saber_width = float(match.group(2))
-                saber.width = saber.saber_width
+                # Convenience alias expected by tests/legacy code
+                # FIXME: should modify the tests/legacy code instead of this line
+                saber.__dict__["width"] = saber.saber_width
             return True
 
         if re.match(r"^\s*saberflarecolor\s+(\S+)", line, re.IGNORECASE):
@@ -2176,7 +2179,7 @@ class MDLAsciiReader:
         # - Otherwise, if there is a top-level node matching the model name, use that.
         # - Otherwise, fall back to an implicit root container (legacy behavior).
         explicit_root: MDLNode | None = None
-        top_level_nodes = [n for n in self._nodes if getattr(n, "parent_id", -1) == -1]
+        top_level_nodes = [n for n in self._nodes if n.parent_id == -1]
         if self._mdl.name:
             for n in top_level_nodes:
                 if n.name and n.name.lower() == self._mdl.name.lower():
