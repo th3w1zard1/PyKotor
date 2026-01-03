@@ -3153,8 +3153,14 @@ class MDLBinaryWriter:
         bin_node.trimesh.offset_to_counters = node_offset + bin_node.inverted_counters_offset(self.game)
         bin_node.trimesh.offset_to_indices_counts = node_offset + bin_node.indices_counts_offset(self.game)
         bin_node.trimesh.offset_to_indices_offset = node_offset + bin_node.indices_offsets_offset(self.game)
-        if bin_node.trimesh.indices_offsets_count and bin_node.trimesh.indices_offsets:
-            bin_node.trimesh.indices_offsets = [node_offset + bin_node.indices_offset(self.game)]
+        # indices_offsets stores offsets relative to the start of the indices data block
+        # If indices_offsets is empty but count > 0, create a single offset pointing to the indices data start
+        # Otherwise preserve the original relative offsets
+        if bin_node.trimesh.indices_offsets_count > 0 and not bin_node.trimesh.indices_offsets:
+            # No offsets preserved - create a single offset pointing to indices data start (relative offset = 0)
+            bin_node.trimesh.indices_offsets = [0]
+            bin_node.trimesh.indices_offsets_count = bin_node.trimesh.indices_offsets_count2 = 1
+        # If indices_offsets already has values, preserve them (they're already relative offsets)
 
         bin_node.trimesh.offset_to_faces = node_offset + bin_node.faces_offset(self.game)
         bin_node.trimesh.vertices_offset = node_offset + bin_node.vertices_offset(self.game)
