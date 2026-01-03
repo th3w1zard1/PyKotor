@@ -1897,8 +1897,6 @@ class MDLBinaryReader:
                                     can_read_count = min(required_vertex_count, max_vertices_from_mdx)
                                 else:
                                     can_read_count = 0
-                                else:
-                                    can_read_count = 0
                     elif bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
                         # Check MDL bounds
                         if bin_node.trimesh.faces_count == 0:
