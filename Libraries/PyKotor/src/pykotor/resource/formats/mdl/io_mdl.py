@@ -1941,8 +1941,8 @@ class MDLBinaryReader:
                 node.node_type = MDLNodeType.TRIMESH
             node.mesh.shadow = bool(bin_node.trimesh.has_shadow)
             # render is stored as uint8 in binary (0 or 1), convert to bool for MDLMesh
-            # Ensure we preserve the exact value: 0 -> False, any non-zero -> True
-            node.mesh.render = bool(bin_node.trimesh.render) if bin_node.trimesh.render != 0 else False
+            # bool(0) = False, bool(1) = True, bool(any non-zero) = True
+            node.mesh.render = bool(bin_node.trimesh.render)
             node.mesh.background_geometry = bool(bin_node.trimesh.background)
             node.mesh.has_lightmap = bool(bin_node.trimesh.has_lightmap)
             node.mesh.beaming = bool(bin_node.trimesh.beaming)
@@ -2253,34 +2253,31 @@ class MDLBinaryReader:
                 elif bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
                     # Read all vertices from MDL
                     if vcount > 0:
-                        vertices_bytes = vcount * 12
-                        if bin_node.trimesh.vertices_offset + vertices_bytes <= self._reader.size():
-                            self._reader.seek(bin_node.trimesh.vertices_offset)
-                            # Read all vertices up to vcount, preserving index positions for face vertex references
-                            # Must maintain 1:1 index mapping - faces reference indices directly, so we can't skip vertices
-                            for i in range(vcount):
-                                if self._reader.position() + 12 <= self._reader.size():
-                                    try:
-                                        vertex = self._reader.read_vector3()
-                                        # Basic sanity check
-                                        if all(-1e6 <= coord <= 1e6 for coord in (vertex.x, vertex.y, vertex.z)) and all(not (coord != coord) for coord in (vertex.x, vertex.y, vertex.z)):
-                                            node.mesh.vertex_positions.append(vertex)
-                                        else:
-                                            # Invalid vertex data - use null vertex to preserve index position
-                                            node.mesh.vertex_positions.append(Vector3.from_null())
-                                    except Exception:
-                                        # Can't read this vertex - use null vertex to preserve index position
+                        self._reader.seek(bin_node.trimesh.vertices_offset)
+                        # Read all vertices up to vcount, preserving index positions for face vertex references
+                        # Must maintain 1:1 index mapping - faces reference indices directly, so we can't skip vertices
+                        # Read as many vertices as possible from file, pad with null vertices if needed
+                        for i in range(vcount):
+                            if self._reader.position() + 12 <= self._reader.size():
+                                try:
+                                    vertex = self._reader.read_vector3()
+                                    # Basic sanity check
+                                    if all(-1e6 <= coord <= 1e6 for coord in (vertex.x, vertex.y, vertex.z)) and all(not (coord != coord) for coord in (vertex.x, vertex.y, vertex.z)):
+                                        node.mesh.vertex_positions.append(vertex)
+                                    else:
+                                        # Invalid vertex data - use null vertex to preserve index position
                                         node.mesh.vertex_positions.append(Vector3.from_null())
-                                else:
-                                    # Bounds check failed - use null vertex to preserve index position
+                                except Exception:
+                                    # Can't read this vertex - use null vertex to preserve index position
                                     node.mesh.vertex_positions.append(Vector3.from_null())
-                            # All vertices should have been read (even if some are null)
-                            if len(node.mesh.vertex_positions) != vcount:
-                                # This shouldn't happen, but if it does, fall back
-                                vcount_verified = False
-                        else:
-                            # Can't read all vertices - fall back
-                            vcount_verified = False
+                            else:
+                                # Bounds check failed - use null vertex to preserve index position
+                                node.mesh.vertex_positions.append(Vector3.from_null())
+                        # All vertices should have been read (even if some are null)
+                        if len(node.mesh.vertex_positions) != vcount:
+                            # This shouldn't happen, but if it does, pad with null vertices
+                            while len(node.mesh.vertex_positions) < vcount:
+                                node.mesh.vertex_positions.append(Vector3.from_null())
             elif bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
                 # Read from MDX
                 if bin_node.trimesh.mdx_data_offset not in (0, 0xFFFFFFFF) and bin_node.trimesh.mdx_data_size > 0 and vcount > 0:
