@@ -47,24 +47,6 @@ updates:
     prefix: chore(batchpatcher)
     include: scope
 - package-ecosystem: pip
-  directory: /Tools/HolocronAI
-  schedule:
-    interval: weekly
-    day: monday
-  open-pull-requests-limit: 5
-  commit-message:
-    prefix: chore(holocronai)
-    include: scope
-- package-ecosystem: pip
-  directory: /Tools/HolocronToolset
-  schedule:
-    interval: weekly
-    day: monday
-  open-pull-requests-limit: 5
-  commit-message:
-    prefix: chore(holocrontoolset)
-    include: scope
-- package-ecosystem: pip
   directory: /Tools/HoloGenerator
   schedule:
     interval: weekly
@@ -90,6 +72,24 @@ updates:
   open-pull-requests-limit: 5
   commit-message:
     prefix: chore(holopazaak)
+    include: scope
+- package-ecosystem: pip
+  directory: /Tools/HolocronAI
+  schedule:
+    interval: weekly
+    day: monday
+  open-pull-requests-limit: 5
+  commit-message:
+    prefix: chore(holocronai)
+    include: scope
+- package-ecosystem: pip
+  directory: /Tools/HolocronToolset
+  schedule:
+    interval: weekly
+    day: monday
+  open-pull-requests-limit: 5
+  commit-message:
+    prefix: chore(holocrontoolset)
     include: scope
 - package-ecosystem: pip
   directory: /Tools/KotorCLI
