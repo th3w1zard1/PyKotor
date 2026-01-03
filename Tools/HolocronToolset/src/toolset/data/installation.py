@@ -46,10 +46,24 @@ if TYPE_CHECKING:
 
 
 class HTInstallation(Installation):
+    """Extended Installation class for Holocron Toolset with 2DA caching and game-specific features.
+    
+    This class provides access to canonical 2DA file names that are verified to be loaded
+    by the game engine. All 2DA constants below reference files confirmed through reverse
+    engineering analysis of swkotor.exe and swkotor2.exe using Ghidra (Reva MCP server).
+    
+    See TwoDARegistry class docstring for detailed function references showing where each
+    2DA file is loaded in the game executables.
+    """
+    # All 2DA file names below are verified to be loaded by the game engine.
+    # See Libraries/PyKotor/src/pykotor/extract/twoda.py TwoDARegistry class for details.
     TwoDA_APPEARANCES: str = TwoDARegistry.APPEARANCES
     TwoDA_BASEITEMS: str = TwoDARegistry.BASEITEMS
     TwoDA_CAMERAS: str = TwoDARegistry.CAMERAS
     TwoDA_CLASSES: str = TwoDARegistry.CLASSES
+    TwoDA_CLASSPOWERGAIN: str = TwoDARegistry.CLASSPOWERGAIN
+    TwoDA_COMBATANIMATIONS: str = TwoDARegistry.COMBATANIMATIONS
+    TwoDA_CREATURESPEED: str = TwoDARegistry.CREATURESPEED
     TwoDA_CURSORS: str = TwoDARegistry.CURSORS
     TwoDA_DIALOG_ANIMS: str = TwoDARegistry.DIALOG_ANIMS
     TwoDA_DOORS: str = TwoDARegistry.DOORS
@@ -478,13 +492,20 @@ class HTInstallation(Installation):
     def ht_get_cache_2da(self, resname: str) -> TwoDA | None:
         """Gets a 2DA resource from the cache or loads it if not present.
 
+        This method caches 2DA files that are verified to be loaded by the game engine.
+        All 2DA files accessible through this cache are confirmed through reverse engineering
+        analysis of swkotor.exe and swkotor2.exe using Ghidra (Reva MCP server).
+        
+        See TwoDARegistry class in Libraries/PyKotor/src/pykotor/extract/twoda.py for the
+        complete list of verified 2DA files and their game engine loading functions.
+
         Args:
         ----
-            resname: The name of the 2DA resource to retrieve
+            resname: The name of the 2DA resource to retrieve (e.g., "appearance", "classes")
 
         Returns:
         -------
-            2DA: The retrieved 2DA data
+            TwoDA | None: The retrieved 2DA data, or None if not found
 
         Processing Logic:
         ----------------
@@ -550,13 +571,23 @@ class HTInstallation(Installation):
 
         return relevant_resources
 
-    def ht_batch_cache_2da(self, resnames: list[str], *, reload: bool = False):
+    def ht_batch_cache_2da(
+        self,
+        resnames: list[str],
+        *,
+        reload: bool = False,
+    ):
         """Cache 2D array resources in batch.
+
+        This method efficiently caches multiple 2DA files that are verified to be loaded
+        by the game engine. All 2DA files accessible through this cache are confirmed
+        through reverse engineering analysis of swkotor.exe and swkotor2.exe using Ghidra
+        (Reva MCP server).
 
         Args:
         ----
-            resnames: List of resource names to cache
-            reload: Whether to reload cached resources
+            resnames: List of resource names to cache (e.g., ["appearance", "classes", "feat"])
+            reload: Whether to reload cached resources even if already cached
 
         Processing Logic:
         ----------------
@@ -708,151 +739,3 @@ class HTInstallation(Installation):
         if self._tsl is None:
             self._tsl = self.game().is_k2()
         return self._tsl
-
-    def is_save_corrupted(self, save_path: Path) -> bool:
-        """Check if a save game is corrupted using a lightweight check.
-        
-        This method performs a quick check for EventQueue corruption without
-        loading the entire save structure into memory.
-        
-        Args:
-        ----
-            save_path: Path to the save game folder
-            
-        Returns:
-        -------
-            True if the save is corrupted, False otherwise
-        """
-        try:
-            # Use lightweight corruption check that doesn't load the entire save
-            return self._check_save_corruption_lightweight(save_path)
-        except Exception:  # noqa: BLE001  # pylint: disable=broad-exception-caught
-            # If we can't check the save, assume it's not corrupted (safer than false positives)
-            RobustLogger().debug(f"Failed to check corruption for save at '{save_path}'")
-            return False
-    
-    def _check_save_corruption_lightweight(self, save_path: Path) -> bool:
-        """Lightweight corruption check that doesn't fully parse saves.
-        
-        Only reads the SAVEGAME.sav ERF and checks for EventQueue entries
-        in cached module IFOs without parsing everything else.
-        
-        Args:
-        ----
-            save_path: Path to the save game folder
-            
-        Returns:
-        -------
-            True if corrupted (has EventQueue entries), False otherwise
-        """
-        from pykotor.resource.formats.erf.erf_auto import read_erf
-        from pykotor.resource.formats.gff.gff_auto import read_gff
-        from pykotor.resource.type import ResourceType
-        
-        savegame_sav = save_path / "SAVEGAME.sav"
-        if not savegame_sav.exists():
-            return False
-        
-        try:
-            # Read the outer ERF (SAVEGAME.sav)
-            outer_erf = read_erf(savegame_sav)
-            
-            # Check each .sav resource (cached modules) for EventQueue corruption
-            for resource in outer_erf:
-                if resource.restype is not ResourceType.SAV:
-                    continue
-                
-                # Read the nested module ERF
-                try:
-                    inner_erf = read_erf(resource.data)
-                    
-                    # Look for module.ifo in this cached module
-                    for inner_resource in inner_erf:
-                        if str(inner_resource.resref).lower() == "module" and inner_resource.restype is ResourceType.IFO:
-                            # Check for EventQueue
-                            ifo_gff = read_gff(inner_resource.data)
-                            if ifo_gff.root.exists("EventQueue"):
-                                event_queue = ifo_gff.root.get_list("EventQueue")
-                                if event_queue and len(event_queue) > 0:
-                                    return True  # Corrupted!
-                            break  # Only one module.ifo per cached module
-                except Exception:  # noqa: BLE001
-                    continue  # Skip malformed nested ERFs
-                    
-            return False  # No corruption found
-        except Exception:  # noqa: BLE001
-            return False  # If we can't parse, assume not corrupted
-    
-    def fix_save_corruption(self, save_path: Path) -> bool:
-        """Fix EventQueue corruption in a save by clearing EventQueues from cached modules.
-        
-        This method clears the EventQueue list from all cached module IFOs in the save,
-        which is a common fix for save corruption issues.
-        
-        Args:
-        ----
-            save_path: Path to the save game folder
-            
-        Returns:
-        -------
-            True if any corruption was fixed, False if no corruption was found or fix failed
-        """
-        from pykotor.resource.formats.erf.erf_auto import read_erf, write_erf
-        from pykotor.resource.formats.gff.gff_auto import bytes_gff, read_gff
-        from pykotor.resource.formats.gff.gff_data import GFFList
-        from pykotor.resource.type import ResourceType
-        
-        savegame_sav = save_path / "SAVEGAME.sav"
-        if not savegame_sav.exists():
-            return False
-        
-        try:
-            # Read the outer ERF (SAVEGAME.sav)
-            outer_erf = read_erf(savegame_sav)
-            any_fixed = False
-            
-            # Process each .sav resource (cached modules)
-            for resource in outer_erf:
-                if resource.restype is not ResourceType.SAV:
-                    continue
-                
-                try:
-                    inner_erf = read_erf(resource.data)
-                    inner_modified = False
-                    
-                    # Look for module.ifo in this cached module
-                    for inner_resource in inner_erf:
-                        if str(inner_resource.resref).lower() == "module" and inner_resource.restype is ResourceType.IFO:
-                            # Check and clear EventQueue
-                            ifo_gff = read_gff(inner_resource.data)
-                            if ifo_gff.root.exists("EventQueue"):
-                                event_queue = ifo_gff.root.get_list("EventQueue")
-                                if event_queue and len(event_queue) > 0:
-                                    # Clear the EventQueue
-                                    ifo_gff.root.set_list("EventQueue", GFFList())
-                                    # Update the resource data
-                                    inner_erf.set_data(str(inner_resource.resref), inner_resource.restype, bytes_gff(ifo_gff, ResourceType.IFO))
-                                    inner_modified = True
-                                    any_fixed = True
-                            break
-                    
-                    if inner_modified:
-                        # Update the outer ERF with the modified inner ERF
-                        from pykotor.resource.formats.erf.erf_auto import bytes_erf
-                        outer_erf.set_data(str(resource.resref), resource.restype, bytes_erf(inner_erf, ResourceType.SAV))
-                        
-                except Exception as e:  # noqa: BLE001
-                    RobustLogger().warning(f"Failed to process cached module {resource.resref}: {e}")
-                    continue
-            
-            if any_fixed:
-                # Write the fixed outer ERF back to disk
-                write_erf(outer_erf, savegame_sav, ResourceType.SAV)
-                RobustLogger().info(f"Fixed EventQueue corruption in save: {save_path.name}")
-                return True
-                
-            return False  # No corruption to fix
-            
-        except Exception as e:  # noqa: BLE001
-            RobustLogger().exception(f"Failed to fix corruption for save at '{save_path}': {e}")
-            return False
