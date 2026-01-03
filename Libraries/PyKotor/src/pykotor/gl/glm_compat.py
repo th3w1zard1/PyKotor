@@ -392,9 +392,9 @@ def decompose(
     m = transform._data
 
     # Extract translation
-    translation.x = m[3, 0]
-    translation.y = m[3, 1]
-    translation.z = m[3, 2]
+    translation.x = float(m[3, 0])
+    translation.y = float(m[3, 1])
+    translation.z = float(m[3, 2])
 
     # Extract scale
     scale_x = math.sqrt(m[0, 0]**2 + m[0, 1]**2 + m[0, 2]**2)
