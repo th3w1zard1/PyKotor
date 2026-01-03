@@ -720,7 +720,12 @@ class _NodeHeader:
         if children_count_raw > 0x7FFFFFFF:
             children_count_raw = 0x7FFFFFFF
         self.children_count = children_count_raw
-        self.children_count2 = children_count_raw
+        # Read children_count2 as a separate field to maintain correct file position
+        # The binary format has two separate uint32 fields for children_count and children_count2
+        children_count2_raw = reader.read_uint32()
+        if children_count2_raw > 0x7FFFFFFF:
+            children_count2_raw = 0x7FFFFFFF
+        self.children_count2 = children_count2_raw
         self.offset_to_controllers = reader.read_uint32()
         self.controller_count = reader.read_uint32()
         self.controller_count2 = reader.read_uint32()
