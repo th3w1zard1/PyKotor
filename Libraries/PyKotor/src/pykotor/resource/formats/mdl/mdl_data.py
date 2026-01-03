@@ -2161,6 +2161,30 @@ class MDLLight(ComparableMixin):
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:27,88
         # Texture names for lens flare elements (e.g. "flaretex01")
         self.flare_textures: list[str] = []
+        
+        # RGB color stored as Vector3 (controller type 76)
+        # Reference: reone:44, docstring line 2098
+        self._color: Vector3 = Vector3(1.0, 1.0, 1.0)
+
+    @property
+    def color(self) -> Color:
+        """RGB color of the light.
+        
+        Returns:
+        -------
+            Color instance representing the light's RGB color.
+        """
+        return Color.from_rgb_vector3(self._color)
+    
+    @color.setter
+    def color(self, value: Color) -> None:
+        """Set the RGB color of the light.
+        
+        Args:
+        ----
+            value: Color instance to set as the light's color.
+        """
+        self._color = value.rgb_vector3()
 
     def __repr__(self):
         return f"{self.__class__.__name__}(flare_radius={self.flare_radius!r}, light_priority={self.light_priority!r}, ambient_only={self.ambient_only!r}, dynamic_type={self.dynamic_type!r}, shadow={self.shadow!r}, flare={self.flare!r}, fading_light={self.fading_light!r})"
