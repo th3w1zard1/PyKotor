@@ -426,19 +426,19 @@ class _Node:
         # Write indices counts array
         for count in self.trimesh.indices_counts:
             writer.write_uint32(count)
-        
+
         # Write indices offsets array
         for offset in self.trimesh.indices_offsets:
             writer.write_uint32(offset)
-        
+
         # Write inverted counters array (array3)
         for counter in self.trimesh.inverted_counters:
             writer.write_uint32(counter)
-        
+
         # Write faces (full _Face structs)
         for face in self.trimesh.faces:
             face.write(writer)
-        
+
         # Write vertices (Vector3 array)
         for vertex in self.trimesh.vertices:
             writer.write_vector3(vertex)
@@ -863,10 +863,10 @@ class _TrimeshHeader:
 
             # Only run recovery if vertex_count is invalid AND vertices are not in MDX
             # If mdx_data_offset is valid, vertices are in MDX, so vertices_offset being 0/0xFFFFFFFF is expected
-            # TODO: ensure the comparison still happen
+            # TODO: ensure accuracy here though.
             mdx_valid = self.mdx_data_offset not in (0, 0xFFFFFFFF) and self.mdx_data_offset <= reader.size()
             vertex_count_invalid = self.vertex_count < 0 or self.vertex_count > 1_000_000
-            
+
             if vertex_count_invalid or (not _valid(int(self.vertex_count), int(self.vertices_offset)) and not mdx_valid):
                 # Prefer the legacy MDLOps-style offsets first, then our writer's layout.
                 for off_vc, off_mdx in ((304, 324), (300, 352)):
@@ -891,21 +891,21 @@ class _TrimeshHeader:
             if self.offset_to_indices_counts <= reader.size() and (self.offset_to_indices_counts + counts_bytes) <= reader.size():
                 reader.seek(self.offset_to_indices_counts)
                 self.indices_counts = [reader.read_uint32() for _ in range(self.indices_counts_count)]
-        
+
         # Indices offsets array
         if self.offset_to_indices_offset not in (0, 0xFFFFFFFF) and self.indices_offsets_count > 0:
             offsets_bytes = self.indices_offsets_count * 4  # uint32 per offset
             if self.offset_to_indices_offset <= reader.size() and (self.offset_to_indices_offset + offsets_bytes) <= reader.size():
                 reader.seek(self.offset_to_indices_offset)
                 self.indices_offsets = [reader.read_uint32() for _ in range(self.indices_offsets_count)]
-        
+
         # Inverted counters (array3) - read from offset_to_counters when counters_count > 0
         if self.offset_to_counters not in (0, 0xFFFFFFFF) and self.counters_count > 0:
             counters_bytes = self.counters_count * 4  # uint32 per counter
             if self.offset_to_counters <= reader.size() and (self.offset_to_counters + counters_bytes) <= reader.size():
                 reader.seek(self.offset_to_counters)
                 self.inverted_counters = [reader.read_uint32() for _ in range(self.counters_count)]
-        
+
         # Faces
         if self.offset_to_faces not in (0, 0xFFFFFFFF) and self.faces_count > 0:
             faces_bytes = self.faces_count * _Face.SIZE
@@ -1797,6 +1797,7 @@ class MDLBinaryReader:
             # TODO: Read AABB/walkmesh data from binary when AABB flag is set
             # For now, create empty walkmesh to preserve the AABB node type
             from pykotor.resource.formats.mdl.mdl_data import MDLWalkmesh
+
             if node.aabb is None:
                 node.aabb = MDLWalkmesh()
 
@@ -1829,9 +1830,10 @@ class MDLBinaryReader:
             # Vertex positions can be stored either in MDL (K1-style) or in MDX blocks.
             # Preserve vertex_count even if the MDL vertex table wasn't readable.
             vcount = bin_node.trimesh.vertex_count
-            
+
             # Validate vertex_count - if it's suspiciously low (1 or 0) but we have faces, it's likely wrong
             # Faces typically require at least 3 vertices, so vertex_count of 1 with faces is suspicious
+            vcount_corrected = False
             if vcount <= 1 and bin_node.trimesh.faces_count > 0:
                 # Try to infer correct vertex_count from faces
                 max_vertex_index = 0
@@ -1843,23 +1845,28 @@ class MDLBinaryReader:
                     inferred_count = max_vertex_index + 1
                     # Only use if it's reasonable (not more than 10x the face count, and at least 3)
                     if 3 <= inferred_count <= bin_node.trimesh.faces_count * 10:
-                        vcount = inferred_count
                         # Also check if we can read that many vertices from the offset
                         if bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
                             inferred_bytes = inferred_count * 12
-                            if bin_node.trimesh.vertices_offset + inferred_bytes > self._reader.size():
+                            if bin_node.trimesh.vertices_offset + inferred_bytes <= self._reader.size():
+                                vcount = inferred_count
+                                vcount_corrected = True
+                            else:
                                 # Can't read that many, so use a more conservative estimate
                                 # Try to read as many as we can
                                 available_bytes = self._reader.size() - bin_node.trimesh.vertices_offset
                                 if available_bytes >= 12:  # At least one vertex
                                     vcount = min(inferred_count, available_bytes // 12)
-                                else:
-                                    vcount = inferred_count  # Use inferred anyway, will fail gracefully
-            
+                                    vcount_corrected = True
+                        elif bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
+                            # Vertices are in MDX, use inferred count
+                            vcount = inferred_count
+                            vcount_corrected = True
+
             node.mesh.vertex_positions = []
             
-            # If vertices were read by read_extra and count matches, use them directly
-            if bin_node.trimesh.vertices and len(bin_node.trimesh.vertices) == vcount:
+            # If vertices were read by read_extra and count matches (and wasn't corrected), use them directly
+            if not vcount_corrected and bin_node.trimesh.vertices and len(bin_node.trimesh.vertices) == vcount:
                 node.mesh.vertex_positions = bin_node.trimesh.vertices.copy()
             elif bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
                 # Read from MDX
@@ -1903,7 +1910,7 @@ class MDLBinaryReader:
                 elif bin_node.trimesh.vertices:
                     # Use vertices read by read_extra
                     node.mesh.vertex_positions = bin_node.trimesh.vertices.copy()
-                    
+
             # Fallback: create null vertices if we couldn't read any, but only if vcount > 0
             if not node.mesh.vertex_positions and vcount > 0:
                 # Don't create null vertices if we have some vertices but not all
@@ -2762,7 +2769,9 @@ class MDLBinaryWriter:
         for bin_node, mdl_node, orig_idx, node_id in node_pairs_sorted:
             if bin_node.trimesh:
                 if _DEBUG_MDL:
-                    print(f"DEBUG _write_all: Calling _update_mdx for node {mdl_node.name} (node_id={node_id}, orig_idx={orig_idx}, bin_node_id={id(bin_node)}, trimesh_id={id(bin_node.trimesh)})")
+                    print(
+                        f"DEBUG _write_all: Calling _update_mdx for node {mdl_node.name} (node_id={node_id}, orig_idx={orig_idx}, bin_node_id={id(bin_node)}, trimesh_id={id(bin_node.trimesh)})"
+                    )
                 self._update_mdx(bin_node, mdl_node)
                 if _DEBUG_MDL and bin_node.trimesh.texture1:
                     print(f"DEBUG _write_all: After _update_mdx, node {mdl_node.name} has tex1_off={bin_node.trimesh.mdx_texture1_offset} (trimesh_id={id(bin_node.trimesh)})")
@@ -2812,7 +2821,7 @@ class MDLBinaryWriter:
                 print(f"DEBUG _write_all: After writing node {i}, texture1_offset={bin_node.trimesh.mdx_texture1_offset}")
 
         # Write to MDL
-        mdl_writer = BinaryWriter.to_auto(self._target)
+        mdl_writer: BinaryWriter = BinaryWriter.to_auto(self._target)
         mdl_writer.write_uint32(0)
         mdl_writer.write_uint32(self._writer.size())
         mdl_writer.write_uint32(self._writer_ext.size())
