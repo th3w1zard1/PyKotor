@@ -69,7 +69,7 @@ jobs:
           TAG="${{ steps.determine_tag.outputs.tag_name }}"
           # Extract tool suffix from tag (e.g., test-v3.1.2-toolset -> toolset)
           TAG_SUFFIX=$(echo "$TAG" | sed 's/^test-v[^-]*-//' | sed 's/^test-[^-]*-//' | sed 's/^test-v//' | sed 's/^test-//' | sed 's/^v[^-]*-//')
-          
+
           # Map tag suffix to tool name
           case "$TAG_SUFFIX" in
             toolset)
@@ -112,7 +112,7 @@ jobs:
               fi
               ;;
           esac
-          
+
           # Find config file dynamically
           CONFIG_FILE=""
           if [ -f "Tools/$TOOL_NAME/src/$TOOL_NAME_LOWER/config.py" ]; then
@@ -124,12 +124,12 @@ jobs:
           elif [ -f "Tools/$TOOL_NAME/src/$TOOL_NAME_LOWER/__init__.py" ]; then
             CONFIG_FILE="Tools/$TOOL_NAME/src/$TOOL_NAME_LOWER/__init__.py"
           fi
-          
+
           if [ -z "$CONFIG_FILE" ]; then
             echo "Could not find config file for $TOOL_NAME"
             exit 1
           fi
-          
+
           echo "tool_name=$TOOL_NAME" >> $GITHUB_OUTPUT
           echo "tool_name_lower=$TOOL_NAME_LOWER" >> $GITHUB_OUTPUT
           echo "config_file=$CONFIG_FILE" >> $GITHUB_OUTPUT
@@ -197,6 +197,10 @@ jobs:
             sed -i "s/__version__ = \"[^\"]*\"/__version__ = \"$VERSION\"/" "$CONFIG_FILE"
             echo "Updated __version__:"
             grep "__version__" "$CONFIG_FILE"
+          else
+            echo "❌ ERROR: No recognized version key found in $CONFIG_FILE"
+            echo "Expected one of: \"currentVersion\", CURRENT_VERSION, or __version__"
+            exit 1
           fi
         shell: bash
 
@@ -467,7 +471,7 @@ jobs:
         $toolName = "${{ needs.validate.outputs.tool_name }}"
         $toolNameLower = "${{ needs.validate.outputs.tool_name_lower }}"
         $venvName = ".venv_${toolNameLower}_${{ matrix.os }}_${{ matrix.python_pypy }}_${{ matrix.python-version }}_${{ matrix.architecture }}"
-        
+
         try {
           . ./install_python_venv.ps1 -noprompt -venv_name $venvName -force_python_version ${{ matrix.python-version }}
           Write-Host "Python executable path: $pythonExePath"
@@ -487,7 +491,7 @@ jobs:
           $env:QT_API = "${{ matrix.qt_version }}"
           $output = ""
           $errorLines = @()
-          
+
           # Find deps script dynamically
           $depsScript = ""
           if (Test-Path "compile/deps_${toolNameLower}.ps1") {
@@ -497,7 +501,7 @@ jobs:
           } elseif ($toolNameLower -eq "toolset" -and (Test-Path "compile/deps_toolset.ps1")) {
             $depsScript = "compile/deps_toolset.ps1"
           }
-          
+
           if ($depsScript -and (Test-Path $depsScript)) {
             Write-Host "Running deps script: $depsScript"
             . ./$depsScript -noprompt -venv_name $venvName 2>&1 | ForEach-Object {
@@ -508,7 +512,7 @@ jobs:
               }
             }
           }
-          
+
           if ($errorLines.Count -gt 0) {
             $errorLines | ForEach-Object { Write-Error $_ }
             Add-Content -Path $env:GITHUB_OUTPUT -Value "success=false"
@@ -516,7 +520,7 @@ jobs:
           } else {
             Add-Content -Path $env:GITHUB_OUTPUT -Value "success=true"
           }
-          
+
           # Install Qt dependencies if needed
           if ($toolNameLower -eq "toolset" -or $toolNameLower -eq "holocrontoolset") {
             pip install "setuptools==69.5.1"
@@ -544,7 +548,7 @@ jobs:
         $output = ""
         $env:PYTHONOPTIMIZE = "1"
         $env:QT_API = "${{ matrix.qt_version }}"
-        
+
         # Find compile script dynamically
         $compileScript = ""
         if (Test-Path "compile/compile_${toolNameLower}.ps1") {
@@ -554,12 +558,12 @@ jobs:
         } elseif ($toolNameLower -eq "toolset" -and (Test-Path "compile/compile_toolset.ps1")) {
           $compileScript = "compile/compile_toolset.ps1"
         }
-        
+
         if (-not $compileScript -or -not (Test-Path $compileScript)) {
           Write-Error "Could not find compile script for $toolName"
           exit 1
         }
-        
+
         Write-Host "Running compile script: $compileScript"
         . ./$compileScript -noprompt -venv_name $venvName -upx_dir $upxDir 2>&1 | ForEach-Object {
           Write-Output $_.ToString()
@@ -661,12 +665,12 @@ jobs:
           # Try to find and update latest version keys dynamically
           LATEST_KEY="${TOOL_NAME_LOWER}LatestVersion"
           BETA_KEY="${TOOL_NAME_LOWER}LatestBetaVersion"
-          
+
           if grep -q "\"$LATEST_KEY\"" "$CONFIG_FILE"; then
             sed -i "s/\"$LATEST_KEY\": \"[^\"]*\"/\"$LATEST_KEY\": \"$VERSION\"/" "$CONFIG_FILE"
             echo "Updated $LATEST_KEY"
           fi
-          
+
           if grep -q "\"$BETA_KEY\"" "$CONFIG_FILE"; then
             sed -i "s/\"$BETA_KEY\": \"[^\"]*\"/\"$BETA_KEY\": \"$VERSION\"/" "$CONFIG_FILE"
             echo "Updated $BETA_KEY"
@@ -678,7 +682,7 @@ jobs:
             ESCAPED_NOTES=$(echo "$NOTES" | head -n 1 | sed 's/[&/\]/\\&/g' | sed 's/"/\\"/g')
             NOTES_KEY="${TOOL_NAME_LOWER}LatestNotes"
             BETA_NOTES_KEY="${TOOL_NAME_LOWER}LatestBetaNotes"
-            
+
             if grep -q "\"$NOTES_KEY\"" "$CONFIG_FILE"; then
               sed -i "s/\"$NOTES_KEY\": \"[^\"]*\"/\"$NOTES_KEY\": \"[TEST] $ESCAPED_NOTES\"/" "$CONFIG_FILE"
             fi
