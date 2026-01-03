@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 import os
+
 from typing import TYPE_CHECKING, ClassVar, cast
 
 from pykotor.common.misc import Color, Game
@@ -90,7 +91,9 @@ class _ModelHeader:
         self.anim_scale = reader.read_single()
         self.supermodel = reader.read_terminated_string("\0", 32)
         self.offset_to_super_root = reader.read_uint32()
-        self.unknown3 = reader.read_uint32()  # Unknown field from Names array header (cchargin mdl_info.html). Second field after offset_to_super_root. Purpose unknown but preserved for format compatibility.
+        self.unknown3 = (
+            reader.read_uint32()
+        )  # Unknown field from Names array header (cchargin mdl_info.html). Second field after offset_to_super_root. Purpose unknown but preserved for format compatibility.
         self.mdx_size = reader.read_uint32()
         self.mdx_offset = reader.read_uint32()
         self.offset_to_name_offsets = reader.read_uint32()
@@ -118,7 +121,9 @@ class _ModelHeader:
         writer.write_single(self.anim_scale)
         writer.write_string(self.supermodel, string_length=32, encoding="ascii", errors="ignore")
         writer.write_uint32(self.offset_to_super_root)
-        writer.write_uint32(self.unknown3)  # Unknown field from Names array header (cchargin mdl_info.html). Second field after offset_to_super_root. Purpose unknown but preserved for format compatibility.
+        writer.write_uint32(
+            self.unknown3
+        )  # Unknown field from Names array header (cchargin mdl_info.html). Second field after offset_to_super_root. Purpose unknown but preserved for format compatibility.
         writer.write_uint32(self.mdx_size)
         writer.write_uint32(self.mdx_offset)
         writer.write_uint32(self.offset_to_name_offsets)
@@ -916,27 +921,34 @@ class _TrimeshHeader:
         writer.write_single(self.uv_speed)
         writer.write_uint32(self.mdx_data_size)
         if _DEBUG_MDL:
-            print(f"DEBUG _TrimeshHeader.write: texture1={self.texture1} bitmap=0x{self.mdx_data_bitmap:08X} TEXTURE1={bool(self.mdx_data_bitmap & _MDXDataFlags.TEXTURE1)} texture1_offset={self.mdx_texture1_offset}")
+            print(
+                f"DEBUG _TrimeshHeader.write: texture1={self.texture1} bitmap=0x{self.mdx_data_bitmap:08X} TEXTURE1={bool(self.mdx_data_bitmap & _MDXDataFlags.TEXTURE1)} texture1_offset={self.mdx_texture1_offset}"
+            )
             pos_before = writer.position()
             print(f"DEBUG _TrimeshHeader.write: Writing mdx_data_bitmap at position {pos_before}")
         writer.write_uint32(self.mdx_data_bitmap)
         writer.write_uint32(self.mdx_vertex_offset)
         writer.write_uint32(self.mdx_normal_offset)
         writer.write_uint32(self.mdx_color_offset)
+        if _DEBUG_MDL and self.texture1:
+            print(f"DEBUG _TrimeshHeader.write: About to write mdx_texture1_offset={self.mdx_texture1_offset} (type={type(self.mdx_texture1_offset)})")
         writer.write_uint32(self.mdx_texture1_offset)
         if _DEBUG_MDL:
             import struct
+
             _pos_after = writer.position()
             # Read back what we just wrote
-            if hasattr(writer, 'data') and callable(getattr(writer, 'data', None)):
+            if hasattr(writer, "data") and callable(getattr(writer, "data", None)):
                 data = writer.data()
                 if pos_before + 20 <= len(data):
-                    bitmap_written = struct.unpack('<I', data[pos_before:pos_before+4])[0]
-                    vertex_off_written = struct.unpack('<I', data[pos_before+4:pos_before+8])[0]
-                    _normal_off_written = struct.unpack('<I', data[pos_before+8:pos_before+12])[0]
-                    _color_off_written = struct.unpack('<I', data[pos_before+12:pos_before+16])[0]
-                    tex1_off_written = struct.unpack('<I', data[pos_before+16:pos_before+20])[0]
-                    print(f"DEBUG _TrimeshHeader.write: Verified - bitmap=0x{bitmap_written:08X} (expected 0x{self.mdx_data_bitmap:08X}) vertex_off={vertex_off_written} (expected {self.mdx_vertex_offset}) tex1_off={tex1_off_written} (expected {self.mdx_texture1_offset})")
+                    bitmap_written = struct.unpack("<I", data[pos_before : pos_before + 4])[0]
+                    vertex_off_written = struct.unpack("<I", data[pos_before + 4 : pos_before + 8])[0]
+                    _normal_off_written = struct.unpack("<I", data[pos_before + 8 : pos_before + 12])[0]
+                    _color_off_written = struct.unpack("<I", data[pos_before + 12 : pos_before + 16])[0]
+                    tex1_off_written = struct.unpack("<I", data[pos_before + 16 : pos_before + 20])[0]
+                    print(
+                        f"DEBUG _TrimeshHeader.write: Verified - bitmap=0x{bitmap_written:08X} (expected 0x{self.mdx_data_bitmap:08X}) vertex_off={vertex_off_written} (expected {self.mdx_vertex_offset}) tex1_off={tex1_off_written} (expected {self.mdx_texture1_offset})"
+                    )
         writer.write_uint32(self.mdx_texture2_offset)
         writer.write_uint32(self.mdx_unknown_offset)  # Offset to unknown data in MDX (always -1)
         writer.write_uint32(self.mdx_uv3_offset)  # Offset to tertiary UV data in MDX (always -1)
@@ -1387,19 +1399,20 @@ class _Face:
 # Geometry calculation utilities
 # Reference: vendor/mdlops/MDLOpsM.pm:463-520
 
+
 def _calculate_face_area(v1: Vector3, v2: Vector3, v3: Vector3) -> float:
     """Calculate a triangle face's surface area using Heron's formula.
-    
+
     Args:
     ----
         v1: First vertex position
         v2: Second vertex position
         v3: Third vertex position
-    
+
     Returns:
     -------
         The surface area of the triangle
-    
+
     References:
     ----------
         vendor/mdlops/MDLOpsM.pm:465-488 - facearea() function
@@ -1407,28 +1420,16 @@ def _calculate_face_area(v1: Vector3, v2: Vector3, v3: Vector3) -> float:
     """
     # Calculate edge lengths (mdlops:471-482)
     import math
-    
-    a = math.sqrt(
-        (v1.x - v2.x) ** 2 +
-        (v1.y - v2.y) ** 2 +
-        (v1.z - v2.z) ** 2
-    )
-    
-    b = math.sqrt(
-        (v1.x - v3.x) ** 2 +
-        (v1.y - v3.y) ** 2 +
-        (v1.z - v3.z) ** 2
-    )
-    
-    c = math.sqrt(
-        (v2.x - v3.x) ** 2 +
-        (v2.y - v3.y) ** 2 +
-        (v2.z - v3.z) ** 2
-    )
-    
+
+    a = math.sqrt((v1.x - v2.x) ** 2 + (v1.y - v2.y) ** 2 + (v1.z - v2.z) ** 2)
+
+    b = math.sqrt((v1.x - v3.x) ** 2 + (v1.y - v3.y) ** 2 + (v1.z - v3.z) ** 2)
+
+    c = math.sqrt((v2.x - v3.x) ** 2 + (v2.y - v3.y) ** 2 + (v2.z - v3.z) ** 2)
+
     # Semi-perimeter (mdlops:483)
     s = (a + b + c) / 2.0
-    
+
     # Heron's formula (mdlops:485-487)
     inter = s * (s - a) * (s - b) * (s - c)
     return math.sqrt(inter) if inter > 0.0 else 0.0
@@ -1436,94 +1437,95 @@ def _calculate_face_area(v1: Vector3, v2: Vector3, v3: Vector3) -> float:
 
 def _decompress_quaternion(compressed: int) -> Vector4:
     """Decompress a packed quaternion from a 32-bit integer.
-    
+
     KotOR uses compressed quaternions for orientation controllers to save space.
     The compression packs X, Y, Z components into 11, 11, and 10 bits respectively,
     with W calculated from the constraint that |q| = 1.
-    
+
     Args:
     ----
         compressed: 32-bit packed quaternion value
-    
+
     Returns:
     -------
         Vector4: Decompressed quaternion (x, y, z, w)
-    
+
     References:
     ----------
         vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:850-868
         Formula: X uses bits 0-10 (11 bits), Y uses bits 11-21 (11 bits),
                  Z uses bits 22-31 (10 bits), W computed from magnitude
-    
+
     Notes:
     -----
         The compressed format maps values to [-1, 1] range:
         - X: 11 bits -> [0, 2047] -> mapped to [-1, 1]
-        - Y: 11 bits -> [0, 2047] -> mapped to [-1, 1]  
+        - Y: 11 bits -> [0, 2047] -> mapped to [-1, 1]
         - Z: 10 bits -> [0, 1023] -> mapped to [-1, 1]
         - W: Computed from sqrt(1 - x² - y² - z²) if mag < 1, else 0
     """
     # Extract components from packed integer (kotorblender:855-858)
     # X component: bits 0-10 (11 bits, mask 0x7FF = 2047)
     x = ((compressed & 0x7FF) / 1023.0) - 1.0
-    
+
     # Y component: bits 11-21 (11 bits, shift 11 then mask 0x7FF)
     y = (((compressed >> 11) & 0x7FF) / 1023.0) - 1.0
-    
+
     # Z component: bits 22-31 (10 bits, shift 22, max value 1023)
     z = ((compressed >> 22) / 511.0) - 1.0
-    
+
     # Calculate W from quaternion unit constraint (kotorblender:859-863)
     mag2 = x * x + y * y + z * z
     if mag2 < 1.0:
         import math
+
         w = math.sqrt(1.0 - mag2)
     else:
         w = 0.0
-    
+
     return Vector4(x, y, z, w)
 
 
 def _compress_quaternion(quat: Vector4) -> int:
     """Compress a quaternion into a 32-bit integer.
-    
+
     Inverse of _decompress_quaternion. Packs X, Y, Z components into a single
     32-bit value. The W component is not stored as it can be recomputed from
     the quaternion unit constraint.
-    
+
     Args:
     ----
         quat: Quaternion to compress (x, y, z, w)
-    
+
     Returns:
     -------
         int: 32-bit packed quaternion value
-    
+
     References:
     ----------
         vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:850-868 (decompression)
         Inverse operation derived from decompression algorithm
-    
+
     Notes:
     -----
         Values are clamped to [-1, 1] range before packing to prevent overflow.
     """
-    
+
     # Clamp values to valid range
     x = max(-1.0, min(1.0, quat.x))
     y = max(-1.0, min(1.0, quat.y))
     z = max(-1.0, min(1.0, quat.z))
-    
+
     # Map from [-1, 1] to integer ranges and pack
     # X: [-1, 1] -> [0, 2047] (11 bits)
     x_packed = int((x + 1.0) * 1023.0) & 0x7FF
-    
+
     # Y: [-1, 1] -> [0, 2047] (11 bits)
     y_packed = int((y + 1.0) * 1023.0) & 0x7FF
-    
-    # Z: [-1, 1] -> [0, 1023] (10 bits)  
+
+    # Z: [-1, 1] -> [0, 1023] (10 bits)
     z_packed = int((z + 1.0) * 511.0) & 0x3FF
-    
+
     # Pack into single 32-bit integer
     return x_packed | (y_packed << 11) | (z_packed << 22)
 
@@ -1641,7 +1643,7 @@ class MDLBinaryReader:
         size_ext: Size of the MDX data to read
         game: The game version (K1 or K2)
         fast_load: If True, skips animations and controllers for faster loading (optimized for rendering)
-    
+
     References:
     ----------
         vendor/mdlops/MDLOpsM.pm:1649-1778 (Controller structure and bezier detection)
@@ -1694,14 +1696,10 @@ class MDLBinaryReader:
 
         # Determine game version from the file header function pointers.
         # This is more reliable than using per-node function pointer values.
-        if (
-            model_header.geometry.function_pointer0 == _GeometryHeader.K1_FUNCTION_POINTER0
-            and model_header.geometry.function_pointer1 == _GeometryHeader.K1_FUNCTION_POINTER1
-        ):
+        if model_header.geometry.function_pointer0 == _GeometryHeader.K1_FUNCTION_POINTER0 and model_header.geometry.function_pointer1 == _GeometryHeader.K1_FUNCTION_POINTER1:
             self.game = Game.K1
         elif (
-            model_header.geometry.function_pointer0 == _GeometryHeader.K2_FUNCTION_POINTER0
-            and model_header.geometry.function_pointer1 == _GeometryHeader.K2_FUNCTION_POINTER1
+            model_header.geometry.function_pointer0 == _GeometryHeader.K2_FUNCTION_POINTER0 and model_header.geometry.function_pointer1 == _GeometryHeader.K2_FUNCTION_POINTER1
         ):
             self.game = Game.K2
 
@@ -1980,7 +1978,7 @@ class MDLBinaryReader:
         # vendor/mdlops/MDLOpsM.pm:1749-1756 - Bezier data expansion (3 values per column)
         bezier_flag: int = 0x10
         is_bezier: bool = bool(column_count & bezier_flag)
-        
+
         # Orientation data stored in controllers is sometimes compressed into 4 bytes. We need to check for that and
         # uncompress the quaternion if that is the case.
         # vendor/mdlops/MDLOpsM.pm:1714-1719 - Compressed quaternion detection
@@ -1999,15 +1997,12 @@ class MDLBinaryReader:
                 effective_columns = base_columns * 3
             else:
                 effective_columns = column_count
-            
+
             # Ensure we have at least some columns to read
             if effective_columns <= 0:
                 effective_columns = column_count & ~bezier_flag  # Strip bezier flag
-            
-            data = [
-                [self._reader.read_single() for _ in range(effective_columns)]
-                for _ in range(row_count)
-            ]
+
+            data = [[self._reader.read_single() for _ in range(effective_columns)] for _ in range(row_count)]
 
         controller_type: int = bin_controller.type_id
         rows: list[MDLControllerRow] = [MDLControllerRow(time_keys[i], data[i]) for i in range(row_count)]
@@ -2018,15 +2013,16 @@ class MDLBinaryReader:
 
 class MDLBinaryWriter:
     """Binary MDL/MDX file writer.
-    
+
     Writes MDL (model) and MDX (model extension) files from MDL data structures.
-    
+
     References:
     ----------
         vendor/mdlops/MDLOpsM.pm (Binary MDL writing paths)
         vendor/reone/src/libs/graphics/format/mdlmdxwriter.cpp (MDL/MDX writing)
         vendor/kotorblender/format/mdl/writer.py (MDL writing reference)
     """
+
     def __init__(
         self,
         mdl: MDL,
@@ -2064,6 +2060,7 @@ class MDLBinaryWriter:
         # Some round-trip paths construct animation roots independently, so build this as a de-duped,
         # insertion-ordered list.
         self._names.clear()
+
         def _add_name(n: str) -> None:
             if n and n not in self._names:
                 self._names.append(n)
@@ -2348,47 +2345,43 @@ class MDLBinaryWriter:
         uv2_len = len(mdl_node.mesh.vertex_uv2) if mdl_node.mesh.vertex_uv2 else 0
         has_uv1 = mdl_node.mesh.vertex_uv1 is not None and uv1_len == vcount and vcount > 0
         has_uv2 = mdl_node.mesh.vertex_uv2 is not None and uv2_len == vcount and vcount > 0
-        
+
         # Only set TEXTURE1 flag if texture name is valid (not None, not empty, not "NULL")
-        has_texture1 = (
-            mdl_node.mesh.texture_1 is not None
-            and mdl_node.mesh.texture_1.strip() != ""
-            and mdl_node.mesh.texture_1.upper() != "NULL"
-        )
-        
+        has_texture1 = mdl_node.mesh.texture_1 is not None and mdl_node.mesh.texture_1.strip() != "" and mdl_node.mesh.texture_1.upper() != "NULL"
+
         if has_uv1:
             bin_node.trimesh.mdx_texture1_offset = suboffset
             bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.TEXTURE1
             if _DEBUG_MDL:
-                print(f"DEBUG _update_mdx: Node {mdl_node.name} has_uv1=True texture1={mdl_node.mesh.texture_1} bitmap=0x{bin_node.trimesh.mdx_data_bitmap:08X} TEXTURE1={bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE1)} texture1_offset={bin_node.trimesh.mdx_texture1_offset}")
+                print(
+                    f"DEBUG _update_mdx: Node {mdl_node.name} has_uv1=True texture1={mdl_node.mesh.texture_1} bitmap=0x{bin_node.trimesh.mdx_data_bitmap:08X} TEXTURE1={bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE1)} texture1_offset={bin_node.trimesh.mdx_texture1_offset}"
+                )
             assert bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE1, f"Failed to set TEXTURE1 flag for node {mdl_node.name}"
             suboffset += 8
         elif has_texture1 and vcount > 0:
             # Texture name exists but no valid UV data - generate default UV coordinates
             # This ensures MDLOps can find tverts data when it reads the binary
-            if not hasattr(mdl_node.mesh, '_default_uv1_generated'):
+            if not hasattr(mdl_node.mesh, "_default_uv1_generated"):
                 mdl_node.mesh.vertex_uv1 = [Vector2(0.0, 0.0) for _ in range(vcount)]
                 mdl_node.mesh._default_uv1_generated = True
             bin_node.trimesh.mdx_texture1_offset = suboffset
             bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.TEXTURE1
             if _DEBUG_MDL:
-                print(f"DEBUG _update_mdx: Node {mdl_node.name} has_uv1=False texture1={mdl_node.mesh.texture_1} vcount={vcount} generated default UVs bitmap=0x{bin_node.trimesh.mdx_data_bitmap:08X} TEXTURE1={bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE1)}")
+                print(
+                    f"DEBUG _update_mdx: Node {mdl_node.name} has_uv1=False texture1={mdl_node.mesh.texture_1} vcount={vcount} generated default UVs bitmap=0x{bin_node.trimesh.mdx_data_bitmap:08X} TEXTURE1={bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE1)}"
+                )
             suboffset += 8
 
         # Only set TEXTURE2 flag if texture name is valid (not None, not empty, not "NULL")
-        has_texture2 = (
-            mdl_node.mesh.texture_2 is not None
-            and mdl_node.mesh.texture_2.strip() != ""
-            and mdl_node.mesh.texture_2.upper() != "NULL"
-        )
-        
+        has_texture2 = mdl_node.mesh.texture_2 is not None and mdl_node.mesh.texture_2.strip() != "" and mdl_node.mesh.texture_2.upper() != "NULL"
+
         if has_uv2:
             bin_node.trimesh.mdx_texture2_offset = suboffset
             bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.TEXTURE2
             suboffset += 8
         elif has_texture2 and vcount > 0:
             # Texture name exists but no valid UV data - generate default UV coordinates
-            if not hasattr(mdl_node.mesh, '_default_uv2_generated'):
+            if not hasattr(mdl_node.mesh, "_default_uv2_generated"):
                 mdl_node.mesh.vertex_uv2 = [Vector2(0.0, 0.0) for _ in range(vcount)]
                 mdl_node.mesh._default_uv2_generated = True
             bin_node.trimesh.mdx_texture2_offset = suboffset
@@ -2600,7 +2593,6 @@ class MDLBinaryWriter:
         bin_node.trimesh.offset_to_faces = node_offset + bin_node.faces_offset(self.game)
         bin_node.trimesh.vertices_offset = node_offset + bin_node.vertices_offset(self.game)
 
-
     def _node_type(
         self,
         node: MDLNode,
@@ -2631,10 +2623,9 @@ class MDLBinaryWriter:
         # The all_nodes() traversal returns nodes in a different order than they appear in the binary,
         # so we need to sort by node_id before writing MDX data.
         # Create a list of (bin_node, mdl_node, original_index) tuples sorted by node_id
-        node_pairs = [(self._bin_nodes[i], self._mdl_nodes[i], i, getattr(self._mdl_nodes[i], 'node_id', i)) 
-                      for i in range(len(self._bin_nodes))]
+        node_pairs = [(self._bin_nodes[i], self._mdl_nodes[i], i, getattr(self._mdl_nodes[i], "node_id", i)) for i in range(len(self._bin_nodes))]
         node_pairs_sorted = sorted(node_pairs, key=lambda x: x[3])  # Sort by node_id
-        
+
         # Write MDX data in node_id order
         for bin_node, mdl_node, orig_idx, node_id in node_pairs_sorted:
             if bin_node.trimesh:
@@ -2679,10 +2670,14 @@ class MDLBinaryWriter:
 
         for bin_anim in self._bin_anims:
             bin_anim.write(self._writer, self.game)
-        for bin_node in self._bin_nodes:
+        for i, bin_node in enumerate(self._bin_nodes):
             if _DEBUG_MDL and bin_node.trimesh and bin_node.trimesh.texture1:
-                print(f"DEBUG _write_all: Node {bin_node.header.name_id if bin_node.header else '?'} texture1={bin_node.trimesh.texture1} bitmap=0x{bin_node.trimesh.mdx_data_bitmap:08X} TEXTURE1={bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE1)} texture1_offset={bin_node.trimesh.mdx_texture1_offset}")
+                print(
+                    f"DEBUG _write_all: About to write node {i} (name_id={bin_node.header.name_id if bin_node.header else '?'}) texture1={bin_node.trimesh.texture1} bitmap=0x{bin_node.trimesh.mdx_data_bitmap:08X} texture1_offset={bin_node.trimesh.mdx_texture1_offset}"
+                )
             bin_node.write(self._writer, self.game)
+            if _DEBUG_MDL and bin_node.trimesh and bin_node.trimesh.texture1:
+                print(f"DEBUG _write_all: After writing node {i}, texture1_offset={bin_node.trimesh.mdx_texture1_offset}")
 
         # Write to MDL
         mdl_writer = BinaryWriter.to_auto(self._target)
@@ -2690,18 +2685,18 @@ class MDLBinaryWriter:
         mdl_writer.write_uint32(self._writer.size())
         mdl_writer.write_uint32(self._writer_ext.size())
         writer_data = self._writer.data()
-        
+
         if _DEBUG_MDL:
             # Check writer_data BEFORE writing to file
             import struct
+
             # Check the first trimesh header at position 23890
             if len(writer_data) >= 23890 + 32:  # 32 bytes for the MDX offsets section
-                bitmap_at_23890 = struct.unpack('<I', writer_data[23890:23894])[0]
-                tex1_off_at_23890 = struct.unpack('<I', writer_data[23890 + 16:23890 + 20])[0]
+                bitmap_at_23890 = struct.unpack("<I", writer_data[23890:23894])[0]
+                tex1_off_at_23890 = struct.unpack("<I", writer_data[23890 + 16 : 23890 + 20])[0]
                 print(f"DEBUG _write_all: BEFORE file write - at position 23890: bitmap=0x{bitmap_at_23890:08X} tex1_off={tex1_off_at_23890}")
-        
+
         mdl_writer.write_bytes(writer_data)
-        
 
         # Write to MDX
         if self._target_ext is not None:
