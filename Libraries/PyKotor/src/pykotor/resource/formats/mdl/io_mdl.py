@@ -2697,7 +2697,14 @@ class MDLBinaryReader:
         # key_offset/data_offset are stored as uint16 float-index offsets relative to the start of the
         # controller-data block (not byte offsets). Convert to bytes when seeking.
         self._reader.seek(data_offset + (bin_controller.key_offset * 4))
-        time_keys: list[int] = [self._reader.read_single() for _ in range(row_count)]
+        # Read time keys with bounds checking
+        time_keys: list[float] = []
+        bytes_per_key = 4  # Each float is 4 bytes
+        for _ in range(row_count):
+            # Check bounds before reading each key
+            if self._reader.position() + bytes_per_key > self._reader.size():
+                break
+            time_keys.append(self._reader.read_single())
 
         # There are some special cases when reading controller data rows.
         data_pointer: int = data_offset + (bin_controller.data_offset * 4)
@@ -2709,6 +2716,9 @@ class MDLBinaryReader:
         bezier_flag: int = 0x10
         is_bezier: bool = bool(column_count & bezier_flag)
 
+        # Declare data variable once before the if/else block
+        data: list[list[float]] = []
+
         # Orientation data stored in controllers is sometimes compressed into 4 bytes. We need to check for that and
         # uncompress the quaternion if that is the case.
         # vendor/mdlops/MDLOpsM.pm:1714-1719 - Compressed quaternion detection
@@ -2717,8 +2727,10 @@ class MDLBinaryReader:
         if bin_controller.type_id == MDLControllerType.ORIENTATION and bin_controller.column_count == 2:
             # Detected compressed quaternions - set the model flag
             self._mdl.compress_quaternions = 1
-            data: list[list[float]] = []
             for _ in range(bin_controller.row_count):
+                # Check bounds before reading - need 8 bytes (uint32 + float)
+                if self._reader.position() + 8 > self._reader.size():
+                    break
                 compressed: int = self._reader.read_uint32()
                 # Skip padding float that comes after each compressed uint32
                 _ = self._reader.read_single()
@@ -2738,10 +2750,19 @@ class MDLBinaryReader:
             if effective_columns <= 0:
                 effective_columns = column_count & ~bezier_flag  # Strip bezier flag
 
-            data = [[self._reader.read_single() for _ in range(effective_columns)] for _ in range(row_count)]
+            # Read controller data with bounds checking
+            bytes_per_row = effective_columns * 4  # Each float is 4 bytes
+            for _ in range(row_count):
+                # Check bounds before reading each row
+                if self._reader.position() + bytes_per_row > self._reader.size():
+                    break
+                row_data: list[float] = [self._reader.read_single() for _ in range(effective_columns)]
+                data.append(row_data)
 
         controller_type: int = bin_controller.type_id
-        rows: list[MDLControllerRow] = [MDLControllerRow(time_keys[i], data[i]) for i in range(row_count)]
+        # Handle case where we didn't read all rows due to bounds issues
+        actual_row_count = min(len(time_keys), len(data), row_count)
+        rows: list[MDLControllerRow] = [MDLControllerRow(time_keys[i], data[i]) for i in range(actual_row_count)]
         # vendor/mdlops/MDLOpsM.pm:1709 - Store bezier flag with controller
         controller = MDLController(MDLControllerType(controller_type), rows, is_bezier=is_bezier)
         return controller
