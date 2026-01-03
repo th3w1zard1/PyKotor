@@ -1940,7 +1940,9 @@ class MDLBinaryReader:
             if not (bin_node.header.type_id & MDLNodeFlags.AABB):
                 node.node_type = MDLNodeType.TRIMESH
             node.mesh.shadow = bool(bin_node.trimesh.has_shadow)
-            node.mesh.render = bool(bin_node.trimesh.render)
+            # render is stored as uint8 in binary (0 or 1), convert to bool for MDLMesh
+            # Ensure we preserve the exact value: 0 -> False, any non-zero -> True
+            node.mesh.render = bool(bin_node.trimesh.render) if bin_node.trimesh.render != 0 else False
             node.mesh.background_geometry = bool(bin_node.trimesh.background)
             node.mesh.has_lightmap = bool(bin_node.trimesh.has_lightmap)
             node.mesh.beaming = bool(bin_node.trimesh.beaming)
@@ -2420,7 +2422,7 @@ class MDLBinaryReader:
             # Preserve original indices_offsets_count from binary header even if array is empty
             # This is needed for MDLOps compatibility when the count > 0 but array couldn't be read
             if not hasattr(node.mesh, "indices_offsets_count") or getattr(node.mesh, "indices_offsets_count", None) is None:
-                node.mesh.indices_offsets_count = bin_node.trimesh.indices_offsets_count
+                setattr(node.mesh, "indices_offsets_count", bin_node.trimesh.indices_offsets_count)
 
             # Deterministically derive binary-only face payload from mesh geometry so
             # binary and ASCII parse paths converge (no ASCII syntax extensions).
@@ -2703,7 +2705,9 @@ class MDLBinaryWriter:
             bin_node.trimesh.texture2 = mdl_node.mesh.texture_2
             bin_node.trimesh.diffuse = mdl_node.mesh.diffuse.bgr_vector3()
             bin_node.trimesh.ambient = mdl_node.mesh.ambient.bgr_vector3()
-            bin_node.trimesh.render = int(mdl_node.mesh.render)
+            # render is stored as uint8 in binary (0 or 1), convert from bool to int
+            # Ensure we preserve the exact value: False -> 0, True -> 1
+            bin_node.trimesh.render = 1 if mdl_node.mesh.render else 0
             bin_node.trimesh.transparency_hint = mdl_node.mesh.transparency_hint
             bin_node.trimesh.uv_jitter = mdl_node.mesh.uv_jitter
             bin_node.trimesh.uv_speed = mdl_node.mesh.uv_jitter_speed
