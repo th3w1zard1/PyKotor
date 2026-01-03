@@ -2750,6 +2750,9 @@ class MDLBinaryWriter:
                 # Use original count if it's > 0, otherwise use array length
                 if original_count > 0:
                     bin_node.trimesh.indices_offsets_count = bin_node.trimesh.indices_offsets_count2 = original_count
+                    # Ensure array matches count - if count > 0 but array is empty, create array of zeros
+                    if not bin_node.trimesh.indices_offsets:
+                        bin_node.trimesh.indices_offsets = [0] * original_count
                 else:
                     bin_node.trimesh.indices_offsets_count = bin_node.trimesh.indices_offsets_count2 = len(bin_node.trimesh.indices_offsets)
             else:
