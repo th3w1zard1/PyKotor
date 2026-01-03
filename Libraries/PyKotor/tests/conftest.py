@@ -78,6 +78,16 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     if "game_install_root" not in metafunc.fixturenames:
         return
 
+    # `test_mdl_ascii.py::test_models_bif_roundtrip_eq_hash_pytest` provides its own
+    # combined parametrization of (game_install_root, mdl_entry) to avoid the
+    # cartesian product that would otherwise be created by this hook.
+    #
+    # If we parametrize `game_install_root` here and `mdl_entry` in the test module,
+    # pytest will generate mismatched pairs and skip them at runtime, defeating the
+    # whole point of the combined parametrization.
+    if "test_mdl_ascii.py::test_models_bif_roundtrip_eq_hash_pytest" in metafunc.definition.nodeid:
+        return
+
     roots = _discover_game_install_roots()
     if not roots:
         metafunc.parametrize(

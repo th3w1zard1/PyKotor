@@ -65,6 +65,16 @@ from pykotor.resource.type import ResourceType
 from utility.common.geometry import Vector2, Vector3, Vector4
 
 
+# NOTE: MDL ASCII reader/writer are implemented on top of BinaryReader/BinaryWriter,
+# which operate on bytes/binary streams (not text streams like io.StringIO).
+def _encode_ascii(text: str) -> bytes:
+    return text.encode("utf-8")
+
+
+def _decode_ascii(buf: bytearray) -> str:
+    return bytes(buf).decode("utf-8")
+
+
 # ============================================================================
 # Test Data Builders
 # ============================================================================
@@ -226,11 +236,11 @@ class TestMDLAsciiBasicIO(unittest.TestCase):
         """Test writing an empty MDL to ASCII."""
         mdl = create_test_mdl("empty_test")
 
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
 
-        content = output.getvalue()
+        content = _decode_ascii(output)
         self.assertIn("newmodel empty_test", content)
         self.assertIn("beginmodelgeom", content)
         self.assertIn("endmodelgeom", content)
@@ -242,13 +252,13 @@ class TestMDLAsciiBasicIO(unittest.TestCase):
         mdl.root.name = "root_node"
 
         # Write to ASCII
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
-        ascii_content = output.getvalue()
+        ascii_content = _decode_ascii(output)
 
         # Read back
-        reader = MDLAsciiReader(io.StringIO(ascii_content))
+        reader = MDLAsciiReader(_encode_ascii(ascii_content))
         mdl2 = reader.load()
 
         self.assertEqual(mdl2.name, mdl.name)
@@ -294,11 +304,11 @@ class TestMDLAsciiNodeTypes(unittest.TestCase):
         node = create_test_node("dummy_node", MDLNodeType.DUMMY)
         mdl.root.children.append(node)
 
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
 
-        content = output.getvalue()
+        content = _decode_ascii(output)
         self.assertIn("node dummy dummy_node", content)
 
     def test_read_dummy_node(self):
@@ -328,7 +338,7 @@ endmodelgeom test
 
 donemodel test
 """
-        reader = MDLAsciiReader(io.StringIO(ascii_content))
+        reader = MDLAsciiReader(_encode_ascii(ascii_content))
         mdl = reader.load()
 
         self.assertEqual(len(mdl.all_nodes()), 2)  # root + dummy
@@ -344,11 +354,11 @@ donemodel test
         node.mesh = create_test_mesh()
         mdl.root.children.append(node)
 
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
 
-        content = output.getvalue()
+        content = _decode_ascii(output)
         self.assertIn("node trimesh mesh_node", content)
         self.assertIn("verts", content.lower())
         self.assertIn("faces", content.lower())
@@ -386,7 +396,7 @@ endmodelgeom test
 
 donemodel test
 """
-        reader = MDLAsciiReader(io.StringIO(ascii_content))
+        reader = MDLAsciiReader(_encode_ascii(ascii_content))
         mdl = reader.load()
 
         mesh_node = mdl.get("mesh_node")
@@ -406,11 +416,11 @@ donemodel test
         node.light.radius = 10.0
         mdl.root.children.append(node)
 
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
 
-        content = output.getvalue()
+        content = _decode_ascii(output)
         self.assertIn("node light light_node", content)
 
     def test_read_light_node(self):
@@ -442,7 +452,7 @@ endmodelgeom test
 
 donemodel test
 """
-        reader = MDLAsciiReader(io.StringIO(ascii_content))
+        reader = MDLAsciiReader(_encode_ascii(ascii_content))
         mdl = reader.load()
 
         light_node = mdl.get("light_node")
@@ -461,11 +471,11 @@ donemodel test
         node.emitter.render = "normal"
         mdl.root.children.append(node)
 
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
 
-        content = output.getvalue()
+        content = _decode_ascii(output)
         self.assertIn("node emitter emitter_node", content)
 
     def test_read_emitter_node(self):
@@ -497,7 +507,7 @@ endmodelgeom test
 
 donemodel test
 """
-        reader = MDLAsciiReader(io.StringIO(ascii_content))
+        reader = MDLAsciiReader(_encode_ascii(ascii_content))
         mdl = reader.load()
 
         emitter_node = mdl.get("emitter_node")
@@ -515,11 +525,11 @@ donemodel test
         node.reference.model = "test_ref.mdl"
         mdl.root.children.append(node)
 
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
 
-        content = output.getvalue()
+        content = _decode_ascii(output)
         self.assertIn("node reference ref_node", content)
 
     def test_read_reference_node(self):
@@ -550,7 +560,7 @@ endmodelgeom test
 
 donemodel test
 """
-        reader = MDLAsciiReader(io.StringIO(ascii_content))
+        reader = MDLAsciiReader(_encode_ascii(ascii_content))
         mdl = reader.load()
 
         ref_node = mdl.get("ref_node")
@@ -568,11 +578,11 @@ donemodel test
         node.saber.saber_length = 1.0
         mdl.root.children.append(node)
 
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
 
-        content = output.getvalue()
+        content = _decode_ascii(output)
         self.assertIn("node lightsaber saber_node", content)
 
     def test_read_saber_node(self):
@@ -603,7 +613,7 @@ endmodelgeom test
 
 donemodel test
 """
-        reader = MDLAsciiReader(io.StringIO(ascii_content))
+        reader = MDLAsciiReader(_encode_ascii(ascii_content))
         mdl = reader.load()
 
         saber_node = mdl.get("saber_node")
@@ -620,11 +630,11 @@ donemodel test
         node.aabb = MDLWalkmesh()
         mdl.root.children.append(node)
 
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
 
-        content = output.getvalue()
+        content = _decode_ascii(output)
         self.assertIn("node aabb aabb_node", content)
 
     def test_read_aabb_node(self):
@@ -654,7 +664,7 @@ endmodelgeom test
 
 donemodel test
 """
-        reader = MDLAsciiReader(io.StringIO(ascii_content))
+        reader = MDLAsciiReader(_encode_ascii(ascii_content))
         mdl = reader.load()
 
         aabb_node = mdl.get("aabb_node")
@@ -679,11 +689,11 @@ class TestMDLAsciiControllers(unittest.TestCase):
         node.controllers.append(create_test_controller(MDLControllerType.POSITION))
         mdl.root.children.append(node)
 
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
 
-        content = output.getvalue()
+        content = _decode_ascii(output)
         self.assertIn("positionkey", content.lower())
 
     def test_read_position_controller(self):
@@ -716,7 +726,7 @@ endmodelgeom test
 
 donemodel test
 """
-        reader = MDLAsciiReader(io.StringIO(ascii_content))
+        reader = MDLAsciiReader(_encode_ascii(ascii_content))
         mdl = reader.load()
 
         node = mdl.get("test_node")
@@ -732,11 +742,11 @@ donemodel test
         node.controllers.append(create_test_controller(MDLControllerType.ORIENTATION))
         mdl.root.children.append(node)
 
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
 
-        content = output.getvalue()
+        content = _decode_ascii(output)
         self.assertIn("orientationkey", content.lower())
 
     def test_read_orientation_controller(self):
@@ -769,7 +779,7 @@ endmodelgeom test
 
 donemodel test
 """
-        reader = MDLAsciiReader(io.StringIO(ascii_content))
+        reader = MDLAsciiReader(_encode_ascii(ascii_content))
         mdl = reader.load()
 
         node = mdl.get("test_node")
@@ -785,11 +795,11 @@ donemodel test
         node.controllers.append(create_test_controller(MDLControllerType.SCALE))
         mdl.root.children.append(node)
 
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
 
-        content = output.getvalue()
+        content = _decode_ascii(output)
         self.assertIn("scalekey", content.lower())
 
     def test_write_bezier_controller(self):
@@ -800,11 +810,11 @@ donemodel test
         node.controllers.append(controller)
         mdl.root.children.append(node)
 
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
 
-        content = output.getvalue()
+        content = _decode_ascii(output)
         self.assertIn("positionbezierkey", content.lower())
 
     def test_read_bezier_controller(self):
@@ -837,7 +847,7 @@ endmodelgeom test
 
 donemodel test
 """
-        reader = MDLAsciiReader(io.StringIO(ascii_content))
+        reader = MDLAsciiReader(_encode_ascii(ascii_content))
         mdl = reader.load()
 
         node = mdl.get("test_node")
@@ -862,11 +872,11 @@ donemodel test
 
         mdl.root.children.append(node)
 
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
 
-        content = output.getvalue()
+        content = _decode_ascii(output)
         self.assertIn("positionkey", content.lower())
         self.assertIn("orientationkey", content.lower())
         self.assertIn("scalekey", content.lower())
@@ -890,11 +900,11 @@ donemodel test
 
         mdl.root.children.append(node)
 
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
 
-        content = output.getvalue()
+        content = _decode_ascii(output)
         self.assertIn("colorkey", content.lower())
         self.assertIn("radiuskey", content.lower())
         self.assertIn("shadowradiuskey", content.lower())
@@ -917,11 +927,11 @@ donemodel test
 
         mdl.root.children.append(node)
 
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
 
-        content = output.getvalue()
+        content = _decode_ascii(output)
         self.assertIn("alphastartkey", content.lower())
         self.assertIn("alphaendkey", content.lower())
         self.assertIn("birthratekey", content.lower())
@@ -949,11 +959,11 @@ class TestMDLAsciiMeshData(unittest.TestCase):
         node.mesh = mesh
         mdl.root.children.append(node)
 
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
 
-        content = output.getvalue()
+        content = _decode_ascii(output)
         self.assertIn("verts 4", content.lower())
 
     def test_read_mesh_vertices(self):
@@ -1021,11 +1031,11 @@ donemodel test
         node.mesh = mesh
         mdl.root.children.append(node)
 
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
 
-        content = output.getvalue()
+        content = _decode_ascii(output)
         self.assertIn("faces 2", content.lower())
 
     def test_read_mesh_faces(self):
@@ -1063,7 +1073,7 @@ endmodelgeom test
 
 donemodel test
 """
-        reader = MDLAsciiReader(io.StringIO(ascii_content))
+        reader = MDLAsciiReader(_encode_ascii(ascii_content))
         mdl = reader.load()
 
         mesh_node = mdl.get("mesh_node")
@@ -1086,11 +1096,11 @@ donemodel test
         node.mesh = mesh
         mdl.root.children.append(node)
 
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
 
-        content = output.getvalue()
+        content = _decode_ascii(output)
         self.assertIn("tverts", content.lower())
 
     def test_read_mesh_tverts(self):
@@ -1130,7 +1140,7 @@ endmodelgeom test
 
 donemodel test
 """
-        reader = MDLAsciiReader(io.StringIO(ascii_content))
+        reader = MDLAsciiReader(_encode_ascii(ascii_content))
         mdl = reader.load()
 
         mesh_node = mdl.get("mesh_node")
@@ -1162,11 +1172,11 @@ donemodel test
         node.mesh = skin
         mdl.root.children.append(node)
 
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
 
-        content = output.getvalue()
+        content = _decode_ascii(output)
         self.assertIn("bones", content.lower())
         self.assertIn("weights", content.lower())
 
@@ -1231,11 +1241,11 @@ donemodel test
         node.mesh = dangly
         mdl.root.children.append(node)
 
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
 
-        content = output.getvalue()
+        content = _decode_ascii(output)
         self.assertIn("danglymesh", content.lower())
 
 
@@ -1253,11 +1263,11 @@ class TestMDLAsciiAnimations(unittest.TestCase):
         anim = create_test_animation("test_anim")
         mdl.anims.append(anim)
 
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
 
-        content = output.getvalue()
+        content = _decode_ascii(output)
         self.assertIn("newanim test_anim", content)
         self.assertIn("length", content.lower())
         self.assertIn("transtime", content.lower())
@@ -1290,7 +1300,7 @@ doneanim test_anim test
 
 donemodel test
 """
-        reader = MDLAsciiReader(io.StringIO(ascii_content))
+        reader = MDLAsciiReader(_encode_ascii(ascii_content))
         mdl = reader.load()
 
         self.assertEqual(len(mdl.anims), 1)
@@ -1315,11 +1325,11 @@ donemodel test
         anim.events = [event1, event2]
         mdl.anims.append(anim)
 
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
 
-        content = output.getvalue()
+        content = _decode_ascii(output)
         self.assertIn("event 0.5 footstep", content)
         self.assertIn("event 1.0 attack_hit", content)
 
@@ -1351,7 +1361,7 @@ doneanim test_anim test
 
 donemodel test
 """
-        reader = MDLAsciiReader(io.StringIO(ascii_content))
+        reader = MDLAsciiReader(_encode_ascii(ascii_content))
         mdl = reader.load()
 
         self.assertEqual(len(mdl.anims), 1)
@@ -1371,11 +1381,11 @@ donemodel test
 
         mdl.anims.append(anim)
 
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
 
-        content = output.getvalue()
+        content = _decode_ascii(output)
         self.assertIn("node dummy anim_node", content)
         self.assertIn("positionkey", content.lower())
 
@@ -1411,7 +1421,7 @@ doneanim test_anim test
 
 donemodel test
 """
-        reader = MDLAsciiReader(io.StringIO(ascii_content))
+        reader = MDLAsciiReader(_encode_ascii(ascii_content))
         mdl = reader.load()
 
         self.assertEqual(len(mdl.anims), 1)
@@ -1429,11 +1439,11 @@ donemodel test
 
         mdl.anims = [anim1, anim2, anim3]
 
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
 
-        content = output.getvalue()
+        content = _decode_ascii(output)
         self.assertIn("newanim anim1", content)
         self.assertIn("newanim anim2", content)
         self.assertIn("newanim anim3", content)
@@ -1458,20 +1468,20 @@ class TestMDLAsciiRoundTrip(unittest.TestCase):
         mdl1.root.children.append(node)
 
         # Write to ASCII
-        output1 = io.StringIO()
+        output1 = bytearray()
         writer1 = MDLAsciiWriter(mdl1, output1)
         writer1.write()
-        ascii1 = output1.getvalue()
+        ascii1 = _decode_ascii(output1)
 
         # Read back
-        reader = MDLAsciiReader(io.StringIO(ascii1))
+        reader = MDLAsciiReader(_encode_ascii(ascii1))
         mdl2 = reader.load()
 
         # Write again
-        output2 = io.StringIO()
+        output2 = bytearray()
         writer2 = MDLAsciiWriter(mdl2, output2)
         writer2.write()
-        ascii2 = output2.getvalue()
+        ascii2 = _decode_ascii(output2)
 
         # Compare key elements
         self.assertIn("newmodel roundtrip_test", ascii2)
@@ -1501,12 +1511,12 @@ class TestMDLAsciiRoundTrip(unittest.TestCase):
         ])
 
         # Round-trip
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl1, output)
         writer.write()
-        ascii_content = output.getvalue()
+        ascii_content = _decode_ascii(output)
 
-        reader = MDLAsciiReader(io.StringIO(ascii_content))
+        reader = MDLAsciiReader(_encode_ascii(ascii_content))
         mdl2 = reader.load()
 
         # Verify all nodes exist
@@ -1535,12 +1545,12 @@ class TestMDLAsciiRoundTrip(unittest.TestCase):
         mdl1.root.children.append(node)
 
         # Round-trip
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl1, output)
         writer.write()
-        ascii_content = output.getvalue()
+        ascii_content = _decode_ascii(output)
 
-        reader = MDLAsciiReader(io.StringIO(ascii_content))
+        reader = MDLAsciiReader(_encode_ascii(ascii_content))
         mdl2 = reader.load()
 
         # Verify controllers
@@ -1558,12 +1568,12 @@ class TestMDLAsciiRoundTrip(unittest.TestCase):
         mdl1.anims = [anim1, anim2]
 
         # Round-trip
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl1, output)
         writer.write()
-        ascii_content = output.getvalue()
+        ascii_content = _decode_ascii(output)
 
-        reader = MDLAsciiReader(io.StringIO(ascii_content))
+        reader = MDLAsciiReader(_encode_ascii(ascii_content))
         mdl2 = reader.load()
 
         # Verify animations
@@ -1589,11 +1599,11 @@ class TestMDLAsciiClassifications(unittest.TestCase):
             mdl = create_test_mdl(f"class_{classification.name.lower()}_test")
             mdl.classification = classification
 
-            output = io.StringIO()
+            output = bytearray()
             writer = MDLAsciiWriter(mdl, output)
             writer.write()
 
-            content = output.getvalue()
+            content = _decode_ascii(output)
             self.assertIn(f"classification {classification.name.lower()}", content)
 
     def test_read_all_classifications(self):
@@ -1620,7 +1630,7 @@ endmodelgeom test
 
 donemodel test
 """
-            reader = MDLAsciiReader(io.StringIO(ascii_content))
+            reader = MDLAsciiReader(_encode_ascii(ascii_content))
             mdl = reader.load()
 
             self.assertEqual(mdl.classification, classification)
@@ -1636,7 +1646,7 @@ class TestMDLAsciiEdgeCases(unittest.TestCase):
 
     def test_read_empty_file(self):
         """Test reading empty file."""
-        reader = MDLAsciiReader(io.StringIO(""))
+        reader = MDLAsciiReader(b"")
         with self.assertRaises(Exception):  # Should raise some error
             reader.load()
 
@@ -1645,7 +1655,7 @@ class TestMDLAsciiEdgeCases(unittest.TestCase):
         ascii_content = """invalid header
 more invalid content
 """
-        reader = MDLAsciiReader(io.StringIO(ascii_content))
+        reader = MDLAsciiReader(_encode_ascii(ascii_content))
         # Should handle gracefully or raise appropriate error
         try:
             mdl = reader.load()
@@ -1665,7 +1675,7 @@ beginmodelgeom test
   bmax 5 5 10
   radius 7
 """
-        reader = MDLAsciiReader(io.StringIO(ascii_content))
+        reader = MDLAsciiReader(_encode_ascii(ascii_content))
         # Should handle gracefully
         try:
             mdl = reader.load()
@@ -1679,12 +1689,12 @@ beginmodelgeom test
         node = create_test_node("")
         mdl.root.children.append(node)
 
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
 
         # Should handle gracefully
-        content = output.getvalue()
+        content = _decode_ascii(output)
         self.assertIn("beginmodelgeom", content)
 
     def test_write_controller_with_no_rows(self):
@@ -1697,12 +1707,12 @@ beginmodelgeom test
         node.controllers.append(controller)
         mdl.root.children.append(node)
 
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
 
         # Should skip empty controllers
-        content = output.getvalue()
+        content = _decode_ascii(output)
         self.assertNotIn("positionkey", content.lower())
 
     def test_read_controller_with_old_format(self):
@@ -1735,7 +1745,7 @@ endmodelgeom test
 
 donemodel test
 """
-        reader = MDLAsciiReader(io.StringIO(ascii_content))
+        reader = MDLAsciiReader(_encode_ascii(ascii_content))
         mdl = reader.load()
 
         node = mdl.get("test_node")
@@ -1767,11 +1777,11 @@ donemodel test
         node.mesh = mesh
         mdl.root.children.append(node)
 
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
 
-        content = output.getvalue()
+        content = _decode_ascii(output)
         self.assertIn("verts 1000", content)
         self.assertIn("faces 500", content)
 
@@ -1820,7 +1830,7 @@ donemodel test
 
         ascii_content = "\n".join(lines)
 
-        reader = MDLAsciiReader(io.StringIO(ascii_content))
+        reader = MDLAsciiReader(_encode_ascii(ascii_content))
         mdl = reader.load()
 
         mesh_node = mdl.get("large_mesh")
@@ -1842,11 +1852,11 @@ donemodel test
             current.children.append(child)
             current = child
 
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
 
-        content = output.getvalue()
+        content = _decode_ascii(output)
         # All levels should be present
         for i in range(10):
             self.assertIn(f"level_{i}", content)
@@ -1887,7 +1897,7 @@ donemodel test
 
         ascii_content = "\n".join(lines)
 
-        reader = MDLAsciiReader(io.StringIO(ascii_content))
+        reader = MDLAsciiReader(_encode_ascii(ascii_content))
         mdl = reader.load()
 
         # Verify hierarchy
@@ -2041,12 +2051,12 @@ class TestMDLAsciiComprehensive(unittest.TestCase):
         mdl.anims = [anim1, anim2]
 
         # Round-trip test
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
-        ascii_content = output.getvalue()
+        ascii_content = _decode_ascii(output)
 
-        reader = MDLAsciiReader(io.StringIO(ascii_content))
+        reader = MDLAsciiReader(_encode_ascii(ascii_content))
         mdl2 = reader.load()
 
         # Verify all features
@@ -2076,12 +2086,12 @@ class TestMDLAsciiComprehensive(unittest.TestCase):
         mdl.root.children.append(level1)
 
         # Round-trip
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
-        ascii_content = output.getvalue()
+        ascii_content = _decode_ascii(output)
 
-        reader = MDLAsciiReader(io.StringIO(ascii_content))
+        reader = MDLAsciiReader(_encode_ascii(ascii_content))
         mdl2 = reader.load()
 
         # Verify hierarchy
@@ -2126,12 +2136,12 @@ class TestMDLAsciiComprehensive(unittest.TestCase):
         mdl.anims.append(anim)
 
         # Round-trip
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
-        ascii_content = output.getvalue()
+        ascii_content = _decode_ascii(output)
 
-        reader = MDLAsciiReader(io.StringIO(ascii_content))
+        reader = MDLAsciiReader(_encode_ascii(ascii_content))
         mdl2 = reader.load()
 
         # Verify animation
@@ -2164,7 +2174,7 @@ class TestMDLAsciiPerformance(unittest.TestCase):
             mdl.root.children.append(node)
 
         start = time.time()
-        output = io.StringIO()
+        output = bytearray()
         writer = MDLAsciiWriter(mdl, output)
         writer.write()
         write_time = time.time() - start
@@ -2172,7 +2182,7 @@ class TestMDLAsciiPerformance(unittest.TestCase):
         # Should complete in reasonable time (< 1 second for 100 nodes)
         self.assertLess(write_time, 1.0, "Writing should be fast")
 
-        content = output.getvalue()
+        content = _decode_ascii(output)
         self.assertGreater(len(content), 0)
 
     def test_read_performance_large_model(self):
@@ -2215,7 +2225,7 @@ class TestMDLAsciiPerformance(unittest.TestCase):
         ascii_content = "\n".join(lines)
 
         start = time.time()
-        reader = MDLAsciiReader(io.StringIO(ascii_content))
+        reader = MDLAsciiReader(_encode_ascii(ascii_content))
         mdl = reader.load()
         read_time = time.time() - start
 
@@ -2614,19 +2624,17 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo) -> None:
         callspec = getattr(item, "callspec", None)  # type: ignore[attr-defined]
         test_id = callspec.id if callspec else ""  # type: ignore[attr-defined]
         if "-" in test_id:
-            game_label = test_id.split("-")[0]
+            game_label = str(test_id.split("-")[0])
             _models_bif_failure_state[game_label] = True
 
 
 def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     """Parametrize test_models_bif_roundtrip_eq_hash_pytest with MDL entries.
 
-    This generates test cases for each model. Since game_install_root is already
-    parametrized by conftest.py, we only parametrize mdl_entry here and match
-    them in the test function to avoid cartesian product duplication.
+    This generates test cases for each model, combining game_install_root and mdl_entry
+    into a single parametrization to avoid cartesian product duplication.
     """
     # Only handle our test function
-    # Note: game_install_root is already parametrized by conftest.py, so we only parametrize mdl_entry
     if "mdl_entry" not in metafunc.fixturenames or "game_install_root" not in metafunc.fixturenames:
         return
 
@@ -2649,11 +2657,11 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     _add("k2", os.environ.get("TSL_PATH") or os.environ.get("K2_PATH"))
 
     if not roots:
-        # Only parametrize mdl_entry since game_install_root is handled by conftest
         metafunc.parametrize(
-            "mdl_entry",
+            "game_install_root,mdl_entry",
             [
                 pytest.param(
+                    ("missing", Path(".")),
                     None,
                     marks=pytest.mark.skip(
                         reason="Requires K1_PATH and/or TSL_PATH/K2_PATH to be set to a game installation root.",
@@ -2664,16 +2672,16 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
         )
         return
 
-    # Collect MDL entries for each game install root
-    # Since game_install_root is already parametrized by conftest, we create
-    # mdl_entry params that include the game_label for matching in the test
-    params: list = []
+    # Collect MDL entries for each game install root and create combined parameters
+    # This avoids the cartesian product by combining game_install_root and mdl_entry
+    params: list[pytest.ParamSpec] = []
     for game_label, game_root in roots:
         mdl_entries = _collect_mdl_entries_for_game(game_label, game_root)
         if not mdl_entries:
             # Add a skip marker if no MDL entries found
             params.append(
                 pytest.param(
+                    (game_label, game_root),
                     (game_label, game_root, None, None, None),
                     marks=pytest.mark.skip(
                         reason=f"{game_label}: no MDL entries found in models.bif",
@@ -2686,13 +2694,13 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
                 safe_resref = _safe_filename(resref)
                 params.append(
                     pytest.param(
+                        (game_label, game_root),
                         (game_label, game_root, resref, mdl_res, mdx_res),
                         id=f"{game_label}-{safe_resref}",
                     ),
                 )
 
-    # Only parametrize mdl_entry - game_install_root is already parametrized by conftest
-    metafunc.parametrize("mdl_entry", params)
+    metafunc.parametrize("game_install_root,mdl_entry", params, indirect=["game_install_root"])
 
 
 def test_models_bif_roundtrip_eq_hash_pytest(
