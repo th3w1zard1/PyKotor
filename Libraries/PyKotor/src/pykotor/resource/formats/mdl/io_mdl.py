@@ -2348,7 +2348,7 @@ class MDLBinaryWriter:
             bin_node.trimesh.texture2 = mdl_node.mesh.texture_2
             bin_node.trimesh.diffuse = mdl_node.mesh.diffuse.bgr_vector3()
             bin_node.trimesh.ambient = mdl_node.mesh.ambient.bgr_vector3()
-            bin_node.trimesh.render = mdl_node.mesh.render
+            bin_node.trimesh.render = int(mdl_node.mesh.render)
             bin_node.trimesh.transparency_hint = mdl_node.mesh.transparency_hint
             bin_node.trimesh.uv_jitter = mdl_node.mesh.uv_jitter
             bin_node.trimesh.uv_speed = mdl_node.mesh.uv_jitter_speed
