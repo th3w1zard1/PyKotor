@@ -132,8 +132,8 @@ def determine_vertex_format_requirements(mesh: MDLMesh) -> dict[str, bool]:
     """
     return {
         "has_normals": len(mesh.vertex_normals) > 0 if mesh.vertex_normals is not None else False,
-        "has_tangent_space": len(mesh.vertex_normals) > 0 if mesh.vertex_normals is not None else False and len(mesh.faces) > 0 and len(mesh.vertex_uvs) > 0,
-        "has_lightmap": mesh.has_lightmap and len(mesh.vertex_uv2) > 0 if mesh.vertex_uv2 is not None else False,
+        "has_tangent_space": (len(mesh.vertex_normals) > 0 if mesh.vertex_normals is not None else False) and len(mesh.faces) > 0 and len(mesh.vertex_uvs) > 0,
+        "has_lightmap": mesh.has_lightmap and (len(mesh.vertex_uv2) > 0 if mesh.vertex_uv2 is not None else False),
         "has_skinning": isinstance(mesh, MDLSkin) and mesh is not None,
         "has_uv2": len(mesh.vertex_uv2) > 0 if mesh.vertex_uv2 is not None else False,
     }
