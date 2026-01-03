@@ -41,7 +41,7 @@ repos:
     hooks:
       - id: mypy
         args: [--strict, --show-error-codes, --no-error-summary]
-        exclude: (vendor/|^\.|/\.)
+        exclude: (^vendor/|^\.|/\.)
         pass_filenames: true
 
   - repo: local
@@ -51,6 +51,6 @@ repos:
         entry: pyright
         language: system
         types: [python]
-        exclude: (vendor/|^\.|/\.)
+        exclude: (^vendor/|^\.|/\.)
         pass_filenames: false
         args: []
