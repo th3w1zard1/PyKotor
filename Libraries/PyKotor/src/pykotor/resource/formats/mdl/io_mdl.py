@@ -821,22 +821,39 @@ class _TrimeshHeader:
         self.mdx_data_offset = reader.read_uint32()
         self.vertices_offset = reader.read_uint32()
 
-        # Some node types (notably K1 skin meshes) have layout quirks in the tail of the trimesh header.
-        # To keep parsing stable across real-world files, re-read the key tail fields from their fixed
-        # K1 offsets, without disturbing the caller's stream position.
+        # Some real-world K1 files have tail fields at alternative fixed offsets.
+        # Try to recover ONLY when the sequentially-read vertices_offset/count look invalid.
         if game == Game.K1:
             end_pos = reader.position()
-            # K1 tail layout (K1_SIZE = 332):
-            # - vertex_count: u2 @ +304
-            # - texture_count: u2 @ +306
-            # - mdx_data_offset: u4 @ +324
-            # - vertices_offset: u4 @ +328
-            reader.seek(start_pos + 304)
-            self.vertex_count = reader.read_uint16()
-            self.texture_count = reader.read_uint16()
-            reader.seek(start_pos + 324)
-            self.mdx_data_offset = reader.read_uint32()
-            self.vertices_offset = reader.read_uint32()
+
+            def _valid(vc: int, vo: int) -> bool:
+                if vo in (0, 0xFFFFFFFF):
+                    return False
+                if vc < 0 or vc > 1_000_000:
+                    return False
+                needed = vc * 12
+                return vo <= reader.size() and (vo + needed) <= reader.size()
+
+            def _try_offsets(off_vc: int, off_mdx: int) -> tuple[int, int, int, int]:
+                reader.seek(start_pos + off_vc)
+                vc = reader.read_uint16()
+                tc = reader.read_uint16()
+                reader.seek(start_pos + off_mdx)
+                mo = reader.read_uint32()
+                vo = reader.read_uint32()
+                return vc, tc, mo, vo
+
+            if not _valid(int(self.vertex_count), int(self.vertices_offset)):
+                # Prefer the legacy MDLOps-style offsets first, then our writer's layout.
+                for off_vc, off_mdx in ((304, 324), (300, 352)):
+                    vc, tc, mo, vo = _try_offsets(off_vc, off_mdx)
+                    if _valid(int(vc), int(vo)):
+                        self.vertex_count = vc
+                        self.texture_count = tc
+                        self.mdx_data_offset = mo
+                        self.vertices_offset = vo
+                        break
+
             reader.seek(end_pos)
         return self
 
@@ -863,7 +880,6 @@ class _TrimeshHeader:
         writer: BinaryWriter,
         game: Game,
     ):
-        start_pos = writer.position()
         writer.write_uint32(self.function_pointer0)
         writer.write_uint32(self.function_pointer1)
         writer.write_uint32(self.offset_to_faces)
@@ -930,23 +946,8 @@ class _TrimeshHeader:
         writer.write_uint32(self.mdx_data_offset)
         writer.write_uint32(self.vertices_offset)
 
-        # K1 layout quirk: some real-world files (and MDLOps) treat key tail fields as being at fixed
-        # offsets within the trimesh header. Our reader already re-reads these from the canonical K1
-        # offsets; ensure our writer also places them there for interoperability.
-        if game == Game.K1:
-            end_pos = writer.position()
-            # Canonical K1 offsets from _TrimeshHeader.read():
-            # - vertex_count: u2 @ +304
-            # - texture_count: u2 @ +306
-            # - mdx_data_offset: u4 @ +324
-            # - vertices_offset: u4 @ +328
-            writer.seek(start_pos + 304)
-            writer.write_uint16(self.vertex_count)
-            writer.write_uint16(self.texture_count)
-            writer.seek(start_pos + 324)
-            writer.write_uint32(self.mdx_data_offset)
-            writer.write_uint32(self.vertices_offset)
-            writer.seek(end_pos)
+        # Do NOT perform K1 fixed-offset patching here; it can overlap tail flag bytes depending on
+        # which K1 layout variant the file uses. Our reader handles K1 variants via conditional recovery.
 
     def header_size(
         self,
@@ -1028,6 +1029,7 @@ class _SkinmeshHeader:
         self.bones: tuple[int, ...] = tuple(-1 for _ in range(16))
         self.unknown1: int = 0  # TODO: what is this?
 
+        # NOTE: Some implementations store bonemap values as float32; we store them as ints.
         self.bonemap: list[int] = []
         self.tbones: list[Vector3] = []
         self.qbones: list[Vector4] = []
@@ -1067,7 +1069,7 @@ class _SkinmeshHeader:
             bonemap_bytes = self.bonemap_count * 4
             if self.offset_to_bonemap <= reader.size() and (self.offset_to_bonemap + bonemap_bytes) <= reader.size():
                 reader.seek(self.offset_to_bonemap)
-                self.bonemap = [reader.read_single() for _ in range(self.bonemap_count)]
+                self.bonemap = [int(reader.read_single()) for _ in range(self.bonemap_count)]
 
         if self.offset_to_tbones not in (0, 0xFFFFFFFF) and self.tbones_count > 0:
             tbones_bytes = self.tbones_count * 12
@@ -2187,8 +2189,8 @@ class MDLBinaryWriter:
 
             # Bonemap + bind pose transforms.
             bonemap = list(getattr(skin, "bonemap", []))
-            bin_node.skin.bonemap = [float(x) for x in bonemap]
-            bin_node.skin.bonemap_count = bin_node.skin.bonemap_count2 = len(bin_node.skin.bonemap)
+            bin_node.skin.bonemap = [int(x) for x in bonemap]
+            bin_node.skin.bonemap_count = len(bin_node.skin.bonemap)
 
             qbones = list(getattr(skin, "qbones", []))
             tbones = list(getattr(skin, "tbones", []))

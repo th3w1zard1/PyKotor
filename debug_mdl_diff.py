@@ -94,10 +94,6 @@ def debug_diff(*, resref: str = "3dgui") -> int:
                 for k in sorted(a_anims.keys()):
                     if not md._mdl_animation_equal(a_anims[k], b_anims[k]):  # noqa: SLF001
                         print(f"first anim mismatch at key={k!r}")
-                        # Reuse the mismatch finder to get a concrete path.
-                        sub = _find_first_mismatch(a_anims[k], b_anims[k], "anim")
-                        if sub:
-                            print("anim mismatch path:", sub)
                         break
         except Exception as e:
             print(f"anim keys: <error> {e!r}")
@@ -459,6 +455,17 @@ def debug_diff(*, resref: str = "3dgui") -> int:
     # If binary vs ASCII matches but binary->ascii->binary does not, print that diff.
     if mdl_bin != mdl_bin_round:
         print("\n== binary->ascii->binary mismatch ==")
+        try:
+            for i in range(5):
+                nb = mdl_bin.root.children[i]
+                na = mdl_ascii.root.children[i]
+                nr = mdl_bin_round.root.children[i]
+                mb = nb.mesh.background_geometry if nb.mesh else None
+                ma = na.mesh.background_geometry if na.mesh else None
+                mr = nr.mesh.background_geometry if nr.mesh else None
+                print(f"child[{i}] {nb.name!r} bg: bin={mb!r} ascii={ma!r} round={mr!r}")
+        except Exception:
+            pass
         logs2: list[str] = []
         _ = mdl_bin.compare(mdl_bin_round, log_func=logs2.append)
         if logs2:
