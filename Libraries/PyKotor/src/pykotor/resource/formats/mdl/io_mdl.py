@@ -1823,6 +1823,22 @@ class MDLBinaryReader:
             # Vertex positions can be stored either in MDL (K1-style) or in MDX blocks.
             # Preserve vertex_count even if the MDL vertex table wasn't readable.
             vcount = bin_node.trimesh.vertex_count
+            
+            # Validate vertex_count - if it's suspiciously low (1) but we have faces, it's likely wrong
+            # Faces typically require at least 3 vertices, so vertex_count of 1 with faces is suspicious
+            if vcount == 1 and bin_node.trimesh.faces_count > 0:
+                # Try to infer correct vertex_count from faces
+                max_vertex_index = 0
+                for face in bin_node.trimesh.faces:
+                    max_vertex_index = max(max_vertex_index, face.vertex1, face.vertex2, face.vertex3)
+                # vertex_count should be at least max_vertex_index + 1
+                if max_vertex_index + 1 > vcount:
+                    # Use the inferred count, but be conservative
+                    inferred_count = max_vertex_index + 1
+                    # Only use if it's reasonable (not more than 10x the face count)
+                    if inferred_count <= bin_node.trimesh.faces_count * 10:
+                        vcount = inferred_count
+            
             node.mesh.vertex_positions = []
             
             # If vertices were read by read_extra and count matches, use them directly
