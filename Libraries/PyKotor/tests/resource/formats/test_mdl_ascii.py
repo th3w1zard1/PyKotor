@@ -2576,6 +2576,46 @@ def _collect_mdl_entries_for_game(game_label: str, game_root: Path) -> list[tupl
     return result
 
 
+# Session-scoped state to track failures for fast-fail behavior
+_models_bif_failure_state: dict[str, bool] = {}
+
+
+@pytest.fixture(scope="session")
+def models_bif_failure_tracker(request: pytest.FixtureRequest) -> dict[str, bool]:
+    """Track failures per game installation to enable fast-fail behavior.
+    
+    If any test fails for a given game installation, all subsequent tests
+    for that installation will be skipped.
+    """
+    return _models_bif_failure_state
+
+
+def pytest_runtest_setup(item: pytest.Item) -> None:
+    """Skip test if a previous test in the same game installation has failed."""
+    if "test_models_bif_roundtrip_eq_hash_pytest" not in item.name:
+        return
+    
+    # Extract game label from test ID (format: k1-modelname or k2-modelname)
+    test_id = item.callspec.id if hasattr(item, "callspec") and item.callspec else ""
+    if "-" in test_id:
+        game_label = test_id.split("-")[0]
+        if game_label in _models_bif_failure_state and _models_bif_failure_state[game_label]:
+            pytest.skip(f"Fast-fail: Previous test failed for {game_label} installation")
+
+
+def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo) -> None:
+    """Track failures when tests fail."""
+    if "test_models_bif_roundtrip_eq_hash_pytest" not in item.name:
+        return
+    
+    if call.when == "call" and call.excinfo is not None:
+        # Test failed - extract game label and mark it
+        test_id = item.callspec.id if hasattr(item, "callspec") and item.callspec else ""
+        if "-" in test_id:
+            game_label = test_id.split("-")[0]
+            _models_bif_failure_state[game_label] = True
+
+
 def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     """Parametrize test_models_bif_roundtrip_eq_hash_pytest with MDL entries.
 
@@ -2655,6 +2695,7 @@ def test_models_bif_roundtrip_eq_hash_pytest(
     game_install_root: tuple[str, Path],
     mdl_entry: tuple[str, Path, str | None, FileResource | None, FileResource | None] | None,
     tmp_path: Path,
+    models_bif_failure_tracker: dict[str, bool],
 ):
     """Roundtrip each MDL in models.bif using Chitin (KEY/BIF) enumeration (pytest-parametrized).
 
@@ -2662,6 +2703,9 @@ def test_models_bif_roundtrip_eq_hash_pytest(
     `game_install_root` and `mdl_entry` into a single parametrization to avoid duplicates.
 
     Each model gets its own test case with the model name as a suffix (e.g., k1-modelname or k2-modelname).
+
+    Fast-fail behavior: If any test fails for a game installation, all subsequent tests
+    for that installation are automatically skipped to avoid wasting time on broken setups.
 
     Pipeline per resref:
       - Read binary MDL (+ optional MDX) from models.bif via Chitin
@@ -2671,11 +2715,16 @@ def test_models_bif_roundtrip_eq_hash_pytest(
       - Validate __eq__/__hash__ + deep component-wise equality
       - Convert back to binary and re-parse, validating stability
     """
+    game_label, game_root = game_install_root
+    
+    # Fast-fail check: skip if a previous test for this game installation failed
+    if models_bif_failure_tracker.get(game_label, False):
+        pytest.skip(f"Fast-fail: Previous test failed for {game_label} installation")
+    
     if mdl_entry is None:
         pytest.skip("No MDL entry provided")
 
     game_label_from_entry, game_root_from_entry, resref, mdl_res, mdx_res = mdl_entry
-    game_label, game_root = game_install_root
 
     # Verify game_install_root matches mdl_entry (should always match now, but keep for safety)
     if game_label != game_label_from_entry or game_root != game_root_from_entry:
