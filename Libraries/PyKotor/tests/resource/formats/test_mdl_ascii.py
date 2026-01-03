@@ -2579,11 +2579,11 @@ def _collect_mdl_entries_for_game(game_label: str, game_root: Path) -> list[tupl
 def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     """Parametrize test_models_bif_roundtrip_eq_hash_pytest with MDL entries.
 
-    This generates test cases for each (game_install_root, mdl_entry) combination.
-    Since game_install_root is already parametrized by conftest, pytest will create
-    a cartesian product. The test function filters to only run matching combinations.
+    This generates test cases for each model, combining game_install_root and mdl_entry
+    into a single parametrization to avoid cartesian product duplication.
     """
-    if "mdl_entry" not in metafunc.fixturenames:
+    # Only handle our test function
+    if "mdl_entry" not in metafunc.fixturenames or "game_install_root" not in metafunc.fixturenames:
         return
 
     # Get game install roots using the same logic as conftest
@@ -2606,9 +2606,10 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
 
     if not roots:
         metafunc.parametrize(
-            "mdl_entry",
+            "game_install_root,mdl_entry",
             [
                 pytest.param(
+                    ("missing", Path(".")),
                     None,
                     marks=pytest.mark.skip(
                         reason="Requires K1_PATH and/or TSL_PATH/K2_PATH to be set to a game installation root.",
@@ -2619,8 +2620,8 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
         )
         return
 
-    # Collect MDL entries for each game install root
-    # We create params that include the game_label so the test can filter
+    # Collect MDL entries for each game install root and create combined parameters
+    # This avoids the cartesian product by combining game_install_root and mdl_entry
     params: list = []
     for game_label, game_root in roots:
         mdl_entries = _collect_mdl_entries_for_game(game_label, game_root)
@@ -2628,6 +2629,7 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
             # Add a skip marker if no MDL entries found
             params.append(
                 pytest.param(
+                    (game_label, game_root),
                     (game_label, game_root, None, None, None),
                     marks=pytest.mark.skip(
                         reason=f"{game_label}: no MDL entries found in models.bif",
@@ -2640,12 +2642,13 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
                 safe_resref = _safe_filename(resref)
                 params.append(
                     pytest.param(
+                        (game_label, game_root),
                         (game_label, game_root, resref, mdl_res, mdx_res),
                         id=f"{game_label}-{safe_resref}",
                     ),
                 )
 
-    metafunc.parametrize("mdl_entry", params)
+    metafunc.parametrize("game_install_root,mdl_entry", params)
 
 
 def test_models_bif_roundtrip_eq_hash_pytest(
@@ -2655,11 +2658,10 @@ def test_models_bif_roundtrip_eq_hash_pytest(
 ):
     """Roundtrip each MDL in models.bif using Chitin (KEY/BIF) enumeration (pytest-parametrized).
 
-    This test is parametrized by:
-    - `game_install_root` from `Libraries/PyKotor/tests/conftest.py`
-    - `mdl_entry` from `pytest_generate_tests` in this module
+    This test is parametrized by `pytest_generate_tests` in this module, which combines
+    `game_install_root` and `mdl_entry` into a single parametrization to avoid duplicates.
 
-    Each model gets its own test case with the model name as a suffix.
+    Each model gets its own test case with the model name as a suffix (e.g., k1-modelname or k2-modelname).
 
     Pipeline per resref:
       - Read binary MDL (+ optional MDX) from models.bif via Chitin
@@ -2675,7 +2677,7 @@ def test_models_bif_roundtrip_eq_hash_pytest(
     game_label_from_entry, game_root_from_entry, resref, mdl_res, mdx_res = mdl_entry
     game_label, game_root = game_install_root
 
-    # Verify game_install_root matches mdl_entry (skip if mismatch due to cartesian product)
+    # Verify game_install_root matches mdl_entry (should always match now, but keep for safety)
     if game_label != game_label_from_entry or game_root != game_root_from_entry:
         pytest.skip(f"Mismatch between game_install_root ({game_label}) and mdl_entry ({game_label_from_entry})")
 
