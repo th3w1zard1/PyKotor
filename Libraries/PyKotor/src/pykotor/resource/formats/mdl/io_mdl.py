@@ -1989,15 +1989,27 @@ class MDLBinaryReader:
                             
                             # Only use face-based count if we actually read at least that many vertices
                             # If we didn't read enough, we have a problem - faces reference vertices that don't exist
-                            # In that case, use what we actually read, but this indicates a corrupted file
+                            # In that case, we need to verify we can actually read that many vertices before using the face-based count
                             if min_required_from_faces > 0:
                                 if actual_vertex_count >= min_required_from_faces:
                                     # We read enough for faces - use the actual count (may be more than required)
                                     pass  # actual_vertex_count is already correct
                                 else:
-                                    # We didn't read enough for faces - this is a problem
-                                    # Use the face-based count anyway, but we'll try to read what we can
-                                    actual_vertex_count = min_required_from_faces
+                                    # We didn't read enough for faces - verify we can actually read that many
+                                    # Check if we can read at least min_required_from_faces vertices
+                                    can_read_required = True
+                                    for i in range(actual_vertex_count, min_required_from_faces):
+                                        seek_pos = mdx_data_offset + i * mdx_data_block_size + vertex_offset
+                                        if seek_pos + 12 > self._reader_ext.size():
+                                            can_read_required = False
+                                            break
+                                    if can_read_required:
+                                        # We can read the required count - use it
+                                        actual_vertex_count = min_required_from_faces
+                                    else:
+                                        # We can't read the required count - use what we actually read
+                                        # This indicates a problem, but we'll use what we have
+                                        pass  # actual_vertex_count stays as what we read
                             
                             # If we found vertices, use the count
                             if actual_vertex_count > vcount:
@@ -2044,15 +2056,26 @@ class MDLBinaryReader:
                             
                             # Only use face-based count if we actually read at least that many vertices
                             # If we didn't read enough, we have a problem - faces reference vertices that don't exist
-                            # In that case, use what we actually read, but this indicates a corrupted file
+                            # In that case, we need to verify we can actually read that many vertices before using the face-based count
                             if min_required_from_faces > 0:
                                 if actual_vertex_count >= min_required_from_faces:
                                     # We read enough for faces - use the actual count (may be more than required)
                                     pass  # actual_vertex_count is already correct
                                 else:
-                                    # We didn't read enough for faces - this is a problem
-                                    # Use the face-based count anyway, but we'll try to read what we can
-                                    actual_vertex_count = min_required_from_faces
+                                    # We didn't read enough for faces - verify we can actually read that many
+                                    # Check if we can read at least min_required_from_faces vertices
+                                    can_read_required = True
+                                    read_pos = bin_node.trimesh.vertices_offset + (actual_vertex_count * 12)
+                                    required_bytes = (min_required_from_faces - actual_vertex_count) * 12
+                                    if read_pos + required_bytes > self._reader.size():
+                                        can_read_required = False
+                                    if can_read_required:
+                                        # We can read the required count - use it
+                                        actual_vertex_count = min_required_from_faces
+                                    else:
+                                        # We can't read the required count - use what we actually read
+                                        # This indicates a problem, but we'll use what we have
+                                        pass  # actual_vertex_count stays as what we read
                             
                             # If we found more vertices than the header says, use the actual count
                             if actual_vertex_count > vcount:
