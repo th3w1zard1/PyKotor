@@ -863,10 +863,12 @@ class _TrimeshHeader:
 
             # Only run recovery if vertex_count is invalid AND vertices are not in MDX
             # If mdx_data_offset is valid, vertices are in MDX, so vertices_offset being 0/0xFFFFFFFF is expected
+            # Also run recovery if vertex_count is suspiciously low (0 or 1) - this is almost always wrong for meshes
             mdx_valid = self.mdx_data_offset not in (0, 0xFFFFFFFF) and self.mdx_data_offset <= reader.size()
             vertex_count_invalid = self.vertex_count < 0 or self.vertex_count > 1_000_000
+            vertex_count_suspicious = self.vertex_count <= 1  # 0 or 1 is suspicious for a mesh with geometry
 
-            if vertex_count_invalid or (not _valid(int(self.vertex_count), int(self.vertices_offset)) and not mdx_valid):
+            if vertex_count_invalid or vertex_count_suspicious or (not _valid(int(self.vertex_count), int(self.vertices_offset)) and not mdx_valid):
                 # Prefer the legacy MDLOps-style offsets first, then our writer's layout.
                 for off_vc, off_mdx in ((304, 324), (300, 352)):
                     vc, tc, mo, vo = _try_offsets(off_vc, off_mdx)
