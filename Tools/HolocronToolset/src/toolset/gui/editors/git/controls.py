@@ -125,12 +125,10 @@ class GITControlScheme:
         if self.is_drag_moving:
             for instance, old_position in self.initial_positions.items():
                 new_position = instance.position
-                if old_position and new_position != old_position:
+                if new_position != old_position:
                     RobustLogger().debug("GITControlScheme: Create the MoveCommand for undo/redo functionality")
                     move_command = MoveCommand(instance, old_position, new_position)
                     self.undo_stack.push(move_command)
-                elif not old_position:
-                    RobustLogger().debug("GITControlScheme: No old position %s", instance.resref)
                 else:
                     RobustLogger().debug("GITControlScheme: Both old and new positions are the same %s", instance.resref)
 
@@ -142,11 +140,9 @@ class GITControlScheme:
         if self.is_drag_rotating:
             for instance, old_rotation in self.initial_rotations.items():
                 new_rotation = instance.orientation if isinstance(instance, GITCamera) else instance.bearing
-                if old_rotation and new_rotation != old_rotation:
+                if new_rotation != old_rotation:
                     RobustLogger().debug(f"Create the RotateCommand for undo/redo functionality: {instance!r}")
                     self.undo_stack.push(RotateCommand(instance, old_rotation, new_rotation))
-                elif not old_rotation:
-                    RobustLogger().debug("No old rotation for %s", instance.resref)
                 else:
                     RobustLogger().debug("Both old and new rotations are the same for %s", instance.resref)
 
