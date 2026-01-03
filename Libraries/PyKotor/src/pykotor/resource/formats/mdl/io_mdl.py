@@ -554,6 +554,9 @@ class _Node:
             size += _TrimeshHeader.K1_SIZE if game == Game.K1 else _TrimeshHeader.K2_SIZE
         if self.skin:
             size += _SkinmeshHeader.SIZE
+        if self.light:
+            # Light header size: 15 uint32s (offsets/counts) + 1 float (flare_radius) + 7 uint32s (light properties) = 92 bytes
+            size += 92
         if self.emitter:
             # Emitter header size: 3 floats + 1 uint32 + 1 float + 1 Vector2 + 5*32-byte strings + 4 uint32s + 1 uint8 + 3 padding + 1 uint32 = 212 bytes
             size += 212
@@ -2028,9 +2031,10 @@ class MDLBinaryReader:
 
         if bin_node.trimesh is not None:
             node.mesh = MDLMesh()
-            # Only set TRIMESH type if AABB flag is not set (AABB takes precedence for walkmesh nodes)
+            # Only set TRIMESH type if special node type flags are not set
             # A node can have both MESH and AABB flags (walkmesh with visible geometry)
-            if not (bin_node.header.type_id & MDLNodeFlags.AABB):
+            # LIGHT, EMITTER, and REFERENCE flags also take precedence over TRIMESH
+            if not (bin_node.header.type_id & (MDLNodeFlags.AABB | MDLNodeFlags.LIGHT | MDLNodeFlags.EMITTER | MDLNodeFlags.REFERENCE)):
                 node.node_type = MDLNodeType.TRIMESH
             node.mesh.shadow = bool(bin_node.trimesh.has_shadow)
             # render is stored as uint8 in binary (0 or 1), convert to bool for MDLMesh
