@@ -2021,24 +2021,33 @@ class MDLBinaryReader:
             # If vcount was verified/corrected, we need to re-read ALL vertices from scratch with the corrected count
             # Don't use read_extra vertices since they were read with the wrong count
             elif vcount_verified:
-                # Re-read all vertices from scratch
+                # Re-read all vertices from scratch with the verified count
                 if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
                     # Read all vertices from MDX
                     if bin_node.trimesh.mdx_data_offset not in (0, 0xFFFFFFFF) and bin_node.trimesh.mdx_data_size > 0 and vcount > 0:
                         vertex_offset = bin_node.trimesh.mdx_vertex_offset
+                        # Read as many vertices as we can, up to vcount
                         for i in range(vcount):
                             seek_pos = bin_node.trimesh.mdx_data_offset + i * bin_node.trimesh.mdx_data_size + vertex_offset
                             if seek_pos + 12 <= self._reader_ext.size():  # Need 12 bytes for Vector3
-                                self._reader_ext.seek(seek_pos)
-                                x, y, z = (
-                                    self._reader_ext.read_single(),
-                                    self._reader_ext.read_single(),
-                                    self._reader_ext.read_single(),
-                                )
-                                node.mesh.vertex_positions.append(Vector3(x, y, z))
+                                try:
+                                    self._reader_ext.seek(seek_pos)
+                                    x, y, z = (
+                                        self._reader_ext.read_single(),
+                                        self._reader_ext.read_single(),
+                                        self._reader_ext.read_single(),
+                                    )
+                                    node.mesh.vertex_positions.append(Vector3(x, y, z))
+                                except Exception:
+                                    # Can't read this vertex, stop reading
+                                    break
                             else:
                                 # Bounds check failed, stop reading
                                 break
+                        # Update vcount to actual number of vertices read
+                        if len(node.mesh.vertex_positions) < vcount:
+                            vcount = len(node.mesh.vertex_positions)
+                            bin_node.trimesh.vertex_count = vcount
                 elif bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
                     # Read all vertices from MDL
                     if vcount > 0:
