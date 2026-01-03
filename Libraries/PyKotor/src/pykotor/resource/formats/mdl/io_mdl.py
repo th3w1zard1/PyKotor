@@ -1910,13 +1910,16 @@ class MDLBinaryReader:
                     
                     # Use the validated count (at least what faces require, but not more than we can read)
                     # Also use it if vcount is 0/1 and we found a reasonable count from file bounds
-                    # If faces require more vertices than header says, always use the face-based count
-                    # (faces are authoritative - if they reference vertex indices, those vertices must exist)
+                    # If faces require more vertices than header says, use face-based count but cap to what we can read
+                    # (faces are authoritative - if they reference vertex indices, those vertices should exist)
                     if required_vertex_count > vcount:
-                        # Faces require more vertices - use face-based count as authoritative
-                        vcount = required_vertex_count
-                        bin_node.trimesh.vertex_count = required_vertex_count
-                        vcount_verified = True
+                        # Faces require more vertices - use face-based count, but cap to what we can actually read
+                        # This prevents stream boundary errors while still prioritizing face-based count
+                        final_count = min(required_vertex_count, can_read_count) if can_read_count > 0 else required_vertex_count
+                        if final_count > vcount:
+                            vcount = final_count
+                            bin_node.trimesh.vertex_count = final_count
+                            vcount_verified = True
                     elif can_read_count > vcount or (vcount <= 1 and can_read_count > 1):
                         # Use validated count from file bounds
                         vcount = can_read_count
