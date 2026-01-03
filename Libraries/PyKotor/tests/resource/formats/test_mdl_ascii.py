@@ -2626,19 +2626,8 @@ def pytest_generate_tests(metafunc: pytest.Metafunc) -> None:
     them in the test function to avoid cartesian product duplication.
     """
     # Only handle our test function
-    if "mdl_entry" not in metafunc.fixturenames:
-        return
-    
-    # Check if game_install_root is already parametrized (by conftest)
-    # If it is, we should NOT parametrize it again
-    game_install_root_parametrized = (
-        "game_install_root" in metafunc.fixturenames
-        and hasattr(metafunc, "parametrize")
-        and any("game_install_root" in str(getattr(metafunc, "callspec", None) or ""))
-    )
-    
-    # If game_install_root is not in fixturenames, we can't proceed
-    if "game_install_root" not in metafunc.fixturenames:
+    # Note: game_install_root is already parametrized by conftest.py, so we only parametrize mdl_entry
+    if "mdl_entry" not in metafunc.fixturenames or "game_install_root" not in metafunc.fixturenames:
         return
 
     # Get game install roots using the same logic as conftest
