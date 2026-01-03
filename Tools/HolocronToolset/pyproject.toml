@@ -1,1 +1,265 @@
+[build-system]
+requires = ["setuptools>=67.8.0", "wheel"]
+build-backend = "setuptools.build_meta"
+# Note: setup.py provides custom build hook to copy wiki directory for PyPI distribution
 
+[tool.setuptools]
+package-dir = { "" = "src" }
+py-modules = ["resources_rc"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["toolset*"]
+exclude = ["plugin*", "*.plugin*", "*plugin*", "plugin"]
+
+[tool.setuptools.package-data]
+toolset = [
+  "help/**/*.xml",
+  "help/**/*.md",
+  "wiki/**/*.md",  # Wiki files copied during build by setup.py
+]
+
+[project]
+name = "holocrontoolset"
+description = "A PyQt-backed program with a collection of tools and editors that make it easy to work with kotor files"
+version = "4.0.0b15"
+requires-python = ">=3.8"
+dependencies = [
+  "pykotor[all]>=2.0.5",
+  "certifi>=2021.10.8",
+  "idna>=3.11",
+  "Markdown>=3.4.4,<3.9; python_version<\"3.9\"",
+  "Markdown>=3.4.4; python_version>=\"3.9\"",
+  "numpy>=1.19.0,<1.25.0; python_version<\"3.9\"",
+  "numpy>=1.19.0; python_version>=\"3.9\"",
+  "PyQt6>=6.6.1,<6.10.1; python_version==\"3.8\"",
+  "PyQt6>=6.10.1; python_version>=\"3.9\"",
+  "PyQt6-Qt6>=6.6.1,<6.10.1; python_version==\"3.8\"",
+  "PyQt6-Qt6>=6.10.1; python_version>=\"3.9\"",
+  "PyQt6-sip>=12.10,<13.10.3; python_version<\"3.10\"",
+  "PyQt6-sip>=13.10.3; python_version>=\"3.10\"",
+  "PyQt5-Qt5>=5.15; python_version==\"3.8\"",
+  "PyQt5-sip>=12.10; python_version==\"3.8\"",
+  "PyQt5>=5.15; python_version==\"3.8\"",
+  "PySide6; python_implementation == 'PyPy' and python_version >= '3.9'",
+  "PySide6>=6.10.1; python_implementation == 'PyPy' and python_version >= '3.9'",
+  "PySide6_Addons>=6.10.1; python_implementation == 'PyPy' and python_version >= '3.9'",
+  "PySide6_Essentials>=6.10.1; python_implementation == 'PyPy' and python_version >= '3.9'",
+  "qtpy>=2.4.3",
+  "requests>=2.25.0,<2.32.0; python_version<\"3.9\"",
+  "requests>=2.25.0; python_version>=\"3.9\"",
+  "urllib3>=1.26.0,<2.0.0; python_version<\"3.9\"",
+  "urllib3>=1.26.0; python_version>=\"3.9\"",
+  "jsonpickle>=4.1.1",
+  "send2trash>=1.8.3",
+  "comtypes>=1.4.0; sys_platform == \"win32\"",
+  "PyYAML>=6.0",
+  "Pillow>=9.5; python_implementation == 'CPython'",
+  "Pillow>10,<11.1.0; python_implementation == 'PyPy'",
+]
+authors = [{ name = "NickHugi" }]
+maintainers = [{ name = "th3w1zard1", email = "halomastar@gmail.com" }]
+readme = { file = "README.md", content-type = "text/markdown" }
+license = { text = "LGPL-3.0-or-later" }
+keywords = [
+  "kotor",
+  "kotor1",
+  "kotor2",
+  "tsl",
+  "star-wars",
+  "knights-of-the-old-republic",
+  "modding",
+  "toolset",
+  "editor",
+  "gff",
+  "dlg",
+  "module-designer",
+  "pyqt5",
+  "opengl",
+  "3d",
+  "holocron",
+  "pykotor",
+  "bioware",
+]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: End Users/Desktop",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Games/Entertainment",
+  "Topic :: Games/Entertainment :: Role-Playing",
+  "Topic :: Multimedia :: Graphics :: 3D Modeling",
+  "Topic :: Text Editors :: Integrated Development Environments (IDE)",
+  "Environment :: X11 Applications :: Qt",
+  "Environment :: Win32 (MS Windows)",
+  "Environment :: MacOS X",
+]
+
+[project.scripts]
+holocrontoolset = "toolset.__main__:main"
+
+[project.gui-scripts]
+holocrontoolset-gui = "toolset.__main__:main"
+
+[project.optional-dependencies]
+updater = ["requests>=2.27,<2.32", "certifi==2025.11.12", "pycryptodome>=3.19.0"]
+qt6 = ["PyQt6>=6.6.1"]
+pyside6 = ["PySide6>=6.6.3.1"]
+dev = [
+  "pytest-qt>=4.2.0",
+  "pytest-xvfb>=3.0.0",
+  "types-Pillow",
+  "types-Send2Trash",
+]
+
+[project.urls]
+Homepage = "https://github.com/OldRepublicDevs/PyKotor"
+Documentation = "https://github.com/OldRepublicDevs/PyKotor/wiki"
+Repository = "https://github.com/OldRepublicDevs/PyKotor.git"
+Issues = "https://github.com/OldRepublicDevs/PyKotor/issues"
+Changelog = "https://github.com/OldRepublicDevs/PyKotor/releases"
+
+# Optional Poetry configuration for those who prefer it
+[tool.poetry]
+name = "holocrontoolset"
+version = "4.0.0b15"
+description = "A PyQt-backed program with a collection of tools and editors that make it easy to work with kotor files"
+authors = ["NickHugi", "Benjamin Auquite <halomastar@gmail.com>"]
+readme = "README.md"
+packages = [{ include = "toolset", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pykotor = "^2.0.5"
+idna = "*"
+urllib3 = ">=1.26,<2.7"
+Markdown = ">=3.3,<3.10"
+qtpy = "*"
+send2trash = "*"
+
+# Optional dependencies
+pycryptodome = { version = "^3.19.0", optional = true }
+requests = { version = "^2.31.0", optional = true }
+PyQt5 = { version = "^5.15", optional = true }
+PyQt6 = { version = "^6.6.1", optional = true }
+PySide2 = { version = "^5.15.2", python = ">=3.8,<3.11", optional = true }
+PySide6 = { version = "^6.6.3.1", python = ">=3.8,<3.13", optional = true }
+
+[tool.poetry.group.dev.dependencies]
+pytest-qt = "^4.2.0"
+pytest-xvfb = "^3.0.0"
+types-Pillow = "*"
+types-Send2Trash = "*"
+
+[tool.poetry.extras]
+qt = ["pyqt5 | pyqt6 | pyside2 | pyside6"]
+updater = ["pycryptodome", "requests"]
+qt5 = ["PyQt5"]
+qt6 = ["PyQt6"]
+pyside2 = ["PySide2"]
+pyside6 = ["PySide6"]
+
+########################################################
+## UV workspace configuration                         ##
+########################################################
+
+[dependency-groups]
+dev = []
+
+########################################################
+## define only linter configurations below this point ##
+########################################################
+
+[tool.pyright]
+include = ["*.py"]
+exclude = [
+  "**/node_modules/**",
+  "**/__pycache__/**",
+  "**/build/**",
+  "**/dist/**",
+  "**/venv/**",
+  "**/__pycache__/**",
+]
+extraPaths = [
+  "Engines/PyKotorEngine/src",
+  "Libraries/PyKotor/src",
+  "Libraries/PyKotor/src",
+  "Libraries/PyKotorFont/src",
+  "Libraries/PyKotorGL/src",
+  "Tools/BatchPatcher/src",
+  "Tools/HolocronAI/src",
+  "Tools/HolocronToolset/src",
+  "Tools/HoloGenerator/src",
+  "Tools/HoloPatcher/src",
+  "Tools/HoloPazaak/src",
+  "Tools/KotorCLI/src",
+  "Tools/KotorDiff/src",
+]
+pythonVersion = "3.8"
+analyzeUnannotatedFunctions = true
+deprecateTypingAliases = false
+reportIncompatibleMethodOverride = false
+reportMissingImports = true
+reportMissingTypeStubs = false
+reportOptionalMemberAccess = false
+
+[tool.pyright.defineConstant]
+PYQT5 = false
+PYSIDE2 = false
+PYQT6 = true
+PYSIDE6 = false
+
+
+[tool.ruff]
+extend = "../../pyproject.toml"
+
+[tool.ruff.lint]
+ignore = [
+  "N",       # disable snake_case vs PascalCase/camelCase checks for pyqt5
+  "SLF001",  # private member access
+  "PLR0913", # too many arguments in function definition
+  "FBT001",  # boolean-typed positional argument in function definition
+  "E402",    # Module level import not at top of file
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*.py" = ["ALL"]
+".github/*py" = ["INP001"]
+"__init__.py" = ["I001", "F401"]
+"globalsettings.py" = ["I001", "F401"]
+"./src/toolset/*.py" = ["FBT003", "N802", "N803", "N806", "A001"]
+"./src/toolset/uic/*.py" = ["ALL"]                                # uic's are auto-generated
+"resources_rc.py" = ["ALL"]
+".mdx" = ["ALL"]
+".mdl" = ["ALL"]
+"pykotor/resource/formats/ncs/compiler/*.py" = ["ALL"]
+
+[tool.ruff.lint.flake8-pytest-style]
+fixture-parentheses = false
+
+[tool.ruff.lint.isort]
+required-imports = ["from __future__ import annotations"]
+
+[tool.ruff.lint.pyupgrade]
+keep-runtime-typing = true
+
+[tool.mccabe]
+max-complexity = 25
+
+[tool.style]
+based_on_style = "pep8"
+split_before_named_assigns = true
+split_complex_comprehension = true
+split_arguments_when_comma_terminated = true
+
+[tool.pylintrc]
+max-line-length = 175

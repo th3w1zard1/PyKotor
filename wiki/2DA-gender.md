@@ -1,1 +1,21 @@
+# gender.2da
 
+Part of the [2DA File Format Documentation](2DA-File-Format).
+
+**Engine Usage**: Defines gender types for character creation and [creature templates](GFF-File-Format#utc-creature). The engine uses this file to determine gender-specific properties and restrictions.
+
+**Row index**: Gender ID (integer)
+
+**Column structure**:
+
+| Column Name | type | Description |
+|------------|------|-------------|
+| `label` | string | Gender label |
+| Additional columns | Various | Gender properties |
+
+**References**:
+
+- [`Libraries/PyKotor/src/pykotor/extract/twoda.py:461`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L461) - TwoDARegistry definition
+- [`Tools/HolocronToolset/src/toolset/data/installation.py:60`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/data/installation.py#L60) - HTInstallation constant
+
+---

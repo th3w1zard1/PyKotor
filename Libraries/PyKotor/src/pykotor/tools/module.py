@@ -1,1 +1,461 @@
+from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+from loggerplus import RobustLogger
+from pykotor.common.language import LocalizedString
+from pykotor.common.misc import ResRef
+from pykotor.common.module import Module
+from pykotor.extract.file import LocationResult
+from pykotor.extract.installation import Installation, SearchLocation
+from pykotor.resource.formats.erf import ERF, ERFType, read_erf, write_erf
+from pykotor.resource.formats.gff import bytes_gff
+from pykotor.resource.formats.lyt import bytes_lyt
+from pykotor.resource.formats.rim import read_rim
+from pykotor.resource.formats.tpc import TPCTextureFormat
+from pykotor.resource.formats.tpc.tpc_auto import bytes_tpc
+from pykotor.resource.formats.vis import bytes_vis
+from pykotor.resource.generics.are import dismantle_are
+from pykotor.resource.generics.git import dismantle_git
+from pykotor.resource.generics.ifo import dismantle_ifo
+from pykotor.resource.generics.pth import PTH, dismantle_pth
+from pykotor.resource.generics.utd import UTD, dismantle_utd
+from pykotor.resource.generics.utp import UTP, dismantle_utp
+from pykotor.resource.generics.uts import dismantle_uts
+from pykotor.resource.type import ResourceType
+from pykotor.tools import model
+from pykotor.tools.misc import is_mod_file
+from pykotor.tools.path import CaseAwarePath
+from utility.common.misc_string.util import ireplace
+
+if TYPE_CHECKING:
+    import os
+
+    from pathlib import Path
+
+    from pykotor.common.misc import Game
+    from pykotor.common.module import ModuleResource
+    from pykotor.extract.file import ResourceResult
+    from pykotor.resource.formats.lyt.lyt_data import LYT
+    from pykotor.resource.formats.tpc import TPC
+    from pykotor.resource.formats.vis.vis_data import VIS
+    from pykotor.resource.generics.are import ARE
+    from pykotor.resource.generics.git import GIT
+    from pykotor.resource.generics.ifo import IFO
+    from pykotor.resource.generics.pth import PTH
+    from pykotor.resource.generics.utd import UTD
+    from pykotor.resource.generics.utp import UTP
+    from pykotor.resource.generics.uts import UTS
+
+
+def clone_module(  # noqa: C901, PLR0915, PLR0912, PLR0913
+    root: str,
+    identifier: str,
+    prefix: str,
+    name: str,
+    installation: Installation,
+    *,
+    copy_textures: bool = False,
+    copy_lightmaps: bool = False,
+    keep_doors: bool = False,
+    keep_placeables: bool = False,
+    keep_sounds: bool = False,
+    keep_pathing: bool = False,
+):
+    """Clones a module.
+
+    Creates a new module by copying and modifying resources from an existing module.
+    Handles resource renaming, texture/lightmap copying, and module file generation.
+
+    Args:
+    ----
+        root: str - The path to the module root
+        identifier: str - The resref str for the new module
+        prefix: str - Prefix for generated textures and lightmaps
+        name: str - Name for the new ARE file
+        installation: Installation - The installation context
+
+    Processing Logic:
+    ----------------
+        1. Load resources from old module
+        2. Rename resources and change identifiers
+        3. Copy textures and lightmaps if specified
+        4. Write new module resources to file.
+
+    References:
+    ----------
+        vendor/TSLPatcher/TSLPatcher.pl (Module installation/cloning logic)
+        vendor/HoloPatcher.NET/src/TSLPatcher.Core/Patcher/ModInstaller.cs (Module handling)
+        Note: Module cloning is PyKotor-specific functionality
+    """
+    old_module = Module(root, installation)
+    new_module = ERF(ERFType.MOD)
+
+    git_res: ModuleResource[GIT] | None = old_module.git()
+    git: GIT | None = git_res.resource() if git_res is not None else None
+    if git is None:
+        raise ValueError(f"No GIT file found in module '{root}'")
+
+    ifo_res: ModuleResource[IFO] | None = old_module.info()
+    ifo: IFO | None = ifo_res.resource() if ifo_res is not None else None
+    if ifo is not None:
+        old_resref: ResRef = ifo.resref
+        ifo.resref = ResRef(identifier)
+        ifo.mod_name = LocalizedString.from_english(identifier.upper())
+        ifo.tag = identifier.upper()
+        ifo.area_name.set_data(identifier)
+        new_module.set_data("module", ResourceType.IFO, bytes_gff(dismantle_ifo(ifo)))
+    else:
+        RobustLogger().warning(f"No IFO found in module to be cloned: '{root}'")
+
+    are_res: ModuleResource[ARE] | None = old_module.are()
+    are: ARE | None = are_res.resource() if are_res is not None else None
+
+    if are is not None:
+        are.name = LocalizedString.from_english(name)
+        new_module.set_data(identifier, ResourceType.ARE, bytes_gff(dismantle_are(are)))
+    else:
+        RobustLogger().warning(f"No ARE found in module to be cloned: '{root}'")
+
+    if keep_pathing:  # sourcery skip: extract-method
+        pth_res: ModuleResource[PTH] | None = old_module.pth()
+        pth: PTH | None = None if pth_res is None else pth_res.resource()
+        if pth is not None:
+            new_module.set_data(identifier, ResourceType.PTH, bytes_gff(dismantle_pth(pth)))
+
+    git.creatures = []
+    git.encounters = []
+    git.stores = []
+    git.triggers = []
+    git.waypoints = []
+    git.cameras = []
+
+    if keep_doors:
+        for i, door in enumerate(git.doors):
+            old_resname: str = str(door.resref)
+            new_resname: str = f"{identifier}_dor{i}"
+            door.resref.set_data(new_resname)
+            door.tag = new_resname
+
+            utd_mod_res: ModuleResource[UTD] | None = old_module.door(old_resname)
+            if utd_mod_res is None:
+                RobustLogger().warning(f"No UTD found for door '{old_resname}' in module '{root}'")
+                continue
+            utd_res: UTD | None = utd_mod_res.resource()
+            if utd_res is None:
+                RobustLogger().warning(f"UTD resource is None for door '{old_resname}' in module '{root}'")
+                continue
+
+            new_module.set_data(new_resname, ResourceType.UTD, bytes_gff(dismantle_utd(utd_res)))
+    else:
+        git.doors = []
+
+    if keep_placeables:
+        for i, placeable in enumerate(git.placeables):
+            old_resname = str(placeable.resref)
+            new_resname = f"{identifier}_plc{i}"
+            placeable.resref.set_data(new_resname)
+            placeable.tag = new_resname
+
+            utp_mod_res: ModuleResource[UTP] | None = old_module.placeable(old_resname)
+            if utp_mod_res is None:
+                RobustLogger().warning(f"No UTP found for placeable '{old_resname}' in module '{root}'")
+                continue
+            utp_res: UTP | None = utp_mod_res.resource()
+            if utp_res is None:
+                RobustLogger().warning(f"UTP resource is None for placeable '{old_resname}' in module '{root}'")
+                continue
+
+            new_module.set_data(new_resname, ResourceType.UTP, bytes_gff(dismantle_utp(utp_res)))
+    else:
+        git.placeables = []
+
+    if keep_sounds:
+        git.sounds = []
+    else:
+        for i, sound in enumerate(git.sounds):
+            old_resname = str(sound.resref)
+            new_resname = f"{identifier}_snd{i}"
+            sound.resref.set_data(new_resname)
+            sound.tag = new_resname
+
+            uts_mod_res = old_module.sound(old_resname)
+            if uts_mod_res is None:
+                RobustLogger().warning(f"No UTS found for sound '{old_resname}' in module '{root}'")
+                continue
+            uts_res: UTS | None = uts_mod_res.resource()
+            if uts_res is None:
+                RobustLogger().warning(f"UTS resource is None for sound '{old_resname}' in module '{root}'")
+                continue
+            new_module.set_data(new_resname, ResourceType.UTS, bytes_gff(dismantle_uts(uts_res)))
+
+    new_module.set_data(identifier, ResourceType.GIT, bytes_gff(dismantle_git(git)))
+
+    lyt_res: ModuleResource[LYT] | None = old_module.layout()
+    lyt: LYT | None = lyt_res.resource() if lyt_res is not None else None
+
+    vis_res: ModuleResource[VIS] | None = old_module.vis()
+    vis: VIS | None = vis_res.resource() if vis_res is not None else None
+
+    new_lightmaps: dict[str, str] = {}
+    new_textures: dict[str, str] = {}
+    if lyt is not None:
+        for room in lyt.rooms:
+            old_model_name: str = room.model
+            new_model_name: str = ireplace(old_model_name, str(old_resref), identifier)
+
+            room.model = new_model_name
+            if vis is not None and vis.room_exists(old_model_name):
+                vis.rename_room(old_model_name, new_model_name)
+
+            mdl_resource: ResourceResult | None = installation.resource(old_model_name, ResourceType.MDL)
+            mdl_data: None | bytes = None if mdl_resource is None else mdl_resource.data
+            if mdl_data is None:
+                continue
+            mdx_resource: ResourceResult | None = installation.resource(old_model_name, ResourceType.MDX)
+            mdx_data: None | bytes = None if mdx_resource is None else mdx_resource.data
+            if mdx_data is None:
+                continue
+            wok_resource: ResourceResult | None = installation.resource(old_model_name, ResourceType.WOK)
+            wok_data: None | bytes = None if wok_resource is None else wok_resource.data
+            if wok_data is None:
+                continue
+
+            if copy_textures:
+                for texture in model.iterate_textures(mdl_data):
+                    if texture in new_textures:
+                        continue
+                    new_texture_name: str = prefix + texture[3:]
+                    new_textures[texture] = new_texture_name
+
+                    tpc: TPC | None = installation.texture(
+                        texture,
+                        [
+                            SearchLocation.CHITIN,
+                            SearchLocation.OVERRIDE,
+                            SearchLocation.TEXTURES_GUI,
+                            SearchLocation.TEXTURES_TPA,
+                        ],
+                    )
+                    if tpc is None:
+                        RobustLogger().warning(f"TPC/TGA resource not found for texture '{texture}' in module '{root}'")
+                        continue
+                    tpc = tpc.copy()
+                    if tpc.format() in (TPCTextureFormat.BGR, TPCTextureFormat.DXT1, TPCTextureFormat.Greyscale):
+                        tpc.convert(TPCTextureFormat.RGB)
+                    elif tpc.format() in (TPCTextureFormat.BGRA, TPCTextureFormat.DXT3, TPCTextureFormat.DXT5):
+                        tpc.convert(TPCTextureFormat.RGBA)
+                    new_module.set_data(new_texture_name, ResourceType.TGA, bytes_tpc(tpc, ResourceType.TGA))
+                mdl_data = model.change_textures(mdl_data, new_textures)
+
+            if copy_lightmaps:
+                for lightmap in model.iterate_lightmaps(mdl_data):
+                    if lightmap in new_lightmaps:
+                        continue
+                    new_lightmap_name: str = f"{identifier}_lm_{len(new_lightmaps.keys())}"
+                    new_lightmaps[lightmap] = new_lightmap_name
+
+                    tpc = installation.texture(
+                        lightmap,
+                        [
+                            SearchLocation.CHITIN,
+                            SearchLocation.OVERRIDE,
+                            SearchLocation.TEXTURES_GUI,
+                            SearchLocation.TEXTURES_TPA,
+                        ],
+                    )
+                    if tpc is None:
+                        RobustLogger().warning(f"TPC/TGA resource not found for lightmap '{lightmap}' in module '{root}'")
+                        continue
+                    tpc = tpc.copy()
+                    if tpc.format() in (TPCTextureFormat.BGR, TPCTextureFormat.DXT1, TPCTextureFormat.Greyscale):
+                        tpc.convert(TPCTextureFormat.RGB)
+                    elif tpc.format() in (TPCTextureFormat.BGRA, TPCTextureFormat.DXT3, TPCTextureFormat.DXT5):
+                        tpc.convert(TPCTextureFormat.RGBA)
+                    new_module.set_data(new_lightmap_name, ResourceType.TGA, bytes_tpc(tpc))
+                mdl_data = model.change_lightmaps(mdl_data, new_lightmaps)
+
+            mdl_data = model.rename(mdl_data, new_model_name)
+            new_module.set_data(new_model_name, ResourceType.MDL, mdl_data)
+            new_module.set_data(new_model_name, ResourceType.MDX, mdx_data)
+            new_module.set_data(new_model_name, ResourceType.WOK, wok_data)
+
+    if vis is not None:
+        new_module.set_data(identifier, ResourceType.VIS, bytes_vis(vis))
+    else:
+        RobustLogger().warning(f"No VIS found in module to be cloned: '{root}'")
+
+    if lyt is not None:
+        new_module.set_data(identifier, ResourceType.LYT, bytes_lyt(lyt))
+    else:
+        RobustLogger().error(f"No LYT found in module to be cloned: '{root}'")
+
+    write_erf(new_module, installation.module_path().joinpath(f"{identifier}.mod"))
+
+
+def rim_to_mod(
+    filepath: os.PathLike | str,
+    rim_folderpath: os.PathLike | str | None = None,
+    module_root: str | None = None,
+    game: Game | None = None,
+):
+    """Creates a MOD file at the given filepath and copies the resources from the corresponding RIM files.
+
+    Raises:
+    ------
+        ValueError: If the file was corrupted or the format could not be determined.
+        FileNotFoundError: If the file could not be found.
+        IsADirectoryError: If the specified path is a directory (Unix-like systems only).
+        PermissionError: If the file could not be accessed.
+
+    Args:
+    ----
+        filepath: The filepath of the MOD file you would like to create.
+        rim_folderpath: Folderpath where the rims can be found for this module.
+            The filestem of the filepath will be used to determine which rim to load.
+    """
+    r_outpath = CaseAwarePath(filepath)
+    if not is_mod_file(r_outpath):
+        msg = "Specified file must end with the .mod extension"
+        raise ValueError(msg)
+
+    module_root = Installation.get_module_root(module_root or filepath)
+    r_rim_folderpath = CaseAwarePath(rim_folderpath) if rim_folderpath else r_outpath.parent
+
+    filepath_rim: Path = r_rim_folderpath / f"{module_root}.rim"
+    filepath_rim_s: Path = r_rim_folderpath / f"{module_root}_s.rim"
+    filepath_dlg_erf: Path = r_rim_folderpath / f"{module_root}_dlg.erf"
+
+    mod = ERF(ERFType.MOD)
+    for res in read_rim(filepath_rim):
+        mod.set_data(str(res.resref), res.restype, res.data)
+
+    if filepath_rim_s.is_file():
+        for res in read_rim(filepath_rim_s):
+            mod.set_data(str(res.resref), res.restype, res.data)
+
+    if (game is None or game.is_k2()) and filepath_dlg_erf.is_file():
+        for res in read_erf(filepath_dlg_erf):
+            mod.set_data(str(res.resref), res.restype, res.data)
+
+    write_erf(mod, filepath, ResourceType.MOD)
+
+
+def get_resource_priority(location: LocationResult, installation: Installation) -> int:
+    """Get resource priority based on KOTOR resolution order.
+
+    Resolution order (from highest to lowest priority):
+    1. Override folder (priority 0 - highest)
+    2. Modules (.mod files) (priority 1)
+    3. Modules (.rim/_s.rim/_dlg.erf files) (priority 2)
+    4. Chitin BIFs (priority 3 - lowest)
+
+    Reference: Libraries/PyKotor/src/pykotor/tslpatcher/writer.py _get_resource_priority
+
+    Args:
+    ----
+        location: LocationResult from installation.locations()
+        installation: The installation instance
+
+    Returns:
+    -------
+        Priority value (lower = higher priority)
+    """
+    filepath = location.filepath
+    parent_names_lower = [parent.name.lower() for parent in filepath.parents]
+
+    if "override" in parent_names_lower:
+        return 0
+    if "modules" in parent_names_lower:
+        name_lower = filepath.name.lower()
+        if name_lower.endswith(".mod"):
+            return 1
+        return 2  # .rim/_s.rim/_dlg.erf
+    if "data" in parent_names_lower or filepath.suffix.lower() == ".bif":
+        return 3
+    # Files directly in installation root treated as Override priority
+    if filepath.parent == installation.path():
+        return 0
+    # Default to lowest priority if unknown
+    return 3
+
+
+def prioritize_module_files(module_files: list[os.PathLike | str]) -> list[Path]:
+    """Prioritize module files using canonical composite loading logic.
+
+    This implements the same priority logic used by kotordiff's composite module loading:
+    - `.mod` files overshadow rim-like files (`.rim`, `_s.rim`, `_dlg.erf`) - if a `.mod` exists
+      for a module root, only the `.mod` is used and rim-like files are ignored
+    - Only rim-like files can form a composite module group - if no `.mod` exists, all rim-like
+      files (`.rim`, `_s.rim`, `_dlg.erf`) are combined together
+
+    Args:
+    ----
+        module_files: List of module file paths to prioritize
+
+    Returns:
+    -------
+        Prioritized list of Path objects representing the files to use.
+        Files are grouped by module root, with `.mod` files overshadowing rim-like files
+        for the same module root. Only rim-like files form composite groups when no `.mod` exists.
+
+    Examples:
+    --------
+        >>> files = ["mymod.rim", "mymod.mod", "mymod_s.rim"]
+        >>> prioritize_module_files(files)
+        [Path("mymod.mod")]  # .mod overshadows rim-like files
+
+        >>> files = ["mymod.rim", "mymod_s.rim", "mymod_dlg.erf"]
+        >>> prioritize_module_files(files)
+        [Path("mymod.rim"), Path("mymod_s.rim"), Path("mymod_dlg.erf")]  # Rim-like files form composite when no .mod
+
+    Note:
+    ----
+        This matches the logic from `pykotor.tslpatcher.diff.engine.apply_folder_resolution_order`
+        and `pykotor.tslpatcher.diff.engine.CompositeModuleCapsule`.
+    """
+    from pathlib import Path  # noqa: PLC0415
+
+    # Group files by module root
+    module_groups: dict[str, list[Path]] = {}
+    non_module_files: list[Path] = []
+
+    for file_path in module_files:
+        path = Path(file_path)
+        file_name_lower = path.name.lower()
+
+        # Check if this is a module file
+        is_module_file = file_name_lower.endswith(".mod") or file_name_lower.endswith(".rim") or file_name_lower.endswith("_s.rim") or file_name_lower.endswith("_dlg.erf")
+
+        if is_module_file:
+            try:
+                root = Installation.get_module_root(path)
+                if root not in module_groups:
+                    module_groups[root] = []
+                module_groups[root].append(path)
+            except Exception:  # noqa: BLE001
+                # If we can't determine module root, treat as non-module file
+                non_module_files.append(path)
+        else:
+            non_module_files.append(path)
+
+    # Apply priority logic to each module group
+    prioritized_files: list[Path] = list(non_module_files)
+
+    for root, group_files in module_groups.items():
+        # Partition into .mod (highest priority) and rim-like group
+        mod_files = [f for f in group_files if f.name.lower().endswith(".mod")]
+        rimlike_files = [
+            f
+            for f in group_files
+            if (f.name.lower().endswith(".rim") and not f.name.lower().endswith("_s.rim")) or f.name.lower().endswith("_s.rim") or f.name.lower().endswith("_dlg.erf")
+        ]
+
+        if mod_files:
+            # .mod exists - use it, ignore rim-like group
+            prioritized_files.append(mod_files[0])
+        else:
+            # No .mod - use all rim-like files
+            prioritized_files.extend(rimlike_files)
+
+    return prioritized_files
