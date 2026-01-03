@@ -19,6 +19,7 @@ from pykotor.resource.generics.git import (
     GITCreature,
     GITDoor,
     GITEncounter,
+    GITEncounterSpawnPoint,
     GITPlaceable,
     GITSound,
     GITStore,
@@ -35,7 +36,7 @@ from toolset.gui.dialogs.instance.store import StoreDialog
 from toolset.gui.dialogs.instance.trigger import TriggerDialog
 from toolset.gui.dialogs.instance.waypoint import WaypointDialog
 from toolset.gui.dialogs.load_from_location_result import FileSelectionWindow, ResourceItems
-from toolset.gui.widgets.renderer.walkmesh import GeomPoint
+from toolset.gui.widgets.renderer.walkmesh import EncounterSpawnPoint, GeomPoint
 from toolset.utils.window import add_window, open_resource_editor
 from utility.common.geometry import Vector2, Vector3
 
@@ -256,8 +257,7 @@ class _InstanceMode(_Mode):
     def edit_selected_instance_spawns(self):
         if self.renderer2d.instance_selection.last():
             self.renderer2d.instance_selection.last()
-            # TODO: Implement spawn mode (UTE)
-            # self._editor.enter_spawn_mode()
+            self._editor.enter_spawn_mode()
 
     def add_instance(self, instance: GITInstance):
         from toolset.gui.editors.git.undo import InsertCommand
@@ -725,27 +725,180 @@ class _GeometryMode(_Mode):
 
 
 class _SpawnMode(_Mode):
-    def on_item_selection_changed(self, item: QListWidgetItem): ...
+    def __init__(
+        self,
+        editor: GITEditor | ModuleDesigner,
+        installation: HTInstallation | None,
+        git: GIT,
+        *,
+        hide_others: bool = True,
+    ):
+        super().__init__(editor, installation, git)
 
-    def on_filter_edited(self, text: str): ...
+        if hide_others:
+            self.renderer2d.hide_creatures = True
+            self.renderer2d.hide_doors = True
+            self.renderer2d.hide_placeables = True
+            self.renderer2d.hide_sounds = True
+            self.renderer2d.hide_stores = True
+            self.renderer2d.hide_cameras = True
+            self.renderer2d.hide_triggers = True
+            self.renderer2d.hide_waypoints = True
+            self.renderer2d.hide_encounters = False
+        else:
+            self.renderer2d.hide_encounters = False
 
-    def on_render_context_menu(self, world: Vector2, screen: QPoint): ...
+        self.renderer2d.hide_geom_points = True
+        self.renderer2d.hide_spawn_points = False
 
-    def open_list_context_menu(self, item: QListWidgetItem, screen: QPoint): ...
+        self.renderer2d.geometry_selection.clear()
+        self.renderer2d.spawn_selection.clear()
 
-    def update_visibility(self): ...
+        # Ensure an encounter is selected; spawn points belong to an encounter instance.
+        last = self.renderer2d.instance_selection.last()
+        if last is not None and not isinstance(last, GITEncounter):
+            self.renderer2d.instance_selection.clear()
+        if self.renderer2d.instance_selection.isEmpty() and self._git.encounters:
+            self.renderer2d.instance_selection.select([self._git.encounters[0]])
 
-    def select_underneath(self): ...
+    def _selected_encounter(self) -> GITEncounter | None:
+        inst = self.renderer2d.instance_selection.last()
+        return inst if isinstance(inst, GITEncounter) else None
 
-    def delete_selected(self, *, no_undo_stack: bool = False): ...
+    def _undo_stack(self):
+        # GITEditor uses the controls' undo stack; ModuleDesigner uses its own undo_stack.
+        return self._editor._controls.undo_stack if isinstance(self._editor, GITEditor) else self._editor.undo_stack  # noqa: SLF001
 
-    def duplicate_selected(self, position: Vector3): ...
+    def _refresh(self):
+        self.renderer2d.update()
 
-    def move_selected(self, x: float, y: float): ...
+    def insert_spawn_point_at_mouse(self):
+        from toolset.gui.editors.git.undo import SpawnPointInsertCommand
 
-    def rotate_selected(self, angle: float): ...
+        encounter = self._selected_encounter()
+        if encounter is None:
+            return
+        screen: QPoint = self.renderer2d.mapFromGlobal(self._editor.cursor().pos())
+        world: Vector3 = self.renderer2d.to_world_coords(screen.x(), screen.y())
 
-    def rotate_selected_to_point(self, x: float, y: float): ...
+        spawn = GITEncounterSpawnPoint(world.x, world.y, world.z)
+        self._undo_stack().push(SpawnPointInsertCommand(encounter, spawn, self._editor))
+        self.renderer2d.spawn_selection.select([EncounterSpawnPoint(encounter, spawn)])
+        self._refresh()
 
-    def update_status_bar(self, world: Vector2): ...
+    # region Interface Methods
+    def on_item_selection_changed(self, item: QListWidgetItem):
+        # Spawn mode does not use the instance list for selection changes.
+        return
+
+    def on_filter_edited(self, text: str):
+        return
+
+    def update_status_bar(self, world: Vector2):
+        encounter = self._selected_encounter()
+        msg = f"({world.x:.1f}, {world.y:.1f}) Editing Spawn Points"
+        if encounter is not None:
+            msg = f"({world.x:.1f}, {world.y:.1f}) Editing Spawn Points of {encounter.identifier().resname}"
+        if hasattr(self._editor, "statusBar"):
+            self._editor.statusBar().showMessage(msg)  # pyright: ignore[reportOptionalMemberAccess]
+
+    def on_render_context_menu(self, world: Vector2, screen: QPoint):
+        menu = QMenu(self._editor)
+        self._get_render_context_menu(world, menu)
+        menu.popup(screen)
+
+    def _get_render_context_menu(
+        self,
+        world: Vector2,
+        menu: QMenu,
+    ):
+        if not self.renderer2d.spawn_selection.isEmpty():
+            menu.addAction("Remove Spawn Point").triggered.connect(self.delete_selected)  # pyright: ignore[reportOptionalMemberAccess]
+            menu.addAction("Duplicate Spawn Point Here").triggered.connect(lambda: self.duplicate_selected(Vector3(world.x, world.y, self.renderer2d.get_z_coord(world.x, world.y))))  # pyright: ignore[reportOptionalMemberAccess]
+        else:
+            menu.addAction("Insert Spawn Point").triggered.connect(self.insert_spawn_point_at_mouse)  # pyright: ignore[reportOptionalMemberAccess]
+
+        menu.addSeparator()
+        menu.addAction("Finish Editing").triggered.connect(self._editor.enter_instance_mode)  # pyright: ignore[reportOptionalMemberAccess]
+
+    def open_list_context_menu(self, item: QListWidgetItem, screen: QPoint):
+        return
+
+    def update_visibility(self):
+        return
+
+    def select_underneath(self):
+        under_mouse = self.renderer2d.spawn_points_under_mouse()
+        selection = self.renderer2d.spawn_selection.all()
+        if selection and selection[0] in under_mouse:
+            return
+        if under_mouse:
+            self.renderer2d.spawn_selection.select([under_mouse[-1]])
+        else:
+            self.renderer2d.spawn_selection.select([])
+
+    def delete_selected(self, *, no_undo_stack: bool = False):
+        from toolset.gui.editors.git.undo import SpawnPointDeleteCommand
+
+        sp_ref = self.renderer2d.spawn_selection.last()
+        if sp_ref is None:
+            return
+        encounter = sp_ref.encounter
+        spawn = sp_ref.spawn
+        if spawn not in encounter.spawn_points:
+            self.renderer2d.spawn_selection.clear()
+            return
+
+        if no_undo_stack:
+            encounter.spawn_points.remove(spawn)
+        else:
+            self._undo_stack().push(SpawnPointDeleteCommand(encounter, spawn, self._editor))
+        self.renderer2d.spawn_selection.clear()
+        self._refresh()
+
+    def duplicate_selected(self, position: Vector3):
+        from toolset.gui.editors.git.undo import SpawnPointInsertCommand
+
+        sp_ref = self.renderer2d.spawn_selection.last()
+        if sp_ref is None:
+            return
+        encounter = sp_ref.encounter
+        source = sp_ref.spawn
+        if source not in encounter.spawn_points:
+            return
+
+        spawn = GITEncounterSpawnPoint(position.x, position.y, position.z)
+        spawn.orientation = source.orientation
+        self._undo_stack().push(SpawnPointInsertCommand(encounter, spawn, self._editor))
+        self.renderer2d.spawn_selection.select([EncounterSpawnPoint(encounter, spawn)])
+        self._refresh()
+
+    def move_selected(self, x: float, y: float):
+        for sp_ref in self.renderer2d.spawn_selection.all():
+            if sp_ref.spawn not in sp_ref.encounter.spawn_points:
+                continue
+            sp_ref.spawn.x += x
+            sp_ref.spawn.y += y
+            sp_ref.spawn.z = self.renderer2d.get_z_coord(sp_ref.spawn.x, sp_ref.spawn.y)
+        self._refresh()
+
+    def rotate_selected(self, angle: float):
+        for sp_ref in self.renderer2d.spawn_selection.all():
+            if sp_ref.spawn not in sp_ref.encounter.spawn_points:
+                continue
+            sp_ref.spawn.orientation += angle
+        self._refresh()
+
+    def rotate_selected_to_point(self, x: float, y: float):
+        for sp_ref in self.renderer2d.spawn_selection.all():
+            if sp_ref.spawn not in sp_ref.encounter.spawn_points:
+                continue
+            dx = x - sp_ref.spawn.x
+            dy = y - sp_ref.spawn.y
+            if abs(dx) < 1e-6 and abs(dy) < 1e-6:
+                continue
+            sp_ref.spawn.orientation = math.atan2(-dx, dy)
+        self._refresh()
+
+    # endregion
 

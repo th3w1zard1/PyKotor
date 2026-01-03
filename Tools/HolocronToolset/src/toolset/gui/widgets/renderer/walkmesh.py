@@ -22,7 +22,18 @@ from qtpy.QtWidgets import QWidget
 from pykotor.resource.formats.bwm import BWM
 from pykotor.resource.formats.tpc import TPCTextureFormat
 from pykotor.resource.generics.are import ARENorthAxis
-from pykotor.resource.generics.git import GITCamera, GITCreature, GITDoor, GITEncounter, GITPlaceable, GITSound, GITStore, GITTrigger, GITWaypoint
+from pykotor.resource.generics.git import (
+    GITCamera,
+    GITCreature,
+    GITDoor,
+    GITEncounter,
+    GITEncounterSpawnPoint,
+    GITPlaceable,
+    GITSound,
+    GITStore,
+    GITTrigger,
+    GITWaypoint,
+)
 from toolset.utils.misc import clamp
 from utility.common.geometry import Vector2, Vector3
 from utility.error_handling import assert_with_variable_trace
@@ -44,6 +55,11 @@ T = TypeVar("T")
 class GeomPoint(NamedTuple):
     instance: GITInstance
     point: Vector3
+
+
+class EncounterSpawnPoint(NamedTuple):
+    encounter: GITEncounter
+    spawn: GITEncounterSpawnPoint
 
 
 class WalkmeshCamera:
@@ -155,6 +171,7 @@ class WalkmeshRenderer(QWidget):
         self.camera: WalkmeshCamera = WalkmeshCamera()
         self.instance_selection: WalkmeshSelection[GITInstance] = WalkmeshSelection()
         self.geometry_selection: WalkmeshSelection[GeomPoint] = WalkmeshSelection()
+        self.spawn_selection: WalkmeshSelection[EncounterSpawnPoint] = WalkmeshSelection()
 
         self._mouse_prev: Vector2 = Vector2(self.cursor().pos().x(), self.cursor().pos().y())
         self._walkmesh_face_cache: dict[BWMFace, QPainterPath] | None = None
@@ -173,6 +190,7 @@ class WalkmeshRenderer(QWidget):
         self.hide_encounters: bool = True
         self.hide_waypoints: bool = True
         self.hide_cameras: bool = True
+        self.hide_spawn_points: bool = True
 
         self.material_colors: dict[SurfaceMaterial, QColor] = {}
         self.default_material_color: QColor = QColor(255, 0, 255)
@@ -194,6 +212,7 @@ class WalkmeshRenderer(QWidget):
 
         self._instances_under_mouse: list[GITInstance] = []
         self._geom_points_under_mouse: list[GeomPoint] = []
+        self._spawn_points_under_mouse: list[EncounterSpawnPoint] = []
 
         self._path_nodes_under_mouse: list[Vector2] = []
         self.path_selection: WalkmeshSelection[Vector2] = WalkmeshSelection()
@@ -415,6 +434,9 @@ class WalkmeshRenderer(QWidget):
 
     def geom_points_under_mouse(self) -> list[GeomPoint]:
         return self._geom_points_under_mouse
+
+    def spawn_points_under_mouse(self) -> list[EncounterSpawnPoint]:
+        return self._spawn_points_under_mouse
 
     def is_instance_visible(self, instance: GITInstance) -> bool | None:
         retBool: bool | None = None
@@ -791,6 +813,23 @@ class WalkmeshRenderer(QWidget):
             for camera in [] if self.hide_cameras else self._git.cameras:
                 self._draw_image(painter, self._pixmap_camera, camera.position.x, camera.position.y, math.pi + self.camera.rotation(), 1 / 16)
 
+            # Draw encounter spawn points (if enabled)
+            if not self.hide_spawn_points:
+                painter.setOpacity(0.8)
+                painter.setPen(Qt.PenStyle.NoPen)
+                for encounter in self._git.encounters:
+                    for spawn in encounter.spawn_points:
+                        painter.setBrush(QColor(180, 200, 255, 180))
+                        painter.drawEllipse(QPointF(spawn.x, spawn.y), 3 / self.camera.zoom(), 3 / self.camera.zoom())
+                        # Orientation arrow
+                        length = 1.0
+                        dx = math.sin(spawn.orientation) * length
+                        dy = math.cos(spawn.orientation) * length
+                        painter.setBrush(Qt.BrushStyle.NoBrush)
+                        painter.setPen(QPen(QColor(180, 200, 255, 200), 0.12))
+                        painter.drawLine(QPointF(spawn.x, spawn.y), QPointF(spawn.x + dx, spawn.y + dy))
+                        painter.setPen(Qt.PenStyle.NoPen)
+
         # Highlight the first instance that is underneath the mouse
         if self._instances_under_mouse:
             instance: GITInstance = self._instances_under_mouse[0]
@@ -813,6 +852,14 @@ class WalkmeshRenderer(QWidget):
                 painter.setBrush(QColor(255, 255, 255, 200))
                 painter.setPen(Qt.PenStyle.NoPen)
                 painter.drawEllipse(QPointF(point.x, point.y), 4 / self.camera.zoom(), 4 / self.camera.zoom())
+
+        # Highlight first spawn point that is underneath the mouse
+        if self._spawn_points_under_mouse and not self.hide_spawn_points:
+            sp_ref: EncounterSpawnPoint = self._spawn_points_under_mouse[0]
+            sp = sp_ref.spawn
+            painter.setBrush(QColor(255, 255, 255, 200))
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawEllipse(QPointF(sp.x, sp.y), 4 / self.camera.zoom(), 4 / self.camera.zoom())
 
         # Highlight selected instances
         for instance in self.instance_selection.all():
@@ -849,6 +896,23 @@ class WalkmeshRenderer(QWidget):
             painter.setPen(Qt.PenStyle.NoPen)
             painter.drawEllipse(QPointF(point.x, point.y), 4 / self.camera.zoom(), 4 / self.camera.zoom())
 
+        # Draw selected spawn points
+        if not self.hide_spawn_points:
+            for sp_ref in self.spawn_selection.all():
+                if sp_ref.spawn not in sp_ref.encounter.spawn_points:
+                    continue
+                sp = sp_ref.spawn
+                painter.setBrush(QColor(255, 255, 255, 255))
+                painter.setPen(Qt.PenStyle.NoPen)
+                painter.drawEllipse(QPointF(sp.x, sp.y), 4 / self.camera.zoom(), 4 / self.camera.zoom())
+                # Orientation arrow
+                length = 1.2
+                dx = math.sin(sp.orientation) * length
+                dy = math.cos(sp.orientation) * length
+                painter.setBrush(Qt.BrushStyle.NoBrush)
+                painter.setPen(QPen(QColor(255, 255, 255, 255), 0.15))
+                painter.drawLine(QPointF(sp.x, sp.y), QPointF(sp.x + dx, sp.y + dy))
+
     def wheelEvent(self, e: QWheelEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
         self.sig_mouse_scrolled.emit(Vector2(e.angleDelta().x(), e.angleDelta().y()), self._mouse_down, self._keys_down)
 
@@ -862,6 +926,7 @@ class WalkmeshRenderer(QWidget):
 
         self._instances_under_mouse = []
         self._geom_points_under_mouse = []
+        self._spawn_points_under_mouse = []
         self._path_nodes_under_mouse = []
 
         world: Vector2 = Vector2.from_vector3(self.to_world_coords(coords.x, coords.y))  # Mouse pos in world
@@ -879,6 +944,12 @@ class WalkmeshRenderer(QWidget):
                         pworld: Vector2 = Vector2.from_vector3(instance.position + point)
                         if pworld.distance(world) <= 0.5:  # noqa: PLR2004
                             self._geom_points_under_mouse.append(GeomPoint(instance, point))
+
+                if isinstance(instance, GITEncounter) and not self.hide_spawn_points:
+                    for spawn in instance.spawn_points:
+                        pworld = Vector2(spawn.x, spawn.y)
+                        if pworld.distance(world) <= 0.75:  # noqa: PLR2004
+                            self._spawn_points_under_mouse.append(EncounterSpawnPoint(instance, spawn))
 
         if self._pth is not None:
             for point in self._pth:

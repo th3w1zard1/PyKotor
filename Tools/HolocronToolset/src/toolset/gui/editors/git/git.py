@@ -21,18 +21,14 @@ from pykotor.common.misc import Color
 from pykotor.extract.installation import SearchLocation
 from pykotor.resource.formats.bwm import read_bwm
 from pykotor.resource.formats.lyt import read_lyt
-from pykotor.resource.generics.git import (
-    GIT,
-    bytes_git,
-    read_git,
-)
+from pykotor.resource.generics.git import GIT, bytes_git, read_git
 from pykotor.resource.type import ResourceType
 from pykotor.tools.template import extract_name, extract_tag_from_gff
 from toolset.blender import BlenderEditorMode
 from toolset.blender.integration import BlenderEditorMixin
 from toolset.gui.editor import Editor
 from toolset.gui.editors.git.controls import GITControlScheme
-from toolset.gui.editors.git.mode import _GeometryMode, _InstanceMode, _Mode
+from toolset.gui.editors.git.mode import _GeometryMode, _InstanceMode, _Mode, _SpawnMode
 from toolset.gui.widgets.settings.editor_settings.git import GITSettings
 from utility.common.geometry import SurfaceMaterial, Vector2, Vector3
 
@@ -176,6 +172,8 @@ class GITEditor(Editor, BlenderEditorMixin):
         self.ui.viewStoreCheck.mouseDoubleClickEvent = lambda a0: self.on_instance_visibility_double_click(self.ui.viewStoreCheck)  # noqa: ARG005  # pyright: ignore[reportAttributeAccessIssue]
 
         # Undo/Redo
+        # Uncomment to debug undo/redo signals
+        # DO NOT remove.
         #self.ui.actionUndo.triggered.connect(lambda: print("Undo signal") or self._controls.undo_stack.undo())
         #self.ui.actionUndo.triggered.connect(lambda: print("Redo signal") or self._controls.undo_stack.redo())
 
@@ -328,13 +326,23 @@ class GITEditor(Editor, BlenderEditorMixin):
         assert self._installation is not None, "Installation is required to load GITEditor layout walkmeshes"
         walkmeshes: list[BWM] = []
         for room in layout.rooms:
-            order: list[SearchLocation] = [SearchLocation.OVERRIDE, SearchLocation.CHITIN, SearchLocation.MODULES]
-            find_bwm: ResourceResult | None = self._installation.resource(room.model, ResourceType.WOK, order)
-            if find_bwm is not None:
+            order: list[SearchLocation] = [
+                SearchLocation.OVERRIDE,
+                SearchLocation.MODULES,
+                SearchLocation.CHITIN,
+            ]
+            walkmesh_resource: ResourceResult | None = self._installation.resource(
+                room.model,
+                ResourceType.WOK,
+                order,
+            )
+            if walkmesh_resource is not None:
                 try:
-                    walkmeshes.append(read_bwm(find_bwm.data))
+                    wok_data = read_bwm(walkmesh_resource.data)
                 except (ValueError, OSError):
                     self._logger.exception("Corrupted walkmesh cannot be loaded: '%s.wok'", room.model)
+                else:
+                    walkmeshes.append(wok_data)
             else:
                 self._logger.warning("Missing walkmesh '%s.wok'", room.model)
 
@@ -418,8 +426,9 @@ class GITEditor(Editor, BlenderEditorMixin):
         self._mode = _GeometryMode(self, self._installation, self._git)
 
     def enter_spawn_mode(self):
-        ...
-        # TODO(NickHugi): Encounter spawn mode.
+        # Track which instance is being edited (encounters only).
+        self._geom_instance = self.ui.renderArea.instance_selection.last()
+        self._mode = _SpawnMode(self, self._installation, self._git)
 
     def move_camera_to_selection(self):
         instance = self.ui.renderArea.instance_selection.last()

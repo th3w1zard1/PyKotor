@@ -2254,10 +2254,7 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         self._controls2d._mode = _GeometryMode(self, self._installation, self.git(), hide_others=False)  # noqa: SLF001
 
     def enter_spawn_mode(self):
-        # TODO(NickHugi): _SpawnMode is incomplete - needs to implement all abstract methods from _Mode
-        # Temporarily disabled until _SpawnMode is fully implemented
-        # self._controls2d._mode = _SpawnMode(self, self._installation, self.git())
-        self.log.warning("Spawn mode is not yet implemented")
+        self._controls2d._mode = _SpawnMode(self, self._installation, self.git(), hide_others=False)  # noqa: SLF001
 
     def on_resource_tree_context_menu(self, point: QPoint):
         menu = QMenu(self)

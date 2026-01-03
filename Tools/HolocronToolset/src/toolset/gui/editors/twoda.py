@@ -29,6 +29,24 @@ if TYPE_CHECKING:
 
 
 class TwoDAEditor(Editor):
+    """Editor for 2DA (Two-Dimensional Array) files used in KotOR games.
+    
+    This editor provides a spreadsheet-like interface for editing 2DA files, which are
+    tabular data files used extensively throughout KotOR and KotOR 2 for game configuration.
+    
+    Game Engine Usage:
+    ----------------
+    The 2DA files edited by this tool are verified to be loaded and used by the game engine,
+    as confirmed through reverse engineering analysis of swkotor.exe and swkotor2.exe using
+    Ghidra (via Reva MCP server). See TwoDARegistry class documentation in
+    Libraries/PyKotor/src/pykotor/extract/twoda.py for a complete list of verified 2DA files
+    and their loading functions.
+    
+    Supported formats:
+    - Native 2DA binary format (ResourceType.TwoDA)
+    - CSV format (ResourceType.TwoDA_CSV)
+    - JSON format (ResourceType.TwoDA_JSON)
+    """
     def __init__(
         self,
         parent: QWidget | None,

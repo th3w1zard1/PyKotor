@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from copy import deepcopy
 from typing import TYPE_CHECKING, Sequence
 
 from qtpy.QtWidgets import QUndoCommand  # pyright: ignore[reportPrivateImportUsage]
@@ -9,7 +8,18 @@ from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
 from utility.common.geometry import Vector3, Vector4
 
 if TYPE_CHECKING:
-    from pykotor.resource.generics.git import GIT, GITCamera, GITCreature, GITDoor, GITInstance, GITPlaceable, GITStore, GITWaypoint
+    from pykotor.resource.generics.git import (
+        GIT,
+        GITCamera,
+        GITCreature,
+        GITDoor,
+        GITEncounter,
+        GITEncounterSpawnPoint,
+        GITInstance,
+        GITPlaceable,
+        GITStore,
+        GITWaypoint,
+    )
     from toolset.gui.editors.git.git import GITEditor
     from toolset.gui.windows.module_designer import ModuleDesigner
 
@@ -78,8 +88,6 @@ class DuplicateCommand(QUndoCommand):
         self.editor: GITEditor | ModuleDesigner = editor
 
     def undo(self):
-        from toolset.gui.editors.git.mode import _InstanceMode
-
         self.editor.enter_instance_mode()
         for instance in self.instances:
             if instance not in self.git.instances():
@@ -105,8 +113,6 @@ class DuplicateCommand(QUndoCommand):
             self.editor.rebuild_instance_list()
 
     def redo(self):
-        from toolset.gui.editors.git.mode import _InstanceMode
-
         for instance in self.instances:
             if instance in self.git.instances():
                 RobustLogger().warning(f"{instance!r} already found in instances: no duplicate to redo.")
@@ -210,3 +216,122 @@ class InsertCommand(QUndoCommand):
         self.git.add(self.instance)
         self.rebuild_instance_list()
 
+
+def _refresh_git_views(editor: GITEditor | ModuleDesigner):
+    ui = getattr(editor, "ui", None)
+    if ui is None:
+        return
+    render_area = getattr(ui, "renderArea", None)
+    if render_area is not None:
+        render_area.update()
+    flat_renderer = getattr(ui, "flatRenderer", None)
+    if flat_renderer is not None:
+        flat_renderer.update()
+    main_renderer = getattr(ui, "mainRenderer", None)
+    if main_renderer is not None:
+        main_renderer.update()
+
+
+class SpawnPointInsertCommand(QUndoCommand):
+    def __init__(
+        self,
+        encounter: GITEncounter,
+        spawn: GITEncounterSpawnPoint,
+        editor: GITEditor | ModuleDesigner,
+    ):
+        super().__init__()
+        self.encounter: GITEncounter = encounter
+        self.spawn: GITEncounterSpawnPoint = spawn
+        self.editor: GITEditor | ModuleDesigner = editor
+
+    def undo(self):
+        if self.spawn in self.encounter.spawn_points:
+            self.encounter.spawn_points.remove(self.spawn)
+        _refresh_git_views(self.editor)
+
+    def redo(self):
+        if self.spawn not in self.encounter.spawn_points:
+            self.encounter.spawn_points.append(self.spawn)
+        _refresh_git_views(self.editor)
+
+
+class SpawnPointDeleteCommand(QUndoCommand):
+    def __init__(
+        self,
+        encounter: GITEncounter,
+        spawn: GITEncounterSpawnPoint,
+        editor: GITEditor | ModuleDesigner,
+    ):
+        super().__init__()
+        self.encounter: GITEncounter = encounter
+        self.spawn: GITEncounterSpawnPoint = spawn
+        self.editor: GITEditor | ModuleDesigner = editor
+        try:
+            self.index: int = encounter.spawn_points.index(spawn)
+        except ValueError:
+            self.index = -1
+
+    def undo(self):
+        if self.spawn in self.encounter.spawn_points:
+            _refresh_git_views(self.editor)
+            return
+        if self.index < 0 or self.index > len(self.encounter.spawn_points):
+            self.encounter.spawn_points.append(self.spawn)
+        else:
+            self.encounter.spawn_points.insert(self.index, self.spawn)
+        _refresh_git_views(self.editor)
+
+    def redo(self):
+        if self.spawn in self.encounter.spawn_points:
+            self.encounter.spawn_points.remove(self.spawn)
+        _refresh_git_views(self.editor)
+
+
+class SpawnPointMoveCommand(QUndoCommand):
+    def __init__(
+        self,
+        spawn: GITEncounterSpawnPoint,
+        old_position: Vector3,
+        new_position: Vector3,
+        editor: GITEditor | ModuleDesigner,
+    ):
+        super().__init__()
+        self.spawn: GITEncounterSpawnPoint = spawn
+        self.old_position: Vector3 = old_position
+        self.new_position: Vector3 = new_position
+        self.editor: GITEditor | ModuleDesigner = editor
+
+    def undo(self):
+        self.spawn.x = self.old_position.x
+        self.spawn.y = self.old_position.y
+        self.spawn.z = self.old_position.z
+        _refresh_git_views(self.editor)
+
+    def redo(self):
+        self.spawn.x = self.new_position.x
+        self.spawn.y = self.new_position.y
+        self.spawn.z = self.new_position.z
+        _refresh_git_views(self.editor)
+
+
+class SpawnPointRotateCommand(QUndoCommand):
+    def __init__(
+        self,
+        spawn: GITEncounterSpawnPoint,
+        old_orientation: float,
+        new_orientation: float,
+        editor: GITEditor | ModuleDesigner,
+    ):
+        super().__init__()
+        self.spawn: GITEncounterSpawnPoint = spawn
+        self.old_orientation: float = old_orientation
+        self.new_orientation: float = new_orientation
+        self.editor: GITEditor | ModuleDesigner = editor
+
+    def undo(self):
+        self.spawn.orientation = self.old_orientation
+        _refresh_git_views(self.editor)
+
+    def redo(self):
+        self.spawn.orientation = self.new_orientation
+        _refresh_git_views(self.editor)
