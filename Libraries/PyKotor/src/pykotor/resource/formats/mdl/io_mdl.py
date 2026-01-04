@@ -2518,8 +2518,9 @@ class MDLBinaryReader:
                             if read_pos + remaining_bytes <= self._reader.size():
                                 self._reader.seek(read_pos)
                                 node.mesh.vertex_positions.extend([self._reader.read_vector3() for _ in range(remaining)])
-                elif bin_node.trimesh.vertices:
-                    # Use vertices read by read_extra
+                elif bin_node.trimesh.vertices and vcount > 1:
+                    # Use vertices read by read_extra, but only if vcount is not suspiciously low (0 or 1)
+                    # A vcount of 0 or 1 is almost always wrong for meshes with geometry
                     node.mesh.vertex_positions = bin_node.trimesh.vertices.copy()
 
             # Fallback: create null vertices if we couldn't read any, but only if vcount > 0
