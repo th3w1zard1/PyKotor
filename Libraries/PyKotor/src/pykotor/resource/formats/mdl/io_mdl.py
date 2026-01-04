@@ -3476,9 +3476,10 @@ class MDLBinaryWriter:
         bin_node: _Node,
     ):
         assert bin_node.trimesh is not None
-        bin_node.trimesh.offset_to_counters = node_offset + bin_node.inverted_counters_offset(self.game)
-        bin_node.trimesh.offset_to_indices_counts = node_offset + bin_node.indices_counts_offset(self.game)
-        bin_node.trimesh.offset_to_indices_offset = node_offset + bin_node.indices_offsets_offset(self.game)
+        # MDLOps stores these locations as (absolute_offset - 12).
+        bin_node.trimesh.offset_to_counters = (node_offset + bin_node.inverted_counters_offset(self.game)) - 12
+        bin_node.trimesh.offset_to_indices_counts = (node_offset + bin_node.indices_counts_offset(self.game)) - 12
+        bin_node.trimesh.offset_to_indices_offset = (node_offset + bin_node.indices_offsets_offset(self.game)) - 12
         # indices_offsets stores offsets relative to the start of the indices data block
         # If indices_offsets is empty but count > 0, create the correct number of offsets (all 0)
         # This ensures the count matches the array length, preventing MDLOps from reading beyond bounds
