@@ -2403,7 +2403,9 @@ class MDLBinaryReader:
             node.mesh.vertex_positions = []
             
             # If vertices were read by read_extra and count matches (and wasn't verified/corrected), use them directly
-            if not vcount_verified and bin_node.trimesh.vertices and len(bin_node.trimesh.vertices) == vcount:
+            # BUT: Never use read_extra vertices if vcount is suspiciously low (0 or 1) - this is almost always wrong
+            # Even if counts match, a vcount of 0 or 1 is almost always incorrect for meshes with geometry
+            if not vcount_verified and bin_node.trimesh.vertices and len(bin_node.trimesh.vertices) == vcount and vcount > 1:
                 node.mesh.vertex_positions = bin_node.trimesh.vertices.copy()
             # If vcount was verified/corrected, we need to re-read ALL vertices from scratch with the corrected count
             # Don't use read_extra vertices since they were read with the wrong count
