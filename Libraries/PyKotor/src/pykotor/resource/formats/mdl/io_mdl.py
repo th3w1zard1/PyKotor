@@ -3067,16 +3067,16 @@ class MDLBinaryWriter:
             bin_node.light.unknown0_count = 0
             bin_node.light.unknown0_count2 = 0
             bin_node.light.offset_to_flare_sizes = 0
-            bin_node.light.flare_sizes_count = len(light.flare_sizes) if hasattr(light, 'flare_sizes') and light.flare_sizes else 0
+            bin_node.light.flare_sizes_count = len(light.flare_sizes)
             bin_node.light.flare_sizes_count2 = bin_node.light.flare_sizes_count
             bin_node.light.offset_to_flare_positions = 0
-            bin_node.light.flare_positions_count = len(light.flare_positions) if hasattr(light, 'flare_positions') and light.flare_positions else 0
+            bin_node.light.flare_positions_count = len(light.flare_positions)
             bin_node.light.flare_positions_count2 = bin_node.light.flare_positions_count
             bin_node.light.offset_to_flare_colors = 0
-            bin_node.light.flare_colors_count = len(light.flare_color_shifts) if hasattr(light, 'flare_color_shifts') and light.flare_color_shifts else 0
+            bin_node.light.flare_colors_count = len(light.flare_color_shifts)
             bin_node.light.flare_colors_count2 = bin_node.light.flare_colors_count
             bin_node.light.offset_to_flare_textures = 0
-            bin_node.light.flare_textures_count = len(light.flare_textures) if hasattr(light, 'flare_textures') and light.flare_textures else 0
+            bin_node.light.flare_textures_count = len(light.flare_textures)
             bin_node.light.flare_textures_count2 = bin_node.light.flare_textures_count
 
         # Emitter header data
