@@ -3587,16 +3587,6 @@ class MDLBinaryWriter:
         mdl_writer.write_uint32(self._writer_ext.size())
         writer_data = self._writer.data()
 
-        if _DEBUG_MDL:
-            # Check writer_data BEFORE writing to file
-            import struct
-
-            # Check the first trimesh header at position 23890
-            if len(writer_data) >= 23890 + 32:  # 32 bytes for the MDX offsets section
-                bitmap_at_23890 = struct.unpack("<I", writer_data[23890:23894])[0]
-                tex1_off_at_23890 = struct.unpack("<I", writer_data[23890 + 16 : 23890 + 20])[0]
-                print(f"DEBUG _write_all: BEFORE file write - at position 23890: bitmap=0x{bitmap_at_23890:08X} tex1_off={tex1_off_at_23890}")
-
         mdl_writer.write_bytes(writer_data)
 
         # Write to MDX
