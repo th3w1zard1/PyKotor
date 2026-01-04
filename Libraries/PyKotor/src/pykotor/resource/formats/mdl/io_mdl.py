@@ -2102,8 +2102,10 @@ class MDLBinaryReader:
                     vcount = required_vertex_count
                     bin_node.trimesh.vertex_count = required_vertex_count
                     vcount_verified = True
-                    # Discard any vertices read by read_extra with wrong count
-                    bin_node.trimesh.vertices = []
+                    # Keep any vertices read by read_extra if they match the new count
+                    # Otherwise discard them and force re-reading
+                    if not bin_node.trimesh.vertices or len(bin_node.trimesh.vertices) != required_vertex_count:
+                        bin_node.trimesh.vertices = []
             
             # CRITICAL: If vcount is suspiciously low (0 or 1), ALWAYS try to recover from faces or file bounds
             # Even if faces don't exist yet, vcount of 0 or 1 is almost always wrong for meshes with geometry
