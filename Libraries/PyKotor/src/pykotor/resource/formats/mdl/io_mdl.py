@@ -2476,16 +2476,26 @@ class MDLBinaryReader:
                     for i in range(vcount):
                         seek_pos = bin_node.trimesh.mdx_data_offset + i * bin_node.trimesh.mdx_data_size + vertex_offset
                         if seek_pos + 12 <= self._reader_ext.size():  # Need 12 bytes for Vector3
-                            self._reader_ext.seek(seek_pos)
-                            x, y, z = (
-                                self._reader_ext.read_single(),
-                                self._reader_ext.read_single(),
-                                self._reader_ext.read_single(),
-                            )
-                            node.mesh.vertex_positions.append(Vector3(x, y, z))
+                            try:
+                                self._reader_ext.seek(seek_pos)
+                                x, y, z = (
+                                    self._reader_ext.read_single(),
+                                    self._reader_ext.read_single(),
+                                    self._reader_ext.read_single(),
+                                )
+                                # Basic sanity check
+                                if all(-1e6 <= coord <= 1e6 for coord in (x, y, z)) and all(not (coord != coord) for coord in (x, y, z)):
+                                    node.mesh.vertex_positions.append(Vector3(x, y, z))
+                                else:
+                                    # Invalid vertex data - use null vertex to preserve index position
+                                    node.mesh.vertex_positions.append(Vector3.from_null())
+                            except Exception:
+                                # Can't read this vertex - use null vertex to preserve index position
+                                node.mesh.vertex_positions.append(Vector3.from_null())
                         else:
-                            # Bounds check failed, stop reading
-                            break
+                            # Bounds check failed - use null vertex to preserve index position
+                            # Don't break - must maintain 1:1 index mapping for face vertex references
+                            node.mesh.vertex_positions.append(Vector3.from_null())
             else:
                 # Read from MDL vertex table
                 if vcount > 0 and bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
