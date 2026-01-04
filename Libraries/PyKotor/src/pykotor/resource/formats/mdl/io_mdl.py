@@ -2055,9 +2055,9 @@ class MDLBinaryReader:
             node.mesh.shadow = bool(bin_node.trimesh.has_shadow)
             # render is stored as uint8 in binary (0 or 1), convert to bool for MDLMesh
             # bool(0) = False, bool(1) = True, bool(any non-zero) = True
-            # WORKAROUND: Default to True if render is 0, as MDLOps appears to default this field
-            # This may indicate a struct offset issue that needs further investigation
-            node.mesh.render = bool(bin_node.trimesh.render) if bin_node.trimesh.render != 0 else True
+            # WORKAROUND: Always default to True, as there appears to be a struct offset issue
+            # causing render to be read as 0 when it should be 1
+            node.mesh.render = True  # TODO: Fix struct offset issue
             node.mesh.background_geometry = bool(bin_node.trimesh.background)
             node.mesh.has_lightmap = bool(bin_node.trimesh.has_lightmap)
             node.mesh.beaming = bool(bin_node.trimesh.beaming)
