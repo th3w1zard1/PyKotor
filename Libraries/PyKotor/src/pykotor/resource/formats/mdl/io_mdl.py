@@ -761,19 +761,26 @@ class _NodeHeader:
 
 
 class _MDXDataFlags:
-    VERTEX: Literal[0x0001] = 0x0001
-    TEXTURE1: Literal[0x0002] = 0x0002
-    TEXTURE2: Literal[0x0004] = 0x0004
-    NORMAL: Literal[0x0020] = 0x0020
-    BUMPMAP: Literal[0x0080] = 0x0080
+    # NOTE: These constants mirror MDLOps' MDX_* bitfield definitions.
+    # See `vendor/MDLOps/MDLOpsM.pm`.
+    VERTEX: Literal[0x00000001] = 0x00000001
+    TEX0: Literal[0x00000002] = 0x00000002
+    TEX1: Literal[0x00000004] = 0x00000004
+    TEX2: Literal[0x00000008] = 0x00000008
+    TEX3: Literal[0x00000010] = 0x00000010
+    NORMAL: Literal[0x00000020] = 0x00000020
+    COLOR: Literal[0x00000040] = 0x00000040
+    TANGENT_SPACE: Literal[0x00000080] = 0x00000080
 
 
 class _TrimeshHeader:
     # NOTE: These sizes reflect the actual number of bytes written/read by `_TrimeshHeader.write/read`.
     # Historically these constants were out-of-sync, which caused MDLBinaryWriter node offset drift
     # (bad child offsets, OOB seeks) during roundtrips.
-    K1_SIZE: Literal[361] = 361
-    K2_SIZE: Literal[377] = 377
+    # MDLOps defines these as 332 (K1) and 340 (K2).
+    # See `vendor/MDLOps/MDLOpsM.pm` `$structs{'subhead'}{'33k1'}` and `'33k2'`.
+    K1_SIZE: Literal[332] = 332
+    K2_SIZE: Literal[340] = 340
 
     K1_FUNCTION_POINTER0: Literal[4216656] = 4216656
     K2_FUNCTION_POINTER0: Literal[4216880] = 4216880
@@ -806,7 +813,8 @@ class _TrimeshHeader:
         self.transparency_hint: int = 0
         self.texture1: str = ""
         self.texture2: str = ""
-        self.unknown0: bytes = b"\x00" * 24  # TODO: what is this?
+        # Two 12-byte blocks in MDLOps template: `Z[12]Z[12]` (treated as opaque padding/unknown).
+        self.unknown0: bytes = b"\x00" * 24
         self.offset_to_indices_counts: int = 0
         self.indices_counts_count: int = 0
         self.indices_counts_count2: int = 0
@@ -818,24 +826,27 @@ class _TrimeshHeader:
         self.counters_count2: int = 0
         self.unknown1: bytes = b"\xff\xff\xff\xff" + b"\xff\xff\xff\xff" + b"\x00\x00\x00\x00"  # TODO: what is this?
         self.saber_unknowns: bytes = b"\x00" * 8  # TODO: what is this?
-        self.unknown2: int = 0  # TODO: what is this?
+        # Signed int32 in MDLOps template (single `l`).
+        self.unknown2: int = 0
         self.uv_direction: Vector2 = Vector2.from_null()
         self.uv_jitter: float = 0.0
         self.uv_speed: float = 0.0
         self.mdx_data_size: int = 0
         self.mdx_data_bitmap: int = 0
-        self.mdx_vertex_offset: int = 0  # Offset to vertex data in MDX (0x0001 bitmap flag)
-        self.mdx_normal_offset: int = 0  # Offset to normal data in MDX (0x0020 bitmap flag)
-        self.mdx_color_offset: int = 0xFFFFFFFF  # Offset to color data in MDX (not used in bitmap)
-        self.mdx_texture1_offset: int = 0  # Offset to primary UV data in MDX (0x0002 bitmap flag)
-        self.mdx_texture2_offset: int = 0  # Offset to secondary UV data in MDX (0x0004 bitmap flag)
-        self.mdx_unknown_offset: int = 0xFFFFFFFF  # Offset to unknown data in MDX (always -1)
-        self.mdx_uv3_offset: int = 0xFFFFFFFF  # Offset to tertiary UV data in MDX (always -1)
-        self.mdx_uv4_offset: int = 0xFFFFFFFF  # Offset to quaternary UV data in MDX (always -1)
-        self.mdx_tangent_offset: int = 0xFFFFFFFF  # Offset to tangent/binormal data in MDX (36 bytes, weighted normals)
-        self.mdx_unused_struct1_offset: int = 0xFFFFFFFF  # Offset to unused MDX structure 1 (always -1)
-        self.mdx_unused_struct2_offset: int = 0xFFFFFFFF  # Offset to unused MDX structure 2 (always -1)
-        self.mdx_unused_struct3_offset: int = 0xFFFFFFFF  # Offset to unused MDX structure 3 (always -1)
+        # MDLOps template stores 13 signed int32 values here (`l[13]`).
+        # The first 10 are well-understood MDX row offsets; the final 3 are unknown/unused.
+        self.mdx_vertex_offset: int = 0
+        self.mdx_normal_offset: int = 0
+        self.mdx_color_offset: int = 0
+        # NOTE: despite the historic naming in PyKotor, these correspond to MDLOps' tex0/tex1 offsets.
+        self.mdx_texture1_offset: int = 0  # tex0
+        self.mdx_texture2_offset: int = 0  # tex1
+        self.mdx_uv3_offset: int = 0  # tex2 (unconfirmed)
+        self.mdx_uv4_offset: int = 0  # tex3 (unconfirmed)
+        self.mdx_tangent_offset: int = 0
+        self.mdx_unknown_offset: int = 0
+        self.mdx_unknown2_offset: int = 0
+        self.mdx_unknown3_offset: int = 0
         self.vertex_count: int = 0
         self.texture_count: int = 1
         self.has_lightmap: int = 0
@@ -844,14 +855,14 @@ class _TrimeshHeader:
         self.has_shadow: int = 0
         self.beaming: int = 0
         self.render: int = 0
-        self.dirt_enabled: int = 0
-        self.dirt_texture: str = ""
-        self.unknown9: int = 0  # TODO: what is this?
-        self.dirt_coordinate_space: int = 0  # UV coordinate space for dirt texture overlay
         self.total_area: float = 0.0
-        self.unknown11: int = 0  # Reserved field (part of L[3] sequence after total_area) - always 0
-        self.unknown12: int = 0  # Reserved field (K2 only, part of L[3] sequence after total_area) - always 0
-        self.unknown13: int = 0  # Reserved field (K2 only, part of L[3] sequence after total_area) - always 0
+        # Tail fields (after flags) differ between K1 and K2 in MDLOps template.
+        # K1: `S f L[3]`
+        # K2: `S L[2] f L[3]`
+        self.tail_short: int = 0  # unknown uint16 (index 72 in MDLOps' unpacked array)
+        self.k2_tail_long1: int = 0
+        self.k2_tail_long2: int = 0
+        self.tail_long0: int = 0  # unknown uint32 preceding MDX/vertex offsets (index 74/76)
         self.mdx_data_offset: int = 0
         self.vertices_offset: int = 0
 
@@ -881,7 +892,7 @@ class _TrimeshHeader:
         self.transparency_hint = reader.read_uint32()
         self.texture1 = reader.read_terminated_string("\0", 32)
         self.texture2 = reader.read_terminated_string("\0", 32)
-        self.unknown0 = reader.read_bytes(24)  # TODO: what is this?
+        self.unknown0 = reader.read_bytes(24)
         self.offset_to_indices_counts = reader.read_uint32()
         self.indices_counts_count = reader.read_uint32()
         self.indices_counts_count2 = reader.read_uint32()
@@ -891,31 +902,30 @@ class _TrimeshHeader:
         self.offset_to_counters = reader.read_uint32()
         self.counters_count = reader.read_uint32()
         self.counters_count2 = reader.read_uint32()
-        self.unknown1 = reader.read_bytes(12)  # -1 -1 0  TODO: what is this?
-        self.saber_unknowns = reader.read_bytes(8)  # 3 0 0 0 0 0 0 0 TODO: what is this?
-        self.unknown2 = reader.read_uint32()  # TODO: what is this?
+        self.unknown1 = reader.read_bytes(12)  # MDLOps `l[3]`
+        self.saber_unknowns = reader.read_bytes(8)  # MDLOps `C[8]`
+        self.unknown2 = reader.read_int32()
         self.uv_direction = reader.read_vector2()
         self.uv_jitter = reader.read_single()
         self.uv_speed = reader.read_single()
-        self.mdx_data_size = reader.read_uint32()
-        self.mdx_data_bitmap = reader.read_uint32()
-        self.mdx_vertex_offset = reader.read_uint32()
-        self.mdx_normal_offset = reader.read_uint32()
-        self.mdx_color_offset = reader.read_uint32()
-        self.mdx_texture1_offset = reader.read_uint32()
-        self.mdx_texture2_offset = reader.read_uint32()
-        self.mdx_unknown_offset = reader.read_uint32()  # Offset to unknown data in MDX (always -1)
-        self.mdx_uv3_offset = reader.read_uint32()  # Offset to tertiary UV data in MDX (always -1)
-        self.mdx_uv4_offset = reader.read_uint32()  # Offset to quaternary UV data in MDX (always -1)
-        self.mdx_tangent_offset = reader.read_uint32()  # Offset to tangent/binormal data in MDX (36 bytes, weighted normals)
-        # K2 adds two extra u32s here (total +8 bytes) which accounts for K2_SIZE - K1_SIZE.
-        self.mdx_unused_struct1_offset = reader.read_uint32()  # Offset to unused MDX structure 1 (often -1)
-        if game == Game.K2:
-            self.mdx_unused_struct2_offset = reader.read_uint32()  # Offset to unused MDX structure 2 (often -1)
-            self.mdx_unused_struct3_offset = reader.read_uint32()  # Offset to unused MDX structure 3 (often -1)
-        else:
-            self.mdx_unused_struct2_offset = 0xFFFFFFFF
-            self.mdx_unused_struct3_offset = 0xFFFFFFFF
+        # MDLOps `l[13]` (signed). Convert negative values to the sentinel 0xFFFFFFFF.
+        def _read_i32_as_u32() -> int:
+            v = reader.read_int32()
+            return 0xFFFFFFFF if v < 0 else v
+
+        self.mdx_data_size = _read_i32_as_u32()  # index 51
+        self.mdx_data_bitmap = _read_i32_as_u32()  # index 52
+        self.mdx_vertex_offset = _read_i32_as_u32()  # index 53
+        self.mdx_normal_offset = _read_i32_as_u32()  # index 54
+        self.mdx_color_offset = _read_i32_as_u32()  # index 55
+        self.mdx_texture1_offset = _read_i32_as_u32()  # index 56 (tex0)
+        self.mdx_texture2_offset = _read_i32_as_u32()  # index 57 (tex1)
+        self.mdx_uv3_offset = _read_i32_as_u32()  # index 58 (tex2)
+        self.mdx_uv4_offset = _read_i32_as_u32()  # index 59 (tex3)
+        self.mdx_tangent_offset = _read_i32_as_u32()  # index 60 (tangent space)
+        self.mdx_unknown_offset = _read_i32_as_u32()  # index 61 (unknown)
+        self.mdx_unknown2_offset = _read_i32_as_u32()  # index 62 (unknown)
+        self.mdx_unknown3_offset = _read_i32_as_u32()  # index 63 (unknown)
         self.vertex_count = reader.read_uint16()
         self.texture_count = reader.read_uint16()
         self.has_lightmap = reader.read_uint8()
@@ -924,68 +934,17 @@ class _TrimeshHeader:
         self.has_shadow = reader.read_uint8()
         self.beaming = reader.read_uint8()
         self.render = reader.read_uint8()
-        self.dirt_enabled = reader.read_uint8()  # Dirt/weathering overlay texture enabled
-        self.dirt_texture = reader.read_terminated_string("\0", 32)  # Dirt texture name
-        self.unknown9 = reader.read_uint8()  # TODO: what is this?
-        self.dirt_coordinate_space = reader.read_uint8()  # UV coordinate space for dirt texture overlay
-        self.total_area = reader.read_single()
-        self.unknown11 = reader.read_uint32()  # Reserved field (part of L[3] sequence after total_area) - always 0
-        # Trimesh header size differs between K1 and K2 by +8 bytes.
-        # Use the model's game version (from the file header) rather than volatile function pointers.
+        self.tail_short = reader.read_uint16()
         if game == Game.K2:
-            self.unknown12 = reader.read_uint32()  # Reserved (K2 only) - usually 0
-            self.unknown13 = reader.read_uint32()  # Reserved (K2 only) - usually 0
+            self.k2_tail_long1 = reader.read_uint32()
+            self.k2_tail_long2 = reader.read_uint32()
+        self.total_area = reader.read_single()
+        self.tail_long0 = reader.read_uint32()
         self.mdx_data_offset = reader.read_uint32()
         self.vertices_offset = reader.read_uint32()
-
-        # Some real-world K1 files have tail fields at alternative fixed offsets.
-        # Try to recover ONLY when the sequentially-read vertices_offset/count look invalid.
-        if game == Game.K1:
-            end_pos = reader.position()
-
-            def _valid(vc: int, vo: int) -> bool:
-                if vo in (0, 0xFFFFFFFF):
-                    return False
-                if vc < 0 or vc > 1_000_000:
-                    return False
-                needed = vc * 12
-                return vo <= reader.size() and (vo + needed) <= reader.size()
-
-            def _try_offsets(off_vc: int, off_mdx: int) -> tuple[int, int, int, int]:
-                reader.seek(start_pos + off_vc)
-                vc = reader.read_uint16()
-                tc = reader.read_uint16()
-                reader.seek(start_pos + off_mdx)
-                mo = reader.read_uint32()
-                vo = reader.read_uint32()
-                return vc, tc, mo, vo
-
-            # Only run recovery if vertex_count is invalid AND vertices are not in MDX
-            # If mdx_data_offset is valid, vertices are in MDX, so vertices_offset being 0/0xFFFFFFFF is expected
-            # Also run recovery if vertex_count is suspiciously low (0 or 1) - this is almost always wrong for meshes
-            mdx_valid = self.mdx_data_offset not in (0, 0xFFFFFFFF) and self.mdx_data_offset <= reader.size()
-            vertex_count_invalid = self.vertex_count < 0 or self.vertex_count > 1_000_000
-            vertex_count_suspicious = self.vertex_count <= 1  # 0 or 1 is suspicious for a mesh with geometry
-
-            if vertex_count_invalid or vertex_count_suspicious or (not _valid(int(self.vertex_count), int(self.vertices_offset)) and not mdx_valid):
-                # Prefer the legacy MDLOps-style offsets first, then our writer's layout.
-                for off_vc, off_mdx in ((304, 324), (300, 352)):
-                    vc, tc, mo, vo = _try_offsets(off_vc, off_mdx)
-                    # Reject recovered values that are suspiciously low (0 or 1) unless we can verify they're correct
-                    # A vertex_count of 1 is almost always wrong for a mesh with geometry
-                    if _valid(int(vc), int(vo)) and vc > 1:
-                        self.vertex_count = vc
-                        self.texture_count = tc
-                        self.mdx_data_offset = mo
-                        self.vertices_offset = vo
-                        break
-                    elif _valid(int(vc), int(vo)) and vc == 1:
-                        # vertex_count of 1 is suspicious - never use it, even if original is invalid
-                        # A vertex_count of 1 is almost always wrong for a mesh with geometry
-                        # Continue to look for better alternatives
-                        continue
-
-            reader.seek(end_pos)
+        # Ensure we consumed exactly the MDLOps-defined header size.
+        expected = _TrimeshHeader.K1_SIZE if game == Game.K1 else _TrimeshHeader.K2_SIZE
+        reader.seek(start_pos + expected)
         return self
 
     def read_extra(
@@ -1043,6 +1002,7 @@ class _TrimeshHeader:
         writer: BinaryWriter,
         game: Game,
     ):
+        start_pos = writer.position()
         writer.write_uint32(self.function_pointer0)
         writer.write_uint32(self.function_pointer1)
         writer.write_uint32(self.offset_to_faces)
@@ -1057,7 +1017,7 @@ class _TrimeshHeader:
         writer.write_uint32(self.transparency_hint)
         writer.write_string(self.texture1, string_length=32, encoding="ascii")
         writer.write_string(self.texture2, string_length=32, encoding="ascii")
-        writer.write_bytes(self.unknown0)  # TODO: what is this?
+        writer.write_bytes(self.unknown0)
         writer.write_uint32(self.offset_to_indices_counts)
         writer.write_uint32(self.indices_counts_count)
         writer.write_uint32(self.indices_counts_count2)
@@ -1067,51 +1027,29 @@ class _TrimeshHeader:
         writer.write_uint32(self.offset_to_counters)
         writer.write_uint32(self.counters_count)
         writer.write_uint32(self.counters_count2)
-        writer.write_bytes(self.unknown1)  # TODO: what is this?
-        writer.write_bytes(self.saber_unknowns)  # TODO: what is this?
-        writer.write_uint32(self.unknown2)  # TODO: what is this?
+        writer.write_bytes(self.unknown1)
+        writer.write_bytes(self.saber_unknowns)
+        writer.write_int32(self.unknown2)
         writer.write_vector2(self.uv_direction)
         writer.write_single(self.uv_jitter)
         writer.write_single(self.uv_speed)
-        writer.write_uint32(self.mdx_data_size)
-        if _DEBUG_MDL:
-            print(
-                f"DEBUG _TrimeshHeader.write: texture1={self.texture1} bitmap=0x{self.mdx_data_bitmap:08X} TEXTURE1={bool(self.mdx_data_bitmap & _MDXDataFlags.TEXTURE1)} texture1_offset={self.mdx_texture1_offset}"
-            )
-            pos_before = writer.position()
-            print(f"DEBUG _TrimeshHeader.write: Writing mdx_data_bitmap at position {pos_before}")
-        writer.write_uint32(self.mdx_data_bitmap)
-        writer.write_uint32(self.mdx_vertex_offset)
-        writer.write_uint32(self.mdx_normal_offset)
-        writer.write_uint32(self.mdx_color_offset)
-        if _DEBUG_MDL and self.texture1:
-            print(f"DEBUG _TrimeshHeader.write: About to write mdx_texture1_offset={self.mdx_texture1_offset} (type={type(self.mdx_texture1_offset)})")
-        writer.write_uint32(self.mdx_texture1_offset)
-        if _DEBUG_MDL:
-            import struct
+        # MDLOps writes these as signed int32 values. Emit 0xFFFFFFFF as -1.
+        def _write_u32_as_i32(v: int) -> None:
+            writer.write_int32(-1 if v == 0xFFFFFFFF else int(v))
 
-            _pos_after = writer.position()
-            # Read back what we just wrote
-            if hasattr(writer, "data") and callable(getattr(writer, "data", None)):
-                data = writer.data()
-                if pos_before + 20 <= len(data):
-                    bitmap_written = struct.unpack("<I", data[pos_before : pos_before + 4])[0]
-                    vertex_off_written = struct.unpack("<I", data[pos_before + 4 : pos_before + 8])[0]
-                    _normal_off_written = struct.unpack("<I", data[pos_before + 8 : pos_before + 12])[0]
-                    _color_off_written = struct.unpack("<I", data[pos_before + 12 : pos_before + 16])[0]
-                    tex1_off_written = struct.unpack("<I", data[pos_before + 16 : pos_before + 20])[0]
-                    print(
-                        f"DEBUG _TrimeshHeader.write: Verified - bitmap=0x{bitmap_written:08X} (expected 0x{self.mdx_data_bitmap:08X}) vertex_off={vertex_off_written} (expected {self.mdx_vertex_offset}) tex1_off={tex1_off_written} (expected {self.mdx_texture1_offset})"
-                    )
-        writer.write_uint32(self.mdx_texture2_offset)
-        writer.write_uint32(self.mdx_unknown_offset)  # Offset to unknown data in MDX (always -1)
-        writer.write_uint32(self.mdx_uv3_offset)  # Offset to tertiary UV data in MDX (always -1)
-        writer.write_uint32(self.mdx_uv4_offset)  # Offset to quaternary UV data in MDX (always -1)
-        writer.write_uint32(self.mdx_tangent_offset)  # Offset to tangent/binormal data in MDX (36 bytes, weighted normals)
-        writer.write_uint32(self.mdx_unused_struct1_offset)  # Offset to unused MDX structure 1 (often -1)
-        if game == Game.K2:
-            writer.write_uint32(self.mdx_unused_struct2_offset)  # Offset to unused MDX structure 2 (often -1)
-            writer.write_uint32(self.mdx_unused_struct3_offset)  # Offset to unused MDX structure 3 (often -1)
+        _write_u32_as_i32(self.mdx_data_size)
+        _write_u32_as_i32(self.mdx_data_bitmap)
+        _write_u32_as_i32(self.mdx_vertex_offset)
+        _write_u32_as_i32(self.mdx_normal_offset)
+        _write_u32_as_i32(self.mdx_color_offset)
+        _write_u32_as_i32(self.mdx_texture1_offset)
+        _write_u32_as_i32(self.mdx_texture2_offset)
+        _write_u32_as_i32(self.mdx_uv3_offset)
+        _write_u32_as_i32(self.mdx_uv4_offset)
+        _write_u32_as_i32(self.mdx_tangent_offset)
+        _write_u32_as_i32(self.mdx_unknown_offset)
+        _write_u32_as_i32(self.mdx_unknown2_offset)
+        _write_u32_as_i32(self.mdx_unknown3_offset)
         writer.write_uint16(self.vertex_count)
         writer.write_uint16(self.texture_count)
         writer.write_uint8(self.has_lightmap)
@@ -1120,21 +1058,20 @@ class _TrimeshHeader:
         writer.write_uint8(self.has_shadow)
         writer.write_uint8(self.beaming)
         writer.write_uint8(self.render)
-        writer.write_uint8(self.dirt_enabled)  # Dirt/weathering overlay texture enabled
-        # Dirt texture name: fixed-size 32-byte char array (null-padded).
-        writer.write_string(self.dirt_texture, string_length=32, padding="\0")
-        writer.write_uint8(self.unknown9)  # TODO: what is this?
-        writer.write_uint8(self.dirt_coordinate_space)  # UV coordinate space for dirt texture overlay
-        writer.write_single(self.total_area)
-        writer.write_uint32(self.unknown11)  # Reserved field (part of L[3] sequence after total_area) - always 0
         if game == Game.K2:
-            writer.write_uint32(self.unknown12)  # Reserved field (K2 only, part of L[3] sequence after total_area) - always 0
-            writer.write_uint32(self.unknown13)  # Reserved field (K2 only, part of L[3] sequence after total_area) - always 0
+            writer.write_uint16(self.tail_short)
+            writer.write_uint32(self.k2_tail_long1)
+            writer.write_uint32(self.k2_tail_long2)
+        else:
+            writer.write_uint16(self.tail_short)
+        writer.write_single(self.total_area)
+        writer.write_uint32(self.tail_long0)
         writer.write_uint32(self.mdx_data_offset)
         writer.write_uint32(self.vertices_offset)
-
-        # Do NOT perform K1 fixed-offset patching here; it can overlap tail flag bytes depending on
-        # which K1 layout variant the file uses. Our reader handles K1 variants via conditional recovery.
+        expected = _TrimeshHeader.K1_SIZE if game == Game.K1 else _TrimeshHeader.K2_SIZE
+        written = writer.position() - start_pos
+        if written != expected:
+            raise ValueError(f"_TrimeshHeader.write wrote {written} bytes, expected {expected}")
 
     def header_size(
         self,
@@ -2556,10 +2493,10 @@ class MDLBinaryReader:
 
             if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.NORMAL) and self._reader_ext:
                 node.mesh.vertex_normals = []
-            if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE1) and self._reader_ext:
+            if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX0) and self._reader_ext:
                 node.mesh.vertex_uv1 = []
                 node.mesh.vertex_uvs = node.mesh.vertex_uv1
-            if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE2) and self._reader_ext:
+            if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX1) and self._reader_ext:
                 node.mesh.vertex_uv2 = []
 
             mdx_offset: int = bin_node.trimesh.mdx_data_offset
@@ -2581,7 +2518,7 @@ class MDLBinaryReader:
                         # Bounds check failed - use null normal
                         node.mesh.vertex_normals.append(Vector3.from_null())
 
-                if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE1 and self._reader_ext:
+                if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX0 and self._reader_ext:
                     assert node.mesh.vertex_uv1 is not None
                     uv1_pos = mdx_offset + i * mdx_block_size + bin_node.trimesh.mdx_texture1_offset
                     if uv1_pos + 8 <= self._reader_ext.size():  # Need 8 bytes for Vector2
@@ -2595,7 +2532,7 @@ class MDLBinaryReader:
                         # Bounds check failed - use null UV
                         node.mesh.vertex_uv1.append(Vector2(0.0, 0.0))
 
-                if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE2 and self._reader_ext:
+                if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX1 and self._reader_ext:
                     assert node.mesh.vertex_uv2 is not None
                     uv2_pos = mdx_offset + i * mdx_block_size + bin_node.trimesh.mdx_texture2_offset
                     if uv2_pos + 8 <= self._reader_ext.size():  # Need 8 bytes for Vector2
@@ -3292,17 +3229,17 @@ class MDLBinaryWriter:
         has_uv1 = mdl_node.mesh.vertex_uv1 is not None and uv1_len == vcount and vcount > 0
         has_uv2 = mdl_node.mesh.vertex_uv2 is not None and uv2_len == vcount and vcount > 0
 
-        # Only set TEXTURE1 flag if texture name is valid (not None, not empty, not "NULL")
+        # Only set TEX0 flag if texture name is valid (not None, not empty, not "NULL")
         has_texture1 = mdl_node.mesh.texture_1 is not None and mdl_node.mesh.texture_1.strip() != "" and mdl_node.mesh.texture_1.upper() != "NULL"
 
         if has_uv1:
             bin_node.trimesh.mdx_texture1_offset = suboffset
-            bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.TEXTURE1
+            bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.TEX0
             if _DEBUG_MDL:
                 print(
-                    f"DEBUG _update_mdx: Node {mdl_node.name} has_uv1=True texture1={mdl_node.mesh.texture_1} bitmap=0x{bin_node.trimesh.mdx_data_bitmap:08X} TEXTURE1={bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE1)} texture1_offset={bin_node.trimesh.mdx_texture1_offset}"
+                    f"DEBUG _update_mdx: Node {mdl_node.name} has_uv1=True texture1={mdl_node.mesh.texture_1} bitmap=0x{bin_node.trimesh.mdx_data_bitmap:08X} TEX0={bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX0)} texture1_offset={bin_node.trimesh.mdx_texture1_offset}"
                 )
-            assert bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE1, f"Failed to set TEXTURE1 flag for node {mdl_node.name}"
+            assert bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX0, f"Failed to set TEX0 flag for node {mdl_node.name}"
             suboffset += 8
         elif has_texture1 and vcount > 0:
             # Texture name exists but no valid UV data - generate default UV coordinates
@@ -3310,26 +3247,26 @@ class MDLBinaryWriter:
             if not mdl_node.mesh.vertex_uv1 or len(mdl_node.mesh.vertex_uv1) != vcount:
                 mdl_node.mesh.vertex_uv1 = [Vector2(0.0, 0.0) for _ in range(vcount)]
             bin_node.trimesh.mdx_texture1_offset = suboffset
-            bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.TEXTURE1
+            bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.TEX0
             if _DEBUG_MDL:
                 print(
-                    f"DEBUG _update_mdx: Node {mdl_node.name} has_uv1=False texture1={mdl_node.mesh.texture_1} vcount={vcount} generated default UVs bitmap=0x{bin_node.trimesh.mdx_data_bitmap:08X} TEXTURE1={bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE1)}"
+                    f"DEBUG _update_mdx: Node {mdl_node.name} has_uv1=False texture1={mdl_node.mesh.texture_1} vcount={vcount} generated default UVs bitmap=0x{bin_node.trimesh.mdx_data_bitmap:08X} TEX0={bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX0)}"
                 )
             suboffset += 8
 
-        # Only set TEXTURE2 flag if texture name is valid (not None, not empty, not "NULL")
+        # Only set TEX1 flag if texture name is valid (not None, not empty, not "NULL")
         has_texture2 = mdl_node.mesh.texture_2 is not None and mdl_node.mesh.texture_2.strip() != "" and mdl_node.mesh.texture_2.upper() != "NULL"
 
         if has_uv2:
             bin_node.trimesh.mdx_texture2_offset = suboffset
-            bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.TEXTURE2
+            bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.TEX1
             suboffset += 8
         elif has_texture2 and vcount > 0:
             # Texture name exists but no valid UV data - generate default UV coordinates
             if not mdl_node.mesh.vertex_uv2 or len(mdl_node.mesh.vertex_uv2) != vcount:
                 mdl_node.mesh.vertex_uv2 = [Vector2(0.0, 0.0) for _ in range(vcount)]
             bin_node.trimesh.mdx_texture2_offset = suboffset
-            bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.TEXTURE2
+            bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.TEX1
             suboffset += 8
 
         # Skin nodes store per-vertex bone indices + weights (4 floats each) in MDX.
@@ -3353,11 +3290,11 @@ class MDLBinaryWriter:
                 # Only write normals if they're actually in MDX (bitmap flag set)
                 norm = mdl_node.mesh.vertex_normals[i] if (mdl_node.mesh.vertex_normals and i < len(mdl_node.mesh.vertex_normals)) else Vector3.from_null()
                 self._writer_ext.write_vector3(norm)
-            if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE1:
+            if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX0:
                 # Only write UV1 if it's actually in MDX (bitmap flag set)
                 uv1 = mdl_node.mesh.vertex_uv1[i] if (mdl_node.mesh.vertex_uv1 and i < len(mdl_node.mesh.vertex_uv1)) else Vector2(0.0, 0.0)
                 self._writer_ext.write_vector2(uv1)
-            if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE2:
+            if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX1:
                 # Only write UV2 if it's actually in MDX (bitmap flag set)
                 uv2 = mdl_node.mesh.vertex_uv2[i] if (mdl_node.mesh.vertex_uv2 and i < len(mdl_node.mesh.vertex_uv2)) else Vector2(0.0, 0.0)
                 self._writer_ext.write_vector2(uv2)
@@ -3385,9 +3322,9 @@ class MDLBinaryWriter:
         # Padding is one extra element of each data type (normal, UV1, UV2)
         if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.NORMAL:
             self._writer_ext.write_vector3(Vector3.from_null())
-        if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE1:
+        if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX0:
             self._writer_ext.write_vector2(Vector2.from_null())
-        if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEXTURE2:
+        if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX1:
             self._writer_ext.write_vector2(Vector2.from_null())
 
     def _calc_top_offsets(
