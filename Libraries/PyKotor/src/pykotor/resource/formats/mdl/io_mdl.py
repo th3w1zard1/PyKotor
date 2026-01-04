@@ -401,18 +401,19 @@ class _Node:
         # Validate children_count and offset_to_children before reading
         # If offset_to_children is invalid (0xFFFFFFFF) or out of bounds, or children_count is suspiciously large,
         # set children_count to 0 to prevent reading garbage data
+        child_loc = 0 if self.header.offset_to_children in (0, 0xFFFFFFFF) else self.header.offset_to_children + 12
         if (
             self.header.offset_to_children == 0xFFFFFFFF
-            or self.header.offset_to_children >= reader.size()
+            or child_loc >= reader.size()
             or self.header.children_count > 0x7FFFFFFF  # Prevent negative values when interpreted as signed
-            or self.header.children_count * 4 + self.header.offset_to_children > reader.size()
+            or self.header.children_count * 4 + child_loc > reader.size()
         ):
             self.header.children_count = 0
             self.header.children_count2 = 0
             self.children_offsets = []
         else:
             try:
-                reader.seek(self.header.offset_to_children)
+                reader.seek(child_loc)
                 self.children_offsets = [reader.read_uint32() for _ in range(self.header.children_count)]
             except Exception:
                 # If reading fails, set to empty to prevent corruption
@@ -2635,11 +2636,13 @@ class MDLBinaryReader:
 
         # Skip controllers when fast loading (not needed for rendering)
         if not self._fast_load:
+            controllers_base = 0 if bin_node.header.offset_to_controllers in (0, 0xFFFFFFFF) else bin_node.header.offset_to_controllers + 12
+            controller_data_base = 0 if bin_node.header.offset_to_controller_data in (0, 0xFFFFFFFF) else bin_node.header.offset_to_controller_data + 12
             for i in range(bin_node.header.controller_count):
-                offset = bin_node.header.offset_to_controllers + i * _Controller.SIZE
+                offset = controllers_base + i * _Controller.SIZE
                 controller: MDLController = self._load_controller(
                     offset,
-                    bin_node.header.offset_to_controller_data,
+                    controller_data_base,
                 )
                 node.controllers.append(controller)
 
@@ -3422,9 +3425,10 @@ class MDLBinaryWriter:
                     bin_node.children_offsets.append(bin_offsets[child_idx])
 
             assert bin_node.header is not None
-            bin_node.header.offset_to_children = node_offset + bin_node.children_offsets_offset(self.game)
-            bin_node.header.offset_to_controllers = node_offset + bin_node.controllers_offset(self.game)
-            bin_node.header.offset_to_controller_data = node_offset + bin_node.controller_data_offset(self.game)
+            # MDLOps stores these locations as (absolute_offset - 12).
+            bin_node.header.offset_to_children = (node_offset + bin_node.children_offsets_offset(self.game)) - 12
+            bin_node.header.offset_to_controllers = (node_offset + bin_node.controllers_offset(self.game)) - 12
+            bin_node.header.offset_to_controller_data = (node_offset + bin_node.controller_data_offset(self.game)) - 12
             bin_node.header.offset_to_root = 0
             parent_idx = parent_by_idx.get(i)
             bin_node.header.offset_to_parent = bin_offsets[parent_idx] if parent_idx is not None else 0
