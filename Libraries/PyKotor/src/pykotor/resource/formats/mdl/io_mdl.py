@@ -1020,6 +1020,17 @@ class _TrimeshHeader:
                 reader.seek(self.offset_to_faces)
                 self.faces = [_Face().read(reader) for _ in range(self.faces_count)]
 
+        # CRITICAL: Validate vertex_count from faces BEFORE reading vertices
+        # If faces reference vertex indices, vertex_count must be at least max_index + 1
+        if self.faces:
+            max_vertex_index = 0
+            for face in self.faces:
+                max_vertex_index = max(max_vertex_index, face.vertex1, face.vertex2, face.vertex3)
+            required_vertex_count = max_vertex_index + 1
+            if required_vertex_count > self.vertex_count:
+                # Faces require more vertices than header says - use face-based count (authoritative)
+                self.vertex_count = required_vertex_count
+
         # Vertices
         if self.vertices_offset not in (0, 0xFFFFFFFF) and self.vertex_count > 0:
             vertices_bytes = self.vertex_count * 12  # Vector3 of floats
