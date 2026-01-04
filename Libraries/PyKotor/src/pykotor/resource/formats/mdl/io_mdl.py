@@ -2149,19 +2149,13 @@ class MDLBinaryReader:
                     # (faces are authoritative - if they reference vertex indices, those vertices should exist)
                     # Always prioritize face-based count if faces exist
                     if required_vertex_count > 0:
-                        # Faces exist - use face-based count, but cap to what we can actually read
-                        # This prevents stream boundary errors while still prioritizing face-based count
-                        # If can_read_count is 0, we still need to use required_vertex_count (faces are authoritative)
-                        # But we'll verify we can actually read that many vertices later
-                        if can_read_count > 0:
-                            final_count = min(required_vertex_count, can_read_count)
-                        else:
-                            # can_read_count is 0, but faces require vertices - use required_vertex_count
-                            # We'll verify we can actually read that many vertices in the second recovery pass
-                            final_count = required_vertex_count
+                        # Faces exist - use face-based count (faces are authoritative)
+                        # Don't cap to can_read_count in the first pass - we'll verify we can read them in the second pass
+                        # If we can't read all vertices, that's an error condition, but faces are still authoritative
+                        final_count = required_vertex_count
                         # CRITICAL: Always update vcount if faces require more vertices OR if vcount is suspiciously low (0 or 1)
                         # This ensures we fix vcount even when it's 1 (which is almost always wrong for meshes with geometry)
-                        # Even if final_count equals vcount, if vcount is 1 and faces require vertices, we need to verify
+                        # Faces are authoritative - if they reference vertex indices, those vertices must exist
                         if final_count > vcount or (vcount <= 1 and final_count > 0):
                             vcount = final_count
                             bin_node.trimesh.vertex_count = final_count
