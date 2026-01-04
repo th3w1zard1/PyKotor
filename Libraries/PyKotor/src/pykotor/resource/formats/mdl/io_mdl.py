@@ -2084,6 +2084,15 @@ class MDLBinaryReader:
                 for face in bin_node.trimesh.faces:
                     max_vertex_index = max(max_vertex_index, face.vertex1, face.vertex2, face.vertex3)
                 required_vertex_count = max_vertex_index + 1
+                
+                # CRITICAL FIX: If faces require more vertices than header says, update immediately
+                # This must happen BEFORE any vertex reading, since read_extra already read with wrong count
+                if required_vertex_count > vcount:
+                    vcount = required_vertex_count
+                    bin_node.trimesh.vertex_count = required_vertex_count
+                    vcount_verified = True
+                    # Discard any vertices read by read_extra with wrong count
+                    bin_node.trimesh.vertices = []
             
             # CRITICAL: If vcount is suspiciously low (0 or 1), ALWAYS try to recover from faces or file bounds
             # Even if faces don't exist yet, vcount of 0 or 1 is almost always wrong for meshes with geometry
