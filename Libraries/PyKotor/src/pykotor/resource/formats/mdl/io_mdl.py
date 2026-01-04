@@ -2060,6 +2060,7 @@ class MDLBinaryReader:
             node.mesh.render = True  # TODO: Fix struct offset issue
             node.mesh.background_geometry = bool(bin_node.trimesh.background)
             node.mesh.has_lightmap = bool(bin_node.trimesh.has_lightmap)
+            node.mesh.rotate_texture = bool(bin_node.trimesh.rotate_texture)
             node.mesh.beaming = bool(bin_node.trimesh.beaming)
             node.mesh.dirt_enabled = bool(bin_node.trimesh.dirt_enabled)
             node.mesh.dirt_texture = bin_node.trimesh.dirt_texture
