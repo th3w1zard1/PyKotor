@@ -401,7 +401,7 @@ class _Node:
         # Validate children_count and offset_to_children before reading
         # If offset_to_children is invalid (0xFFFFFFFF) or out of bounds, or children_count is suspiciously large,
         # set children_count to 0 to prevent reading garbage data
-        child_loc = 0 if self.header.offset_to_children in (0, 0xFFFFFFFF) else self.header.offset_to_children + 12
+        child_loc = self.header.offset_to_children
         if (
             self.header.offset_to_children == 0xFFFFFFFF
             or child_loc >= reader.size()
@@ -414,12 +414,8 @@ class _Node:
         else:
             try:
                 reader.seek(child_loc)
-                # Child pointers are stored like MDLOps: (child_node_offset - 12).
                 raw_children = [reader.read_uint32() for _ in range(self.header.children_count)]
-                self.children_offsets = [
-                    (c + 12) if c not in (0, 0xFFFFFFFF) else c
-                    for c in raw_children
-                ]
+                self.children_offsets = raw_children
             except Exception:
                 # If reading fails, set to empty to prevent corruption
                 self.header.children_count = 0
@@ -957,10 +953,11 @@ class _TrimeshHeader:
         self,
         reader: BinaryReader,
     ):
-        # MDLOps stores many internal pointers as (absolute_offset - 12), and then seeks (offset + 12).
-        # For parity, interpret these loc fields the same way when reading.
+        # NOTE: MDL offsets are stored relative to the start of the MDL data block.
+        # MDLBinaryReader already compensates for the leading 12-byte wrapper via `BinaryReader.set_offset(+12)`.
+        # Therefore, loc fields in the file can be used directly with this reader.
         def _loc(off: int) -> int:
-            return 0 if off in (0, 0xFFFFFFFF) else off + 12
+            return off
 
         # Indices counts array
         if self.offset_to_indices_counts not in (0, 0xFFFFFFFF) and self.indices_counts_count > 0:
@@ -2243,7 +2240,7 @@ class MDLBinaryReader:
                     if available_bytes >= 12:  # At least one vertex (12 bytes for Vector3)
                         saved_pos = self._reader.position()
                         try:
-                            self._reader.seek(bin_node.trimesh.vertices_offset + 12)
+                            self._reader.seek(bin_node.trimesh.vertices_offset)
                             actual_vertex_count = 0
                             max_readable = min(available_bytes // 12, 100000)  # Safety limit
                             # But at least what faces require
@@ -2295,7 +2292,7 @@ class MDLBinaryReader:
                         saved_pos = self._reader.position()
                         try:
                             # Try to find vertices after the faces array
-                            faces_end = (bin_node.trimesh.offset_to_faces + 12) + (bin_node.trimesh.faces_count * _Face.SIZE)
+                            faces_end = bin_node.trimesh.offset_to_faces + (bin_node.trimesh.faces_count * _Face.SIZE)
                             if faces_end < self._reader.size():
                                 # Scan forward from faces_end looking for valid vertex data
                                 scan_start = faces_end
@@ -2418,7 +2415,7 @@ class MDLBinaryReader:
                 elif bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
                     # Read all vertices from MDL
                     if vcount > 0:
-                        self._reader.seek(bin_node.trimesh.vertices_offset + 12)
+                        self._reader.seek(bin_node.trimesh.vertices_offset)
                         # Read all vertices up to vcount, preserving index positions for face vertex references
                         # Must maintain 1:1 index mapping - faces reference indices directly, so we can't skip vertices
                         # Read as many vertices as possible from file, pad with null vertices if needed
@@ -2476,8 +2473,8 @@ class MDLBinaryReader:
                     # `read_extra` might have skipped vertices due to a conservative bounds check;
                     # try again here using the advertised vertex_count.
                     vertices_bytes = vcount * 12
-                    if (bin_node.trimesh.vertices_offset + 12) + vertices_bytes <= self._reader.size():
-                        self._reader.seek(bin_node.trimesh.vertices_offset + 12)
+                    if bin_node.trimesh.vertices_offset + vertices_bytes <= self._reader.size():
+                        self._reader.seek(bin_node.trimesh.vertices_offset)
                         node.mesh.vertex_positions = [self._reader.read_vector3() for _ in range(vcount)]
                     elif bin_node.trimesh.vertices:
                         # Use whatever vertices were read by read_extra, even if incomplete
@@ -2486,7 +2483,7 @@ class MDLBinaryReader:
                         remaining = vcount - len(bin_node.trimesh.vertices)
                         if remaining > 0:
                             remaining_bytes = remaining * 12
-                            read_pos = (bin_node.trimesh.vertices_offset + 12) + (len(bin_node.trimesh.vertices) * 12)
+                            read_pos = bin_node.trimesh.vertices_offset + (len(bin_node.trimesh.vertices) * 12)
                             if read_pos + remaining_bytes <= self._reader.size():
                                 self._reader.seek(read_pos)
                                 node.mesh.vertex_positions.extend([self._reader.read_vector3() for _ in range(remaining)])
@@ -2503,8 +2500,8 @@ class MDLBinaryReader:
                     # Try one more time to read from MDL if we haven't tried yet
                     if bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
                         vertices_bytes = vcount * 12
-                        if (bin_node.trimesh.vertices_offset + 12) + vertices_bytes <= self._reader.size():
-                            self._reader.seek(bin_node.trimesh.vertices_offset + 12)
+                        if bin_node.trimesh.vertices_offset + vertices_bytes <= self._reader.size():
+                            self._reader.seek(bin_node.trimesh.vertices_offset)
                             node.mesh.vertex_positions = [self._reader.read_vector3() for _ in range(vcount)]
                 if not node.mesh.vertex_positions:
                     node.mesh.vertex_positions = [Vector3.from_null() for _ in range(vcount)]
@@ -2641,8 +2638,8 @@ class MDLBinaryReader:
 
         # Skip controllers when fast loading (not needed for rendering)
         if not self._fast_load:
-            controllers_base = 0 if bin_node.header.offset_to_controllers in (0, 0xFFFFFFFF) else bin_node.header.offset_to_controllers + 12
-            controller_data_base = 0 if bin_node.header.offset_to_controller_data in (0, 0xFFFFFFFF) else bin_node.header.offset_to_controller_data + 12
+            controllers_base = bin_node.header.offset_to_controllers
+            controller_data_base = bin_node.header.offset_to_controller_data
             for i in range(bin_node.header.controller_count):
                 offset = controllers_base + i * _Controller.SIZE
                 controller: MDLController = self._load_controller(
@@ -3427,14 +3424,12 @@ class MDLBinaryWriter:
             for child in mdl_node.children:
                 child_idx = idx_by_id.get(id(child))
                 if child_idx is not None:
-                    # Child pointers are stored like MDLOps: (child_node_offset - 12).
-                    bin_node.children_offsets.append(bin_offsets[child_idx] - 12)
+                    bin_node.children_offsets.append(bin_offsets[child_idx])
 
             assert bin_node.header is not None
-            # MDLOps stores these locations as (absolute_offset - 12).
-            bin_node.header.offset_to_children = (node_offset + bin_node.children_offsets_offset(self.game)) - 12
-            bin_node.header.offset_to_controllers = (node_offset + bin_node.controllers_offset(self.game)) - 12
-            bin_node.header.offset_to_controller_data = (node_offset + bin_node.controller_data_offset(self.game)) - 12
+            bin_node.header.offset_to_children = node_offset + bin_node.children_offsets_offset(self.game)
+            bin_node.header.offset_to_controllers = node_offset + bin_node.controllers_offset(self.game)
+            bin_node.header.offset_to_controller_data = node_offset + bin_node.controller_data_offset(self.game)
             bin_node.header.offset_to_root = 0
             parent_idx = parent_by_idx.get(i)
             bin_node.header.offset_to_parent = bin_offsets[parent_idx] if parent_idx is not None else 0
@@ -3486,10 +3481,9 @@ class MDLBinaryWriter:
         bin_node: _Node,
     ):
         assert bin_node.trimesh is not None
-        # MDLOps stores these locations as (absolute_offset - 12).
-        bin_node.trimesh.offset_to_counters = (node_offset + bin_node.inverted_counters_offset(self.game)) - 12
-        bin_node.trimesh.offset_to_indices_counts = (node_offset + bin_node.indices_counts_offset(self.game)) - 12
-        bin_node.trimesh.offset_to_indices_offset = (node_offset + bin_node.indices_offsets_offset(self.game)) - 12
+        bin_node.trimesh.offset_to_counters = node_offset + bin_node.inverted_counters_offset(self.game)
+        bin_node.trimesh.offset_to_indices_counts = node_offset + bin_node.indices_counts_offset(self.game)
+        bin_node.trimesh.offset_to_indices_offset = node_offset + bin_node.indices_offsets_offset(self.game)
         # indices_offsets stores offsets relative to the start of the indices data block
         # If indices_offsets is empty but count > 0, create the correct number of offsets (all 0)
         # This ensures the count matches the array length, preventing MDLOps from reading beyond bounds
@@ -3502,9 +3496,8 @@ class MDLBinaryWriter:
         if bin_node.trimesh.indices_offsets:
             bin_node.trimesh.indices_offsets_count = bin_node.trimesh.indices_offsets_count2 = len(bin_node.trimesh.indices_offsets)
 
-        # MDLOps stores these locations as (absolute_offset - 12).
-        bin_node.trimesh.offset_to_faces = (node_offset + bin_node.faces_offset(self.game)) - 12
-        bin_node.trimesh.vertices_offset = (node_offset + bin_node.vertices_offset(self.game)) - 12
+        bin_node.trimesh.offset_to_faces = node_offset + bin_node.faces_offset(self.game)
+        bin_node.trimesh.vertices_offset = node_offset + bin_node.vertices_offset(self.game)
 
     def _node_type(
         self,
