@@ -3215,7 +3215,12 @@ class MDLBinaryWriter:
                     bin_node.w_controller_data.extend(row.data)
 
         bin_node.header.controller_count = bin_node.header.controller_count2 = len(mdl_node.controllers)
-        bin_node.header.controller_data_length = bin_node.header.controller_data_length2 = len(bin_node.w_controller_data)
+        # Clamp controller_data_length to prevent Perl from interpreting it as negative (values >= 2^31)
+        # MDLOps reads this as a signed integer, so we must ensure it's < 2^31
+        controller_data_length = len(bin_node.w_controller_data)
+        if controller_data_length > 0x7FFFFFFF:
+            controller_data_length = 0x7FFFFFFF
+        bin_node.header.controller_data_length = bin_node.header.controller_data_length2 = controller_data_length
 
     def _update_anim(
         self,
