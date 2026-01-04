@@ -414,7 +414,12 @@ class _Node:
         else:
             try:
                 reader.seek(child_loc)
-                self.children_offsets = [reader.read_uint32() for _ in range(self.header.children_count)]
+                # Child pointers are stored like MDLOps: (child_node_offset - 12).
+                raw_children = [reader.read_uint32() for _ in range(self.header.children_count)]
+                self.children_offsets = [
+                    (c + 12) if c not in (0, 0xFFFFFFFF) else c
+                    for c in raw_children
+                ]
             except Exception:
                 # If reading fails, set to empty to prevent corruption
                 self.header.children_count = 0
@@ -3422,7 +3427,8 @@ class MDLBinaryWriter:
             for child in mdl_node.children:
                 child_idx = idx_by_id.get(id(child))
                 if child_idx is not None:
-                    bin_node.children_offsets.append(bin_offsets[child_idx])
+                    # Child pointers are stored like MDLOps: (child_node_offset - 12).
+                    bin_node.children_offsets.append(bin_offsets[child_idx] - 12)
 
             assert bin_node.header is not None
             # MDLOps stores these locations as (absolute_offset - 12).
