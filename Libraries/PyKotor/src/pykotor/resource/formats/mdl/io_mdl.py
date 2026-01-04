@@ -1997,9 +1997,6 @@ class MDLBinaryReader:
             node.mesh.has_lightmap = bool(bin_node.trimesh.has_lightmap)
             node.mesh.rotate_texture = bool(bin_node.trimesh.rotate_texture)
             node.mesh.beaming = bool(bin_node.trimesh.beaming)
-            node.mesh.dirt_enabled = bool(bin_node.trimesh.dirt_enabled)
-            node.mesh.dirt_texture = bin_node.trimesh.dirt_texture
-            node.mesh.dirt_coordinate_space = bin_node.trimesh.dirt_coordinate_space
             node.mesh.diffuse = Color.from_bgr_vector3(bin_node.trimesh.diffuse)
             node.mesh.ambient = Color.from_bgr_vector3(bin_node.trimesh.ambient)
             node.mesh.texture_1 = bin_node.trimesh.texture1
@@ -2921,9 +2918,6 @@ class MDLBinaryWriter:
             bin_node.trimesh.has_shadow = 1 if mdl_node.mesh.shadow else 0
             bin_node.trimesh.beaming = 1 if mdl_node.mesh.beaming else 0
             # render is already set above, no need to set it again
-            bin_node.trimesh.dirt_enabled = 1 if mdl_node.mesh.dirt_enabled else 0
-            bin_node.trimesh.dirt_texture = mdl_node.mesh.dirt_texture
-            bin_node.trimesh.dirt_coordinate_space = mdl_node.mesh.dirt_coordinate_space
             bin_node.trimesh.saber_unknowns = bytes(mdl_node.mesh.saber_unknowns)
 
             bin_node.trimesh.vertex_count = len(mdl_node.mesh.vertex_positions)
