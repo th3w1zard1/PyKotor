@@ -1060,7 +1060,12 @@ class _TrimeshHeader:
         _write_u32_as_i32(self.mdx_unknown_offset)
         _write_u32_as_i32(self.mdx_unknown2_offset)
         _write_u32_as_i32(self.mdx_unknown3_offset)
-        writer.write_uint16(self.vertex_count)
+        # Vertex count is stored as uint16 in the on-disk header.
+        # Some real-world models use a full 0..65535 index range, requiring 65536 vertices;
+        # MDLOps handles this by storing 0 in the uint16 field to mean 65536.
+        if self.vertex_count < 0 or self.vertex_count > 65536:
+            raise ValueError(f"vertex_count out of range for uint16/MDLOps semantics: {self.vertex_count}")
+        writer.write_uint16(0 if self.vertex_count == 65536 else self.vertex_count)
         writer.write_uint16(self.texture_count)
         writer.write_uint8(self.has_lightmap)
         writer.write_uint8(self.rotate_texture)
