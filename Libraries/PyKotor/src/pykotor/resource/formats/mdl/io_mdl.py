@@ -365,6 +365,7 @@ class _Node:
         self.light: _LightHeader | None = None
         self.emitter: _EmitterHeader | None = None
         self.reference: _ReferenceHeader | None = None
+        self.dangly: _DanglymeshHeader | None = None
         self.children_offsets: list[int] = []
 
         self.w_children = []
@@ -393,34 +394,44 @@ class _Node:
         if self.header.type_id & MDLNodeFlags.REFERENCE:
             self.reference = _ReferenceHeader().read(reader)
 
+        # Danglymesh sub-sub-header follows trimesh header (28 bytes: l[3]f[3]l)
+        if self.header.type_id & MDLNodeFlags.DANGLY and self.trimesh:
+            self.dangly = _DanglymeshHeader().read(reader)
+
         if self.trimesh:
             self.trimesh.read_extra(reader)
         if self.skin:
             self.skin.read_extra(reader)
 
-        # Validate children_count and offset_to_children before reading
-        # If offset_to_children is invalid (0xFFFFFFFF) or out of bounds, or children_count is suspiciously large,
-        # set children_count to 0 to prevent reading garbage data
+        # Read the children offsets array.
+        #
+        # IMPORTANT: When `children_count == 0`, MDLOps commonly leaves `childrenloc` as 0.
+        # Seeking to 0 here would desync the caller's expectations and can cascade into bogus
+        # controller reads. Only seek/read when there are actual children.
+        if self.header.children_count == 0:
+            self.children_offsets = []
+            return self
+
         child_loc = self.header.offset_to_children
         if (
-            self.header.offset_to_children == 0xFFFFFFFF
+            child_loc in (0, 0xFFFFFFFF)
             or child_loc >= reader.size()
             or self.header.children_count > 0x7FFFFFFF  # Prevent negative values when interpreted as signed
-            or self.header.children_count * 4 + child_loc > reader.size()
+            or (self.header.children_count * 4) + child_loc > reader.size()
         ):
             self.header.children_count = 0
             self.header.children_count2 = 0
             self.children_offsets = []
-        else:
-            try:
-                reader.seek(child_loc)
-                raw_children = [reader.read_uint32() for _ in range(self.header.children_count)]
-                self.children_offsets = raw_children
-            except Exception:
-                # If reading fails, set to empty to prevent corruption
-                self.header.children_count = 0
-                self.header.children_count2 = 0
-                self.children_offsets = []
+            return self
+
+        try:
+            reader.seek(child_loc)
+            self.children_offsets = [reader.read_uint32() for _ in range(self.header.children_count)]
+        except Exception:
+            # If reading fails, set to empty to prevent corruption.
+            self.header.children_count = 0
+            self.header.children_count2 = 0
+            self.children_offsets = []
         return self
 
     def write(
@@ -446,8 +457,14 @@ class _Node:
         if self.reference:
             self.reference.write(writer)
 
+        # Danglymesh sub-sub-header follows trimesh header
+        if self.dangly:
+            self.dangly.write(writer)
+
         if self.trimesh:
             self._write_trimesh_data(writer)
+        if self.dangly:
+            self._write_dangly_extra(writer)
         if self.skin:
             self._write_skin_extra(writer)
         for child_offset in self.children_offsets:
@@ -525,6 +542,27 @@ class _Node:
         for vertex in self.trimesh.vertices:
             writer.write_vector3(vertex)
 
+    def dangly_extra_size(self) -> int:
+        """Size of dangly constraints array (1 float per constraint = 4 bytes each)."""
+        if not self.dangly:
+            return 0
+        return len(getattr(self, "_dangly_constraints", [])) * 4
+
+    def _write_dangly_extra(self, writer: BinaryWriter) -> None:
+        """Write danglymesh constraints array after vertices."""
+        assert self.dangly is not None
+        # Constraints are written as floats (4 bytes each, one float per vertex)
+        # MDLOps writes constraints after the dangly sub-sub-header
+        constraints = getattr(self, "_dangly_constraints", [])
+        for constraint in constraints:
+            # Constraints are stored as single float values
+            # Extract from constraint.type if it was stored there, otherwise use 0.0
+            if hasattr(constraint, "type") and constraint.type != 0:
+                constraint_value = float(constraint.type) / 1000000.0
+            else:
+                constraint_value = 0.0
+            writer.write_single(constraint_value)
+
     def _write_skin_extra(self, writer: BinaryWriter) -> None:
         """Write variable-length skin blocks referenced by _SkinmeshHeader offsets."""
         assert self.skin is not None
@@ -560,8 +598,10 @@ class _Node:
             # Light header size: 15 uint32s (offsets/counts) + 1 float (flare_radius) + 7 uint32s (light properties) = 92 bytes
             size += 92
         if self.emitter:
-            # Emitter header size: 3 floats + 1 uint32 + 1 float + 1 Vector2 + 5*32-byte strings + 4 uint32s + 1 uint8 + 3 padding + 1 uint32 = 212 bytes
-            size += 212
+            # MDLOps emitter_header template is 224 bytes:
+            #   f[3]L[5]Z[32]*4 Z[16] L[2] S C Z[32] C L
+            # See: `vendor/MDLOps/MDLOpsM.pm` `$structs{'subhead'}{'5k1'}` / `'5k2'`.
+            size += 224
         if self.reference:
             # Reference header size: 32-byte string + 1 uint32 = 36 bytes
             size += 36
@@ -623,9 +663,12 @@ class _Node:
         game: Game,
     ) -> int:
         # Children offsets follow the vertex array and any skin extra blocks (bonemap/qbones/tbones).
+        # Dangly constraints also come after vertices.
         size = self.vertices_offset(game)
         if self.trimesh:
             size += self.trimesh.vertices_size()
+        if self.dangly:
+            size += self.dangly_extra_size()
         if self.skin:
             size += self.skin_extra_size()
         return size
@@ -706,7 +749,11 @@ class _NodeHeader:
     ) -> _NodeHeader:
         # MDLOps nodeheader template: "SSSSllffffffflllllllll"
         # The 4 uint16 fields are ordered such that the 3rd short is the node index/id used as the primary key.
-        # See `vendor/MDLOps/MDLOpsM.pm` (node = unpack("x[ss]s", $buffer)).
+        # MDLOps does NOT store the node's name index here (it writes 0 for the 4th short) and derives names
+        # from the model "partnames" array indexed by `node_id`.
+        # See `vendor/MDLOps/MDLOpsM.pm`:
+        #   - read: `node = unpack("x[ss]s", $buffer)` (3rd short)
+        #   - write: `pack("SSSS", nodetype, supernode, $i, 0)` (4th short constant 0)
         self.type_id = reader.read_uint16()
         self.padding0 = reader.read_uint16()
         self.node_id = reader.read_uint16()
@@ -1140,13 +1187,17 @@ class _DanglymeshHeader:
         self,
         writer: BinaryWriter,
     ):
+        # MDLOps writes: pack("lll", 0, vertnum, vertnum) then f[3] then l
+        # First 3 int32s: constraint pointer (offset-12), constraints_count, constraints_count2
         writer.write_uint32(self.offset_to_contraints)
         writer.write_uint32(self.constraints_count)
         writer.write_uint32(self.constraints_count2)
+        # Then 3 floats: displacement, tightness, period
         writer.write_single(self.displacement)
         writer.write_single(self.tightness)
         writer.write_single(self.period)
-        writer.write_uint32(self.unknown0)  # TODO: what is this?
+        # Then danglyverts pointer (offset-12), currently always 0
+        writer.write_uint32(self.unknown0)  # danglyverts pointer
 
 
 class _SkinmeshHeader:
@@ -1375,24 +1426,34 @@ class _EmitterHeader:
     def __init__(
         self,
     ):
+        # MDLOps emitter_header template (size 224):
+        #   f[3]L[5]Z[32]Z[32]Z[32]Z[32]Z[16]L[2]SCZ[32]CL
+        # See: `vendor/MDLOps/MDLOpsM.pm` lines ~176-190 and ~6889+.
         self.dead_space: float = 0.0
         self.blast_radius: float = 0.0
         self.blast_length: float = 0.0
-        self.branch_count: int = 0
-        self.smoothing: float = 0.0
-        self.grid: Vector2 = Vector2.from_null()
-        self.update: str = ""
-        self.render: str = ""
-        self.blend: str = ""
-        self.texture: str = ""
-        self.chunk_name: str = ""
-        self.twosided_texture: int = 0
-        self.loop: int = 0
-        self.render_order: int = 0
-        self.frame_blending: int = 0
-        self.depth_texture: str = ""
-        self.unknown0: int = 0
-        self.flags: int = 0
+
+        self.branch_count: int = 0  # L (numBranches)
+        # NOTE: Stored as uint32 in MDLOps' template (L), despite some external docs treating it as float.
+        # We keep it as uint32 for mdlops parity and map to/from MDLEmitter as float where needed.
+        self.control_point_smoothing: int = 0  # L (controlptsmoothing)
+        self.x_grid: int = 0  # L
+        self.y_grid: int = 0  # L
+        self.spawn_type: int = 0  # L (spawntype)
+
+        self.update: str = ""   # Z[32]
+        self.render: str = ""   # Z[32]
+        self.blend: str = ""    # Z[32]
+        self.texture: str = ""  # Z[32]
+        self.chunk_name: str = ""  # Z[16]
+
+        self.twosided_texture: int = 0  # L
+        self.loop: int = 0  # L
+        self.render_order: int = 0  # S
+        self.frame_blending: int = 0  # C
+        self.depth_texture: str = ""  # Z[32]
+        self.unknown1: int = 0  # C (MDLOps writes 0)
+        self.flags: int = 0  # L (emitterflags)
 
     def read(
         self,
@@ -1401,20 +1462,25 @@ class _EmitterHeader:
         self.dead_space = reader.read_single()
         self.blast_radius = reader.read_single()
         self.blast_length = reader.read_single()
+
         self.branch_count = reader.read_uint32()
-        self.smoothing = reader.read_single()
-        self.grid = reader.read_vector2()
+        self.control_point_smoothing = reader.read_uint32()
+        self.x_grid = reader.read_uint32()
+        self.y_grid = reader.read_uint32()
+        self.spawn_type = reader.read_uint32()
+
         self.update = reader.read_terminated_string("\0", 32)
         self.render = reader.read_terminated_string("\0", 32)
         self.blend = reader.read_terminated_string("\0", 32)
         self.texture = reader.read_terminated_string("\0", 32)
-        self.chunk_name = reader.read_terminated_string("\0", 32)
+        self.chunk_name = reader.read_terminated_string("\0", 16)
+
         self.twosided_texture = reader.read_uint32()
         self.loop = reader.read_uint32()
-        self.render_order = reader.read_uint32()
-        self.frame_blending = reader.read_uint32()
+        self.render_order = reader.read_uint16()
+        self.frame_blending = reader.read_uint8()
         self.depth_texture = reader.read_terminated_string("\0", 32)
-        self.unknown0 = reader.read_uint8()
+        self.unknown1 = reader.read_uint8()
         self.flags = reader.read_uint32()
         return self
 
@@ -1425,20 +1491,25 @@ class _EmitterHeader:
         writer.write_single(self.dead_space)
         writer.write_single(self.blast_radius)
         writer.write_single(self.blast_length)
+
         writer.write_uint32(self.branch_count)
-        writer.write_single(self.smoothing)
-        writer.write_vector2(self.grid)
+        writer.write_uint32(self.control_point_smoothing)
+        writer.write_uint32(self.x_grid)
+        writer.write_uint32(self.y_grid)
+        writer.write_uint32(self.spawn_type)
+
         writer.write_string(self.update, string_length=32, encoding="ascii")
         writer.write_string(self.render, string_length=32, encoding="ascii")
         writer.write_string(self.blend, string_length=32, encoding="ascii")
         writer.write_string(self.texture, string_length=32, encoding="ascii")
-        writer.write_string(self.chunk_name, string_length=32, encoding="ascii")
+        writer.write_string(self.chunk_name, string_length=16, encoding="ascii")
+
         writer.write_uint32(self.twosided_texture)
         writer.write_uint32(self.loop)
-        writer.write_uint32(self.render_order)
-        writer.write_uint32(self.frame_blending)
+        writer.write_uint16(self.render_order)
+        writer.write_uint8(self.frame_blending)
         writer.write_string(self.depth_texture, string_length=32, encoding="ascii")
-        writer.write_uint8(self.unknown0)
+        writer.write_uint8(self.unknown1)
         writer.write_uint32(self.flags)
 
 
@@ -1866,7 +1937,8 @@ class MDLBinaryReader:
 
         node = MDLNode()
         node.node_id = bin_node.header.node_id
-        node.name = self._names[bin_node.header.name_id]
+        # MDLOps derives node names from the "partnames" array by node_id (not from the nodeheader 4th short).
+        node.name = self._names[bin_node.header.node_id] if 0 <= bin_node.header.node_id < len(self._names) else ""
         node.position = bin_node.header.position
         node.orientation = bin_node.header.orientation
         node.node_type = MDLNodeType.DUMMY
@@ -1977,9 +2049,10 @@ class MDLBinaryReader:
                 node.emitter.blast_radius = bin_node.emitter.blast_radius
                 node.emitter.blast_length = bin_node.emitter.blast_length
                 node.emitter.branch_count = bin_node.emitter.branch_count
-                node.emitter.control_point_smoothing = bin_node.emitter.smoothing
-                node.emitter.x_grid = int(bin_node.emitter.grid.x)
-                node.emitter.y_grid = int(bin_node.emitter.grid.y)
+                node.emitter.control_point_smoothing = float(bin_node.emitter.control_point_smoothing)
+                node.emitter.x_grid = int(bin_node.emitter.x_grid)
+                node.emitter.y_grid = int(bin_node.emitter.y_grid)
+                node.emitter.spawn_type = int(bin_node.emitter.spawn_type)
                 node.emitter.update = bin_node.emitter.update
                 node.emitter.render = bin_node.emitter.render
                 node.emitter.blend = bin_node.emitter.blend
@@ -1987,8 +2060,8 @@ class MDLBinaryReader:
                 node.emitter.chunk_name = bin_node.emitter.chunk_name
                 node.emitter.two_sided_texture = bin_node.emitter.twosided_texture
                 node.emitter.loop = bin_node.emitter.loop
-                node.emitter.render_order = bin_node.emitter.render_order
-                node.emitter.frame_blender = bin_node.emitter.frame_blending
+                node.emitter.render_order = int(bin_node.emitter.render_order)
+                node.emitter.frame_blender = int(bin_node.emitter.frame_blending)
                 node.emitter.depth_texture = bin_node.emitter.depth_texture
                 node.emitter.flags = bin_node.emitter.flags
                 # TODO: Read additional emitter data if needed
@@ -2004,12 +2077,19 @@ class MDLBinaryReader:
                 node.reference.reattachable = bool(bin_node.reference.reattachable)
 
         if bin_node.trimesh is not None:
-            node.mesh = MDLMesh()
-            # Only set TRIMESH type if special node type flags are not set
-            # A node can have both MESH and AABB flags (walkmesh with visible geometry)
-            # LIGHT, EMITTER, and REFERENCE flags also take precedence over TRIMESH
-            if not (bin_node.header.type_id & (MDLNodeFlags.AABB | MDLNodeFlags.LIGHT | MDLNodeFlags.EMITTER | MDLNodeFlags.REFERENCE)):
-                node.node_type = MDLNodeType.TRIMESH
+            # Check for DANGLY flag - danglymesh nodes should use MDLDangly
+            if bin_node.header.type_id & MDLNodeFlags.DANGLY:
+                from pykotor.resource.formats.mdl.mdl_data import MDLDangly
+                node.dangly = MDLDangly()
+                node.mesh = node.dangly  # MDLDangly inherits from MDLMesh
+                node.node_type = MDLNodeType.DANGLYMESH
+            else:
+                node.mesh = MDLMesh()
+                # Only set TRIMESH type if special node type flags are not set
+                # A node can have both MESH and AABB flags (walkmesh with visible geometry)
+                # LIGHT, EMITTER, and REFERENCE flags also take precedence over TRIMESH
+                if not (bin_node.header.type_id & (MDLNodeFlags.AABB | MDLNodeFlags.LIGHT | MDLNodeFlags.EMITTER | MDLNodeFlags.REFERENCE)):
+                    node.node_type = MDLNodeType.TRIMESH
             node.mesh.shadow = bool(bin_node.trimesh.has_shadow)
             # render is stored as uint8 in binary (0 or 1), convert to bool for MDLMesh
             # bool(0) = False, bool(1) = True, bool(any non-zero) = True
@@ -2602,6 +2682,34 @@ class MDLBinaryReader:
             if not self._fast_load:
                 _mdl_recompute_mesh_face_payload(node.mesh)
 
+            # Read danglymesh constraints if present
+            if bin_node.dangly and node.dangly:
+                node.dangly.displacement = bin_node.dangly.displacement
+                node.dangly.tightness = bin_node.dangly.tightness
+                node.dangly.period = bin_node.dangly.period
+                # Read constraints array (offset uses offset-12 semantics, so add 12)
+                # Constraints are stored as a flat array of floats (one per vertex)
+                # MDLOps stores constraints as simple float values, not structured objects
+                if bin_node.dangly.offset_to_contraints not in (0, 0xFFFFFFFF) and bin_node.dangly.constraints_count > 0:
+                    saved_pos = self._reader.position()
+                    try:
+                        constraint_loc = bin_node.dangly.offset_to_contraints + 12
+                        self._reader.seek(constraint_loc)
+                        # Constraints are floats - one float per vertex
+                        # Store as list of floats for now (MDLDangly.constraints expects list)
+                        for _ in range(bin_node.dangly.constraints_count):
+                            if self._reader.position() + 4 <= self._reader.size():
+                                constraint_value = self._reader.read_single()
+                                # Store constraint as a simple value (MDLDangly.constraints is list[MDLConstraint])
+                                # For now, we'll store the float value directly in a constraint object
+                                from pykotor.resource.formats.mdl.mdl_data import MDLConstraint
+                                constraint = MDLConstraint()
+                                # Use type field to store the float value (temporary workaround)
+                                constraint.type = int(constraint_value * 1000000) if constraint_value != 0.0 else 0
+                                node.dangly.constraints.append(constraint)
+                    finally:
+                        self._reader.seek(saved_pos)
+
         if bin_node.skin:
             node.skin = MDLSkin()
             node.skin.bone_indices = bin_node.skin.bones
@@ -2829,20 +2937,10 @@ class MDLBinaryWriter:
         self._mdl_nodes[:] = self._mdl.all_nodes()
         self._bin_nodes[:] = [_Node() for _ in self._mdl_nodes]
         self._bin_anims[:] = [_Animation() for _ in self._mdl.anims]
-        # Name table must cover *all* nodes referenced by the file: geometry nodes + animation nodes.
-        # Some round-trip paths construct animation roots independently, so build this as a de-duped,
-        # insertion-ordered list.
-        self._names.clear()
-
-        def _add_name(n: str) -> None:
-            if n and n not in self._names:
-                self._names.append(n)
-
-        for node in self._mdl_nodes:
-            _add_name(node.name)
-        for anim in self._mdl.anims:
-            for node in anim.all_nodes():
-                _add_name(node.name)
+        # Node names in binary are stored in the "partnames" array and are indexed by node_id.
+        # MDLOps writes `node_id` as the index into this array and writes 0 for the nodeheader's 4th short.
+        # Therefore, we must keep this array in node_id order (no de-dupe).
+        self._names = [n.name for n in self._mdl_nodes]
 
         self._anim_offsets[:] = [0 for _ in self._bin_anims]
         self._node_offsets[:] = [0 for _ in self._bin_nodes]
@@ -2884,9 +2982,8 @@ class MDLBinaryWriter:
         if children_count > 0x7FFFFFFF:
             children_count = 0x7FFFFFFF
         bin_node.header.children_count = bin_node.header.children_count2 = children_count
-        if mdl_node.name not in self._names:
-            self._names.append(mdl_node.name)
-        bin_node.header.name_id = self._names.index(mdl_node.name)
+        # MDLOps writes 0 for the nodeheader's 4th short; names come from partnames[node_id].
+        bin_node.header.name_id = 0
         # Node IDs are positional within their node array (geometry or animation), not global by name.
         # When writing, always prefer the caller-provided order.
         bin_node.header.node_id = node_id_override if node_id_override is not None else 0
@@ -2917,6 +3014,16 @@ class MDLBinaryWriter:
             bin_node.trimesh.function_pointer0 = fp0
             bin_node.trimesh.function_pointer1 = fp1
             bin_node.trimesh.average = mdl_node.mesh.average
+            # Create dangly header if this is a danglymesh node
+            if mdl_node.dangly:
+                bin_node.dangly = _DanglymeshHeader()
+                bin_node.dangly.displacement = mdl_node.dangly.displacement
+                bin_node.dangly.tightness = mdl_node.dangly.tightness
+                bin_node.dangly.period = mdl_node.dangly.period
+                bin_node.dangly.constraints_count = len(mdl_node.dangly.constraints)
+                bin_node.dangly.constraints_count2 = len(mdl_node.dangly.constraints)
+                # Store constraints for writing later (store on bin_node for access during write)
+                setattr(bin_node, "_dangly_constraints", list(mdl_node.dangly.constraints))
             bin_node.trimesh.radius = mdl_node.mesh.radius
             bin_node.trimesh.bounding_box_max = mdl_node.mesh.bb_max
             bin_node.trimesh.bounding_box_min = mdl_node.mesh.bb_min
@@ -3071,8 +3178,10 @@ class MDLBinaryWriter:
             bin_node.emitter.blast_radius = emitter.blast_radius
             bin_node.emitter.blast_length = emitter.blast_length
             bin_node.emitter.branch_count = emitter.branch_count
-            bin_node.emitter.smoothing = emitter.control_point_smoothing
-            bin_node.emitter.grid = Vector2(float(emitter.x_grid), float(emitter.y_grid))
+            bin_node.emitter.control_point_smoothing = int(emitter.control_point_smoothing)
+            bin_node.emitter.x_grid = int(emitter.x_grid)
+            bin_node.emitter.y_grid = int(emitter.y_grid)
+            bin_node.emitter.spawn_type = int(emitter.spawn_type)
             bin_node.emitter.update = emitter.update
             bin_node.emitter.render = emitter.render
             bin_node.emitter.blend = emitter.blend
@@ -3080,10 +3189,22 @@ class MDLBinaryWriter:
             bin_node.emitter.chunk_name = emitter.chunk_name
             bin_node.emitter.twosided_texture = emitter.two_sided_texture
             bin_node.emitter.loop = emitter.loop
-            bin_node.emitter.render_order = emitter.render_order
-            bin_node.emitter.frame_blending = emitter.frame_blender
+            # MDLOps encodes renderorder as uint16 and frame blending as uint8.
+            ro = int(emitter.render_order)
+            if ro < 0:
+                ro = 0
+            if ro > 0xFFFF:
+                ro = 0xFFFF
+            bin_node.emitter.render_order = ro
+            fb = int(emitter.frame_blender)
+            if fb < 0:
+                fb = 0
+            if fb > 0xFF:
+                fb = 0xFF
+            bin_node.emitter.frame_blending = fb
             bin_node.emitter.depth_texture = emitter.depth_texture
-            bin_node.emitter.unknown0 = 0  # TODO: preserve if available
+            # MDLOps writes this byte as 0 (m_bUnknown1 in perl).
+            bin_node.emitter.unknown1 = 0
             bin_node.emitter.flags = emitter.flags
 
         # Reference header data
@@ -3229,9 +3350,14 @@ class MDLBinaryWriter:
         bin_node.trimesh.mdx_texture2_offset = 0xFFFFFFFF
         bin_node.trimesh.mdx_data_bitmap = 0
 
+        # MDLOps decompiler expects vertex coordinates to be present in MDX rows when an MDX is available,
+        # keyed by MDXDataBitmap's VERTEX bit and mdxvertcoordsloc (offset 0).
+        #
+        # Without this, MDLOps will output `verts N` but omit the vertex coordinate list entirely.
         suboffset = 0
-        # Vertices are stored in MDL, not MDX. MDX only contains per-vertex data like normals, UVs, and skin data.
-        bin_node.trimesh.mdx_vertex_offset = 0xFFFFFFFF
+        bin_node.trimesh.mdx_vertex_offset = suboffset
+        bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.VERTEX
+        suboffset += 12
 
         if mdl_node.mesh.vertex_normals:
             bin_node.trimesh.mdx_normal_offset = suboffset
@@ -3439,8 +3565,26 @@ class MDLBinaryWriter:
 
             if bin_node.trimesh:
                 self._calc_trimesh_offsets(node_offset, bin_node)
+            if bin_node.dangly:
+                self._calc_dangly_offsets(node_offset, bin_node)
             if bin_node.skin:
                 self._calc_skin_offsets(node_offset, bin_node)
+
+    def _calc_dangly_offsets(
+        self,
+        node_offset: int,
+        bin_node: _Node,
+    ) -> None:
+        assert bin_node.dangly is not None
+        # Constraints follow vertices
+        after_vertices = node_offset + bin_node.vertices_offset(self.game)
+        if bin_node.trimesh:
+            after_vertices += bin_node.trimesh.vertices_size()
+        if bin_node.dangly.constraints_count > 0:
+            # MDLOps uses offset-12 semantics for constraint pointer
+            bin_node.dangly.offset_to_contraints = after_vertices - 12
+        else:
+            bin_node.dangly.offset_to_contraints = 0
 
     def _calc_skin_offsets(
         self,

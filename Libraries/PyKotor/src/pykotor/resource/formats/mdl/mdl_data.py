@@ -3003,6 +3003,11 @@ class MDLDangly(MDLMesh):
         # Reuse MDLMesh initialization so ambient/diffuse/textures/verts/faces exist.
         super().__init__()
 
+        # vendor/mdlops/MDLOpsM.pm:2094-2097 - Dangly physics parameters
+        self.displacement: float = 0.0
+        self.tightness: float = 0.0
+        self.period: float = 0.0
+
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:276-291
         # vendor/mdlops/MDLOpsM.pm:1835-1850
         # Constraints define how vertices can move (springs, limits, etc.)
