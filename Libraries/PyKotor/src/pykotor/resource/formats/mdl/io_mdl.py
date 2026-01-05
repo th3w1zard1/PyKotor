@@ -3595,9 +3595,12 @@ class MDLBinaryWriter:
             bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.NORMAL
             suboffset += 12
 
+        # Use vertex_count from trimesh header as authoritative source (may differ from vertex_positions length)
+        # This ensures we write the correct number of vertices even if vertex_positions is empty or incomplete
+        vcount = bin_node.trimesh.vertex_count
         # MDLOps requires texture vertex data in MDX if texture name is set
         # Check both list existence and non-empty to ensure we have valid UV data
-        vcount = len(mdl_node.mesh.vertex_positions) if mdl_node.mesh.vertex_positions else 0
+        vertex_positions_len = len(mdl_node.mesh.vertex_positions) if mdl_node.mesh.vertex_positions else 0
         uv1_len = len(mdl_node.mesh.vertex_uv1) if mdl_node.mesh.vertex_uv1 else 0
         uv2_len = len(mdl_node.mesh.vertex_uv2) if mdl_node.mesh.vertex_uv2 else 0
         has_uv1 = mdl_node.mesh.vertex_uv1 is not None and uv1_len == vcount and vcount > 0
@@ -3663,9 +3666,11 @@ class MDLBinaryWriter:
 
         # Write MDX data based on bitmap flags, not just list existence
         # This ensures we only write data that's actually in the MDX structure
-        # Write per-vertex data for all vertices
-        for i, position in enumerate(mdl_node.mesh.vertex_positions):
+        # Write per-vertex data for all vertices (use vcount from header, not vertex_positions length)
+        for i in range(vcount):
             if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX:
+                # Use vertex from vertex_positions if available, otherwise use null vertex
+                position = mdl_node.mesh.vertex_positions[i] if (mdl_node.mesh.vertex_positions and i < len(mdl_node.mesh.vertex_positions)) else Vector3.from_null()
                 self._writer_ext.write_vector3(position)
             if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.NORMAL:
                 # Only write normals if they're actually in MDX (bitmap flag set)
