@@ -1116,7 +1116,10 @@ class _TrimeshHeader:
             _padding = reader.read_uint8()  # padding byte
             self.dirt_texture = reader.read_int16()
             self.dirt_worldspace = reader.read_int16()
-            self.hologram_donotdraw = reader.read_uint32() != 0
+            # Read hologram_donotdraw as uint32, but only set to True if the value is explicitly 1
+            # Some models may have uninitialized memory (non-zero garbage) that should be treated as 0
+            hologram_value = reader.read_uint32()
+            self.hologram_donotdraw = (hologram_value == 1)
             # Store in tail fields for compatibility (not used in K2)
             self.tail_short = 0
             self.k2_tail_long1 = reader.read_uint32()
