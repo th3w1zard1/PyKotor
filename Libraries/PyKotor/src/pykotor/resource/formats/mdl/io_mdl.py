@@ -3312,7 +3312,8 @@ class MDLBinaryWriter:
                 bin_node.trimesh.dirt_worldspace = mdl_node.mesh.dirt_worldspace if mdl_node.mesh.dirt_worldspace else 1
                 # Only use hologram_donotdraw, not hide_in_hologram (which is just a legacy alias)
                 # hide_in_hologram is set from hologram_donotdraw when reading, so they should match
-                bin_node.trimesh.hologram_donotdraw = 1 if mdl_node.mesh.hologram_donotdraw else 0
+                # Write as uint32 (1 or 0), but _TrimeshHeader stores it as bool, so convert
+                bin_node.trimesh.hologram_donotdraw = bool(mdl_node.mesh.hologram_donotdraw)
             bin_node.trimesh.saber_unknowns = bytes(mdl_node.mesh.saber_unknowns)
 
             # Set vertex_count from vertex_positions length, but ensure it matches the actual vertex data
