@@ -2657,6 +2657,7 @@ class MDLMesh(ComparableMixin):
         "shadow",
         "beaming",
         "render",
+        "tangent_space",
         "dirt_enabled",
         "dirt_texture",
         "dirt_coordinate_space",
@@ -2728,6 +2729,12 @@ class MDLMesh(ComparableMixin):
         self.shadow: bool = False  # Cast shadows
         self.beaming: bool = False  # Special hologram effect
         self.render: bool = True  # Should be rendered
+        
+        # Tangent space for bump/normal mapping
+        # vendor/mdlops/MDLOpsM.pm:256 (MDX_TANGENT_SPACE = 0x00000080)
+        # vendor/mdlops/MDLOpsM.pm:3204-3205 (tangentspace property)
+        # When True, the mesh uses tangent space calculations for bump mapping
+        self.tangent_space: bool = False
 
         # Vertex data arrays
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:381-384

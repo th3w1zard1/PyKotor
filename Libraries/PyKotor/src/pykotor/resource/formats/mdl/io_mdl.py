@@ -2108,6 +2108,8 @@ class MDLBinaryReader:
             node.mesh.average = bin_node.trimesh.average
             node.mesh.area = bin_node.trimesh.total_area
             node.mesh.transparency_hint = bin_node.trimesh.transparency_hint
+            # Tangent space flag from MDX data bitmap
+            node.mesh.tangent_space = bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TANGENT_SPACE)
             # Stored as 8 raw bytes in the binary trimesh header; normalize to a tuple[int,...] for MDLMesh.
             node.mesh.saber_unknowns = cast(
                 "tuple[int, int, int, int, int, int, int, int]",
@@ -3411,6 +3413,13 @@ class MDLBinaryWriter:
             bin_node.trimesh.mdx_texture2_offset = suboffset
             bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.TEX1
             suboffset += 8
+
+        # Tangent space flag (for bump/normal mapping)
+        # The TANGENT_SPACE flag is just a hint - actual tangent/bitangent vectors are calculated at runtime
+        # We just need to preserve the flag from the original binary
+        if mdl_node.mesh.tangent_space:
+            bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.TANGENT_SPACE
+            # Note: mdx_tangent_offset is not used when only the flag is set (tangent data is calculated, not stored)
 
         # Skin nodes store per-vertex bone indices + weights (4 floats each) in MDX.
         if mdl_node.skin and bin_node.skin is not None:
