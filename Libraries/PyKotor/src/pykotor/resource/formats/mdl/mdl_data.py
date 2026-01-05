@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from dataclasses import dataclass
 
 from enum import IntFlag
 from typing import TYPE_CHECKING, Any
@@ -3032,6 +3033,36 @@ class MDLDangly(MDLMesh):
         return f"{self.__class__.__name__}(constraints={self.constraints!r}, verts={self.verts!r}, verts_original={self.verts_original!r})"
 
 
+@dataclass
+class MDLAABBNode:
+    """A single node in the AABB tree structure.
+
+    Each AABB node represents a bounding volume in the collision detection tree.
+    Leaf nodes contain face indices, branch nodes contain child pointers.
+
+    References:
+    ----------
+        vendor/mdlops/MDLOpsM.pm:233 (template: "ffffffllll" = 40 bytes)
+        vendor/mdlops/MDLOpsM.pm:1440-1466 (readaabb recursive reading)
+        vendor/mdlops/MDLOpsM.pm:1471-1513 (writeaabb recursive writing)
+
+    Attributes:
+    ----------
+        bbox_min: Minimum corner of bounding box (3 floats)
+        bbox_max: Maximum corner of bounding box (3 floats)
+        face_index: Face index for leaf nodes, -1 for branch nodes
+        left_child_offset: Offset to left child node (0 if no left child)
+        right_child_offset: Offset to right child node (0 if no right child)
+        unknown: Unknown int32 value (typically 0)
+    """
+    bbox_min: Vector3
+    bbox_max: Vector3
+    face_index: int
+    left_child_offset: int
+    right_child_offset: int
+    unknown: int
+
+
 class MDLWalkmesh(ComparableMixin):
     """Walkmesh collision data using Axis-Aligned Bounding Box (AABB) tree.
 
@@ -3076,7 +3107,7 @@ class MDLWalkmesh(ComparableMixin):
         # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:499-520
         # Hierarchical AABB tree for efficient collision detection
         # Each node contains bounding box and either face index (leaf) or child pointers (branch)
-        self.aabbs: list[MDLNode] = []
+        self.aabbs: list[MDLAABBNode] = []
 
     def __eq__(self, other):
         if not isinstance(other, MDLWalkmesh):

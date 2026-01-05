@@ -398,6 +398,15 @@ class _Node:
         if self.header.type_id & MDLNodeFlags.DANGLY and self.trimesh:
             self.dangly = _DanglymeshHeader().read(reader)
 
+        # AABB nodes have an extra 4-byte field (aabbloc) after the trimesh header
+        # This extends the header from 332/340 bytes to 336/344 bytes
+        if self.header.type_id & MDLNodeFlags.AABB and self.trimesh:
+            # Read the AABB tree offset (aabbloc)
+            # MDLOps stores this as a signed int32, but we treat it as an offset
+            aabb_offset_raw = reader.read_int32()
+            # Apply offset-12 semantics: MDLOps stores (absolute_offset - 12)
+            self.trimesh.offset_to_aabb = aabb_offset_raw + 12 if aabb_offset_raw != 0 else 0
+
         if self.trimesh:
             self.trimesh.read_extra(reader)
         if self.skin:
@@ -461,12 +470,22 @@ class _Node:
         if self.dangly:
             self.dangly.write(writer)
 
+        # AABB nodes have an extra 4-byte field (aabbloc) after the trimesh header
+        # This extends the header from 332/340 bytes to 336/344 bytes
+        if self.header.type_id & MDLNodeFlags.AABB and self.trimesh:
+            # Write the AABB tree offset (aabbloc)
+            # Apply offset-12 semantics: MDLOps stores (absolute_offset - 12)
+            aabb_offset_raw = (self.trimesh.offset_to_aabb - 12) if self.trimesh.offset_to_aabb != 0 else 0
+            writer.write_int32(aabb_offset_raw)
+
         if self.trimesh:
             self._write_trimesh_data(writer)
         if self.dangly:
             self._write_dangly_extra(writer)
         if self.skin:
             self._write_skin_extra(writer)
+        if self.header.type_id & MDLNodeFlags.AABB and self.trimesh:
+            self._write_aabb_extra(writer)
         for child_offset in self.children_offsets:
             writer.write_uint32(child_offset)
 
@@ -547,6 +566,80 @@ class _Node:
         if not self.dangly:
             return 0
         return len(getattr(self, "_dangly_constraints", [])) * 4
+
+    def _write_aabb_extra(self, writer: BinaryWriter) -> None:
+        """Write AABB tree recursively after node data.
+        
+        Reference: vendor/MDLOps/MDLOpsM.pm:1471-1513 (writeaabb)
+        AABB nodes are stored in depth-first order, matching the recursive reading.
+        """
+        from pykotor.resource.formats.mdl.mdl_data import MDLAABBNode
+        
+        aabb_nodes = getattr(self, "_aabb_nodes", None)
+        if not aabb_nodes or len(aabb_nodes) == 0:
+            return
+
+        # Write AABB tree recursively (depth-first, matching MDLOps)
+        # Each node is 40 bytes: 6 floats (bbox) + 4 int32s (children/face)
+        # AABB nodes are already in depth-first order from reading
+        node_index = [0]  # Use list to allow mutation in nested function
+        
+        def _write_aabb_recursive(writer: BinaryWriter, start_pos: int) -> int:
+            """Recursively write AABB node and its children.
+            
+            Returns:
+                last_write_pos: Last write position after this subtree
+            """
+            if node_index[0] >= len(aabb_nodes):
+                return writer.position()
+            
+            node = aabb_nodes[node_index[0]]
+            
+            # Write bounding box (6 floats)
+            writer.write_vector3(node.bbox_min)
+            writer.write_vector3(node.bbox_max)
+            
+            # For branch nodes (face_index == -1), we need to write children first
+            # then come back and write the child pointers
+            if node.face_index == -1:
+                # Write placeholder child pointers (will be updated later)
+                left_child_placeholder = writer.position()
+                writer.write_int32(0)  # left child offset (placeholder)
+                writer.write_int32(0)  # right child offset (placeholder)
+                writer.write_int32(-1)  # face_index = -1 for branch
+                writer.write_int32(node.unknown)
+                
+                # Write left child
+                node_index[0] += 1
+                left_child_pos = writer.position()
+                _write_aabb_recursive(writer, start_pos)
+                
+                # Write right child
+                node_index[0] += 1
+                right_child_pos = writer.position()
+                last_pos = _write_aabb_recursive(writer, start_pos)
+                
+                # Update child pointers (apply offset-12 semantics)
+                saved_pos = writer.position()
+                writer.seek(left_child_placeholder)
+                left_child_offset = (left_child_pos - 12) if left_child_pos > 0 else 0
+                right_child_offset = (right_child_pos - 12) if right_child_pos > 0 else 0
+                writer.write_int32(left_child_offset)
+                writer.write_int32(right_child_offset)
+                writer.seek(saved_pos)
+                
+                return last_pos
+            else:
+                # Leaf node: write child pointers as 0, then face index
+                writer.write_int32(0)  # left child = 0
+                writer.write_int32(0)  # right child = 0
+                writer.write_int32(node.face_index)
+                writer.write_int32(node.unknown)
+                node_index[0] += 1
+                return writer.position()
+
+        # Write root node and all children
+        _write_aabb_recursive(writer, writer.position())
 
     def _write_dangly_extra(self, writer: BinaryWriter) -> None:
         """Write danglymesh constraints array after vertices."""
@@ -917,6 +1010,9 @@ class _TrimeshHeader:
         self.tail_long0: int = 0  # unknown uint32 preceding MDX/vertex offsets (index 74/76)
         self.mdx_data_offset: int = 0
         self.vertices_offset: int = 0
+        # AABB nodes have an extra 4-byte field (aabbloc) after the trimesh header
+        # This is only present for nodes with AABB flag (NODE_AABB = 545)
+        self.offset_to_aabb: int = 0
 
         self.faces: list[_Face] = []
         self.vertices: list[Vector3] = []
@@ -1947,12 +2043,66 @@ class MDLBinaryReader:
         # A node can have both MESH and AABB flags (walkmesh with visible geometry)
         if bin_node.header.type_id & MDLNodeFlags.AABB:
             node.node_type = MDLNodeType.AABB
-            # TODO: Read AABB/walkmesh data from binary when AABB flag is set
-            # For now, create empty walkmesh to preserve the AABB node type
-            from pykotor.resource.formats.mdl.mdl_data import MDLWalkmesh
+            from pykotor.resource.formats.mdl.mdl_data import MDLWalkmesh, MDLAABBNode
 
             if node.aabb is None:
                 node.aabb = MDLWalkmesh()
+
+            # Read AABB tree if offset is valid
+            if bin_node.trimesh and bin_node.trimesh.offset_to_aabb > 0:
+                # Read AABB tree recursively (depth-first, matching MDLOps)
+                # Reference: vendor/MDLOps/MDLOpsM.pm:1440-1466 (readaabb)
+                def _read_aabb_recursive(reader: BinaryReader, offset: int) -> tuple[int, list[MDLAABBNode]]:
+                    """Recursively read AABB tree node and its children.
+                    
+                    Returns:
+                        (count, nodes): Number of nodes read and list of AABB nodes
+                    """
+                    if offset == 0 or offset >= reader.size() or offset + 40 > reader.size():
+                        return (0, [])
+
+                    reader.seek(offset)
+                    # Read 6 floats (bounding box min/max)
+                    bbox_min = reader.read_vector3()
+                    bbox_max = reader.read_vector3()
+                    # Read 4 int32s: left child offset, right child offset, face index, unknown
+                    left_child_raw = reader.read_int32()
+                    right_child_raw = reader.read_int32()
+                    face_index = reader.read_int32()
+                    unknown = reader.read_int32()
+
+                    # Apply offset-12 semantics: MDLOps stores (absolute_offset - 12)
+                    left_child = (left_child_raw + 12) if left_child_raw != 0 else 0
+                    right_child = (right_child_raw + 12) if right_child_raw != 0 else 0
+
+                    aabb_node = MDLAABBNode(
+                        bbox_min=bbox_min,
+                        bbox_max=bbox_max,
+                        face_index=face_index,
+                        left_child_offset=left_child,
+                        right_child_offset=right_child,
+                        unknown=unknown,
+                    )
+
+                    nodes = [aabb_node]
+                    count = 1
+
+                    # If this is a branch node (face_index == -1), recursively read children
+                    if face_index == -1:
+                        if left_child != 0:
+                            child_count, child_nodes = _read_aabb_recursive(reader, left_child)
+                            count += child_count
+                            nodes.extend(child_nodes)
+                        if right_child != 0:
+                            child_count, child_nodes = _read_aabb_recursive(reader, right_child)
+                            count += child_count
+                            nodes.extend(child_nodes)
+
+                    return (count, nodes)
+
+                # Read AABB tree starting from the offset
+                _, aabb_nodes = _read_aabb_recursive(self._reader, bin_node.trimesh.offset_to_aabb)
+                node.aabb.aabbs = aabb_nodes
 
         # Check for LIGHT flag - nodes with LIGHT flag should be marked as LIGHT type
         if bin_node.header.type_id & MDLNodeFlags.LIGHT:
@@ -3026,6 +3176,11 @@ class MDLBinaryWriter:
                 bin_node.dangly.constraints_count2 = len(mdl_node.dangly.constraints)
                 # Store constraints for writing later (store on bin_node for access during write)
                 setattr(bin_node, "_dangly_constraints", list(mdl_node.dangly.constraints))
+            
+            # Store AABB tree for writing later if this is an AABB node
+            if mdl_node.aabb and mdl_node.aabb.aabbs:
+                setattr(bin_node, "_aabb_nodes", list(mdl_node.aabb.aabbs))
+                bin_node.trimesh.offset_to_aabb = 0  # Will be calculated during offset calculation
             bin_node.trimesh.radius = mdl_node.mesh.radius
             bin_node.trimesh.bounding_box_max = mdl_node.mesh.bb_max
             bin_node.trimesh.bounding_box_min = mdl_node.mesh.bb_min
@@ -3578,6 +3733,8 @@ class MDLBinaryWriter:
                 self._calc_dangly_offsets(node_offset, bin_node)
             if bin_node.skin:
                 self._calc_skin_offsets(node_offset, bin_node)
+            if bin_node.header.type_id & MDLNodeFlags.AABB and bin_node.trimesh:
+                self._calc_aabb_offsets(node_offset, bin_node)
 
     def _calc_dangly_offsets(
         self,
@@ -3594,6 +3751,50 @@ class MDLBinaryWriter:
             bin_node.dangly.offset_to_contraints = after_vertices - 12
         else:
             bin_node.dangly.offset_to_contraints = 0
+
+    def _calc_aabb_offsets(
+        self,
+        node_offset: int,
+        bin_node: _Node,
+    ) -> None:
+        """Calculate AABB tree offset.
+        
+        AABB tree is written after all other node data (faces, vertices, etc.).
+        Reference: vendor/MDLOps/MDLOpsM.pm:7279-7312 (AABB tree writing)
+        """
+        assert bin_node.trimesh is not None
+        aabb_nodes = getattr(bin_node, "_aabb_nodes", None)
+        if not aabb_nodes or len(aabb_nodes) == 0:
+            bin_node.trimesh.offset_to_aabb = 0
+            return
+
+        # Calculate where AABB tree will be written (after all node data)
+        # This is similar to how dangly constraints are placed after vertices
+        after_vertices = node_offset + bin_node.vertices_offset(self.game)
+        if bin_node.trimesh:
+            after_vertices += bin_node.trimesh.vertices_size()
+        if bin_node.dangly:
+            # Dangly constraints come after vertices
+            after_vertices += getattr(bin_node, "_dangly_extra_size", lambda: 0)()
+        if bin_node.skin:
+            # Skin data comes after vertices/dangly
+            # Calculate skin extra size: bonemap + qbones + tbones + unknown0
+            skin_extra_size = 0
+            if bin_node.skin.bonemap_count > 0:
+                skin_extra_size += bin_node.skin.bonemap_count * 4
+            if bin_node.skin.qbones_count > 0:
+                skin_extra_size += bin_node.skin.qbones_count * 16
+            if bin_node.skin.tbones_count > 0:
+                skin_extra_size += bin_node.skin.tbones_count * 12
+            if bin_node.skin.unknown0_count > 0:
+                skin_extra_size += bin_node.skin.unknown0_count * 4
+            after_vertices += skin_extra_size
+        
+        # AABB tree size: 40 bytes per node
+        aabb_tree_size = len(aabb_nodes) * 40
+        bin_node.trimesh.offset_to_aabb = after_vertices
+        # Store size for writing
+        setattr(bin_node, "_aabb_tree_size", aabb_tree_size)
 
     def _calc_skin_offsets(
         self,
