@@ -1109,10 +1109,20 @@ class _TrimeshHeader:
         self.has_shadow = reader.read_uint8()
         self.beaming = reader.read_uint8()
         self.render = reader.read_uint8()
-        self.tail_short = reader.read_uint16()
         if game == Game.K2:
+            # K2 dirt fields replace tail_short (2 bytes) with CCssL (10 bytes)
+            # Reference: vendor/MDLOps/MDLOpsM.pm:2076-2086 (reading)
+            self.dirt_enabled = reader.read_uint8() != 0
+            _padding = reader.read_uint8()  # padding byte
+            self.dirt_texture = reader.read_int16()
+            self.dirt_worldspace = reader.read_int16()
+            self.hologram_donotdraw = reader.read_uint32() != 0
+            # Store in tail fields for compatibility (not used in K2)
+            self.tail_short = 0
             self.k2_tail_long1 = reader.read_uint32()
             self.k2_tail_long2 = reader.read_uint32()
+        else:
+            self.tail_short = reader.read_uint16()
         self.total_area = reader.read_single()
         self.tail_long0 = reader.read_uint32()
         self.mdx_data_offset = reader.read_uint32()
