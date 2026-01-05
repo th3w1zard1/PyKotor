@@ -3614,7 +3614,6 @@ class MDLBinaryWriter:
         vcount = bin_node.trimesh.vertex_count
         # MDLOps requires texture vertex data in MDX if texture name is set
         # Check both list existence and non-empty to ensure we have valid UV data
-        vertex_positions_len = len(mdl_node.mesh.vertex_positions) if mdl_node.mesh.vertex_positions else 0
         uv1_len = len(mdl_node.mesh.vertex_uv1) if mdl_node.mesh.vertex_uv1 else 0
         uv2_len = len(mdl_node.mesh.vertex_uv2) if mdl_node.mesh.vertex_uv2 else 0
         has_uv1 = mdl_node.mesh.vertex_uv1 is not None and uv1_len == vcount and vcount > 0
