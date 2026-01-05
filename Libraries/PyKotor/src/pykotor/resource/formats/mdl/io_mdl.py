@@ -2682,10 +2682,11 @@ class MDLBinaryReader:
                                     )
                                     # Basic sanity check - reject NaN, Inf, and extremely small values that are likely garbage
                                     # Values like 2.308779e-041 are clearly garbage (uninitialized memory)
+                                    # But allow normal vertex coordinates (even very small ones like 1e-10)
                                     is_valid = (
                                         all(not (coord != coord) for coord in (x, y, z)) and  # Not NaN
                                         all(abs(coord) < 1e30 for coord in (x, y, z)) and  # Not Inf
-                                        all(abs(coord) > 1e-20 or abs(coord) == 0.0 for coord in (x, y, z))  # Reject extremely small non-zero values
+                                        all(abs(coord) > 1e-35 or abs(coord) == 0.0 for coord in (x, y, z))  # Reject extremely small non-zero values (but allow 1e-10 range)
                                     )
                                     if is_valid:
                                         node.mesh.vertex_positions.append(Vector3(x, y, z))
@@ -2715,10 +2716,11 @@ class MDLBinaryReader:
                                     vertex = self._reader.read_vector3()
                                     # Basic sanity check - reject NaN, Inf, and extremely small values that are likely garbage
                                     # Values like 2.308779e-041 are clearly garbage (uninitialized memory)
+                                    # But allow normal vertex coordinates (even very small ones like 1e-10)
                                     is_valid = (
                                         all(not (coord != coord) for coord in (vertex.x, vertex.y, vertex.z)) and  # Not NaN
                                         all(abs(coord) < 1e30 for coord in (vertex.x, vertex.y, vertex.z)) and  # Not Inf
-                                        all(abs(coord) > 1e-20 or abs(coord) == 0.0 for coord in (vertex.x, vertex.y, vertex.z))  # Reject extremely small non-zero values
+                                        all(abs(coord) > 1e-35 or abs(coord) == 0.0 for coord in (vertex.x, vertex.y, vertex.z))  # Reject extremely small non-zero values (but allow 1e-10 range)
                                     )
                                     if is_valid:
                                         node.mesh.vertex_positions.append(vertex)
