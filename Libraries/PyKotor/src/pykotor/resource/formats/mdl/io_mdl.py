@@ -2753,6 +2753,7 @@ class MDLBinaryReader:
             elif bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
                 # Read from MDX
                 # Check that mdx_data_offset is valid, mdx_data_size > 0, mdx_vertex_offset is valid (not 0xFFFFFFFF), and vcount > 0
+                vertices_read_from_mdx = False
                 if (bin_node.trimesh.mdx_data_offset not in (0, 0xFFFFFFFF) 
                     and bin_node.trimesh.mdx_data_size > 0 
                     and bin_node.trimesh.mdx_vertex_offset not in (0xFFFFFFFF,)
@@ -2788,6 +2789,33 @@ class MDLBinaryReader:
                             # Bounds check failed - use null vertex to preserve index position
                             # Don't break - must maintain 1:1 index mapping for face vertex references
                             node.mesh.vertex_positions.append(Vector3.from_null())
+                    if len(node.mesh.vertex_positions) == vcount:
+                        vertices_read_from_mdx = True
+                # If MDX reading failed or wasn't attempted, fall back to MDL
+                if not vertices_read_from_mdx:
+                    # Read from MDL vertex table
+                    if vcount > 0 and bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
+                        # `read_extra` might have skipped vertices due to a conservative bounds check;
+                        # try again here using the advertised vertex_count.
+                        vertices_bytes = vcount * 12
+                        if bin_node.trimesh.vertices_offset + vertices_bytes <= self._reader.size():
+                            self._reader.seek(bin_node.trimesh.vertices_offset)
+                            node.mesh.vertex_positions = [self._reader.read_vector3() for _ in range(vcount)]
+                        elif bin_node.trimesh.vertices:
+                            # Use whatever vertices were read by read_extra, even if incomplete
+                            # But try to read the rest if possible
+                            node.mesh.vertex_positions = bin_node.trimesh.vertices.copy()
+                            remaining = vcount - len(bin_node.trimesh.vertices)
+                            if remaining > 0:
+                                remaining_bytes = remaining * 12
+                                read_pos = bin_node.trimesh.vertices_offset + (len(bin_node.trimesh.vertices) * 12)
+                                if read_pos + remaining_bytes <= self._reader.size():
+                                    self._reader.seek(read_pos)
+                                    node.mesh.vertex_positions.extend([self._reader.read_vector3() for _ in range(remaining)])
+                    elif bin_node.trimesh.vertices and vcount > 1:
+                        # Use vertices read by read_extra, but only if vcount is not suspiciously low (0 or 1)
+                        # A vcount of 0 or 1 is almost always wrong for meshes with geometry
+                        node.mesh.vertex_positions = bin_node.trimesh.vertices.copy()
             else:
                 # Read from MDL vertex table
                 if vcount > 0 and bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
