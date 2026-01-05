@@ -472,11 +472,16 @@ class _Node:
 
         # AABB nodes have an extra 4-byte field (aabbloc) after the trimesh header
         # This extends the header from 332/340 bytes to 336/344 bytes
+        # Reference: vendor/MDLOps/MDLOpsM.pm:7279-7313 (AABB writing)
+        # The AABB tree is written IMMEDIATELY after the aabbloc field, not after all node data
         if self.header.type_id & MDLNodeFlags.AABB and self.trimesh:
-            # Write the AABB tree offset (aabbloc)
-            # Apply offset-12 semantics: MDLOps stores (absolute_offset - 12)
-            aabb_offset_raw = (self.trimesh.offset_to_aabb - 12) if self.trimesh.offset_to_aabb != 0 else 0
+            # Calculate AABB tree offset: current position + 4 (for aabbloc field itself), with offset-12 semantics
+            # MDLOps calculates: (tell(BMDLOUT) - 12) + 4
+            aabb_tree_pos = writer.position() + 4
+            aabb_offset_raw = (aabb_tree_pos - 12) if aabb_tree_pos > 0 else 0
             writer.write_int32(aabb_offset_raw)
+            # Write AABB tree immediately after aabbloc field
+            self._write_aabb_extra(writer)
 
         if self.trimesh:
             self._write_trimesh_data(writer)
@@ -484,8 +489,6 @@ class _Node:
             self._write_dangly_extra(writer)
         if self.skin:
             self._write_skin_extra(writer)
-        if self.header.type_id & MDLNodeFlags.AABB and self.trimesh:
-            self._write_aabb_extra(writer)
         for child_offset in self.children_offsets:
             writer.write_uint32(child_offset)
 
