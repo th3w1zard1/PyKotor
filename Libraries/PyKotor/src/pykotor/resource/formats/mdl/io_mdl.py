@@ -2680,8 +2680,14 @@ class MDLBinaryReader:
                                         self._reader_ext.read_single(),
                                         self._reader_ext.read_single(),
                                     )
-                                    # Basic sanity check
-                                    if all(-1e6 <= coord <= 1e6 for coord in (x, y, z)) and all(not (coord != coord) for coord in (x, y, z)):
+                                    # Basic sanity check - reject NaN, Inf, and extremely small values that are likely garbage
+                                    # Values like 2.308779e-041 are clearly garbage (uninitialized memory)
+                                    is_valid = (
+                                        all(not (coord != coord) for coord in (x, y, z)) and  # Not NaN
+                                        all(abs(coord) < 1e30 for coord in (x, y, z)) and  # Not Inf
+                                        all(abs(coord) > 1e-20 or abs(coord) == 0.0 for coord in (x, y, z))  # Reject extremely small non-zero values
+                                    )
+                                    if is_valid:
                                         node.mesh.vertex_positions.append(Vector3(x, y, z))
                                     else:
                                         # Invalid vertex data - use null vertex to preserve index position
@@ -2707,8 +2713,14 @@ class MDLBinaryReader:
                             if self._reader.position() + 12 <= self._reader.size():
                                 try:
                                     vertex = self._reader.read_vector3()
-                                    # Basic sanity check
-                                    if all(-1e6 <= coord <= 1e6 for coord in (vertex.x, vertex.y, vertex.z)) and all(not (coord != coord) for coord in (vertex.x, vertex.y, vertex.z)):
+                                    # Basic sanity check - reject NaN, Inf, and extremely small values that are likely garbage
+                                    # Values like 2.308779e-041 are clearly garbage (uninitialized memory)
+                                    is_valid = (
+                                        all(not (coord != coord) for coord in (vertex.x, vertex.y, vertex.z)) and  # Not NaN
+                                        all(abs(coord) < 1e30 for coord in (vertex.x, vertex.y, vertex.z)) and  # Not Inf
+                                        all(abs(coord) > 1e-20 or abs(coord) == 0.0 for coord in (vertex.x, vertex.y, vertex.z))  # Reject extremely small non-zero values
+                                    )
+                                    if is_valid:
                                         node.mesh.vertex_positions.append(vertex)
                                     else:
                                         # Invalid vertex data - use null vertex to preserve index position
