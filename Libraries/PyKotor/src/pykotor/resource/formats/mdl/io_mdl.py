@@ -704,10 +704,13 @@ class _NodeHeader:
         self,
         reader: BinaryReader,
     ) -> _NodeHeader:
+        # MDLOps nodeheader template: "SSSSllffffffflllllllll"
+        # The 4 uint16 fields are ordered such that the 3rd short is the node index/id used as the primary key.
+        # See `vendor/MDLOps/MDLOpsM.pm` (node = unpack("x[ss]s", $buffer)).
         self.type_id = reader.read_uint16()
+        self.padding0 = reader.read_uint16()
         self.node_id = reader.read_uint16()
         self.name_id = reader.read_uint16()
-        self.padding0 = reader.read_uint16()
         self.offset_to_root = reader.read_uint32()
         self.offset_to_parent = reader.read_uint32()
         self.position = reader.read_vector3()
@@ -741,9 +744,9 @@ class _NodeHeader:
         writer: BinaryWriter,
     ):
         writer.write_uint16(self.type_id)
+        writer.write_uint16(self.padding0)
         writer.write_uint16(self.node_id)
         writer.write_uint16(self.name_id)
-        writer.write_uint16(self.padding0)
         writer.write_uint32(self.offset_to_root)
         writer.write_uint32(self.offset_to_parent)
         writer.write_vector3(self.position)
