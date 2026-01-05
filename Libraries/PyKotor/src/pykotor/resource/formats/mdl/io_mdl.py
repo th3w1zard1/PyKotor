@@ -3143,6 +3143,14 @@ class MDLBinaryWriter:
         # Therefore, we must keep this array in node_id order (no de-dupe).
         self._names = [n.name for n in self._mdl_nodes]
 
+        # Determine game version: if any node has dirt fields set, it's K2
+        # Otherwise, default to K1 (can be overridden by checking function pointers if available)
+        self.game = Game.K1
+        for node in self._mdl_nodes:
+            if node.mesh and (node.mesh.dirt_enabled or node.mesh.dirt_texture != 1 or node.mesh.dirt_worldspace != 1 or node.mesh.hologram_donotdraw):
+                self.game = Game.K2
+                break
+
         self._anim_offsets[:] = [0 for _ in self._bin_anims]
         self._node_offsets[:] = [0 for _ in self._bin_nodes]
         self._file_header = _ModelHeader()
