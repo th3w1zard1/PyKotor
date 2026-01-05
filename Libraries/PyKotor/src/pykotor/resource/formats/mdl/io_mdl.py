@@ -2667,6 +2667,7 @@ class MDLBinaryReader:
             # Don't use read_extra vertices since they were read with the wrong count
             elif vcount_verified:
                 # Re-read all vertices from scratch with the verified count
+                vertices_read = False
                 if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
                     # Read all vertices from MDX
                     # Check that mdx_data_offset is valid, mdx_data_size > 0, mdx_vertex_offset is valid (not 0xFFFFFFFF), and vcount > 0
@@ -2707,10 +2708,14 @@ class MDLBinaryReader:
                                 # Bounds check failed - use null vertex to preserve index position
                                 node.mesh.vertex_positions.append(Vector3.from_null())
                         # All vertices should have been read (even if some are null)
-                        if len(node.mesh.vertex_positions) != vcount:
+                        if len(node.mesh.vertex_positions) == vcount:
+                            vertices_read = True
+                        else:
                             # This shouldn't happen, but if it does, fall back
+                            node.mesh.vertex_positions = []
                             vcount_verified = False
-                elif bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
+                # If MDX reading failed or wasn't attempted, try MDL
+                if not vertices_read and bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
                     # Read all vertices from MDL
                     if vcount > 0:
                         self._reader.seek(bin_node.trimesh.vertices_offset)
