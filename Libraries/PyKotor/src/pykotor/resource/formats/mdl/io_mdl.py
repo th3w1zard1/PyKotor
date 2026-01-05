@@ -3963,8 +3963,13 @@ class MDLBinaryWriter:
                 if _DEBUG_MDL and bin_node.trimesh.texture1:
                     print(f"DEBUG _write_all: After _update_mdx, node {mdl_node.name} has tex1_off={bin_node.trimesh.mdx_texture1_offset} (trimesh_id={id(bin_node.trimesh)})")
 
-        self._file_header.geometry.function_pointer0 = _GeometryHeader.K1_FUNCTION_POINTER0
-        self._file_header.geometry.function_pointer1 = _GeometryHeader.K1_FUNCTION_POINTER1
+        # Set function pointers based on game version
+        if self.game == Game.K2:
+            self._file_header.geometry.function_pointer0 = _GeometryHeader.K2_FUNCTION_POINTER0
+            self._file_header.geometry.function_pointer1 = _GeometryHeader.K2_FUNCTION_POINTER1
+        else:
+            self._file_header.geometry.function_pointer0 = _GeometryHeader.K1_FUNCTION_POINTER0
+            self._file_header.geometry.function_pointer1 = _GeometryHeader.K1_FUNCTION_POINTER1
         self._file_header.geometry.model_name = self._mdl.name
         self._file_header.geometry.node_count = len(self._mdl_nodes)  # TODO: need to include supermodel in count
         self._file_header.geometry.geometry_type = 2
