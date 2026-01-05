@@ -2670,12 +2670,14 @@ class MDLBinaryReader:
                 vertices_read = False
                 if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
                     # Read all vertices from MDX
-                    # Check that mdx_data_offset is valid, mdx_data_size > 0, mdx_vertex_offset is valid (not 0xFFFFFFFF), and vcount > 0
+                    # Check that mdx_data_offset is valid, mdx_data_size > 0, and vcount > 0
+                    # If mdx_vertex_offset is 0xFFFFFFFF, treat it as 0 (vertices are first in MDX data block)
                     if (bin_node.trimesh.mdx_data_offset not in (0, 0xFFFFFFFF) 
                         and bin_node.trimesh.mdx_data_size > 0 
-                        and bin_node.trimesh.mdx_vertex_offset not in (0xFFFFFFFF,)
                         and vcount > 0):
-                        vertex_offset = bin_node.trimesh.mdx_vertex_offset
+                        # If mdx_vertex_offset is 0xFFFFFFFF, use 0 (vertices are first in MDX data block)
+                        # Otherwise, use the actual offset
+                        vertex_offset = 0 if bin_node.trimesh.mdx_vertex_offset == 0xFFFFFFFF else bin_node.trimesh.mdx_vertex_offset
                         # Read all vertices up to vcount, preserving index positions for face vertex references
                         # Must maintain 1:1 index mapping - faces reference indices directly, so we can't skip vertices
                         for i in range(vcount):
