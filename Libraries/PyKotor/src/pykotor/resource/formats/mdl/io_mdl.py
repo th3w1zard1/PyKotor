@@ -10,9 +10,11 @@ from pykotor.common.stream import BinaryReader, BinaryWriter
 from pykotor.resource.formats.mdl.mdl_data import (
     MDL,
     MDLAnimation,
+    MDLAABBNode,
     MDLBoneVertex,
     MDLController,
     MDLControllerRow,
+    MDLConstraint,
     MDLEvent,
     MDLFace,
     MDLMesh,
@@ -369,6 +371,10 @@ class _Controller:
 class _Node:
     SIZE: ClassVar[int] = 80
 
+    _dangly_constraints: list[MDLConstraint] | None = None
+    _aabb_nodes: list[MDLAABBNode] | None = None
+    _aabb_tree_size: int | None = None
+
     """
     Ordering:
         # Node Header
@@ -592,11 +598,22 @@ class _Node:
         for vertex in self.trimesh.vertices:
             writer.write_vector3(vertex)
 
+        # Write vertex indices array (vertindexes)
+        # Reference: vendor/MDLOps/MDLOpsM.pm:7936-7940 (vertindexes writing)
+        # MDLOps writes face vertex indices as a separate short array after vertices
+        # Format: 3 int16s per face (vertex1, vertex2, vertex3)
+        for face in self.trimesh.faces:
+            writer.write_int16(face.vertex1)
+            writer.write_int16(face.vertex2)
+            writer.write_int16(face.vertex3)
+
     def dangly_extra_size(self) -> int:
         """Size of dangly constraints array (1 float per constraint = 4 bytes each)."""
         if not self.dangly:
             return 0
-        return len(getattr(self, "_dangly_constraints", [])) * 4
+        if self._dangly_constraints is None:
+            return 0
+        return len(self._dangly_constraints) * 4
 
     def _write_aabb_extra(self, writer: BinaryWriter) -> None:
         """Write AABB tree recursively after node data.
@@ -605,8 +622,10 @@ class _Node:
         AABB nodes are stored in depth-first order, matching the recursive reading.
         MDLOps uses sequential layout: each node is 40 bytes, child1 is always at start+40.
         """
-        aabb_nodes = getattr(self, "_aabb_nodes", None)
-        if not aabb_nodes or len(aabb_nodes) == 0:
+        if self._aabb_nodes is None:
+            return
+        aabb_nodes: list[MDLAABBNode] = self._aabb_nodes
+        if len(aabb_nodes) == 0:
             return
 
         # Write AABB tree recursively (depth-first, matching MDLOps exactly)
@@ -680,11 +699,11 @@ class _Node:
         assert self.dangly is not None
         # Constraints are written as floats (4 bytes each, one float per vertex)
         # MDLOps writes constraints after the dangly sub-sub-header
-        constraints = getattr(self, "_dangly_constraints", [])
+        constraints = self._dangly_constraints or []
         for constraint in constraints:
             # Constraints are stored as single float values
             # Extract from constraint.type if it was stored there, otherwise use 0.0
-            if hasattr(constraint, "type") and constraint.type != 0:
+            if constraint.type != 0:
                 constraint_value = float(constraint.type) / 1000000.0
             else:
                 constraint_value = 0.0
@@ -795,11 +814,12 @@ class _Node:
         self,
         game: Game,
     ) -> int:
-        # Children offsets follow the vertex array and any skin extra blocks (bonemap/qbones/tbones).
-        # Dangly constraints also come after vertices.
+        # Children offsets follow the vertex array, vertex indices array, and any extra blocks.
+        # Reference: vendor/MDLOps/MDLOpsM.pm:7917-7940 (vertex data + vertindexes)
         size = self.vertices_offset(game)
         if self.trimesh:
             size += self.trimesh.vertices_size()
+            size += self.trimesh.vertex_indices_size()  # vertindexes array
         if self.dangly:
             size += self.dangly_extra_size()
         if self.skin:
@@ -849,9 +869,9 @@ class _Node:
         """Size of AABB tree written immediately after aabbloc field (before trimesh data)."""
         if not (self.header and self.header.type_id & MDLNodeFlags.AABB and self.trimesh):
             return 0
-        aabb_nodes = getattr(self, "_aabb_nodes", None)
-        if not aabb_nodes:
+        if self._aabb_nodes is None:
             return 0
+        aabb_nodes: list[MDLAABBNode] = self._aabb_nodes
         # Each AABB node is 40 bytes: 6 floats (24 bytes) + 4 int32s (16 bytes)
         return len(aabb_nodes) * 40
 
@@ -1337,13 +1357,15 @@ class _TrimeshHeader:
         writer.write_uint8(self.beaming)
         writer.write_uint8(self.render)
         if game == Game.K2:
-            # K2 dirt fields replace tail_short (2 bytes) with CCssL (10 bytes)
+            # K2 dirt fields replace tail_short (2 bytes) with CCssL (10 bytes) + 2 uint32s (8 bytes)
             # Reference: vendor/MDLOps/MDLOpsM.pm:7065-7068
             writer.write_uint8(1 if self.dirt_enabled else 0)
             writer.write_uint8(0)  # padding byte
             writer.write_int16(self.dirt_texture if self.dirt_texture else 1)
             writer.write_int16(self.dirt_worldspace if self.dirt_worldspace else 1)
             writer.write_uint32(1 if self.hologram_donotdraw else 0)
+            writer.write_uint32(self.k2_tail_long1)
+            writer.write_uint32(self.k2_tail_long2)
         else:
             writer.write_uint16(self.tail_short)
         writer.write_single(self.total_area)
@@ -1370,6 +1392,15 @@ class _TrimeshHeader:
         self,
     ) -> int:
         return len(self.vertices) * 12
+
+    def vertex_indices_size(
+        self,
+    ) -> int:
+        """Size of vertex indices array (3 int16s per face = 6 bytes per face).
+        
+        Reference: vendor/MDLOps/MDLOpsM.pm:7936-7940 (vertindexes writing)
+        """
+        return len(self.faces) * 6  # 3 shorts per face
 
 
 class _DanglymeshHeader:
@@ -2155,6 +2186,15 @@ class MDLBinaryReader:
         self._get_node_order(model_header.geometry.root_node_offset)
         self._mdl.root = self._load_node(model_header.geometry.root_node_offset, None)
 
+        # Detect headlink: if offset_to_super_root differs from root_node_offset and neck_g exists,
+        # this is a head model. Reference: vendor/MDLOps/MDLOpsM.pm:863-866
+        if model_header.offset_to_super_root != model_header.geometry.root_node_offset:
+            # Check if neck_g node exists in the model
+            for node in self._mdl.all_nodes():
+                if node.name == "neck_g":
+                    self._mdl.headlink = "1"
+                    break
+
         # Skip animations when fast loading (not needed for rendering)
         if not self._fast_load:
             self._reader.seek(model_header.offset_to_animations)
@@ -2174,26 +2214,20 @@ class MDLBinaryReader:
         self,
         model_header: _ModelHeader,
     ):
-        self._reader.seek(180)
-        name_header_raw = self._reader.read_bytes(28)
-        name_header_unpacked = []
-        for i in range(7):
-            name_header_unpacked.append(int.from_bytes(name_header_raw[i*4:(i+1)*4], byteorder="little", signed=True))
-        
-        name_indexes_offset = name_header_unpacked[4] + 12
+        name_indexes_offset = model_header.offset_to_name_offsets
         self._reader.seek(name_indexes_offset)
-        name_indexes_count = name_header_unpacked[5]
+        name_indexes_count = model_header.name_offsets_count
         name_indexes_raw = self._reader.read_bytes(4 * name_indexes_count)
         name_indexes_unpacked = []
         for i in range(name_indexes_count):
             name_indexes_unpacked.append(int.from_bytes(name_indexes_raw[i*4:(i+1)*4], byteorder="little", signed=True))
         
-        names_size = model_header.offset_to_animations - (name_header_unpacked[4] + (4 * name_header_unpacked[5]))
+        names_size = model_header.offset_to_animations - (model_header.offset_to_name_offsets + (4 * name_indexes_count))
         names_raw = self._reader.read_bytes(names_size)
         
         names_list = []
         current_pos = 0
-        for _ in range(name_header_unpacked[5]):
+        for _ in range(name_indexes_count):
             null_pos = names_raw.find(b'\x00', current_pos)
             if null_pos == -1:
                 null_pos = len(names_raw)
@@ -2210,9 +2244,6 @@ class MDLBinaryReader:
         self,
         startnode: int,
     ):
-        if not hasattr(self, '_order2nameindex'):
-            self._order2nameindex = []
-        
         startnode += 12
         self._reader.seek(startnode + 4)
         name_index = self._reader.read_uint16()
@@ -2486,607 +2517,46 @@ class MDLBinaryReader:
             vcount = bin_node.trimesh.vertex_count
             node.mesh.vertex_positions = []
             
-            # Read vertices exactly as MDLOps does: if VERTEX flag is set, read from MDX, otherwise read from MDL
-            if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
+            # Read vertices: try MDX first if valid, otherwise fall back to MDL
+            vertices_read = False
+            if (bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) 
+                and self._reader_ext is not None 
+                and self._reader_ext.size() > 0
+                and bin_node.trimesh.mdx_data_offset not in (0, 0xFFFFFFFF) 
+                and bin_node.trimesh.mdx_data_size > 0 
+                and vcount > 0):
                 # Read from MDX
-                if (bin_node.trimesh.mdx_data_offset not in (0, 0xFFFFFFFF) 
-                    and bin_node.trimesh.mdx_data_size > 0 
-                    and vcount > 0):
-                    vertex_offset = 0 if bin_node.trimesh.mdx_vertex_offset == 0xFFFFFFFF else bin_node.trimesh.mdx_vertex_offset
-                    for i in range(vcount):
-                        seek_pos = bin_node.trimesh.mdx_data_offset + i * bin_node.trimesh.mdx_data_size + vertex_offset
-                        if seek_pos + 12 <= self._reader_ext.size():
-                            self._reader_ext.seek(seek_pos)
-                            node.mesh.vertex_positions.append(Vector3(
-                                self._reader_ext.read_single(),
-                                self._reader_ext.read_single(),
-                                self._reader_ext.read_single(),
-                            ))
-            elif vcount > 0 and bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
+                vertex_offset = 0 if bin_node.trimesh.mdx_vertex_offset == 0xFFFFFFFF else bin_node.trimesh.mdx_vertex_offset
+                for i in range(vcount):
+                    seek_pos = bin_node.trimesh.mdx_data_offset + i * bin_node.trimesh.mdx_data_size + vertex_offset
+                    if seek_pos + 12 <= self._reader_ext.size():
+                        self._reader_ext.seek(seek_pos)
+                        node.mesh.vertex_positions.append(Vector3(
+                            self._reader_ext.read_single(),
+                            self._reader_ext.read_single(),
+                            self._reader_ext.read_single(),
+                        ))
+                vertices_read = True
+            
+            if not vertices_read and vcount > 0 and bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
                 # Read from MDL
                 vertices_bytes = vcount * 12
                 if bin_node.trimesh.vertices_offset + vertices_bytes <= self._reader.size():
                     self._reader.seek(bin_node.trimesh.vertices_offset)
                     node.mesh.vertex_positions = [self._reader.read_vector3() for _ in range(vcount)]
             
-            # Old complex fallback logic removed - match MDLOps exactly
-            # Removed: face-based inference, scanning, null vertex creation, multiple fallback attempts
-            # Removed: vcount verification, bounds checking beyond basic file size checks
-            
-            # Continue with normals and UVs reading
-            required_vertex_count = 0
-            if bin_node.trimesh.faces_count > 0 and bin_node.trimesh.faces:
-                max_vertex_index = 0
-                for face in bin_node.trimesh.faces:
-                    max_vertex_index = max(max_vertex_index, face.vertex1, face.vertex2, face.vertex3)
-                required_vertex_count = max_vertex_index + 1
-                
-                # CRITICAL FIX: If faces require more vertices than header says, update immediately
-                # This must happen BEFORE any vertex reading, since read_extra already read with wrong count
-                if required_vertex_count > vcount:
-                    vcount = required_vertex_count
-                    bin_node.trimesh.vertex_count = required_vertex_count
-                    vcount_verified = True
-                    # Keep any vertices read by read_extra if they match the new count
-                    # Otherwise discard them and force re-reading
-                    if not bin_node.trimesh.vertices or len(bin_node.trimesh.vertices) != required_vertex_count:
-                        bin_node.trimesh.vertices = []
-            
-            # CRITICAL: If vcount is suspiciously low (0 or 1), ALWAYS try to recover from faces or file bounds
-            # Even if faces don't exist yet, vcount of 0 or 1 is almost always wrong for meshes with geometry
-            # If faces exist and require more vertices, that's the authoritative count
-            if vcount <= 1 or required_vertex_count > vcount:
-                
-                # If we have a required count from faces, or if vcount is 0/1 (suspicious), try to validate/read from file
-                # When there are no faces, we should still try to determine vertex count from file bounds
-                # Always run validation if vcount is suspiciously low (0 or 1) OR if faces require more vertices
-                if vcount <= 1 or required_vertex_count > vcount:
-                    # Validate that we can actually read this many vertices from the file
-                    # Start with the required count, then limit if bounds check fails
-                    can_read_count = required_vertex_count if required_vertex_count > 0 else 0
-                    if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
-                        # Check MDX bounds
-                        mdx_vertex_data_offset: int = bin_node.trimesh.mdx_data_offset
-                        mdx_vertex_data_block_size: int = bin_node.trimesh.mdx_data_size
-                        vertex_offset = bin_node.trimesh.mdx_vertex_offset
-                        if mdx_vertex_data_offset not in (0, 0xFFFFFFFF) and mdx_vertex_data_block_size > 0:
-                            # If no faces, try to determine count from available MDX data
-                            if bin_node.trimesh.faces_count == 0:
-                                # Calculate max vertices that can fit in MDX
-                                available_bytes = self._reader_ext.size() - mdx_vertex_data_offset - vertex_offset
-                                if available_bytes > 0:
-                                    can_read_count = available_bytes // mdx_vertex_data_block_size
-                                    if can_read_count < 0:
-                                        can_read_count = 0
-                            else:
-                                # Calculate max vertices that can fit in MDX for required count
-                                # Always calculate the actual count we can read, even if bounds check passes
-                                # For vertex i, position is: mdx_vertex_data_offset + i * mdx_vertex_data_block_size + vertex_offset
-                                # For the last vertex (index vcount-1), we need: mdx_vertex_data_offset + (vcount-1) * mdx_vertex_data_block_size + vertex_offset + 12 <= size
-                                # Solving: (vcount-1) * mdx_vertex_data_block_size <= size - mdx_vertex_data_offset - vertex_offset - 12
-                                # vcount <= (size - mdx_vertex_data_offset - vertex_offset - 12) / mdx_vertex_data_block_size + 1
-                                available_for_vertices = self._reader_ext.size() - mdx_vertex_data_offset - vertex_offset - 12
-                                if available_for_vertices > 0:
-                                    max_vertices_from_mdx = (available_for_vertices // mdx_vertex_data_block_size) + 1
-                                    if max_vertices_from_mdx < 0:
-                                        max_vertices_from_mdx = 0
-                                    # Use the minimum of required count and what we can actually read
-                                    can_read_count = min(required_vertex_count, max_vertices_from_mdx) if required_vertex_count > 0 else max_vertices_from_mdx
-                                else:
-                                    can_read_count = 0
-                    elif bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
-                        # Check MDL bounds
-                        available_bytes = self._reader.size() - bin_node.trimesh.vertices_offset
-                        if available_bytes > 0:
-                            max_vertices_from_mdl = available_bytes // 12
-                            if max_vertices_from_mdl < 0:
-                                max_vertices_from_mdl = 0
-                            if bin_node.trimesh.faces_count == 0:
-                                # If no faces, use what we can read from MDL
-                                can_read_count = max_vertices_from_mdl
-                            else:
-                                # Use the minimum of required count and what we can actually read
-                                can_read_count = min(required_vertex_count, max_vertices_from_mdl) if required_vertex_count > 0 else max_vertices_from_mdl
-                        else:
-                            can_read_count = 0
-                    
-                    # Use the validated count (at least what faces require, but not more than we can read)
-                    # Also use it if vcount is 0/1 and we found a reasonable count from file bounds
-                    # If faces require more vertices than header says, use face-based count but cap to what we can read
-                    # (faces are authoritative - if they reference vertex indices, those vertices should exist)
-                    # Always prioritize face-based count if faces exist
-                    if required_vertex_count > 0:
-                        # Faces exist - use face-based count (faces are authoritative)
-                        # Don't cap to can_read_count in the first pass - we'll verify we can read them in the second pass
-                        # If we can't read all vertices, that's an error condition, but faces are still authoritative
-                        final_count = required_vertex_count
-                        # CRITICAL: Always update vcount if faces require more vertices OR if vcount is suspiciously low (0 or 1)
-                        # This ensures we fix vcount even when it's 1 (which is almost always wrong for meshes with geometry)
-                        # Faces are authoritative - if they reference vertex indices, those vertices must exist
-                        if final_count > vcount or (vcount <= 1 and final_count > 0):
-                            vcount = final_count
-                            bin_node.trimesh.vertex_count = final_count
-                            vcount_verified = True
-                    elif can_read_count > 0 and (can_read_count > vcount or vcount <= 1):
-                        # No faces, but we found a count from file bounds (even if it's 1, use it if vcount is 0 or 1)
-                        # This ensures we don't leave vcount at 0 or 1 when vertices exist in the file
-                        # But never use a count of 1 if we can find a better count
-                        if can_read_count > 1 or vcount == 0:
-                            vcount = can_read_count
-                            bin_node.trimesh.vertex_count = can_read_count
-                            vcount_verified = True
-            
-            # If still suspiciously low, try to count actual vertices from file data
-            # Use face-based count as minimum if faces exist (faces are authoritative)
-            # Recalculate required count from faces if not already calculated
-            if required_vertex_count == 0 and bin_node.trimesh.faces_count > 0:
-                max_vertex_index = 0
-                for face in bin_node.trimesh.faces:
-                    max_vertex_index = max(max_vertex_index, face.vertex1, face.vertex2, face.vertex3)
-                required_vertex_count = max_vertex_index + 1
-            
-            # CRITICAL: If vcount is still suspiciously low OR faces require more vertices, try to count actual vertices
-            # Even if vcount_verified was set in the first pass, we need to verify we can actually read the vertices
-            # This second pass actually reads vertices to count them, which is more reliable than bounds checking
-            if vcount <= 1 or required_vertex_count > vcount:
-                if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
-                    # Vertices are in MDX: try to count actual vertices by reading them
-                    mdx_vertex_data_offset = bin_node.trimesh.mdx_data_offset
-                    mdx_vertex_data_block_size = bin_node.trimesh.mdx_data_size
-                    vertex_offset = bin_node.trimesh.mdx_vertex_offset
-                    if mdx_vertex_data_offset not in (0, 0xFFFFFFFF) and mdx_vertex_data_block_size > 0:
-                        # Try to read vertices and count them
-                        saved_pos = self._reader_ext.position()
-                        try:
-                            actual_vertex_count = 0
-                            # Try reading up to a reasonable limit, but at least what faces require
-                            max_to_read = max(required_vertex_count, 100000) if required_vertex_count > 0 else 100000
-                            for i in range(max_to_read):
-                                seek_pos = mdx_vertex_data_offset + i * mdx_vertex_data_block_size + vertex_offset
-                                if seek_pos + 12 > self._reader_ext.size():
-                                    break
-                                try:
-                                    self._reader_ext.seek(seek_pos)
-                                    x = self._reader_ext.read_single()
-                                    y = self._reader_ext.read_single()
-                                    z = self._reader_ext.read_single()
-                                    # Basic sanity check: reasonable float values
-                                    if (
-                                        all(-1e6 <= coord <= 1e6 for coord in (x, y, z))
-                                        and all(not (coord != coord) for coord in (x, y, z))  # Not NaN
-                                    ):
-                                        actual_vertex_count = i + 1
-                                    else:
-                                        # Hit invalid data, but if we've read enough for faces, use that
-                                        if required_vertex_count > 0 and actual_vertex_count >= required_vertex_count:
-                                            actual_vertex_count = required_vertex_count
-                                        break
-                                except Exception:
-                                    # Can't read more, but if we've read enough for faces, use that
-                                    if required_vertex_count > 0 and actual_vertex_count >= required_vertex_count:
-                                        actual_vertex_count = required_vertex_count
-                                    break
-                            
-                            # Only use face-based count if we actually read at least that many vertices
-                            # If we didn't read enough, we have a problem - faces reference vertices that don't exist
-                            # In that case, we need to verify we can actually read that many vertices before using the face-based count
-                            if required_vertex_count > 0:
-                                if actual_vertex_count >= required_vertex_count:
-                                    # We read enough for faces - use the actual count (may be more than required)
-                                    pass  # actual_vertex_count is already correct
-                                else:
-                                    # We didn't read enough for faces - verify we can actually read that many
-                                    # Check if we can read at least required_vertex_count vertices
-                                    can_read_required = True
-                                    for i in range(actual_vertex_count, required_vertex_count):
-                                        seek_pos = mdx_vertex_data_offset + i * mdx_vertex_data_block_size + vertex_offset
-                                        if seek_pos + 12 > self._reader_ext.size():
-                                            can_read_required = False
-                                            break
-                                    if can_read_required:
-                                        # We can read the required count - use it
-                                        actual_vertex_count = required_vertex_count
-                                    else:
-                                        # We can't read the required count - use what we actually read
-                                        # This indicates a problem, but we'll use what we have
-                                        pass  # actual_vertex_count stays as what we read
-                            
-                            # If we found vertices, use the count
-                            # CRITICAL: Always update if actual count is greater OR if vcount is suspiciously low (0 or 1)
-                            # Even if actual_vertex_count equals vcount, if vcount is 1 and faces require more, we need to update
-                            if actual_vertex_count > vcount or (vcount <= 1 and actual_vertex_count > 0):
-                                vcount = actual_vertex_count
-                                bin_node.trimesh.vertex_count = actual_vertex_count
-                                vcount_verified = True
-                            # Also update if faces require more vertices than we actually read
-                            elif required_vertex_count > 0 and required_vertex_count > actual_vertex_count:
-                                # Faces require more vertices - use face-based count (faces are authoritative)
-                                vcount = required_vertex_count
-                                bin_node.trimesh.vertex_count = required_vertex_count
-                                vcount_verified = True
-                        finally:
-                            self._reader_ext.seek(saved_pos)
-                elif bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
-                    # Vertices are in MDL: count actual vertices
-                    available_bytes = self._reader.size() - bin_node.trimesh.vertices_offset
-                    if available_bytes >= 12:  # At least one vertex (12 bytes for Vector3)
-                        saved_pos = self._reader.position()
-                        try:
-                            self._reader.seek(bin_node.trimesh.vertices_offset)
-                            actual_vertex_count = 0
-                            max_readable = min(available_bytes // 12, 100000)  # Safety limit
-                            # But at least what faces require
-                            if required_vertex_count > 0:
-                                max_readable = max(max_readable, required_vertex_count)
-                            
-                            # Read vertices until we can't read any more valid ones
-                            for i in range(max_readable):
-                                if self._reader.position() + 12 > self._reader.size():
-                                    break
-                                try:
-                                    vertex = self._reader.read_vector3()
-                                    # Basic sanity check: reasonable float values, not all zeros
-                                    if (
-                                        all(-1e6 <= coord <= 1e6 for coord in (vertex.x, vertex.y, vertex.z))
-                                        and all(not (coord != coord) for coord in (vertex.x, vertex.y, vertex.z))  # Not NaN
-                                    ):
-                                        actual_vertex_count = i + 1
-                                    else:
-                                        # Hit invalid vertex data, but if we've read enough for faces, use that
-                                        if required_vertex_count > 0 and actual_vertex_count >= required_vertex_count:
-                                            actual_vertex_count = required_vertex_count
-                                        break
-                                except Exception:
-                                    # Can't read more, but if we've read enough for faces, use that
-                                    if required_vertex_count > 0 and actual_vertex_count >= required_vertex_count:
-                                        actual_vertex_count = required_vertex_count
-                                    break
-                            
-                            # If we found more vertices than the header says, use the actual count
-                            # CRITICAL: Always update if actual count is greater OR if vcount is suspiciously low (0 or 1)
-                            # Even if actual_vertex_count equals vcount, if vcount is 1 and faces require more, we need to update
-                            if actual_vertex_count > vcount or (vcount <= 1 and actual_vertex_count > 0):
-                                vcount = actual_vertex_count
-                                bin_node.trimesh.vertex_count = actual_vertex_count
-                                vcount_verified = True
-                            # Also update if faces require more vertices than we actually read
-                            elif required_vertex_count > 0 and required_vertex_count > actual_vertex_count:
-                                # Faces require more vertices - use face-based count (faces are authoritative)
-                                vcount = required_vertex_count
-                                bin_node.trimesh.vertex_count = required_vertex_count
-                                vcount_verified = True
-                        finally:
-                            self._reader.seek(saved_pos)
-                else:
-                    # vertices_offset is invalid - try to find vertices by scanning after faces
-                    # This is a fallback for corrupted K1 files where vertices_offset is wrong
-                    if required_vertex_count > 0 and bin_node.trimesh.offset_to_faces not in (0, 0xFFFFFFFF):
-                        saved_pos = self._reader.position()
-                        try:
-                            # Try to find vertices after the faces array
-                            faces_end = bin_node.trimesh.offset_to_faces + (bin_node.trimesh.faces_count * _Face.SIZE)
-                            if faces_end < self._reader.size():
-                                # Scan forward from faces_end looking for valid vertex data
-                                scan_start = faces_end
-                                scan_end = min(scan_start + (required_vertex_count * 12 * 2), self._reader.size())  # Scan up to 2x required bytes
-                                actual_vertex_count = 0
-                                found_valid_offset = None
-                                
-                                # Try scanning from faces_end
-                                for test_offset in range(scan_start, scan_end, 4):  # Try 4-byte aligned offsets
-                                    if test_offset + (required_vertex_count * 12) > self._reader.size():
-                                        break
-                                    try:
-                                        self._reader.seek(test_offset)
-                                        test_count = 0
-                                        for i in range(min(required_vertex_count, 100)):  # Test first 100 vertices
-                                            if self._reader.position() + 12 > self._reader.size():
-                                                break
-                                            vertex = self._reader.read_vector3()
-                                            if (
-                                                all(-1e6 <= coord <= 1e6 for coord in (vertex.x, vertex.y, vertex.z))
-                                                and all(not (coord != coord) for coord in (vertex.x, vertex.y, vertex.z))
-                                            ):
-                                                test_count = i + 1
-                                            else:
-                                                break
-                                        
-                                        # If we found enough vertices, use this offset
-                                        if test_count >= min(required_vertex_count, 10):  # Found at least 10 valid vertices
-                                            found_valid_offset = test_offset
-                                            actual_vertex_count = test_count
-                                            # Try to read all required vertices
-                                            self._reader.seek(test_offset)
-                                            for i in range(required_vertex_count):
-                                                if self._reader.position() + 12 > self._reader.size():
-                                                    break
-                                                vertex = self._reader.read_vector3()
-                                                if (
-                                                    all(-1e6 <= coord <= 1e6 for coord in (vertex.x, vertex.y, vertex.z))
-                                                    and all(not (coord != coord) for coord in (vertex.x, vertex.y, vertex.z))
-                                                ):
-                                                    actual_vertex_count = i + 1
-                                                else:
-                                                    break
-                                            break
-                                    except Exception:
-                                        continue
-                                
-                                # If we found a valid offset, update vertices_offset
-                                if found_valid_offset is not None:
-                                    bin_node.trimesh.vertices_offset = found_valid_offset
-                                    if actual_vertex_count >= required_vertex_count:
-                                        vcount = actual_vertex_count
-                                        bin_node.trimesh.vertex_count = actual_vertex_count
-                                        vcount_verified = True
-                                    elif required_vertex_count > 0:
-                                        # Use face-based count even if we didn't read all vertices
-                                        vcount = required_vertex_count
-                                        bin_node.trimesh.vertex_count = required_vertex_count
-                                        vcount_verified = True
-                            
-                            # If we found more vertices than the header says, use the actual count
-                            # CRITICAL: Always update if actual count is greater OR if vcount is suspiciously low (0 or 1)
-                            # Even if actual_vertex_count equals vcount, if vcount is 1 and faces require more, we need to update
-                            if actual_vertex_count > vcount or (vcount <= 1 and actual_vertex_count > 0):
-                                vcount = actual_vertex_count
-                                bin_node.trimesh.vertex_count = actual_vertex_count
-                                vcount_verified = True
-                            # Also update if faces require more vertices than we actually read
-                            elif required_vertex_count > 0 and required_vertex_count > actual_vertex_count:
-                                # Faces require more vertices - use face-based count (faces are authoritative)
-                                vcount = required_vertex_count
-                                bin_node.trimesh.vertex_count = required_vertex_count
-                                vcount_verified = True
-                        finally:
-                            self._reader.seek(saved_pos)
-
-            node.mesh.vertex_positions = []
-            
-            # If vertices were read by read_extra and count matches (and wasn't verified/corrected), use them directly
-            # BUT: Never use read_extra vertices if vcount is suspiciously low (0 or 1) - this is almost always wrong
-            # Even if counts match, a vcount of 0 or 1 is almost always incorrect for meshes with geometry
-            if not vcount_verified and bin_node.trimesh.vertices and len(bin_node.trimesh.vertices) == vcount and vcount > 1:
-                node.mesh.vertex_positions = bin_node.trimesh.vertices.copy()
-            # If vcount was verified/corrected, we need to re-read ALL vertices from scratch with the corrected count
-            # Don't use read_extra vertices since they were read with the wrong count
-            elif vcount_verified:
-                # Re-read all vertices from scratch with the verified count
-                vertices_read = False
-                if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
-                    # Read all vertices from MDX
-                    # Check that mdx_data_offset is valid, mdx_data_size > 0, and vcount > 0
-                    # If mdx_vertex_offset is 0xFFFFFFFF, treat it as 0 (vertices are first in MDX data block)
-                    if (bin_node.trimesh.mdx_data_offset not in (0, 0xFFFFFFFF) 
-                        and bin_node.trimesh.mdx_data_size > 0 
-                        and vcount > 0):
-                        # If mdx_vertex_offset is 0xFFFFFFFF, use 0 (vertices are first in MDX data block)
-                        # Otherwise, use the actual offset
-                        vertex_offset = 0 if bin_node.trimesh.mdx_vertex_offset == 0xFFFFFFFF else bin_node.trimesh.mdx_vertex_offset
-                        # Read all vertices up to vcount, preserving index positions for face vertex references
-                        # Must maintain 1:1 index mapping - faces reference indices directly, so we can't skip vertices
-                        for i in range(vcount):
-                            seek_pos = bin_node.trimesh.mdx_data_offset + i * bin_node.trimesh.mdx_data_size + vertex_offset
-                            if seek_pos + 12 <= self._reader_ext.size():  # Need 12 bytes for Vector3
-                                try:
-                                    self._reader_ext.seek(seek_pos)
-                                    x, y, z = (
-                                        self._reader_ext.read_single(),
-                                        self._reader_ext.read_single(),
-                                        self._reader_ext.read_single(),
-                                    )
-                                    # Basic sanity check - reject NaN, Inf, and extremely small values that are likely garbage
-                                    # Values like 2.308779e-041 are clearly garbage (uninitialized memory)
-                                    # But allow normal vertex coordinates (even very small ones like 1e-10)
-                                    is_valid = (
-                                        all(not (coord != coord) for coord in (x, y, z)) and  # Not NaN
-                                        all(abs(coord) < 1e30 for coord in (x, y, z)) and  # Not Inf
-                                        all(abs(coord) > 1e-35 or abs(coord) == 0.0 for coord in (x, y, z))  # Reject extremely small non-zero values (but allow 1e-10 range)
-                                    )
-                                    if is_valid:
-                                        node.mesh.vertex_positions.append(Vector3(x, y, z))
-                                    else:
-                                        # Invalid vertex data - use null vertex to preserve index position
-                                        node.mesh.vertex_positions.append(Vector3.from_null())
-                                except Exception:
-                                    # Can't read this vertex - use null vertex to preserve index position
-                                    node.mesh.vertex_positions.append(Vector3.from_null())
-                            else:
-                                # Bounds check failed - use null vertex to preserve index position
-                                node.mesh.vertex_positions.append(Vector3.from_null())
-                        # All vertices should have been read (even if some are null)
-                        if len(node.mesh.vertex_positions) == vcount:
-                            vertices_read = True
-                        else:
-                            # This shouldn't happen, but if it does, fall back
-                            node.mesh.vertex_positions = []
-                            vcount_verified = False
-                # If MDX reading failed or wasn't attempted, try MDL
-                if not vertices_read and bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
-                    # Read all vertices from MDL
-                    if vcount > 0:
-                        self._reader.seek(bin_node.trimesh.vertices_offset)
-                        # Read all vertices up to vcount, preserving index positions for face vertex references
-                        # Must maintain 1:1 index mapping - faces reference indices directly, so we can't skip vertices
-                        # Read as many vertices as possible from file, pad with null vertices if needed
-                        for i in range(vcount):
-                            if self._reader.position() + 12 <= self._reader.size():
-                                try:
-                                    vertex = self._reader.read_vector3()
-                                    # Basic sanity check - reject NaN, Inf, and extremely small values that are likely garbage
-                                    # Values like 2.308779e-041 are clearly garbage (uninitialized memory)
-                                    # But allow normal vertex coordinates (even very small ones like 1e-10)
-                                    is_valid = (
-                                        all(not (coord != coord) for coord in (vertex.x, vertex.y, vertex.z)) and  # Not NaN
-                                        all(abs(coord) < 1e30 for coord in (vertex.x, vertex.y, vertex.z)) and  # Not Inf
-                                        all(abs(coord) > 1e-35 or abs(coord) == 0.0 for coord in (vertex.x, vertex.y, vertex.z))  # Reject extremely small non-zero values (but allow 1e-10 range)
-                                    )
-                                    if is_valid:
-                                        node.mesh.vertex_positions.append(vertex)
-                                    else:
-                                        # Invalid vertex data - use null vertex to preserve index position
-                                        node.mesh.vertex_positions.append(Vector3.from_null())
-                                except Exception:
-                                    # Can't read this vertex - use null vertex to preserve index position
-                                    node.mesh.vertex_positions.append(Vector3.from_null())
-                            else:
-                                # Bounds check failed - use null vertex to preserve index position
-                                node.mesh.vertex_positions.append(Vector3.from_null())
-                        # All vertices should have been read (even if some are null)
-                        if len(node.mesh.vertex_positions) != vcount:
-                            # This shouldn't happen, but if it does, pad with null vertices
-                            while len(node.mesh.vertex_positions) < vcount:
-                                node.mesh.vertex_positions.append(Vector3.from_null())
-            elif bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
-                # Read from MDX
-                # Check that mdx_data_offset is valid, mdx_data_size > 0, and vcount > 0
-                # If mdx_vertex_offset is 0xFFFFFFFF, treat it as 0 (vertices are first in MDX data block)
-                vertices_read_from_mdx = False
-                if (bin_node.trimesh.mdx_data_offset not in (0, 0xFFFFFFFF) 
-                    and bin_node.trimesh.mdx_data_size > 0 
-                    and vcount > 0):
-                    # If mdx_vertex_offset is 0xFFFFFFFF, use 0 (vertices are first in MDX data block)
-                    # Otherwise, use the actual offset
-                    vertex_offset = 0 if bin_node.trimesh.mdx_vertex_offset == 0xFFFFFFFF else bin_node.trimesh.mdx_vertex_offset
-                    for i in range(vcount):
-                        seek_pos = bin_node.trimesh.mdx_data_offset + i * bin_node.trimesh.mdx_data_size + vertex_offset
-                        if seek_pos + 12 <= self._reader_ext.size():  # Need 12 bytes for Vector3
-                            try:
-                                self._reader_ext.seek(seek_pos)
-                                x, y, z = (
-                                    self._reader_ext.read_single(),
-                                    self._reader_ext.read_single(),
-                                    self._reader_ext.read_single(),
-                                )
-                                # Basic sanity check - reject NaN, Inf, and extremely small values that are likely garbage
-                                # Values like 2.308779e-041 are clearly garbage (uninitialized memory)
-                                # But allow normal vertex coordinates (even very small ones like 1e-10)
-                                is_valid = (
-                                    all(not (coord != coord) for coord in (x, y, z)) and  # Not NaN
-                                    all(abs(coord) < 1e30 for coord in (x, y, z)) and  # Not Inf
-                                    all(abs(coord) > 1e-35 or abs(coord) == 0.0 for coord in (x, y, z))  # Reject extremely small non-zero values (but allow 1e-10 range)
-                                )
-                                if is_valid:
-                                    node.mesh.vertex_positions.append(Vector3(x, y, z))
-                                else:
-                                    # Invalid vertex data - use null vertex to preserve index position
-                                    node.mesh.vertex_positions.append(Vector3.from_null())
-                            except Exception:
-                                # Can't read this vertex - use null vertex to preserve index position
-                                node.mesh.vertex_positions.append(Vector3.from_null())
-                        else:
-                            # Bounds check failed - use null vertex to preserve index position
-                            # Don't break - must maintain 1:1 index mapping for face vertex references
-                            node.mesh.vertex_positions.append(Vector3.from_null())
-                    if len(node.mesh.vertex_positions) == vcount:
-                        vertices_read_from_mdx = True
-                # If MDX reading failed or wasn't attempted, fall back to MDL
-                if not vertices_read_from_mdx:
-                    # Read from MDL vertex table
-                    if vcount > 0 and bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
-                        # `read_extra` might have skipped vertices due to a conservative bounds check;
-                        # try again here using the advertised vertex_count.
-                        vertices_bytes = vcount * 12
-                        if bin_node.trimesh.vertices_offset + vertices_bytes <= self._reader.size():
-                            self._reader.seek(bin_node.trimesh.vertices_offset)
-                            node.mesh.vertex_positions = [self._reader.read_vector3() for _ in range(vcount)]
-                        elif bin_node.trimesh.vertices:
-                            # Use whatever vertices were read by read_extra, even if incomplete
-                            # But try to read the rest if possible
-                            node.mesh.vertex_positions = bin_node.trimesh.vertices.copy()
-                            remaining = vcount - len(bin_node.trimesh.vertices)
-                            if remaining > 0:
-                                remaining_bytes = remaining * 12
-                                read_pos = bin_node.trimesh.vertices_offset + (len(bin_node.trimesh.vertices) * 12)
-                                if read_pos + remaining_bytes <= self._reader.size():
-                                    self._reader.seek(read_pos)
-                                    node.mesh.vertex_positions.extend([self._reader.read_vector3() for _ in range(remaining)])
-                    elif bin_node.trimesh.vertices and vcount > 1:
-                        # Use vertices read by read_extra, but only if vcount is not suspiciously low (0 or 1)
-                        # A vcount of 0 or 1 is almost always wrong for meshes with geometry
-                        node.mesh.vertex_positions = bin_node.trimesh.vertices.copy()
-            else:
-                # Read from MDL vertex table
-                if vcount > 0 and bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
-                    # `read_extra` might have skipped vertices due to a conservative bounds check;
-                    # try again here using the advertised vertex_count.
-                    vertices_bytes = vcount * 12
-                    if bin_node.trimesh.vertices_offset + vertices_bytes <= self._reader.size():
-                        self._reader.seek(bin_node.trimesh.vertices_offset)
-                        node.mesh.vertex_positions = [self._reader.read_vector3() for _ in range(vcount)]
-                    elif bin_node.trimesh.vertices:
-                        # Use whatever vertices were read by read_extra, even if incomplete
-                        # But try to read the rest if possible
-                        node.mesh.vertex_positions = bin_node.trimesh.vertices.copy()
-                        remaining = vcount - len(bin_node.trimesh.vertices)
-                        if remaining > 0:
-                            remaining_bytes = remaining * 12
-                            read_pos = bin_node.trimesh.vertices_offset + (len(bin_node.trimesh.vertices) * 12)
-                            if read_pos + remaining_bytes <= self._reader.size():
-                                self._reader.seek(read_pos)
-                                node.mesh.vertex_positions.extend([self._reader.read_vector3() for _ in range(remaining)])
-                elif bin_node.trimesh.vertices and vcount > 1:
-                    # Use vertices read by read_extra, but only if vcount is not suspiciously low (0 or 1)
-                    # A vcount of 0 or 1 is almost always wrong for meshes with geometry
-                    node.mesh.vertex_positions = bin_node.trimesh.vertices.copy()
-
-            # Fallback: try to read from MDX if we haven't tried yet and MDX exists
-            # For K2 models, vertices are typically in MDX even if the bitmap flag isn't set correctly
-            if not node.mesh.vertex_positions and vcount > 0 and self._reader_ext:
-                # Try reading from MDX if mdx_data_offset is valid
-                if (bin_node.trimesh.mdx_data_offset not in (0, 0xFFFFFFFF) 
-                    and bin_node.trimesh.mdx_data_size > 0):
-                    vertex_offset = 0 if bin_node.trimesh.mdx_vertex_offset == 0xFFFFFFFF else bin_node.trimesh.mdx_vertex_offset
-                    for i in range(vcount):
-                        seek_pos = bin_node.trimesh.mdx_data_offset + i * bin_node.trimesh.mdx_data_size + vertex_offset
-                        if seek_pos + 12 <= self._reader_ext.size():
-                            try:
-                                self._reader_ext.seek(seek_pos)
-                                x, y, z = (
-                                    self._reader_ext.read_single(),
-                                    self._reader_ext.read_single(),
-                                    self._reader_ext.read_single(),
-                                )
-                                is_valid = (
-                                    all(not (coord != coord) for coord in (x, y, z)) and  # Not NaN
-                                    all(abs(coord) < 1e30 for coord in (x, y, z)) and  # Not Inf
-                                    all(abs(coord) > 1e-35 or abs(coord) == 0.0 for coord in (x, y, z))
-                                )
-                                if is_valid:
-                                    node.mesh.vertex_positions.append(Vector3(x, y, z))
-                                else:
-                                    node.mesh.vertex_positions.append(Vector3.from_null())
-                            except Exception:
-                                node.mesh.vertex_positions.append(Vector3.from_null())
-                        else:
-                            node.mesh.vertex_positions.append(Vector3.from_null())
-                    # If we successfully read vertices from MDX, mark as read
-                    if len(node.mesh.vertex_positions) == vcount:
-                        # Set the VERTEX flag to indicate vertices are in MDX
-                        bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.VERTEX
-                        bin_node.trimesh.mdx_vertex_offset = vertex_offset
-                # If MDX reading failed, try MDL as last resort
-                if not node.mesh.vertex_positions and bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
-                    vertices_bytes = vcount * 12
-                    if bin_node.trimesh.vertices_offset + vertices_bytes <= self._reader.size():
-                        self._reader.seek(bin_node.trimesh.vertices_offset)
-                        node.mesh.vertex_positions = [self._reader.read_vector3() for _ in range(vcount)]
-                # Final fallback: create null vertices if we still couldn't read any
-                if not node.mesh.vertex_positions and vcount > 0:
-                    node.mesh.vertex_positions = [Vector3.from_null() for _ in range(vcount)]
-
-            if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.NORMAL) and self._reader_ext:
+            if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.NORMAL) and self._reader_ext is not None and self._reader_ext.size() > 0:
                 node.mesh.vertex_normals = []
-            if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX0) and self._reader_ext:
+            if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX0) and self._reader_ext is not None and self._reader_ext.size() > 0:
                 node.mesh.vertex_uv1 = []
                 node.mesh.vertex_uvs = node.mesh.vertex_uv1
-            if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX1) and self._reader_ext:
+            if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX1) and self._reader_ext is not None and self._reader_ext.size() > 0:
                 node.mesh.vertex_uv2 = []
 
             mdx_offset: int = bin_node.trimesh.mdx_data_offset
             mdx_block_size: int = bin_node.trimesh.mdx_data_size
             for i in range(vcount):
-                if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.NORMAL) and self._reader_ext:
+                if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.NORMAL) and self._reader_ext is not None and self._reader_ext.size() > 0:
                     if node.mesh.vertex_normals is None:
                         node.mesh.vertex_normals = []
                     normal_pos = mdx_offset + i * mdx_block_size + bin_node.trimesh.mdx_normal_offset
@@ -3102,7 +2572,7 @@ class MDLBinaryReader:
                         # Bounds check failed - use null normal
                         node.mesh.vertex_normals.append(Vector3.from_null())
 
-                if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX0 and self._reader_ext:
+                if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX0 and self._reader_ext is not None and self._reader_ext.size() > 0:
                     assert node.mesh.vertex_uv1 is not None
                     uv1_pos = mdx_offset + i * mdx_block_size + bin_node.trimesh.mdx_texture1_offset
                     if uv1_pos + 8 <= self._reader_ext.size():  # Need 8 bytes for Vector2
@@ -3116,7 +2586,7 @@ class MDLBinaryReader:
                         # Bounds check failed - use null UV
                         node.mesh.vertex_uv1.append(Vector2(0.0, 0.0))
 
-                if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX1 and self._reader_ext:
+                if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX1 and self._reader_ext is not None and self._reader_ext.size() > 0:
                     assert node.mesh.vertex_uv2 is not None
                     uv2_pos = mdx_offset + i * mdx_block_size + bin_node.trimesh.mdx_texture2_offset
                     if uv2_pos + 8 <= self._reader_ext.size():  # Need 8 bytes for Vector2
@@ -3158,10 +2628,7 @@ class MDLBinaryReader:
                 node.mesh.indices_counts = bin_node.trimesh.indices_counts.copy()
             if bin_node.trimesh.indices_offsets:
                 node.mesh.indices_offsets = bin_node.trimesh.indices_offsets.copy()
-            # Preserve original indices_offsets_count from binary header even if array is empty
-            # This is needed for MDLOps compatibility when the count > 0 but array couldn't be read
-            if not hasattr(node.mesh, "indices_offsets_count") or getattr(node.mesh, "indices_offsets_count", None) is None:
-                setattr(node.mesh, "indices_offsets_count", bin_node.trimesh.indices_offsets_count)
+            node.mesh.indices_offsets_count = bin_node.trimesh.indices_offsets_count
 
             # Deterministically derive binary-only face payload from mesh geometry so
             # binary and ASCII parse paths converge (no ASCII syntax extensions).
@@ -3203,7 +2670,7 @@ class MDLBinaryReader:
             node.skin.tbones = bin_node.skin.tbones
             node.skin.qbones = bin_node.skin.qbones
 
-            if self._reader_ext:
+            if self._reader_ext is not None and self._reader_ext.size() > 0:
                 assert bin_node.trimesh is not None
                 for i in range(bin_node.trimesh.vertex_count):
                     vertex_bone = MDLBoneVertex()
@@ -3450,7 +2917,7 @@ class MDLBinaryWriter:
                     self.game = Game.K2
                     break
                 # If the node has K2-specific fields that were read (even at defaults), it's K2
-                # Check if hasattr indicates these fields exist (they always do now, but we can check if they were read)
+                # Check if these fields differ from defaults, or if hologram_donotdraw is set (K2-only)
                 # For now, we'll use a heuristic: if the model has any mesh nodes and we're writing,
                 # check if the original binary had K2 function pointers by checking if dirt fields were read
                 # This is imperfect, but we don't have access to the original binary's function pointers
@@ -3532,11 +2999,15 @@ class MDLBinaryWriter:
                 bin_node.dangly.constraints_count = len(mdl_node.dangly.constraints)
                 bin_node.dangly.constraints_count2 = len(mdl_node.dangly.constraints)
                 # Store constraints for writing later (store on bin_node for access during write)
-                setattr(bin_node, "_dangly_constraints", list(mdl_node.dangly.constraints))
+                bin_node._dangly_constraints = list(mdl_node.dangly.constraints)
             
             # Store AABB tree for writing later if this is an AABB node
-            if mdl_node.aabb and mdl_node.aabb.aabbs:
-                setattr(bin_node, "_aabb_nodes", list(mdl_node.aabb.aabbs))
+            # Always initialize _aabb_nodes when aabb exists, even if empty, to match AABB flag behavior
+            if mdl_node.aabb:
+                if mdl_node.aabb.aabbs:
+                    bin_node._aabb_nodes = list(mdl_node.aabb.aabbs)
+                else:
+                    bin_node._aabb_nodes = []
                 bin_node.trimesh.offset_to_aabb = 0  # Will be calculated during offset calculation
             bin_node.trimesh.radius = mdl_node.mesh.radius
             bin_node.trimesh.bounding_box_max = mdl_node.mesh.bb_max
@@ -3584,7 +3055,7 @@ class MDLBinaryWriter:
 
             # Preserve indices arrays and inverted_counters if they were read from the original binary
             # These are needed for MDLOps compatibility
-            if hasattr(mdl_node.mesh, "inverted_counters") and mdl_node.mesh.inverted_counters:
+            if mdl_node.mesh.inverted_counters:
                 bin_node.trimesh.inverted_counters = list(mdl_node.mesh.inverted_counters)
                 bin_node.trimesh.counters_count = bin_node.trimesh.counters_count2 = len(bin_node.trimesh.inverted_counters)
             else:
@@ -3593,26 +3064,15 @@ class MDLBinaryWriter:
                 bin_node.trimesh.counters_count = bin_node.trimesh.counters_count2 = 0
 
             # Preserve indices arrays if available from original binary
-            if hasattr(mdl_node.mesh, "indices_counts") and mdl_node.mesh.indices_counts:
-                bin_node.trimesh.indices_counts = list(mdl_node.mesh.indices_counts)
-            else:
-                bin_node.trimesh.indices_counts = []
-            if hasattr(mdl_node.mesh, "indices_offsets") and mdl_node.mesh.indices_offsets:
-                bin_node.trimesh.indices_offsets = list(mdl_node.mesh.indices_offsets)
-            else:
-                bin_node.trimesh.indices_offsets = []
+            bin_node.trimesh.indices_counts = list(mdl_node.mesh.indices_counts)
+            bin_node.trimesh.indices_offsets = list(mdl_node.mesh.indices_offsets)
             bin_node.trimesh.indices_counts_count = bin_node.trimesh.indices_counts_count2 = len(bin_node.trimesh.indices_counts)
             # Preserve original indices_offsets_count from binary header if available, otherwise use array length
-            if hasattr(mdl_node.mesh, "indices_offsets_count") and getattr(mdl_node.mesh, "indices_offsets_count", None) is not None:
-                original_count = getattr(mdl_node.mesh, "indices_offsets_count")
-                # Use original count if it's > 0, otherwise use array length
-                if original_count > 0:
+            original_count = int(mdl_node.mesh.indices_offsets_count)
+            if original_count > 0:
                     bin_node.trimesh.indices_offsets_count = bin_node.trimesh.indices_offsets_count2 = original_count
-                    # Ensure array matches count - if count > 0 but array is empty, create array of zeros
                     if not bin_node.trimesh.indices_offsets:
                         bin_node.trimesh.indices_offsets = [0] * original_count
-                else:
-                    bin_node.trimesh.indices_offsets_count = bin_node.trimesh.indices_offsets_count2 = len(bin_node.trimesh.indices_offsets)
             else:
                 bin_node.trimesh.indices_offsets_count = bin_node.trimesh.indices_offsets_count2 = len(bin_node.trimesh.indices_offsets)
 
@@ -3627,8 +3087,8 @@ class MDLBinaryWriter:
                 bin_face.adjacent2 = face.a2
                 bin_face.adjacent3 = face.a3
                 # Repack surface material (low 5 bits) and smoothgroup (high bits)
-                surface = getattr(face, "material", 0) & 0x1F
-                smooth = getattr(face, "smoothgroup", 0)
+                surface = face.material & 0x1F
+                smooth = face.smoothgroup
                 bin_face.material = surface | (smooth << 5)
                 bin_face.plane_coefficient = face.coefficient
                 bin_face.normal = face.normal
@@ -3639,17 +3099,16 @@ class MDLBinaryWriter:
             skin = mdl_node.skin
 
             # Bone indices table in header is fixed-size (16 uint16).
-            bones = list(getattr(skin, "bone_indices", []))
+            bones = list(skin.bone_indices)
             bones16: list[int] = [(int(b) if i < len(bones) else -1) for i, b in enumerate(bones[:16] + [-1] * 16)]
             bin_node.skin.bones = tuple(int(b) for b in bones16[:16])
 
             # Bonemap + bind pose transforms.
-            bonemap = list(getattr(skin, "bonemap", []))
-            bin_node.skin.bonemap = [int(x) for x in bonemap]
+            bin_node.skin.bonemap = [int(x) for x in skin.bonemap]
             bin_node.skin.bonemap_count = len(bin_node.skin.bonemap)
 
-            qbones = list(getattr(skin, "qbones", []))
-            tbones = list(getattr(skin, "tbones", []))
+            qbones = list(skin.qbones)
+            tbones = list(skin.tbones)
             if not qbones and self._mdl_nodes:
                 qbones = [Vector4.from_null() for _ in self._mdl_nodes]
             if not tbones and self._mdl_nodes:
@@ -3780,7 +3239,7 @@ class MDLBinaryWriter:
                 bin_controller.column_count = 2  # Compressed quaternions use 2 columns
             # Encode bezier flag in column_count bit 4 (16) as per mdlops.
             # For bezier controllers, each logical column stores 3 floats per row.
-            elif getattr(mdl_controller, "is_bezier", False):
+            elif mdl_controller.is_bezier:
                 logical_cols = data_floats_per_row // 3 if data_floats_per_row >= 3 else data_floats_per_row
                 bin_controller.column_count = int(logical_cols) | 16
             else:
@@ -4177,8 +3636,13 @@ class MDLBinaryWriter:
         Reference: vendor/MDLOps/MDLOpsM.pm:7279-7312 (AABB tree writing)
         """
         assert bin_node.trimesh is not None
-        aabb_nodes = getattr(bin_node, "_aabb_nodes", None)
-        if not aabb_nodes or len(aabb_nodes) == 0:
+        # _aabb_nodes is always initialized when AABB flag is set (empty list if no aabbs)
+        # Type check ensures we handle the None case (should not occur after initialization)
+        if bin_node._aabb_nodes is None:
+            bin_node.trimesh.offset_to_aabb = 0
+            return
+        aabb_nodes: list[MDLAABBNode] = bin_node._aabb_nodes
+        if len(aabb_nodes) == 0:
             bin_node.trimesh.offset_to_aabb = 0
             return
 
@@ -4187,9 +3651,8 @@ class MDLBinaryWriter:
         after_vertices = node_offset + bin_node.vertices_offset(self.game)
         if bin_node.trimesh:
             after_vertices += bin_node.trimesh.vertices_size()
-        if bin_node.dangly:
-            # Dangly constraints come after vertices
-            after_vertices += getattr(bin_node, "_dangly_extra_size", lambda: 0)()
+        if bin_node.dangly and bin_node._dangly_constraints is not None:
+            after_vertices += len(bin_node._dangly_constraints) * 4
         if bin_node.skin:
             # Skin data comes after vertices/dangly
             # Calculate skin extra size: bonemap + qbones + tbones + unknown0
@@ -4208,7 +3671,7 @@ class MDLBinaryWriter:
         aabb_tree_size = len(aabb_nodes) * 40
         bin_node.trimesh.offset_to_aabb = after_vertices
         # Store size for writing
-        setattr(bin_node, "_aabb_tree_size", aabb_tree_size)
+        bin_node._aabb_tree_size = aabb_tree_size
 
     def _calc_skin_offsets(
         self,
@@ -4300,7 +3763,7 @@ class MDLBinaryWriter:
         # The all_nodes() traversal returns nodes in a different order than they appear in the binary,
         # so we need to sort by node_id before writing MDX data.
         # Create a list of (bin_node, mdl_node, original_index) tuples sorted by node_id
-        node_pairs = [(self._bin_nodes[i], self._mdl_nodes[i], i, getattr(self._mdl_nodes[i], "node_id", i)) for i in range(len(self._bin_nodes))]
+        node_pairs = [(self._bin_nodes[i], self._mdl_nodes[i], i, self._mdl_nodes[i].node_id) for i in range(len(self._bin_nodes))]
         node_pairs_sorted = sorted(node_pairs, key=lambda x: x[3])  # Sort by node_id
 
         # Write MDX data in node_id order
@@ -4325,7 +3788,23 @@ class MDLBinaryWriter:
         node_count_actual = len(self._mdl_nodes)  # TODO: need to include supermodel in count
         self._file_header.geometry.node_count = min(node_count_actual, 0x7FFFFFFF)
         self._file_header.geometry.geometry_type = 2
-        self._file_header.offset_to_super_root = self._file_header.geometry.root_node_offset
+
+        # Handle headlink: for head models, offset_to_super_root points to neck_g node
+        # Reference: vendor/MDLOps/MDLOpsM.pm:6285-6296 (headfix/headlink logic)
+        if self._mdl.headlink:
+            neck_g_node_offset: int | None = None
+            for i, mdl_node in enumerate(self._mdl_nodes):
+                if mdl_node.name == "neck_g":
+                    neck_g_node_offset = self._node_offsets[i]
+                    break
+            if neck_g_node_offset is not None:
+                self._file_header.offset_to_super_root = neck_g_node_offset
+            else:
+                # neck_g not found, fall back to root_node_offset
+                self._file_header.offset_to_super_root = self._file_header.geometry.root_node_offset
+        else:
+            self._file_header.offset_to_super_root = self._file_header.geometry.root_node_offset
+
         self._file_header.mdx_size = self._writer_ext.size()
         self._file_header.mdx_offset = 0
 
@@ -4370,28 +3849,6 @@ class MDLBinaryWriter:
             bin_node.write(self._writer, self.game)
             if _DEBUG_MDL and bin_node.trimesh and bin_node.trimesh.texture1:
                 print(f"DEBUG _write_all: After writing node {i}, texture1_offset={bin_node.trimesh.mdx_texture1_offset}")
-
-        # Handle headlink: if set, the names header root node offset should point to 'neck_g' instead of actual root
-        # Reference: vendor/MDLOps/MDLOpsM.pm:6285-6296 (headfix/headlink logic)
-        # The names header is at offset 180 in the model header, and the 4th int32 (index 3, offset 12) is the root node offset
-        if self._mdl.headlink:
-            # Find the 'neck_g' node
-            neck_g_node_offset: int | None = None
-            for i, mdl_node in enumerate(self._mdl_nodes):
-                if mdl_node.name == "neck_g":
-                    neck_g_node_offset = self._node_offsets[i]
-                    break
-            
-            if neck_g_node_offset is not None:
-                # Update the names header root node offset to point to neck_g
-                # Names header is at offset 180 in the model header, 4th int32 (index 3) is at offset 12 from names header start
-                # Total offset: 180 + 12 = 192 from model header start
-                names_header_root_offset = 180 + 12
-                saved_pos = self._writer.position()
-                self._writer.seek(names_header_root_offset)
-                # Apply offset-12 semantics: MDLOps stores (absolute_offset - 12)
-                self._writer.write_uint32((neck_g_node_offset - 12) if neck_g_node_offset > 0 else 0)
-                self._writer.seek(saved_pos)
 
         # Write to MDL
         mdl_writer = BinaryWriter.to_auto(self._target)
