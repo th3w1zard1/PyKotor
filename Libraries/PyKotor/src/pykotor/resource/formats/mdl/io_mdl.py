@@ -2752,13 +2752,15 @@ class MDLBinaryReader:
                                 node.mesh.vertex_positions.append(Vector3.from_null())
             elif bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
                 # Read from MDX
-                # Check that mdx_data_offset is valid, mdx_data_size > 0, mdx_vertex_offset is valid (not 0xFFFFFFFF), and vcount > 0
+                # Check that mdx_data_offset is valid, mdx_data_size > 0, and vcount > 0
+                # If mdx_vertex_offset is 0xFFFFFFFF, treat it as 0 (vertices are first in MDX data block)
                 vertices_read_from_mdx = False
                 if (bin_node.trimesh.mdx_data_offset not in (0, 0xFFFFFFFF) 
                     and bin_node.trimesh.mdx_data_size > 0 
-                    and bin_node.trimesh.mdx_vertex_offset not in (0xFFFFFFFF,)
                     and vcount > 0):
-                    vertex_offset = bin_node.trimesh.mdx_vertex_offset
+                    # If mdx_vertex_offset is 0xFFFFFFFF, use 0 (vertices are first in MDX data block)
+                    # Otherwise, use the actual offset
+                    vertex_offset = 0 if bin_node.trimesh.mdx_vertex_offset == 0xFFFFFFFF else bin_node.trimesh.mdx_vertex_offset
                     for i in range(vcount):
                         seek_pos = bin_node.trimesh.mdx_data_offset + i * bin_node.trimesh.mdx_data_size + vertex_offset
                         if seek_pos + 12 <= self._reader_ext.size():  # Need 12 bytes for Vector3
