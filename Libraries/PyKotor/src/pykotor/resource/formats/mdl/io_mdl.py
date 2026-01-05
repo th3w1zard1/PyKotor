@@ -3143,13 +3143,24 @@ class MDLBinaryWriter:
         # Therefore, we must keep this array in node_id order (no de-dupe).
         self._names = [n.name for n in self._mdl_nodes]
 
-        # Determine game version: if any node has dirt fields set, it's K2
-        # Otherwise, default to K1 (can be overridden by checking function pointers if available)
+        # Determine game version: K2 models always have dirt fields in the binary format
+        # If any node has dirt fields that were read (not just defaults), it's K2
+        # Check if dirt fields exist and differ from defaults, or if hologram_donotdraw is set
         self.game = Game.K1
         for node in self._mdl_nodes:
-            if node.mesh and (node.mesh.dirt_enabled or node.mesh.dirt_texture != 1 or node.mesh.dirt_worldspace != 1 or node.mesh.hologram_donotdraw):
-                self.game = Game.K2
-                break
+            if node.mesh:
+                # Check if dirt fields are present (K2 always has them, even if all zeros)
+                # The presence of these fields (even with default values) indicates K2
+                # But we need to check if they were actually read from binary, not just initialized
+                # Since all MDLMesh instances have these fields now, we check if they differ from defaults
+                # or if hologram_donotdraw is set (which is K2-only)
+                if node.mesh.dirt_enabled or node.mesh.dirt_texture != 1 or node.mesh.dirt_worldspace != 1 or node.mesh.hologram_donotdraw:
+                    self.game = Game.K2
+                    break
+                # Also check if hide_in_hologram is set (legacy alias for hologram_donotdraw)
+                if node.mesh.hide_in_hologram:
+                    self.game = Game.K2
+                    break
 
         self._anim_offsets[:] = [0 for _ in self._bin_anims]
         self._node_offsets[:] = [0 for _ in self._bin_nodes]
