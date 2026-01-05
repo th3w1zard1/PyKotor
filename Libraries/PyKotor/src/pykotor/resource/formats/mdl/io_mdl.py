@@ -3281,7 +3281,21 @@ class MDLBinaryWriter:
                 bin_node.trimesh.hologram_donotdraw = mdl_node.mesh.hologram_donotdraw or mdl_node.mesh.hide_in_hologram
             bin_node.trimesh.saber_unknowns = bytes(mdl_node.mesh.saber_unknowns)
 
-            bin_node.trimesh.vertex_count = len(mdl_node.mesh.vertex_positions)
+            # Set vertex_count from vertex_positions length, but ensure it matches the actual vertex data
+            # If vertex_positions is empty, we need to use a fallback (e.g., from faces or texture_count)
+            vertex_positions_len = len(mdl_node.mesh.vertex_positions) if mdl_node.mesh.vertex_positions else 0
+            # Use vertex_positions length if available, otherwise try to infer from faces or use texture_count as fallback
+            if vertex_positions_len > 0:
+                bin_node.trimesh.vertex_count = vertex_positions_len
+            elif mdl_node.mesh.faces:
+                # Infer from faces if vertex_positions is empty
+                max_vertex_index = max(
+                    max(face.v1, face.v2, face.v3) for face in mdl_node.mesh.faces
+                )
+                bin_node.trimesh.vertex_count = max_vertex_index + 1
+            else:
+                # Last resort: use texture_count as a hint (often matches vertex_count)
+                bin_node.trimesh.vertex_count = len(mdl_node.mesh.vertex_uv1) if mdl_node.mesh.vertex_uv1 else 0
             bin_node.trimesh.vertices = mdl_node.mesh.vertex_positions
 
             # Preserve indices arrays and inverted_counters if they were read from the original binary
