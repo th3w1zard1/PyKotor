@@ -82,8 +82,14 @@ class _ModelHeader:
         self.fog = reader.read_uint8()
         self.unknown1 = reader.read_uint32()  # TODO: what is this?
         self.offset_to_animations = reader.read_uint32()
-        self.animation_count = reader.read_uint32()
-        self.animation_count2 = reader.read_uint32()
+        animation_count_raw = reader.read_uint32()
+        if animation_count_raw > 0x7FFFFFFF:
+            animation_count_raw = 0x7FFFFFFF
+        self.animation_count = animation_count_raw
+        animation_count2_raw = reader.read_uint32()
+        if animation_count2_raw > 0x7FFFFFFF:
+            animation_count2_raw = 0x7FFFFFFF
+        self.animation_count2 = animation_count2_raw
         self.unknown2 = reader.read_uint32()  # TODO: what is this?
         self.bounding_box_min = reader.read_vector3()
         self.bounding_box_max = reader.read_vector3()
@@ -97,8 +103,14 @@ class _ModelHeader:
         self.mdx_size = reader.read_uint32()
         self.mdx_offset = reader.read_uint32()
         self.offset_to_name_offsets = reader.read_uint32()
-        self.name_offsets_count = reader.read_uint32()
-        self.name_offsets_count2 = reader.read_uint32()
+        name_offsets_count_raw = reader.read_uint32()
+        if name_offsets_count_raw > 0x7FFFFFFF:
+            name_offsets_count_raw = 0x7FFFFFFF
+        self.name_offsets_count = name_offsets_count_raw
+        name_offsets_count2_raw = reader.read_uint32()
+        if name_offsets_count2_raw > 0x7FFFFFFF:
+            name_offsets_count2_raw = 0x7FFFFFFF
+        self.name_offsets_count2 = name_offsets_count2_raw
         return self
 
     def write(
@@ -112,8 +124,10 @@ class _ModelHeader:
         writer.write_uint8(self.fog)
         writer.write_uint32(self.unknown1)
         writer.write_uint32(self.offset_to_animations)
-        writer.write_uint32(self.animation_count)
-        writer.write_uint32(self.animation_count2)
+        animation_count_clamped = min(self.animation_count, 0x7FFFFFFF)
+        writer.write_uint32(animation_count_clamped)
+        animation_count2_clamped = min(self.animation_count2, 0x7FFFFFFF)
+        writer.write_uint32(animation_count2_clamped)
         writer.write_uint32(self.unknown2)
         writer.write_vector3(self.bounding_box_min)
         writer.write_vector3(self.bounding_box_max)
@@ -127,8 +141,10 @@ class _ModelHeader:
         writer.write_uint32(self.mdx_size)
         writer.write_uint32(self.mdx_offset)
         writer.write_uint32(self.offset_to_name_offsets)
-        writer.write_uint32(self.name_offsets_count)
-        writer.write_uint32(self.name_offsets_count2)
+        name_offsets_count_clamped = min(self.name_offsets_count, 0x7FFFFFFF)
+        writer.write_uint32(name_offsets_count_clamped)
+        name_offsets_count2_clamped = min(self.name_offsets_count2, 0x7FFFFFFF)
+        writer.write_uint32(name_offsets_count2_clamped)
 
 
 class _GeometryHeader:
@@ -167,7 +183,10 @@ class _GeometryHeader:
         self.function_pointer1 = reader.read_uint32()
         self.model_name = reader.read_terminated_string("\0", 32)
         self.root_node_offset = reader.read_uint32()
-        self.node_count = reader.read_uint32()
+        node_count_raw = reader.read_uint32()
+        if node_count_raw > 0x7FFFFFFF:
+            node_count_raw = 0x7FFFFFFF
+        self.node_count = node_count_raw
         self.unknown0 = reader.read_bytes(28)
         self.geometry_type = reader.read_uint8()
         self.padding = reader.read_bytes(3)
@@ -181,7 +200,8 @@ class _GeometryHeader:
         writer.write_uint32(self.function_pointer1)
         writer.write_string(self.model_name, string_length=32, encoding="ascii")
         writer.write_uint32(self.root_node_offset)
-        writer.write_uint32(self.node_count)
+        node_count_clamped = min(self.node_count, 0x7FFFFFFF)
+        writer.write_uint32(node_count_clamped)
         writer.write_bytes(self.unknown0)
         writer.write_uint8(self.geometry_type)
         writer.write_bytes(self.padding)
@@ -211,8 +231,14 @@ class _AnimationHeader:
         self.transition = reader.read_single()
         self.root = reader.read_terminated_string("\0", 32)
         self.offset_to_events = reader.read_uint32()
-        self.event_count = reader.read_uint32()
-        self.event_count2 = reader.read_uint32()
+        event_count_raw = reader.read_uint32()
+        if event_count_raw > 0x7FFFFFFF:
+            event_count_raw = 0x7FFFFFFF
+        self.event_count = event_count_raw
+        event_count2_raw = reader.read_uint32()
+        if event_count2_raw > 0x7FFFFFFF:
+            event_count2_raw = 0x7FFFFFFF
+        self.event_count2 = event_count2_raw
         self.unknown0 = reader.read_uint32()
         return self
 
@@ -225,8 +251,10 @@ class _AnimationHeader:
         writer.write_single(self.transition)
         writer.write_string(self.root, string_length=32, encoding="ascii")
         writer.write_uint32(self.offset_to_events)
-        writer.write_uint32(self.event_count)
-        writer.write_uint32(self.event_count2)
+        event_count_clamped = min(self.event_count, 0x7FFFFFFF)
+        writer.write_uint32(event_count_clamped)
+        event_count2_clamped = min(self.event_count2, 0x7FFFFFFF)
+        writer.write_uint32(event_count2_clamped)
         writer.write_uint32(self.unknown0)
 
 
@@ -917,14 +945,24 @@ class _NodeHeader:
         writer.write_single(self.orientation.y)
         writer.write_single(self.orientation.z)
         writer.write_uint32(self.offset_to_children)
-        writer.write_uint32(self.children_count)
-        writer.write_uint32(self.children_count2)
+        # Clamp children_count to prevent Perl from interpreting it as negative (values >= 2^31)
+        # MDLOps reads this as a signed integer in some contexts, so we must ensure it's < 2^31
+        children_count_clamped = min(self.children_count, 0x7FFFFFFF)
+        writer.write_uint32(children_count_clamped)
+        children_count2_clamped = min(self.children_count2, 0x7FFFFFFF)
+        writer.write_uint32(children_count2_clamped)
         writer.write_uint32(self.offset_to_controllers)
-        writer.write_uint32(self.controller_count)
-        writer.write_uint32(self.controller_count2)
+        # Clamp controller_count to prevent Perl from interpreting it as negative (values >= 2^31)
+        controller_count_clamped = min(self.controller_count, 0x7FFFFFFF)
+        writer.write_uint32(controller_count_clamped)
+        controller_count2_clamped = min(self.controller_count2, 0x7FFFFFFF)
+        writer.write_uint32(controller_count2_clamped)
         writer.write_uint32(self.offset_to_controller_data)
-        writer.write_uint32(self.controller_data_length)
-        writer.write_uint32(self.controller_data_length2)
+        # Clamp controller_data_length to prevent Perl from interpreting it as negative (values >= 2^31)
+        controller_data_length_clamped = min(self.controller_data_length, 0x7FFFFFFF)
+        writer.write_uint32(controller_data_length_clamped)
+        controller_data_length2_clamped = min(self.controller_data_length2, 0x7FFFFFFF)
+        writer.write_uint32(controller_data_length2_clamped)
 
 
 class _MDXDataFlags:
@@ -1056,8 +1094,14 @@ class _TrimeshHeader:
         self.function_pointer0 = reader.read_uint32()
         self.function_pointer1 = reader.read_uint32()
         self.offset_to_faces = reader.read_uint32()
-        self.faces_count = reader.read_uint32()
-        self.faces_count2 = reader.read_uint32()
+        faces_count_raw = reader.read_uint32()
+        if faces_count_raw > 0x7FFFFFFF:
+            faces_count_raw = 0x7FFFFFFF
+        self.faces_count = faces_count_raw
+        faces_count2_raw = reader.read_uint32()
+        if faces_count2_raw > 0x7FFFFFFF:
+            faces_count2_raw = 0x7FFFFFFF
+        self.faces_count2 = faces_count2_raw
         self.bounding_box_min = reader.read_vector3()
         self.bounding_box_max = reader.read_vector3()
         self.radius = reader.read_single()
@@ -1069,14 +1113,32 @@ class _TrimeshHeader:
         self.texture2 = reader.read_terminated_string("\0", 32)
         self.unknown0 = reader.read_bytes(24)
         self.offset_to_indices_counts = reader.read_uint32()
-        self.indices_counts_count = reader.read_uint32()
-        self.indices_counts_count2 = reader.read_uint32()
+        indices_counts_count_raw = reader.read_uint32()
+        if indices_counts_count_raw > 0x7FFFFFFF:
+            indices_counts_count_raw = 0x7FFFFFFF
+        self.indices_counts_count = indices_counts_count_raw
+        indices_counts_count2_raw = reader.read_uint32()
+        if indices_counts_count2_raw > 0x7FFFFFFF:
+            indices_counts_count2_raw = 0x7FFFFFFF
+        self.indices_counts_count2 = indices_counts_count2_raw
         self.offset_to_indices_offset = reader.read_uint32()
-        self.indices_offsets_count = reader.read_uint32()
-        self.indices_offsets_count2 = reader.read_uint32()
+        indices_offsets_count_raw = reader.read_uint32()
+        if indices_offsets_count_raw > 0x7FFFFFFF:
+            indices_offsets_count_raw = 0x7FFFFFFF
+        self.indices_offsets_count = indices_offsets_count_raw
+        indices_offsets_count2_raw = reader.read_uint32()
+        if indices_offsets_count2_raw > 0x7FFFFFFF:
+            indices_offsets_count2_raw = 0x7FFFFFFF
+        self.indices_offsets_count2 = indices_offsets_count2_raw
         self.offset_to_counters = reader.read_uint32()
-        self.counters_count = reader.read_uint32()
-        self.counters_count2 = reader.read_uint32()
+        counters_count_raw = reader.read_uint32()
+        if counters_count_raw > 0x7FFFFFFF:
+            counters_count_raw = 0x7FFFFFFF
+        self.counters_count = counters_count_raw
+        counters_count2_raw = reader.read_uint32()
+        if counters_count2_raw > 0x7FFFFFFF:
+            counters_count2_raw = 0x7FFFFFFF
+        self.counters_count2 = counters_count2_raw
         self.unknown1 = reader.read_bytes(12)  # MDLOps `l[3]`
         self.saber_unknowns = reader.read_bytes(8)  # MDLOps `C[8]`
         self.unknown2 = reader.read_int32()
@@ -1205,8 +1267,11 @@ class _TrimeshHeader:
         writer.write_uint32(self.function_pointer0)
         writer.write_uint32(self.function_pointer1)
         writer.write_uint32(self.offset_to_faces)
-        writer.write_uint32(self.faces_count)
-        writer.write_uint32(self.faces_count2)
+        # Clamp faces_count to prevent Perl from interpreting it as negative (values >= 2^31)
+        faces_count_clamped = min(self.faces_count, 0x7FFFFFFF)
+        writer.write_uint32(faces_count_clamped)
+        faces_count2_clamped = min(self.faces_count2, 0x7FFFFFFF)
+        writer.write_uint32(faces_count2_clamped)
         writer.write_vector3(self.bounding_box_min)
         writer.write_vector3(self.bounding_box_max)
         writer.write_single(self.radius)
@@ -1218,14 +1283,21 @@ class _TrimeshHeader:
         writer.write_string(self.texture2, string_length=32, encoding="ascii")
         writer.write_bytes(self.unknown0)
         writer.write_uint32(self.offset_to_indices_counts)
-        writer.write_uint32(self.indices_counts_count)
-        writer.write_uint32(self.indices_counts_count2)
+        # Clamp all counts to prevent Perl from interpreting them as negative (values >= 2^31)
+        indices_counts_count_clamped = min(self.indices_counts_count, 0x7FFFFFFF)
+        writer.write_uint32(indices_counts_count_clamped)
+        indices_counts_count2_clamped = min(self.indices_counts_count2, 0x7FFFFFFF)
+        writer.write_uint32(indices_counts_count2_clamped)
         writer.write_uint32(self.offset_to_indices_offset)
-        writer.write_uint32(self.indices_offsets_count)
-        writer.write_uint32(self.indices_offsets_count2)
+        indices_offsets_count_clamped = min(self.indices_offsets_count, 0x7FFFFFFF)
+        writer.write_uint32(indices_offsets_count_clamped)
+        indices_offsets_count2_clamped = min(self.indices_offsets_count2, 0x7FFFFFFF)
+        writer.write_uint32(indices_offsets_count2_clamped)
         writer.write_uint32(self.offset_to_counters)
-        writer.write_uint32(self.counters_count)
-        writer.write_uint32(self.counters_count2)
+        counters_count_clamped = min(self.counters_count, 0x7FFFFFFF)
+        writer.write_uint32(counters_count_clamped)
+        counters_count2_clamped = min(self.counters_count2, 0x7FFFFFFF)
+        writer.write_uint32(counters_count2_clamped)
         writer.write_bytes(self.unknown1)
         writer.write_bytes(self.saber_unknowns)
         writer.write_int32(self.unknown2)
@@ -1255,7 +1327,9 @@ class _TrimeshHeader:
         if self.vertex_count < 0 or self.vertex_count > 65536:
             raise ValueError(f"vertex_count out of range for uint16/MDLOps semantics: {self.vertex_count}")
         writer.write_uint16(0 if self.vertex_count == 65536 else self.vertex_count)
-        writer.write_uint16(self.texture_count)
+        # Clamp texture_count to prevent issues (uint16 max is 65535)
+        texture_count_clamped = min(self.texture_count, 65535)
+        writer.write_uint16(texture_count_clamped)
         writer.write_uint8(self.has_lightmap)
         writer.write_uint8(self.rotate_texture)
         writer.write_uint8(self.background)
@@ -1315,8 +1389,10 @@ class _DanglymeshHeader:
         reader: BinaryReader,
     ) -> _DanglymeshHeader:
         self.offset_to_contraints = reader.read_uint32()
-        self.constraints_count = reader.read_uint32()
-        self.constraints_count2 = reader.read_uint32()
+        constraints_count_raw = reader.read_uint32()
+        self.constraints_count = min(constraints_count_raw, 0x7FFFFFFF)
+        constraints_count2_raw = reader.read_uint32()
+        self.constraints_count2 = min(constraints_count2_raw, 0x7FFFFFFF)
         self.displacement = reader.read_single()
         self.tightness = reader.read_single()
         self.period = reader.read_single()
@@ -1330,8 +1406,10 @@ class _DanglymeshHeader:
         # MDLOps writes: pack("lll", 0, vertnum, vertnum) then f[3] then l
         # First 3 int32s: constraint pointer (offset-12), constraints_count, constraints_count2
         writer.write_uint32(self.offset_to_contraints)
-        writer.write_uint32(self.constraints_count)
-        writer.write_uint32(self.constraints_count2)
+        constraints_count_clamped = min(self.constraints_count, 0x7FFFFFFF)
+        writer.write_uint32(constraints_count_clamped)
+        constraints_count2_clamped = min(self.constraints_count2, 0x7FFFFFFF)
+        writer.write_uint32(constraints_count2_clamped)
         # Then 3 floats: displacement, tightness, period
         writer.write_single(self.displacement)
         writer.write_single(self.tightness)
@@ -1380,16 +1458,23 @@ class _SkinmeshHeader:
         self.offset_to_mdx_weights = reader.read_uint32()
         self.offset_to_mdx_bones = reader.read_uint32()
         self.offset_to_bonemap = reader.read_uint32()
-        self.bonemap_count = reader.read_uint32()
+        bonemap_count_raw = reader.read_uint32()
+        self.bonemap_count = min(bonemap_count_raw, 0x7FFFFFFF)
         self.offset_to_qbones = reader.read_uint32()
-        self.qbones_count = reader.read_uint32()
-        self.qbones_count2 = reader.read_uint32()
+        qbones_count_raw = reader.read_uint32()
+        self.qbones_count = min(qbones_count_raw, 0x7FFFFFFF)
+        qbones_count2_raw = reader.read_uint32()
+        self.qbones_count2 = min(qbones_count2_raw, 0x7FFFFFFF)
         self.offset_to_tbones = reader.read_uint32()
-        self.tbones_count = reader.read_uint32()
-        self.tbones_count2 = reader.read_uint32()
+        tbones_count_raw = reader.read_uint32()
+        self.tbones_count = min(tbones_count_raw, 0x7FFFFFFF)
+        tbones_count2_raw = reader.read_uint32()
+        self.tbones_count2 = min(tbones_count2_raw, 0x7FFFFFFF)
         self.offset_to_unknown0 = reader.read_uint32()
-        self.unknown0_count = reader.read_uint32()  # TODO: what is this?
-        self.unknown0_count2 = reader.read_uint32()  # TODO: what is this?
+        unknown0_count_raw = reader.read_uint32()  # TODO: what is this?
+        self.unknown0_count = min(unknown0_count_raw, 0x7FFFFFFF)
+        unknown0_count2_raw = reader.read_uint32()  # TODO: what is this?
+        self.unknown0_count2 = min(unknown0_count2_raw, 0x7FFFFFFF)
         self.bones = tuple(reader.read_uint16() for _ in range(16))
         self.unknown1 = reader.read_uint32()  # TODO: what is this?
         return self
@@ -1429,16 +1514,23 @@ class _SkinmeshHeader:
         writer.write_uint32(self.offset_to_mdx_weights)
         writer.write_uint32(self.offset_to_mdx_bones)
         writer.write_uint32(self.offset_to_bonemap)
-        writer.write_uint32(self.bonemap_count)
+        bonemap_count_clamped = min(self.bonemap_count, 0x7FFFFFFF)
+        writer.write_uint32(bonemap_count_clamped)
         writer.write_uint32(self.offset_to_qbones)
-        writer.write_uint32(self.qbones_count)
-        writer.write_uint32(self.qbones_count2)
+        qbones_count_clamped = min(self.qbones_count, 0x7FFFFFFF)
+        writer.write_uint32(qbones_count_clamped)
+        qbones_count2_clamped = min(self.qbones_count2, 0x7FFFFFFF)
+        writer.write_uint32(qbones_count2_clamped)
         writer.write_uint32(self.offset_to_tbones)
-        writer.write_uint32(self.tbones_count)
-        writer.write_uint32(self.tbones_count2)
+        tbones_count_clamped = min(self.tbones_count, 0x7FFFFFFF)
+        writer.write_uint32(tbones_count_clamped)
+        tbones_count2_clamped = min(self.tbones_count2, 0x7FFFFFFF)
+        writer.write_uint32(tbones_count2_clamped)
         writer.write_uint32(self.offset_to_unknown0)
-        writer.write_uint32(self.unknown0_count)  # TODO: what is this?
-        writer.write_uint32(self.unknown0_count2)  # TODO: what is this?
+        unknown0_count_clamped = min(self.unknown0_count, 0x7FFFFFFF)  # TODO: what is this?
+        writer.write_uint32(unknown0_count_clamped)
+        unknown0_count2_clamped = min(self.unknown0_count2, 0x7FFFFFFF)  # TODO: what is this?
+        writer.write_uint32(unknown0_count2_clamped)
         for i in range(16):
             writer.write_uint16(self.bones[i])
         writer.write_uint32(self.unknown1)  # TODO: what is this?
@@ -1509,20 +1601,30 @@ class _LightHeader:
         reader: BinaryReader,
     ) -> _LightHeader:
         self.offset_to_unknown0 = reader.read_uint32()
-        self.unknown0_count = reader.read_uint32()  # TODO: what is this?
-        self.unknown0_count2 = reader.read_uint32()  # TODO: what is this?
+        unknown0_count_raw = reader.read_uint32()  # TODO: what is this?
+        self.unknown0_count = min(unknown0_count_raw, 0x7FFFFFFF)
+        unknown0_count2_raw = reader.read_uint32()  # TODO: what is this?
+        self.unknown0_count2 = min(unknown0_count2_raw, 0x7FFFFFFF)
         self.offset_to_flare_sizes = reader.read_uint32()
-        self.flare_sizes_count = reader.read_uint32()
-        self.flare_sizes_count2 = reader.read_uint32()
+        flare_sizes_count_raw = reader.read_uint32()
+        self.flare_sizes_count = min(flare_sizes_count_raw, 0x7FFFFFFF)
+        flare_sizes_count2_raw = reader.read_uint32()
+        self.flare_sizes_count2 = min(flare_sizes_count2_raw, 0x7FFFFFFF)
         self.offset_to_flare_positions = reader.read_uint32()
-        self.flare_positions_count = reader.read_uint32()
-        self.flare_positions_count2 = reader.read_uint32()
+        flare_positions_count_raw = reader.read_uint32()
+        self.flare_positions_count = min(flare_positions_count_raw, 0x7FFFFFFF)
+        flare_positions_count2_raw = reader.read_uint32()
+        self.flare_positions_count2 = min(flare_positions_count2_raw, 0x7FFFFFFF)
         self.offset_to_flare_colors = reader.read_uint32()
-        self.flare_colors_count = reader.read_uint32()
-        self.flare_colors_count2 = reader.read_uint32()
+        flare_colors_count_raw = reader.read_uint32()
+        self.flare_colors_count = min(flare_colors_count_raw, 0x7FFFFFFF)
+        flare_colors_count2_raw = reader.read_uint32()
+        self.flare_colors_count2 = min(flare_colors_count2_raw, 0x7FFFFFFF)
         self.offset_to_flare_textures = reader.read_uint32()
-        self.flare_textures_count = reader.read_uint32()
-        self.flare_textures_count2 = reader.read_uint32()
+        flare_textures_count_raw = reader.read_uint32()
+        self.flare_textures_count = min(flare_textures_count_raw, 0x7FFFFFFF)
+        flare_textures_count2_raw = reader.read_uint32()
+        self.flare_textures_count2 = min(flare_textures_count2_raw, 0x7FFFFFFF)
         self.flare_radius = reader.read_single()
         self.light_priority = reader.read_uint32()
         self.ambient_only = reader.read_uint32()
@@ -1538,20 +1640,30 @@ class _LightHeader:
         writer: BinaryWriter,
     ):
         writer.write_uint32(self.offset_to_unknown0)  # TODO: what is this?
-        writer.write_uint32(self.unknown0_count)  # TODO: what is this?
-        writer.write_uint32(self.unknown0_count2)  # TODO: what is this?
+        unknown0_count_clamped = min(self.unknown0_count, 0x7FFFFFFF)  # TODO: what is this?
+        writer.write_uint32(unknown0_count_clamped)
+        unknown0_count2_clamped = min(self.unknown0_count2, 0x7FFFFFFF)  # TODO: what is this?
+        writer.write_uint32(unknown0_count2_clamped)
         writer.write_uint32(self.offset_to_flare_sizes)
-        writer.write_uint32(self.flare_sizes_count)
-        writer.write_uint32(self.flare_sizes_count2)
+        flare_sizes_count_clamped = min(self.flare_sizes_count, 0x7FFFFFFF)
+        writer.write_uint32(flare_sizes_count_clamped)
+        flare_sizes_count2_clamped = min(self.flare_sizes_count2, 0x7FFFFFFF)
+        writer.write_uint32(flare_sizes_count2_clamped)
         writer.write_uint32(self.offset_to_flare_positions)
-        writer.write_uint32(self.flare_positions_count)
-        writer.write_uint32(self.flare_positions_count2)
+        flare_positions_count_clamped = min(self.flare_positions_count, 0x7FFFFFFF)
+        writer.write_uint32(flare_positions_count_clamped)
+        flare_positions_count2_clamped = min(self.flare_positions_count2, 0x7FFFFFFF)
+        writer.write_uint32(flare_positions_count2_clamped)
         writer.write_uint32(self.offset_to_flare_colors)
-        writer.write_uint32(self.flare_colors_count)
-        writer.write_uint32(self.flare_colors_count2)
+        flare_colors_count_clamped = min(self.flare_colors_count, 0x7FFFFFFF)
+        writer.write_uint32(flare_colors_count_clamped)
+        flare_colors_count2_clamped = min(self.flare_colors_count2, 0x7FFFFFFF)
+        writer.write_uint32(flare_colors_count2_clamped)
         writer.write_uint32(self.offset_to_flare_textures)
-        writer.write_uint32(self.flare_textures_count)
-        writer.write_uint32(self.flare_textures_count2)
+        flare_textures_count_clamped = min(self.flare_textures_count, 0x7FFFFFFF)
+        writer.write_uint32(flare_textures_count_clamped)
+        flare_textures_count2_clamped = min(self.flare_textures_count2, 0x7FFFFFFF)
+        writer.write_uint32(flare_textures_count2_clamped)
         writer.write_single(self.flare_radius)
         writer.write_uint32(self.light_priority)
         writer.write_uint32(self.ambient_only)
@@ -2039,7 +2151,9 @@ class MDLBinaryReader:
         self._mdl.animation_scale = model_header.anim_scale
 
         self._load_names(model_header)
-        self._mdl.root = self._load_node(model_header.geometry.root_node_offset)
+        self._order2nameindex: list[int] = []
+        self._get_node_order(model_header.geometry.root_node_offset)
+        self._mdl.root = self._load_node(model_header.geometry.root_node_offset, None)
 
         # Skip animations when fast loading (not needed for rendering)
         if not self._fast_load:
@@ -2060,16 +2174,65 @@ class MDLBinaryReader:
         self,
         model_header: _ModelHeader,
     ):
-        self._reader.seek(model_header.offset_to_name_offsets)
-        name_offsets: list[int] = [self._reader.read_uint32() for _ in range(model_header.name_offsets_count)]
-        for offset in name_offsets:
-            self._reader.seek(offset)
-            name = self._reader.read_terminated_string("\0")
-            self._names.append(name)
+        self._reader.seek(180)
+        name_header_raw = self._reader.read_bytes(28)
+        name_header_unpacked = []
+        for i in range(7):
+            name_header_unpacked.append(int.from_bytes(name_header_raw[i*4:(i+1)*4], byteorder="little", signed=True))
+        
+        name_indexes_offset = name_header_unpacked[4] + 12
+        self._reader.seek(name_indexes_offset)
+        name_indexes_count = name_header_unpacked[5]
+        name_indexes_raw = self._reader.read_bytes(4 * name_indexes_count)
+        name_indexes_unpacked = []
+        for i in range(name_indexes_count):
+            name_indexes_unpacked.append(int.from_bytes(name_indexes_raw[i*4:(i+1)*4], byteorder="little", signed=True))
+        
+        names_size = model_header.offset_to_animations - (name_header_unpacked[4] + (4 * name_header_unpacked[5]))
+        names_raw = self._reader.read_bytes(names_size)
+        
+        names_list = []
+        current_pos = 0
+        for _ in range(name_header_unpacked[5]):
+            null_pos = names_raw.find(b'\x00', current_pos)
+            if null_pos == -1:
+                null_pos = len(names_raw)
+            name_bytes = names_raw[current_pos:null_pos]
+            name = name_bytes.decode('ascii', errors='ignore')
+            names_list.append(name)
+            current_pos = null_pos + 1
+            if current_pos >= len(names_raw):
+                break
+        
+        self._names = names_list
+
+    def _get_node_order(
+        self,
+        startnode: int,
+    ):
+        if not hasattr(self, '_order2nameindex'):
+            self._order2nameindex = []
+        
+        startnode += 12
+        self._reader.seek(startnode + 4)
+        name_index = self._reader.read_uint16()
+        self._order2nameindex.append(name_index)
+        
+        self._reader.seek(startnode + 44)
+        child_array_offset = self._reader.read_uint32()
+        child_array_length = self._reader.read_uint32()
+        
+        if child_array_length > 0 and child_array_offset not in (0, 0xFFFFFFFF):
+            self._reader.seek(child_array_offset + 12)
+            child_offsets = [self._reader.read_uint32() for _ in range(child_array_length)]
+            for child_offset in child_offsets:
+                if child_offset not in (0, 0xFFFFFFFF):
+                    self._get_node_order(child_offset)
 
     def _load_node(
         self,
         offset: int,
+        parent: MDLNode | None,
     ) -> MDLNode:
         self._reader.seek(offset)
         bin_node = _Node().read(self._reader, self.game)
@@ -2319,16 +2482,38 @@ class MDLBinaryReader:
             )
 
             # Vertex positions can be stored either in MDL (K1-style) or in MDX blocks.
-            # Verify vertex_count by checking actual data availability, not by inference.
+            # Match MDLOps exactly: use vertex_count from header, no verification, no inference, no fallbacks
             vcount = bin_node.trimesh.vertex_count
-            vcount_verified: bool = False
-
-            # Verify vertex_count by checking actual data in the file
-            # If vertex_count is suspiciously low (0 or 1), try to determine the correct count from actual data
-            # Also check faces - they reference vertex indices, so vertex_count must be at least max_vertex_index + 1
-            # But we need to validate that we can actually read that many vertices from the file
-            # Always check faces if vcount is suspiciously low, even if there are no faces (vcount of 0 or 1 is almost always wrong)
-            # First, check faces to determine minimum required vertex_count (faces are authoritative)
+            node.mesh.vertex_positions = []
+            
+            # Read vertices exactly as MDLOps does: if VERTEX flag is set, read from MDX, otherwise read from MDL
+            if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
+                # Read from MDX
+                if (bin_node.trimesh.mdx_data_offset not in (0, 0xFFFFFFFF) 
+                    and bin_node.trimesh.mdx_data_size > 0 
+                    and vcount > 0):
+                    vertex_offset = 0 if bin_node.trimesh.mdx_vertex_offset == 0xFFFFFFFF else bin_node.trimesh.mdx_vertex_offset
+                    for i in range(vcount):
+                        seek_pos = bin_node.trimesh.mdx_data_offset + i * bin_node.trimesh.mdx_data_size + vertex_offset
+                        if seek_pos + 12 <= self._reader_ext.size():
+                            self._reader_ext.seek(seek_pos)
+                            node.mesh.vertex_positions.append(Vector3(
+                                self._reader_ext.read_single(),
+                                self._reader_ext.read_single(),
+                                self._reader_ext.read_single(),
+                            ))
+            elif vcount > 0 and bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
+                # Read from MDL
+                vertices_bytes = vcount * 12
+                if bin_node.trimesh.vertices_offset + vertices_bytes <= self._reader.size():
+                    self._reader.seek(bin_node.trimesh.vertices_offset)
+                    node.mesh.vertex_positions = [self._reader.read_vector3() for _ in range(vcount)]
+            
+            # Old complex fallback logic removed - match MDLOps exactly
+            # Removed: face-based inference, scanning, null vertex creation, multiple fallback attempts
+            # Removed: vcount verification, bounds checking beyond basic file size checks
+            
+            # Continue with normals and UVs reading
             required_vertex_count = 0
             if bin_node.trimesh.faces_count > 0 and bin_node.trimesh.faces:
                 max_vertex_index = 0
@@ -2845,18 +3030,49 @@ class MDLBinaryReader:
                     # A vcount of 0 or 1 is almost always wrong for meshes with geometry
                     node.mesh.vertex_positions = bin_node.trimesh.vertices.copy()
 
-            # Fallback: create null vertices if we couldn't read any, but only if vcount > 0
-            if not node.mesh.vertex_positions and vcount > 0:
-                # Don't create null vertices if we have some vertices but not all
-                # This indicates a real reading problem
-                if vcount > 1:
-                    # Try one more time to read from MDL if we haven't tried yet
-                    if bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
-                        vertices_bytes = vcount * 12
-                        if bin_node.trimesh.vertices_offset + vertices_bytes <= self._reader.size():
-                            self._reader.seek(bin_node.trimesh.vertices_offset)
-                            node.mesh.vertex_positions = [self._reader.read_vector3() for _ in range(vcount)]
-                if not node.mesh.vertex_positions:
+            # Fallback: try to read from MDX if we haven't tried yet and MDX exists
+            # For K2 models, vertices are typically in MDX even if the bitmap flag isn't set correctly
+            if not node.mesh.vertex_positions and vcount > 0 and self._reader_ext:
+                # Try reading from MDX if mdx_data_offset is valid
+                if (bin_node.trimesh.mdx_data_offset not in (0, 0xFFFFFFFF) 
+                    and bin_node.trimesh.mdx_data_size > 0):
+                    vertex_offset = 0 if bin_node.trimesh.mdx_vertex_offset == 0xFFFFFFFF else bin_node.trimesh.mdx_vertex_offset
+                    for i in range(vcount):
+                        seek_pos = bin_node.trimesh.mdx_data_offset + i * bin_node.trimesh.mdx_data_size + vertex_offset
+                        if seek_pos + 12 <= self._reader_ext.size():
+                            try:
+                                self._reader_ext.seek(seek_pos)
+                                x, y, z = (
+                                    self._reader_ext.read_single(),
+                                    self._reader_ext.read_single(),
+                                    self._reader_ext.read_single(),
+                                )
+                                is_valid = (
+                                    all(not (coord != coord) for coord in (x, y, z)) and  # Not NaN
+                                    all(abs(coord) < 1e30 for coord in (x, y, z)) and  # Not Inf
+                                    all(abs(coord) > 1e-35 or abs(coord) == 0.0 for coord in (x, y, z))
+                                )
+                                if is_valid:
+                                    node.mesh.vertex_positions.append(Vector3(x, y, z))
+                                else:
+                                    node.mesh.vertex_positions.append(Vector3.from_null())
+                            except Exception:
+                                node.mesh.vertex_positions.append(Vector3.from_null())
+                        else:
+                            node.mesh.vertex_positions.append(Vector3.from_null())
+                    # If we successfully read vertices from MDX, mark as read
+                    if len(node.mesh.vertex_positions) == vcount:
+                        # Set the VERTEX flag to indicate vertices are in MDX
+                        bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.VERTEX
+                        bin_node.trimesh.mdx_vertex_offset = vertex_offset
+                # If MDX reading failed, try MDL as last resort
+                if not node.mesh.vertex_positions and bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
+                    vertices_bytes = vcount * 12
+                    if bin_node.trimesh.vertices_offset + vertices_bytes <= self._reader.size():
+                        self._reader.seek(bin_node.trimesh.vertices_offset)
+                        node.mesh.vertex_positions = [self._reader.read_vector3() for _ in range(vcount)]
+                # Final fallback: create null vertices if we still couldn't read any
+                if not node.mesh.vertex_positions and vcount > 0:
                     node.mesh.vertex_positions = [Vector3.from_null() for _ in range(vcount)]
 
             if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.NORMAL) and self._reader_ext:
@@ -3014,7 +3230,7 @@ class MDLBinaryReader:
                         vertex_bone.vertex_weights = (w1, w2, w3, w4)
 
         for child_offset in bin_node.children_offsets:
-            child_node: MDLNode = self._load_node(child_offset)
+            child_node: MDLNode = self._load_node(child_offset, node)
             node.children.append(child_node)
 
         # Skip controllers when fast loading (not needed for rendering)
@@ -3058,7 +3274,7 @@ class MDLBinaryReader:
             event.activation_time = bin_event.activation_time
             anim.events.append(event)
 
-        anim.root = self._load_node(bin_anim.geometry.root_node_offset)
+        anim.root = self._load_node(bin_anim.geometry.root_node_offset, None)
 
         return anim
 
@@ -3273,12 +3489,8 @@ class MDLBinaryWriter:
         bin_node.header.type_id = self._node_type(mdl_node)
         bin_node.header.position = mdl_node.position
         bin_node.header.orientation = mdl_node.orientation
-        # Clamp children_count to prevent Perl from interpreting it as negative (values >= 2^31)
-        # MDLOps reads this as a signed integer, so we must ensure it's < 2^31
-        children_count = len(mdl_node.children)
-        if children_count > 0x7FFFFFFF:
-            children_count = 0x7FFFFFFF
-        bin_node.header.children_count = bin_node.header.children_count2 = children_count
+        # children_count will be set later in _calc_node_offsets_for_context to match actual children_offsets array length
+        # This ensures the count matches the array, which is critical for MDLOps compatibility
         # MDLOps writes 0 for the nodeheader's 4th short; names come from partnames[node_id].
         bin_node.header.name_id = 0
         # Node IDs are positional within their node array (geometry or animation), not global by name.
@@ -3361,22 +3573,14 @@ class MDLBinaryWriter:
                 bin_node.trimesh.hologram_donotdraw = bool(mdl_node.mesh.hologram_donotdraw)
             bin_node.trimesh.saber_unknowns = bytes(mdl_node.mesh.saber_unknowns)
 
-            # Set vertex_count from vertex_positions length, but ensure it matches the actual vertex data
-            # If vertex_positions is empty, we need to use a fallback (e.g., from faces or texture_count)
-            vertex_positions_len = len(mdl_node.mesh.vertex_positions) if mdl_node.mesh.vertex_positions else 0
-            # Use vertex_positions length if available, otherwise try to infer from faces or use texture_count as fallback
-            if vertex_positions_len > 0:
-                bin_node.trimesh.vertex_count = vertex_positions_len
-            elif mdl_node.mesh.faces:
-                # Infer from faces if vertex_positions is empty
-                max_vertex_index = max(
-                    max(face.v1, face.v2, face.v3) for face in mdl_node.mesh.faces
-                )
-                bin_node.trimesh.vertex_count = max_vertex_index + 1
+            # Set vertex_count from vertex_positions length - match MDLOps exactly
+            # No fallbacks, no inference - use what's in the data
+            if mdl_node.mesh.vertex_positions:
+                bin_node.trimesh.vertex_count = len(mdl_node.mesh.vertex_positions)
+                bin_node.trimesh.vertices = mdl_node.mesh.vertex_positions
             else:
-                # Last resort: use texture_count as a hint (often matches vertex_count)
-                bin_node.trimesh.vertex_count = len(mdl_node.mesh.vertex_uv1) if mdl_node.mesh.vertex_uv1 else 0
-            bin_node.trimesh.vertices = mdl_node.mesh.vertex_positions
+                bin_node.trimesh.vertex_count = 0
+                bin_node.trimesh.vertices = []
 
             # Preserve indices arrays and inverted_counters if they were read from the original binary
             # These are needed for MDLOps compatibility
@@ -3446,6 +3650,10 @@ class MDLBinaryWriter:
 
             qbones = list(getattr(skin, "qbones", []))
             tbones = list(getattr(skin, "tbones", []))
+            if not qbones and self._mdl_nodes:
+                qbones = [Vector4.from_null() for _ in self._mdl_nodes]
+            if not tbones and self._mdl_nodes:
+                tbones = [Vector3.from_null() for _ in self._mdl_nodes]
             bin_node.skin.qbones = list(qbones)
             bin_node.skin.tbones = list(tbones)
             bin_node.skin.qbones_count = bin_node.skin.qbones_count2 = len(bin_node.skin.qbones)
@@ -3617,7 +3825,9 @@ class MDLBinaryWriter:
                 else:
                     bin_node.w_controller_data.extend(row.data)
 
-        bin_node.header.controller_count = bin_node.header.controller_count2 = len(mdl_node.controllers)
+        controller_count_actual = len(mdl_node.controllers)
+        controller_count_clamped = min(controller_count_actual, 0x7FFFFFFF)
+        bin_node.header.controller_count = bin_node.header.controller_count2 = controller_count_clamped
         # Clamp controller_data_length to prevent Perl from interpreting it as negative (values >= 2^31)
         # MDLOps reads this as a signed integer, so we must ensure it's < 2^31
         controller_data_length = len(bin_node.w_controller_data)
@@ -3643,7 +3853,9 @@ class MDLBinaryWriter:
         bin_anim.header.duration = mdl_anim.anim_length
         bin_anim.header.transition = mdl_anim.transition_length
         bin_anim.header.root = mdl_anim.root_model
-        bin_anim.header.event_count = bin_anim.header.event_count2 = len(mdl_anim.events)
+        event_count_actual = len(mdl_anim.events)
+        event_count_clamped = min(event_count_actual, 0x7FFFFFFF)
+        bin_anim.header.event_count = bin_anim.header.event_count2 = event_count_clamped
 
         for mdl_event in mdl_anim.events:
             bin_event = _EventStructure()
@@ -3689,9 +3901,14 @@ class MDLBinaryWriter:
             bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.NORMAL
             suboffset += 12
 
-        # Use vertex_count from trimesh header as authoritative source (may differ from vertex_positions length)
-        # This ensures we write the correct number of vertices even if vertex_positions is empty or incomplete
-        vcount = bin_node.trimesh.vertex_count
+        # Use vertex_count from trimesh header, but prefer vertex_positions length if available
+        # This ensures we write the correct number of vertices
+        vertex_positions_len = len(mdl_node.mesh.vertex_positions) if mdl_node.mesh.vertex_positions else 0
+        vcount = vertex_positions_len if vertex_positions_len > 0 else bin_node.trimesh.vertex_count
+        # Ensure vcount matches vertex_positions length if vertex_positions exists
+        if vertex_positions_len > 0 and vcount != vertex_positions_len:
+            vcount = vertex_positions_len
+            bin_node.trimesh.vertex_count = vcount
         # MDLOps requires texture vertex data in MDX if texture name is set
         # Check both list existence and non-empty to ensure we have valid UV data
         uv1_len = len(mdl_node.mesh.vertex_uv1) if mdl_node.mesh.vertex_uv1 else 0
@@ -3790,21 +4007,39 @@ class MDLBinaryWriter:
                     wts = (0.0, 0.0, 0.0, 0.0)
                 else:
                     idxs = tuple(float(x) for x in vb.vertex_indices)
-                    wts = tuple(float(x) for x in vb.vertex_weights)
+                    raw_weights = tuple(float(x) for x in vb.vertex_weights)
+                    total = raw_weights[0] + raw_weights[1] + raw_weights[2] + raw_weights[3]
+                    if total and abs(total - 1.0) > 1e-4:
+                        # Normalize to sum to 1.0 like MDLOps postprocessnodes
+                        inv = 1.0 / total
+                        wts = tuple(w * inv for w in raw_weights)
+                    else:
+                        wts = raw_weights
                 for x in idxs:
                     self._writer_ext.write_single(float(x))
                 for w in wts:
                     self._writer_ext.write_single(float(w))
 
-        # MDX format includes padding after all vertex data blocks
-        # Write padding based on bitmap flags to match MDLOps output
-        # Padding is one extra element of each data type (normal, UV1, UV2)
-        if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.NORMAL:
-            self._writer_ext.write_vector3(Vector3.from_null())
-        if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX0:
-            self._writer_ext.write_vector2(Vector2.from_null())
-        if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX1:
-            self._writer_ext.write_vector2(Vector2.from_null())
+        # MDX terminator row + alignment: mirror MDLOps
+        row_floats = max(0, int(bin_node.trimesh.mdx_data_size / 4))
+        sentinel = 1_000_000.0 if mdl_node.skin else 10_000_000.0
+        zeros_to_add = max(0, row_floats - 3 - (8 if mdl_node.skin else 0))
+        # Terminator row
+        for value in (sentinel, sentinel, sentinel):
+            self._writer_ext.write_single(value)
+        for _ in range(zeros_to_add):
+            self._writer_ext.write_single(0.0)
+        # Extra padding block for skin meshes
+        if mdl_node.skin:
+            for value in (1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0):
+                self._writer_ext.write_single(value)
+        # 16-byte alignment padding (MDLOps alignment rule)
+        mdx_written = self._writer_ext.size() - bin_node.trimesh.mdx_data_offset
+        alignment_padding = (16 - (mdx_written % 16)) % 16
+        if alignment_padding:
+            pad_floats = alignment_padding // 4
+            for _ in range(pad_floats):
+                self._writer_ext.write_single(0.0)
 
     def _calc_top_offsets(
         self,
@@ -3892,6 +4127,13 @@ class MDLBinaryWriter:
                     bin_node.children_offsets.append(bin_offsets[child_idx])
 
             assert bin_node.header is not None
+            # Ensure children_count matches the actual number of children_offsets
+            # This is critical for MDLOps compatibility - the count must match the array length
+            actual_children_count = len(bin_node.children_offsets)
+            # Clamp to prevent Perl from interpreting it as negative (values >= 2^31)
+            if actual_children_count > 0x7FFFFFFF:
+                actual_children_count = 0x7FFFFFFF
+            bin_node.header.children_count = bin_node.header.children_count2 = actual_children_count
             bin_node.header.offset_to_children = node_offset + bin_node.children_offsets_offset(self.game)
             bin_node.header.offset_to_controllers = node_offset + bin_node.controllers_offset(self.game)
             bin_node.header.offset_to_controller_data = node_offset + bin_node.controller_data_offset(self.game)
@@ -4080,10 +4322,12 @@ class MDLBinaryWriter:
             self._file_header.geometry.function_pointer0 = _GeometryHeader.K1_FUNCTION_POINTER0
             self._file_header.geometry.function_pointer1 = _GeometryHeader.K1_FUNCTION_POINTER1
         self._file_header.geometry.model_name = self._mdl.name
-        self._file_header.geometry.node_count = len(self._mdl_nodes)  # TODO: need to include supermodel in count
+        node_count_actual = len(self._mdl_nodes)  # TODO: need to include supermodel in count
+        self._file_header.geometry.node_count = min(node_count_actual, 0x7FFFFFFF)
         self._file_header.geometry.geometry_type = 2
         self._file_header.offset_to_super_root = self._file_header.geometry.root_node_offset
         self._file_header.mdx_size = self._writer_ext.size()
+        self._file_header.mdx_offset = 0
 
         # Preserve basic model header fields needed for roundtrip tests.
         # `model_type` corresponds to classification in practice.
@@ -4091,7 +4335,9 @@ class MDLBinaryWriter:
         # unknown0 corresponds to classification_unk1
         self._file_header.unknown0 = self._mdl.classification_unk1
         self._file_header.fog = 1 if self._mdl.fog else 0
-        self._file_header.animation_count = self._file_header.animation_count2 = len(self._mdl.anims)
+        animation_count_actual = len(self._mdl.anims)
+        animation_count_clamped = min(animation_count_actual, 0x7FFFFFFF)
+        self._file_header.animation_count = self._file_header.animation_count2 = animation_count_clamped
         self._file_header.bounding_box_min = self._mdl.bmin
         self._file_header.bounding_box_max = self._mdl.bmax
         self._file_header.radius = self._mdl.radius
@@ -4099,7 +4345,9 @@ class MDLBinaryWriter:
         self._file_header.supermodel = self._mdl.supermodel
         # TODO self._file_header.mdx_size
         # TODO self._file_header.mdx_offset
-        self._file_header.name_offsets_count = self._file_header.name_offsets_count2 = len(self._names)
+        name_offsets_count_actual = len(self._names)
+        name_offsets_count_clamped = min(name_offsets_count_actual, 0x7FFFFFFF)
+        self._file_header.name_offsets_count = self._file_header.name_offsets_count2 = name_offsets_count_clamped
 
         self._file_header.write(self._writer)
 

@@ -139,7 +139,7 @@ def _test_single_model(
             return False, f"MDLOps error while decompiling original: {e}"
 
         # Step 2: Read MDL with PyKotor and write back to binary
-        print("    [2/4] PyKotor: Reading and writing binary...")
+        print("    [2/6] PyKotor: Reading and writing binary...")
         try:
             # Read the original binary MDL/MDX
             mdl_obj = read_mdl(
@@ -161,8 +161,70 @@ def _test_single_model(
         except Exception as e:
             return False, f"PyKotor error: {e}"
 
-        # Step 3: Decompile PyKotor output with MDLOps
-        print("    [3/4] MDLOps: Decompiling PyKotor binary...")
+        # Step 3: Recompile MDLOps ASCII back to binary for oracle
+        print("    [3/6] MDLOps: Recompiling ASCII to binary...")
+        try:
+            result = subprocess.run(
+                [str(mdlops_exe), str(mdlops_ascii_path)],
+                cwd=str(td_path),
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+            if result.returncode != 0:
+                error_msg = result.stderr or result.stdout
+                return False, f"MDLOps failed to recompile ASCII: {error_msg[:500]}"
+
+            # MDLOps writes -bin suffix for binary outputs
+            ascii_stem = mdlops_ascii_path.stem  # e.g. foo-ascii
+            mdlops_bin_mdl = td_path / f"{ascii_stem}-bin.mdl"
+            mdlops_bin_mdx = td_path / f"{ascii_stem}-bin.mdx"
+            if not mdlops_bin_mdl.exists() or not mdlops_bin_mdx.exists():
+                return False, "MDLOps ASCII recompile missing binary outputs"
+
+        except subprocess.TimeoutExpired:
+            return False, "MDLOps timeout while recompiling ASCII"
+        except Exception as e:
+            return False, f"MDLOps error while recompiling ASCII: {e}"
+
+        # Step 4: Binary parity check: PyKotor vs MDLOps binaries
+        print("    [4/6] Comparing binary outputs...")
+        try:
+            pykotor_mdl_bytes = pykotor_mdl.read_bytes()
+            pykotor_mdx_bytes = pykotor_mdx.read_bytes()
+            mdlops_mdl_bytes = mdlops_bin_mdl.read_bytes()
+            mdlops_mdx_bytes = mdlops_bin_mdx.read_bytes()
+
+            def _compare_bytes(lhs: bytes, rhs: bytes, label: str) -> tuple[bool, str]:
+                if lhs == rhs:
+                    return True, "OK"
+                if len(lhs) != len(rhs):
+                    return False, f"{label} size mismatch: {len(lhs)} vs {len(rhs)}"
+                # Find first differing offset
+                for i, (a, b) in enumerate(zip(lhs, rhs)):
+                    if a != b:
+                        context_start = max(0, i - 8)
+                        context_end = min(len(lhs), i + 8)
+                        lhs_slice = lhs[context_start:context_end]
+                        rhs_slice = rhs[context_start:context_end]
+                        return (
+                            False,
+                            f"{label} byte diff @ {i}: {a:#04x}!={b:#04x} "
+                            f"lhs[{context_start}:{context_end}]={lhs_slice.hex()} "
+                            f"rhs[{context_start}:{context_end}]={rhs_slice.hex()}",
+                        )
+                return False, f"{label} differs but no diff located"
+
+            ok_mdl, msg_mdl = _compare_bytes(pykotor_mdl_bytes, mdlops_mdl_bytes, "MDL")
+            ok_mdx, msg_mdx = _compare_bytes(pykotor_mdx_bytes, mdlops_mdx_bytes, "MDX")
+            if not ok_mdl or not ok_mdx:
+                combined = "; ".join(filter(None, [msg_mdl if not ok_mdl else "", msg_mdx if not ok_mdx else ""]))
+                return False, f"Binary mismatch: {combined}"
+        except Exception as e:
+            return False, f"Binary comparison error: {e}"
+
+        # Step 5: Decompile PyKotor output with MDLOps
+        print("    [5/6] MDLOps: Decompiling PyKotor binary...")
         try:
             result = subprocess.run(
                 [str(mdlops_exe), str(pykotor_mdl)],
@@ -197,8 +259,8 @@ def _test_single_model(
         except Exception as e:
             return False, f"MDLOps error while decompiling PyKotor output: {e}"
 
-        # Step 4: Compare MDLOps ASCII outputs using unified diff
-        print("    [4/4] Comparing ASCII outputs...")
+        # Step 6: Compare MDLOps ASCII outputs using unified diff
+        print("    [6/6] Comparing ASCII outputs...")
         try:
             mdlops_ascii = mdlops_ascii_path.read_text(
                 encoding="utf-8", errors="replace"
