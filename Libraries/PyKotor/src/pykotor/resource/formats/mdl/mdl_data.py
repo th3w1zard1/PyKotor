@@ -2764,10 +2764,12 @@ class MDLMesh(ComparableMixin):
 
         # KotOR 2 Only - Enhanced effects
         # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:445-448
-        self.dirt_enabled: bool = False  # Dirt/weathering overlay texture
-        self.dirt_texture: str = ""  # Dirt texture name
-        self.dirt_coordinate_space: int = 0  # UV space for dirt
-        self.hide_in_hologram: bool = False  # Don't render in hologram effect
+        self.dirt_enabled: bool = False  # Dirt/weathering overlay texture (K2)
+        self.dirt_texture: int = 1  # Dirt texture index (K2, int16, default 1)
+        self.dirt_worldspace: int = 1  # Dirt worldspace flag (K2, int16, default 1)
+        self.dirt_coordinate_space: int = 0  # UV space for dirt (legacy, use dirt_worldspace for K2)
+        self.hologram_donotdraw: bool = False  # Don't render in hologram effect (K2, replaces hide_in_hologram)
+        self.hide_in_hologram: bool = False  # Don't render in hologram effect (legacy alias)
 
         # Inverted mesh sequence counter (array3) - used by MDLOps for inv_count
         # vendor/mdlops/MDLOpsM.pm:2238-2243, 4187-4188

@@ -755,7 +755,13 @@ class _Node:
     ) -> int:
         # Faces begin immediately after all headers / index tables.
         # (Index tables are currently treated as optional and may be empty.)
-        return self.indices_offset(game)
+        # AABB tree (if present) comes after aabbloc field but before faces
+        offset = self.indices_offset(game)
+        # AABB tree is written immediately after aabbloc field (4 bytes), before trimesh data
+        if self.header and self.header.type_id & MDLNodeFlags.AABB and self.trimesh:
+            offset += 4  # aabbloc field
+            offset += self.aabb_extra_size()  # AABB tree
+        return offset
 
     def children_offsets_offset(
         self,
@@ -810,6 +816,16 @@ class _Node:
         # unknown0 block currently not modeled; keep stable at 0 unless counts are set.
         unknown0_bytes = int(self.skin.unknown0_count) * 4
         return bonemap_bytes + qbones_bytes + tbones_bytes + unknown0_bytes
+
+    def aabb_extra_size(self) -> int:
+        """Size of AABB tree written immediately after aabbloc field (before trimesh data)."""
+        if not (self.header and self.header.type_id & MDLNodeFlags.AABB and self.trimesh):
+            return 0
+        aabb_nodes = getattr(self, "_aabb_nodes", None)
+        if not aabb_nodes:
+            return 0
+        # Each AABB node is 40 bytes: 6 floats (24 bytes) + 4 int32s (16 bytes)
+        return len(aabb_nodes) * 40
 
     def calc_size(
         self,
@@ -1009,10 +1025,15 @@ class _TrimeshHeader:
         self.total_area: float = 0.0
         # Tail fields (after flags) differ between K1 and K2 in MDLOps template.
         # K1: `S f L[3]`
-        # K2: `S L[2] f L[3]`
-        self.tail_short: int = 0  # unknown uint16 (index 72 in MDLOps' unpacked array)
-        self.k2_tail_long1: int = 0
-        self.k2_tail_long2: int = 0
+        # K2: `S L[2] f L[3]` but tail_short is replaced by CCssL (10 bytes) for dirt fields
+        self.tail_short: int = 0  # unknown uint16 (index 72 in MDLOps' unpacked array, K1 only)
+        # K2 dirt fields (replace tail_short, 10 bytes total: CCssL)
+        self.dirt_enabled: bool = False  # uint8
+        self.dirt_texture: int = 1  # int16
+        self.dirt_worldspace: int = 1  # int16
+        self.hologram_donotdraw: bool = False  # uint32
+        self.k2_tail_long1: int = 0  # K2 only (after dirt fields)
+        self.k2_tail_long2: int = 0  # K2 only (after dirt fields)
         self.tail_long0: int = 0  # unknown uint32 preceding MDX/vertex offsets (index 74/76)
         self.mdx_data_offset: int = 0
         self.vertices_offset: int = 0
@@ -1229,9 +1250,13 @@ class _TrimeshHeader:
         writer.write_uint8(self.beaming)
         writer.write_uint8(self.render)
         if game == Game.K2:
-            writer.write_uint16(self.tail_short)
-            writer.write_uint32(self.k2_tail_long1)
-            writer.write_uint32(self.k2_tail_long2)
+            # K2 dirt fields replace tail_short (2 bytes) with CCssL (10 bytes)
+            # Reference: vendor/MDLOps/MDLOpsM.pm:7065-7068
+            writer.write_uint8(1 if self.dirt_enabled else 0)
+            writer.write_uint8(0)  # padding byte
+            writer.write_int16(self.dirt_texture if self.dirt_texture else 1)
+            writer.write_int16(self.dirt_worldspace if self.dirt_worldspace else 1)
+            writer.write_uint32(1 if self.hologram_donotdraw else 0)
         else:
             writer.write_uint16(self.tail_short)
         writer.write_single(self.total_area)
@@ -2264,6 +2289,14 @@ class MDLBinaryReader:
             node.mesh.average = bin_node.trimesh.average
             node.mesh.area = bin_node.trimesh.total_area
             node.mesh.transparency_hint = bin_node.trimesh.transparency_hint
+            # K2 dirt fields (only present in K2 models)
+            if self.game == Game.K2:
+                node.mesh.dirt_enabled = bin_node.trimesh.dirt_enabled
+                node.mesh.dirt_texture = bin_node.trimesh.dirt_texture
+                node.mesh.dirt_worldspace = bin_node.trimesh.dirt_worldspace
+                node.mesh.hologram_donotdraw = bin_node.trimesh.hologram_donotdraw
+                # Legacy alias
+                node.mesh.hide_in_hologram = bin_node.trimesh.hologram_donotdraw
             # Tangent space flag from MDX data bitmap
             node.mesh.tangent_space = bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TANGENT_SPACE)
             # Stored as 8 raw bytes in the binary trimesh header; normalize to a tuple[int,...] for MDLMesh.
@@ -3211,6 +3244,12 @@ class MDLBinaryWriter:
             bin_node.trimesh.has_shadow = 1 if mdl_node.mesh.shadow else 0
             bin_node.trimesh.beaming = 1 if mdl_node.mesh.beaming else 0
             # render is already set above, no need to set it again
+            # K2 dirt fields (only present in K2 models)
+            if self.game == Game.K2:
+                bin_node.trimesh.dirt_enabled = mdl_node.mesh.dirt_enabled
+                bin_node.trimesh.dirt_texture = mdl_node.mesh.dirt_texture if mdl_node.mesh.dirt_texture else 1
+                bin_node.trimesh.dirt_worldspace = mdl_node.mesh.dirt_worldspace if mdl_node.mesh.dirt_worldspace else 1
+                bin_node.trimesh.hologram_donotdraw = mdl_node.mesh.hologram_donotdraw or mdl_node.mesh.hide_in_hologram
             bin_node.trimesh.saber_unknowns = bytes(mdl_node.mesh.saber_unknowns)
 
             bin_node.trimesh.vertex_count = len(mdl_node.mesh.vertex_positions)
