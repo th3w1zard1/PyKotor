@@ -3949,6 +3949,28 @@ class MDLBinaryWriter:
             if _DEBUG_MDL and bin_node.trimesh and bin_node.trimesh.texture1:
                 print(f"DEBUG _write_all: After writing node {i}, texture1_offset={bin_node.trimesh.mdx_texture1_offset}")
 
+        # Handle headlink: if set, the names header root node offset should point to 'neck_g' instead of actual root
+        # Reference: vendor/MDLOps/MDLOpsM.pm:6285-6296 (headfix/headlink logic)
+        # The names header is at offset 180 in the model header, and the 4th int32 (index 3, offset 12) is the root node offset
+        if self._mdl.headlink:
+            # Find the 'neck_g' node
+            neck_g_node_offset: int | None = None
+            for i, mdl_node in enumerate(self._mdl_nodes):
+                if mdl_node.name == "neck_g":
+                    neck_g_node_offset = self._node_offsets[i]
+                    break
+            
+            if neck_g_node_offset is not None:
+                # Update the names header root node offset to point to neck_g
+                # Names header is at offset 180 in the model header, 4th int32 (index 3) is at offset 12 from names header start
+                # Total offset: 180 + 12 = 192 from model header start
+                names_header_root_offset = 180 + 12
+                saved_pos = self._writer.position()
+                self._writer.seek(names_header_root_offset)
+                # Apply offset-12 semantics: MDLOps stores (absolute_offset - 12)
+                self._writer.write_uint32((neck_g_node_offset - 12) if neck_g_node_offset > 0 else 0)
+                self._writer.seek(saved_pos)
+
         # Write to MDL
         mdl_writer = BinaryWriter.to_auto(self._target)
         mdl_writer.write_uint32(0)
