@@ -3068,7 +3068,7 @@ class MDLBinaryReader:
                 compressed: int = self._reader.read_uint32()
                 # Skip padding float that comes after each compressed uint32
                 _ = self._reader.read_single()
-                decompressed: Vector4 = Vector4.from_compressed(compressed)
+                decompressed: Vector4 = _decompress_quaternion(compressed)
                 data.append([decompressed.x, decompressed.y, decompressed.z, decompressed.w])
         else:
             # vendor/mdlops/MDLOpsM.pm:1721-1726 - Bezier data reading
