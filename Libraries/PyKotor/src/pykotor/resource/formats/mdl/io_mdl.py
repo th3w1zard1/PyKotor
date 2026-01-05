@@ -572,63 +572,64 @@ class _Node:
         
         Reference: vendor/MDLOps/MDLOpsM.pm:1471-1513 (writeaabb)
         AABB nodes are stored in depth-first order, matching the recursive reading.
+        MDLOps uses sequential layout: each node is 40 bytes, child1 is always at start+40.
         """
-        from pykotor.resource.formats.mdl.mdl_data import MDLAABBNode
-        
         aabb_nodes = getattr(self, "_aabb_nodes", None)
         if not aabb_nodes or len(aabb_nodes) == 0:
             return
 
-        # Write AABB tree recursively (depth-first, matching MDLOps)
+        # Write AABB tree recursively (depth-first, matching MDLOps exactly)
         # Each node is 40 bytes: 6 floats (bbox) + 4 int32s (children/face)
         # AABB nodes are already in depth-first order from reading
         node_index = [0]  # Use list to allow mutation in nested function
         
-        def _write_aabb_recursive(writer: BinaryWriter, start_pos: int) -> int:
+        def _write_aabb_recursive(writer: BinaryWriter, start_pos: int) -> tuple[int, int]:
             """Recursively write AABB node and its children.
             
+            Args:
+                writer: Binary writer
+                start_pos: Starting position for this node (must be aligned to 40-byte boundary)
+            
             Returns:
-                last_write_pos: Last write position after this subtree
+                (next_node_index, last_write_pos): Next node index and last write position
             """
             if node_index[0] >= len(aabb_nodes):
-                return writer.position()
+                return (node_index[0], writer.position())
             
             node = aabb_nodes[node_index[0]]
             
-            # Write bounding box (6 floats)
+            # Seek to start position and write bounding box (6 floats = 24 bytes)
+            saved_pos = writer.position()
+            writer.seek(start_pos)
             writer.write_vector3(node.bbox_min)
             writer.write_vector3(node.bbox_max)
             
             # For branch nodes (face_index == -1), we need to write children first
             # then come back and write the child pointers
             if node.face_index == -1:
-                # Write placeholder child pointers (will be updated later)
-                left_child_placeholder = writer.position()
-                writer.write_int32(0)  # left child offset (placeholder)
-                writer.write_int32(0)  # right child offset (placeholder)
-                writer.write_int32(-1)  # face_index = -1 for branch
-                writer.write_int32(node.unknown)
+                # Calculate child1 position: always at start + 40 (next 40-byte node)
+                child1_pos = start_pos + 40
                 
-                # Write left child
+                # Write left child (child1) at child1_pos
                 node_index[0] += 1
-                left_child_pos = writer.position()
-                _write_aabb_recursive(writer, start_pos)
+                next_idx, child2_pos = _write_aabb_recursive(writer, child1_pos)
                 
-                # Write right child
-                node_index[0] += 1
-                right_child_pos = writer.position()
-                last_pos = _write_aabb_recursive(writer, start_pos)
+                # Write right child (child2) at child2_pos
+                node_index[0] = next_idx
+                next_idx, last_pos = _write_aabb_recursive(writer, child2_pos)
                 
                 # Update child pointers (apply offset-12 semantics)
-                saved_pos = writer.position()
-                writer.seek(left_child_placeholder)
-                left_child_offset = (left_child_pos - 12) if left_child_pos > 0 else 0
-                right_child_offset = (right_child_pos - 12) if right_child_pos > 0 else 0
+                # Go back to start_pos + 24 (after 6 floats) and write child pointers
+                writer.seek(start_pos + 24)
+                left_child_offset = (child1_pos - 12) if child1_pos > 0 else 0
+                right_child_offset = (child2_pos - 12) if child2_pos > 0 else 0
                 writer.write_int32(left_child_offset)
                 writer.write_int32(right_child_offset)
+                writer.write_int32(-1)  # face_index = -1 for branch
+                writer.write_int32(node.unknown)
                 writer.seek(saved_pos)
                 
-                return last_pos
+                return (next_idx, last_pos)
             else:
                 # Leaf node: write child pointers as 0, then face index
                 writer.write_int32(0)  # left child = 0
@@ -636,10 +637,12 @@ class _Node:
                 writer.write_int32(node.face_index)
                 writer.write_int32(node.unknown)
                 node_index[0] += 1
-                return writer.position()
+                # Position is now at start_pos + 40 (end of this 40-byte node)
+                return (node_index[0], start_pos + 40)
 
-        # Write root node and all children
-        _write_aabb_recursive(writer, writer.position())
+        # Write root node and all children starting at current position
+        start_pos = writer.position()
+        _write_aabb_recursive(writer, start_pos)
 
     def _write_dangly_extra(self, writer: BinaryWriter) -> None:
         """Write danglymesh constraints array after vertices."""
