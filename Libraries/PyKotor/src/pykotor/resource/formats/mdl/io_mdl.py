@@ -2669,7 +2669,11 @@ class MDLBinaryReader:
                 # Re-read all vertices from scratch with the verified count
                 if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
                     # Read all vertices from MDX
-                    if bin_node.trimesh.mdx_data_offset not in (0, 0xFFFFFFFF) and bin_node.trimesh.mdx_data_size > 0 and vcount > 0:
+                    # Check that mdx_data_offset is valid, mdx_data_size > 0, mdx_vertex_offset is valid (not 0xFFFFFFFF), and vcount > 0
+                    if (bin_node.trimesh.mdx_data_offset not in (0, 0xFFFFFFFF) 
+                        and bin_node.trimesh.mdx_data_size > 0 
+                        and bin_node.trimesh.mdx_vertex_offset not in (0xFFFFFFFF,)
+                        and vcount > 0):
                         vertex_offset = bin_node.trimesh.mdx_vertex_offset
                         # Read all vertices up to vcount, preserving index positions for face vertex references
                         # Must maintain 1:1 index mapping - faces reference indices directly, so we can't skip vertices
@@ -2743,7 +2747,11 @@ class MDLBinaryReader:
                                 node.mesh.vertex_positions.append(Vector3.from_null())
             elif bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) and self._reader_ext:
                 # Read from MDX
-                if bin_node.trimesh.mdx_data_offset not in (0, 0xFFFFFFFF) and bin_node.trimesh.mdx_data_size > 0 and vcount > 0:
+                # Check that mdx_data_offset is valid, mdx_data_size > 0, mdx_vertex_offset is valid (not 0xFFFFFFFF), and vcount > 0
+                if (bin_node.trimesh.mdx_data_offset not in (0, 0xFFFFFFFF) 
+                    and bin_node.trimesh.mdx_data_size > 0 
+                    and bin_node.trimesh.mdx_vertex_offset not in (0xFFFFFFFF,)
+                    and vcount > 0):
                     vertex_offset = bin_node.trimesh.mdx_vertex_offset
                     for i in range(vcount):
                         seek_pos = bin_node.trimesh.mdx_data_offset + i * bin_node.trimesh.mdx_data_size + vertex_offset
