@@ -292,6 +292,9 @@ class PyFileSystemModel(QAbstractItemModel):
         DontResolveSymlinks = Option.DontResolveSymlinks
         DontUseCustomDirectoryIcons = Option.DontUseCustomDirectoryIcons
 
+    # Class variable for roleNames static initialization (matching C++ static variable)
+    _roleNames: dict[int, QByteArray] | None = None
+
     # Signals matching C++ lines 29-32
     rootPathChanged = Signal(str)  # (const QString &newPath)
     fileRenamed = Signal(str, str, str)  # (const QString &path, const QString &oldName, const QString &newName)
@@ -1543,6 +1546,44 @@ class PyFileSystemModel(QAbstractItemModel):
         print("<SDM> [displayName node.fileName ", node.fileName)
 
         return node.fileName
+
+    def roleNames(self) -> dict[int, QByteArray]:
+        """Return role names matching C++ lines 1277-1289 exactly.
+
+        Matches:
+        QHash<int, QByteArray> QFileSystemModel::roleNames() const
+        {
+            static auto ret = [] {
+                auto ret = QAbstractItemModelPrivate::defaultRoleNames();
+                ret.insert(QFileSystemModel::FileIconRole, "fileIcon"_ba);
+                ret.insert(QFileSystemModel::FilePathRole, "filePath"_ba);
+                ret.insert(QFileSystemModel::FileNameRole, "fileName"_ba);
+                ret.insert(QFileSystemModel::FilePermissions, "filePermissions"_ba);
+                ret.insert(QFileSystemModel::FileInfoRole, "fileInfo"_ba);
+                return ret;
+            }();
+            return ret;
+        }
+        """
+        # Static initialization matching C++ implementation
+        # Use class variable to store the static result (initialized once)
+        if PyFileSystemModel._roleNames is None:
+            # Get default role names from QAbstractItemModel
+            temp_model = QAbstractItemModel()
+            default_roles = temp_model.roleNames()
+            ret = dict(default_roles)
+
+            # Add QFileSystemModel-specific roles
+            ret[self.FileIconRole] = QByteArray(b"fileIcon")  # type: ignore[attr-defined]
+            ret[self.FilePathRole] = QByteArray(b"filePath")  # type: ignore[attr-defined]
+            ret[self.FileNameRole] = QByteArray(b"fileName")  # type: ignore[attr-defined]
+            ret[self.FilePermissions] = QByteArray(b"filePermissions")  # type: ignore[attr-defined]
+            ret[self.FileInfoRole] = QByteArray(b"fileInfo")  # type: ignore[attr-defined]
+
+            PyFileSystemModel._roleNames = ret
+
+        assert PyFileSystemModel._roleNames is not None
+        return PyFileSystemModel._roleNames
 
     def options(self) -> QFileSystemModel.Option:  # type: ignore[attr-defined]
         result = 0
