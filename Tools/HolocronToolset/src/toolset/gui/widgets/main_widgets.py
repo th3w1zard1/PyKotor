@@ -229,8 +229,8 @@ class ResourceList(MainWindowList):
         """Update the filter string for the resource list."""
         self.modules_model.proxy_model().set_filter_string(self.ui.searchEdit.text())
 
-    @Slot()
-    def on_section_changed(self):
+    @Slot(int)
+    def on_section_changed(self, index: int):
         """Handle the section change event."""
         data: str = self.ui.sectionCombo.currentData(Qt.ItemDataRole.UserRole)
         self.sig_section_changed.emit(data)
@@ -761,7 +761,8 @@ class TextureList(MainWindowList):
         print(f"Added {added_count} resources to the model")
         self.queue_load_visible_icons()
 
-    def on_section_changed(self):
+    @Slot(int)
+    def on_section_changed(self, index: int):
         """Handle the section combobox selection change."""
         new_section_name: str = self.ui.sectionCombo.currentData(Qt.ItemDataRole.UserRole)
         print(f"Section changed to: '{new_section_name}'")
