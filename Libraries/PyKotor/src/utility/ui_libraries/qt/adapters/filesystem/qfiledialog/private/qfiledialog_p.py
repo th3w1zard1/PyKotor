@@ -1097,7 +1097,7 @@ class QFileDialogPrivate:
         q = self._public
         root_dir = QDir(self.model.rootDirectory())
         if root_dir.isRoot():
-            newDirectory = cast("str", self.model.myComputer())
+            newDirectory = self.model.myComputer().toString()
         else:
             root_dir.cdUp()
             newDirectory = root_dir.absolutePath()
