@@ -961,22 +961,31 @@ def _mdl_deep_eq(
         return _mdl_float_eq(a, b)
 
     # Vector-like (Vector2/3/4 etc)
-    if isinstance(a, (Vector2, Vector3, Vector4)) and isinstance(b, (Vector2, Vector3, Vector4)):
-        if type(a) is not type(b):
-            return False
-        # Compare component-wise with the same quantization used for hashing.
+    if isinstance(a, Vector2) and isinstance(b, Vector2):
         if not _mdl_float_eq(float(a.x), float(b.x)):
             return False
         if not _mdl_float_eq(float(a.y), float(b.y)):
             return False
-        if isinstance(a, (Vector3, Vector4)):
-            if not _mdl_float_eq(float(a.z), float(b.z)):
-                return False
-        if isinstance(a, Vector4):
-            if not _mdl_float_eq(float(a.w), float(b.w)):
-                return False
         return True
-    elif isinstance(a, (Vector2, Vector3, Vector4)) or isinstance(b, (Vector2, Vector3, Vector4)):
+    if isinstance(a, Vector3) and isinstance(b, Vector3):
+        if not _mdl_float_eq(float(a.x), float(b.x)):
+            return False
+        if not _mdl_float_eq(float(a.y), float(b.y)):
+            return False
+        if not _mdl_float_eq(float(a.z), float(b.z)):
+            return False
+        return True
+    if isinstance(a, Vector4) and isinstance(b, Vector4):
+        if not _mdl_float_eq(float(a.x), float(b.x)):
+            return False
+        if not _mdl_float_eq(float(a.y), float(b.y)):
+            return False
+        if not _mdl_float_eq(float(a.z), float(b.z)):
+            return False
+        if not _mdl_float_eq(float(a.w), float(b.w)):
+            return False
+        return True
+    if isinstance(a, (Vector2, Vector3, Vector4)) or isinstance(b, (Vector2, Vector3, Vector4)):
         return False
 
     # MDLFace: specialized canonical equality (ignoring lossy fields)
@@ -1321,9 +1330,7 @@ class MDL(ComparableMixin):
     )
     COMPARABLE_SEQUENCE_FIELDS = ("anims",)
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self.root: MDLNode = MDLNode()
         self.anims: list[MDLAnimation] = []
         # Back-compat: some engine/tooling expects a geometry_type field.
@@ -1551,10 +1558,11 @@ class MDL(ComparableMixin):
 
         return pick
 
-    def all_nodes(
-        self,
-    ) -> list[MDLNode]:
+    def all_nodes(self) -> list[MDLNode]:
         """Returns a list of all nodes in the tree including the root node and children recursively.
+
+        Uses pre-order depth-first traversal (parent before children, children in order).
+        This matches MDLOps node ordering which is required for binary compatibility.
 
         Args:
         ----
@@ -1569,7 +1577,8 @@ class MDL(ComparableMixin):
         while scan:
             node: MDLNode = scan.pop()
             nodes.append(node)
-            scan.extend(node.children)
+            # Reverse children so that pop() gives them in correct order
+            scan.extend(reversed(node.children))
         return nodes
 
     def find_parent(
@@ -1633,9 +1642,7 @@ class MDL(ComparableMixin):
                 return node
         raise ValueError
 
-    def all_textures(
-        self,
-    ) -> set[str]:
+    def all_textures(self) -> set[str]:
         """Returns all unique texture names used in the scene.
 
         Args:
@@ -1648,9 +1655,7 @@ class MDL(ComparableMixin):
         """
         return {node.mesh.texture_1 for node in self.all_nodes() if (node.mesh and node.mesh.texture_1 != "NULL" and node.mesh.texture_1)}
 
-    def all_lightmaps(
-        self,
-    ) -> set[str]:
+    def all_lightmaps(self) -> set[str]:
         """Returns a set of all lightmap textures used in the scene.
 
         Args:
@@ -1730,9 +1735,7 @@ class MDLAnimation(ComparableMixin):
     COMPARABLE_FIELDS = ("name", "root_model", "anim_length", "transition_length", "root")
     COMPARABLE_SEQUENCE_FIELDS = ("events",)
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:742
         # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:660
         self.name: str = ""
@@ -1799,10 +1802,11 @@ class MDLAnimation(ComparableMixin):
             )
         return h
 
-    def all_nodes(
-        self,
-    ) -> list[MDLNode]:
+    def all_nodes(self) -> list[MDLNode]:
         """Returns all nodes in the MDL tree including children recursively.
+
+        Uses pre-order depth-first traversal (parent before children, children in order).
+        This matches MDLOps node ordering which is required for binary compatibility.
 
         Args:
         ----
@@ -1817,7 +1821,8 @@ class MDLAnimation(ComparableMixin):
         while scan:
             node = scan.pop()
             nodes.append(node)
-            scan.extend(node.children)
+            # Reverse children so that pop() gives them in correct order
+            scan.extend(reversed(node.children))
         return nodes
 
     def __repr__(self):
@@ -1854,9 +1859,7 @@ class MDLEvent(ComparableMixin):
 
     COMPARABLE_FIELDS = ("activation_time", "name")
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:765
         # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:694
         # Time in seconds when event fires (0.0 to animation length)
@@ -1977,9 +1980,7 @@ class MDLNode(ComparableMixin):
     COMPARABLE_FIELDS = ("name", "position", "orientation", "light", "emitter", "mesh", "skin", "dangly", "aabb", "saber")
     COMPARABLE_SEQUENCE_FIELDS = ("children", "controllers")
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         """Initializes a MDLNode object.
 
         Args:
@@ -2091,9 +2092,7 @@ class MDLNode(ComparableMixin):
     def __hash__(self):
         return _mdl_hash(self, ignore_keys=_MDL_EQ_IGNORE_KEYS | _MDL_EQ_ID_KEYS)
 
-    def descendants(
-        self,
-    ) -> list[MDLNode]:
+    def descendants(self) -> list[MDLNode]:
         """Returns all descendants of a node including itself.
 
         Args:
@@ -2208,9 +2207,7 @@ class MDLLight(ComparableMixin):
     COMPARABLE_FIELDS = ("flare_radius", "light_priority", "ambient_only", "dynamic_type", "shadow", "flare", "fading_light", "multiplier")
     COMPARABLE_SEQUENCE_FIELDS = ("flare_sizes", "flare_positions", "flare_color_shifts", "flare_textures")
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:48,80,107
         # Radius for lens flare visibility (0.0 = disabled, typical range 0.0-10.0)
         self.flare_radius: float = 0.0
@@ -2456,9 +2453,7 @@ class MDLEmitter(ComparableMixin):
         "flags",
     )
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:113
         # Inner dead zone radius where no particles spawn
         self.dead_space: float = 0.0
@@ -2594,9 +2589,7 @@ class MDLReference(ComparableMixin):
 
     COMPARABLE_FIELDS = ("model", "reattachable")
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         # vendor/kotorblender/io_scene_kotor/scene/modelnode/reference.py:30
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:552
         # External model resource name to attach at this node
@@ -2672,9 +2665,7 @@ class MDLMesh(ComparableMixin):
         "vertex_uv2",
     )
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         # Basic geometry
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:386-416
         # vendor/mdlops/MDLOpsM.pm:1650-1700
@@ -2780,6 +2771,7 @@ class MDLMesh(ComparableMixin):
         # These arrays are typically empty but must be preserved if present in original binary
         self.indices_counts: list[int] = []
         self.indices_offsets: list[int] = []
+        self.indices_offsets_count: int = 0
 
     @property
     def vertex_uv(self) -> _Vector2ListProxy:
@@ -2850,9 +2842,7 @@ class MDLSkin(MDLMesh):
         "bone_node_number",
     )
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         # Skins are meshes with extra bone-weighting data.
         # Reuse MDLMesh initialization so ambient/diffuse/textures/verts/faces exist.
         super().__init__()
@@ -2955,9 +2945,7 @@ class MDLConstraint(ComparableMixin):
 
     COMPARABLE_FIELDS = ("name", "type", "target", "target_node")
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self.name: str = ""
         self.type: int = 0
         self.target: int = 0
@@ -3006,9 +2994,7 @@ class MDLDangly(MDLMesh):
         "verts_original",
     )
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         # Dangly meshes still behave like meshes for rendering/export purposes.
         # Reuse MDLMesh initialization so ambient/diffuse/textures/verts/faces exist.
         super().__init__()
@@ -3102,9 +3088,7 @@ class MDLWalkmesh(ComparableMixin):
 
     COMPARABLE_SEQUENCE_FIELDS = ("aabbs",)
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:489-509
         # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:499-520
         # Hierarchical AABB tree for efficient collision detection
@@ -3169,9 +3153,7 @@ class MDLSaber(ComparableMixin):
         "saber_flare_radius",
     )
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         # vendor/mdlops/MDLOpsM.pm:1945 - Saber type (single/double-bladed)
         self.saber_type: int = 0
 
@@ -3242,9 +3224,7 @@ class MDLBoneVertex(ComparableMixin):
 
     COMPARABLE_FIELDS = ("vertex_weights", "vertex_indices")
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:264-266
         # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:481-483
         # Normalized blend weights (must sum to 1.0)
@@ -3283,9 +3263,7 @@ class MDLFace(ComparableMixin):
         "_canon_t3",
     )
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self.v1: int = 0
         self.v2: int = 0
         self.v3: int = 0
@@ -3385,14 +3363,21 @@ def _mdl_recompute_mesh_face_payload(mesh: "MDLMesh") -> None:
 
     def _vec_len(a: Vector3) -> float:
         ax, ay, az = float(a.x), float(a.y), float(a.z)
+        if math.isnan(ax) or math.isnan(ay) or math.isnan(az):
+            return 0.0
         return (ax * ax + ay * ay + az * az) ** 0.5
 
     def _vec_norm(a: Vector3) -> Vector3:
-        l = _vec_len(a)
-        if l == 0.0:
+        length = _vec_len(a)
+        if length < 1e-12:
             return Vector3.from_null()
-        inv = 1.0 / l
-        return Vector3(float(a.x) * inv, float(a.y) * inv, float(a.z) * inv)
+        inv = 1.0 / length
+        nx = float(a.x) * inv
+        ny = float(a.y) * inv
+        nz = float(a.z) * inv
+        if math.isnan(nx) or math.isnan(ny) or math.isnan(nz):
+            return Vector3.from_null()
+        return Vector3(nx, ny, nz)
 
     # For each face, compute:
     # - normal: normalized cross((p2-p1),(p3-p1))
@@ -3417,6 +3402,8 @@ def _mdl_recompute_mesh_face_payload(mesh: "MDLMesh") -> None:
         try:
             d = -(float(n.x) * float(p1.x) + float(n.y) * float(p1.y) + float(n.z) * float(p1.z))
         except Exception:
+            d = 0.0
+        if math.isnan(d) or math.isinf(d):
             d = 0.0
         f.coefficient = int(d)
 
@@ -3492,9 +3479,7 @@ class MDLController(ComparableMixin):
         # Some parsers historically passed None here; normalize to strict bool.
         self.is_bezier: bool = bool(is_bezier)
 
-    def __repr__(
-        self,
-    ):
+    def __repr__(self):
         return f"{self.__class__.__name__}(controller_type={self.controller_type!r}, rows={self.rows!r}, is_bezier={self.is_bezier!r})"
 
     def __eq__(self, other):
@@ -3517,14 +3502,10 @@ class MDLControllerRow(ComparableMixin):
         self.time: float = time
         self.data: list[float] = data
 
-    def __repr__(
-        self,
-    ):
+    def __repr__(self):
         return f"{self.__class__.__name__}({self.time!r}, {self.data!r})"
 
-    def __str__(
-        self,
-    ):
+    def __str__(self):
         return f"{self.time} {self.data}".replace(",", "").replace("[", "").replace("]", "")
 
     def __eq__(self, other):

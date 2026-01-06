@@ -18,9 +18,7 @@ class DLGStunt:
     stunt_model: "StuntModel" field.
     """
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self._hash_cache: int = uuid.uuid4().int
         self.participant: str = ""
         self.stunt_model: ResRef = ResRef.from_blank()

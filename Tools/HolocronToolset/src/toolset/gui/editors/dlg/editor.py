@@ -87,9 +87,7 @@ if TYPE_CHECKING:
 
 class DLGEditor(Editor):
     @property
-    def editor(
-        self,
-    ) -> Self:
+    def editor(self) -> Self:
         return self
 
     @editor.setter

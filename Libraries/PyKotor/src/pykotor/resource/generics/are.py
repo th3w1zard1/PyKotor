@@ -122,9 +122,7 @@ class ARE(GenericBase):
 
     BINARY_TYPE = ResourceType.ARE
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         super().__init__()
         # vendor/reone/src/libs/resource/parser/gff/are.cpp:302
         # vendor/Kotor.NET/Kotor.NET/Resources/KotorARE/ARE.cs:13

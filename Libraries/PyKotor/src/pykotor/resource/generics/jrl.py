@@ -28,9 +28,7 @@ class JRL:
 
     BINARY_TYPE = ResourceType.JRL
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self.quests: list[JRLQuest] = []
 
 
@@ -48,9 +46,7 @@ class JRLQuest:
         comment: "Comment" field. Used in toolset only.
     """
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self.comment: str = ""
         self.name: LocalizedString = LocalizedString.from_invalid()
         self.planet_id: int = 0
@@ -71,9 +67,7 @@ class JRLEntry:
         xp_percentage: "XP_Percentage" field.
     """
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self.end: bool = False
         self.entry_id: int = 0
         self.text: LocalizedString = LocalizedString.from_invalid()

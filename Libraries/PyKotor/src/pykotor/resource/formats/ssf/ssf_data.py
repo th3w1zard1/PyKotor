@@ -69,9 +69,7 @@ class SSF(ComparableMixin):
     BINARY_TYPE = ResourceType.SSF
     COMPARABLE_SEQUENCE_FIELDS = ("_sounds",)
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         # vendor/Kotor.NET/Kotor.NET/Formats/KotorSSF/SSFBinaryStructure.cs:67
         # vendor/KotOR_IO/KotOR_IO/File Formats/SSF.cs:51-54
         # vendor/KotOR.js/src/resource/SSFObject.ts:17,42-44
@@ -97,9 +95,7 @@ class SSF(ComparableMixin):
             return NotImplemented
         return self._sounds[item]
 
-    def reset(
-        self,
-    ):
+    def reset(self):
         """Sets all the sound stringrefs to -1."""
         for i in range(28):
             self._sounds[i] = -1

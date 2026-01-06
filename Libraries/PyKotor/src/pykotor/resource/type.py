@@ -92,9 +92,7 @@ class ResourceReader:
             self._size = len(loaded_src)
             self._source: bytearray = loaded_src[offset : self._size]
 
-    def close(
-        self,
-    ):
+    def close(self):
         self._reader.close()
 
 
@@ -105,9 +103,7 @@ class ResourceWriter:
     ):
         self._writer: BinaryWriterFile | BinaryWriterBytearray = cast("BinaryWriterFile | BinaryWriterBytearray", BinaryWriter.to_auto(target))
 
-    def close(
-        self,
-    ):
+    def close(self):
         self._writer.close()
 
 
@@ -432,9 +428,7 @@ class ResourceType(Enum):
     def __bool__(self) -> bool:
         return not self.is_invalid
 
-    def __repr__(
-        self,
-    ) -> str:  # sourcery skip: simplify-fstring-formatting
+    def __repr__(self) -> str:  # sourcery skip: simplify-fstring-formatting
         if self.name == "INVALID" or not self.is_invalid:
             return f"{self.__class__.__name__}.{self.name}"
 
@@ -442,15 +436,11 @@ class ResourceType(Enum):
             f"{self.__class__.__name__}.from_invalid(" f"{f'type_id={self.type_id}, '}" f"{f'extension={self.extension}, ' if self.extension else ''}" f"{f'category={self.category}, ' if self.category else ''}" f"contents={self.contents})"
         )
 
-    def __str__(
-        self,
-    ) -> str:
+    def __str__(self) -> str:
         """Returns the extension in all caps."""
         return str(self.extension.upper())
 
-    def __int__(
-        self,
-    ):
+    def __int__(self):
         """Returns the type_id."""
         return self.type_id
 

@@ -158,9 +158,7 @@ class UTS:
 
     BINARY_TYPE = ResourceType.UTS
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self.resref: ResRef = ResRef.from_blank()
         self.tag: str = ""
         self.comment: str = ""

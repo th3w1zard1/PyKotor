@@ -69,14 +69,10 @@ class LazyCapsule(FileResource):
                 write_erf(ERF(ERFType.from_extension(c_filepath.suffix)), c_filepath)
         super().__init__(*ident.unpack(), c_filepath.stat().st_size, 0x0, c_filepath)
 
-    def __iter__(
-        self,
-    ) -> Iterator[FileResource]:
+    def __iter__(self) -> Iterator[FileResource]:
         yield from self.resources()
 
-    def __len__(
-        self,
-    ):
+    def __len__(self):
         return len(self.resources())
 
     def resource(
@@ -204,9 +200,7 @@ class LazyCapsule(FileResource):
         query = ResourceIdentifier(resref, restype)
         return next((resource for resource in self.resources() if resource == query), None)
 
-    def resources(
-        self,
-    ) -> list[FileResource]:
+    def resources(self) -> list[FileResource]:
         """Get the list of FileResources from the ERF/RIM file.
 
         Args:
@@ -600,9 +594,7 @@ class Capsule(LazyCapsule):
             self.reload()
         return super().info(resref, restype)
 
-    def reload(
-        self,
-    ):
+    def reload(self):
         """Reload the list of resource info linked from the module file.
 
         Args:

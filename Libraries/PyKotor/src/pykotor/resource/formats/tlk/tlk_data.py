@@ -89,15 +89,11 @@ class TLK(ComparableMixin):
         # Language ID field - unused by game but present in file format
         self.language: Language = language  # game does not use this field
 
-    def __len__(
-        self,
-    ) -> int:
+    def __len__(self) -> int:
         """Returns the number of stored entries."""
         return len(self.entries)
 
-    def __iter__(
-        self,
-    ):
+    def __iter__(self):
         """Iterates through the stored entry with each iteration yielding a stringref and the corresponding entry data."""
         yield from enumerate(self.entries)
 

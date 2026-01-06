@@ -61,9 +61,7 @@ class GIT:
     """
     BINARY_TYPE = ResourceType.GIT
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         # vendor/reone/src/libs/resource/parser/gff/git.cpp:182-190
         # vendor/Kotor.NET/Kotor.NET/Resources/KotorGIT/GIT.cs:29-37
         # Area audio properties (ambient sounds, music, environment audio)
@@ -130,9 +128,7 @@ class GIT:
         for waypoint in self.waypoints:
             yield ResourceIdentifier(str(waypoint.resref), ResourceType.UTW)
 
-    def instances(
-        self,
-    ) -> list[GITInstance]:
+    def instances(self) -> list[GITInstance]:
         """Returns a list of all instances stored inside the GIT, regardless of the type.
 
         Returns:
@@ -321,9 +317,7 @@ class GITInstance(ABC):
         """Returns the resource identifier of the instance, or None if it doesn't have one (GITCamera should be the only one returning None)."""
 
     @abstractmethod
-    def blank(
-        self,
-    ) -> bytes | None: ...
+    def blank(self) -> bytes | None: ...
 
     @abstractmethod
     def move(
@@ -350,14 +344,10 @@ class GITInstance(ABC):
     ): ...
 
     @abstractmethod
-    def classification(
-        self,
-    ) -> str: ...
+    def classification(self) -> str: ...
 
     @abstractmethod
-    def yaw(
-        self,
-    ) -> float | None:
+    def yaw(self) -> float | None:
         """Returns the yaw rotation (in radians) of the instance if the instance supports it, otherwise returns None."""
 
     def serialize(self) -> dict[str, Any]:
@@ -469,24 +459,16 @@ class GITCamera(GITInstance):
         rotation.z += pitch
         self.orientation = Vector4.from_euler(rotation.x, rotation.y, rotation.z)
 
-    def identifier(
-        self,
-    ) -> ResourceIdentifier | None:
+    def identifier(self) -> ResourceIdentifier | None:
         return None
 
-    def blank(
-        self,
-    ) -> bytes | None:
+    def blank(self) -> bytes | None:
         return None
 
-    def classification(
-        self,
-    ) -> str:
+    def classification(self) -> str:
         return "Camera"
 
-    def yaw(
-        self,
-    ) -> float | None:
+    def yaw(self) -> float | None:
         return math.pi - self.orientation.to_euler().x
 
     def roll(self) -> float:
@@ -555,29 +537,19 @@ class GITCreature(GITInstance):
     ):
         self.bearing += yaw
 
-    def identifier(
-        self,
-    ) -> ResourceIdentifier:
+    def identifier(self) -> ResourceIdentifier:
         return ResourceIdentifier(str(self.resref), ResourceType.UTC)
 
-    def blank(
-        self,
-    ) -> bytes:
+    def blank(self) -> bytes:
         return bytes_utc(UTC())
 
-    def extension(
-        self,
-    ) -> ResourceType:
+    def extension(self) -> ResourceType:
         return ResourceType.UTC
 
-    def classification(
-        self,
-    ) -> str:
+    def classification(self) -> str:
         return "Creature"
 
-    def yaw(
-        self,
-    ) -> float:
+    def yaw(self) -> float:
         return self.bearing
 
     def _serialize_instance_data(self) -> dict[str, Any]:
@@ -674,14 +646,10 @@ class GITDoor(GITInstance):
     ):
         self.bearing += yaw
 
-    def blank(
-        self,
-    ) -> bytes:
+    def blank(self) -> bytes:
         return bytes_utd(UTD())
 
-    def identifier(
-        self,
-    ) -> ResourceIdentifier:
+    def identifier(self) -> ResourceIdentifier:
         """Returns a ResourceIdentifier for the resource.
 
         Args:
@@ -700,14 +668,10 @@ class GITDoor(GITInstance):
         """
         return ResourceIdentifier(str(self.resref), ResourceType.UTD)
 
-    def classification(
-        self,
-    ) -> str:
+    def classification(self) -> str:
         return "Door"
 
-    def yaw(
-        self,
-    ) -> float:
+    def yaw(self) -> float:
         return self.bearing
 
     def _serialize_instance_data(self) -> dict[str, Any]:
@@ -790,24 +754,16 @@ class GITEncounter(GITInstance):
         msg = "Encounters cannot be rotated."
         raise NotImplementedError(msg)
 
-    def identifier(
-        self,
-    ) -> ResourceIdentifier:
+    def identifier(self) -> ResourceIdentifier:
         return ResourceIdentifier(str(self.resref), ResourceType.UTE)
 
-    def blank(
-        self,
-    ) -> bytes:
+    def blank(self) -> bytes:
         return bytes_ute(UTE())
 
-    def classification(
-        self,
-    ) -> str:
+    def classification(self) -> str:
         return "Encounter"
 
-    def yaw(
-        self,
-    ) -> None:
+    def yaw(self) -> None:
         return None
 
     def _serialize_instance_data(self) -> dict[str, Any]:
@@ -876,24 +832,16 @@ class GITPlaceable(GITInstance):
     ):
         self.bearing += yaw
 
-    def identifier(
-        self,
-    ) -> ResourceIdentifier:
+    def identifier(self) -> ResourceIdentifier:
         return ResourceIdentifier(str(self.resref), ResourceType.UTP)
 
-    def blank(
-        self,
-    ) -> bytes:
+    def blank(self) -> bytes:
         return bytes_utp(UTP())
 
-    def classification(
-        self,
-    ) -> str:
+    def classification(self) -> str:
         return "Placeable"
 
-    def yaw(
-        self,
-    ) -> float:
+    def yaw(self) -> float:
         return self.bearing
 
     def _serialize_instance_data(self) -> dict[str, Any]:
@@ -937,24 +885,16 @@ class GITSound(GITInstance):
         msg = "Sounds cannot be rotated."
         raise ValueError(msg)
 
-    def identifier(
-        self,
-    ) -> ResourceIdentifier:
+    def identifier(self) -> ResourceIdentifier:
         return ResourceIdentifier(str(self.resref), ResourceType.UTS)
 
-    def blank(
-        self,
-    ) -> bytes:
+    def blank(self) -> bytes:
         return bytes_uts(UTS())
 
-    def classification(
-        self,
-    ) -> str:
+    def classification(self) -> str:
         return "Sound"
 
-    def yaw(
-        self,
-    ) -> None:
+    def yaw(self) -> None:
         return None
 
     def _serialize_instance_data(self) -> dict[str, Any]:
@@ -995,24 +935,16 @@ class GITStore(GITInstance):
     ):
         self.bearing += yaw
 
-    def identifier(
-        self,
-    ) -> ResourceIdentifier:
+    def identifier(self) -> ResourceIdentifier:
         return ResourceIdentifier(str(self.resref), ResourceType.UTM)
 
-    def blank(
-        self,
-    ) -> bytes:
+    def blank(self) -> bytes:
         return bytes_utm(UTM())
 
-    def classification(
-        self,
-    ) -> str:
+    def classification(self) -> str:
         return "Store"
 
-    def yaw(
-        self,
-    ) -> float:
+    def yaw(self) -> float:
         return self.bearing
 
     def _serialize_instance_data(self) -> dict[str, Any]:
@@ -1061,24 +993,16 @@ class GITTrigger(GITInstance):
         msg = "Triggers cannot be rotated."
         raise ValueError(msg)
 
-    def identifier(
-        self,
-    ) -> ResourceIdentifier:
+    def identifier(self) -> ResourceIdentifier:
         return ResourceIdentifier(str(self.resref), ResourceType.UTT)
 
-    def blank(
-        self,
-    ) -> bytes:
+    def blank(self) -> bytes:
         return bytes_utt(UTT())
 
-    def classification(
-        self,
-    ) -> str:
+    def classification(self) -> str:
         return "Trigger"
 
-    def yaw(
-        self,
-    ) -> float:
+    def yaw(self) -> float:
         """Triggers do not have a bearing/yaw property. Returns 0.0 by default."""
         return 0.0
 
@@ -1102,9 +1026,7 @@ class GITTrigger(GITInstance):
 
 
 class GITTransitionTrigger(GITTrigger):
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         super().__init__()
         self.linked_to: str = ""
         self.linked_to_flags: GITModuleLink = GITModuleLink.NoLink
@@ -1149,24 +1071,16 @@ class GITWaypoint(GITInstance):
     ):
         self.bearing += yaw
 
-    def identifier(
-        self,
-    ) -> ResourceIdentifier:
+    def identifier(self) -> ResourceIdentifier:
         return ResourceIdentifier(str(self.resref), ResourceType.UTW)
 
-    def blank(
-        self,
-    ) -> bytes:
+    def blank(self) -> bytes:
         return bytes_utw(UTW())
 
-    def classification(
-        self,
-    ) -> str:
+    def classification(self) -> str:
         return "Waypoint"
 
-    def yaw(
-        self,
-    ) -> float:
+    def yaw(self) -> float:
         return self.bearing
 
     def _serialize_instance_data(self) -> dict[str, Any]:

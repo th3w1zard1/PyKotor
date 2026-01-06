@@ -149,9 +149,7 @@ class DLG:
 
     BINARY_TYPE = ResourceType.DLG
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self.starters: list[DLGLink[DLGEntry]] = []
         self.stunts: list[DLGStunt] = []
 

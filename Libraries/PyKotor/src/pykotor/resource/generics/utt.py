@@ -168,9 +168,7 @@ class UTT:
 
     BINARY_TYPE = ResourceType.UTT
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self.resref: ResRef = ResRef.from_blank()
         self.comment: str = ""
         self.tag: str = ""

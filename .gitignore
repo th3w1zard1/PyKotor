@@ -111,8 +111,8 @@ Tools/HolocronToolset/tests/test_files/
 *.diff
 working_vs_current_diff.txt
 profiling/
-vendor/swkotor.h
-vendor/swkotor.c
+vendor/kotor_re_things/swkotor.h
+vendor/kotor_re_things/swkotor.c
 Tools/*/.github/
 *_extract/
 

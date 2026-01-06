@@ -56,14 +56,10 @@ class Chitin:
         self.game: Game | None = game
         self.load()
 
-    def __iter__(
-        self,
-    ) -> Iterator[FileResource]:
+    def __iter__(self) -> Iterator[FileResource]:
         yield from self._resources
 
-    def __len__(
-        self,
-    ):
+    def __len__(self):
         return len(self._resources)
 
     def load(self):

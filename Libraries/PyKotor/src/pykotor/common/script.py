@@ -37,14 +37,10 @@ class ScriptConstant:
             msg = "Script constant value argument does not match given datatype."
             raise ValueError(msg)
 
-    def __repr__(
-        self,
-    ):
+    def __repr__(self):
         return f'ScriptConstant("{self.datatype}", "{self.name}", "{self.value}")'
 
-    def __str__(
-        self,
-    ):
+    def __str__(self):
         return f"{self.datatype} {self.name} = {self.value};"
 
 
@@ -59,14 +55,10 @@ class ScriptParam:
         self.name: str = name
         self.default: Any | None = default
 
-    def __repr__(
-        self,
-    ):
+    def __repr__(self):
         return f"ScriptParam({self.datatype!r}, {self.name!r}, {self.default!r})"
 
-    def __str__(
-        self,
-    ):
+    def __str__(self):
         if self.default is not None:
             return f"{self.datatype} {self.name} = {self.default}"
         return f"{self.datatype} {self.name}"
@@ -87,14 +79,10 @@ class ScriptFunction:
         self.description: str = description
         self.raw: str = raw
 
-    def __repr__(
-        self,
-    ):
+    def __repr__(self):
         return f"ScriptFunction({self.returntype!r}, {self.name!r}, {self.params!r}, {self.description!r}, {self.raw!r})"
 
-    def __str__(
-        self,
-    ):
+    def __str__(self):
         param_str = ""
         for param in self.params:
             param_str += str(param)

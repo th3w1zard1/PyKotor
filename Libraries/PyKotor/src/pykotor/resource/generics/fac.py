@@ -29,9 +29,7 @@ class FACFaction:
             Standard factions (PC, Hostile, Commoner, Merchant) use 0xFFFFFFFF
     """
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self.name: str = ""
         self.global_effect: bool = False
         self.parent_id: int = 0xFFFFFFFF
@@ -55,9 +53,7 @@ class FACReputation:
             90-100 = Faction2 is friendly to Faction1
     """
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self.faction_id1: int = 0
         self.faction_id2: int = 0
         self.reputation: int = 50  # Default to neutral
@@ -89,9 +85,7 @@ class FAC:
 
     BINARY_TYPE = ResourceType.FAC
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self.factions: list[FACFaction] = []
         self.reputations: list[FACReputation] = []
 

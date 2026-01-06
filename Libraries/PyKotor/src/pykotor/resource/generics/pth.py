@@ -32,20 +32,14 @@ class PTH:
 
     BINARY_TYPE = ResourceType.PTH
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self._points: list[Vector2] = []
         self._connections: list[PTHEdge] = []
 
-    def __iter__(
-        self,
-    ):
+    def __iter__(self):
         yield from self._points
 
-    def __len__(
-        self,
-    ):
+    def __len__(self):
         return len(self._points)
 
     def __getitem__(
@@ -138,9 +132,7 @@ class PTHEdge:
         self.source: int = source
         self.target: int = target
 
-    def __repr__(
-        self,
-    ):
+    def __repr__(self):
         return f"{self.__class__.__name__}(source={self.source}, target={self.target})"
 
     def __eq__(

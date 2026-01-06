@@ -86,9 +86,7 @@ class VIS(ComparableMixin):
     COMPARABLE_SET_FIELDS = ("_rooms",)
     COMPARABLE_FIELDS = ("_visibility",)
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         # vendor/reone/src/libs/resource/format/visreader.cpp:46-49
         # vendor/KotOR.js/src/resource/VISObject.ts:34,118
         # Set of all room names (stored lowercase for case-insensitive comparison)
@@ -111,15 +109,11 @@ class VIS(ComparableMixin):
             tuple(sorted((k, tuple(sorted(v))) for k, v in self._visibility.items())),
         ))
 
-    def __iter__(
-        self,
-    ) -> Generator[tuple[str, set[str]], Any, None]:
+    def __iter__(self) -> Generator[tuple[str, set[str]], Any, None]:
         for observer, observed in self._visibility.items():
             yield observer, deepcopy(observed)
 
-    def all_rooms(
-        self,
-    ) -> set[str]:
+    def all_rooms(self) -> set[str]:
         """Returns a copy of the set of rooms.
 
         Args:
@@ -278,9 +272,7 @@ class VIS(ComparableMixin):
 
         return show in self._visibility[when_inside]
 
-    def set_all_visible(
-        self,
-    ):
+    def set_all_visible(self):
         """Sets all rooms visible from each other.
 
         Processing Logic:

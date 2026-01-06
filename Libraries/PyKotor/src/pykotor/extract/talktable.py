@@ -162,9 +162,7 @@ class TalkTable:  # TODO(th3w1zard1): dialogf.tlk  # noqa: FIX002, TD003
 
             return batch
 
-    def size(
-        self,
-    ) -> int:
+    def size(self) -> int:
         """Returns the number of entries in the talk table.
 
         Returns:
@@ -175,9 +173,7 @@ class TalkTable:  # TODO(th3w1zard1): dialogf.tlk  # noqa: FIX002, TD003
             reader.seek(12)
             return reader.read_uint32()  # entries_count
 
-    def language(
-        self,
-    ) -> Language:
+    def language(self) -> Language:
         """Returns the matching Language of the TLK file.
 
         Returns:

@@ -10,9 +10,7 @@ from typing import Any
 class DLGAnimation:
     """Represents a unit of animation executed during a node."""
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self._hash_cache: int = uuid.uuid4().int
         self.animation_id: int = 6
         self.participant: str = ""

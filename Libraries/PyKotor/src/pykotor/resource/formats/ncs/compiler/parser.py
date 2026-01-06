@@ -268,7 +268,7 @@ class NssParser:
             block: CodeBlock = p[1]
             block.add(p[2])
             p[0] = block
-        elif len(p) == 2:  # sourcery skip: class-extract-method
+        elif len(p) == 2:
             block = CodeBlock()
             block.add(p[1])
             p[0] = block

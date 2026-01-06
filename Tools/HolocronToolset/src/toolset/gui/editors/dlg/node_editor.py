@@ -55,9 +55,7 @@ class NodePort:
         self.connections: list[Connection] = []
         self.pos: QPointF = QPointF()
 
-    def get_scene_pos(
-        self,
-    ) -> QPointF:
+    def get_scene_pos(self) -> QPointF:
         return self.parent_node.mapToScene(self.pos)
 
 
@@ -88,9 +86,7 @@ class Connection(QGraphicsPathItem):
         )
         self.setAcceptHoverEvents(True)
 
-    def update_position(
-        self,
-    ):
+    def update_position(self):
         start_pos: QPointF = self.start_port.get_scene_pos()
         end_pos: QPointF = self.end_port.get_scene_pos()
 
@@ -124,9 +120,7 @@ class Connection(QGraphicsPathItem):
         self.setPen(QPen(q_app_style.palette().color(QPalette.ColorRole.Text), 2, Qt.PenStyle.SolidLine))
         super().hoverLeaveEvent(event)
 
-    def animate_path_update(
-        self,
-    ):
+    def animate_path_update(self):
         """Animate connection path changes."""
         start_pos: QPointF = self.start_port.get_scene_pos()
         end_pos: QPointF = self.end_port.get_scene_pos()
@@ -373,9 +367,7 @@ class Node(QGraphicsRectItem):
 
         super().mouseMoveEvent(event)
 
-    def duplicate(
-        self,
-    ) -> Node:
+    def duplicate(self) -> Node:
         """Create a copy of this node."""
         new_node: Self = self.__class__(
             self.title,
@@ -390,9 +382,7 @@ class Node(QGraphicsRectItem):
         gr_scene.addItem(new_node)
         return new_node
 
-    def add_input_port(
-        self,
-    ):
+    def add_input_port(self):
         """Add a new input port to the node."""
         port: NodePort = NodePort(self, is_input=True, label=f"In {len(self.input_ports)}")
         y_offset: int = 40 + len(self.input_ports) * 20
@@ -400,9 +390,7 @@ class Node(QGraphicsRectItem):
         self.input_ports.append(port)
         self.update()
 
-    def add_output_port(
-        self,
-    ):
+    def add_output_port(self):
         """Add a new output port to the node."""
         port: NodePort = NodePort(
             self,
@@ -414,9 +402,7 @@ class Node(QGraphicsRectItem):
         self.output_ports.append(port)
         self.update()
 
-    def delete(
-        self,
-    ):
+    def delete(self):
         """Delete this node and its connections."""
         # Remove all connections
         for port in (*self.input_ports, *self.output_ports):
@@ -478,9 +464,7 @@ class Node(QGraphicsRectItem):
         self.setRect(new_rect)
         self.update_port_positions()
 
-    def update_port_positions(
-        self,
-    ):
+    def update_port_positions(self):
         """Update port positions after resize."""
         rect: QRectF = self.rect()
 
@@ -507,9 +491,7 @@ class Node(QGraphicsRectItem):
         animation.setEasingCurve(QEasingCurve.Type.OutCubic)
         animation.start()
 
-    def highlight(
-        self,
-    ):
+    def highlight(self):
         """Temporarily highlight the node."""
         effect: QGraphicsDropShadowEffect = QGraphicsDropShadowEffect()
         effect.setColor(QColor(255, 255, 0))
@@ -739,9 +721,7 @@ class DialogueNodeEditor(QGraphicsView):
     ):
         self._editor = value
 
-    def setup_grid(
-        self,
-    ):
+    def setup_grid(self):
         # Create a dark background with grid using palette colors
         palette: QPalette = self.palette()
         dark_color: QColor = palette.color(QPalette.ColorRole.Window).darker(150)
@@ -972,9 +952,7 @@ class DialogueNodeEditor(QGraphicsView):
         else:
             self.scale(1 / zoom_factor, 1 / zoom_factor)
 
-    def setup_shortcuts(
-        self,
-    ):
+    def setup_shortcuts(self):
         QShortcut(QKeySequence.StandardKey.Delete, self).activated.connect(self.delete_selected)
         QShortcut(QKeySequence.StandardKey.Copy, self).activated.connect(self.copy_selected)
         QShortcut(QKeySequence.StandardKey.Paste, self).activated.connect(self.paste)

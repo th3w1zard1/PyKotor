@@ -698,7 +698,7 @@ class Editor(QMainWindow):
             - Checks for RIM saving disabled setting and shows dialog
             - Writes data to RIM file
             - Updates installation cache.
-        """  # sourcery skip: class-extract-method
+        """
         assert self._filepath is not None, assert_with_variable_trace(self._filepath is not None)
         assert self._resname is not None, assert_with_variable_trace(self._resname is not None)
         assert self._restype is not None, assert_with_variable_trace(self._restype is not None)

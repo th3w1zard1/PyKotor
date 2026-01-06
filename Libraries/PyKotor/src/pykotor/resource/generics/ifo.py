@@ -35,9 +35,7 @@ class IFO:
 
     BINARY_TYPE = ResourceType.IFO
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         # vendor/reone/src/libs/resource/parser/gff/ifo.cpp:51
         # vendor/Kotor.NET/Kotor.NET/Resources/KotorIFO/IFO.cs:15
         # vendor/KotOR.js/src/module/Module.ts:100 (id: Uint8Array = new Uint8Array(16))

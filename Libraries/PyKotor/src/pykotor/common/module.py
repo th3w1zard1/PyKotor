@@ -607,7 +607,7 @@ class Module:  # noqa: PLR0904
 
     @staticmethod
     @lru_cache(maxsize=5000)
-    def name_to_root(name: str) -> str:  # sourcery skip: inline-immediately-returned-variable
+    def name_to_root(name: str) -> str:
         """Extracts the root module name from a string path or filename.
 
         This method strips any path components, file extensions, and common module suffixes
@@ -642,7 +642,7 @@ class Module:  # noqa: PLR0904
         return root  # noqa: RET504
 
     @staticmethod
-    def filepath_to_root(filepath: os.PathLike | str) -> str:  # sourcery skip: inline-immediately-returned-variable
+    def filepath_to_root(filepath: os.PathLike | str) -> str:
         """Converts a filesystem path to a module root name.
 
         This is a convenience wrapper around name_to_root() that handles PathLike objects.
@@ -1050,9 +1050,7 @@ class Module:  # noqa: PLR0904
         """
         return next((resource for resource in self.resources.values() if (resource.restype() is ResourceType.VIS and resource.resname() == self.module_id())), None)
 
-    def are(
-        self,
-    ) -> ModuleResource[ARE] | None:
+    def are(self) -> ModuleResource[ARE] | None:
         """Returns the ARE resource with the given ID if it exists.
 
         Args:
@@ -1074,9 +1072,7 @@ class Module:  # noqa: PLR0904
             None,
         )
 
-    def git(
-        self,
-    ) -> ModuleResource[GIT] | None:  # sourcery skip: remove-unreachable-code
+    def git(self) -> ModuleResource[GIT] | None:
         """Returns the git resource with matching id if found.
 
         Args:
@@ -1106,9 +1102,7 @@ class Module:  # noqa: PLR0904
                 RobustLogger().warning("This module '%s' has an incorrect GIT resname/resref! Expected '%s', found '%s'", self._root, self.module_id(), fallback.resname())  # noqa: RET503
         return result  # noqa: RET504
 
-    def pth(
-        self,
-    ) -> ModuleResource[PTH] | None:
+    def pth(self) -> ModuleResource[PTH] | None:
         """Finds the PTH resource with matching ID.
 
         Args:
@@ -1132,9 +1126,7 @@ class Module:  # noqa: PLR0904
     def ifo(self) -> ModuleResource[IFO] | None:
         return self.info()
 
-    def info(
-        self,
-    ) -> ModuleResource[IFO] | None:
+    def info(self) -> ModuleResource[IFO] | None:
         """Returns the ModuleResource with type IFO if it exists.
 
         Args:
@@ -1183,9 +1175,7 @@ class Module:  # noqa: PLR0904
             None,
         )
 
-    def creatures(
-        self,
-    ) -> list[ModuleResource[UTC]]:
+    def creatures(self) -> list[ModuleResource[UTC]]:
         """Returns a list of UTC resources.
 
         Args:
@@ -1230,9 +1220,7 @@ class Module:  # noqa: PLR0904
             None,
         )
 
-    def placeables(
-        self,
-    ) -> list[ModuleResource[UTP]]:
+    def placeables(self) -> list[ModuleResource[UTP]]:
         """Returns a list of UTP resources for this module.
 
         Args:
@@ -1277,9 +1265,7 @@ class Module:  # noqa: PLR0904
             None,
         )
 
-    def doors(
-        self,
-    ) -> list[ModuleResource[UTD]]:
+    def doors(self) -> list[ModuleResource[UTD]]:
         """Returns a list of all UTD resources for this module.
 
         Args:
@@ -1324,9 +1310,7 @@ class Module:  # noqa: PLR0904
             None,
         )
 
-    def items(
-        self,
-    ) -> list[ModuleResource[UTI]]:
+    def items(self) -> list[ModuleResource[UTI]]:
         """Returns a list of UTI resources for this module.
 
         Args:
@@ -1372,9 +1356,7 @@ class Module:  # noqa: PLR0904
             None,
         )
 
-    def encounters(
-        self,
-    ) -> list[ModuleResource[UTE]]:
+    def encounters(self) -> list[ModuleResource[UTE]]:
         """Returns a list of UTE resources for this module.
 
         Args:
@@ -1418,9 +1400,7 @@ class Module:  # noqa: PLR0904
             None,
         )
 
-    def stores(
-        self,
-    ) -> list[ModuleResource[UTM]]:
+    def stores(self) -> list[ModuleResource[UTM]]:
         """Returns a list of material (UTM) resources for this module."""
         return [resource for resource in self.resources.values() if resource.restype() is ResourceType.UTM]
 
@@ -1451,9 +1431,7 @@ class Module:  # noqa: PLR0904
             None,
         )
 
-    def triggers(
-        self,
-    ) -> list[ModuleResource[UTT]]:
+    def triggers(self) -> list[ModuleResource[UTT]]:
         """Returns a list of UTT resources for this module.
 
         Args:
@@ -1500,9 +1478,7 @@ class Module:  # noqa: PLR0904
             None,
         )
 
-    def waypoints(
-        self,
-    ) -> list[ModuleResource[UTW]]:
+    def waypoints(self) -> list[ModuleResource[UTW]]:
         """Returns list of UTW resources from resources dict.
 
         Returns:
@@ -1569,9 +1545,7 @@ class Module:  # noqa: PLR0904
             None,
         )
 
-    def models(
-        self,
-    ) -> list[ModuleResource[MDL]]:
+    def models(self) -> list[ModuleResource[MDL]]:
         """Returns a list of MDL model resources.
 
         Args:
@@ -1589,9 +1563,7 @@ class Module:  # noqa: PLR0904
         """
         return [resource for resource in self.resources.values() if resource.restype() is ResourceType.MDL]
 
-    def model_exts(
-        self,
-    ) -> list[ModuleResource]:
+    def model_exts(self) -> list[ModuleResource]:
         """Returns a list of MDX model resources.
 
         Args:
@@ -1637,9 +1609,7 @@ class Module:  # noqa: PLR0904
             None,
         )
 
-    def textures(
-        self,
-    ) -> list[ModuleResource[MDL]]:
+    def textures(self) -> list[ModuleResource[MDL]]:
         """Generates a list of texture resources from this module.
 
         Args:
@@ -1685,9 +1655,7 @@ class Module:  # noqa: PLR0904
             None,
         )
 
-    def sounds(
-        self,
-    ) -> list[ModuleResource[UTS]]:
+    def sounds(self) -> list[ModuleResource[UTS]]:
         """Returns a list of UTS resources.
 
         Args:
@@ -1707,9 +1675,7 @@ class Module:  # noqa: PLR0904
         """
         return [resource for resource in self.resources.values() if resource.restype() is ResourceType.UTS]
 
-    def loadscreen(
-        self,
-    ) -> FileResource | None:
+    def loadscreen(self) -> FileResource | None:
         """Returns a FileResource object representing the loadscreen texture for this module.
 
         The loadscreen is determined by:
@@ -2180,9 +2146,7 @@ class ModuleResource(Generic[T]):
     def isActive(self) -> bool:
         return bool(self._active)
 
-    def save(
-        self,
-    ):
+    def save(self):
         """Saves the resource to the active file.
 
         Args:

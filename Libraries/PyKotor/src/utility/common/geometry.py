@@ -30,19 +30,13 @@ class Vector2:
         self.x: float = x
         self.y: float = y
 
-    def __iter__(
-        self,
-    ) -> Iterator[float]:
+    def __iter__(self) -> Iterator[float]:
         return iter((self.x, self.y))
 
-    def __repr__(
-        self,
-    ) -> str:
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}({self.x}, {self.y})"
 
-    def __str__(
-        self,
-    ):
+    def __str__(self):
         """Returns the individual components separated by whitespace."""
         return f"{self.x} {self.y}"
 
@@ -250,9 +244,7 @@ class Vector2:
         self.x = x
         self.y = y
 
-    def normalize(
-        self,
-    ):
+    def normalize(self):
         """Normalizes the vector so that the magnitude is equal to one while maintaining the same angle."""
         magnitude = self.magnitude()
         if magnitude == 0:
@@ -262,9 +254,7 @@ class Vector2:
             self.x /= magnitude
             self.y /= magnitude
 
-    def magnitude(
-        self,
-    ) -> float:
+    def magnitude(self) -> float:
         """Returns the magnitude of the vector.
 
         Returns:
@@ -273,9 +263,7 @@ class Vector2:
         """
         return math.sqrt(self.x**2 + self.y**2)
 
-    def normal(
-        self,
-    ) -> Self:
+    def normal(self) -> Self:
         vec2 = self.__class__.from_vector2(self)
         vec2.normalize()
         return vec2
@@ -334,9 +322,7 @@ class Vector2:
         """
         return any(item is self for item in container)
 
-    def angle(
-        self,
-    ) -> float:
+    def angle(self) -> float:
         """Returns the angle of the vector.
 
         Returns:
@@ -366,19 +352,13 @@ class Vector3:
         self.y: float = y
         self.z: float = z
 
-    def __iter__(
-        self,
-    ) -> Iterator[float]:
+    def __iter__(self) -> Iterator[float]:
         return iter((self.x, self.y, self.z))
 
-    def __repr__(
-        self,
-    ):
+    def __repr__(self):
         return f"Vector3({self.x}, {self.y}, {self.z})"
 
-    def __str__(
-        self,
-    ):
+    def __str__(self):
         """Returns the individual components as a string separated by whitespace."""
         return f"{self.x} {self.y} {self.z}"
 
@@ -566,9 +546,7 @@ class Vector3:
         self.y = y
         self.z = z
 
-    def normalize(
-        self,
-    ) -> Self:
+    def normalize(self) -> Self:
         """Normalizes the vector so that the magnitude is equal to one while maintaining the same angle."""
         magnitude = self.magnitude()
         if magnitude == 0:
@@ -581,9 +559,7 @@ class Vector3:
             self.z /= magnitude
         return self
 
-    def magnitude(
-        self,
-    ) -> float:
+    def magnitude(self) -> float:
         """Returns the magnitude of the vector.
 
         Returns:
@@ -592,9 +568,7 @@ class Vector3:
         """
         return math.sqrt(self.x**2 + self.y**2 + self.z**2)
 
-    def normal(
-        self,
-    ) -> Self:
+    def normal(self) -> Self:
         vec3 = self.__class__.from_vector3(self)
         vec3.normalize()
         return vec3
@@ -688,19 +662,13 @@ class Vector4:
         self.z: float = z
         self.w: float = w
 
-    def __iter__(
-        self,
-    ) -> Iterator[float]:
+    def __iter__(self) -> Iterator[float]:
         return iter((self.x, self.y, self.z, self.w))
 
-    def __repr__(
-        self,
-    ):
+    def __repr__(self):
         return f"Vector4({self.x}, {self.y}, {self.z}, {self.w})"
 
-    def __str__(
-        self,
-    ):
+    def __str__(self):
         """Returns the individual components as a string separated by whitespace."""
         return f"{self.x} {self.y} {self.z} {self.w}"
 
@@ -913,9 +881,7 @@ class Vector4:
 
         return cls(qx, qy, qz, qw)
 
-    def to_compressed(
-        self,
-    ) -> int:
+    def to_compressed(self) -> int:
         """Compress this quaternion into a 32-bit integer.
         
         Inverse of from_compressed. Packs X, Y, Z components into a single
@@ -953,9 +919,7 @@ class Vector4:
         # Pack into single 32-bit integer
         return x_packed | (y_packed << 11) | (z_packed << 22)
 
-    def to_euler(
-        self,
-    ) -> Vector3:
+    def to_euler(self) -> Vector3:
         """Converts a quaternion to Euler angles.
 
         Args:
@@ -988,9 +952,7 @@ class Vector4:
 
         return Vector3(roll, pitch, yaw)
 
-    def magnitude(
-        self,
-    ) -> float:
+    def magnitude(self) -> float:
         """Returns the magnitude of the vector.
 
         Returns:
@@ -999,9 +961,7 @@ class Vector4:
         """
         return math.sqrt(self.x**2 + self.y**2 + self.z**2 + self.w**2)
 
-    def normalize(
-        self,
-    ) -> Self:
+    def normalize(self) -> Self:
         """Normalizes the vector so that the magnitude is equal to one while maintaining the same angle.
 
         Returns:
@@ -1151,9 +1111,7 @@ class SurfaceMaterial(IntEnum):
     SURFACE_MATERIAL_29 = 29
     TRIGGER = 30
 
-    def walkable(
-        self,
-    ) -> bool:
+    def walkable(self) -> bool:
         """Returns True if the surface material is walkable, False otherwise."""
         return self in {
             SurfaceMaterial.DIRT,
@@ -1218,9 +1176,7 @@ class Face:
         """Hash based on vertices and material for use in sets/dicts."""
         return hash((self.v1, self.v2, self.v3, self.material))
 
-    def normal(
-        self,
-    ) -> Vector3:
+    def normal(self) -> Vector3:
         """Returns the normal for the face.
 
         Returns:
@@ -1238,27 +1194,19 @@ class Face:
 
         return normal
 
-    def area(
-        self,
-    ) -> float:
+    def area(self) -> float:
         a = self.v1.distance(self.v2)
         b = self.v1.distance(self.v3)
         c = self.v2.distance(self.v3)
         return 0.25 * math.sqrt((a + b + c) * (-a + b + c) * (a - b + c) * (a + b - c))
 
-    def planar_distance(
-        self,
-    ) -> float:
+    def planar_distance(self) -> float:
         return -1.0 * (self.normal().dot(self.v1))
 
-    def centre(
-        self,
-    ) -> Vector3:
+    def centre(self) -> Vector3:
         return (self.v1 + self.v2 + self.v3) / 3
 
-    def average(
-        self,
-    ) -> Vector3:
+    def average(self) -> Vector3:
         """Returns the average point of the face.
 
         Returns:
@@ -1299,19 +1247,13 @@ class Polygon2:
     ):
         self.points: list[Vector2] = [] if points is None else points
 
-    def __iter__(
-        self,
-    ) -> Iterator[Vector2]:
+    def __iter__(self) -> Iterator[Vector2]:
         yield from self.points
 
-    def __len__(
-        self,
-    ) -> int:
+    def __len__(self) -> int:
         return len(self.points)
 
-    def __repr__(
-        self,
-    ) -> str:
+    def __repr__(self) -> str:
         return f"Polygon2({self.points})"
 
     def __getitem__(
@@ -1397,9 +1339,7 @@ class Polygon2:
             p1 = p2
         return inside
 
-    def area(
-        self,
-    ) -> float:
+    def area(self) -> float:
         """Calculates the area of a polygon.
 
         Args:
@@ -1458,19 +1398,13 @@ class Polygon3:
     ):
         self.points: list[Vector3] = [] if points is None else points
 
-    def __iter__(
-        self,
-    ) -> Iterator[Vector3]:
+    def __iter__(self) -> Iterator[Vector3]:
         yield from self.points
 
-    def __len__(
-        self,
-    ) -> int:
+    def __len__(self) -> int:
         return len(self.points)
 
-    def __repr__(
-        self,
-    ):
+    def __repr__(self):
         return f"Polygon3({self.points})"
 
     def __getitem__(

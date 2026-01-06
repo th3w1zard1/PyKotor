@@ -190,9 +190,7 @@ class BWM(ComparableMixin):
     COMPARABLE_FIELDS = ("walkmesh_type", "position", "relative_hook1", "relative_hook2", "absolute_hook1", "absolute_hook2")
     COMPARABLE_SEQUENCE_FIELDS = ("faces",)
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         # vendor/reone/src/libs/graphics/format/bwmreader.cpp:30,67
         # vendor/KotOR.js/src/odyssey/OdysseyWalkMesh.ts:60
         # Walkmesh type (AreaModel=WOK or PlaceableOrDoor=PWK/DWK)
@@ -251,9 +249,7 @@ class BWM(ComparableMixin):
             )
         )
 
-    def walkable_faces(
-        self,
-    ) -> list[BWMFace]:
+    def walkable_faces(self) -> list[BWMFace]:
         """Get a list of walkable faces'.
 
         Args:
@@ -272,9 +268,7 @@ class BWM(ComparableMixin):
         """
         return [face for face in self.faces if face.material.walkable()]
 
-    def unwalkable_faces(
-        self,
-    ) -> list[BWMFace]:
+    def unwalkable_faces(self) -> list[BWMFace]:
         """Return unwalkable faces in the mesh.
 
         Returns:
@@ -290,9 +284,7 @@ class BWM(ComparableMixin):
         """
         return [face for face in self.faces if not face.material.walkable()]
 
-    def vertices(
-        self,
-    ) -> list[Vector3]:
+    def vertices(self) -> list[Vector3]:
         """Returns unique vertex objects referenced by faces in the walkmesh.
 
         Returns:
@@ -310,9 +302,7 @@ class BWM(ComparableMixin):
                 vertices.append(face.v3)
         return vertices
 
-    def aabbs(
-        self,
-    ) -> list[BWMNodeAABB]:
+    def aabbs(self) -> list[BWMNodeAABB]:
         """Returns a list of AABBs for all faces in the node.
 
         Args:
@@ -479,9 +469,7 @@ class BWM(ComparableMixin):
 
         return aabb
 
-    def edges(
-        self,
-    ) -> list[BWMEdge]:
+    def edges(self) -> list[BWMEdge]:
         """Returns perimeter edges (edges with no walkable neighbor).
 
         Args:
@@ -1220,9 +1208,7 @@ class BWM(ComparableMixin):
 
         return adj_index1, adj_index2, adj_index3
 
-    def box(
-        self,
-    ) -> tuple[Vector3, Vector3]:
+    def box(self) -> tuple[Vector3, Vector3]:
         """Calculates bounding box of the mesh.
 
         Args:

@@ -86,9 +86,7 @@ class UTW:
 
     BINARY_TYPE = ResourceType.UTW
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self.resref: ResRef = ResRef.from_blank()
         self.comment: str = ""
         self.tag: str = ""

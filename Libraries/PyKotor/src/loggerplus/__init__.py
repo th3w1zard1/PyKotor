@@ -467,7 +467,7 @@ class MetaLogger(type):
         return getattr(instance, attr_name)
 
     def __call__(cls, *args, **kwargs) -> RobustLogger:
-        # sourcery skip: assign-if-exp, merge-duplicate-blocks, reintroduce-else, remove-redundant-if, split-or-ifs
+        """Handle calling the RobustLogger class."""
         instance: RobustLogger | None = type.__getattribute__(RobustLogger, "_singleton_instance")
         if instance is None:
             instance = MetaLogger._create_instance(cls)  # type: ignore[arg-type]

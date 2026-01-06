@@ -141,9 +141,7 @@ class UTE:
 
     BINARY_TYPE = ResourceType.UTE
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self.resref: ResRef = ResRef.from_blank()
         self.tag: str = ""
         self.comment: str = ""
@@ -212,9 +210,7 @@ class UTECreature:
             Reference: Kotor.NET/UTE.cs:43 (GuaranteedCount property)
     """
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self.appearance_id: int = 0
         self.challenge_rating: float = 0.0
         self.resref: ResRef = ResRef.from_blank()
@@ -222,9 +218,7 @@ class UTECreature:
         self.guaranteed_count: int = 0
 
 
-def utd_version(
-    gff: GFF,
-) -> Game:
+def utd_version(gff: GFF) -> Game:
     for label in "GuaranteedCount":
         for creature_struct in gff.root.acquire("CreatureList", GFFList()):
             if creature_struct.exists(label):
@@ -232,9 +226,7 @@ def utd_version(
     return Game.K1
 
 
-def construct_ute(
-    gff: GFF,
-) -> UTE:
+def construct_ute(gff: GFF) -> UTE:
     ute = UTE()
 
     root = gff.root

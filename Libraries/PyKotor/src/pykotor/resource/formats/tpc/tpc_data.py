@@ -504,15 +504,11 @@ class TPC(ComparableMixin):
         """Set the TXI data from a string."""
         self._txi.load(value)
 
-    def format(
-        self,
-    ) -> TPCTextureFormat:
+    def format(self) -> TPCTextureFormat:
         """Get the texture format."""
         return self._format
 
-    def is_compressed(
-        self,
-    ) -> bool:
+    def is_compressed(self) -> bool:
         """Check if the texture is compressed."""
         return self._format in {TPCTextureFormat.DXT1, TPCTextureFormat.DXT3, TPCTextureFormat.DXT5}
 
@@ -521,9 +517,7 @@ class TPC(ComparableMixin):
         mm: TPCMipmap = self.layers[layer].mipmaps[mipmap]
         return mm.width, mm.height
 
-    def dimensions(
-        self,
-    ) -> tuple[int, int]:
+    def dimensions(self) -> tuple[int, int]:
         """Get the dimensions of the texture."""
         if not self.layers:
             return 0, 0

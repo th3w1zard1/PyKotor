@@ -259,7 +259,7 @@ class PTHEditor(Editor):
         restype: ResourceType,
         data: bytes,
     ):
-        super().load(filepath, resref, restype, data)  # sourcery skip: class-extract-method
+        super().load(filepath, resref, restype, data)
 
         order: list[SearchLocation] = [SearchLocation.OVERRIDE, SearchLocation.CHITIN, SearchLocation.MODULES]
         assert self._installation is not None

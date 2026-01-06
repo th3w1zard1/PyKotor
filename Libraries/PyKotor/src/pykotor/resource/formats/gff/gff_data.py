@@ -411,9 +411,7 @@ class _GFFField:
         else:
             self._value = value
 
-    def field_type(
-        self,
-    ) -> GFFFieldType:
+    def field_type(self) -> GFFFieldType:
         """Returns the field type.
 
         Returns:
@@ -422,9 +420,7 @@ class _GFFField:
         """
         return self._field_type
 
-    def value(
-        self,
-    ) -> Any:
+    def value(self) -> Any:
         """Returns the value.
 
         Returns:
@@ -610,9 +606,7 @@ class GFFStruct(ComparableMixin, dict):
 
         return "\n".join(lines)
 
-    def __iter__(
-        self,
-    ) -> Generator[tuple[str, GFFFieldType, Any], Any, None]:
+    def __iter__(self) -> Generator[tuple[str, GFFFieldType, Any], Any, None]:
         """Iterates through the stored fields yielding each field's (label, type, value)."""
         for label, field in self._fields.items():
             yield label, field.field_type(), field.value()
@@ -705,7 +699,7 @@ class GFFStruct(ComparableMixin, dict):
             log_func()
             is_same = False
             return is_same
-        if len(self) != len(other) and not ignore_default_changes:  # sourcery skip: class-extract-method
+        if len(self) != len(other) and not ignore_default_changes:
             log_func("")
             log_func(f"GFFStruct: number of fields have changed at '{current_path}': '{len(self)}' --> '{len(other)}'")
             is_same = False
@@ -1778,9 +1772,7 @@ class GFFList(ComparableMixin, list):
 
     COMPARABLE_SEQUENCE_FIELDS = ("_structs",)
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         # Initialize list first
         super().__init__()
         self._structs: list[GFFStruct] = []

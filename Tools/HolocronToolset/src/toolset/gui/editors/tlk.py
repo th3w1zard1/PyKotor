@@ -225,7 +225,7 @@ class TLKEditor(Editor):
     def change_language(
         self,
         language: Language,
-    ):  # sourcery skip: class-extract-method
+    ):
         self.language = language
         self._update_language_menu_checkmarks()
 
@@ -247,7 +247,7 @@ class TLKEditor(Editor):
         restype: ResourceType,
         data: bytes | bytearray,
     ):
-        super().load(filepath, resref, restype, data)  # sourcery skip: class-extract-method
+        super().load(filepath, resref, restype, data)
         self.source_model.clear()
         self.source_model.setColumnCount(2)
         self.ui.talkTable.hideColumn(1)
@@ -401,7 +401,7 @@ class TLKEditor(Editor):
     def new(self):
         super().new()
 
-        self.source_model.clear()  # sourcery skip: class-extract-method
+        self.source_model.clear()
         self.source_model.setColumnCount(2)
         self.ui.talkTable.hideColumn(1)
         self.ui.textEdit.setEnabled(False)

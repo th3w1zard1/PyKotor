@@ -167,9 +167,7 @@ class _GeometryHeader:
     # Using the same values ensures byte-level parity with MDLOps output.
     MDLOPS_PADDING: ClassVar[bytes] = b"\x31\x96\xBD"
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self.function_pointer0: int = 0
         self.function_pointer1: int = 0
         self.model_name: str = ""
@@ -391,9 +389,7 @@ class _Node:
         # Controller Data
     """
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self.header: _NodeHeader | None = _NodeHeader()
         self.trimesh: _TrimeshHeader | None = None
         self.skin: _SkinmeshHeader | None = None
@@ -838,9 +834,7 @@ class _Node:
             offset += self.skin_extra_size()
         return offset
 
-    def children_offsets_size(
-        self,
-    ) -> int:
+    def children_offsets_size(self) -> int:
         assert self.header is not None
         return 4 * self.header.children_count
 
@@ -852,9 +846,7 @@ class _Node:
         # Reference: vendor/MDLOps/MDLOpsM.pm:7967-7971
         return self.children_offsets_offset(game) + self.children_offsets_size()
 
-    def controllers_size(
-        self,
-    ) -> int:
+    def controllers_size(self) -> int:
         return _Controller.SIZE * len(self.w_controllers)
 
     def controller_data_offset(
@@ -863,9 +855,7 @@ class _Node:
     ) -> int:
         return self.controllers_offset(game) + self.controllers_size()
 
-    def controller_data_size(
-        self,
-    ) -> int:
+    def controller_data_size(self) -> int:
         return len(self.w_controller_data) * 4
 
     def skin_extra_size(self) -> int:
@@ -899,9 +889,7 @@ class _Node:
 class _NodeHeader:
     SIZE = 80
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self.type_id: int = 1
         self.name_id: int = 0
         self.node_id: int = 0
@@ -1032,9 +1020,7 @@ class _TrimeshHeader:
     K1_DANGLY_FUNCTION_POINTER1: Literal[0x405730] = 4216624
     K2_DANGLY_FUNCTION_POINTER1: Literal[0x405810] = 4216848
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self.function_pointer0: int = 0
         self.function_pointer1: int = 0
         self.offset_to_faces: int = 0
@@ -1394,19 +1380,13 @@ class _TrimeshHeader:
     ) -> int:
         return _TrimeshHeader.K1_SIZE if game == Game.K1 else _TrimeshHeader.K2_SIZE
 
-    def faces_size(
-        self,
-    ) -> int:
+    def faces_size(self) -> int:
         return len(self.faces) * _Face.SIZE
 
-    def vertices_size(
-        self,
-    ) -> int:
+    def vertices_size(self) -> int:
         return len(self.vertices) * 12
 
-    def vertex_indices_size(
-        self,
-    ) -> int:
+    def vertex_indices_size(self) -> int:
         """Size of vertex indices array (3 int16s per face = 6 bytes per face).
         
         Reference: vendor/MDLOps/MDLOpsM.pm:7936-7940 (vertindexes writing)
@@ -1415,9 +1395,7 @@ class _TrimeshHeader:
 
 
 class _DanglymeshHeader:
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self.offset_to_contraints: int = 0
         self.constraints_count: int = 0
         self.constraints_count2: int = 0
@@ -1463,9 +1441,7 @@ class _DanglymeshHeader:
 class _SkinmeshHeader:
     SIZE: ClassVar[int] = 100
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self.unknown2: int = 0  # TODO: what is this?
         self.unknown3: int = 0  # TODO: what is this?
         self.unknown4: int = 0  # TODO: what is this?
@@ -1579,9 +1555,7 @@ class _SkinmeshHeader:
 
 
 class _SaberHeader:
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self.offset_to_vertices: int = 0
         self.offset_to_texcoords: int = 0
         self.offset_to_normals: int = 0
@@ -1611,9 +1585,7 @@ class _SaberHeader:
 
 
 class _LightHeader:
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self.offset_to_unknown0: int = 0
         self.unknown0_count: int = 0
         self.unknown0_count2: int = 0
@@ -1717,9 +1689,7 @@ class _LightHeader:
 
 
 class _EmitterHeader:
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         # MDLOps emitter_header template (size 224):
         #   f[3]L[5]Z[32]Z[32]Z[32]Z[32]Z[16]L[2]SCZ[32]CL
         # See: `vendor/MDLOps/MDLOpsM.pm` lines ~176-190 and ~6889+.
@@ -1808,9 +1778,7 @@ class _EmitterHeader:
 
 
 class _ReferenceHeader:
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self.model: str = ""
         self.reattachable: int = 0
 
@@ -1833,9 +1801,7 @@ class _ReferenceHeader:
 class _Face:
     SIZE = 32
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self.normal: Vector3 = Vector3.from_null()
         self.plane_coefficient: float = 0.0
         self.material: int = 0
@@ -3579,9 +3545,7 @@ class MDLBinaryWriter:
             for _ in range(pad_floats):
                 self._writer_ext.write_single(0.0)
 
-    def _calc_top_offsets(
-        self,
-    ):
+    def _calc_top_offsets(self):
         offset_to_name_offsets = _ModelHeader.SIZE
 
         offset_to_names = offset_to_name_offsets + 4 * len(self._names)
@@ -3608,9 +3572,7 @@ class MDLBinaryWriter:
         self._file_header.offset_to_super_root = 0
         self._file_header.offset_to_animations = offset_to_anim_offsets
 
-    def _calc_inner_offsets(
-        self,
-    ):
+    def _calc_inner_offsets(self):
         for i, bin_anim in enumerate(self._bin_anims):
             bin_anim.header.offset_to_events = self._anim_offsets[i] + bin_anim.events_offset()
             bin_anim.header.geometry.root_node_offset = self._anim_offsets[i] + bin_anim.nodes_offset()
@@ -3832,9 +3794,7 @@ class MDLBinaryWriter:
             type_id = type_id | MDLNodeFlags.REFERENCE
         return type_id
 
-    def _write_all(
-        self,
-    ):
+    def _write_all(self):
         # CRITICAL: MDX data must be written in node_id order to match the original binary file structure.
         # The all_nodes() traversal returns nodes in a different order than they appear in the binary,
         # so we need to sort by node_id before writing MDX data.

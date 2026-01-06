@@ -403,7 +403,7 @@ class GitHubFileSelector(QDialog):
         for path in paths:
             highlight_path(path)
 
-    def expand_all_items(self):  # sourcery skip: class-extract-method
+    def expand_all_items(self):
         root: QTreeWidgetItem | None = self.repo_tree_widget.invisibleRootItem()
         if root is None:
             return

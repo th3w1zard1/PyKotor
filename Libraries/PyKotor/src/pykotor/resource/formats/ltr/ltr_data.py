@@ -112,9 +112,7 @@ class LTR(ComparableMixin):
     BINARY_TYPE = ResourceType.LTR
     COMPARABLE_FIELDS = ("_singles", "_doubles", "_triples")
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         # vendor/reone/include/reone/resource/ltr.h:46
         # vendor/reone/src/libs/resource/format/ltrreader.cpp:34-35
         # vendor/KotOR.js/src/resource/LTRObject.ts:31

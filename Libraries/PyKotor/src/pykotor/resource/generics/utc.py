@@ -481,11 +481,7 @@ class UTCClass:
         self.class_level: int = class_level
         self.powers: list[int] = []
 
-    def __repr__(
-        self,
-    ):
-        return f"{self.__class__.__name__}(class_id={self.class_id}, class_level={self.class_level})"
-
+    def __repr__(self)
     def __eq__(
         self,
         other: UTCClass | object,

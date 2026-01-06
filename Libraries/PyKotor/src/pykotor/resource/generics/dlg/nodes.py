@@ -282,9 +282,7 @@ class DLGNode:
         self.record_vo: bool = False
         self.vo_text_changed: bool = False
 
-    def __repr__(
-        self,
-    ) -> str:
+    def __repr__(self) -> str:
         text: str | None = self.text.get(Language.ENGLISH, Gender.MALE, use_fallback=True)
         strref_display: str = f"stringref={self.text.stringref}" if text is None else f"text={text}"
         return f"{self.__class__.__name__}({strref_display}, list_index={self.list_index}, links={self.links})"

@@ -20,7 +20,7 @@ if TYPE_CHECKING:
     from qtpy.QtGui import QColor, QPaintEvent
     from qtpy.QtWidgets import QWidget
 
-    from pykotor.resource.formats.twoda.twoda_data import TwoDA
+    from pykotor.resource.formats.twoda import TwoDA
     from toolset.data.installation import HTInstallation
 
 
@@ -36,6 +36,7 @@ class ComboBox2DA(QComboBox):
         self.customContextMenuRequested.connect(self.on_context_menu)
         self.currentIndexChanged.connect(self.on_current_index_changed)
         from toolset.gui.common.localization import translate as tr
+
         self.setToolTip(tr("<i>Right click for more options</i>"))
 
         self._sort_alphabetically: bool = False
@@ -43,7 +44,7 @@ class ComboBox2DA(QComboBox):
         self._installation: HTInstallation | None = None
         self._resname: str | None = None
 
-    def paintEvent(self, event: QPaintEvent):  # type: ignore[override]  # pyright: ignore[reportIncompatibleMethodOverride]
+    def paintEvent(self, event: QPaintEvent):  # pyright: ignore[reportIncompatibleMethodOverride]  # type: ignore[override]
         super().paintEvent(event)
         if super().currentIndex() == -1:
             painter: QPainter = QPainter(self)
@@ -137,14 +138,14 @@ class ComboBox2DA(QComboBox):
             assert open_action is not None, "Failed to create 'Open in 2DAEditor' action."
             open_action.triggered.connect(self.open_in_2da_editor)
             menu.addAction(open_action)
-            
+
             # Add "Find References" action for 2DA row
             row_index = self.currentIndex()
             if row_index >= 0:
                 find_refs_action = QAction("Find References...", self)
                 find_refs_action.triggered.connect(lambda checked=False: self._find_2da_row_references(row_index))
                 menu.addAction(find_refs_action)
-        
+
         toggle_sort_action = QAction("Toggle Sorting", self)
         toggle_sort_action.setCheckable(True)
         toggle_sort_action.setChecked(self._sort_alphabetically)
@@ -178,7 +179,7 @@ class ComboBox2DA(QComboBox):
     def update_tool_tip(self):
         row_index_display = f"<b>Row Index:</b> {self.currentIndex()}<br>" if self.currentIndex() != -1 else ""
         if self._resname and self._this2DA:
-            tooltip_text = f"<b>Filename:</b> {self._resname}.2da<br>" f"{row_index_display}<br><i>Right-click for more options.</i>"
+            tooltip_text = f"<b>Filename:</b> {self._resname}.2da<br>{row_index_display}<br><i>Right-click for more options.</i>"
         else:
             tooltip_text = f"{row_index_display}<br><i>Right-click for more options.</i>"
         self.setToolTip(tooltip_text)
@@ -192,10 +193,10 @@ class ComboBox2DA(QComboBox):
     def toggle_sort(self):
         self.disable_sort() if self._sort_alphabetically else self.enable_sort()
 
-    def enable_sort(self):  # sourcery skip: class-extract-method
+    def enable_sort(self):
         """Sorts the combobox alphabetically. This is a custom method."""
         self._sort_alphabetically = True
-        model: QAbstractItemModel = self.model()
+        model: QAbstractItemModel | None = self.model()
         if not isinstance(model, QStandardItemModel):
             return
         model.setSortRole(_REAL_2DA_TEXT_ROLE)
@@ -204,7 +205,7 @@ class ComboBox2DA(QComboBox):
     def disable_sort(self):
         """Sorts the combobox by row index. This is a custom method."""
         self._sort_alphabetically = False
-        model: QAbstractItemModel = self.model()
+        model: QAbstractItemModel | None = self.model()
         if not isinstance(model, QStandardItemModel):
             return
         model.setSortRole(_ROW_INDEX_DATA_ROLE)
@@ -225,11 +226,13 @@ class ComboBox2DA(QComboBox):
         except (ValueError, OSError) as e:
             error_msg: str = str(universal_simplify_exception(e)).replace("\n", "<br>")
             from toolset.gui.common.localization import translate as tr, trf
+
             QMessageBox(QMessageBox.Icon.Critical, tr("Failed to load file."), trf("Failed to open or load file data.<br>{error}", error=error_msg)).exec()
             return
         else:
             editor.jump_to_row(self.currentIndex())
         from toolset.gui.common.localization import translate as tr, trf
+
         editor.setWindowTitle(trf("{resname}.2da - 2DAEditor({name})", resname=self._resname, name=self._installation.name))
         add_window(editor)
         editor.show()
@@ -248,16 +251,17 @@ class ComboBox2DA(QComboBox):
         if self._installation is None or self._resname is None or self._this2DA is None:
             return
 
+        from qtpy.QtWidgets import QDialog
+
+        from pykotor.tools.reference_finder import ReferenceSearchResult, find_field_value_references
         from toolset.gui.dialogs.asyncloader import AsyncLoader
         from toolset.gui.dialogs.reference_search_options import ReferenceSearchOptions
         from toolset.gui.dialogs.search import FileResults
         from toolset.utils.window import add_window
-        from pykotor.tools.reference_finder import ReferenceSearchResult, find_field_value_references
-        from qtpy.QtWidgets import QDialog
 
         # Get the row label/text for searching
         row_label = self._this2DA.get_cell(row_index, 0) if row_index < self._this2DA.get_height() else ""
-        
+
         # Also check for stringref values in this row
         strref_values: list[int] = []
         if row_index < self._this2DA.get_height():
@@ -287,7 +291,9 @@ class ComboBox2DA(QComboBox):
 
         # Search for row label/text if available
         if row_label and row_label.strip():
+
             def search_label_fn() -> list[ReferenceSearchResult]:
+                assert self._installation is not None, "Installation is not set"
                 return find_field_value_references(
                     self._installation,
                     row_label,
@@ -296,7 +302,7 @@ class ComboBox2DA(QComboBox):
                     file_pattern=file_pattern,
                     file_types=file_types,
                 )
-            
+
             loader = AsyncLoader(
                 self,
                 f"Searching for references to 2DA row '{row_label}'...",
@@ -321,8 +327,11 @@ class ComboBox2DA(QComboBox):
 
         def _search_stringrefs():
             """Search for stringref references."""
-            from pykotor.tools.reference_cache import find_strref_references, GFFRefLocation, NCSRefLocation, SSFRefLocation, TwoDARefLocation
-            
+            from pykotor.tools.reference_cache import GFFRefLocation, NCSRefLocation, SSFRefLocation, TwoDARefLocation, find_strref_references
+
+            assert self._installation is not None, "Installation is not set"
+            assert isinstance(self._installation, HTInstallation), "Installation is not an HTInstallation"
+
             def search_strref_fn() -> list[ReferenceSearchResult]:
                 all_strref_results: list[ReferenceSearchResult] = []
                 for strref in strref_values:
@@ -336,7 +345,7 @@ class ComboBox2DA(QComboBox):
                                 field_path = f"Row {location.row_index}, Column '{location.column_name}'"
                                 byte_offset = None
                             elif isinstance(location, SSFRefLocation):
-                                field_path = f"Sound index {location.sound.strref}"
+                                field_path = f"Sound index SSFSound({location.sound.value})"
                                 byte_offset = None
                             elif isinstance(location, NCSRefLocation):
                                 field_path = "(NCS bytecode)"
@@ -344,10 +353,10 @@ class ComboBox2DA(QComboBox):
                             else:
                                 field_path = "(unknown)"
                                 byte_offset = None
-                            
+
                             restype = result.resource.restype()
                             file_type = restype.extension.upper() if restype else "UNKNOWN"
-                            
+
                             all_strref_results.append(
                                 ReferenceSearchResult(
                                     file_resource=result.resource,
@@ -381,6 +390,7 @@ class ComboBox2DA(QComboBox):
             """Show search results."""
             if not all_results:
                 from toolset.gui.common.localization import tr, trf
+
                 QMessageBox(
                     QMessageBox.Icon.Information,
                     tr("No references found"),
@@ -389,11 +399,22 @@ class ComboBox2DA(QComboBox):
                 ).exec()
                 return
 
+            assert self._installation is not None, "Installation is not set"
+            assert isinstance(self._installation, HTInstallation), "Installation is not an HTInstallation"
+
             results_dialog = FileResults(self, all_results, self._installation)
             results_dialog.show()
             results_dialog.activateWindow()
             from toolset.gui.common.localization import trf
-            results_dialog.setWindowTitle(trf("{count} reference(s) found for row {row_index} in '{resname}.2da'", count=len(all_results), row_index=row_index, resname=self._resname))
+
+            results_dialog.setWindowTitle(
+                trf(
+                    "{count} reference(s) found for row {row_index} in '{resname}.2da'",
+                    count=len(all_results),
+                    row_index=row_index,
+                    resname=self._resname,
+                )
+            )
             add_window(results_dialog)
 
         # If no row label, just search stringrefs
@@ -402,6 +423,7 @@ class ComboBox2DA(QComboBox):
                 _search_stringrefs()
             else:
                 from toolset.gui.common.localization import tr, trf
+
                 QMessageBox(
                     QMessageBox.Icon.Information,
                     tr("No searchable data"),

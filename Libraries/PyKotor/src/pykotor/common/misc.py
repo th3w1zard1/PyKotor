@@ -124,9 +124,7 @@ class ResRef(str):
         instance.set_data(text)
         return instance
 
-    def __len__(
-        self,
-    ):
+    def __len__(self):
         return len(self._value.strip())  # should already be stripped, leave here for clarity (it is a fast operation)
 
     def __bool__(self):
@@ -147,14 +145,10 @@ class ResRef(str):
     def __hash__(self):
         return hash(self._value.casefold())
 
-    def __repr__(
-        self,
-    ):
+    def __repr__(self):
         return f"ResRef({self._value})"
 
-    def __str__(
-        self,
-    ):
+    def __str__(self):
         return str(self._value)
 
     @classmethod
@@ -208,7 +202,7 @@ class ResRef(str):
         text: str,
         *,
         truncate: bool = False,
-    ):  # sourcery skip: remove-unnecessary-cast
+    ):
         """Sets the ResRef.
 
         Args:
@@ -560,7 +554,7 @@ class WrappedInt:
             return True
         if isinstance(other, WrappedInt):
             return self.get() == other.get()
-        if isinstance(other, int):  # sourcery skip: assign-if-exp
+        if isinstance(other, int):
             return self.get() == other
         return hash(self) == hash(other)
 
@@ -570,9 +564,7 @@ class WrappedInt:
     ):
         self._value = value
 
-    def get(
-        self,
-    ) -> int:
+    def get(self) -> int:
         return self._value
 
 
@@ -587,9 +579,7 @@ class InventoryItem:
         self.droppable: bool = droppable
         self.infinite: bool = infinite
 
-    def __str__(
-        self,
-    ) -> str:
+    def __str__(self) -> str:
         return str(self.resref)
 
     def __eq__(
@@ -602,9 +592,7 @@ class InventoryItem:
             return self.resref == other.resref and self.droppable == other.droppable  # and self.infinite == other.infinite
         return NotImplemented
 
-    def __hash__(
-        self,
-    ):
+    def __hash__(self):
         return hash(self.resref)
 
 

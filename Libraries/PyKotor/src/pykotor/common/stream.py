@@ -19,9 +19,7 @@ ArrayHead = _ArrayHead  # backwards compatibility
 class BinaryReader(RawBinaryReader, ABC):
     """Provides easier reading of binary objects that abstracts uniformly to all different stream/data types."""
 
-    def read_locstring(
-        self,
-    ) -> LocalizedString:
+    def read_locstring(self) -> LocalizedString:
         """Reads the localized string data structure from the stream.
 
         The binary data structure that is read follows the structure found in the GFF format specification.

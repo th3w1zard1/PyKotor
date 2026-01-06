@@ -144,9 +144,7 @@ class UTI:
         self.stolen: int = 0
         self.identified: int = 0
 
-    def is_armor(
-        self,
-    ) -> bool:
+    def is_armor(self) -> bool:
         return self.base_item in ARMOR_BASE_ITEMS
 
 

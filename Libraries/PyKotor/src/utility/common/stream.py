@@ -94,9 +94,7 @@ class RawBinaryReader:
         """
         return self._stream.tell()
 
-    def __enter__(
-        self,
-    ):
+    def __enter__(self):
         return self
 
     def __exit__(
@@ -232,9 +230,7 @@ class RawBinaryReader:
             reader.seek(offset)
             return reader.read() if size == -1 else reader.read(size)
 
-    def offset(
-        self,
-    ) -> int:
+    def offset(self) -> int:
         """Returns the offset value.
 
         Args:
@@ -256,9 +252,7 @@ class RawBinaryReader:
         self._offset = offset
         self._position = absolute_position
 
-    def size(
-        self,
-    ) -> int:
+    def size(self) -> int:
         """Returns the total number of bytes in the stream.
 
         When a BinaryReader is instantiated, it can be given a size argument and an offset argument, and will not
@@ -270,9 +264,7 @@ class RawBinaryReader:
         """
         return self._size
 
-    def true_size(
-        self,
-    ) -> int:
+    def true_size(self) -> int:
         """Returns the total number of bytes in the stream.
 
         This does NOT include the initial offset and size constraint passed to the constructor.
@@ -290,9 +282,7 @@ class RawBinaryReader:
         self._stream.seek(current)
         return size
 
-    def remaining(
-        self,
-    ) -> int:
+    def remaining(self) -> int:
         """Returns the number of bytes remaining in the stream based on current position.
 
         Returns:
@@ -301,9 +291,7 @@ class RawBinaryReader:
         """
         return self.size() - self.position()
 
-    def close(
-        self,
-    ):
+    def close(self):
         """Closes the underlying stream and releases any resources."""
         self._stream.close()
 
@@ -321,9 +309,7 @@ class RawBinaryReader:
         skipped = self._stream.read(length) or b""
         self._position += len(skipped)
 
-    def position(
-        self,
-    ) -> int:
+    def position(self) -> int:
         """Returns the byte offset into the stream.
 
         Returns:
@@ -364,9 +350,7 @@ class RawBinaryReader:
         self._stream.seek(position + self._offset)
         self._position = position
 
-    def read_all(
-        self,
-    ) -> bytes:
+    def read_all(self) -> bytes:
         """Read all remaining bytes from the stream.
 
         Args:
@@ -810,9 +794,7 @@ class RawBinaryReader:
                     self.skip(available)
         return string
 
-    def read_locstring(
-        self,
-    ) -> LocalizedString:
+    def read_locstring(self) -> LocalizedString:
         """Reads the localized string data structure from the stream.
 
         The binary data structure that is read follows the structure found in the GFF format specification.
@@ -833,9 +815,7 @@ class RawBinaryReader:
             locstring.set_data(language, gender, string)
         return locstring
 
-    def read_array_head(
-        self,
-    ) -> ArrayHead:
+    def read_array_head(self) -> ArrayHead:
         return ArrayHead(self.read_uint32(), self.read_uint32())
 
     def peek(
@@ -979,15 +959,11 @@ class RawBinaryWriter(ABC):
             file.write(data)
 
     @abstractmethod
-    def close(
-        self,
-    ):
+    def close(self):
         """Closes the stream."""
 
     @abstractmethod
-    def size(
-        self,
-    ) -> int:
+    def size(self) -> int:
         """Returns the total file size.
 
         Returns:
@@ -996,9 +972,7 @@ class RawBinaryWriter(ABC):
         """
 
     @abstractmethod
-    def data(
-        self,
-    ) -> bytes:
+    def data(self) -> bytes:
         """Returns the full file data.
 
         Returns:
@@ -1007,9 +981,7 @@ class RawBinaryWriter(ABC):
         """
 
     @abstractmethod
-    def clear(
-        self,
-    ):
+    def clear(self):
         """Clears all the data in the file."""
 
     @abstractmethod
@@ -1025,15 +997,11 @@ class RawBinaryWriter(ABC):
         """
 
     @abstractmethod
-    def end(
-        self,
-    ):
+    def end(self):
         """Moves the pointer for the stream to the end."""
 
     @abstractmethod
-    def position(
-        self,
-    ) -> int:
+    def position(self) -> int:
         """Returns the byte offset into the stream.
 
         Returns:
@@ -1323,9 +1291,7 @@ class RawBinaryWriterFile(RawBinaryWriter):
 
         self._stream.seek(offset)
 
-    def __enter__(
-        self,
-    ) -> Self:
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(
@@ -1337,15 +1303,11 @@ class RawBinaryWriterFile(RawBinaryWriter):
         if self.auto_close:
             self.close()
 
-    def close(
-        self,
-    ):
+    def close(self):
         """Closes the stream."""
         self._stream.close()
 
-    def size(
-        self,
-    ) -> int:
+    def size(self) -> int:
         """Returns the total file size.
 
         Returns:
@@ -1358,9 +1320,7 @@ class RawBinaryWriterFile(RawBinaryWriter):
         self._stream.seek(pos)
         return size
 
-    def data(
-        self,
-    ) -> bytes:
+    def data(self) -> bytes:
         """Returns the full file data.
 
         Returns:
@@ -1373,9 +1333,7 @@ class RawBinaryWriterFile(RawBinaryWriter):
         self._stream.seek(pos)
         return b"" if data is None else data
 
-    def clear(
-        self,
-    ):
+    def clear(self):
         """Clears all the data in the file."""
         self._stream.seek(0)
         self._stream.truncate()
@@ -1392,15 +1350,11 @@ class RawBinaryWriterFile(RawBinaryWriter):
         """
         self._stream.seek(position + self._offset)
 
-    def end(
-        self,
-    ):
+    def end(self):
         """Moves the pointer for the stream to the end."""
         self._stream.seek(0, 2)
 
-    def position(
-        self,
-    ) -> int:
+    def position(self) -> int:
         """Returns the byte offset into the stream.
 
         Returns:
@@ -1588,7 +1542,7 @@ class RawBinaryWriterFile(RawBinaryWriter):
         value: Vector3,
         *,
         big: bool = False,
-    ):  # sourcery skip: class-extract-method
+    ):
         """Writes three 32-bit floating point numbers to the stream.
 
         Args:
@@ -1745,9 +1699,7 @@ class RawBinaryWriterBytearray(RawBinaryWriter):
         self._position: int = 0
         self._initial_size: int = len(ba)  # Track initial size to distinguish fixed-size from growable buffers
 
-    def __enter__(
-        self,
-    ) -> Self:
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(
@@ -1757,14 +1709,10 @@ class RawBinaryWriterBytearray(RawBinaryWriter):
         exc_tb: TracebackType | None,
     ): ...
 
-    def close(
-        self,
-    ):
+    def close(self):
         """Closes the stream."""
 
-    def size(
-        self,
-    ) -> int:
+    def size(self) -> int:
         """Returns the total file size.
 
         Returns:
@@ -1773,9 +1721,7 @@ class RawBinaryWriterBytearray(RawBinaryWriter):
         """
         return len(self._ba)
 
-    def data(
-        self,
-    ) -> bytes:
+    def data(self) -> bytes:
         """Returns the full file data.
 
         Returns:
@@ -1784,9 +1730,7 @@ class RawBinaryWriterBytearray(RawBinaryWriter):
         """
         return bytes(self._ba)
 
-    def clear(
-        self,
-    ):
+    def clear(self):
         """Clears all the data in the file."""
         self._ba.clear()
 
@@ -1802,15 +1746,11 @@ class RawBinaryWriterBytearray(RawBinaryWriter):
         """
         self._position = position
 
-    def end(
-        self,
-    ):
+    def end(self):
         """Moves the pointer for the stream to the end."""
         self._position = len(self._ba)
 
-    def position(
-        self,
-    ) -> int:
+    def position(self) -> int:
         """Returns the byte offset into the stream.
 
         Returns:
@@ -2084,7 +2024,7 @@ class RawBinaryWriterBytearray(RawBinaryWriter):
         value: Vector3,
         *,
         big: bool = False,
-    ):  # sourcery skip: class-extract-method
+    ):
         """Writes three 32-bit floating point numbers to the stream.
 
         Args:

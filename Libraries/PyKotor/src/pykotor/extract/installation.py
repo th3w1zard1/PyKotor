@@ -477,9 +477,7 @@ class Installation:
         self._locations_list_cache.clear()
         self._texture_list_cache.clear()
 
-    def load_lips(
-        self,
-    ):
+    def load_lips(self):
         """Reloads the list of modules in the lips folder linked to the Installation."""
         if self._lips_loaded:
             return
@@ -511,9 +509,7 @@ class Installation:
         self._locations_list_cache.clear()
         self._texture_list_cache.clear()
 
-    def load_textures(
-        self,
-    ):
+    def load_textures(self):
         """Reloads the list of modules files in the texturepacks folder linked to the Installation."""
         if self._texturepacks_loaded:
             return
@@ -522,9 +518,7 @@ class Installation:
         self._locations_list_cache.clear()
         self._texture_list_cache.clear()
 
-    def load_saves(
-        self,
-    ):
+    def load_saves(self):
         """Reloads the data in the 'saves' folder linked to the Installation.
         
         This method loads both:
@@ -644,18 +638,14 @@ class Installation:
         else:
             override_list[override_list.index(resource)] = resource
 
-    def load_streammusic(
-        self,
-    ):
+    def load_streammusic(self):
         """Reloads the list of resources in the streammusic folder linked to the Installation."""
         if self._streammusic_loaded:
             return
         self._streammusic_data = self.load_resources_list(self.streammusic_path())
         self._streammusic_loaded = True
 
-    def load_streamsounds(
-        self,
-    ):
+    def load_streamsounds(self):
         """Reloads the list of resources in the streamsounds folder linked to the Installation."""
         if self._streamsounds_loaded:
             return

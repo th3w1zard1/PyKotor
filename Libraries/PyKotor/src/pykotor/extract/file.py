@@ -366,14 +366,10 @@ class FileResource:
 
         return ResRef(self._resname)
 
-    def restype(
-        self,
-    ) -> ResourceType:
+    def restype(self) -> ResourceType:
         return self._restype
 
-    def size(
-        self,
-    ) -> int:
+    def size(self) -> int:
         return self._size
 
     def filename(self) -> str:
@@ -405,9 +401,7 @@ class FileResource:
         """Offset to where the data is stored, at the filepath."""
         return self._offset
 
-    def _index_resource(
-        self,
-    ):
+    def _index_resource(self):
         """Reload information about where the resource can be loaded from.
         
         Supports nested capsule paths by checking if the filepath is directly accessible
@@ -457,9 +451,7 @@ class FileResource:
         self._offset = 0
         self._size = 0  # Size will be determined during extraction
 
-    def exists(
-        self,
-    ) -> bool:
+    def exists(self) -> bool:
         """Determines if this FileResource exists.
 
         Supports nested capsule paths (e.g., SAVEGAME.sav/inner.sav).

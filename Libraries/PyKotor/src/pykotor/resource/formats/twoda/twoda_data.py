@@ -144,21 +144,15 @@ class TwoDA(ComparableMixin):
     def __hash__(self):
         return hash((tuple(tuple(sorted(row.items())) for row in self._rows), tuple(self._headers), tuple(self._labels)))
 
-    def __repr__(
-        self,
-    ):
+    def __repr__(self):
         return f"{self.__class__.__name__}(headers={self._headers!r}, labels={self._labels!r}, rows={self._rows!r})"
 
-    def __iter__(
-        self,
-    ):
+    def __iter__(self):
         """Iterates through each row yielding a new linked TwoDARow instance."""
         for i, row in enumerate(self._rows):
             yield TwoDARow(self.get_label(i), row)
 
-    def __len__(
-        self,
-    ) -> int:
+    def __len__(self) -> int:
         """Returns the number of rows in the 2DA.
 
         Returns:
@@ -216,9 +210,7 @@ class TwoDA(ComparableMixin):
         raise TypeError(msg)
 
     @property
-    def shape(
-        self,
-    ) -> tuple[int, int]:
+    def shape(self) -> tuple[int, int]:
         """Returns the dimensions of the 2DA as (rows, columns).
 
         Returns:
@@ -228,9 +220,7 @@ class TwoDA(ComparableMixin):
         return (self.get_height(), self.get_width())
 
     @property
-    def columns(
-        self,
-    ) -> list[str]:
+    def columns(self) -> list[str]:
         """Returns a copy of the column headers.
 
         Returns:
@@ -240,9 +230,7 @@ class TwoDA(ComparableMixin):
         return copy(self._headers)
 
     @property
-    def index(
-        self,
-    ) -> list[str]:
+    def index(self) -> list[str]:
         """Returns a copy of the row labels.
 
         Returns:
@@ -251,9 +239,7 @@ class TwoDA(ComparableMixin):
         """
         return copy(self._labels)
 
-    def get_headers(
-        self,
-    ) -> list[str]:
+    def get_headers(self) -> list[str]:
         """Returns a copy of the set of column headers.
 
         Returns:
@@ -286,9 +272,7 @@ class TwoDA(ComparableMixin):
 
         return [self._rows[i][header] for i in range(self.get_height())]
 
-    def get_columns(
-        self,
-    ) -> dict[str, list[str]]:
+    def get_columns(self) -> dict[str, list[str]]:
         """Returns all columns as a dictionary mapping header names to their column values.
 
         Returns:
@@ -337,9 +321,7 @@ class TwoDA(ComparableMixin):
 
         self._headers.remove(header)
 
-    def get_labels(
-        self,
-    ) -> list[str]:
+    def get_labels(self) -> list[str]:
         """Returns a copy of the set of row labels.
 
         Returns:
@@ -671,9 +653,7 @@ class TwoDA(ComparableMixin):
         value = "" if value is None else value
         self._rows[row_index][column] = str(value)
 
-    def get_height(
-        self,
-    ) -> int:
+    def get_height(self) -> int:
         """Returns the number of rows in the table.
 
         Returns:
@@ -682,9 +662,7 @@ class TwoDA(ComparableMixin):
         """
         return len(self._rows)
 
-    def get_width(
-        self,
-    ) -> int:
+    def get_width(self) -> int:
         """Returns the number of columns in the table.
 
         Returns:
@@ -742,9 +720,7 @@ class TwoDA(ComparableMixin):
 
         return max_found + 1
 
-    def label_max(
-        self,
-    ) -> int:
+    def label_max(self) -> int:
         """Finds the maximum label and returns the next integer.
 
         Args:
@@ -956,9 +932,7 @@ class TwoDARow(ComparableMixin):
         # Cell data: column_header -> cell_value (all strings)
         self._data: dict[str, str] = row_data
 
-    def __repr__(
-        self,
-    ):
+    def __repr__(self):
         return f"{self.__class__.__name__}(row_label={self._row_label}, row_data={self._data})"
 
     def __eq__(self, other: TwoDARow | object):
@@ -971,9 +945,7 @@ class TwoDARow(ComparableMixin):
     def __hash__(self):
         return hash((self._row_label, tuple(sorted(self._data.items()))))
 
-    def label(
-        self,
-    ) -> str:
+    def label(self) -> str:
         """Returns the row label.
 
         Returns:

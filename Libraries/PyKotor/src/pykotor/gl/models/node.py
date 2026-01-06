@@ -44,7 +44,7 @@ class Node:
             ancestor = ancestor._parent  # noqa: SLF001
         return list(reversed(ancestors))
 
-    def global_position(self) -> vec3:  # sourcery skip: class-extract-method
+    def global_position(self) -> vec3:
         ancestors: list[Node] = [*self.ancestors(), self]
         transform = mat4()
         for ancestor in ancestors:
