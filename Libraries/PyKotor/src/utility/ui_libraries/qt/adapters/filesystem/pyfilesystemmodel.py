@@ -1654,6 +1654,28 @@ class PyFileSystemModel(QAbstractItemModel):
     ) -> QModelIndex:
         return self.index(row, column, self.parent(idx))
 
+    def event(self, event: QEvent) -> bool:
+        """Handle events matching C++ lines 1776-1786 exactly.
+
+        Matches:
+        bool QFileSystemModel::event(QEvent *event)
+        {
+        #if QT_CONFIG(filesystemwatcher)
+            Q_D(QFileSystemModel);
+            if (event->type() == QEvent::LanguageChange) {
+                d->root.retranslateStrings(d->fileInfoGatherer->iconProvider(), QString());
+                return true;
+            }
+        #endif
+            return QAbstractItemModel::event(event);
+        }
+        """
+        # QT_CONFIG(filesystemwatcher) - always true
+        if event.type() == QEvent.Type.LanguageChange:
+            self._root.retranslateStrings(self._fileInfoGatherer.iconProvider(), "")
+            return True
+        return super().event(event)
+
     def timerEvent(
         self,
         event: QTimerEvent,
