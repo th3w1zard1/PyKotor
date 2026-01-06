@@ -3,7 +3,6 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import TYPE_CHECKING, Sequence
 
-from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import (
     QAction,  # pyright: ignore[reportPrivateImportUsage]
@@ -15,6 +14,7 @@ from qtpy.QtWidgets import (
     QTreeWidgetItem,
 )
 
+from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
 from pykotor.common.misc import ResRef
 from pykotor.extract.file import LocationResult
 from pykotor.extract.installation import SearchLocation
@@ -47,7 +47,7 @@ class UTIEditor(Editor):
     def __init__(
         self,
         parent: QWidget | None,
-        installation: HTInstallation = None,
+        installation: HTInstallation | None = None,
     ):
         """Initializes the Item Editor window.
 
@@ -74,9 +74,10 @@ class UTIEditor(Editor):
         self.ui.descEdit.set_installation(installation)
 
         self.setMinimumSize(700, 350)
-        
+
         # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
+
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
 
@@ -99,6 +100,7 @@ class UTIEditor(Editor):
         """Set up signal connections for UI elements."""
         self.ui.tagGenerateButton.clicked.connect(self.generate_tag)
         from toolset.gui.common.localization import translate as tr
+
         self.ui.tagGenerateButton.setToolTip(tr("Reset this custom tag so it matches the resref"))
         self.ui.resrefGenerateButton.clicked.connect(self.generate_resref)
         self.ui.editPropertyButton.clicked.connect(self.edit_selected_property)
@@ -355,9 +357,19 @@ class UTIEditor(Editor):
         icon_path: str = self._installation.get_item_icon_path(base_item, model_variation, texture_variation)
 
         if as_html:
-            tooltip = f"<b>Base Item:</b> {base_item_name} (ID: {base_item})<br>" f"<b>Model Variation:</b> {model_var_name} (ID: {model_variation})<br>" f"<b>Texture Variation:</b> {texture_var_name} (ID: {texture_variation})<br>" f"<b>Icon Name:</b> {icon_path}"
+            tooltip = (
+                f"<b>Base Item:</b> {base_item_name} (ID: {base_item})<br>"
+                f"<b>Model Variation:</b> {model_var_name} (ID: {model_variation})<br>"
+                f"<b>Texture Variation:</b> {texture_var_name} (ID: {texture_variation})<br>"
+                f"<b>Icon Name:</b> {icon_path}"
+            )
         else:
-            tooltip = f"Base Item: {base_item_name} (ID: {base_item})\n" f"Model Variation: {model_var_name} (ID: {model_variation})\n" f"Texture Variation: {texture_var_name} (ID: {texture_variation})\n" f"Icon Name: {icon_path}"
+            tooltip = (
+                f"Base Item: {base_item_name} (ID: {base_item})\n"
+                f"Model Variation: {model_var_name} (ID: {model_variation})\n"
+                f"Texture Variation: {texture_var_name} (ID: {texture_variation})\n"
+                f"Icon Name: {icon_path}"
+            )
         return tooltip
 
     def _icon_label_context_menu(
@@ -397,7 +409,8 @@ class UTIEditor(Editor):
         file_menu = context_menu.addMenu("File...")
         assert file_menu is not None
         locations: dict[ResourceIdentifier, list[LocationResult]] = self._installation.locations(
-            ([icon_path], [ResourceType.TGA, ResourceType.TPC]), order=[SearchLocation.OVERRIDE, SearchLocation.TEXTURES_GUI, SearchLocation.TEXTURES_TPA, SearchLocation.TEXTURES_TPB, SearchLocation.TEXTURES_TPC]
+            ([icon_path], [ResourceType.TGA, ResourceType.TPC]),
+            order=[SearchLocation.OVERRIDE, SearchLocation.TEXTURES_GUI, SearchLocation.TEXTURES_TPA, SearchLocation.TEXTURES_TPB, SearchLocation.TEXTURES_TPC],
         )
         flat_locations: list[LocationResult] = [item for sublist in locations.values() for item in sublist]
         if flat_locations:
@@ -585,15 +598,20 @@ class PropertyEditor(QDialog):
         uti_property: UTIProperty,
     ):
         super().__init__()
-        self.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.WindowCloseButtonHint | Qt.WindowType.WindowStaysOnTopHint & ~Qt.WindowType.WindowContextHelpButtonHint & ~Qt.WindowType.WindowMinimizeButtonHint)
+        self.setWindowFlags(
+            Qt.WindowType.Dialog
+            | Qt.WindowType.WindowCloseButtonHint
+            | Qt.WindowType.WindowStaysOnTopHint & ~Qt.WindowType.WindowContextHelpButtonHint & ~Qt.WindowType.WindowMinimizeButtonHint
+        )
 
         from toolset.uic.qtpy.dialogs.property import Ui_Dialog
 
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
-        
+
         # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
+
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
 
