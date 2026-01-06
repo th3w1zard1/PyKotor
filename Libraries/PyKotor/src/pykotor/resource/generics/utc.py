@@ -487,7 +487,7 @@ class UTCClass:
         if self is other:
             return True
         if isinstance(other, UTCClass):
-            return self.class_id == other.class_id and self.class_level == self.class_level
+            return self.class_id == other.class_id and self.class_level == other.class_level
         return NotImplemented
 
 
