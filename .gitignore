@@ -27,8 +27,6 @@ __pycache__
 /toolset/help/
 /vendor/DeNCS
 Analysis-*.toc
-analyze_profile_comprehensive.py
-analyze_profile.py
 analyze_tokens.py
 base_library.zip
 build
@@ -129,3 +127,4 @@ Tools/*/.github/
 !.idea
 !.vscode
 !.pre-commit-config.yaml
+_tmp*
