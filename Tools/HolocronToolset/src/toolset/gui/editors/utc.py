@@ -4,15 +4,16 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import TYPE_CHECKING, Sequence
 
-from loggerplus import RobustLogger
 from qtpy.QtCore import QSettings, Qt
 from qtpy.QtGui import QImage, QPixmap, QTransform
 from qtpy.QtWidgets import QApplication, QListWidgetItem, QMenu, QMessageBox
 
+from loggerplus import RobustLogger
 from pykotor.common.language import Gender, Language
 from pykotor.common.misc import Game, ResRef
 from pykotor.common.module import Module
 from pykotor.extract.capsule import Capsule
+from pykotor.extract.file import FileResource
 from pykotor.extract.installation import SearchLocation
 from pykotor.resource.formats.ltr import read_ltr
 from pykotor.resource.formats.twoda.twoda_data import TwoDA
@@ -88,12 +89,13 @@ class UTCEditor(Editor):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.resize(798, 553)
-        
+
         # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
+
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
-        
+
         self._setup_menus()
         self._add_help_action()
         self._setup_installation(installation)
@@ -121,9 +123,9 @@ class UTCEditor(Editor):
         """Generates a detailed tooltip for the portrait picture."""
         portrait = self._get_portrait_resref()
         if as_html:
-            tooltip = f"<b>Portrait:</b> {portrait}<br>" "<br><i>Right-click for more options.</i>"
+            tooltip = f"<b>Portrait:</b> {portrait}<br><br><i>Right-click for more options.</i>"
         else:
-            tooltip = f"Portrait: {portrait}\n" "\nRight-click for more options."
+            tooltip = f"Portrait: {portrait}\n\nRight-click for more options."
         return tooltip
 
     def _portrait_context_menu(self, position: QPoint):
@@ -355,19 +357,25 @@ class UTCEditor(Editor):
         self.ui.hologramCheckbox.setVisible(installation.tsl)
         self.ui.k2onlyBox.setVisible(installation.tsl)
 
-        self._installation.setup_file_context_menu(self.ui.onBlockedEdit, [ResourceType.NSS, ResourceType.NCS])
-        self._installation.setup_file_context_menu(self.ui.onAttackedEdit, [ResourceType.NSS, ResourceType.NCS])
-        self._installation.setup_file_context_menu(self.ui.onNoticeEdit, [ResourceType.NSS, ResourceType.NCS])
-        self._installation.setup_file_context_menu(self.ui.onConversationEdit, [ResourceType.NSS, ResourceType.NCS])
-        self._installation.setup_file_context_menu(self.ui.onDamagedEdit, [ResourceType.NSS, ResourceType.NCS])
-        self._installation.setup_file_context_menu(self.ui.onDeathEdit, [ResourceType.NSS, ResourceType.NCS])
-        self._installation.setup_file_context_menu(self.ui.onEndRoundEdit, [ResourceType.NSS, ResourceType.NCS])
-        self._installation.setup_file_context_menu(self.ui.onEndConversationEdit, [ResourceType.NSS, ResourceType.NCS])
-        self._installation.setup_file_context_menu(self.ui.onDisturbedEdit, [ResourceType.NSS, ResourceType.NCS])
-        self._installation.setup_file_context_menu(self.ui.onHeartbeatSelect, [ResourceType.NSS, ResourceType.NCS])
-        self._installation.setup_file_context_menu(self.ui.onSpawnEdit, [ResourceType.NSS, ResourceType.NCS])
-        self._installation.setup_file_context_menu(self.ui.onSpellCastEdit, [ResourceType.NSS, ResourceType.NCS])
-        self._installation.setup_file_context_menu(self.ui.onUserDefinedSelect, [ResourceType.NSS, ResourceType.NCS])
+        # Setup context menus for script fields with reference search enabled
+        script_fields = [
+            self.ui.onBlockedEdit,
+            self.ui.onAttackedEdit,
+            self.ui.onNoticeEdit,
+            self.ui.onConversationEdit,
+            self.ui.onDamagedEdit,
+            self.ui.onDeathEdit,
+            self.ui.onEndRoundEdit,
+            self.ui.onEndConversationEdit,
+            self.ui.onDisturbedEdit,
+            self.ui.onHeartbeatSelect,
+            self.ui.onSpawnEdit,
+            self.ui.onSpellCastEdit,
+            self.ui.onUserDefinedSelect,
+        ]
+        for field in script_fields:
+            self._installation.setup_file_context_menu(field, [ResourceType.NSS, ResourceType.NCS], enable_reference_search=True, reference_search_type="script")
+            field.setToolTip(tr("Right-click to find references to this script in the installation."))
 
     def load(
         self,
@@ -505,8 +513,20 @@ class UTCEditor(Editor):
                 item.setCheckState(Qt.CheckState.Checked)
         self.relevant_script_resnames: list[str] = sorted(iter({res.resname().lower() for res in self._installation.get_relevant_resources(ResourceType.NCS, self._filepath)}))
 
-        self.ui.conversationEdit.populate_combo_box(sorted(iter({res.resname().lower() for res in self._installation.get_relevant_resources(ResourceType.DLG, self._filepath)})))
-        self._installation.setup_file_context_menu(self.ui.conversationEdit, [ResourceType.DLG])
+        dlg_resources: list[FileResource] = self._installation.get_relevant_resources(ResourceType.DLG, self._filepath)
+        dlg_resnames_set: set[str] = {res.resname().lower() for res in dlg_resources}
+        dlg_resnames_sorted: list[str] = sorted(dlg_resnames_set)
+        self.ui.conversationEdit.populate_combo_box(dlg_resnames_sorted)
+        self._installation.setup_file_context_menu(self.ui.conversationEdit, [ResourceType.DLG], enable_reference_search=True, reference_search_type="conversation")
+        self.ui.conversationEdit.setToolTip(tr("Right-click to find references to this conversation in the installation."))
+
+        # Setup reference search for Tag field
+        self._installation.setup_file_context_menu(self.ui.tagEdit, [], enable_reference_search=True, reference_search_type="tag")
+        self.ui.tagEdit.setToolTip(tr("Right-click to find references to this tag in the installation."))
+
+        # Setup reference search for TemplateResRef field
+        self._installation.setup_file_context_menu(self.ui.resrefEdit, [], enable_reference_search=True, reference_search_type="template_resref")
+        self.ui.resrefEdit.setToolTip(tr("Right-click to find references to this template resref in the installation."))
 
         self.ui.onBlockedEdit.populate_combo_box(self.relevant_script_resnames)
         self.ui.onAttackedEdit.populate_combo_box(self.relevant_script_resnames)
@@ -900,7 +920,7 @@ class UTCEditor(Editor):
 
     def update3dPreview(self):
         """Updates the 3D preview and model info.
-        
+
         Hides BOTH the preview renderer AND the model info groupbox when preview is hidden.
         """
         show_preview = self.global_settings.showPreviewUTC
@@ -918,23 +938,24 @@ class UTCEditor(Editor):
                 self._update_model_info(utc)
         else:
             self.resize(max(798 - 350, self.sizeHint().width()), max(553, self.sizeHint().height()))
-    
+
     def _update_model_info(self, utc: UTC):
         """Updates the model information label with creature model details.
-        
+
         Args:
         ----
             utc: The UTC object to analyze
         """
         if self._installation is None:
             return
-        
+
         info_lines: list[str] = []
-        
+
         try:
+
             def _append_renderer_texture_details(tex_name: str, *, indent: str = "    ") -> None:
                 """Append texture resolution details from the renderer's existing lookup info.
-                
+
                 IMPORTANT: This MUST NOT perform any new Installation lookups. It only reads
                 the cached metadata produced by the existing async resolver/worker pipeline.
                 """
@@ -991,13 +1012,13 @@ class UTCEditor(Editor):
                             info_lines.append(f"    └─ Source: {source}")
                     except ValueError:
                         info_lines.append(f"  MDL: {body_mdl.filepath}")
-                
+
                 if body_texture:
                     info_lines.append(f"  Body Texture: '{body_texture}'")
                     # NOTE: Do not call Installation.texture()/location() here.
                     # Use renderer-produced lookup info instead (async-safe, no extra lookups).
                     _append_renderer_texture_details(body_texture, indent="    ")
-            
+
             # Get head model and texture
             head_model, head_texture = creature.get_head_model(utc, self._installation)
             if head_model:
@@ -1009,11 +1030,11 @@ class UTCEditor(Editor):
                         info_lines.append(f"  MDL: {mdl_path}")
                     except ValueError:
                         info_lines.append(f"  MDL: {head_mdl.filepath}")
-                
+
                 if head_texture:
                     info_lines.append(f"  Head Texture: '{head_texture}'")
                     _append_renderer_texture_details(head_texture, indent="    ")
-            
+
             # Get weapon models
             right_weapon, left_weapon = creature.get_weapon_models(utc, self._installation)
             if right_weapon:
@@ -1034,7 +1055,7 @@ class UTCEditor(Editor):
                         info_lines.append(f"  MDL: {mdl_path}")
                     except ValueError:
                         info_lines.append(f"  MDL: {weapon_mdl.filepath}")
-            
+
             # Get mask model if equipped
             mask_model = creature.get_mask_model(utc, self._installation)
             if mask_model:
@@ -1046,20 +1067,20 @@ class UTCEditor(Editor):
                         info_lines.append(f"  MDL: {mdl_path}")
                     except ValueError:
                         info_lines.append(f"  MDL: {mask_mdl.filepath}")
-            
+
             if not info_lines:
                 info_lines.append("No model information available")
-            
+
             # Add placeholder for textures - actual renderer textures will be populated when they finish loading
             info_lines.append("")
             info_lines.append("Renderer Textures: Loading...")
-            
+
         except Exception as e:  # noqa: BLE001
             info_lines.append(f"Error gathering model info: {e}")
-        
+
         full_text = "\n".join(info_lines)
         self.ui.modelInfoLabel.setText(full_text)
-        
+
         # Update summary (first line or key info)
         summary = info_lines[0] if info_lines else "No model information"
         if body_model:
@@ -1067,7 +1088,7 @@ class UTCEditor(Editor):
             if body_texture:
                 summary += f" | Texture: {body_texture}"
         self.ui.modelInfoSummaryLabel.setText(summary)
-    
+
     def _on_model_info_toggled(self, checked: bool):
         """Handle model info groupbox toggle."""
         self.ui.modelInfoLabel.setVisible(checked)
@@ -1091,40 +1112,40 @@ class UTCEditor(Editor):
 
     def _on_textures_loaded(self):
         """Called when renderer signals that textures have finished loading.
-        
+
         Reads the EXACT lookup info from scene.texture_lookup_info - this is the
         SAME info that the renderer used when loading textures. No additional lookups.
         """
         import os
-        
+
         scene = self.ui.previewRenderer._scene
         if scene is None:
             return
-        
+
         # Get the EXACT lookup info stored by the renderer when it loaded textures
         texture_lookup_info = getattr(scene, "texture_lookup_info", {})
-        
+
         if not texture_lookup_info:
             RobustLogger().debug("_on_textures_loaded: No texture_lookup_info available yet")
             return
-        
+
         RobustLogger().debug(f"_on_textures_loaded: Found {len(texture_lookup_info)} textures with lookup info")
-        
+
         # Get current model info text and update the texture section
         current_text = self.ui.modelInfoLabel.text()
-        
+
         # Find and replace the "Renderer Textures: Loading..." line
         lines = current_text.split("\n")
         new_lines: list[str] = []
         skip_old_texture_section = False
-        
+
         for line in lines:
             if "Renderer Textures:" in line:
                 skip_old_texture_section = True
                 # Add new texture section
                 new_lines.append("")
                 new_lines.append(f"Renderer Textures ({len(texture_lookup_info)} loaded):")
-                
+
                 for tex_name, lookup_info in sorted(texture_lookup_info.items()):
                     restype = lookup_info.get("restype") or ""
                     if lookup_info.get("found"):
@@ -1178,25 +1199,26 @@ class UTCEditor(Editor):
                 new_lines.append(line)
             elif not skip_old_texture_section:
                 new_lines.append(line)
-        
+
         self.ui.modelInfoLabel.setText("\n".join(new_lines))
-    
+
     def _get_source_location_type(self, filepath: os.PathLike | str) -> str | None:
         """Determines the source location type for a given filepath.
-        
+
         Args:
         ----
             filepath: The filepath to analyze
-            
+
         Returns:
         -------
             A string describing the source location type, or None if unknown
         """
         if self._installation is None:
             return None
-            
+
         try:
             from pathlib import Path
+
             path = self._installation.path()
             filepath_obj = Path(filepath) if not isinstance(filepath, Path) else filepath
             rel_path = filepath_obj.relative_to(path)

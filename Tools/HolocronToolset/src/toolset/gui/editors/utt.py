@@ -104,19 +104,26 @@ class UTTEditor(Editor):
         )
 
         self.ui.onClickEdit.populate_combo_box(self.relevant_script_resnames)
-        installation.setup_file_context_menu(self.ui.onClickEdit, [ResourceType.NCS, ResourceType.NSS])
+        installation.setup_file_context_menu(self.ui.onClickEdit, [ResourceType.NCS, ResourceType.NSS], enable_reference_search=True, reference_search_type="script")
         self.ui.onDisarmEdit.populate_combo_box(self.relevant_script_resnames)
-        installation.setup_file_context_menu(self.ui.onDisarmEdit, [ResourceType.NCS, ResourceType.NSS])
+        installation.setup_file_context_menu(self.ui.onDisarmEdit, [ResourceType.NCS, ResourceType.NSS], enable_reference_search=True, reference_search_type="script")
         self.ui.onEnterSelect.populate_combo_box(self.relevant_script_resnames)
-        installation.setup_file_context_menu(self.ui.onEnterSelect, [ResourceType.NCS, ResourceType.NSS])
+        installation.setup_file_context_menu(self.ui.onEnterSelect, [ResourceType.NCS, ResourceType.NSS], enable_reference_search=True, reference_search_type="script")
         self.ui.onExitSelect.populate_combo_box(self.relevant_script_resnames)
-        installation.setup_file_context_menu(self.ui.onExitSelect, [ResourceType.NCS, ResourceType.NSS])
+        installation.setup_file_context_menu(self.ui.onExitSelect, [ResourceType.NCS, ResourceType.NSS], enable_reference_search=True, reference_search_type="script")
         self.ui.onTrapTriggeredEdit.populate_combo_box(self.relevant_script_resnames)
-        installation.setup_file_context_menu(self.ui.onTrapTriggeredEdit, [ResourceType.NCS, ResourceType.NSS])
+        installation.setup_file_context_menu(self.ui.onTrapTriggeredEdit, [ResourceType.NCS, ResourceType.NSS], enable_reference_search=True, reference_search_type="script")
         self.ui.onHeartbeatSelect.populate_combo_box(self.relevant_script_resnames)
-        installation.setup_file_context_menu(self.ui.onHeartbeatSelect, [ResourceType.NCS, ResourceType.NSS])
+        installation.setup_file_context_menu(self.ui.onHeartbeatSelect, [ResourceType.NCS, ResourceType.NSS], enable_reference_search=True, reference_search_type="script")
         self.ui.onUserDefinedSelect.populate_combo_box(self.relevant_script_resnames)
-        installation.setup_file_context_menu(self.ui.onUserDefinedSelect, [ResourceType.NCS, ResourceType.NSS])
+        installation.setup_file_context_menu(self.ui.onUserDefinedSelect, [ResourceType.NCS, ResourceType.NSS], enable_reference_search=True, reference_search_type="script")
+        
+        # Setup reference search for Tag field
+        installation.setup_file_context_menu(self.ui.tagEdit, [], enable_reference_search=True, reference_search_type="tag")
+        
+        # Setup reference search for TemplateResRef field
+        installation.setup_file_context_menu(self.ui.resrefEdit, [], enable_reference_search=True, reference_search_type="template_resref")
+        self.ui.resrefEdit.setToolTip(tr("Right-click to find references to this template resref in the installation."))
 
     def load(
         self,
