@@ -388,56 +388,64 @@ def _search_gff_for_resref(
     except (ValueError, OSError):
         return results
 
+    # Pre-compute search value for direct comparison (faster than regex when possible)
+    search_lower = resref.lower() if not case_sensitive else resref
+    # Detect if this is a partial match pattern (no word boundaries)
+    pattern_str = search_pattern.pattern
+    is_partial = "\\b" not in pattern_str
+
     def recurse_struct(gff_struct: GFFStruct, path_prefix: str = "") -> None:
         """Recursively search GFF struct for ResRef matches."""
         for label, field_type, value in gff_struct:
             field_path = f"{path_prefix}.{label}" if path_prefix else label
 
-            # Check if this field should be searched
-            if field_names and label not in field_names:
-                # Still recurse into nested structures
-                if field_type == GFFFieldType.Struct and isinstance(value, GFFStruct):
-                    recurse_struct(value, field_path)
-                elif field_type == GFFFieldType.List and isinstance(value, GFFList):
-                    for idx, item in enumerate(value):
-                        if isinstance(item, GFFStruct):
-                            list_path = f"{field_path}[{idx}]"
-                            recurse_struct(item, list_path)
-                continue
+            # Check if this field should be searched (early exit)
+            should_search_field = field_names is None or label in field_names
+            should_check_type = field_type in field_types
 
-            # Check field type
-            if field_type not in field_types:
-                # Still recurse into nested structures
-                if field_type == GFFFieldType.Struct and isinstance(value, GFFStruct):
-                    recurse_struct(value, field_path)
-                elif field_type == GFFFieldType.List and isinstance(value, GFFList):
-                    for idx, item in enumerate(value):
-                        if isinstance(item, GFFStruct):
-                            list_path = f"{field_path}[{idx}]"
-                            recurse_struct(item, list_path)
-                continue
+            # Check value match only if field name and type match
+            if should_search_field and should_check_type:
+                # Fast path: direct string comparison before regex
+                # ResRef inherits from str, so str() conversion is very fast
+                if field_type == GFFFieldType.ResRef:
+                    resref_str = str(value)  # ResRef is already a string subclass
+                elif field_type == GFFFieldType.String:
+                    resref_str = str(value)
+                else:
+                    resref_str = ""
 
-            # Check value match
-            if field_type == GFFFieldType.ResRef:
-                resref_str = str(value) if isinstance(value, ResRef) else str(value)
-            elif field_type == GFFFieldType.String:
-                resref_str = str(value)
-            else:
-                resref_str = ""
+                if resref_str:
+                    # Fast path: direct comparison for exact matches (avoid regex when possible)
+                    match_found = False
+                    if not case_sensitive:
+                        resref_lower = resref_str.lower()
+                        if is_partial:
+                            match_found = search_lower in resref_lower
+                        else:
+                            match_found = resref_lower == search_lower
+                    else:
+                        if is_partial:
+                            match_found = resref in resref_str
+                        else:
+                            match_found = resref_str == resref
 
-            if resref_str and search_pattern.search(resref_str):
-                results.append(
-                    ReferenceSearchResult(
-                        file_resource=resource,
-                        field_path=field_path,
-                        matched_value=resref_str,
-                        file_type=file_type,
-                    ),
-                )
-                if logger:
-                    logger(f"Found '{resref}' in {resource.filename()} at {field_path}")
+                    # Only use regex if direct comparison didn't match (regex is slower)
+                    if not match_found:
+                        match_found = bool(search_pattern.search(resref_str))
 
-            # Recurse into nested structures
+                    if match_found:
+                        results.append(
+                            ReferenceSearchResult(
+                                file_resource=resource,
+                                field_path=field_path,
+                                matched_value=resref_str,
+                                file_type=file_type,
+                            ),
+                        )
+                        if logger:
+                            logger(f"Found '{resref}' in {resource.filename()} at {field_path}")
+
+            # Recurse into nested structures (only once, not multiple times)
             if field_type == GFFFieldType.Struct and isinstance(value, GFFStruct):
                 recurse_struct(value, field_path)
             elif field_type == GFFFieldType.List and isinstance(value, GFFList):
@@ -468,56 +476,64 @@ def _search_gff_for_value(
     except (ValueError, OSError):
         return results
 
+    # Pre-compute search value for direct comparison (faster than regex when possible)
+    search_lower = search_value.lower() if not case_sensitive else search_value
+    # Detect if this is a partial match pattern (no word boundaries)
+    pattern_str = search_pattern.pattern
+    is_partial = "\\b" not in pattern_str
+
     def recurse_struct(gff_struct: GFFStruct, path_prefix: str = "") -> None:
         """Recursively search GFF struct for value matches."""
         for label, field_type, value in gff_struct:
             field_path = f"{path_prefix}.{label}" if path_prefix else label
 
-            # Check if this field should be searched
-            if field_names and label not in field_names:
-                # Still recurse into nested structures
-                if field_type == GFFFieldType.Struct and isinstance(value, GFFStruct):
-                    recurse_struct(value, field_path)
-                elif field_type == GFFFieldType.List and isinstance(value, GFFList):
-                    for idx, item in enumerate(value):
-                        if isinstance(item, GFFStruct):
-                            list_path = f"{field_path}[{idx}]"
-                            recurse_struct(item, list_path)
-                continue
+            # Check if this field should be searched (early exit)
+            should_search_field = field_names is None or label in field_names
+            should_check_type = field_type in field_types
 
-            # Check field type
-            if field_type not in field_types:
-                # Still recurse into nested structures
-                if field_type == GFFFieldType.Struct and isinstance(value, GFFStruct):
-                    recurse_struct(value, field_path)
-                elif field_type == GFFFieldType.List and isinstance(value, GFFList):
-                    for idx, item in enumerate(value):
-                        if isinstance(item, GFFStruct):
-                            list_path = f"{field_path}[{idx}]"
-                            recurse_struct(item, list_path)
-                continue
+            # Check value match only if field name and type match
+            if should_search_field and should_check_type:
+                # Fast path: direct string comparison before regex
+                # ResRef inherits from str, so str() conversion is very fast
+                if field_type == GFFFieldType.ResRef:
+                    value_str = str(value)  # ResRef is already a string subclass
+                elif field_type == GFFFieldType.String:
+                    value_str = str(value)
+                else:
+                    value_str = ""
 
-            # Check value match
-            if field_type == GFFFieldType.ResRef:
-                value_str = str(value) if isinstance(value, ResRef) else str(value)
-            elif field_type == GFFFieldType.String:
-                value_str = str(value)
-            else:
-                value_str = ""
+                if value_str:
+                    # Fast path: direct comparison for exact matches (avoid regex when possible)
+                    match_found = False
+                    if not case_sensitive:
+                        value_lower = value_str.lower()
+                        if is_partial:
+                            match_found = search_lower in value_lower
+                        else:
+                            match_found = value_lower == search_lower
+                    else:
+                        if is_partial:
+                            match_found = search_value in value_str
+                        else:
+                            match_found = value_str == search_value
 
-            if value_str and search_pattern.search(value_str):
-                results.append(
-                    ReferenceSearchResult(
-                        file_resource=resource,
-                        field_path=field_path,
-                        matched_value=value_str,
-                        file_type=file_type,
-                    ),
-                )
-                if logger:
-                    logger(f"Found '{search_value}' in {resource.filename()} at {field_path}")
+                    # Only use regex if direct comparison didn't match (regex is slower)
+                    if not match_found:
+                        match_found = bool(search_pattern.search(value_str))
 
-            # Recurse into nested structures
+                    if match_found:
+                        results.append(
+                            ReferenceSearchResult(
+                                file_resource=resource,
+                                field_path=field_path,
+                                matched_value=value_str,
+                                file_type=file_type,
+                            ),
+                        )
+                        if logger:
+                            logger(f"Found '{search_value}' in {resource.filename()} at {field_path}")
+
+            # Recurse into nested structures (only once, not multiple times)
             if field_type == GFFFieldType.Struct and isinstance(value, GFFStruct):
                 recurse_struct(value, field_path)
             elif field_type == GFFFieldType.List and isinstance(value, GFFList):
