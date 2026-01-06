@@ -351,6 +351,8 @@ class MDLAsciiWriter(ResourceWriter):
         self.write_line(0, f"setanimationscale {mdl.animation_scale}")
         self.write_line(0, "")
         self.write_line(0, "beginmodelgeom " + mdl.name)
+        # MDLOps prints model-level bmin/bmax/radius without format specifiers (uses Perl default)
+        # Match MDLOps exactly - Reference: vendor/MDLOps/MDLOpsM.pm:3082-3084
         self.write_line(1, f"bmin {mdl.bmin.x} {mdl.bmin.y} {mdl.bmin.z}")
         self.write_line(1, f"bmax {mdl.bmax.x} {mdl.bmax.y} {mdl.bmax.z}")
         self.write_line(1, f"radius {mdl.radius}")
@@ -395,7 +397,7 @@ class MDLAsciiWriter(ResourceWriter):
         elif node.skin is not None:
             # SKIN nodes: NODE_SKIN = 97 = HEADER + MESH + SKIN (0x061)
             # Reference: vendor/MDLOps/MDLOpsM.pm:320 (NODE_SKIN = 97), 3105-3108
-            # SKIN nodes are written as "skin" (convert_skin option not implemented yet)
+            # SKIN nodes are written as "skin" (TODO: convert_skin option not implemented yet)
             node_type_str = "skin"
         elif node.mesh is not None or node.node_type == MDLNodeType.TRIMESH:
             node_type_str = "trimesh"
@@ -465,10 +467,11 @@ class MDLAsciiWriter(ResourceWriter):
     ) -> None:
         """Write mesh data."""
         # Mesh header values (bbox/radius/average) are emitted in-node by MDLOps and must roundtrip.
-        self.write_line(indent, f"bmin {mesh.bb_min.x:.7g} {mesh.bb_min.y:.7g} {mesh.bb_min.z:.7g}")
-        self.write_line(indent, f"bmax {mesh.bb_max.x:.7g} {mesh.bb_max.y:.7g} {mesh.bb_max.z:.7g}")
-        self.write_line(indent, f"radius {mesh.radius:.7g}")
-        self.write_line(indent, f"average {mesh.average.x:.7g} {mesh.average.y:.7g} {mesh.average.z:.7g}")
+        # MDLOps uses "% .7g" format (space before number) - Reference: vendor/MDLOps/MDLOpsM.pm:3325-3328
+        self.write_line(indent, f"bmin {mesh.bb_min.x: .7g} {mesh.bb_min.y: .7g} {mesh.bb_min.z: .7g}")
+        self.write_line(indent, f"bmax {mesh.bb_max.x: .7g} {mesh.bb_max.y: .7g} {mesh.bb_max.z: .7g}")
+        self.write_line(indent, f"radius {mesh.radius: .7g}")
+        self.write_line(indent, f"average {mesh.average.x: .7g} {mesh.average.y: .7g} {mesh.average.z: .7g}")
         # Not emitted by MDLOps ASCII, but present in the binary mesh header and required for strict equality.
         self.write_line(indent, f"area {mesh.area:.7g}")
 
