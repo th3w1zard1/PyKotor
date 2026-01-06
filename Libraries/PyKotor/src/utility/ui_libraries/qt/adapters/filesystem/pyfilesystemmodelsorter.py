@@ -8,7 +8,7 @@ from __future__ import annotations
 import os
 from typing import TYPE_CHECKING
 
-from qtpy.QtCore import QCollator, QDateTime, QTimeZone, Qt  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+from qtpy.QtCore import QCollator, QDateTime, QTimeZone, Qt  # type: ignore[attr-defined]
 
 if TYPE_CHECKING:
     from utility.ui_libraries.qt.adapters.filesystem.pyfilesystemnode import PyFileSystemNode
@@ -50,11 +50,11 @@ class PyFileSystemModelSorter:
         """
         self.sortColumn: int = column
         # Matches C++ line 1108: QCollator naturalCompare;
-        self.naturalCompare: QCollator = QCollator()  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+        self.naturalCompare: QCollator = QCollator()  # type: ignore[attr-defined]
         # Matches C++ line 1046: naturalCompare.setNumericMode(true);
-        self.naturalCompare.setNumericMode(True)  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+        self.naturalCompare.setNumericMode(True)  # type: ignore[attr-defined]
         # Matches C++ line 1047: naturalCompare.setCaseSensitivity(Qt::CaseInsensitive);
-        self.naturalCompare.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+        self.naturalCompare.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)  # type: ignore[attr-defined]
 
     def compareNodes(
         self,
@@ -132,7 +132,7 @@ class PyFileSystemModelSorter:
                 if left != right:  # XOR
                     return left
             # Matches C++ line 1062: return naturalCompare.compare(l->fileName, r->fileName) < 0;
-            return self.naturalCompare.compare(l.fileName, r.fileName) < 0  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+            return self.naturalCompare.compare(l.fileName, r.fileName) < 0  # type: ignore[attr-defined]
 
         # Matches C++ lines 1064-1077: SizeColumn case
         if self.sortColumn == 1:  # SizeColumn
@@ -144,24 +144,24 @@ class PyFileSystemModelSorter:
 
             sizeDifference = l.size() - r.size()
             if sizeDifference == 0:
-                return self.naturalCompare.compare(l.fileName, r.fileName) < 0  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+                return self.naturalCompare.compare(l.fileName, r.fileName) < 0  # type: ignore[attr-defined]
 
             return sizeDifference < 0
 
         # Matches C++ lines 1078-1085: TypeColumn case
         if self.sortColumn == 2:  # TypeColumn
-            compare = self.naturalCompare.compare(l.type(), r.type())  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+            compare = self.naturalCompare.compare(l.type(), r.type())  # type: ignore[attr-defined]
             if compare == 0:
-                return self.naturalCompare.compare(l.fileName, r.fileName) < 0  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+                return self.naturalCompare.compare(l.fileName, r.fileName) < 0  # type: ignore[attr-defined]
 
             return compare < 0
 
         # Matches C++ lines 1086-1094: TimeColumn case
         if self.sortColumn == 3:  # TimeColumn
-            left_dt = l.lastModified(QTimeZone.UTC)  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
-            right_dt = r.lastModified(QTimeZone.UTC)  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+            left_dt = l.lastModified(QTimeZone.UTC)  # type: ignore[attr-defined]
+            right_dt = r.lastModified(QTimeZone.UTC)  # type: ignore[attr-defined]
             if left_dt == right_dt:
-                return self.naturalCompare.compare(l.fileName, r.fileName) < 0  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+                return self.naturalCompare.compare(l.fileName, r.fileName) < 0  # type: ignore[attr-defined]
 
             return left_dt < right_dt
 

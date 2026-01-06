@@ -2715,4 +2715,4 @@ if __name__ == "__main__":
 
     main_window.show()
 
-    sys.exit(app.exec() if hasattr(app, "exec_") else app.exec())  # pyright: ignore[reportAttributeAccessIssue]
+    sys.exit(app.exec())  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
