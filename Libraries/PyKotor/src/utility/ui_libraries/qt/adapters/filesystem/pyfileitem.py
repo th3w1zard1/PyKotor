@@ -23,7 +23,6 @@ else:
 
 def update_sys_path(_path: pathlib.Path):
     working_dir = str(_path)
-    print("<SDM> [update_sys_path scope] working_dir: ", working_dir)
 
     if working_dir not in sys.path:
         sys.path.append(working_dir)
