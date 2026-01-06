@@ -1719,7 +1719,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
     def set_warp_point(self, x: float, y: float, z: float):
         self._map.warp_point = Vector3(x, y, z)
 
-    def on_kit_selected(self):
+    def on_kit_selected(self, index: int = -1):
         kit: Kit = self.ui.kitSelect.currentData()
         if not isinstance(kit, Kit):
             return
@@ -2064,8 +2064,8 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
     def onMouseDoubleClicked(
         self,
         delta: Vector2,
-        buttons: set[int],
-        keys: set[int],
+        buttons: set[Qt.MouseButton] | set[Qt.MouseButton] | set[int] | set[Qt.MouseButton | int],
+        keys: set[Qt.Key] | set[QKeySequence] | set[int] | set[Qt.Key | QKeySequence | int],
     ):
         room: IndoorMapRoom | None = self.ui.mapRenderer.room_under_mouse()
         if Qt.MouseButton.LeftButton not in buttons or room is None:
