@@ -20,8 +20,6 @@ __pycache__
 /.aider.tags.cache.v3
 /.qtcreator
 /Libraries/Utility/src/utility/ui_libraries/qt/adapters/filesystem/relevant_qt_src
-/Libraries/Utility/src/utility/ui_libraries/qt/filesystem/common/deprecated
-/Libraries/Utility/src/utility/ui_libraries/qt/filesystem/common/untested
 /pyglm-2.8.2
 /pykotor/gl/window.py
 /toolset/help/
