@@ -99,8 +99,6 @@ class UTIEditor(Editor):
     def _setup_signals(self):
         """Set up signal connections for UI elements."""
         self.ui.tagGenerateButton.clicked.connect(self.generate_tag)
-        from toolset.gui.common.localization import translate as tr
-
         self.ui.tagGenerateButton.setToolTip(tr("Reset this custom tag so it matches the resref"))
         self.ui.resrefGenerateButton.clicked.connect(self.generate_resref)
         self.ui.editPropertyButton.clicked.connect(self.edit_selected_property)
