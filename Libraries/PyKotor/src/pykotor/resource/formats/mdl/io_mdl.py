@@ -453,7 +453,9 @@ class _Node:
             self.children_offsets = []
             return self
 
-        child_loc = self.header.offset_to_children
+        # MDLOps stores offsets as (absolute_offset - 12), so add 12 when reading
+        child_loc_raw = self.header.offset_to_children
+        child_loc = child_loc_raw + 12 if child_loc_raw not in (0, 0xFFFFFFFF) else child_loc_raw
         if (
             child_loc in (0, 0xFFFFFFFF)
             or child_loc >= reader.size()
@@ -2695,8 +2697,11 @@ class MDLBinaryReader:
 
         # Skip controllers when fast loading (not needed for rendering)
         if not self._fast_load:
-            controllers_base = bin_node.header.offset_to_controllers
-            controller_data_base = bin_node.header.offset_to_controller_data
+            # MDLOps stores offsets as (absolute_offset - 12), so add 12 when reading
+            controllers_base_raw = bin_node.header.offset_to_controllers
+            controller_data_base_raw = bin_node.header.offset_to_controller_data
+            controllers_base = controllers_base_raw + 12 if controllers_base_raw not in (0, 0xFFFFFFFF) else controllers_base_raw
+            controller_data_base = controller_data_base_raw + 12 if controller_data_base_raw not in (0, 0xFFFFFFFF) else controller_data_base_raw
             for i in range(bin_node.header.controller_count):
                 offset = controllers_base + i * _Controller.SIZE
                 controller: MDLController = self._load_controller(

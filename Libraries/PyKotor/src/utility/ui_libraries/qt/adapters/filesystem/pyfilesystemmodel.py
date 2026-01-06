@@ -16,6 +16,7 @@ from qtpy.QtCore import (
     QBasicTimer,
     QByteArray,
     QDir,
+    QEvent,
     QFileDevice,
     QFileInfo,
     QMimeData,
@@ -30,8 +31,10 @@ from qtpy.QtCore import (
 from qtpy.QtGui import QIcon  # noqa: E402
 # QAbstractFileIconProvider is not exposed by qtpy, import directly
 try:
-    if qtpy.API_NAME in ("PyQt6", "PySide6"):
+    if qtpy.API_NAME == "PyQt6":
         from PyQt6.QtGui import QAbstractFileIconProvider  # type: ignore[import-untyped]  # noqa: E402
+    elif qtpy.API_NAME == "PySide6":
+        from PySide6.QtGui import QAbstractFileIconProvider  # type: ignore[import-untyped]  # noqa: E402
     else:
         # PyQt5/PySide2 - QAbstractFileIconProvider might not exist
         QAbstractFileIconProvider = QFileIconProvider  # type: ignore[assignment, misc]

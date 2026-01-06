@@ -298,6 +298,18 @@ class PyFileSystemNode:
             return bool(self.info and self.info == other)
         return NotImplemented
 
+    def __hash__(self) -> int:
+        """Hash method to make PyFileSystemNode hashable for use as dictionary keys.
+
+        Required because __eq__ is defined, which sets __hash__ to None by default.
+        Nodes are used as keys in _bypassFilters dictionary, so they must be hashable.
+        Uses filename and parent identity for consistent hashing.
+        """
+        # Hash based on filename (case-insensitive for consistency) and parent identity
+        filename_hash = hash(self.fileName.lower())
+        parent_hash = hash(id(self.parent)) if self.parent is not None else 0
+        return hash((filename_hash, parent_hash))
+
     def hasInformation(self) -> bool:
         """Check if has information matching C++ line 140 exactly.
 
