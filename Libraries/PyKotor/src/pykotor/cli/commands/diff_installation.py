@@ -23,8 +23,8 @@ def cmd_diff_installation(args: Namespace, logger: Logger) -> int:
         Exit code (0 for success, non-zero for error)
     """
     try:
-        # Try to import and use the kotordiff package
-        from kotordiff.__main__ import main as kotordiff_main  # type: ignore[import-untyped]
+        # Use pykotor.diff_tool
+        from pykotor.diff_tool.__main__ import main as kotordiff_main
 
         # Convert argparse Namespace to list of strings for kotordiff
         import sys

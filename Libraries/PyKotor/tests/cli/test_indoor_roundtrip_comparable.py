@@ -10,20 +10,19 @@ These tests verify that:
 from __future__ import annotations
 
 # sys.path modifications removed - pykotor is now a proper package
-
 import difflib
+
+from argparse import Namespace
 from io import StringIO
 from pathlib import Path
 from typing import Any
 
 import pytest
-from argparse import Namespace
 
 from pykotor.cli.commands.indoor_builder import cmd_indoor_build, cmd_indoor_extract
-from pykotor.common.indoormap import IndoorMap
+from pykotor.common.indoormap import IndoorMap, MissingRoomInfo
 from pykotor.common.modulekit import ModuleKitManager
 from pykotor.extract.installation import Installation
-from pykotor.tools.path import CaseAwarePath
 
 
 class _MemLogger:
@@ -97,13 +96,18 @@ def _run_indoor_build(
     return int(cmd_indoor_build(args, _MemLogger()))  # type: ignore[arg-type]
 
 
-def _safe_out_module_id(*, module_root: str, game_key: str, room_count: int) -> str:
+def _safe_out_module_id(
+    *,
+    module_root: str,
+    game_key: str,
+    room_count: int,
+) -> str:
     """Pick a module id that will not exceed the 16-char ResRef limit."""
-    max_index = max(room_count - 1, 0)
-    digits = len(str(max_index))
-    max_for_rooms = 16 - (len("_room") + digits)
-    max_for_minimap = 16 - len("lbl_map")
-    max_module_id_len = min(max_for_rooms, max_for_minimap)
+    max_index: int = max(room_count - 1, 0)
+    digits: int = len(str(max_index))
+    max_for_rooms: int = 16 - (len("_room") + digits)
+    max_for_minimap: int = 16 - len("lbl_map")
+    max_module_id_len: int = min(max_for_rooms, max_for_minimap)
 
     if max_module_id_len <= 0:
         msg = f"Cannot construct a valid module_id for room_count={room_count} (digits={digits})"
@@ -131,7 +135,7 @@ def _compare_indoor_maps_with_udiff(
         diff_lines.append(msg)
         log_buffer.write(msg + "\n")
 
-    is_identical = original.compare(roundtripped, log_func=log_func)
+    is_identical: bool = original.compare(roundtripped, log_func=log_func)
 
     if not is_identical:
         # Generate udiff format output
@@ -210,9 +214,7 @@ def roundtrip_data(
 
     # Normalize module_id for stable comparison
     room_count = len(original_indoor_map.rooms)
-    output_module_root = _safe_out_module_id(
-        module_root=source_module_root, game_key=game_key, room_count=room_count
-    )
+    output_module_root = _safe_out_module_id(module_root=source_module_root, game_key=game_key, room_count=room_count)
     original_indoor_map.module_id = output_module_root
 
     # Write normalized indoor file
@@ -277,10 +279,10 @@ def _installation_for(
 # Test: Module -> .indoor -> module -> .indoor roundtrip
 def test_module_to_indoor_to_module_to_indoor_roundtrip(roundtrip_data: dict[str, Any]) -> None:
     """Test complete roundtrip: module -> .indoor -> module -> .indoor using ComparableMixin.compare()."""
-    original = roundtrip_data["original_indoor_map"]
-    roundtripped = roundtrip_data["roundtripped_indoor_map"]
+    original: IndoorMap = roundtrip_data["original_indoor_map"]
+    roundtripped: IndoorMap = roundtrip_data["roundtripped_indoor_map"]
 
-    is_identical = _compare_indoor_maps_with_udiff(
+    is_identical: bool = _compare_indoor_maps_with_udiff(
         original,
         roundtripped,
         original_label="original (module -> .indoor)",
@@ -293,27 +295,27 @@ def test_module_to_indoor_to_module_to_indoor_roundtrip(roundtrip_data: dict[str
 # Test: .indoor -> module -> .indoor roundtrip
 def test_indoor_to_module_to_indoor_roundtrip(roundtrip_data: dict[str, Any]) -> None:
     """Test roundtrip: .indoor -> module -> .indoor using ComparableMixin.compare()."""
-    game_key = roundtrip_data["game_key"]
-    source_module_root = roundtrip_data["source_module_root"]
-    output_module_root = roundtrip_data["output_module_root"]
-    installation = roundtrip_data["installation"]
-    mk_mgr = roundtrip_data["mk_mgr"]
-    game_arg = "k1" if game_key == "k1" else "k2"
+    game_key: str = roundtrip_data["game_key"]
+    source_module_root: str = roundtrip_data["source_module_root"]
+    output_module_root: str = roundtrip_data["output_module_root"]
+    installation: Installation = roundtrip_data["installation"]
+    mk_mgr: ModuleKitManager = roundtrip_data["mk_mgr"]
+    game_arg: str = "k1" if game_key == "k1" else "k2"
 
-    tmp_path = roundtrip_data["indoor0_path"].parent
+    tmp_path: Path = roundtrip_data["indoor0_path"].parent
 
     # Start with the first extracted indoor file
-    indoor_start = roundtrip_data["indoor0_path"]
-    mod_intermediate = tmp_path / f"{source_module_root}.{game_key}.intermediate.mod"
-    indoor_end = tmp_path / f"{source_module_root}.{game_key}.end.indoor"
+    indoor_start: Path = roundtrip_data["indoor0_path"]
+    mod_intermediate: Path = tmp_path / f"{source_module_root}.{game_key}.intermediate.mod"
+    indoor_end: Path = tmp_path / f"{source_module_root}.{game_key}.end.indoor"
 
     # Load starting indoor map
-    start_indoor_map = IndoorMap()
-    missing = start_indoor_map.load(indoor_start.read_bytes(), [], module_kit_manager=mk_mgr)
+    start_indoor_map: IndoorMap = IndoorMap()
+    missing: list[MissingRoomInfo] = start_indoor_map.load(indoor_start.read_bytes(), [], module_kit_manager=mk_mgr)
     assert missing == [], f"Missing rooms/components in start: {missing}"
 
     # Build module from indoor
-    rc = _run_indoor_build(
+    rc: int = _run_indoor_build(
         installation=installation,
         mk_mgr=mk_mgr,
         game_arg=game_arg,
@@ -340,7 +342,7 @@ def test_indoor_to_module_to_indoor_roundtrip(roundtrip_data: dict[str, Any]) ->
     assert missing == [], f"Missing rooms/components in end: {missing}"
 
     # Compare using ComparableMixin.compare()
-    is_identical = _compare_indoor_maps_with_udiff(
+    is_identical: bool = _compare_indoor_maps_with_udiff(
         start_indoor_map,
         end_indoor_map,
         original_label="start (.indoor)",

@@ -322,7 +322,7 @@ class ApplicationSettings(Settings):
     }
 
     # region Application Attributes
-    if qtpy.API_NAME in ("PyQt5", "PySide2"):
+    if qtpy.QT5:
         REQUIRES_RESTART: ClassVar[dict[str, Qt.ApplicationAttribute | None]] = {
             "AA_PluginApplication": Qt.ApplicationAttribute.AA_PluginApplication,
             "AA_UseDesktopOpenGL": Qt.ApplicationAttribute.AA_UseDesktopOpenGL,
@@ -442,7 +442,7 @@ class ApplicationSettings(Settings):
         "AA_SetPalette",
         (QApplication.testAttribute(Qt.ApplicationAttribute.AA_SetPalette) if hasattr(Qt.ApplicationAttribute, "AA_SetPalette") else False),
     )
-    if qtpy.API_NAME in ("PyQt5", "PySide2"):
+    if qtpy.QT5:
         AA_DisableHighDpiScaling: SettingsProperty[bool] = Settings.addSetting(
             "AA_DisableHighDpiScaling",
             (

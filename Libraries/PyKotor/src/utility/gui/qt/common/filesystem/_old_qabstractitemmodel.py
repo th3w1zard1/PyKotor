@@ -24,9 +24,9 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
-if qtpy.API_NAME in ("PyQt6", "PySide6"):
+if qtpy.QT6:
     from qtpy.QtGui import QUndoCommand, QUndoStack  # pyright: ignore[reportPrivateImportUsage]
-elif qtpy.API_NAME in ("PyQt5", "PySide2"):
+elif qtpy.QT5:
     from qtpy.QtWidgets import QUndoCommand, QUndoStack  # pyright: ignore[reportPrivateImportUsage]
 else:
     raise RuntimeError(f"Unexpected qtpy version: {qtpy.API_NAME}")

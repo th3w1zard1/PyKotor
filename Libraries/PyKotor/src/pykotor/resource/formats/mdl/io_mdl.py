@@ -2146,7 +2146,11 @@ class MDLBinaryReader:
     ):
         self._reader: BinaryReader = BinaryReader.from_auto(source, offset)
 
-        self._reader_ext: BinaryReader | None = None if source_ext is None else BinaryReader.from_auto(source_ext, offset_ext)
+        self._reader_ext: BinaryReader | None = (
+            None
+            if source_ext is None
+            else BinaryReader.from_auto(source_ext, offset_ext)
+        )
 
         # first 12 bytes do not count in offsets used within the file
         self._reader.set_offset(self._reader.offset() + 12)
@@ -2216,7 +2220,10 @@ class MDLBinaryReader:
         # Skip animations when fast loading (not needed for rendering)
         if not self._fast_load:
             self._reader.seek(model_header.offset_to_animations)
-            animation_offsets: list[int] = [self._reader.read_uint32() for _ in range(model_header.animation_count)]
+            animation_offsets: list[int] = [
+                self._reader.read_uint32()
+                for _ in range(model_header.animation_count)
+            ]
             for animation_offset in animation_offsets:
                 anim: MDLAnimation = self._load_anim(animation_offset)
                 self._mdl.anims.append(anim)
@@ -2246,7 +2253,10 @@ class MDLBinaryReader:
                 ),
             )
 
-        names_size: int = model_header.offset_to_animations - (model_header.offset_to_name_offsets + (4 * name_indexes_count))
+        names_size: int = model_header.offset_to_animations - (
+            model_header.offset_to_name_offsets
+            + (4 * name_indexes_count)
+        )
         names_raw: bytes = self._reader.read_bytes(names_size)
 
         names_list: list[str] = []

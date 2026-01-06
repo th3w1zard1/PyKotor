@@ -8,7 +8,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "kotor-diff"
 version = "1.0.1"
-description = "KotOR Diff Tool - generates TSLPatcher patch data from file differences"
+description = "KotOR Diff Tool - generates TSLPatcher patch data from file differences (shim package, functionality now in pykotor.diff_tool)"
 authors = [{name = "NickHugi"}]
 maintainers = [{name = "th3w1zard1", email = "halomastar@gmail.com"}]
 readme = {file = "README.md", content-type = "text/markdown"}

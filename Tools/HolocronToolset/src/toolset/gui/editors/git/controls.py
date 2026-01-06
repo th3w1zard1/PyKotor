@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING
 import qtpy
 
 from qtpy.QtCore import Qt
-from qtpy.QtGui import QUndoStack  # pyright: ignore[reportPrivateImportUsage]
 
 from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
 from pykotor.resource.generics.git import (

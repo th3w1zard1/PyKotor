@@ -35,11 +35,11 @@ _add_sys_path(UTILITY_PATH)
 
 from argparse import Namespace
 
-from kotorcli.commands.indoor_builder import cmd_indoor_build, cmd_indoor_extract
 from pykotor.common.indoormap import IndoorMap
 from pykotor.common.modulekit import ModuleKitManager
 from pykotor.extract.installation import Installation
-from pykotor.tools.path import CaseAwarePath
+
+from kotorcli.commands.indoor_builder import cmd_indoor_build, cmd_indoor_extract
 
 
 class _MemLogger:
@@ -147,7 +147,18 @@ def _compare_indoor_maps_with_udiff(
         diff_lines.append(msg)
         log_buffer.write(msg + "\n")
 
-    is_identical = original.compare(roundtripped, log_func=log_func)
+    # Verify IndoorMap has compare method (from ComparableMixin)
+    if not hasattr(original, "compare"):
+        # Try to get compare from ComparableMixin directly
+        from pykotor.resource.formats._base import ComparableMixin  # noqa: PLC0415
+
+        if ComparableMixin not in type(original).__mro__:
+            msg = f"IndoorMap does not inherit from ComparableMixin. MRO: {type(original).__mro__}"
+            raise AssertionError(msg)
+        # Use ComparableMixin.compare directly
+        is_identical = ComparableMixin.compare(original, roundtripped, log_func=log_func)
+    else:
+        is_identical = original.compare(roundtripped, log_func=log_func)
 
     if not is_identical:
         # Generate udiff format output
@@ -168,18 +179,18 @@ def _compare_indoor_maps_with_udiff(
         )
 
         # Print the udiff
-        print("\n" + "=" * 80)
-        print("Unified diff (udiff format):")
-        print("=" * 80)
+        print("\n" + "=" * 80)  # noqa: T201
+        print("Unified diff (udiff format):")  # noqa: T201
+        print("=" * 80)  # noqa: T201
         for line in udiff:
-            print(line)
-        print("=" * 80)
+            print(line)  # noqa: T201
+        print("=" * 80)  # noqa: T201
 
         # Also print the structured comparison output
-        print("\nStructured comparison differences:")
-        print("-" * 80)
-        print(log_buffer.getvalue())
-        print("-" * 80)
+        print("\nStructured comparison differences:")  # noqa: T201
+        print("-" * 80)  # noqa: T201
+        print(log_buffer.getvalue())  # noqa: T201
+        print("-" * 80)  # noqa: T201
 
     return is_identical
 
@@ -226,9 +237,7 @@ def roundtrip_data(
 
     # Normalize module_id for stable comparison
     room_count = len(original_indoor_map.rooms)
-    output_module_root = _safe_out_module_id(
-        module_root=source_module_root, game_key=game_key, room_count=room_count
-    )
+    output_module_root = _safe_out_module_id(module_root=source_module_root, game_key=game_key, room_count=room_count)
     original_indoor_map.module_id = output_module_root
 
     # Write normalized indoor file

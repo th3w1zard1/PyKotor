@@ -925,9 +925,7 @@ class ToolWindow(QMainWindow):
     def on_savepath_changed(
         self,
         new_save_dir: str,
-    ):
-        from qtpy.QtGui import QBrush, QColor
-        
+    ):        
         assert self.active is not None, "No active installation selected"
         self.ui.savesWidget.modules_model.invisibleRootItem().removeRows(0, self.ui.savesWidget.modules_model.rowCount())  # pyright: ignore[reportOptionalMemberAccess]
         new_save_dir_path = Path(new_save_dir)
@@ -937,15 +935,6 @@ class ToolWindow(QMainWindow):
             return
         for save_path, resource_list in self.active.saves[new_save_dir_path].items():
             save_path_item = QStandardItem(str(save_path.relative_to(save_path.parent.parent)))
-            
-            # Check if this save is corrupted
-            is_corrupted = self.active.is_save_corrupted(save_path)
-            if is_corrupted:
-                # Add red border/background color for corrupted saves
-                save_path_item.setBackground(QBrush(QColor(255, 220, 220)))  # Light red background
-                save_path_item.setForeground(QBrush(QColor(139, 0, 0)))  # Dark red text
-                # Add tooltip
-                save_path_item.setToolTip(tr("This save is corrupted."))
             
             self.ui.savesWidget.modules_model.invisibleRootItem().appendRow(save_path_item)  # pyright: ignore[reportOptionalMemberAccess]
             category_items_under_save_path: dict[str, QStandardItem] = {}
@@ -1657,7 +1646,10 @@ class ToolWindow(QMainWindow):
             filename = resource.filepath().name
             self.on_save_reload(filename)
 
-    def _select_override_resource(self, resource: FileResource):
+    def _select_override_resource(
+        self,
+        resource: FileResource,
+    ):
         assert self.active is not None
         self.ui.resourceTabs.setCurrentWidget(self.ui.overrideTab)  # pyright: ignore[reportArgumentType]
         self.ui.overrideWidget.set_resource_selection(resource)

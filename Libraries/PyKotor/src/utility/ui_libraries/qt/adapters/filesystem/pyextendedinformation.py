@@ -19,6 +19,7 @@ private:
 from __future__ import annotations
 
 import os
+
 from typing import TYPE_CHECKING
 
 from qtpy.QtCore import QDateTime, QFileDevice, QFileInfo, QTimeZone  # noqa: E402
@@ -30,17 +31,18 @@ if TYPE_CHECKING:
 
 class PyQExtendedInformation:
     """Python adapter for QExtendedInformation matching Qt6 C++ source exactly.
-    
+
     Matches qfileinfogatherer_p.h lines 42-122.
     """
-    
+
     # Matches C++ line 44: enum Type { Dir, File, System };
     class Type:
         """Type enum matching C++ QExtendedInformation::Type exactly."""
+
         Dir = 0
         File = 1
         System = 2
-    
+
     # Convenience constants matching C++ enum values
     Dir: int = Type.Dir
     File: int = Type.File
@@ -48,7 +50,7 @@ class PyQExtendedInformation:
 
     def __init__(self, info: QFileInfo | None = None):
         """Initialize QExtendedInformation matching C++ constructors exactly.
-        
+
         Matches C++ lines 46-47:
         QExtendedInformation() {}
         QExtendedInformation(const QFileInfo &info) : mFileInfo(info) {}
@@ -57,7 +59,7 @@ class PyQExtendedInformation:
         if info is None:
             self.mFileInfo: QFileInfo = QFileInfo()
         else:
-            self.mFileInfo: QFileInfo = QFileInfo(info)
+            self.mFileInfo = QFileInfo(info)
         # Matches C++ line 117: QString displayType;
         self.displayType: str = ""
         # Matches C++ line 118: QIcon icon;
@@ -65,28 +67,28 @@ class PyQExtendedInformation:
 
     def isDir(self) -> bool:
         """Return true if type() == Dir.
-        
+
         Matches C++: inline bool isDir() { return type() == Dir; }
         """
         return self.type() == PyQExtendedInformation.Dir
 
     def isFile(self) -> bool:
         """Return true if type() == File.
-        
+
         Matches C++: inline bool isFile() { return type() == File; }
         """
         return self.type() == PyQExtendedInformation.File
 
     def isSystem(self) -> bool:
         """Return true if type() == System.
-        
+
         Matches C++: inline bool isSystem() { return type() == System; }
         """
         return self.type() == PyQExtendedInformation.System
 
     def __eq__(self, other: object) -> bool:
         """Equality operator matching C++ exactly.
-        
+
         Matches C++ lines 53-58:
         bool operator ==(const QExtendedInformation &fileInfo) const {
            return mFileInfo == fileInfo.mFileInfo
@@ -106,7 +108,7 @@ class PyQExtendedInformation:
 
     def isCaseSensitive(self) -> bool:
         """Return case sensitivity.
-        
+
         Matches C++ lines 60-65 (QT_NO_FSFILEENGINE version not implemented,
         using platform check instead).
         """
@@ -115,7 +117,7 @@ class PyQExtendedInformation:
 
     def permissions(self) -> QFileDevice.Permissions:
         """Return file permissions.
-        
+
         Matches C++ lines 67-69:
         QFile::Permissions permissions() const {
             return mFileInfo.permissions();
@@ -125,7 +127,7 @@ class PyQExtendedInformation:
 
     def type(self) -> int:
         """Return Type enum value.
-        
+
         Matches C++ lines 71-82:
         Type type() const {
             if (mFileInfo.isDir()) {
@@ -150,7 +152,7 @@ class PyQExtendedInformation:
 
     def isSymLink(self, ignoreNtfsSymLinks: bool = False) -> bool:  # noqa: FBT001, FBT002
         """Check if symlink, matching C++ exactly.
-        
+
         Matches C++ lines 84-92:
         bool isSymLink(bool ignoreNtfsSymLinks = false) const
         {
@@ -171,7 +173,7 @@ class PyQExtendedInformation:
 
     def isHidden(self) -> bool:
         """Return true if file is hidden.
-        
+
         Matches C++ lines 94-96:
         bool isHidden() const {
             return mFileInfo.isHidden();
@@ -181,7 +183,7 @@ class PyQExtendedInformation:
 
     def fileInfo(self) -> QFileInfo:
         """Return QFileInfo.
-        
+
         Matches C++ lines 98-100:
         QFileInfo fileInfo() const {
             return mFileInfo;
@@ -191,7 +193,7 @@ class PyQExtendedInformation:
 
     def lastModified(self, tz: QTimeZone) -> QDateTime:
         """Return last modified time in timezone.
-        
+
         Matches C++ lines 102-104:
         QDateTime lastModified(const QTimeZone &tz) const {
             return mFileInfo.lastModified(tz);
@@ -201,7 +203,7 @@ class PyQExtendedInformation:
 
     def size(self) -> int:
         """Return file size.
-        
+
         Matches C++ lines 106-115:
         qint64 size() const {
             qint64 size = -1;

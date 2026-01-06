@@ -74,44 +74,48 @@ STRING_TO_MOUSE: dict[str, Qt.MouseButton] = {k: v for k, v in Qt.MouseButton.__
 STRING_TO_MOUSE.update({v: k for k, v in MOUSE_BUTTON_NAMES.items()})
 
 BUTTON_TO_INT: dict[Qt.MouseButton | str, int] = {
-    Qt.MouseButton.LeftButton: int(Qt.MouseButton.LeftButton) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.LeftButton.value,  # pyright: ignore[reportArgumentType]
-    Qt.MouseButton.RightButton: int(Qt.MouseButton.RightButton) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.RightButton.value,  # pyright: ignore[reportArgumentType]
-    Qt.MouseButton.MiddleButton: int(Qt.MouseButton.MiddleButton) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.MiddleButton.value,  # pyright: ignore[reportArgumentType]
-    Qt.MouseButton.BackButton: int(Qt.MouseButton.BackButton) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.BackButton.value,  # pyright: ignore[reportArgumentType]
-    Qt.MouseButton.ForwardButton: int(Qt.MouseButton.ForwardButton) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.ForwardButton.value,  # pyright: ignore[reportArgumentType]
-    Qt.MouseButton.TaskButton: int(Qt.MouseButton.TaskButton) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.TaskButton.value,  # pyright: ignore[reportArgumentType]
-    Qt.MouseButton.ExtraButton1: int(Qt.MouseButton.ExtraButton1) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.ExtraButton1.value,  # pyright: ignore[reportArgumentType]
-    Qt.MouseButton.ExtraButton2: int(Qt.MouseButton.ExtraButton2) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.ExtraButton2.value,  # pyright: ignore[reportArgumentType]
-    Qt.MouseButton.ExtraButton3: int(Qt.MouseButton.ExtraButton3) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.ExtraButton3.value,  # pyright: ignore[reportArgumentType]
-    Qt.MouseButton.ExtraButton4: int(Qt.MouseButton.ExtraButton4) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.ExtraButton4.value,  # pyright: ignore[reportArgumentType]
-    Qt.MouseButton.ExtraButton5: int(Qt.MouseButton.ExtraButton5) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.ExtraButton5.value,  # pyright: ignore[reportArgumentType]
-    Qt.MouseButton.ExtraButton6: int(Qt.MouseButton.ExtraButton6) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.ExtraButton6.value,  # pyright: ignore[reportArgumentType]
-    Qt.MouseButton.ExtraButton7: int(Qt.MouseButton.ExtraButton7) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.ExtraButton7.value,  # pyright: ignore[reportArgumentType]
-    Qt.MouseButton.ExtraButton8: int(Qt.MouseButton.ExtraButton8) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.ExtraButton8.value,  # pyright: ignore[reportArgumentType]
-    Qt.MouseButton.ExtraButton9: int(Qt.MouseButton.ExtraButton9) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.ExtraButton9.value,  # pyright: ignore[reportArgumentType]
-    Qt.MouseButton.ExtraButton10: int(Qt.MouseButton.ExtraButton10) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.ExtraButton10.value,  # pyright: ignore[reportArgumentType]
-    Qt.MouseButton.ExtraButton11: int(Qt.MouseButton.ExtraButton11) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.ExtraButton11.value,  # pyright: ignore[reportArgumentType]
-    Qt.MouseButton.ExtraButton12: int(Qt.MouseButton.ExtraButton12) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.ExtraButton12.value,  # pyright: ignore[reportArgumentType]
-    Qt.MouseButton.ExtraButton13: int(Qt.MouseButton.ExtraButton13) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.ExtraButton13.value,  # pyright: ignore[reportArgumentType]
-    Qt.MouseButton.ExtraButton14: int(Qt.MouseButton.ExtraButton14) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.ExtraButton14.value,  # pyright: ignore[reportArgumentType]
-    Qt.MouseButton.ExtraButton15: int(Qt.MouseButton.ExtraButton15) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.ExtraButton15.value,  # pyright: ignore[reportArgumentType]
-    Qt.MouseButton.ExtraButton16: int(Qt.MouseButton.ExtraButton16) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.ExtraButton16.value,  # pyright: ignore[reportArgumentType]
-    Qt.MouseButton.ExtraButton17: int(Qt.MouseButton.ExtraButton17) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.ExtraButton17.value,  # pyright: ignore[reportArgumentType]
-    Qt.MouseButton.ExtraButton18: int(Qt.MouseButton.ExtraButton18) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.ExtraButton18.value,  # pyright: ignore[reportArgumentType]
-    Qt.MouseButton.ExtraButton19: int(Qt.MouseButton.ExtraButton19) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.ExtraButton19.value,  # pyright: ignore[reportArgumentType]
-    Qt.MouseButton.ExtraButton20: int(Qt.MouseButton.ExtraButton20) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.ExtraButton20.value,  # pyright: ignore[reportArgumentType]
-    Qt.MouseButton.ExtraButton21: int(Qt.MouseButton.ExtraButton21) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.ExtraButton21.value,  # pyright: ignore[reportArgumentType]
-    Qt.MouseButton.ExtraButton22: int(Qt.MouseButton.ExtraButton22) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.ExtraButton22.value,  # pyright: ignore[reportArgumentType]
-    Qt.MouseButton.ExtraButton23: int(Qt.MouseButton.ExtraButton23) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.ExtraButton23.value,  # pyright: ignore[reportArgumentType]
-    Qt.MouseButton.ExtraButton24: int(Qt.MouseButton.ExtraButton24) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.ExtraButton24.value,  # pyright: ignore[reportArgumentType]
-    Qt.MouseButton.NoButton: int(Qt.MouseButton.NoButton) if API_NAME in ("PyQt5", "PySide2") else Qt.MouseButton.NoButton.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.LeftButton: int(Qt.MouseButton.LeftButton) if qtpy.QT5 else Qt.MouseButton.LeftButton.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.RightButton: int(Qt.MouseButton.RightButton) if qtpy.QT5 else Qt.MouseButton.RightButton.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.MiddleButton: int(Qt.MouseButton.MiddleButton) if qtpy.QT5 else Qt.MouseButton.MiddleButton.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.BackButton: int(Qt.MouseButton.BackButton) if qtpy.QT5 else Qt.MouseButton.BackButton.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.ForwardButton: int(Qt.MouseButton.ForwardButton) if qtpy.QT5 else Qt.MouseButton.ForwardButton.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.TaskButton: int(Qt.MouseButton.TaskButton) if qtpy.QT5 else Qt.MouseButton.TaskButton.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.ExtraButton1: int(Qt.MouseButton.ExtraButton1) if qtpy.QT5 else Qt.MouseButton.ExtraButton1.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.ExtraButton2: int(Qt.MouseButton.ExtraButton2) if qtpy.QT5 else Qt.MouseButton.ExtraButton2.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.ExtraButton3: int(Qt.MouseButton.ExtraButton3) if qtpy.QT5 else Qt.MouseButton.ExtraButton3.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.ExtraButton4: int(Qt.MouseButton.ExtraButton4) if qtpy.QT5 else Qt.MouseButton.ExtraButton4.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.ExtraButton5: int(Qt.MouseButton.ExtraButton5) if qtpy.QT5 else Qt.MouseButton.ExtraButton5.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.ExtraButton6: int(Qt.MouseButton.ExtraButton6) if qtpy.QT5 else Qt.MouseButton.ExtraButton6.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.ExtraButton7: int(Qt.MouseButton.ExtraButton7) if qtpy.QT5 else Qt.MouseButton.ExtraButton7.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.ExtraButton8: int(Qt.MouseButton.ExtraButton8) if qtpy.QT5 else Qt.MouseButton.ExtraButton8.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.ExtraButton9: int(Qt.MouseButton.ExtraButton9) if qtpy.QT5 else Qt.MouseButton.ExtraButton9.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.ExtraButton10: int(Qt.MouseButton.ExtraButton10) if qtpy.QT5 else Qt.MouseButton.ExtraButton10.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.ExtraButton11: int(Qt.MouseButton.ExtraButton11) if qtpy.QT5 else Qt.MouseButton.ExtraButton11.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.ExtraButton12: int(Qt.MouseButton.ExtraButton12) if qtpy.QT5 else Qt.MouseButton.ExtraButton12.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.ExtraButton13: int(Qt.MouseButton.ExtraButton13) if qtpy.QT5 else Qt.MouseButton.ExtraButton13.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.ExtraButton14: int(Qt.MouseButton.ExtraButton14) if qtpy.QT5 else Qt.MouseButton.ExtraButton14.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.ExtraButton15: int(Qt.MouseButton.ExtraButton15) if qtpy.QT5 else Qt.MouseButton.ExtraButton15.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.ExtraButton16: int(Qt.MouseButton.ExtraButton16) if qtpy.QT5 else Qt.MouseButton.ExtraButton16.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.ExtraButton17: int(Qt.MouseButton.ExtraButton17) if qtpy.QT5 else Qt.MouseButton.ExtraButton17.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.ExtraButton18: int(Qt.MouseButton.ExtraButton18) if qtpy.QT5 else Qt.MouseButton.ExtraButton18.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.ExtraButton19: int(Qt.MouseButton.ExtraButton19) if qtpy.QT5 else Qt.MouseButton.ExtraButton19.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.ExtraButton20: int(Qt.MouseButton.ExtraButton20) if qtpy.QT5 else Qt.MouseButton.ExtraButton20.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.ExtraButton21: int(Qt.MouseButton.ExtraButton21) if qtpy.QT5 else Qt.MouseButton.ExtraButton21.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.ExtraButton22: int(Qt.MouseButton.ExtraButton22) if qtpy.QT5 else Qt.MouseButton.ExtraButton22.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.ExtraButton23: int(Qt.MouseButton.ExtraButton23) if qtpy.QT5 else Qt.MouseButton.ExtraButton23.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.ExtraButton24: int(Qt.MouseButton.ExtraButton24) if qtpy.QT5 else Qt.MouseButton.ExtraButton24.value,  # pyright: ignore[reportArgumentType]
+    Qt.MouseButton.NoButton: int(Qt.MouseButton.NoButton) if qtpy.QT5 else Qt.MouseButton.NoButton.value,  # pyright: ignore[reportArgumentType]
 }
-if API_NAME in ("PySide2", "PySide6"):
-    BUTTON_TO_INT[Qt.MouseButton.MouseButtonMask] = int(Qt.MouseButton.MouseButtonMask) if API_NAME == "PySide2" else Qt.MouseButton.MouseButtonMask.value  # pyright: ignore[reportAttributeAccessIssue]
+if qtpy.QT5 and hasattr(Qt.MouseButton, "MouseButtonMask"):
+    BUTTON_TO_INT[Qt.MouseButton.MouseButtonMask] = (  # pyright: ignore[reportAttributeAccessIssue]
+        int(Qt.MouseButton.MouseButtonMask)  # pyright: ignore[reportAttributeAccessIssue]
+        if API_NAME == "PySide2"
+        else Qt.MouseButton.MouseButtonMask.value  # pyright: ignore[reportAttributeAccessIssue]
+    )
 INT_TO_BUTTON: dict[int, Qt.MouseButton] = {v: k for k, v in BUTTON_TO_INT.items()}  # pyright: ignore[reportAssignmentType]
 
 
-STRING_KEY_TO_INT: dict[str, int] = {k: v.value if API_NAME in ("PyQt6", "PySide6") else v for k, v in Qt.Key.__dict__.items() if k.startswith("Key_")}
+STRING_KEY_TO_INT: dict[str, int] = {k: v.value if qtpy.QT6 else v for k, v in Qt.Key.__dict__.items() if k.startswith("Key_")}
 
 
 def get_qsettings_organization(organization: str) -> str:
@@ -209,7 +213,10 @@ def get_qt_key_string(
 def get_qt_key_string_localized(
     key: Qt.Key | str | int | bytes,
 ) -> str:
-    return MODIFIER_KEY_NAMES.get(key, getattr(key, "name", QKeySequence(key).toString())).upper().strip().replace("KEY_", "").replace("CONTROL", "CTRL")  # type: ignore[arg-type]
+    return MODIFIER_KEY_NAMES.get(
+        key,  # type: ignore[arg-type]
+        getattr(key, "name", QKeySequence(key).toString()),
+    ).upper().strip().replace("KEY_", "").replace("CONTROL", "CTRL")
 
 
 def get_qt_button_string(
@@ -287,8 +294,16 @@ def get_resource_from_file(
 
 
 if __name__ == "__main__":  # quick test
-    all_keys: list[Qt.Key] = [getattr(Qt.Key, key) for key in dir(Qt.Key) if key.startswith("Key_")]
-    all_buttons: list[Qt.MouseButton] = [getattr(Qt.MouseButton, button) for button in dir(Qt.MouseButton) if "Button" in button and button not in ("AllButtons", "NoButton")]
+    all_keys: list[Qt.Key] = [
+        getattr(Qt.Key, key)
+        for key in dir(Qt.Key)
+        if key.startswith("Key_")
+    ]
+    all_buttons: list[Qt.MouseButton] = [
+        getattr(Qt.MouseButton, button)
+        for button in dir(Qt.MouseButton)
+        if "Button" in button and button not in ("AllButtons", "NoButton")
+    ]
 
     for key in all_keys:
         key_string: str = get_qt_key_string(key)

@@ -279,13 +279,10 @@ def create_parser() -> ArgumentParser:  # noqa: PLR0915
         aliases=["diff-paths", "kotordiff", "diff-kotor"],
         help="Compare installations/files/modules using structured KotorDiff (headless with CLI args, GUI otherwise)",
     )
-    # Try to use kotordiff package's argument parser, otherwise use fallback
-    try:
-        from kotordiff.cli import add_kotordiff_arguments  # type: ignore[import-untyped]
+    # Use pykotor.diff_tool's argument parser
+    from pykotor.diff_tool.cli import add_kotordiff_arguments
 
-        add_kotordiff_arguments(diff_install_parser)
-    except ImportError:
-        _add_kotordiff_arguments_fallback(diff_install_parser)
+    add_kotordiff_arguments(diff_install_parser)
 
     # Utility commands
     diff_parser = subparsers.add_parser("diff", help="Compare two files and show differences")

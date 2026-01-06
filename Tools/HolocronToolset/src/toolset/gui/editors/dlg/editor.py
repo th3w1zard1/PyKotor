@@ -60,7 +60,7 @@ from toolset.gui.widgets.settings.installations import GlobalSettings
 from utility.ui_libraries.qt.adapters.itemmodels.filters import NoScrollEventFilter
 from utility.ui_libraries.qt.widgets.itemviews.html_delegate import HTMLDelegate
 
-if qtpy.API_NAME in ("PyQt6", "PySide6"):
+if qtpy.QT6:
     from qtpy.QtGui import QUndoStack
 else:
     from qtpy.QtWidgets import QUndoStack  # type: ignore[assignment]

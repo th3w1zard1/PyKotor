@@ -1040,7 +1040,7 @@ class Editor(QMainWindow):
         QTimer.singleShot(125, lambda: self.setWindowOpacity(1))
 
     def play_byte_source_media(self, data: bytes | None) -> bool:
-        if qtpy.API_NAME in ["PyQt5", "PySide2"]:
+        if qtpy.QT5:
             from qtpy.QtMultimedia import QMediaContent
 
             if data:
@@ -1054,7 +1054,7 @@ class Editor(QMainWindow):
                 return False
             return True
 
-        if qtpy.API_NAME in ["PyQt6", "PySide6"]:
+        if qtpy.QT6:
             if data:
                 self._play_byte_data_qt6(data)
             else:

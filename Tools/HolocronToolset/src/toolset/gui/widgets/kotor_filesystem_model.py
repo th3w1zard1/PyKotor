@@ -17,13 +17,13 @@ from pykotor.extract.capsule import LazyCapsule
 from utility.ui_libraries.qt.adapters.filesystem.pyfilesystemmodel import PyFileSystemModel
 from utility.ui_libraries.qt.tools.image import qicon_from_file_ext, qpixmap_to_qicon
 
-if qtpy.API_NAME in ("PyQt6", "PySide6"):
+if qtpy.QT6:
     QDesktopWidget = None
     from qtpy.QtGui import (
         QUndoCommand,  # pyright: ignore[reportPrivateImportUsage]  # noqa: F401
         QUndoStack,
     )
-elif qtpy.API_NAME in ("PyQt5", "PySide2"):
+elif qtpy.QT5:
     from qtpy.QtWidgets import (
         QUndoCommand,  # pyright: ignore[reportPrivateImportUsage]  # noqa: F401
         QUndoStack,

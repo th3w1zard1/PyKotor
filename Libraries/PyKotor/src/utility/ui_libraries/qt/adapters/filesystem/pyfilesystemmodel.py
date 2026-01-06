@@ -94,9 +94,9 @@ if TYPE_CHECKING:
     from typing_extensions import Literal
 
 
-if qtpy.API_NAME in ("PyQt6", "PySide6"):
+if qtpy.QT6:
     QDesktopWidget = None
-elif qtpy.API_NAME in ("PyQt5", "PySide2"):
+elif qtpy.QT5:
     from qtpy.QtWidgets import QDesktopWidget
 else:
     raise RuntimeError(f"Unexpected qtpy version: '{qtpy.API_NAME}'")
