@@ -337,7 +337,7 @@ class PyFileSystemModel(QAbstractItemModel):
         self._fetchingTimer: QBasicTimer = QBasicTimer()
 
         # Member variables matching C++ lines 293-302
-        self._filters: QDir.Filters = QDir.Filter.AllEntries | QDir.Filter.NoDotAndDotDot | QDir.Filter.AllDirs  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+        self._filters: QDir.Filter = QDir.Filter.AllEntries | QDir.Filter.NoDotAndDotDot | QDir.Filter.AllDirs  # type: ignore[attr-defined]
         self._sortColumn: int = 0
         self._sortOrder: Qt.SortOrder = Qt.SortOrder.AscendingOrder
         self._forceSort: bool = True
@@ -1386,7 +1386,7 @@ class PyFileSystemModel(QAbstractItemModel):
         # When the model is set to only show files, then a node representing a dir
         # should be hidden regardless of bypassFilters.
         # QTBUG-74471
-        hideDirs = (self._filters & (QDir.Filter.Dirs | QDir.Filter.AllDirs)) == 0  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+        hideDirs = (self._filters & (QDir.Filter.Dirs | QDir.Filter.AllDirs)) == 0  # type: ignore[attr-defined]
         shouldHideDirNode = hideDirs and node.isDir()
 
         # always accept drives
@@ -1397,17 +1397,17 @@ class PyFileSystemModel(QAbstractItemModel):
         if not node.hasInformation():
             return False
 
-        filterPermissions = ((self._filters & QDir.Filter.PermissionMask)  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
-                            and (self._filters & QDir.Filter.PermissionMask) != QDir.Filter.PermissionMask)  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
-        hideFiles = not bool(self._filters & QDir.Filter.Files)  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
-        hideReadable = not (not filterPermissions or bool(self._filters & QDir.Filter.Readable))  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
-        hideWritable = not (not filterPermissions or bool(self._filters & QDir.Filter.Writable))  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
-        hideExecutable = not (not filterPermissions or bool(self._filters & QDir.Filter.Executable))  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
-        hideHidden = not bool(self._filters & QDir.Filter.Hidden)  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
-        hideSystem = not bool(self._filters & QDir.Filter.System)  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
-        hideSymlinks = bool(self._filters & QDir.Filter.NoSymLinks)  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
-        hideDot = bool(self._filters & QDir.Filter.NoDot)  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
-        hideDotDot = bool(self._filters & QDir.Filter.NoDotDot)  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+        filterPermissions = ((self._filters & QDir.Filter.PermissionMask)  # type: ignore[attr-defined]
+                            and (self._filters & QDir.Filter.PermissionMask) != QDir.Filter.PermissionMask)  # type: ignore[attr-defined]
+        hideFiles = not bool(self._filters & QDir.Filter.Files)  # type: ignore[attr-defined]
+        hideReadable = not (not filterPermissions or bool(self._filters & QDir.Filter.Readable))  # type: ignore[attr-defined]
+        hideWritable = not (not filterPermissions or bool(self._filters & QDir.Filter.Writable))  # type: ignore[attr-defined]
+        hideExecutable = not (not filterPermissions or bool(self._filters & QDir.Filter.Executable))  # type: ignore[attr-defined]
+        hideHidden = not bool(self._filters & QDir.Filter.Hidden)  # type: ignore[attr-defined]
+        hideSystem = not bool(self._filters & QDir.Filter.System)  # type: ignore[attr-defined]
+        hideSymlinks = bool(self._filters & QDir.Filter.NoSymLinks)  # type: ignore[attr-defined]
+        hideDot = bool(self._filters & QDir.Filter.NoDot)  # type: ignore[attr-defined]
+        hideDotDot = bool(self._filters & QDir.Filter.NoDotDot)  # type: ignore[attr-defined]
 
         # Note that we match the behavior of entryList and not QFileInfo on this.
         isDot = node.fileName == "."
@@ -1462,7 +1462,7 @@ class PyFileSystemModel(QAbstractItemModel):
             return True
 
         # Check the name regularexpression filters
-        if not (node.isDir() and bool(self._filters & QDir.Filter.AllDirs)):  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+        if not (node.isDir() and bool(self._filters & QDir.Filter.AllDirs)):  # type: ignore[attr-defined]
             from qtpy.QtCore import QRegularExpression
             
             # C++: node->fileName.contains(re) where re is QRegularExpression
@@ -1504,7 +1504,7 @@ class PyFileSystemModel(QAbstractItemModel):
         # Reserve equivalent - pre-allocate list size
         self._nameFiltersRegexps = [None] * len(self._nameFilters)  # type: ignore[list-item]
         
-        cs = Qt.CaseSensitivity.CaseSensitive if bool(self._filters & QDir.Filter.CaseSensitive) else Qt.CaseSensitivity.CaseInsensitive  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+        cs = Qt.CaseSensitivity.CaseSensitive if bool(self._filters & QDir.Filter.CaseSensitive) else Qt.CaseSensitivity.CaseInsensitive  # type: ignore[attr-defined]
         
         for i, nameFilter in enumerate(self._nameFilters):
             # QRegularExpression::fromWildcard equivalent
@@ -1544,10 +1544,10 @@ class PyFileSystemModel(QAbstractItemModel):
 
         return node.fileName
 
-    def options(self) -> int | QFileSystemModel.Option | QFileSystemModel.Options:  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+    def options(self) -> QFileSystemModel.Option:  # type: ignore[attr-defined]
         result = 0
         if not self.resolveSymlinks():
-            result |= QFileSystemModel.DontResolveSymlinks  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+            result |= QFileSystemModel.DontResolveSymlinks  # type: ignore[attr-defined]
 
         # TODO:
         # if not self._fileInfoGatherer.isWatching():
@@ -1556,33 +1556,33 @@ class PyFileSystemModel(QAbstractItemModel):
         provider = self.iconProvider()
         print("<SDM> [options scope] provider: ", provider)
 
-        if provider and bool(provider.options() & QFileIconProvider.DontUseCustomDirectoryIcons):  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
-            result |= QFileSystemModel.DontUseCustomDirectoryIcons  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+        if provider and bool(provider.options() & QFileIconProvider.DontUseCustomDirectoryIcons):  # type: ignore[attr-defined]
+            result |= QFileSystemModel.DontUseCustomDirectoryIcons  # type: ignore[attr-defined]
 
         return result
 
     def setOptions(
         self,
-        options: QFileSystemModel.Options,  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+        options: QFileSystemModel.Option,  # type: ignore[attr-defined]
     ):
         changed = options ^ self.options()
         print("<SDM> [setOptions scope] changed: ", changed)
 
-        if bool(changed & QFileSystemModel.DontResolveSymlinks):  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
-            self.setResolveSymlinks(not bool(options & QFileSystemModel.DontResolveSymlinks))  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+        if bool(changed & QFileSystemModel.DontResolveSymlinks):  # type: ignore[attr-defined]
+            self.setResolveSymlinks(not bool(options & QFileSystemModel.DontResolveSymlinks))  # type: ignore[attr-defined]
 
         # TODO:
         # if bool(changed & QFileSystemModel.DontWatchForChanges):
         #    self._fileInfoGatherer.setWatching(not bool(options & QFileSystemModel.DontWatchForChanges))
 
-        if bool(changed & QFileSystemModel.DontUseCustomDirectoryIcons):  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+        if bool(changed & QFileSystemModel.DontUseCustomDirectoryIcons):  # type: ignore[attr-defined]
             provider = self.iconProvider()
             if provider:
                 providerOptions = provider.options()
-                if bool(options & QFileSystemModel.DontUseCustomDirectoryIcons):  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
-                    providerOptions |= QFileIconProvider.DontUseCustomDirectoryIcons  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+                if bool(options & QFileSystemModel.DontUseCustomDirectoryIcons):  # type: ignore[attr-defined]
+                    providerOptions |= QFileIconProvider.DontUseCustomDirectoryIcons  # type: ignore[attr-defined]
                 else:
-                    providerOptions &= ~QFileIconProvider.DontUseCustomDirectoryIcons  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+                    providerOptions &= ~QFileIconProvider.DontUseCustomDirectoryIcons  # type: ignore[attr-defined]
                 provider.setOptions(providerOptions)
             else:
                 RobustLogger().warning("Setting PyFileSystemModel::DontUseCustomDirectoryIcons has no effect when no provider is used")
@@ -1592,14 +1592,14 @@ class PyFileSystemModel(QAbstractItemModel):
         option: QFileSystemModel.Option,
     ) -> bool:
         print("<SDM> [testOption scope] option: ", option)
-        return bool(self.options() & option) == option  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+        return bool(self.options() & option) == option  # type: ignore[attr-defined]
 
     def setOption(
         self,
         option: QFileSystemModel.Option,
         on: bool = True,
     ):  # noqa: FBT001, FBT002
-        self.setOptions(self.options() | option if on else self.options() & ~option)  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+        self.setOptions(self.options() | option if on else self.options() & ~option)  # type: ignore[attr-defined]
 
     def sibling(
         self,
@@ -1668,11 +1668,11 @@ class PyFileSystemModel(QAbstractItemModel):
     def permissions(
         self,
         index: QModelIndex,
-    ) -> QFileDevice.Permissions | int:  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+    ) -> QFileDevice.Permission:  # type: ignore[attr-defined]
         r1 = QFileInfo(self.filePath(index)).permissions()
         print("<SDM> [permissions scope] r1: ", r1)
 
-        return QFileDevice.Permissions() if r1 is None else r1  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+        return QFileDevice.Permission() if r1 is None else r1  # type: ignore[attr-defined]
 
     def lastModified(
         self,
@@ -2061,7 +2061,7 @@ class PyFileSystemModel(QAbstractItemModel):
         from qtpy.QtCore import QLocale, QTimeZone
 
         # QTimeZone.LocalTime - matches usage in pyextendedinformation.py
-        local_tz = QTimeZone.LocalTime  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+        local_tz = QTimeZone.LocalTime  # type: ignore[attr-defined]
         return QLocale.system().toString(self.node(index).lastModified(local_tz), QLocale.FormatType.ShortFormat)
 
     def _icon(
@@ -2298,7 +2298,7 @@ class PyFileSystemModel(QAbstractItemModel):
 
         return success
 
-    def supportedDropActions(self) -> int | Qt.DropActions:  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+    def supportedDropActions(self) -> Qt.DropAction:  # type: ignore[attr-defined]
         return Qt.DropAction.CopyAction | Qt.DropAction.MoveAction | Qt.DropAction.LinkAction
 
     def filePath(
@@ -2512,7 +2512,7 @@ class PyFileSystemModel(QAbstractItemModel):
 
     def setFilter(
         self,
-        filters: QDir.Filters | QDir.Filter,  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+        filters: QDir.Filter,  # type: ignore[attr-defined]
     ):
         """Set filter matching C++ lines 1624-1636 exactly.
 
@@ -2534,7 +2534,7 @@ class PyFileSystemModel(QAbstractItemModel):
         if self._filters == filters:
             return
         changingCaseSensitivity = (
-            bool(filters & QDir.Filter.CaseSensitive) != bool(self._filters & QDir.Filter.CaseSensitive)  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+            bool(filters & QDir.Filter.CaseSensitive) != bool(self._filters & QDir.Filter.CaseSensitive)  # type: ignore[attr-defined]
         )
         self._filters = filters
         if changingCaseSensitivity:
@@ -2542,7 +2542,7 @@ class PyFileSystemModel(QAbstractItemModel):
         self._forceSort = True
         self._delayedSort()
 
-    def filter(self) -> QDir.Filters | QDir.Filter | int:  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+    def filter(self) -> QDir.Filter:  # type: ignore[attr-defined]
         return self._filters
 
     def setResolveSymlinks(self, enable: bool):  # noqa: FBT001
@@ -2621,9 +2621,9 @@ class PyFileSystemModel(QAbstractItemModel):
     # These are class attributes that reference the inner classes
     # In PyQt6, Options doesn't exist as a separate type - Option is a Flag enum
 
-    DontWatchForChanges: QFileSystemModel.Option = QFileSystemModel.Option.DontWatchForChanges  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
-    DontResolveSymlinks: QFileSystemModel.Option = QFileSystemModel.Option.DontResolveSymlinks  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
-    DontUseCustomDirectoryIcons: QFileSystemModel.Option = QFileSystemModel.Option.DontUseCustomDirectoryIcons  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+    DontWatchForChanges: QFileSystemModel.Option = QFileSystemModel.Option.DontWatchForChanges  # type: ignore[attr-defined]
+    DontResolveSymlinks: QFileSystemModel.Option = QFileSystemModel.Option.DontResolveSymlinks  # type: ignore[attr-defined]
+    DontUseCustomDirectoryIcons: QFileSystemModel.Option = QFileSystemModel.Option.DontUseCustomDirectoryIcons  # type: ignore[attr-defined]
 
     FileIconRole: QFileSystemModel.Roles | Qt.ItemDataRole | Literal[1] = Qt.ItemDataRole.DecorationRole
     FilePathRole: QFileSystemModel.Roles | Qt.ItemDataRole | Literal[257] = Qt.ItemDataRole.UserRole + 1  # pyright: ignore[reportAssignmentType]
@@ -2715,4 +2715,4 @@ if __name__ == "__main__":
 
     main_window.show()
 
-    sys.exit(app.exec())  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+    sys.exit(app.exec())  # type: ignore[attr-defined]
