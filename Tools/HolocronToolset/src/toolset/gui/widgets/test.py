@@ -241,7 +241,13 @@ class ResourceList(MainWindowList):
     def _get_section_user_role_data(self):
         return self.ui.sectionCombo.currentData(Qt.ItemDataRole.UserRole)
 
-    def on_filter_string_updated(self):
+    def on_filter_string_updated(self, text: str = ""):
+        """Update the filter string.
+        
+        Args:
+        ----
+            text: The new text from the textEdited/textChanged signal (ignored, we read from widget).
+        """
         self.modules_model.proxy_model().set_filter_string(self.ui.searchEdit.text())
 
     def on_section_changed(self):
@@ -249,12 +255,24 @@ class ResourceList(MainWindowList):
         print(data)
         self.section_changed.emit(data)
 
-    def on_reload_clicked(self):
+    def on_reload_clicked(self, checked: bool = False):
+        """Handle the reload button click.
+        
+        Args:
+        ----
+            checked: Whether the button was checked (from clicked signal, ignored).
+        """
         data = self._get_section_user_role_data()
         print(data)
         self.request_reload.emit(data)
 
-    def on_refresh_clicked(self):
+    def on_refresh_clicked(self, checked: bool = False):
+        """Handle the refresh button click.
+        
+        Args:
+        ----
+            checked: Whether the button was checked (from clicked signal, ignored).
+        """
         self._clear_modules_model()
         self.request_refresh.emit()
 
@@ -271,7 +289,16 @@ class ResourceList(MainWindowList):
         builder.viewport = lambda: self.ui.resourceTree
         builder.run_context_menu(point, menu=menu)
 
-    def on_resource_double_clicked(self):
+    def on_resource_double_clicked(
+        self,
+        index: QModelIndex | None = None,
+    ):
+        """Handle double-click on a resource.
+        
+        Args:
+        ----
+            index: The model index from the doubleClicked signal (ignored).
+        """
         self.request_open_resource.emit(self.selected_resources(), None)
 
     def resizeEvent(self, event):
@@ -668,8 +695,13 @@ class TextureList(MainWindowList):
 
         return visible_indexes
 
-    def on_filter_string_updated(self):
-        """Handle the filter string update."""
+    def on_filter_string_updated(self, text: str = ""):
+        """Handle the filter string update.
+        
+        Args:
+        ----
+            text: The new text from the textEdited/textChanged signal (ignored, we read from widget).
+        """
         filter_string = self.ui.searchEdit.text()
         self.textures_proxy_model.setFilterFixedString(filter_string)
 
@@ -703,8 +735,13 @@ class TextureList(MainWindowList):
         assert viewport is not None, "Could not find viewport for resource list"
         viewport.update(0, 0, viewport.width(), viewport.height())
 
-    def queue_load_visible_icons(self):
-        """Queue the loading of icons for visible items."""
+    def queue_load_visible_icons(self, *args: Any):
+        """Queue the loading of icons for visible items.
+        
+        Args:
+        ----
+            *args: Accepts any arguments from connected signals (valueChanged emits int, textChanged emits str, both ignored).
+        """
         visible_indexes = self.visible_indexes(self.ui.resourceList)  # pyright: ignore[reportArgumentType]
         if not visible_indexes:
             return
@@ -758,8 +795,16 @@ class TextureList(MainWindowList):
             RobustLogger().warning("Unexpected thumbnail result type: %s", type(mipmap).__name__)
         self.ui.resourceList.update(item.index())  # pyright: ignore[reportArgumentType]
 
-    def on_resource_double_clicked(self):
-        """Handle the double click event on a resource."""
+    def on_resource_double_clicked(
+        self,
+        index: QModelIndex | None = None,
+    ):
+        """Handle the double click event on a resource.
+        
+        Args:
+        ----
+            index: The model index from the doubleClicked signal (ignored).
+        """
         selected = self.selected_resources()
         if not selected:
             RobustLogger().warning("No resources selected in texture list for double click event")

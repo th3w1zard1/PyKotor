@@ -27,8 +27,7 @@ from qtpy.QtWidgets import QAbstractItemView, QApplication, QFileDialog, QHeader
 
 from loggerplus import RobustLogger  # type: ignore[import-untyped, note]  # pyright: ignore[reportMissingTypeStubs]
 from pykotor.extract.file import FileResource
-from pykotor.resource.formats.tpc.tpc_auto import read_tpc, write_tpc
-from pykotor.resource.formats.tpc.tpc_data import TPCMipmap, TPCTextureFormat
+from pykotor.resource.formats.tpc import read_tpc, write_tpc, TPCMipmap, TPCTextureFormat, TPC
 from pykotor.resource.type import ResourceType
 from toolset.data.installation import HTInstallation
 from toolset.gui.dialogs.load_from_location_result import ResourceItems
@@ -224,9 +223,14 @@ class ResourceList(MainWindowList):
     def selected_resources(self) -> list[FileResource]:
         return self.modules_model.resource_from_indexes(self.ui.resourceTree.selectedIndexes())  # pyright: ignore[reportArgumentType]
 
-    @Slot()
-    def on_filter_string_updated(self):
-        """Update the filter string for the resource list."""
+    @Slot(str)
+    def on_filter_string_updated(self, text: str = ""):
+        """Update the filter string for the resource list.
+
+        Args:
+        ----
+            text: The new text from the textEdited/textChanged signal (ignored, we read from widget).
+        """
         self.modules_model.proxy_model().set_filter_string(self.ui.searchEdit.text())
 
     @Slot(int)
@@ -236,13 +240,19 @@ class ResourceList(MainWindowList):
         self.sig_section_changed.emit(data)
 
     @Slot()
-    def on_reload_clicked(self):
-        """Handle the reload button click event."""
+    @Slot(bool)
+    def on_reload_clicked(self, checked: bool = False):
+        """Handle the reload button click event.
+
+        Args:
+        ----
+            checked: Whether the button was checked (from clicked signal, ignored).
+        """
         data: str = self.ui.sectionCombo.currentData(Qt.ItemDataRole.UserRole)
         self.sig_request_reload.emit(data)
 
-    @Slot()
-    def on_refresh_clicked(self):
+    @Slot(bool)
+    def on_refresh_clicked(self, checked: bool = False):
         """Handle the refresh button click event."""
         self._clear_modules_model()
         self.sig_request_refresh.emit()
@@ -358,8 +368,14 @@ class ResourceList(MainWindowList):
 
         return False
 
-    def on_open_save_editor_from_context(self):
-        """Signal the main window to open the save editor."""
+    @Slot(bool)
+    def on_open_save_editor_from_context(self, checked: bool = False):
+        """Signal the main window to open the save editor.
+
+        Args:
+        ----
+            checked: Whether the action was checked (from triggered signal, ignored).
+        """
         # Get the main window and call its open_save_editor method
         from toolset.gui.windows.main import ToolWindow
 
@@ -367,8 +383,14 @@ class ResourceList(MainWindowList):
         if isinstance(main_window, ToolWindow):
             main_window.on_open_save_editor()
 
-    @Slot()
-    def on_resource_double_clicked(self):
+    @Slot("QModelIndex")
+    def on_resource_double_clicked(self, index: QModelIndex | None = None):
+        """Handle double-click on a resource.
+
+        Args:
+        ----
+            index: The model index from the doubleClicked signal (ignored).
+        """
         self.sig_request_open_resource.emit(self.selected_resources(), None)
 
     def mouseMoveEvent(self, event: QMouseEvent):  # pylint: disable=invalid-name  # pyright: ignore[reportIncompatibleMethodOverride]
@@ -772,7 +794,14 @@ class TextureList(MainWindowList):
             return
         self.on_reload_clicked()  # FIXME: models are forgetting their items' icons for some reason.
 
-    def on_filter_string_updated(self):
+    @Slot(str)
+    def on_filter_string_updated(self, text: str = ""):
+        """Update the filter string for the texture list.
+
+        Args:
+        ----
+            text: The new text from the textEdited/textChanged signal (ignored, we read from widget).
+        """
         self.textures_proxy_model.setFilterFixedString(self.ui.searchEdit.text())
 
     def on_resource_context_menu(self, position: QPoint):
@@ -830,8 +859,14 @@ class TextureList(MainWindowList):
             tpc.convert(target_format)
             write_tpc(tpc, folderpath / f"{item.resource.resname()}{target_restype.extension}", target_restype)
 
-    def on_reload_selected(self):
-        """Handle reloading selected textures."""
+    @Slot(bool)
+    def on_reload_selected(self, checked: bool = False):
+        """Handle reloading selected textures.
+        
+        Args:
+        ----
+            checked: Whether the action was checked (from triggered signal, ignored).
+        """
         print("Reloading selected textures")
         selected_items: list[ResourceStandardItem] = self._get_selected_items()
         for item in selected_items:
@@ -875,7 +910,7 @@ class TextureList(MainWindowList):
     @Slot(int)
     def queue_load_visible_icons(self, value: int = 0):
         """Queue the loading of icons for visible items.
-        
+
         Args:
         ----
             value: The scroll value from the valueChanged signal (ignored).
@@ -988,12 +1023,24 @@ class TextureList(MainWindowList):
                 # Queue is empty or other error, stop polling this cycle
                 break
 
-    def on_reload_clicked(self):
-        """Handle the reload button click."""
+    @Slot(bool)
+    def on_reload_clicked(self, checked: bool = False):
+        """Handle the reload button click.
+
+        Args:
+        ----
+            checked: Whether the button was checked (from clicked signal, ignored).
+        """
         self._process_all_items(reload=True)
 
-    def on_refresh_clicked(self):
-        """Handle the refresh button click."""
+    @Slot(bool)
+    def on_refresh_clicked(self, checked: bool = False):
+        """Handle the refresh button click.
+
+        Args:
+        ----
+            checked: Whether the button was checked (from clicked signal, ignored).
+        """
         self._process_all_items(reload=False)
 
     @Slot(Future)
@@ -1008,7 +1055,7 @@ class TextureList(MainWindowList):
         # print(f"Loaded icon for section: {section_name}, row: {row}")
         src_index: QModelIndex = self.texture_source_models[section_name].index(row, 0)
         if not src_index.isValid():
-            RobustLogger().warning("Invalid source index for row {row}")
+            RobustLogger().warning(f"Invalid source index for row {row}")
             return
         item: QStandardItem | None = self.texture_source_models[section_name].itemFromIndex(src_index)
         if item is None:
@@ -1023,8 +1070,17 @@ class TextureList(MainWindowList):
         )
         item.setIcon(QIcon(pixmap))
 
-    @Slot()
-    def on_resource_double_clicked(self):
+    @Slot("QModelIndex")
+    def on_resource_double_clicked(
+        self,
+        index: QModelIndex | None = None,
+    ):
+        """Handle double-click on a resource.
+
+        Args:
+        ----
+            index: The model index from the doubleClicked signal (ignored).
+        """
         self.sig_request_open_resource.emit(self.selected_resources(), None)
 
     def resizeEvent(self, a0: QResizeEvent):  # pylint: disable=unused-argument,invalid-name  # pyright: ignore[reportIncompatibleMethodOverride]

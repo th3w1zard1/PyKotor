@@ -228,12 +228,25 @@ def reimport_dependencies(
 def find_importing_modules(
     target_module_name: str,
 ) -> list[ModuleType]:
-    importing_modules: list[ModuleType] = [name for name, module in sys.modules.items() if module and hasattr(module, "__file__") and target_module_name in sys.modules and target_module_name in module.__dict__.values()]
+    importing_modules: list[ModuleType] = [  # pyright: ignore[reportAssignmentType]
+        name
+        for name, module in sys.modules.items()
+        if (
+            module and hasattr(module, "__file__")
+            and target_module_name in sys.modules
+            and target_module_name in module.__dict__.values()
+        )
+    ]
     return importing_modules
 
 
-def debug_reload_pymodules():
-    """Reload all imported modules that have changed on disk and log their names and file paths."""
+def debug_reload_pymodules(checked: bool = False):
+    """Reload all imported modules that have changed on disk and log their names and file paths.
+    
+    Args:
+    ----
+        checked: Whether the action was checked (from QAction.triggered signal, ignored).
+    """
     app_start_time: float = get_app_start_time()
 
     def get_last_modified_time(file_path: str) -> float:

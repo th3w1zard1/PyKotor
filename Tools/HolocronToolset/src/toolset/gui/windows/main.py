@@ -652,8 +652,14 @@ class ToolWindow(QMainWindow):
         # Setup Language menu
         self._setup_language_menu()
 
-    def _open_theme_dialog(self):
-        """Open the theme selector dialog (non-blocking)."""
+    @Slot(bool)
+    def _open_theme_dialog(self, checked: bool = False):
+        """Open the theme selector dialog (non-blocking).
+        
+        Args:
+        ----
+            checked: Whether the action was checked (from triggered signal, ignored).
+        """
         if self._theme_dialog is None or not self._theme_dialog.isVisible():
             current_theme = self.settings.selectedTheme or "sourcegraph-dark"
             current_style = self.settings.selectedStyle or "Fusion"
@@ -981,9 +987,14 @@ class ToolWindow(QMainWindow):
         has_selection = len(self.ui.savesWidget.ui.resourceTree.selectedIndexes()) > 0
         self.ui.openSaveEditorButton.setEnabled(has_selection)
     
-    @Slot()
-    def on_open_save_editor(self):
-        """Open the Save Editor for the selected save."""
+    @Slot(bool)
+    def on_open_save_editor(self, checked: bool = False):
+        """Open the Save Editor for the selected save.
+        
+        Args:
+        ----
+            checked: Whether the button was checked (from clicked signal, ignored).
+        """
         try:
             if self.active is None:
                 RobustLogger().warning("Cannot open save editor: no active installation")
@@ -1450,7 +1461,14 @@ class ToolWindow(QMainWindow):
         """Prevents users from spamming the start button, which could easily result in a bad crash."""
         self.module_designer_load_processed = True
 
-    def open_module_designer(self):
+    @Slot(bool)
+    def open_module_designer(self, checked: bool = False):
+        """Open the module designer.
+        
+        Args:
+        ----
+            checked: Whether the action was checked (from triggered signal, ignored).
+        """
         assert self.active is not None, "No installation loaded."
         selected_module: Path | None = None
         try:
@@ -1468,8 +1486,14 @@ class ToolWindow(QMainWindow):
                 QTimer.singleShot(33, lambda: designer_window.open_module(selected_module))
         add_window(designer_window)
 
-    def open_settings_dialog(self):
-        """Opens the Settings dialog and refresh installation combo list if changes."""
+    @Slot(bool)
+    def open_settings_dialog(self, checked: bool = False):
+        """Opens the Settings dialog and refresh installation combo list if changes.
+        
+        Args:
+        ----
+            checked: Whether the action was checked (from triggered signal, ignored).
+        """
         dialog = SettingsDialog(self)
         if (
             dialog.exec()
@@ -1485,8 +1509,14 @@ class ToolWindow(QMainWindow):
         ):
             self.reload_settings()
 
-    @Slot()
-    def open_active_talktable(self):
+    @Slot(bool)
+    def open_active_talktable(self, checked: bool = False):
+        """Open the active talktable editor.
+        
+        Args:
+        ----
+            checked: Whether the action was checked (from triggered signal, ignored).
+        """
         assert self.active is not None, "No installation loaded."
         c_filepath = self.active.path() / "dialog.tlk"
         if not c_filepath.exists() or not c_filepath.is_file():
@@ -1499,8 +1529,14 @@ class ToolWindow(QMainWindow):
         resource = FileResource("dialog", ResourceType.TLK, os.path.getsize(c_filepath), 0x0, c_filepath)  # noqa: PTH202
         open_resource_editor(resource, self.active, self)
 
-    @Slot()
-    def open_active_journal(self):
+    @Slot(bool)
+    def open_active_journal(self, checked: bool = False):
+        """Open the active journal editor.
+        
+        Args:
+        ----
+            checked: Whether the action was checked (from triggered signal, ignored).
+        """
         assert self.active is not None, "No active installation selected"
         jrl_ident: ResourceIdentifier = ResourceIdentifier("global", ResourceType.JRL)
         journal_resources: dict[ResourceIdentifier, list[LocationResult]] = self.active.locations(
@@ -1518,8 +1554,14 @@ class ToolWindow(QMainWindow):
         else:
             open_resource_editor(relevant[0].as_file_resource(), self.active, self)
 
-    @Slot()
-    def open_file_search_dialog(self):
+    @Slot(bool)
+    def open_file_search_dialog(self, checked: bool = False):
+        """Open the file search dialog.
+        
+        Args:
+        ----
+            checked: Whether the action was checked (from triggered signal, ignored).
+        """
         assert self.active is not None, "No installation active"
         file_searcher_dialog = FileSearcher(self, self.installations)
         file_searcher_dialog.setModal(False)  # Make the dialog non-modal
@@ -1527,17 +1569,28 @@ class ToolWindow(QMainWindow):
         file_searcher_dialog.file_results.connect(self.handle_search_completed)
         add_window(file_searcher_dialog)
 
-    @Slot()
-    def open_indoor_map_builder(self):
+    @Slot(bool)
+    def open_indoor_map_builder(self, checked: bool = False):
+        """Open the indoor map builder.
+        
+        Args:
+        ----
+            checked: Whether the action was checked (from triggered signal, ignored).
+        """
         builder = IndoorMapBuilder(None, self.active)
         builder.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         builder.show()
         builder.activateWindow()
         add_window(builder)
 
-    @Slot()
-    def open_kotordiff(self):
-        """Open the KotorDiff window."""
+    @Slot(bool)
+    def open_kotordiff(self, checked: bool = False):
+        """Open the KotorDiff window.
+        
+        Args:
+        ----
+            checked: Whether the action was checked (from triggered signal, ignored).
+        """
         kotordiff_window = KotorDiffWindow(
             None,
             self.installations,
@@ -1548,25 +1601,42 @@ class ToolWindow(QMainWindow):
         kotordiff_window.activateWindow()
         add_window(kotordiff_window)
 
-    @Slot()
-    def open_tslpatchdata_editor(self):
-        """Open the TSLPatchData editor dialog."""
+    @Slot(bool)
+    def open_tslpatchdata_editor(self, checked: bool = False):
+        """Open the TSLPatchData editor dialog.
+        
+        Args:
+        ----
+            checked: Whether the action was checked (from triggered signal, ignored).
+        """
         editor = TSLPatchDataEditor(None, self.active)
         editor.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
         editor.show()
         editor.activateWindow()
         add_window(editor)
 
-    def open_instructions_window(self):
-        """Opens the instructions window."""
+    @Slot(bool)
+    def open_instructions_window(self, checked: bool = False):
+        """Opens the instructions window.
+        
+        Args:
+        ----
+            checked: Whether the action was checked (from triggered signal, ignored).
+        """
         window = HelpWindow(None)
         window.setWindowIcon(self.windowIcon())
         window.show()
         window.activateWindow()
         add_window(window)
 
-    def open_about_dialog(self):
-        """Opens the about dialog."""
+    @Slot(bool)
+    def open_about_dialog(self, checked: bool = False):
+        """Opens the about dialog.
+        
+        Args:
+        ----
+            checked: Whether the action was checked (from triggered signal, ignored).
+        """
         About(self).exec()
 
     # endregion
@@ -1595,8 +1665,14 @@ class ToolWindow(QMainWindow):
     def reload_settings(self):
         self.reload_installations()
 
-    @Slot()
-    def _open_module_tab_erf_editor(self):
+    @Slot(bool)
+    def _open_module_tab_erf_editor(self, checked: bool = False):
+        """Open the ERF editor for the module tab.
+        
+        Args:
+        ----
+            checked: Whether the button was checked (from clicked signal, ignored).
+        """
         assert self.active is not None
         reslist = self.get_active_resource_widget()
         assert isinstance(reslist, ResourceList)
@@ -1625,7 +1701,11 @@ class ToolWindow(QMainWindow):
         else:
             self.erf_editor_button.hide()
 
-    def select_resource(self, tree: ResourceList, resource: FileResource):
+    def select_resource(
+        self,
+        tree: ResourceList,
+        resource: FileResource,
+    ):
         """This function seems to reload the resource after determining the ui widget containing it.
 
         Seems to only be used for the FileSearcher dialog.
@@ -2192,7 +2272,14 @@ class ToolWindow(QMainWindow):
                 r_stream.seek(location.offset)
                 w_stream.write(r_stream.read(location.size))
 
-    def open_from_file(self):
+    @Slot(bool)
+    def open_from_file(self, checked: bool = False):
+        """Open files from the file system.
+        
+        Args:
+        ----
+            checked: Whether the action was checked (from triggered signal, ignored).
+        """
         filepaths: list[str] = QFileDialog.getOpenFileNames(self, "Select files to open")[:-1][0]
 
         for filepath in filepaths:
