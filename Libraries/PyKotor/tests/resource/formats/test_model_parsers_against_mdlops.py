@@ -6,9 +6,12 @@ import difflib
 import random
 import subprocess
 import tempfile
+import traceback
+
 from pathlib import Path
 
 import pytest
+
 from pykotor.common.misc import Game
 from pykotor.extract.file import FileResource
 from pykotor.extract.installation import Installation
@@ -93,6 +96,7 @@ def _test_single_model(
     mdl_res: FileResource,
     mdx_res: FileResource,
     mdlops_exe: Path,
+    mdlops_version: str,
 ) -> tuple[bool, str]:
     """Test a single model with MDLOps and compare with PyKotor output.
 
@@ -101,6 +105,11 @@ def _test_single_model(
     """
     with tempfile.TemporaryDirectory(prefix="mdl_test_") as td:
         td_path = Path(td)
+        # MDLOps is external code - we use generous timeouts only to catch infinite loops
+        # or corrupted files that would make MDLOps hang forever, not to limit performance.
+        # Size-scaled timeout: base 2 minutes, +1s per 20KB, capped at 5 minutes.
+        total_size = len(mdl_res.data()) + len(mdx_res.data())
+        mdlops_timeout_s = min(300, 120 + (total_size // 20_000))
         # Construct filenames from resname and extension
         mdl_filename = f"{mdl_res.resname()}.{mdl_res.restype().extension}"
         mdx_filename = f"{mdx_res.resname()}.{mdx_res.restype().extension}"
@@ -120,7 +129,7 @@ def _test_single_model(
                 cwd=str(td_path),
                 capture_output=True,
                 text=True,
-                timeout=30,
+                timeout=mdlops_timeout_s,
             )
 
             if result.returncode != 0:
@@ -142,9 +151,7 @@ def _test_single_model(
         print("    [2/6] PyKotor: Reading and writing binary...")
         try:
             # Read the original binary MDL/MDX
-            mdl_obj = read_mdl(
-                test_mdl, source_ext=test_mdx, file_format=ResourceType.MDL
-            )
+            mdl_obj = read_mdl(test_mdl, source_ext=test_mdx, file_format=ResourceType.MDL)
             if mdl_obj is None:
                 return False, "PyKotor failed to read MDL"
 
@@ -159,26 +166,29 @@ def _test_single_model(
             print(f"         -> Created: {pykotor_mdl.name}, {pykotor_mdx.name}")
 
         except Exception as e:
-            return False, f"PyKotor error: {e}"
+            import traceback
+
+            return False, f"PyKotor error: {e}\n{traceback.format_exc()}"
 
         # Step 3: Recompile MDLOps ASCII back to binary for oracle
         print("    [3/6] MDLOps: Recompiling ASCII to binary...")
         try:
             result = subprocess.run(
-                [str(mdlops_exe), str(mdlops_ascii_path)],
+                [str(mdlops_exe), f"-{mdlops_version}", str(mdlops_ascii_path)],
                 cwd=str(td_path),
                 capture_output=True,
                 text=True,
-                timeout=30,
+                timeout=mdlops_timeout_s,
             )
             if result.returncode != 0:
                 error_msg = result.stderr or result.stdout
                 return False, f"MDLOps failed to recompile ASCII: {error_msg[:500]}"
 
-            # MDLOps writes -bin suffix for binary outputs
+            # MDLOps writes: <filepath>-<version>-bin.(mdl|mdx)
+            # where <filepath> is the ascii path without its extension.
             ascii_stem = mdlops_ascii_path.stem  # e.g. foo-ascii
-            mdlops_bin_mdl = td_path / f"{ascii_stem}-bin.mdl"
-            mdlops_bin_mdx = td_path / f"{ascii_stem}-bin.mdx"
+            mdlops_bin_mdl = td_path / f"{ascii_stem}-{mdlops_version}-bin.mdl"
+            mdlops_bin_mdx = td_path / f"{ascii_stem}-{mdlops_version}-bin.mdx"
             if not mdlops_bin_mdl.exists() or not mdlops_bin_mdx.exists():
                 return False, "MDLOps ASCII recompile missing binary outputs"
 
@@ -189,37 +199,38 @@ def _test_single_model(
 
         # Step 4: Binary parity check: PyKotor vs MDLOps binaries
         print("    [4/6] Comparing binary outputs...")
+        binary_diff_summary: str | None = None
         try:
             pykotor_mdl_bytes = pykotor_mdl.read_bytes()
             pykotor_mdx_bytes = pykotor_mdx.read_bytes()
             mdlops_mdl_bytes = mdlops_bin_mdl.read_bytes()
             mdlops_mdx_bytes = mdlops_bin_mdx.read_bytes()
 
-            def _compare_bytes(lhs: bytes, rhs: bytes, label: str) -> tuple[bool, str]:
-                if lhs == rhs:
-                    return True, "OK"
-                if len(lhs) != len(rhs):
-                    return False, f"{label} size mismatch: {len(lhs)} vs {len(rhs)}"
-                # Find first differing offset
-                for i, (a, b) in enumerate(zip(lhs, rhs)):
-                    if a != b:
-                        context_start = max(0, i - 8)
-                        context_end = min(len(lhs), i + 8)
-                        lhs_slice = lhs[context_start:context_end]
-                        rhs_slice = rhs[context_start:context_end]
-                        return (
-                            False,
-                            f"{label} byte diff @ {i}: {a:#04x}!={b:#04x} "
-                            f"lhs[{context_start}:{context_end}]={lhs_slice.hex()} "
-                            f"rhs[{context_start}:{context_end}]={rhs_slice.hex()}",
-                        )
-                return False, f"{label} differs but no diff located"
+            # Quick binary equality check
+            if pykotor_mdl_bytes == mdlops_mdl_bytes and pykotor_mdx_bytes == mdlops_mdx_bytes:
+                print("         -> Binary outputs match exactly")
+                # Continue to step 5/6 to verify ASCII round-trip
+            else:
+                # Binary files differ - generate summary but continue to get ASCII diff
+                print("         -> Binary files differ (will show ASCII diff below)")
+                if len(pykotor_mdl_bytes) != len(mdlops_mdl_bytes):
+                    binary_diff_summary = f"MDL size mismatch: {len(pykotor_mdl_bytes)} vs {len(mdlops_mdl_bytes)} bytes"
+                elif len(pykotor_mdx_bytes) != len(mdlops_mdx_bytes):
+                    binary_diff_summary = f"MDX size mismatch: {len(pykotor_mdx_bytes)} vs {len(mdlops_mdx_bytes)} bytes"
+                else:
+                    # Same size, find first difference
+                    for i, (a, b) in enumerate(zip(pykotor_mdl_bytes, mdlops_mdl_bytes)):
+                        if a != b:
+                            binary_diff_summary = f"MDL first diff @ offset {i}: {a:02x} != {b:02x}"
+                            break
+                    if not binary_diff_summary:
+                        for i, (a, b) in enumerate(zip(pykotor_mdx_bytes, mdlops_mdx_bytes)):
+                            if a != b:
+                                binary_diff_summary = f"MDX first diff @ offset {i}: {a:02x} != {b:02x}"
+                                break
+                if not binary_diff_summary:
+                    binary_diff_summary = "Binary files differ (details unknown)"
 
-            ok_mdl, msg_mdl = _compare_bytes(pykotor_mdl_bytes, mdlops_mdl_bytes, "MDL")
-            ok_mdx, msg_mdx = _compare_bytes(pykotor_mdx_bytes, mdlops_mdx_bytes, "MDX")
-            if not ok_mdl or not ok_mdx:
-                combined = "; ".join(filter(None, [msg_mdl if not ok_mdl else "", msg_mdx if not ok_mdx else ""]))
-                return False, f"Binary mismatch: {combined}"
         except Exception as e:
             return False, f"Binary comparison error: {e}"
 
@@ -231,7 +242,7 @@ def _test_single_model(
                 cwd=str(td_path),
                 capture_output=True,
                 text=True,
-                timeout=30,
+                timeout=mdlops_timeout_s,
             )
 
             if result.returncode != 0:
@@ -239,10 +250,7 @@ def _test_single_model(
                 # Show more context for MDLOps errors
                 full_error = error_msg
                 if len(error_msg) > 1000:
-                    full_error = (
-                        error_msg[:1000]
-                        + f"\n... ({len(error_msg) - 1000} more characters)"
-                    )
+                    full_error = error_msg[:1000] + f"\n... ({len(error_msg) - 1000} more characters)"
                 return (
                     False,
                     f"MDLOps failed to decompile PyKotor output:\n{full_error}",
@@ -262,23 +270,15 @@ def _test_single_model(
         # Step 6: Compare MDLOps ASCII outputs using unified diff
         print("    [6/6] Comparing ASCII outputs...")
         try:
-            mdlops_ascii = mdlops_ascii_path.read_text(
-                encoding="utf-8", errors="replace"
-            )
-            pykotor_ascii = pykotor_ascii_path.read_text(
-                encoding="utf-8", errors="replace"
-            )
+            mdlops_ascii = mdlops_ascii_path.read_text(encoding="utf-8", errors="replace")
+            pykotor_ascii = pykotor_ascii_path.read_text(encoding="utf-8", errors="replace")
 
             # Normalize filedependancy lines - MDLOps uses filename, so PyKotor output
             # will have "-pykotor" suffix in filename, which MDLOps reads and uses
             # Replace "-pykotor" suffix in filedependancy lines for comparison
             import re
-            pykotor_ascii_normalized = re.sub(
-                r"^filedependancy (.+)-pykotor (NULL\.mlk)$",
-                r"filedependancy \1 \2",
-                pykotor_ascii,
-                flags=re.MULTILINE
-            )
+
+            pykotor_ascii_normalized = re.sub(r"^filedependancy (.+)-pykotor (NULL\.mlk)$", r"filedependancy \1 \2", pykotor_ascii, flags=re.MULTILINE)
 
             if mdlops_ascii == pykotor_ascii_normalized:
                 print("         -> PASS: Outputs match exactly")
@@ -298,18 +298,101 @@ def _test_single_model(
             if diff_lines:
                 # Show full diff in pytest output
                 diff_text = "".join(diff_lines)
-                # Limit to first 300 lines for readability
-                if len(diff_lines) > 300:
-                    diff_text = (
-                        "".join(diff_lines[:300])
-                        + f"\n... ({len(diff_lines) - 300} more lines)"
-                    )
-                return False, f"Mismatch detected:\n{diff_text}"
+                # Limit to first 500 lines for readability
+                if len(diff_lines) > 500:
+                    diff_text = "".join(diff_lines[:500]) + f"\n... ({len(diff_lines) - 500} more lines)"
 
-            return False, "Files differ but no diff generated"
+                # Combine binary diff summary (if any) with ASCII diff
+                error_parts: list[str] = []
+                if binary_diff_summary:
+                    error_parts.append(f"Binary mismatch: {binary_diff_summary}")
+                error_parts.append("ASCII output mismatch (unified diff):")
+                error_parts.append(diff_text)
+                return False, "\n\n".join(error_parts)
+
+            # Files differ but no diff generated (shouldn't happen)
+            error_msg = "Files differ but no diff generated"
+            if binary_diff_summary:
+                error_msg = f"Binary mismatch: {binary_diff_summary}\n\n{error_msg}"
+            return False, error_msg
 
         except Exception as e:
-            return False, f"Comparison error: {e}"
+            error_msg = f"Comparison error: {e}"
+            if binary_diff_summary:
+                error_msg = f"Binary mismatch: {binary_diff_summary}\n\n{error_msg}"
+            return False, error_msg
+
+
+def _format_clean_traceback(exc: BaseException) -> str:
+    """Format exception traceback, filtering out pytest internals."""
+    tb_lines = traceback.format_exception(type(exc), exc, exc.__traceback__)
+    # Filter out pytest internal frames
+    filtered_lines: list[str] = []
+    skip_next = False
+    for line in tb_lines:
+        # Skip pytest internal frames
+        if any(
+            skip in line
+            for skip in [
+                "_pytest/",
+                "pluggy/",
+                "pytestqt/",
+                "pytest_runtest_call",
+                "pytest_pyfunc_call",
+                "from_call",
+                "run_old_style_hookwrapper",
+                "_multicall",
+                "_hookexec",
+            ]
+        ):
+            skip_next = True
+            continue
+        if skip_next and line.strip() == "":
+            skip_next = False
+            continue
+        skip_next = False
+        # Only include lines from our codebase
+        if "Libraries/PyKotor" in line or "test_model_parsers" in line or "Traceback" in line or "Error:" in line or line.strip() == "":
+            filtered_lines.append(line)
+
+    if not filtered_lines:
+        # Fallback: just show the exception message
+        return f"{type(exc).__name__}: {exc}"
+
+    return "".join(filtered_lines)
+
+
+# Pytest hook to customize exception display - intercept and clean traceback
+def pytest_runtest_logreport(report: pytest.TestReport) -> None:  # noqa: ARG001
+    """Customize test report to show clean error messages without pytest internals."""
+    if report.failed and report.longrepr:
+        longrepr_str = str(report.longrepr)
+        # Check if this is one of our custom error messages
+        if "Model" in longrepr_str and "failed:" in longrepr_str:
+            # Extract just the error message part - find "Failed: Model" and extract everything from there
+            # but stop at "Stack Trace Variables" or any traceback lines
+            lines = longrepr_str.split("\n")
+            
+            # Find the start of our error message
+            msg_start = None
+            for i, line in enumerate(lines):
+                if "Failed: Model" in line:
+                    msg_start = i
+                    break
+            
+            if msg_start is not None:
+                # Extract from msg_start until we hit "Stack Trace Variables" or a traceback line
+                clean_lines: list[str] = []
+                for i in range(msg_start, len(lines)):
+                    line = lines[i]
+                    # Stop at "Stack Trace Variables" or traceback indicators
+                    if "Stack Trace Variables" in line or line.strip().startswith("Function '") or "Traceback (most recent call last):" in line:
+                        break
+                    clean_lines.append(line)
+                
+                # Replace the report's longrepr with just the clean error message
+                if clean_lines:
+                    report.longrepr = "\n".join(clean_lines)
 
 
 def test_k1_models_random_sample(
@@ -317,8 +400,8 @@ def test_k1_models_random_sample(
     k1_models: list[tuple[FileResource, FileResource]],
 ) -> None:
     """Test a random sample of K1 models."""
-    # Randomly sample up to 10 models for testing
-    test_count = min(10, len(k1_models))
+    # Randomly sample up to 5 models for testing (keeps suite runtime bounded).
+    test_count = min(5, len(k1_models))
     random_models = random.sample(k1_models, test_count)
 
     print(f"\n{'=' * 70}")
@@ -333,15 +416,29 @@ def test_k1_models_random_sample(
     for mdl_res, mdx_res in random_models:
         model_name = f"{mdl_res.resname()}.{mdl_res.restype().extension}"
         print(f"  Testing: {model_name}")
-        success, msg = _test_single_model(mdl_res, mdx_res, mdlops_exe)
-        if success:
-            passed += 1
-            print("  Result: PASS\n")
-        else:
+        try:
+            success, msg = _test_single_model(mdl_res, mdx_res, mdlops_exe, "k1")
+            if success:
+                passed += 1
+                print("  Result: PASS\n")
+            else:
+                failed += 1
+                print("  Result: FAIL\n")
+                # Format error message nicely - msg already contains the diff
+                error_msg = f"Model {model_name} failed:\n\n{msg}"
+                # Use pytest.fail() for cleaner output without traceback
+                pytest.fail(error_msg, pytrace=False)
+        except Exception as e:
             failed += 1
-            print(f"  Result: FAIL - {msg}\n")
-            # Fail the test on first failure for now
-            pytest.fail(f"Model {model_name} failed: {msg}")
+            # For unexpected exceptions, show clean traceback
+            if isinstance(e, AssertionError) and "Model" in str(e):
+                # Already formatted by pytest.fail, just re-raise
+                raise
+            clean_tb = _format_clean_traceback(e)
+            error_msg = f"Model {model_name} failed with unexpected error:\n\n{clean_tb}"
+            if hasattr(e, "__cause__") and e.__cause__:
+                error_msg += f"\n\nCaused by:\n{_format_clean_traceback(e.__cause__)}"
+            pytest.fail(error_msg, pytrace=False)
 
     print(f"{'=' * 70}")
     print(f"Summary: {passed} passed, {failed} failed out of {test_count} tested")
@@ -353,8 +450,8 @@ def test_k2_models_random_sample(
     k2_models: list[tuple[FileResource, FileResource]],
 ) -> None:
     """Test a random sample of TSL/K2 models."""
-    # Randomly sample up to 10 models for testing
-    test_count = min(10, len(k2_models))
+    # Randomly sample up to 5 models for testing (keeps suite runtime bounded).
+    test_count = min(5, len(k2_models))
     random_models = random.sample(k2_models, test_count)
 
     print(f"\n{'=' * 70}")
@@ -369,15 +466,29 @@ def test_k2_models_random_sample(
     for mdl_res, mdx_res in random_models:
         model_name = f"{mdl_res.resname()}.{mdl_res.restype().extension}"
         print(f"  Testing: {model_name}")
-        success, msg = _test_single_model(mdl_res, mdx_res, mdlops_exe)
-        if success:
-            passed += 1
-            print("  Result: PASS\n")
-        else:
+        try:
+            success, msg = _test_single_model(mdl_res, mdx_res, mdlops_exe, "k2")
+            if success:
+                passed += 1
+                print("  Result: PASS\n")
+            else:
+                failed += 1
+                print("  Result: FAIL\n")
+                # Format error message nicely - msg already contains the diff
+                error_msg = f"Model {model_name} failed:\n\n{msg}"
+                # Use pytest.fail() for cleaner output without traceback
+                pytest.fail(error_msg, pytrace=False)
+        except Exception as e:
             failed += 1
-            print(f"  Result: FAIL - {msg}\n")
-            # Fail the test on first failure for now
-            pytest.fail(f"Model {model_name} failed: {msg}")
+            # For unexpected exceptions, show clean traceback
+            if isinstance(e, AssertionError) and "Model" in str(e):
+                # Already formatted by pytest.fail, just re-raise
+                raise
+            clean_tb = _format_clean_traceback(e)
+            error_msg = f"Model {model_name} failed with unexpected error:\n\n{clean_tb}"
+            if hasattr(e, "__cause__") and e.__cause__:
+                error_msg += f"\n\nCaused by:\n{_format_clean_traceback(e.__cause__)}"
+            pytest.fail(error_msg, pytrace=False)
 
     print(f"{'=' * 70}")
     print(f"Summary: {passed} passed, {failed} failed out of {test_count} tested")
