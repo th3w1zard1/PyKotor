@@ -136,7 +136,7 @@ if os.name == "nt_disabled":
             name = BSTR()
             print("<SDM> [volumeName scope] name: ", name)
 
-            hr = pShellItem.GetDisplayName(SIGDN.SIGDN_NORMALDISPLAY, comtypes.byref(name))  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+            hr = pShellItem.GetDisplayName(SIGDN.SIGDN_NORMALDISPLAY, comtypes.byref(name))  # type: ignore[attr-defined]
             print("<SDM> [volumeName scope] hr: ", hr)
 
             if hr != 0:
