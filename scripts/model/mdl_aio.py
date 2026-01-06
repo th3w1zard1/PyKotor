@@ -198,7 +198,8 @@ def _run_mdlops_roundtrip(
             raise RuntimeError(f"MDLOps decompile failed (rc={dec.returncode}): {dec.stderr.strip() or dec.stdout.strip()}")
 
         # Compile
-        args = [str(mdlops_exe), str(ascii_path), "-k1" if game == Game.K1 else "-k2"]
+        # MDLOps requires flags before file path: mdlops.exe [options] [-k1|-k2] filepath
+        args = [str(mdlops_exe), "-k1" if game == Game.K1 else "-k2", str(ascii_path)]
         comp = subprocess.run(
             args,
             cwd=str(td_path),
