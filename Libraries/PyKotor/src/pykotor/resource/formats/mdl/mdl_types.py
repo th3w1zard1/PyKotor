@@ -105,6 +105,7 @@ class MDLNodeType(IntEnum):
     REFERENCE = 6  # Reference to another model
     PATCH = 7  # NURBS patch (unused)
     AABB = 8  # Axis-aligned bounding box
+    SKIN = 9  # Skinned mesh (mdlops:320, NODE_SKIN = 97 = HEADER + MESH + SKIN flags)
     CAMERA = 10  # Camera viewpoint
     BINARY = 11  # Binary (unknown usage)
     SABER = 12  # Lightsaber blade

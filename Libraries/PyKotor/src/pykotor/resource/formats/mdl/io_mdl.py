@@ -573,7 +573,10 @@ class _Node:
             msg = f"Number of child offsets in array does not match header count in {self.header.name_id} ({len(self.children_offsets)} vs {self.header.children_count})."
             raise ValueError(msg)
 
-    def _write_trimesh_data(self, writer: BinaryWriter):
+    def _write_trimesh_data(
+        self,
+        writer: BinaryWriter,
+    ):
         """Write trimesh data in MDLOps order.
 
         Reference: vendor/MDLOps/MDLOpsM.pm:7903-7940
@@ -622,7 +625,10 @@ class _Node:
             return 0
         return len(self._dangly_constraints) * 4
 
-    def _write_aabb_extra(self, writer: BinaryWriter) -> None:
+    def _write_aabb_extra(
+        self,
+        writer: BinaryWriter,
+    ) -> None:
         """Write AABB tree recursively, matching MDLOps depth-first traversal.
 
         Reference: vendor/MDLOps/MDLOpsM.pm:1471-1513 (writeaabb)
@@ -637,7 +643,10 @@ class _Node:
         tree_start = writer.position()
         node_index = [0]  # Mutable counter for tracking which node we're writing
 
-        def _write_aabb_recursive(writer: BinaryWriter, start_pos: int) -> int:
+        def _write_aabb_recursive(
+            writer: BinaryWriter,
+            start_pos: int,
+        ) -> int:
             """Recursively write AABB node and return last written position.
 
             Args:
@@ -693,7 +702,10 @@ class _Node:
         final_pos = tree_start + len(aabb_nodes) * 40
         writer.seek(final_pos)
 
-    def _write_dangly_extra(self, writer: BinaryWriter) -> None:
+    def _write_dangly_extra(
+        self,
+        writer: BinaryWriter,
+    ) -> None:
         """Write danglymesh constraints array after vertices."""
         assert self.dangly is not None
         # Constraints are written as floats (4 bytes each, one float per vertex)
@@ -708,7 +720,10 @@ class _Node:
                 constraint_value = 0.0
             writer.write_single(constraint_value)
 
-    def _write_skin_extra(self, writer: BinaryWriter) -> None:
+    def _write_skin_extra(
+        self,
+        writer: BinaryWriter,
+    ) -> None:
         """Write variable-length skin blocks referenced by _SkinmeshHeader offsets."""
         assert self.skin is not None
         # Layout we write (immediately after trimesh vertex array):
@@ -1173,7 +1188,7 @@ class _TrimeshHeader:
 
         # MDLOps `l[13]` (signed). Convert negative values to the sentinel 0xFFFFFFFF.
         def _read_i32_as_u32() -> int:
-            v = reader.read_int32()
+            v: int = reader.read_int32()
             return 0xFFFFFFFF if v < 0 else v
 
         self.mdx_data_size = _read_i32_as_u32()  # index 51
@@ -2152,10 +2167,14 @@ class MDLBinaryReader:
 
         # Determine game version from the file header function pointers.
         # This is more reliable than using per-node function pointer values.
-        if model_header.geometry.function_pointer0 == _GeometryHeader.K1_FUNCTION_POINTER0 and model_header.geometry.function_pointer1 == _GeometryHeader.K1_FUNCTION_POINTER1:
+        if (
+            model_header.geometry.function_pointer0 == _GeometryHeader.K1_FUNCTION_POINTER0
+            and model_header.geometry.function_pointer1 == _GeometryHeader.K1_FUNCTION_POINTER1
+        ):
             self.game = Game.K1
         elif (
-            model_header.geometry.function_pointer0 == _GeometryHeader.K2_FUNCTION_POINTER0 and model_header.geometry.function_pointer1 == _GeometryHeader.K2_FUNCTION_POINTER1
+            model_header.geometry.function_pointer0 == _GeometryHeader.K2_FUNCTION_POINTER0
+            and model_header.geometry.function_pointer1 == _GeometryHeader.K2_FUNCTION_POINTER1
         ):
             self.game = Game.K2
 
@@ -2205,25 +2224,31 @@ class MDLBinaryReader:
         self,
         model_header: _ModelHeader,
     ):
-        name_indexes_offset = model_header.offset_to_name_offsets
+        name_indexes_offset: int = model_header.offset_to_name_offsets
         self._reader.seek(name_indexes_offset)
-        name_indexes_count = model_header.name_offsets_count
-        name_indexes_raw = self._reader.read_bytes(4 * name_indexes_count)
-        name_indexes_unpacked = []
+        name_indexes_count: int = model_header.name_offsets_count
+        name_indexes_raw: bytes = self._reader.read_bytes(4 * name_indexes_count)
+        name_indexes_unpacked: list[int] = []
         for i in range(name_indexes_count):
-            name_indexes_unpacked.append(int.from_bytes(name_indexes_raw[i * 4 : (i + 1) * 4], byteorder="little", signed=True))
+            name_indexes_unpacked.append(
+                int.from_bytes(
+                    name_indexes_raw[i * 4 : (i + 1) * 4],
+                    byteorder="little",
+                    signed=True,
+                ),
+            )
 
-        names_size = model_header.offset_to_animations - (model_header.offset_to_name_offsets + (4 * name_indexes_count))
-        names_raw = self._reader.read_bytes(names_size)
+        names_size: int = model_header.offset_to_animations - (model_header.offset_to_name_offsets + (4 * name_indexes_count))
+        names_raw: bytes = self._reader.read_bytes(names_size)
 
-        names_list = []
-        current_pos = 0
+        names_list: list[str] = []
+        current_pos: int = 0
         for _ in range(name_indexes_count):
-            null_pos = names_raw.find(b"\x00", current_pos)
+            null_pos: int = names_raw.find(b"\x00", current_pos)
             if null_pos == -1:
                 null_pos = len(names_raw)
-            name_bytes = names_raw[current_pos:null_pos]
-            name = name_bytes.decode("ascii", errors="ignore")
+            name_bytes: bytes = names_raw[current_pos:null_pos]
+            name: str = name_bytes.decode("ascii", errors="ignore")
             names_list.append(name)
             current_pos = null_pos + 1
             if current_pos >= len(names_raw):
@@ -2237,16 +2262,16 @@ class MDLBinaryReader:
     ):
         startnode += 12
         self._reader.seek(startnode + 4)
-        name_index = self._reader.read_uint16()
+        name_index: int = self._reader.read_uint16()
         self._order2nameindex.append(name_index)
 
         self._reader.seek(startnode + 44)
-        child_array_offset = self._reader.read_uint32()
-        child_array_length = self._reader.read_uint32()
+        child_array_offset: int = self._reader.read_uint32()
+        child_array_length: int = self._reader.read_uint32()
 
         if child_array_length > 0 and child_array_offset not in (0, 0xFFFFFFFF):
             self._reader.seek(child_array_offset + 12)
-            child_offsets = [self._reader.read_uint32() for _ in range(child_array_length)]
+            child_offsets: list[int] = [self._reader.read_uint32() for _ in range(child_array_length)]
             for child_offset in child_offsets:
                 if child_offset not in (0, 0xFFFFFFFF):
                     self._get_node_order(child_offset)
@@ -2257,10 +2282,10 @@ class MDLBinaryReader:
         parent: MDLNode | None,
     ) -> MDLNode:
         self._reader.seek(offset)
-        bin_node = _Node().read(self._reader, self.game)
+        bin_node: _Node = _Node().read(self._reader, self.game)
         assert bin_node.header is not None
 
-        node = MDLNode()
+        node: MDLNode = MDLNode()
         node.node_id = bin_node.header.node_id
         # MDLOps derives node names from the "partnames" array by node_id (not from the nodeheader 4th short).
         node.name = self._names[bin_node.header.node_id] if 0 <= bin_node.header.node_id < len(self._names) else ""
@@ -2281,7 +2306,10 @@ class MDLBinaryReader:
             if bin_node.trimesh and bin_node.trimesh.offset_to_aabb > 0:
                 # Read AABB tree recursively (depth-first, matching MDLOps)
                 # Reference: vendor/MDLOps/MDLOpsM.pm:1440-1466 (readaabb)
-                def _read_aabb_recursive(reader: BinaryReader, offset: int) -> tuple[int, list[MDLAABBNode]]:
+                def _read_aabb_recursive(
+                    reader: BinaryReader,
+                    offset: int,
+                ) -> tuple[int, list[MDLAABBNode]]:
                     """Recursively read AABB tree node and its children.
 
                     Returns:
@@ -2292,15 +2320,15 @@ class MDLBinaryReader:
 
                     reader.seek(offset)
                     # Read 6 floats (bounding box min/max)
-                    bbox_min = reader.read_vector3()
-                    bbox_max = reader.read_vector3()
+                    bbox_min: Vector3 = reader.read_vector3()
+                    bbox_max: Vector3 = reader.read_vector3()
                     # Read 4 int32s: left child offset, right child offset, face index, unknown
                     # Note: Child offsets in the file are stored as (absolute_offset - 12), but since
                     # BinaryReader has set_offset(+12) applied, these can be used directly.
-                    left_child = reader.read_int32()
-                    right_child = reader.read_int32()
-                    face_index = reader.read_int32()
-                    unknown = reader.read_int32()
+                    left_child: int = reader.read_int32()
+                    right_child: int = reader.read_int32()
+                    face_index: int = reader.read_int32()
+                    unknown: int = reader.read_int32()
 
                     aabb_node = MDLAABBNode(
                         bbox_min=bbox_min,
@@ -2416,12 +2444,14 @@ class MDLBinaryReader:
                         self._reader.seek(saved_pos)
 
         # Check for EMITTER flag - nodes with EMITTER flag should be marked as EMITTER type
+        # Reference: vendor/MDLOps/MDLOpsM.pm lines 1959-1998 (emitter parsing)
         if bin_node.header.type_id & MDLNodeFlags.EMITTER:
             node.node_type = MDLNodeType.EMITTER
             from pykotor.resource.formats.mdl.mdl_data import MDLEmitter
 
             if bin_node.emitter is not None:
                 node.emitter = MDLEmitter()
+                # Read emitter properties in same order as MDLOps (lines 1960-1981)
                 node.emitter.dead_space = bin_node.emitter.dead_space
                 node.emitter.blast_radius = bin_node.emitter.blast_radius
                 node.emitter.blast_length = bin_node.emitter.blast_length
@@ -2440,8 +2470,10 @@ class MDLBinaryReader:
                 node.emitter.render_order = int(bin_node.emitter.render_order)
                 node.emitter.frame_blender = int(bin_node.emitter.frame_blending)
                 node.emitter.depth_texture = bin_node.emitter.depth_texture
+                # Note: bin_node.emitter.unknown1 (index 18) is read but not used in MDLEmitter
+                # MDLOps stores it as m_bUnknown1 but doesn't expose it (line 1980)
                 node.emitter.flags = bin_node.emitter.flags
-                # TODO: Read additional emitter data if needed
+                # MDLOps parses flags into individual booleans (lines 1983-1996), but we store as flags enum
 
         # Check for REFERENCE flag - nodes with REFERENCE flag should be marked as REFERENCE type
         if bin_node.header.type_id & MDLNodeFlags.REFERENCE:
@@ -2454,8 +2486,12 @@ class MDLBinaryReader:
                 node.reference.reattachable = bool(bin_node.reference.reattachable)
 
         if bin_node.trimesh is not None:
+            # Check for SKIN flag - skin nodes should use MDLSkin (mdlops:320, NODE_SKIN = 97)
             # Check for DANGLY flag - danglymesh nodes should use MDLDangly
-            if bin_node.header.type_id & MDLNodeFlags.DANGLY:
+            if bin_node.header.type_id & MDLNodeFlags.SKIN:
+                node.mesh = MDLMesh()
+                node.node_type = MDLNodeType.SKIN
+            elif bin_node.header.type_id & MDLNodeFlags.DANGLY:
                 from pykotor.resource.formats.mdl.mdl_data import MDLDangly
 
                 node.dangly = MDLDangly()
@@ -2630,35 +2666,39 @@ class MDLBinaryReader:
                 _mdl_recompute_mesh_face_payload(node.mesh)
 
             # Read danglymesh constraints if present
-            if bin_node.dangly and node.dangly:
+            # Reference: vendor/MDLOps/MDLOpsM.pm lines 2094-2097 (dangly header), 2175-2184 (constraints+ array reading), 2396-2402 (constraints unpacking), 7261-7267 (constraints writing)
+            if bin_node.dangly is not None and node.dangly is not None:
                 node.dangly.displacement = bin_node.dangly.displacement
                 node.dangly.tightness = bin_node.dangly.tightness
                 node.dangly.period = bin_node.dangly.period
                 # Read constraints array (offset uses offset-12 semantics, so add 12)
-                # Constraints are stored as a flat array of floats (one per vertex)
-                # MDLOps stores constraints as simple float values, not structured objects
+                # MDLOps: darray[9] = "constraints+" with template "f[4]" (line 232)
+                # MDLOps: skips constraints+ if not NODE_HAS_DANGLY (line 2175: if ($i == 9 && !($nodetype & NODE_HAS_DANGLY)) {next;})
+                # MDLOps: reads offset from subhead[79] + 12 (line 2176: $temp = $ref->{$node}{'subhead'}{'unpacked'}[$structs{'darray'}[$i]{'loc'} + $temp2] + 12;)
+                # MDLOps: unpacks constraints as floats from "constraints+" array (line 2401: $ref->{$node}{'constraints'}[$i] = $ref->{$node}{$structs{'darray'}[9]{'name'}}{'unpacked'}[$i];)
+                # MDLOps: writes constraints as pack("f", $_) for each constraint (line 7264)
                 if bin_node.dangly.offset_to_contraints not in (0, 0xFFFFFFFF) and bin_node.dangly.constraints_count > 0:
-                    saved_pos = self._reader.position()
+                    saved_pos: int = self._reader.position()
                     try:
-                        constraint_loc = bin_node.dangly.offset_to_contraints + 12
+                        # MDLOps line 2176: offset + 12 (offset-12 semantics)
+                        constraint_loc: int = bin_node.dangly.offset_to_contraints + 12
                         self._reader.seek(constraint_loc)
-                        # Constraints are floats - one float per vertex
-                        # Store as list of floats for now (MDLDangly.constraints expects list)
+                        # MDLOps line 2401: constraints are floats, one per vertex
+                        # MDLOps line 7264: pack("f", $_) for each constraint
                         for _ in range(bin_node.dangly.constraints_count):
                             if self._reader.position() + 4 <= self._reader.size():
-                                constraint_value = self._reader.read_single()
-                                # Store constraint as a simple value (MDLDangly.constraints is list[MDLConstraint])
-                                # For now, we'll store the float value directly in a constraint object
+                                constraint_value: float = self._reader.read_single()
+                                # Store constraint as MDLConstraint object (MDLDangly.constraints expects list[MDLConstraint])
                                 from pykotor.resource.formats.mdl.mdl_data import MDLConstraint
 
                                 constraint = MDLConstraint()
-                                # Use type field to store the float value (temporary workaround)
-                                constraint.type = int(constraint_value * 1000000) if constraint_value != 0.0 else 0
+                                # Store float value in constraint.type field (temporary workaround for MDLConstraint structure)
+                                constraint.type = int(constraint_value * 1000000) if constraint_value != 0.0 else 0  # type: ignore[assignment]
                                 node.dangly.constraints.append(constraint)
                     finally:
                         self._reader.seek(saved_pos)
 
-        if bin_node.skin:
+        if bin_node.skin is not None:
             node.skin = MDLSkin()
             node.skin.bone_indices = bin_node.skin.bones
             node.skin.bonemap = bin_node.skin.bonemap
@@ -2955,7 +2995,7 @@ class MDLBinaryWriter:
         bin_node.header.orientation = mdl_node.orientation
         # Set children_count now so calc_size() returns correct values during _calc_top_offsets()
         # This is critical for correct node offset calculation
-        actual_children_count = len(mdl_node.children)
+        actual_children_count: int = len(mdl_node.children)
         if actual_children_count > 0x7FFFFFFF:
             actual_children_count = 0x7FFFFFFF
         bin_node.header.children_count = bin_node.header.children_count2 = actual_children_count
@@ -2972,19 +3012,19 @@ class MDLBinaryWriter:
 
         # Determine the appropriate function pointer values to write
         if self.game == Game.K1:
-            if mdl_node.skin:
+            if mdl_node.skin is not None:
                 fp0 = _TrimeshHeader.K1_SKIN_FUNCTION_POINTER0
                 fp1 = _TrimeshHeader.K1_SKIN_FUNCTION_POINTER1
-            elif mdl_node.dangly:
+            elif mdl_node.dangly is not None:
                 fp0 = _TrimeshHeader.K1_DANGLY_FUNCTION_POINTER0
                 fp1 = _TrimeshHeader.K1_DANGLY_FUNCTION_POINTER1
             else:
                 fp0 = _TrimeshHeader.K1_FUNCTION_POINTER0
                 fp1 = _TrimeshHeader.K1_FUNCTION_POINTER1
-        elif mdl_node.skin:
+        elif mdl_node.skin is not None:
             fp0 = _TrimeshHeader.K2_SKIN_FUNCTION_POINTER0
             fp1 = _TrimeshHeader.K2_SKIN_FUNCTION_POINTER1
-        elif mdl_node.dangly:
+        elif mdl_node.dangly is not None:
             fp0 = _TrimeshHeader.K2_DANGLY_FUNCTION_POINTER0
             fp1 = _TrimeshHeader.K2_DANGLY_FUNCTION_POINTER1
         else:
@@ -2994,7 +3034,14 @@ class MDLBinaryWriter:
         # Create trimesh header if node has a mesh or if node_type indicates it should have one
         # This ensures we preserve mesh structure even if mesh object is missing
         # Emitter, Light, AABB, and Skin nodes can also have mesh data
-        if mdl_node.mesh or mdl_node.node_type in (MDLNodeType.TRIMESH, MDLNodeType.DANGLYMESH, MDLNodeType.EMITTER, MDLNodeType.LIGHT, MDLNodeType.AABB, MDLNodeType.SKIN):
+        if mdl_node.mesh or mdl_node.node_type in (
+            MDLNodeType.TRIMESH,
+            MDLNodeType.DANGLYMESH,
+            MDLNodeType.EMITTER,
+            MDLNodeType.LIGHT,
+            MDLNodeType.AABB,
+            MDLNodeType.SKIN,
+        ):
             # If mesh is None but node_type indicates mesh, create empty mesh to preserve structure
             if not mdl_node.mesh:
                 from pykotor.resource.formats.mdl.mdl_data import MDLMesh
@@ -3005,7 +3052,7 @@ class MDLBinaryWriter:
             bin_node.trimesh.function_pointer1 = fp1
             bin_node.trimesh.average = mdl_node.mesh.average
             # Create dangly header if this is a danglymesh node
-            if mdl_node.dangly:
+            if mdl_node.dangly is not None:
                 bin_node.dangly = _DanglymeshHeader()
                 bin_node.dangly.displacement = mdl_node.dangly.displacement
                 bin_node.dangly.tightness = mdl_node.dangly.tightness
@@ -3017,7 +3064,7 @@ class MDLBinaryWriter:
 
             # Store AABB tree for writing later if this is an AABB node
             # Always initialize _aabb_nodes when aabb exists, even if empty, to match AABB flag behavior
-            if mdl_node.aabb:
+            if mdl_node.aabb is not None:
                 if mdl_node.aabb.aabbs:
                     bin_node._aabb_nodes = list(mdl_node.aabb.aabbs)
                 else:
@@ -3146,7 +3193,7 @@ class MDLBinaryWriter:
             bin_node.skin.offset_to_mdx_weights = 0
 
         # Light header data
-        if mdl_node.light:
+        if mdl_node.light is not None:
             bin_node.light = _LightHeader()
             light = mdl_node.light
             # Copy basic light properties
@@ -3178,7 +3225,7 @@ class MDLBinaryWriter:
 
         # Emitter header data
         # Create emitter header if node has emitter data or if node_type indicates it should be an emitter
-        if mdl_node.emitter or mdl_node.node_type == MDLNodeType.EMITTER:
+        if mdl_node.emitter is not None or mdl_node.node_type == MDLNodeType.EMITTER:
             if not mdl_node.emitter:
                 from pykotor.resource.formats.mdl.mdl_data import MDLEmitter
 
@@ -3219,7 +3266,7 @@ class MDLBinaryWriter:
             bin_node.emitter.flags = emitter.flags
 
         # Reference header data
-        if mdl_node.reference:
+        if mdl_node.reference is not None:
             bin_node.reference = _ReferenceHeader()
             reference = mdl_node.reference
             bin_node.reference.model = reference.model
@@ -3443,12 +3490,6 @@ class MDLBinaryWriter:
         has_uv2 = mdl_node.mesh.vertex_uv2 is not None and uv2_len == vcount and vcount > 0
 
         # Only set TEX0 flag if texture name is valid (not None, not empty, not "NULL")
-        has_texture1 = (
-            mdl_node.mesh.texture_1 is not None
-            and mdl_node.mesh.texture_1.strip() != ""
-            and mdl_node.mesh.texture_1.upper() != "NULL"
-        )
-
         if has_uv1:
             bin_node.trimesh.mdx_texture1_offset = suboffset
             bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.TEX0
@@ -3456,7 +3497,11 @@ class MDLBinaryWriter:
                 print(f"DEBUG _update_mdx: Node {mdl_node.name} has_uv1=True texture1={mdl_node.mesh.texture_1} bitmap=0x{bin_node.trimesh.mdx_data_bitmap:08X} TEX0={bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX0)} texture1_offset={bin_node.trimesh.mdx_texture1_offset}")
             assert bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX0, f"Failed to set TEX0 flag for node {mdl_node.name}"
             suboffset += 8
-        elif has_texture1 and vcount > 0:
+        elif (  # has_texture1
+            mdl_node.mesh.texture_1 is not None
+            and mdl_node.mesh.texture_1.strip() != ""
+            and mdl_node.mesh.texture_1.upper() != "NULL"
+        ) and vcount > 0:
             # Texture name exists but no valid UV data - generate default UV coordinates
             # This ensures MDLOps can find tverts data when it reads the binary
             if not mdl_node.mesh.vertex_uv1 or len(mdl_node.mesh.vertex_uv1) != vcount:
@@ -3468,17 +3513,15 @@ class MDLBinaryWriter:
             suboffset += 8
 
         # Only set TEX1 flag if texture name is valid (not None, not empty, not "NULL")
-        has_texture2 = (
-            mdl_node.mesh.texture_2 is not None
-            and mdl_node.mesh.texture_2.strip() != ""
-            and mdl_node.mesh.texture_2.upper() != "NULL"
-        )
-
         if has_uv2:
             bin_node.trimesh.mdx_texture2_offset = suboffset
             bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.TEX1
             suboffset += 8
-        elif has_texture2 and vcount > 0:
+        elif (  # has_texture2
+            mdl_node.mesh.texture_2 is not None
+            and mdl_node.mesh.texture_2.strip() != ""
+            and mdl_node.mesh.texture_2.upper() != "NULL"
+        ) and vcount > 0:
             # Texture name exists but no valid UV data - generate default UV coordinates
             if not mdl_node.mesh.vertex_uv2 or len(mdl_node.mesh.vertex_uv2) != vcount:
                 mdl_node.mesh.vertex_uv2 = [Vector2(0.0, 0.0) for _ in range(vcount)]
@@ -3510,19 +3553,35 @@ class MDLBinaryWriter:
         for i in range(vcount):
             if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX:
                 # Use vertex from vertex_positions if available, otherwise use null vertex
-                position = mdl_node.mesh.vertex_positions[i] if (mdl_node.mesh.vertex_positions and i < len(mdl_node.mesh.vertex_positions)) else Vector3.from_null()
+                position = (
+                    mdl_node.mesh.vertex_positions[i]
+                    if (mdl_node.mesh.vertex_positions and i < len(mdl_node.mesh.vertex_positions))
+                    else Vector3.from_null()
+                )
                 self._writer_ext.write_vector3(position)
             if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.NORMAL:
                 # Only write normals if they're actually in MDX (bitmap flag set)
-                norm = mdl_node.mesh.vertex_normals[i] if (mdl_node.mesh.vertex_normals and i < len(mdl_node.mesh.vertex_normals)) else Vector3.from_null()
+                norm = (
+                    mdl_node.mesh.vertex_normals[i]
+                    if (mdl_node.mesh.vertex_normals and i < len(mdl_node.mesh.vertex_normals))
+                    else Vector3.from_null()
+                )
                 self._writer_ext.write_vector3(norm)
             if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX0:
                 # Only write UV1 if it's actually in MDX (bitmap flag set)
-                uv1 = mdl_node.mesh.vertex_uv1[i] if (mdl_node.mesh.vertex_uv1 and i < len(mdl_node.mesh.vertex_uv1)) else Vector2(0.0, 0.0)
+                uv1 = (
+                    mdl_node.mesh.vertex_uv1[i]
+                    if (mdl_node.mesh.vertex_uv1 and i < len(mdl_node.mesh.vertex_uv1))
+                    else Vector2(0.0, 0.0)
+                )
                 self._writer_ext.write_vector2(uv1)
             if bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX1:
                 # Only write UV2 if it's actually in MDX (bitmap flag set)
-                uv2 = mdl_node.mesh.vertex_uv2[i] if (mdl_node.mesh.vertex_uv2 and i < len(mdl_node.mesh.vertex_uv2)) else Vector2(0.0, 0.0)
+                uv2 = (
+                    mdl_node.mesh.vertex_uv2[i]
+                    if (mdl_node.mesh.vertex_uv2 and i < len(mdl_node.mesh.vertex_uv2))
+                    else Vector2(0.0, 0.0)
+                )
                 self._writer_ext.write_vector2(uv2)
 
             if mdl_node.skin and bin_node.skin is not None:
@@ -3821,7 +3880,14 @@ class MDLBinaryWriter:
         # Check for mesh - either explicit mesh object or node_type indicates mesh
         # This ensures we preserve mesh flags even if mesh object is missing
         # Emitter, Light, AABB, and Skin nodes can also have mesh data
-        if node.mesh or node.node_type in (MDLNodeType.TRIMESH, MDLNodeType.DANGLYMESH, MDLNodeType.EMITTER, MDLNodeType.LIGHT, MDLNodeType.AABB, MDLNodeType.SKIN):
+        if node.mesh or node.node_type in (
+            MDLNodeType.TRIMESH,
+            MDLNodeType.DANGLYMESH,
+            MDLNodeType.EMITTER,
+            MDLNodeType.LIGHT,
+            MDLNodeType.AABB,
+            MDLNodeType.SKIN,
+        ):
             type_id = type_id | MDLNodeFlags.MESH
         if node.skin:
             type_id = type_id | MDLNodeFlags.SKIN
@@ -3844,16 +3910,16 @@ class MDLBinaryWriter:
         # The all_nodes() traversal returns nodes in a different order than they appear in the binary,
         # so we need to sort by node_id before writing MDX data.
         # Create a list of (bin_node, mdl_node, original_index) tuples sorted by node_id
-        node_pairs = [(self._bin_nodes[i], self._mdl_nodes[i], i, self._mdl_nodes[i].node_id) for i in range(len(self._bin_nodes))]
-        node_pairs_sorted = sorted(node_pairs, key=lambda x: x[3])  # Sort by node_id
+        node_pairs: list[tuple[_Node, MDLNode, int, int]] = [
+            (self._bin_nodes[i], self._mdl_nodes[i], i, self._mdl_nodes[i].node_id)
+            for i in range(len(self._bin_nodes))
+        ]
 
         # Write MDX data in node_id order
-        for bin_node, mdl_node, orig_idx, node_id in node_pairs_sorted:
-            if bin_node.trimesh:
+        for bin_node, mdl_node, orig_idx, node_id in sorted(node_pairs, key=lambda x: x[3]):   # Sort by node_id
+            if bin_node.trimesh is not None:
                 if _DEBUG_MDL:
-                    print(
-                        f"DEBUG _write_all: Calling _update_mdx for node {mdl_node.name} (node_id={node_id}, orig_idx={orig_idx}, bin_node_id={id(bin_node)}, trimesh_id={id(bin_node.trimesh)})"
-                    )
+                    print(f"DEBUG _write_all: Calling _update_mdx for node {mdl_node.name} (node_id={node_id}, orig_idx={orig_idx}, bin_node_id={id(bin_node)}, trimesh_id={id(bin_node.trimesh)})")
                 self._update_mdx(bin_node, mdl_node)
                 if _DEBUG_MDL and bin_node.trimesh.texture1:
                     print(f"DEBUG _write_all: After _update_mdx, node {mdl_node.name} has tex1_off={bin_node.trimesh.mdx_texture1_offset} (trimesh_id={id(bin_node.trimesh)})")
@@ -3868,8 +3934,8 @@ class MDLBinaryWriter:
         self._file_header.geometry.model_name = self._mdl.name
         # node_count must include ALL nodes: geometry nodes + animation nodes
         # Reference: MDLOps includes all nodes in geometry header's node_count
-        geom_node_count = len(self._mdl_nodes)
-        anim_node_count = sum(len(list(anim.all_nodes())) for anim in self._mdl.anims)
+        geom_node_count: int = len(self._mdl_nodes)
+        anim_node_count: int = sum(len(list(anim.all_nodes())) for anim in self._mdl.anims)
         node_count_actual = geom_node_count + anim_node_count
         self._file_header.geometry.node_count = min(node_count_actual, 0x7FFFFFFF)
         self._file_header.geometry.geometry_type = 2
@@ -3928,9 +3994,7 @@ class MDLBinaryWriter:
             bin_anim.write(self._writer, self.game)
         for i, bin_node in enumerate(self._bin_nodes):
             if _DEBUG_MDL and bin_node.trimesh and bin_node.trimesh.texture1:
-                print(
-                    f"DEBUG _write_all: About to write node {i} (name_id={bin_node.header.name_id if bin_node.header else '?'}) texture1={bin_node.trimesh.texture1} bitmap=0x{bin_node.trimesh.mdx_data_bitmap:08X} texture1_offset={bin_node.trimesh.mdx_texture1_offset}"
-                )
+                print(f"DEBUG _write_all: About to write node {i} (name_id={bin_node.header.name_id if bin_node.header else '?'}) texture1={bin_node.trimesh.texture1} bitmap=0x{bin_node.trimesh.mdx_data_bitmap:08X} texture1_offset={bin_node.trimesh.mdx_texture1_offset}")
             bin_node.write(self._writer, self.game)
             if _DEBUG_MDL and bin_node.trimesh and bin_node.trimesh.texture1:
                 print(f"DEBUG _write_all: After writing node {i}, texture1_offset={bin_node.trimesh.mdx_texture1_offset}")

@@ -1127,6 +1127,7 @@ class MDLAsciiReader(ResourceReader):
             "dummy": MDLNodeType.DUMMY,
             "trimesh": MDLNodeType.TRIMESH,
             "danglymesh": MDLNodeType.DANGLYMESH,
+            "skin": MDLNodeType.SKIN,  # Skinned mesh (mdlops:320, NODE_SKIN = 97)
             "light": MDLNodeType.LIGHT,
             "emitter": MDLNodeType.EMITTER,
             "reference": MDLNodeType.REFERENCE,
@@ -1158,10 +1159,12 @@ class MDLAsciiReader(ResourceReader):
             # Mesh will be created on-demand when mesh data is encountered
         elif node_type == MDLNodeType.SABER:
             node.saber = MDLSaber()
-        elif node_type in (MDLNodeType.TRIMESH, MDLNodeType.DANGLYMESH):
+        elif node_type in (MDLNodeType.TRIMESH, MDLNodeType.DANGLYMESH, MDLNodeType.SKIN):
             node.mesh = MDLMesh()
             if node_type == MDLNodeType.DANGLYMESH:
                 node.dangly = MDLDangly()
+            # SKIN nodes have mesh data but skin payload is stored separately in node.skin
+            # (created on-demand when "bones" or "weights" sections are encountered)
 
         self._nodes.append(node)
         self._node_index[node_name.lower()] = len(self._nodes) - 1
