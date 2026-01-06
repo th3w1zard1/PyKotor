@@ -397,7 +397,7 @@ class MDLAsciiWriter(ResourceWriter):
         elif node.skin is not None:
             # SKIN nodes: NODE_SKIN = 97 = HEADER + MESH + SKIN (0x061)
             # Reference: vendor/MDLOps/MDLOpsM.pm:320 (NODE_SKIN = 97), 3105-3108
-            # SKIN nodes are written as "skin" (TODO: convert_skin option not implemented yet)
+            # SKIN nodes are written as "skin" (TODO: implement convert_skin option)
             node_type_str = "skin"
         elif node.mesh is not None or node.node_type == MDLNodeType.TRIMESH:
             node_type_str = "trimesh"
@@ -732,9 +732,11 @@ class MDLAsciiWriter(ResourceWriter):
         for i, aabb in enumerate(walkmesh.aabbs):
             # MDLOps format: 6 floats (bbox_min.xyz, bbox_max.xyz) + 1 int (face_index)
             # Child offsets and unknown are not stored in ASCII format
+            # MDLOps format: 6 floats with space before number, then 1 int
+            # Reference: vendor/MDLOps/MDLOpsM.pm:3459
             self.write_line(
                 indent + 1,
-                f"      {aabb.bbox_min.x:.7g} {aabb.bbox_min.y:.7g} {aabb.bbox_min.z:.7g} {aabb.bbox_max.x:.7g} {aabb.bbox_max.y:.7g} {aabb.bbox_max.z:.7g} {aabb.face_index}"
+                f"      {aabb.bbox_min.x: .7g} {aabb.bbox_min.y: .7g} {aabb.bbox_min.z: .7g} {aabb.bbox_max.x: .7g} {aabb.bbox_max.y: .7g} {aabb.bbox_max.z: .7g} {aabb.face_index}"
             )
 
     def _write_controller(self, indent: int, node: MDLNode, controller: MDLController) -> None:
