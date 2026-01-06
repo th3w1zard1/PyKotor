@@ -1217,8 +1217,8 @@ class PyFileSystemModel(QAbstractItemModel):
 
         self.layoutAboutToBeChanged.emit()
         old_list = self.persistentIndexList()
+        # Build list of old nodes with their columns (matching C++ oldNodes)
         old_nodes: list[tuple[PyFileSystemNode, int]] = []
-        old_nodes.reserve(len(old_list)) if hasattr(old_nodes, "reserve") else None  # type: ignore[attr-defined]
         for old_node_index in old_list:
             old_nodes.append((self.node(old_node_index), old_node_index.column()))
 
@@ -1230,8 +1230,8 @@ class PyFileSystemModel(QAbstractItemModel):
 
         self._sortOrder = order
 
+        # Build new list from old nodes (matching C++ newList)
         new_list: list[QModelIndex] = []
-        new_list.reserve(len(old_nodes)) if hasattr(new_list, "reserve") else None  # type: ignore[attr-defined]
         for node, col in old_nodes:
             new_list.append(self._index_from_node(node, col))
 
