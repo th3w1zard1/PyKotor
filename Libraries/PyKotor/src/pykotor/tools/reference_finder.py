@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import fnmatch
 import re
-from contextlib import suppress
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Callable
 
@@ -19,14 +18,10 @@ from pykotor.common.stream import BinaryReader
 from pykotor.extract.file import FileResource
 from pykotor.resource.formats.gff.gff_auto import read_gff
 from pykotor.resource.formats.gff.gff_data import GFFFieldType, GFFList, GFFStruct
-from pykotor.resource.formats.ncs.ncs_auto import read_ncs
 from pykotor.resource.formats.ncs.ncs_data import NCSByteCode, NCSInstructionQualifier
-from pykotor.resource.formats.twoda.twoda_auto import read_2da
 from pykotor.resource.type import ResourceType
 
 if TYPE_CHECKING:
-    from pathlib import Path
-
     from pykotor.extract.installation import Installation
 
 
