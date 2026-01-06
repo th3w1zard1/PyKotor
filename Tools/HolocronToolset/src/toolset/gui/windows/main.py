@@ -1299,20 +1299,29 @@ class ToolWindow(QMainWindow):
     # endregion
 
     # region Events
-    def showEvent(self, event: QShowEvent | None):  # pyright: ignore[reportIncompatibleMethodOverride]
+    def showEvent(
+        self,
+        event: QShowEvent | None,  # pyright: ignore[reportIncompatibleMethodOverride]
+    ):
         """Called when the window is shown."""
         RobustLogger().debug("TRACE: ToolWindow.showEvent() called")
         super().showEvent(event) if event else None
         RobustLogger().debug("TRACE: ToolWindow.showEvent() completed - super().showEvent() returned")
     
-    def closeEvent(self, e: QCloseEvent | None):  # pylint: disable=unused-argument  # pyright: ignore[reportIncompatibleMethodOverride]
+    def closeEvent(
+        self,
+        e: QCloseEvent | None,  # pylint: disable=unused-argument  # pyright: ignore[reportIncompatibleMethodOverride]
+    ):
         instance: QCoreApplication | None = QCoreApplication.instance()
         if instance is None:
             sys.exit()
         else:
             instance.quit()
 
-    def mouseMoveEvent(self, event: QMouseEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
+    def mouseMoveEvent(
+        self,
+        event: QMouseEvent,  # pyright: ignore[reportIncompatibleMethodOverride]
+    ):
         if event.buttons() == Qt.MouseButton.LeftButton:
             if self._mouse_move_pos is None:
                 return
@@ -1320,18 +1329,30 @@ class ToolWindow(QMainWindow):
             self.move(self.mapFromGlobal(self.mapToGlobal(self.pos()) + (globalPos - self._mouse_move_pos)))
             self._mouse_move_pos = globalPos
 
-    def mousePressEvent(self, event: QMouseEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
+    def mousePressEvent(
+        self,
+        event: QMouseEvent,  # pyright: ignore[reportIncompatibleMethodOverride]
+    ):
         if event.button() == Qt.MouseButton.LeftButton:
             self._mouse_move_pos = event.globalPos() if qtpy.QT5 else event.globalPosition().toPoint()  # pyright: ignore[reportAttributeAccessIssue]
 
-    def mouseReleaseEvent(self, event: QMouseEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
+    def mouseReleaseEvent(
+        self,
+        event: QMouseEvent,  # pyright: ignore[reportIncompatibleMethodOverride]
+    ):
         if event.button() == Qt.MouseButton.LeftButton:
             self._mouse_move_pos = None
 
-    def keyPressEvent(self, event: QKeyEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
+    def keyPressEvent(
+        self,
+        event: QKeyEvent,  # pyright: ignore[reportIncompatibleMethodOverride]
+    ):
         super().keyPressEvent(event)
 
-    def dragEnterEvent(self, e: QtGui.QDragEnterEvent | None):  # pyright: ignore[reportIncompatibleMethodOverride]
+    def dragEnterEvent(
+        self,
+        e: QtGui.QDragEnterEvent | None,  # pyright: ignore[reportIncompatibleMethodOverride]
+    ):
         if e is None:
             return
         event_mimedata = e.mimeData()
@@ -1649,7 +1670,11 @@ class ToolWindow(QMainWindow):
 
     def reload_installations(self):
         """Refresh the list of installations available in the combobox."""
-        self.ui.gameCombo.currentIndexChanged.disconnect(self.change_active_installation)
+        try:
+            self.ui.gameCombo.currentIndexChanged.disconnect(self.change_active_installation)
+        except (TypeError, RuntimeError):
+            # Signal may not be connected yet during initialization
+            pass
         self.ui.gameCombo.clear()  # without above disconnect, would call ToolWindow().changeActiveInstallation(-1)
         self.ui.gameCombo.addItem("[None]")  # without above disconnect, would call ToolWindow().changeActiveInstallation(0)
 
@@ -1668,8 +1693,12 @@ class ToolWindow(QMainWindow):
         
         # Disconnect signal to prevent recursive call when setting index to 0
         RobustLogger().debug("TRACE: unset_installation: about to disconnect currentIndexChanged signal")
-        self.ui.gameCombo.currentIndexChanged.disconnect(self.change_active_installation)
-        RobustLogger().debug("TRACE: unset_installation: signal disconnected")
+        try:
+            self.ui.gameCombo.currentIndexChanged.disconnect(self.change_active_installation)
+            RobustLogger().debug("TRACE: unset_installation: signal disconnected")
+        except (TypeError, RuntimeError):
+            # Signal may not be connected yet during initialization
+            RobustLogger().debug("TRACE: unset_installation: signal was not connected, skipping disconnect")
         RobustLogger().debug("TRACE: unset_installation: about to call setCurrentIndex(0)")
         self.ui.gameCombo.setCurrentIndex(0)
         RobustLogger().debug("TRACE: unset_installation: setCurrentIndex(0) returned")
