@@ -2554,7 +2554,22 @@ class MDLAsciiReader(ResourceReader):
         # Build name-to-node lookup for hierarchy resolution
         by_name: dict[str, MDLNode] = {n.name.lower(): n for n in self._nodes if n.name}
 
-        # Build parent-child relationships
+        # MDLOps uses node 0 (first parsed node) as the starting point for traversal
+        # Reference: vendor/MDLOps/MDLOpsM.pm:6282 (writebinarynode starts from node 0)
+        # Set root to node 0 if nodes exist, matching MDLOps behavior exactly
+        if self._nodes:
+            self._mdl.root = self._nodes[0]
+            self._mdl.root.children = []
+        else:
+            self._mdl.root.children = []
+        
+        for node in self._nodes:
+            node.children = []
+        
+        # Build name-to-node lookup for hierarchy resolution
+        by_name: dict[str, MDLNode] = {n.name.lower(): n for n in self._nodes if n.name}
+        
+        # Build parent-child relationships (matching MDLOps: vendor/MDLOps/MDLOpsM.pm:4222-4237)
         for node in self._nodes:
             parent_node: MDLNode | None = None
             
@@ -2569,17 +2584,9 @@ class MDLAsciiReader(ResourceReader):
                 parent_node = self._nodes[node.parent_id]
             
             if parent_node is not None:
+                # MDLOps adds child to parent's children array and increments childcount
+                # Reference: vendor/MDLOps/MDLOpsM.pm:4235-4236
                 parent_node.children.append(node)
-            else:
-                # Node has no valid parent (parent_id == -1, or parent not found)
-                # Attach to root to ensure it's not lost
-                if explicit_root is None:
-                    # Attach to implicit root container
-                    self._mdl.root.children.append(node)
-                elif node is not explicit_root:
-                    # Attach other top-level nodes under the explicit root
-                    self._mdl.root.children.append(node)
-                # If node IS the explicit root, it's already set as mdl.root, so no action needed
         
         # Cleanup temporary parent tracking
         for node in self._nodes:
