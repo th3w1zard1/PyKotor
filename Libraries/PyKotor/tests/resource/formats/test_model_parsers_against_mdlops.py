@@ -198,7 +198,10 @@ def _test_single_model(
             return False, f"MDLOps error while recompiling ASCII: {e}"
 
         # Step 4: Binary parity check: PyKotor vs MDLOps binaries
-        print("    [4/6] Comparing binary outputs...")
+        # NOTE: Binary comparison is informational only. MDLOps ASCII roundtrip loses
+        # vertex deduplication info, so binary sizes will differ. The real test is
+        # whether MDLOps can decompile PyKotor's output and produce valid ASCII.
+        print("    [4/6] Comparing binary outputs (informational)...")
         binary_diff_summary: str | None = None
         try:
             pykotor_mdl_bytes = pykotor_mdl.read_bytes()
@@ -209,27 +212,29 @@ def _test_single_model(
             # Quick binary equality check
             if pykotor_mdl_bytes == mdlops_mdl_bytes and pykotor_mdx_bytes == mdlops_mdx_bytes:
                 print("         -> Binary outputs match exactly")
-                # Continue to step 5/6 to verify ASCII round-trip
             else:
-                # Binary files differ - generate summary but continue to get ASCII diff
-                print("         -> Binary files differ (will show ASCII diff below)")
+                # Binary files differ - generate summary but continue to ASCII comparison
+                diffs: list[str] = []
                 if len(pykotor_mdl_bytes) != len(mdlops_mdl_bytes):
-                    binary_diff_summary = f"MDL size mismatch: {len(pykotor_mdl_bytes)} vs {len(mdlops_mdl_bytes)} bytes"
-                elif len(pykotor_mdx_bytes) != len(mdlops_mdx_bytes):
-                    binary_diff_summary = f"MDX size mismatch: {len(pykotor_mdx_bytes)} vs {len(mdlops_mdx_bytes)} bytes"
+                    diffs.append(f"MDL size: {len(pykotor_mdl_bytes)} vs {len(mdlops_mdl_bytes)}")
+                if len(pykotor_mdx_bytes) != len(mdlops_mdx_bytes):
+                    diffs.append(f"MDX size: {len(pykotor_mdx_bytes)} vs {len(mdlops_mdx_bytes)}")
+                if diffs:
+                    print(f"         -> Size diffs: {'; '.join(diffs)}")
+                    binary_diff_summary = "; ".join(diffs)
                 else:
                     # Same size, find first difference
                     for i, (a, b) in enumerate(zip(pykotor_mdl_bytes, mdlops_mdl_bytes)):
                         if a != b:
                             binary_diff_summary = f"MDL first diff @ offset {i}: {a:02x} != {b:02x}"
+                            print(f"         -> {binary_diff_summary}")
                             break
                     if not binary_diff_summary:
                         for i, (a, b) in enumerate(zip(pykotor_mdx_bytes, mdlops_mdx_bytes)):
                             if a != b:
                                 binary_diff_summary = f"MDX first diff @ offset {i}: {a:02x} != {b:02x}"
+                                print(f"         -> {binary_diff_summary}")
                                 break
-                if not binary_diff_summary:
-                    binary_diff_summary = "Binary files differ (details unknown)"
 
         except Exception as e:
             return False, f"Binary comparison error: {e}"
