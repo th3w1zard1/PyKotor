@@ -519,11 +519,14 @@ class _Node:
         # Reference: vendor/MDLOps/MDLOpsM.pm:7279-7313 (AABB writing)
         # The AABB tree is written IMMEDIATELY after the aabbloc field, not after all node data
         if self.header.type_id & MDLNodeFlags.AABB and self.trimesh:
-            # Calculate AABB tree offset: current position + 4 (for aabbloc field itself), with offset-12 semantics
-            # MDLOps calculates: (tell(BMDLOUT) - 12) + 4
-            aabb_tree_pos = writer.position() + 4
-            aabb_offset_raw = (aabb_tree_pos - 12) if aabb_tree_pos > 0 else 0
-            writer.write_int32(aabb_offset_raw)
+            # Write aabbloc field: the offset to AABB tree (position + 4 = right after this field)
+            # Writer positions are in model space (file position - 12 due to header).
+            # The reader has set_offset(+12), so seek(X) goes to file position X + 12.
+            # To point to position P in writer space = file position P + 12,
+            # we need reader to seek to X where X + 12 = P + 12, so X = P.
+            # Therefore, we write the writer position directly.
+            aabb_tree_pos = writer.position() + 4  # Position after this 4-byte field
+            writer.write_int32(aabb_tree_pos)
             # Write AABB tree immediately after aabbloc field
             self._write_aabb_extra(writer)
 
@@ -556,16 +559,14 @@ class _Node:
                 and controller.column_count == 2
             )
             if is_compressed_quat:
-                # Compressed quaternions: write as uint32s (2 floats per row: compressed uint32 + padding)
+                # Compressed quaternions: write as uint32s (1 per row, reinterpreted from float)
+                import struct as struct_module
                 for _ in range(controller.row_count):
                     if data_idx < len(self.w_controller_data):
-                        # Convert float back to uint32 for compressed quaternion
-                        compressed_uint32 = int(self.w_controller_data[data_idx])
+                        # Reinterpret float as uint32 (same bits, NOT numeric conversion)
+                        float_val = self.w_controller_data[data_idx]
+                        compressed_uint32 = struct_module.unpack("<I", struct_module.pack("<f", float_val))[0]
                         writer.write_uint32(compressed_uint32)
-                        data_idx += 1
-                    if data_idx < len(self.w_controller_data):
-                        # Padding float (should be 0.0)
-                        writer.write_single(self.w_controller_data[data_idx])
                         data_idx += 1
             else:
                 # Regular controller data: write as floats
@@ -636,11 +637,15 @@ class _Node:
         return len(self._dangly_constraints) * 4
 
     def _write_aabb_extra(self, writer: BinaryWriter) -> None:
-        """Write AABB tree recursively after node data.
+        """Write AABB tree as flat array.
         
-        Reference: vendor/MDLOps/MDLOpsM.pm:1471-1513 (writeaabb)
-        AABB nodes are stored in depth-first order, matching the recursive reading.
-        MDLOps uses sequential layout: each node is 40 bytes, child1 is always at start+40.
+        Reference: vendor/MDLOps/MDLOpsM.pm:7289-7305 (flat AABB array writing)
+        
+        AABB nodes are written sequentially in the order they were read (depth-first).
+        Each node is 40 bytes: 6 floats (bbox min/max) + 4 int32s (left child, right child, face_index, unknown).
+        
+        For branch nodes (face_index == -1), child offsets point to the position of child nodes.
+        Since nodes are already in depth-first order, we can calculate child positions from indices.
         """
         if self._aabb_nodes is None:
             return
@@ -648,74 +653,104 @@ class _Node:
         if len(aabb_nodes) == 0:
             return
 
-        # Write AABB tree recursively (depth-first, matching MDLOps exactly)
-        # Each node is 40 bytes: 6 floats (bbox) + 4 int32s (children/face)
-        # AABB nodes are already in depth-first order from reading
-        node_index = [0]  # Use list to allow mutation in nested function
+        # AABB nodes are stored as a flat array, written sequentially
+        # Child pointers are calculated based on node indices in the array
+        # MDLOps reference: $buffer .= pack('f[6]LLll', @{$aabb}[0..5], 
+        #   ($aabb->[6] != -1 ? 0 : ($totalbytes - 12) + ($aabb->[9] * 40)),
+        #   ($aabb->[6] != -1 ? 0 : ($totalbytes - 12) + ($aabb->[10] * 40)),
+        #   $aabb->[6], $aabb->[8]);
         
-        def _write_aabb_recursive(writer: BinaryWriter, start_pos: int) -> tuple[int, int]:
-            """Recursively write AABB node and its children.
-            
-            Args:
-                writer: Binary writer
-                start_pos: Starting position for this node (must be aligned to 40-byte boundary)
-            
-            Returns:
-                (next_node_index, last_write_pos): Next node index and last write position
-            """
-            if node_index[0] >= len(aabb_nodes):
-                return (node_index[0], writer.position())
-            
-            node = aabb_nodes[node_index[0]]
-            
-            # Seek to start position and write bounding box (6 floats = 24 bytes)
-            saved_pos = writer.position()
-            writer.seek(start_pos)
+        tree_start = writer.position()
+        
+        for i, node in enumerate(aabb_nodes):
+            # Write bounding box (6 floats = 24 bytes)
             writer.write_vector3(node.bbox_min)
             writer.write_vector3(node.bbox_max)
             
-            # For branch nodes (face_index == -1), we need to write children first
-            # then come back and write the child pointers
             if node.face_index == -1:
-                # Calculate child1 position: always at start + 40 (next 40-byte node)
-                child1_pos = start_pos + 40
+                # Branch node: calculate child offsets from stored indices
+                # Note: left_child_offset and right_child_offset were stored as absolute positions
+                # during reading, but we need to convert them to indices for writing.
+                # Actually, we stored the raw file offsets which aren't useful here.
+                # 
+                # The issue is that when reading, we stored offsets, but for writing we need indices.
+                # MDLOps stores child indices (aabb->[9] and aabb->[10]) separately.
+                # 
+                # For now, since we read in depth-first order and AABB trees are binary,
+                # we can reconstruct child indices: for node at index i, if it's a branch,
+                # left child is at i+1, right child is at i+1+(left subtree size).
+                # But we don't have subtree sizes stored.
+                #
+                # Alternative: just use the stored offsets directly, converting back to writer space.
+                # But that won't work either because the offsets were for the original file.
+                #
+                # Best approach: rebuild child indices during reading and store them.
+                # For now, use a simpler heuristic: write zeros and hope it works for leaf-only cases,
+                # or use the recursive approach to properly track positions.
                 
-                # Write left child (child1) at child1_pos
-                node_index[0] += 1
-                next_idx, child2_pos = _write_aabb_recursive(writer, child1_pos)
+                # HACK: Since nodes are in DFS order, left child is at current_index + 1,
+                # and right child follows the left subtree. We need to count left subtree size.
+                # This is complex - let's use a different approach: write with stored offsets
+                # but convert them properly.
                 
-                # Write right child (child2) at child2_pos
-                node_index[0] = next_idx
-                next_idx, last_pos = _write_aabb_recursive(writer, child2_pos)
+                # For branch nodes, use depth-first tree property:
+                # In a DFS traversal, if we're at node i (a branch), 
+                # the left child is at position i+1
+                # Finding the right child requires knowing the left subtree size, which we don't have.
+                # 
+                # Let's just write the offsets as we calculate them inline.
+                # Since nodes are written sequentially at tree_start + (index * 40),
+                # left child at index L would be at tree_start + L * 40.
                 
-                # Write child pointers
-                # Writer positions are already relative to the model data block (not the file),
-                # which is the same coordinate system used in the file (stored offsets = file_offset - 12).
-                # Therefore, we write writer positions directly without adjustment.
-                writer.seek(start_pos + 24)
-                writer.write_int32(child1_pos if child1_pos > 0 else 0)
-                writer.write_int32(child2_pos if child2_pos > 0 else 0)
+                # We need to build child index mapping. Let's do this properly with a helper.
+                left_child_idx = i + 1  # In DFS, left child is immediately after parent
+                # Right child: need to count all nodes in left subtree
+                # For now, write placeholder and come back
+                writer.write_int32(tree_start + left_child_idx * 40)  # left child offset
+                writer.write_int32(0)  # placeholder for right child
                 writer.write_int32(-1)  # face_index = -1 for branch
                 writer.write_int32(node.unknown)
-                writer.seek(saved_pos)
-                
-                return (next_idx, last_pos)
             else:
-                # Leaf node: write child pointers as 0, then face index
+                # Leaf node: no children
                 writer.write_int32(0)  # left child = 0
                 writer.write_int32(0)  # right child = 0
                 writer.write_int32(node.face_index)
                 writer.write_int32(node.unknown)
-                node_index[0] += 1
-                # Position is now at start_pos + 40 (end of this 40-byte node)
-                return (node_index[0], start_pos + 40)
-
-        # Write root node and all children starting at current position
-        start_pos = writer.position()
-        _, end_pos = _write_aabb_recursive(writer, start_pos)
-        # CRITICAL: Seek to end of AABB tree so subsequent data isn't overwritten
-        # The recursive function may leave writer at wrong position due to seeking
-        writer.seek(end_pos)
+        
+        # Second pass: fix right child offsets for branch nodes
+        # This requires knowing subtree sizes. Build a stack-based count.
+        # In DFS order: for each branch node, its left subtree ends where the right child begins.
+        # Count: when we see a branch, left child is next. When we pop back, right child follows.
+        
+        # Actually, let's do this properly with a recursive helper that builds indices
+        if any(node.face_index == -1 for node in aabb_nodes):
+            # Build child index map
+            child_indices: dict[int, tuple[int, int]] = {}  # node_index -> (left_idx, right_idx)
+            
+            def _count_subtree(idx: int) -> int:
+                """Count nodes in subtree rooted at idx."""
+                if idx >= len(aabb_nodes):
+                    return 0
+                if aabb_nodes[idx].face_index != -1:
+                    return 1  # Leaf
+                # Branch: 1 + left_subtree + right_subtree
+                left_size = _count_subtree(idx + 1)
+                right_start = idx + 1 + left_size
+                right_size = _count_subtree(right_start)
+                child_indices[idx] = (idx + 1, right_start)
+                return 1 + left_size + right_size
+            
+            _count_subtree(0)
+            
+            # Now fix the right child offsets
+            for idx, (left_idx, right_idx) in child_indices.items():
+                # Seek to the right child offset field for this node
+                right_offset_pos = tree_start + idx * 40 + 24 + 4  # After bbox + left_child
+                writer.seek(right_offset_pos)
+                writer.write_int32(tree_start + right_idx * 40)
+        
+        # Seek to end of AABB tree
+        writer.seek(tree_start + len(aabb_nodes) * 40)
 
     def _write_dangly_extra(self, writer: BinaryWriter) -> None:
         """Write danglymesh constraints array after vertices."""
@@ -2211,6 +2246,10 @@ class MDLBinaryReader:
         # unknown0 corresponds to classification_unk1
         self._mdl.classification_unk1 = model_header.unknown0
         self._mdl.animation_scale = model_header.anim_scale
+        # Bounding box and radius from model header
+        self._mdl.bmin = model_header.bounding_box_min
+        self._mdl.bmax = model_header.bounding_box_max
+        self._mdl.radius = model_header.radius
 
         self._load_names(model_header)
         self._order2nameindex: list[int] = []
@@ -2813,18 +2852,17 @@ class MDLBinaryReader:
         # Orientation data stored in controllers is sometimes compressed into 4 bytes. We need to check for that and
         # uncompress the quaternion if that is the case.
         # vendor/mdlops/MDLOpsM.pm:1714-1719 - Compressed quaternion detection
-        # Compressed quaternions use column_count=2, which means 2 floats per row: compressed uint32 + padding float
-        # When reading, we read the uint32 directly (not as float), then skip the padding float
+        # Compressed quaternions use column_count=2 as a FLAG (not 2 values per row!)
+        # Each compressed quaternion is stored as a single uint32, NOT uint32 + padding float
+        # vendor/mdlops/MDLOpsM.pm:1719 - "$template .= 'L' x $_->[2]" - just row_count uint32s
         if bin_controller.type_id == MDLControllerType.ORIENTATION and bin_controller.column_count == 2:
             # Detected compressed quaternions - set the model flag
             self._mdl.compress_quaternions = 1
             for _ in range(bin_controller.row_count):
-                # Check bounds before reading - need 8 bytes (uint32 + float)
-                if self._reader.position() + 8 > self._reader.size():
+                # Check bounds before reading - need 4 bytes (just the uint32, no padding)
+                if self._reader.position() + 4 > self._reader.size():
                     break
                 compressed: int = self._reader.read_uint32()
-                # Skip padding float that comes after each compressed uint32
-                _ = self._reader.read_single()
                 decompressed: Vector4 = _decompress_quaternion(compressed)
                 data.append([decompressed.x, decompressed.y, decompressed.z, decompressed.w])
         else:
@@ -3327,14 +3365,15 @@ class MDLBinaryWriter:
             bin_controller.data_offset = cur_float_offset + bin_controller.row_count
 
             # Adjust float offset calculation for compressed quaternions
-            # Compressed quaternions use 2 floats per row instead of 4
+            # Compressed quaternions use 1 float per row (just the uint32 reinterpreted as float)
             if (
                 self._mdl.compress_quaternions == 1
                 and mdl_controller.controller_type == MDLControllerType.ORIENTATION
                 and data_floats_per_row == 4
             ):
-                # Compressed quaternions: 2 floats per row (compressed uint32 + padding)
-                cur_float_offset += bin_controller.row_count + (bin_controller.row_count * 2)
+                # Compressed quaternions: 1 float per row (compressed uint32 as float)
+                # Plus row_count for time keys
+                cur_float_offset += bin_controller.row_count + bin_controller.row_count
             else:
                 cur_float_offset += bin_controller.row_count + (bin_controller.row_count * data_floats_per_row)
             bin_node.w_controllers.append(bin_controller)
@@ -3355,9 +3394,12 @@ class MDLBinaryWriter:
                     # Compress quaternion (x, y, z, w) into a single uint32
                     quat = Vector4(row.data[0], row.data[1], row.data[2], row.data[3])
                     compressed = _compress_quaternion(quat)
-                    # Write as uint32 (4 bytes) - column_count will be 2 for compressed quaternions
-                    bin_node.w_controller_data.append(float(compressed))
-                    bin_node.w_controller_data.append(0.0)  # Second column for compressed quaternions
+                    # Reinterpret uint32 as float (same bits, NOT numeric conversion)
+                    # MDLOps stores compressed quaternions as raw uint32 bytes in the float array
+                    import struct
+                    compressed_as_float = struct.unpack("<f", struct.pack("<I", compressed))[0]
+                    bin_node.w_controller_data.append(compressed_as_float)
+                    # MDLOps does NOT write a padding float - column_count=2 is just a flag
                 else:
                     bin_node.w_controller_data.extend(row.data)
 
@@ -3401,8 +3443,14 @@ class MDLBinaryWriter:
 
         all_nodes: list[MDLNode] = mdl_anim.all_nodes()
         bin_nodes: list[_Node] = []
-        for node_id, mdl_node in enumerate(all_nodes):
+        # Animation nodes share the same name table (partnames) as geometry nodes.
+        # The node_id must match the geometry node with the same name.
+        # Build a name -> node_id mapping from geometry nodes.
+        geom_name_to_id: dict[str, int] = {name: idx for idx, name in enumerate(self._names)}
+        for mdl_node in all_nodes:
             bin_node = _Node()
+            # Look up node_id from geometry node name, default to 0 if not found
+            node_id = geom_name_to_id.get(mdl_node.name, 0)
             self._update_node(bin_node, mdl_node, node_id_override=node_id, is_animation=True)
             bin_nodes.append(bin_node)
         bin_anim.w_nodes = bin_nodes
@@ -3744,30 +3792,15 @@ class MDLBinaryWriter:
             bin_node.trimesh.offset_to_aabb = 0
             return
 
-        # Calculate where AABB tree will be written (after all node data)
-        # This is similar to how dangly constraints are placed after vertices
-        after_vertices = node_offset + bin_node.vertices_offset(self.game)
-        if bin_node.trimesh:
-            after_vertices += bin_node.trimesh.vertices_size()
-        if bin_node.dangly and bin_node._dangly_constraints is not None:
-            after_vertices += len(bin_node._dangly_constraints) * 4
-        if bin_node.skin:
-            # Skin data comes after vertices/dangly
-            # Calculate skin extra size: bonemap + qbones + tbones + unknown0
-            skin_extra_size = 0
-            if bin_node.skin.bonemap_count > 0:
-                skin_extra_size += bin_node.skin.bonemap_count * 4
-            if bin_node.skin.qbones_count > 0:
-                skin_extra_size += bin_node.skin.qbones_count * 16
-            if bin_node.skin.tbones_count > 0:
-                skin_extra_size += bin_node.skin.tbones_count * 12
-            if bin_node.skin.unknown0_count > 0:
-                skin_extra_size += bin_node.skin.unknown0_count * 4
-            after_vertices += skin_extra_size
+        # AABB tree is written immediately after all headers and the aabbloc field.
+        # Reference: vendor/MDLOps/MDLOpsM.pm layout - AABB comes before faces.
+        # The layout is: headers -> aabbloc field (4 bytes) -> AABB tree -> faces
+        # So the AABB tree position is: node_offset + all_headers_size + 4 (for aabbloc field)
+        aabb_tree_offset = node_offset + bin_node.all_headers_size(self.game) + 4
         
         # AABB tree size: 40 bytes per node
         aabb_tree_size = len(aabb_nodes) * 40
-        bin_node.trimesh.offset_to_aabb = after_vertices
+        bin_node.trimesh.offset_to_aabb = aabb_tree_offset
         # Store size for writing
         bin_node._aabb_tree_size = aabb_tree_size
 
