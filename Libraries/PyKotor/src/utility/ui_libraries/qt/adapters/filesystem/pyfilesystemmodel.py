@@ -17,6 +17,7 @@ from qtpy.QtCore import (
     QByteArray,
     QDir,
     QEvent,
+    QFile,
     QFileDevice,
     QFileInfo,
     QMimeData,
@@ -2402,36 +2403,75 @@ class PyFileSystemModel(QAbstractItemModel):
         column: int,
         parent: QModelIndex,
     ) -> bool:
-        if not parent.isValid() or self._readOnly:
-            return False
+        """Handle drop mime data matching C++ lines 1226-1264 exactly.
 
-        success: bool = True
-        dest_dir = self.filePath(parent)
-        print("<SDM> [dropMimeData scope] dest_dir: ", dest_dir)
+        Matches:
+        bool QFileSystemModel::dropMimeData(const QMimeData *data, Qt::DropAction action,
+                                     int row, int column, const QModelIndex &parent)
+        {
+            Q_UNUSED(row);
+            Q_UNUSED(column);
+            if (!parent.isValid() || isReadOnly())
+                return false;
+
+            bool success = true;
+            QString to = filePath(parent) + QDir::separator();
+
+            QList<QUrl> urls = data->urls();
+            QList<QUrl>::const_iterator it = urls.constBegin();
+
+            switch (action) {
+            case Qt::CopyAction:
+                for (; it != urls.constEnd(); ++it) {
+                    QString path = (*it).toLocalFile();
+                    success = QFile::copy(path, to + QFileInfo(path).fileName()) && success;
+                }
+                break;
+            case Qt::LinkAction:
+                for (; it != urls.constEnd(); ++it) {
+                    QString path = (*it).toLocalFile();
+                    success = QFile::link(path, to + QFileInfo(path).fileName()) && success;
+                }
+                break;
+            case Qt::MoveAction:
+                for (; it != urls.constEnd(); ++it) {
+                    QString path = (*it).toLocalFile();
+                    success = QFile::rename(path, to + QFileInfo(path).fileName()) && success;
+                }
+                break;
+            default:
+                return false;
+            }
+
+            return success;
+        }
+        """
+        # Q_UNUSED(row) and Q_UNUSED(column) - parameters unused in C++
+        if not parent.isValid() or self.isReadOnly():
+            return False
 
         if data is None:
             return False
+
+        success = True
+        to = self.filePath(parent) + QDir.separator()
+
         urls = data.urls()
-        print("<SDM> [dropMimeData scope] urls: ", urls, "entry count:", len(urls))
 
-        for url in urls:
-            path = url.toLocalFile()
-            print("<SDM> [dropMimeData scope] path: ", path)
-
-            file_name = os.path.basename(path)  # noqa: PTH119
-            print("<SDM> [dropMimeData scope] file_name: ", file_name)
-
-            dest_path = os.path.join(dest_dir, file_name)  # noqa: PTH118
-            print("<SDM> [dropMimeData scope] dest_path: ", dest_path)
-
-            if action == Qt.DropAction.CopyAction:
-                success &= bool(shutil.copy(path, dest_path))
-            elif action == Qt.DropAction.LinkAction:
-                success &= bool(os.symlink(path, dest_path)) or False
-            elif action == Qt.DropAction.MoveAction:
-                success &= bool(shutil.move(path, dest_path))
-            else:
-                return False
+        if action == Qt.DropAction.CopyAction:
+            for url in urls:
+                path = url.toLocalFile()
+                success = QFile.copy(path, to + QFileInfo(path).fileName()) and success
+        elif action == Qt.DropAction.LinkAction:
+            for url in urls:
+                path = url.toLocalFile()
+                success = QFile.link(path, to + QFileInfo(path).fileName()) and success
+        elif action == Qt.DropAction.MoveAction:
+            for url in urls:
+                path = url.toLocalFile()
+                success = QFile.rename(path, to + QFileInfo(path).fileName()) and success
+        else:
+            return False
 
         return success
 
