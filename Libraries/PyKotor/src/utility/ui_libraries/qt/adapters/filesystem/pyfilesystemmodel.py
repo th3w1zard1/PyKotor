@@ -1823,15 +1823,30 @@ class PyFileSystemModel(QAbstractItemModel):
         index: QModelIndex,
         tz: QTimeZone | None = None,
     ) -> QDateTime:
-        """Return last modified time matching C++ overloads.
+        """Return last modified time matching C++ lines 562-585 exactly.
 
         Matches:
-        QDateTime QFileSystemModel::lastModified(const QModelIndex &index) const;
-        QDateTime QFileSystemModel::lastModified(const QModelIndex &index, const QTimeZone &tz) const;
+        QDateTime QFileSystemModel::lastModified(const QModelIndex &index) const
+        {
+            Q_D(const QFileSystemModel);
+            if (!index.isValid())
+                return QDateTime();
+            return d->node(index)->lastModified(QTimeZone::LocalTime);
+        }
+
+        QDateTime QFileSystemModel::lastModified(const QModelIndex &index, const QTimeZone &tz) const
+        {
+            Q_D(const QFileSystemModel);
+            if (!index.isValid())
+                return QDateTime();
+            return d->node(index)->lastModified(tz);
+        }
         """
+        if not index.isValid():
+            return QDateTime()
         node = self.node(index)
         if tz is None:
-            return node.lastModified()
+            return node.lastModified(QTimeZone.LocalTime)  # type: ignore[attr-defined]
         return node.lastModified(tz)
 
     def type(
