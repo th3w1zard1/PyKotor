@@ -445,10 +445,11 @@ class _Node:
         # This extends the header from 332/340 bytes to 336/344 bytes
         if self.header.type_id & MDLNodeFlags.AABB and self.trimesh:
             # Read the AABB tree offset (aabbloc)
-            # MDLOps stores this as a signed int32, but we treat it as an offset
+            # MDLOps stores this as (absolute_offset - 12), but since BinaryReader has
+            # set_offset(+12) applied, the raw value can be used directly without adjustment.
             aabb_offset_raw = reader.read_int32()
-            # Apply offset-12 semantics: MDLOps stores (absolute_offset - 12)
-            self.trimesh.offset_to_aabb = aabb_offset_raw + 12 if aabb_offset_raw != 0 else 0
+            # Do NOT add 12 here - the reader's offset is already adjusted
+            self.trimesh.offset_to_aabb = aabb_offset_raw if aabb_offset_raw > 0 else 0
 
         if self.trimesh:
             self.trimesh.read_extra(reader)
@@ -2334,14 +2335,12 @@ class MDLBinaryReader:
                     bbox_min = reader.read_vector3()
                     bbox_max = reader.read_vector3()
                     # Read 4 int32s: left child offset, right child offset, face index, unknown
-                    left_child_raw = reader.read_int32()
-                    right_child_raw = reader.read_int32()
+                    # Note: Child offsets in the file are stored as (absolute_offset - 12), but since
+                    # BinaryReader has set_offset(+12) applied, these can be used directly.
+                    left_child = reader.read_int32()
+                    right_child = reader.read_int32()
                     face_index = reader.read_int32()
                     unknown = reader.read_int32()
-
-                    # Apply offset-12 semantics: MDLOps stores (absolute_offset - 12)
-                    left_child = (left_child_raw + 12) if left_child_raw != 0 else 0
-                    right_child = (right_child_raw + 12) if right_child_raw != 0 else 0
 
                     aabb_node = MDLAABBNode(
                         bbox_min=bbox_min,
