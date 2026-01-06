@@ -13,7 +13,6 @@ import re
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Callable
 
-from pykotor.common.misc import ResRef
 from pykotor.common.stream import BinaryReader
 from pykotor.extract.file import FileResource
 from pykotor.resource.formats.gff.gff_auto import read_gff
