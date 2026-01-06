@@ -149,7 +149,7 @@ class QFSCompleter(QCompleter):
         index: QModelIndex,
     ) -> str:
         dirModel: QAbstractItemModel | QFileSystemModel | None = self.proxyModel.sourceModel() if self.proxyModel else self.sourceModel
-        assert isinstance(dirModel, QFileSystemModel), f"{type(self).__name__}.pathFromIndex: Expected QFileSystemModel, got {type(dirModel).__name__}"
+        assert isinstance(dirModel, QFileSystemModel), f"{self.__class__.__name__}.pathFromIndex: Expected QFileSystemModel, got {type(dirModel).__name__}"
         current_location = Path(dirModel.rootPath().strip())
         path = os.path.abspath(os.path.normpath(str(index.data(QFileSystemModel.Roles.FilePathRole)).strip()))  # noqa: PTH100
         relative_path = os.path.relpath(path, str(current_location))
@@ -343,7 +343,7 @@ class QFileDialogPrivate:
             if isinstance(value, QByteArray):
                 q.restoreState(value)
             else:
-                RobustLogger().warning(f"{type(self).__name__}.init: Invalid value type for Qt/filedialog_py: {type(value).__name__}")
+                RobustLogger().warning(f"{self.__class__.__name__}.init: Invalid value type for Qt/filedialog_py: {type(value).__name__}")
 
         if hasattr(Qt, "Q_EMBEDDED_SMALLSCREEN"):  # FIXME(th3w1zard1): incorrect check, look at docs later.
             assert self.qFileDialogUi is not None, "QFileDialogUi is None"
@@ -683,7 +683,7 @@ class QFileDialogPrivate:
         If this function is removed, the native dialog would not reflect the current state of the QFileDialog,
         leading to inconsistencies in the user interface.
         """
-        assert self.qFileDialogUi is not None, f"{type(self).__name__}.helperPrepareShow: UI is None"
+        assert self.qFileDialogUi is not None, f"{self.__class__.__name__}.helperPrepareShow: UI is None"
         q = self._public
         self.setWindowTitle = q.windowTitle()
         self.options.setHistory(q.history())
@@ -722,7 +722,7 @@ class QFileDialogPrivate:
         """Sets the current name filter to be nameFilter and
         update the qFileDialogUi->fileNameEdit when in AcceptSave mode with the new extension.
         """
-        assert self.qFileDialogUi is not None, f"{type(self).__name__}._q_useNameFilter: UI is None"
+        assert self.qFileDialogUi is not None, f"{self.__class__.__name__}._q_useNameFilter: UI is None"
         nameFilters: list[str] = self.options.nameFilters()
         if index == len(nameFilters):
             comboModel = self.qFileDialogUi.fileTypeCombo.model()
@@ -744,7 +744,7 @@ class QFileDialogPrivate:
                 self.qFileDialogUi.listView.clearSelection()
                 self.lineEdit().setText(fileName)
 
-        assert self.model is not None, f"{type(self).__name__}._q_useNameFilter: model is None"
+        assert self.model is not None, f"{self.__class__.__name__}._q_useNameFilter: model is None"
         self.model.setNameFilters(newNameFilters)
 
     def _q_goToDirectory(
@@ -752,8 +752,8 @@ class QFileDialogPrivate:
         path: str,
     ) -> None:
         """Changes the file dialog's current directory to the one specified by path."""
-        assert self.qFileDialogUi is not None, f"{type(self).__name__}._q_goToDirectory: UI is None"
-        assert self.model is not None, f"{type(self).__name__}._q_goToDirectory: model is None"
+        assert self.qFileDialogUi is not None, f"{self.__class__.__name__}._q_goToDirectory: UI is None"
+        assert self.model is not None, f"{self.__class__.__name__}._q_goToDirectory: model is None"
         q = self._public
         url_role: int = Qt.ItemDataRole.UserRole + 1  # pyright: ignore[reportArgumentType]
 
@@ -789,7 +789,7 @@ class QFileDialogPrivate:
         If this function is removed, the file dialog would not be able to return the user's file selection,
         breaking a core functionality of the file dialog.
         """
-        assert self.qFileDialogUi is not None, f"{type(self).__name__}.userSelectedFiles: No UI setup."
+        assert self.qFileDialogUi is not None, f"{self.__class__.__name__}.userSelectedFiles: No UI setup."
         files: list[QUrl] = []
         if not self.usingWidgets():
             return self.addDefaultSuffixToUrls(self.selectedFiles_sys())
@@ -882,7 +882,7 @@ class QFileDialogPrivate:
         Crucial for correctly navigating and displaying the file system hierarchy.
         """
         view: QAbstractItemView | None = self.currentView()
-        assert view is not None, f"{type(self).__name__}.rootIndex: No view found."
+        assert view is not None, f"{self.__class__.__name__}.rootIndex: No view found."
         return self.mapToSource(view.rootIndex())
 
     def setRootIndex(
@@ -897,7 +897,7 @@ class QFileDialogPrivate:
         leading to inconsistent directory views and potential user confusion.
         """
         idx: QModelIndex = self.mapFromSource(index)
-        assert self.qFileDialogUi is not None, f"{type(self).__name__}.setRootIndex: UI is None"
+        assert self.qFileDialogUi is not None, f"{self.__class__.__name__}.setRootIndex: UI is None"
         self.qFileDialogUi.treeView.setRootIndex(idx)
         self.qFileDialogUi.listView.setRootIndex(idx)
 
@@ -906,8 +906,8 @@ class QFileDialogPrivate:
 
         This is essential for performing operations on the correct view based on the current UI state.
         """
-        assert self.qFileDialogUi is not None, f"{type(self).__name__}.currentView: UI is None"
-        assert self.qFileDialogUi.stackedWidget is not None, f"{type(self).__name__}.currentView: stackedWidget is None"
+        assert self.qFileDialogUi is not None, f"{self.__class__.__name__}.currentView: UI is None"
+        assert self.qFileDialogUi.stackedWidget is not None, f"{self.__class__.__name__}.currentView: stackedWidget is None"
         if self.qFileDialogUi.stackedWidget.currentWidget() == self.qFileDialogUi.listView.parent():
             return self.qFileDialogUi.listView
         return self.qFileDialogUi.treeView
@@ -921,21 +921,21 @@ class QFileDialogPrivate:
         when navigating through history, degrading the user experience.
         """
         if self.currentHistoryLocation < 0 or self.currentHistoryLocation >= len(self.currentHistory):
-            RobustLogger().warning(f"{type(self).__name__}.saveHistorySelection: Invalid history location: {self.currentHistoryLocation}")
+            RobustLogger().warning(f"{self.__class__.__name__}.saveHistorySelection: Invalid history location: {self.currentHistoryLocation}")
             return
 
         if self.qFileDialogUi is None or self.model is None:
-            RobustLogger().warning(f"{type(self).__name__}.saveHistorySelection: UI or model is None")
+            RobustLogger().warning(f"{self.__class__.__name__}.saveHistorySelection: UI or model is None")
             return
 
         item: HistoryItem = self.currentHistory[self.currentHistoryLocation]
         item.selection = []
         listview_sel_model: QItemSelectionModel | None = self.qFileDialogUi.listView.selectionModel()
-        assert listview_sel_model is not None, f"{type(self).__name__}.saveHistorySelection: listview_sel_model is None"
+        assert listview_sel_model is not None, f"{self.__class__.__name__}.saveHistorySelection: listview_sel_model is None"
         selectedIndexes: list[QModelIndex] = listview_sel_model.selectedRows()
         for i, index in enumerate(selectedIndexes):
             if not index.isValid():
-                RobustLogger().warning(f"{type(self).__name__}.saveHistorySelection: Invalid index: {index} at index {i} in the selection model's rows list.")
+                RobustLogger().warning(f"{self.__class__.__name__}.saveHistorySelection: Invalid index: {index} at index {i} in the selection model's rows list.")
                 continue
             item.selection.append(QPersistentModelIndex(index))
 
@@ -951,7 +951,7 @@ class QFileDialogPrivate:
         leading to an inconsistent state between the actual location and what's displayed.
         """
         if self.qFileDialogUi is None or self.model is None:
-            RobustLogger().warning(f"{type(self).__name__}._q_pathChanged: UI or model is None")
+            RobustLogger().warning(f"{self.__class__.__name__}._q_pathChanged: UI or model is None")
             return
 
         q = self._public
@@ -1049,7 +1049,7 @@ class QFileDialogPrivate:
 
         This provides visual feedback about the availability of history navigation.
         """
-        assert self.qFileDialogUi is not None, f"{type(self).__name__}._updateNavigationButtons: No UI setup."
+        assert self.qFileDialogUi is not None, f"{self.__class__.__name__}._updateNavigationButtons: No UI setup."
         # Forward button enabled if there's at least one item forward (currentHistoryLocation < len - 1)
         # Back button enabled if there's at least one item back (currentHistoryLocation > 0)
         self.qFileDialogUi.forwardButton.setEnabled(self.currentHistoryLocation < len(self.currentHistory) - 1)
@@ -1100,7 +1100,7 @@ class QFileDialogPrivate:
             self._ignoreHistoryChange = False
         for i, persistent_index in enumerate(item.selection):
             if not persistent_index.isValid():
-                RobustLogger().warning(f"{type(self).__name__}._navigateToHistoryItem: Invalid index: {persistent_index} at index {i} in the selection model's rows list.")
+                RobustLogger().warning(f"{self.__class__.__name__}._navigateToHistoryItem: Invalid index: {persistent_index} at index {i} in the selection model's rows list.")
                 continue
             # transform QPersistentModelIndex to QModelIndex
             persistent_model_index: QAbstractItemModel | None = persistent_index.model()
@@ -1185,6 +1185,8 @@ class QFileDialogPrivate:
         parent_widget: QWidget | None = cast("QWidget", self.qFileDialogUi.listView.parentWidget())
         if parent_widget is not None:
             self.qFileDialogUi.stackedWidget.setCurrentWidget(parent_widget)
+        # Schedule and immediately execute layout to match C++ doItemsLayout() behavior
+        self.qFileDialogUi.listView.scheduleDelayedItemsLayout()
         self.qFileDialogUi.listView.executeDelayedItemsLayout()
         if self.options.viewMode() != RealQFileDialog.ViewMode.List:
             self.options.setViewMode(RealQFileDialog.ViewMode.List)
@@ -1197,7 +1199,7 @@ class QFileDialogPrivate:
         If this function is removed, users would lose the ability to switch to details view,
         limiting the flexibility of the file dialog's interface.
         """
-        assert self.qFileDialogUi is not None, f"{type(self).__name__}._q_showDetailsView: No UI setup."
+        assert self.qFileDialogUi is not None, f"{self.__class__.__name__}._q_showDetailsView: No UI setup."
         self.qFileDialogUi.listModeButton.setDown(False)
         self.qFileDialogUi.detailModeButton.setDown(True)
         self.qFileDialogUi.listView.hide()
@@ -1205,6 +1207,8 @@ class QFileDialogPrivate:
         parent_widget: QWidget | None = cast("QWidget", self.qFileDialogUi.treeView.parentWidget())
         if parent_widget is not None:
             self.qFileDialogUi.stackedWidget.setCurrentWidget(parent_widget)
+        # Schedule and immediately execute layout to match C++ doItemsLayout() behavior
+        self.qFileDialogUi.treeView.scheduleDelayedItemsLayout()
         self.qFileDialogUi.treeView.executeDelayedItemsLayout()
         if self.options.viewMode() != RealQFileDialog.ViewMode.Detail:
             self.options.setViewMode(RealQFileDialog.ViewMode.Detail)
@@ -1220,11 +1224,11 @@ class QFileDialogPrivate:
         If this function is removed, users would lose access to context-specific actions,
         significantly reducing the functionality and usability of the file dialog.
         """
-        assert self.qFileDialogUi is not None, f"{type(self).__name__}._q_showContextMenu: No UI setup."
-        assert self.model is not None, f"{type(self).__name__}._q_showContextMenu: No file system model setup."
+        assert self.qFileDialogUi is not None, f"{self.__class__.__name__}._q_showContextMenu: No UI setup."
+        assert self.model is not None, f"{self.__class__.__name__}._q_showContextMenu: No file system model setup."
 
         view: QAbstractItemView | None = self.currentView()
-        assert view is not None, f"{type(self).__name__}._q_showContextMenu: No view found."
+        assert view is not None, f"{self.__class__.__name__}._q_showContextMenu: No view found."
 
         index: QModelIndex = view.indexAt(position)
         index = self.mapToSource(index.sibling(index.row(), 0))
@@ -1235,7 +1239,7 @@ class QFileDialogPrivate:
             self._add_file_context_menu_actions(menu, index)
         self._add_context_menu_view_actions(menu)
         viewport: QWidget | None = view.viewport()
-        assert viewport is not None, f"{type(self).__name__}._q_showContextMenu: viewport is None"
+        assert viewport is not None, f"{self.__class__.__name__}._q_showContextMenu: viewport is None"
         menu.exec(viewport.mapToGlobal(position))
 
     def _add_file_context_menu_actions(
@@ -1251,7 +1255,7 @@ class QFileDialogPrivate:
         reducing the functionality and convenience of the file dialog.
         """
         if self.model is None:
-            RobustLogger().warning(f"{type(self).__name__}._add_file_context_menu_actions: No file system model setup.")
+            RobustLogger().warning(f"{self.__class__.__name__}._add_file_context_menu_actions: No file system model setup.")
             return
 
         # Check ReadOnly option from dialog, not just model
@@ -1279,7 +1283,7 @@ class QFileDialogPrivate:
         If this function is removed, the context menu would lack important general actions,
         limiting the user's ability to control the view and perform common operations.
         """
-        assert self.qFileDialogUi is not None, f"{type(self).__name__}._add_context_menu_view_actions: No UI setup."
+        assert self.qFileDialogUi is not None, f"{self.__class__.__name__}._add_context_menu_view_actions: No UI setup."
         if self.showHiddenAction is not None:
             menu.addAction(self.showHiddenAction)
         if self.newFolderAction is not None and self.qFileDialogUi.newFolderButton.isVisible():
@@ -1294,12 +1298,12 @@ class QFileDialogPrivate:
         If this function is removed, users would lose the ability to rename files and directories
         from within the file dialog, reducing its functionality and convenience.
         """
-        assert self.qFileDialogUi is not None, f"{type(self).__name__}._q_renameCurrent: No UI setup."
+        assert self.qFileDialogUi is not None, f"{self.__class__.__name__}._q_renameCurrent: No UI setup."
         index: QModelIndex = self.qFileDialogUi.listView.currentIndex()
         index = index.sibling(index.row(), 0)
         # index = self.mapToSource(index)
         view: QAbstractItemView | None = self.currentView()
-        assert view is not None, f"{type(self).__name__}._q_renameCurrent: No view found."
+        assert view is not None, f"{self.__class__.__name__}._q_renameCurrent: No view found."
         view.edit(index)
 
     def removeDirectory(
@@ -1313,7 +1317,7 @@ class QFileDialogPrivate:
         If this function is removed, users would lose the ability to delete directories
         from within the file dialog, limiting its file management capabilities.
         """
-        assert self.model is not None, f"{type(self).__name__}.removeDirectory: No file system model setup."
+        assert self.model is not None, f"{self.__class__.__name__}.removeDirectory: No file system model setup."
         modelIndex: QModelIndex = self.model.index(path)
         return self.model.remove(modelIndex)
 
@@ -1329,7 +1333,7 @@ class QFileDialogPrivate:
             return
 
         sel_model: QItemSelectionModel | None = self.qFileDialogUi.listView.selectionModel()
-        assert sel_model is not None, f"{type(self).__name__}._q_deleteCurrent: No selection model found."
+        assert sel_model is not None, f"{self.__class__.__name__}._q_deleteCurrent: No selection model found."
         selectedRows: list[QModelIndex] = sel_model.selectedRows()
         for index in reversed(selectedRows):
             self._delete_item(index)
@@ -1342,18 +1346,18 @@ class QFileDialogPrivate:
 
         This function encapsulates the logic for safely removing an item from the file system.
         """
-        assert self.qFileDialogUi is not None, f"{type(self).__name__}._delete_item: No UI setup."
+        assert self.qFileDialogUi is not None, f"{self.__class__.__name__}._delete_item: No UI setup."
 
         if not index.isValid() or index.parent() is None or index == self.qFileDialogUi.listView.rootIndex():
-            RobustLogger().warning(f"{type(self).__name__}._delete_item: Invalid index: {index}.")
+            RobustLogger().warning(f"{self.__class__.__name__}._delete_item: Invalid index: {index}.")
             return
 
         index = self.mapToSource(index.sibling(index.row(), 0))
         if not index.isValid():
-            RobustLogger().warning(f"{type(self).__name__}._delete_item: Invalid index: {index}.")
+            RobustLogger().warning(f"{self.__class__.__name__}._delete_item: Invalid index: {index}.")
             return
 
-        assert self.model is not None, f"{type(self).__name__}._delete_item: No file system model setup."
+        assert self.model is not None, f"{self.__class__.__name__}._delete_item: No file system model setup."
 
         fileName: str = index.data(QFileSystemModel.Roles.FileNameRole)
         filePath: str = index.data(QFileSystemModel.Roles.FilePathRole)
@@ -1429,10 +1433,10 @@ class QFileDialogPrivate:
         Provides auto-completion functionality for file names in the dialog.
         This improves user efficiency by suggesting matching file names as the user types.
         """
-        assert self.model is not None, f"{type(self).__name__}._q_autoCompleteFileName: No file system model setup."
-        assert self.qFileDialogUi is not None, f"{type(self).__name__}._q_autoCompleteFileName: No UI setup."
+        assert self.model is not None, f"{self.__class__.__name__}._q_autoCompleteFileName: No file system model setup."
+        assert self.qFileDialogUi is not None, f"{self.__class__.__name__}._q_autoCompleteFileName: No UI setup."
         sel_listview_model: QItemSelectionModel | None = self.qFileDialogUi.listView.selectionModel()
-        assert sel_listview_model is not None, f"{type(self).__name__}._q_autoCompleteFileName: No selection model found."
+        assert sel_listview_model is not None, f"{self.__class__.__name__}._q_autoCompleteFileName: No selection model found."
         if text.startswith(("//", "\\")):
             sel_listview_model.clearSelection()
             return
@@ -1533,7 +1537,7 @@ class QFileDialogPrivate:
         Ensures that the button is only active when a valid selection or input is present.
         """
         q = self._public
-        assert self.qFileDialogUi is not None, f"{type(self).__name__}._q_updateOkButton: No UI setup."
+        assert self.qFileDialogUi is not None, f"{self.__class__.__name__}._q_updateOkButton: No UI setup."
         accept_mode: RealQFileDialog.AcceptMode = q.acceptMode()
         button_role: QDialogButtonBox.StandardButton = (
             QDialogButtonBox.StandardButton.Open if accept_mode == RealQFileDialog.AcceptMode.AcceptOpen else QDialogButtonBox.StandardButton.Save
@@ -1559,7 +1563,7 @@ class QFileDialogPrivate:
         elif lineEditText == "..":
             isOpenDirectory = True
         elif fileMode == sip_enum_to_int(RealQFileDialog.FileMode.Directory):
-            assert self.model is not None, f"{type(self).__name__}._q_updateOkButton: No file system model setup."
+            assert self.model is not None, f"{self.__class__.__name__}._q_updateOkButton: No file system model setup."
             candidate: str = ""
             if files and files[0]:
                 candidate = files[0]
@@ -1579,7 +1583,7 @@ class QFileDialogPrivate:
             else:
                 enableButton = False
         elif fileMode == sip_enum_to_int(RealQFileDialog.FileMode.AnyFile):
-            assert self.model is not None, f"{type(self).__name__}._q_updateOkButton: No file system model setup."
+            assert self.model is not None, f"{self.__class__.__name__}._q_updateOkButton: No file system model setup."
             if not files or files[0] is None:
                 enableButton = False
             else:
@@ -1610,7 +1614,7 @@ class QFileDialogPrivate:
                     maxLength: int = self.maxNameLength(fileDir)
                     enableButton = maxLength < 0 or len(fileName) <= maxLength
         elif fileMode in (sip_enum_to_int(RealQFileDialog.FileMode.ExistingFile), sip_enum_to_int(RealQFileDialog.FileMode.ExistingFiles)):
-            assert self.model is not None, f"{type(self).__name__}._q_updateOkButton: No file system model setup."
+            assert self.model is not None, f"{self.__class__.__name__}._q_updateOkButton: No file system model setup."
             for file in files:
                 idx = self.model.index(file)
                 if not idx.isValid():
@@ -1660,7 +1664,7 @@ class QFileDialogPrivate:
 
         Allows for dynamic updating of labels based on the dialog's state or localization needs.
         """
-        assert self.qFileDialogUi is not None, f"{type(self).__name__}.setLabelTextControl: No UI setup."
+        assert self.qFileDialogUi is not None, f"{self.__class__.__name__}.setLabelTextControl: No UI setup."
         int_label: int = sip_enum_to_int(label)
         if int_label == sip_enum_to_int(RealQFileDialog.DialogLabel.LookIn):
             self.qFileDialogUi.lookInLabel.setText(text)
@@ -1674,11 +1678,11 @@ class QFileDialogPrivate:
                 button: QPushButton | None = self.qFileDialogUi.buttonBox.button(QDialogButtonBox.StandardButton.Open)
             else:
                 button = self.qFileDialogUi.buttonBox.button(QDialogButtonBox.StandardButton.Save)
-            assert button is not None, f"{type(self).__name__}.setLabelTextControl: No {button} button found."
+            assert button is not None, f"{self.__class__.__name__}.setLabelTextControl: No {button} button found."
             button.setText(text)
         elif int_label == sip_enum_to_int(RealQFileDialog.DialogLabel.Reject):
             button = self.qFileDialogUi.buttonBox.button(QDialogButtonBox.StandardButton.Cancel)
-            assert button is not None, f"{type(self).__name__}.setLabelTextControl: No cancel button found."
+            assert button is not None, f"{self.__class__.__name__}.setLabelTextControl: No cancel button found."
             button.setText(text)
 
     def _q_goToUrl(
@@ -1698,7 +1702,7 @@ class QFileDialogPrivate:
         local_path: str = url.toLocalFile()
         idx: QModelIndex = self.model.index(local_path)
         if not idx.isValid():
-            RobustLogger().warning(f"{type(self).__name__}._q_goToUrl: Invalid index: {idx}.")
+            RobustLogger().warning(f"{self.__class__.__name__}._q_goToUrl: Invalid index: {idx}.")
             return
         if idx.isValid():
             self._q_enterDirectory(idx)
@@ -1719,7 +1723,7 @@ class QFileDialogPrivate:
         assert self.qFileDialogUi is not None, f"{type(self.qFileDialogUi).__name__}._setupFileNameEdit: {type(self.qFileDialogUi).__name__} is None"
         idx: QModelIndex = self.mapFromSource(index)
         sel_listview_model: QItemSelectionModel | None = self.qFileDialogUi.listView.selectionModel()
-        assert sel_listview_model is not None, f"{type(self).__name__}.select: No selection model found."
+        assert sel_listview_model is not None, f"{self.__class__.__name__}.select: No selection model found."
         if idx.isValid() and not sel_listview_model.isSelected(idx):
             sel_listview_model.select(idx, QItemSelectionModel.SelectionFlag.Select | QItemSelectionModel.SelectionFlag.Rows)
         return idx
@@ -1742,7 +1746,7 @@ class QFileDialogPrivate:
 
         This provides a default selection in cases where the view was previously empty.
         """
-        assert self.qFileDialogUi is not None, f"{type(self).__name__}._q_rowsInserted: {type(self.qFileDialogUi).__name__} is None"
+        assert self.qFileDialogUi is not None, f"{self.__class__.__name__}._q_rowsInserted: {type(self.qFileDialogUi).__name__} is None"
         treeview_model: QAbstractItemModel | None = self.qFileDialogUi.treeView.model()
         sel_treeview_model: QItemSelectionModel | None = self.qFileDialogUi.treeView.selectionModel()
         if (
@@ -1757,7 +1761,7 @@ class QFileDialogPrivate:
 
         # Select the first row if conditions are met
         first_index: QModelIndex = treeview_model.index(0, 0, parent)
-        assert first_index.isValid(), f"{type(self).__name__}._q_rowsInserted: Invalid index: {first_index}."
+        assert first_index.isValid(), f"{self.__class__.__name__}._q_rowsInserted: Invalid index: {first_index}."
         sel_treeview_model.select(first_index, QItemSelectionModel.SelectionFlag.SelectCurrent | QItemSelectionModel.SelectionFlag.Rows)
 
     def _q_fileRenamed(
@@ -1863,12 +1867,12 @@ class QFileDialogPrivate:
         This method is triggered when the selection changes in the list view.
         It updates the file list based on the current selection and updates the OK button state.
         """
-        assert self.model is not None, f"{type(self).__name__}._q_selectionChanged: {type(self.model).__name__} is None"
+        assert self.model is not None, f"{self.__class__.__name__}._q_selectionChanged: {type(self.model).__name__} is None"
         assert self.qFileDialogUi is not None, f"{type(self.qFileDialogUi).__name__}._q_selectionChanged: {type(self.qFileDialogUi).__name__} is None"
         q = self._public
         file_mode: int = sip_enum_to_int(q.fileMode())
         sel_listview_model: QItemSelectionModel | None = self.qFileDialogUi.listView.selectionModel()
-        assert sel_listview_model is not None, f"{type(self).__name__}._q_selectionChanged: No selection model found."
+        assert sel_listview_model is not None, f"{self.__class__.__name__}._q_selectionChanged: No selection model found."
         indexes: list[QModelIndex] = sel_listview_model.selectedRows()
         directory_mode = sip_enum_to_int(RealQFileDialog.FileMode.Directory)
         strip_dirs: bool = file_mode != directory_mode
@@ -1904,7 +1908,7 @@ class QFileDialogPrivate:
 
         q = self._public
         if self.model.isDir(index):
-            assert self.qFileDialogUi is not None, f"{type(self).__name__}._q_enterDirectory: {type(self.qFileDialogUi).__name__} is None"
+            assert self.qFileDialogUi is not None, f"{self.__class__.__name__}._q_enterDirectory: {type(self.qFileDialogUi).__name__} is None"
             self.qFileDialogUi.treeView.setCurrentIndex(index)
             filePath: str = self.model.filePath(index)
             q.setDirectory(filePath)
@@ -1938,7 +1942,7 @@ class QFileDialogPrivate:
 
         actionGroup: QActionGroup = self.showActionGroup
         header: QHeaderView | None = self.qFileDialogUi.treeView.header()
-        assert header is not None, f"{type(self).__name__}._q_showHeader: No header found."
+        assert header is not None, f"{self.__class__.__name__}._q_showHeader: No header found."
         columnIndex: int = actionGroup.actions().index(action) + 1
         header.setSectionHidden(columnIndex, not action.isChecked())
 
@@ -1983,21 +1987,21 @@ class QFileDialogPrivate:
                 q.setAttribute(Qt.WidgetAttribute.WA_DontShowOnScreen)
                 # So the completer doesn't try to complete and therefore show a popup
                 if not self.nativeDialogInUse:
-                    assert self.completer is not None, f"{type(self).__name__}.setVisible: Completer is not initialized."
+                    assert self.completer is not None, f"{self.__class__.__name__}.setVisible: Completer is not initialized."
                     self.completer.setModel(None)  # pyright: ignore[reportArgumentType]
             else:
                 self.createWidgets()
                 q.setAttribute(Qt.WidgetAttribute.WA_DontShowOnScreen, False)  # noqa: FBT003
                 if not self.nativeDialogInUse:
-                    assert self.completer is not None, f"{type(self).__name__}.setVisible: Completer is not initialized."
+                    assert self.completer is not None, f"{self.__class__.__name__}.setVisible: Completer is not initialized."
                     if self.proxyModel is not None:
                         self.completer.setModel(self.proxyModel)
                     else:
-                        assert self.model is not None, f"{type(self).__name__}.setVisible: File system model is not initialized."
+                        assert self.model is not None, f"{self.__class__.__name__}.setVisible: File system model is not initialized."
                         self.completer.setModel(self.model)
 
         if visible and self.usingWidgets():
-            assert self.qFileDialogUi is not None, f"{type(self).__name__}.setVisible: No UI setup."
+            assert self.qFileDialogUi is not None, f"{self.__class__.__name__}.setVisible: No UI setup."
             self.qFileDialogUi.fileNameEdit.setFocus()
 
         QDialog.setVisible(q, visible)  # NOTE: QDialogPrivate::setVisible(visible);
@@ -2055,18 +2059,18 @@ class QFileDialogPrivate:
         settings.beginGroup("FileDialog")
 
         if self.usingWidgets():
-            assert self.qFileDialogUi is not None, f"{type(self).__name__}.saveSettings: No UI setup."
+            assert self.qFileDialogUi is not None, f"{self.__class__.__name__}.saveSettings: No UI setup."
             settings.setValue("sidebarWidth", self.qFileDialogUi.splitter.sizes()[0])
             settings.setValue("shortcuts", [url.toString() for url in self.qFileDialogUi.sidebar.urls()])
             header: QHeaderView | None = self.qFileDialogUi.treeView.header()
-            assert header is not None, f"{type(self).__name__}.saveSettings: No header found."
+            assert header is not None, f"{self.__class__.__name__}.saveSettings: No header found."
             settings.setValue("treeViewHeader", header.saveState())
 
         historyUrls: list[str] = [QUrl.fromLocalFile(path).toString() for path in q.history()]
         settings.setValue("history", historyUrls)
         settings.setValue("lastVisited", q.directoryUrl().toString())
         viewMode: RealQFileDialog.ViewMode | None = q.viewMode()
-        assert viewMode is not None, f"{type(self).__name__}.saveSettings: View mode is None."
+        assert viewMode is not None, f"{self.__class__.__name__}.saveSettings: View mode is None."
         settings.setValue("viewMode", int(viewMode if qtpy.QT5 else viewMode.value))  # pyright: ignore[reportArgumentType]
         settings.setValue("qtVersion", qtpy.API_NAME)
 
@@ -2101,10 +2105,10 @@ class QFileDialogPrivate:
 
         Ensures that the layout of the dialog is consistent with the user's previous session.
         """
-        assert self.qFileDialogUi is not None, f"{type(self).__name__}._restoreSplitterState: No UI setup."
+        assert self.qFileDialogUi is not None, f"{self.__class__.__name__}._restoreSplitterState: No UI setup."
         if splitterPosition >= 0:
             widget_item: QWidget | None = self.qFileDialogUi.splitter.widget(1)
-            assert widget_item is not None, f"{type(self).__name__}._restoreSplitterState: No widget item found."
+            assert widget_item is not None, f"{self.__class__.__name__}._restoreSplitterState: No widget item found."
             splitterSizes: list[int] = [
                 splitterPosition,
                 widget_item.sizeHint().width(),
@@ -2123,7 +2127,7 @@ class QFileDialogPrivate:
     def _restoreSidebarUrls(self) -> None:
         """Restores the URLs in the sidebar of the file dialog, preserving custom sidebar shortcuts across sessions."""
         assert self.sidebarUrls is not None, f"{type(self)}.setUrls: URLs is None"
-        assert self.qFileDialogUi is not None, f"{type(self).__name__}._restoreSidebarUrls: No UI setup."
+        assert self.qFileDialogUi is not None, f"{self.__class__.__name__}._restoreSidebarUrls: No UI setup."
         self.qFileDialogUi.sidebar.setUrls(self.sidebarUrls)
 
     def _restoreHistory(
@@ -2149,7 +2153,7 @@ class QFileDialogPrivate:
 
         Ensures that the user's preferred view settings are maintained across sessions.
         """
-        assert self.qFileDialogUi is not None, f"{type(self).__name__}._restoreHeaderState: No UI setup."
+        assert self.qFileDialogUi is not None, f"{self.__class__.__name__}._restoreHeaderState: No UI setup."
         headerView: QHeaderView | None = self.qFileDialogUi.treeView.header()
         if headerView is None or not headerView.restoreState(self.headerData):
             return
@@ -2514,7 +2518,7 @@ class QFileDialogComboBox(QComboBox):
         self,
         e: QKeyEvent,
     ) -> None:
-        assert self._private is not None, f"{type(self).__name__}.keyPressEvent: No private class setup yet."
+        assert self._private is not None, f"{self.__class__.__name__}.keyPressEvent: No private class setup yet."
         if not self._private.itemViewKeyboardEvent(e):
             super().keyPressEvent(e)
         e.accept()
