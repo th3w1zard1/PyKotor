@@ -663,11 +663,12 @@ class _Node:
             writer.write_vector3(node.bbox_max)
             
             if node.face_index != -1:
-                # Leaf node: write (0, 0, face_index, unknown)
+                # Leaf node: write (0, 0, face_index, 0)
+                # Reference: vendor/MDLOps/MDLOpsM.pm:1490 - always writes 0 for unknown
                 writer.write_int32(0)
                 writer.write_int32(0)
                 writer.write_int32(node.face_index)
-                writer.write_int32(node.unknown)
+                writer.write_int32(0)  # MDLOps always writes 0, not node.unknown
                 node_index[0] += 1
                 return start_pos + 40
             else:
@@ -679,13 +680,13 @@ class _Node:
                 last_pos = _write_aabb_recursive(writer, right_child_pos)
                 
                 # Seek back to write child pointers (at offset 24 from start_pos)
-                # Format: (left_offset - 12, right_offset - 12, -1, unknown)
-                # Reference: vendor/MDLOps/MDLOpsM.pm:1506-1508
+                # Format: (left_offset - 12, right_offset - 12, -1, 0)
+                # Reference: vendor/MDLOps/MDLOpsM.pm:1507 - always writes 0 for unknown
                 writer.seek(start_pos + 24)
                 writer.write_int32(left_child_pos - 12)
                 writer.write_int32(right_child_pos - 12)
                 writer.write_int32(-1)
-                writer.write_int32(node.unknown)
+                writer.write_int32(0)  # MDLOps always writes 0, not node.unknown
                 
                 return last_pos
         
