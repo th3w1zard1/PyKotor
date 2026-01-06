@@ -424,8 +424,10 @@ class MDLAsciiWriter(ResourceWriter):
             self.write_line(indent, f"parent {parent.name}")
         else:
             self.write_line(indent, f"parent {node.parent_id}")
-        self.write_line(indent, f"position {node.position.x} {node.position.y} {node.position.z}")
-        self.write_line(indent, f"orientation {node.orientation.x} {node.orientation.y} {node.orientation.z} {node.orientation.w}")
+        # MDLOps uses "% .7g" format (space before number) - Reference: vendor/MDLOps/MDLOpsM.pm:3149
+        self.write_line(indent, f"position {node.position.x: .7g} {node.position.y: .7g} {node.position.z: .7g}")
+        # MDLOps uses "% .7g" format (space before number) - Reference: vendor/MDLOps/MDLOpsM.pm:3154
+        self.write_line(indent, f"orientation {node.orientation.x: .7g} {node.orientation.y: .7g} {node.orientation.z: .7g} {node.orientation.w: .7g}")
 
         if node.mesh:
             # Binary parsing stores skin/dangly payloads in separate node fields (`node.skin`, `node.dangly`)
