@@ -1617,7 +1617,8 @@ class ToolWindow(QMainWindow):
             gff_specialized=self.settings.gffSpecializedEditors,
         )
 
-    def on_tab_changed(self):
+    @Slot(int)
+    def on_tab_changed(self, index: int):
         current_widget: QWidget = self.get_active_resource_tab()
         if current_widget is self.ui.modulesTab:
             self.erf_editor_button.show()
