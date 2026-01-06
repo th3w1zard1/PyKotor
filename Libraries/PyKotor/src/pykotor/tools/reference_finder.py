@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Callable
 from pykotor.common.stream import BinaryReader
 from pykotor.extract.file import FileResource
 from pykotor.resource.formats.gff.gff_auto import read_gff
-from pykotor.resource.formats.gff.gff_data import GFFFieldType, GFFList, GFFStruct
+from pykotor.resource.formats.gff.gff_data import GFF, GFFFieldType, GFFList, GFFStruct
 from pykotor.resource.formats.ncs.ncs_data import NCSByteCode, NCSInstructionQualifier
 from pykotor.resource.type import ResourceType
 
@@ -248,6 +248,11 @@ def find_resref_references(
     gff_extensions = {"utc", "utd", "utm", "utp", "utt", "uti", "are", "ifo", "dlg", "git"}
     exclude_types = {ResourceType.NCS} if search_ncs else None
 
+    # Cache parsed GFF files by FileResource to avoid re-parsing the same file
+    # This handles cases where the same resource appears multiple times in the installation iterator
+    # (e.g., in both override and modules). This is an O(n) -> O(1) optimization for parsing.
+    gff_cache: dict[FileResource, GFF | None] = {}
+
     # Search GFF files
     for resource in installation:
         if not _should_search_resource(resource, file_pattern, file_types, exclude_types):
@@ -260,17 +265,41 @@ def find_resref_references(
             if file_types and file_type not in file_types:
                 continue
 
-            gff_results = _search_gff_for_resref(
-                resource,
-                resref,
-                search_pattern,
-                field_names,
-                field_types,
-                file_type,
-                case_sensitive,
-                logger,
-            )
-            results.extend(gff_results)
+            # Check cache first - if we've already parsed this resource, reuse the parsed GFF
+            if resource in gff_cache:
+                cached_gff = gff_cache[resource]
+                if cached_gff is not None:
+                    gff_results = _search_gff_for_resref_with_gff(
+                        resource,
+                        cached_gff,
+                        resref,
+                        search_pattern,
+                        field_names,
+                        field_types,
+                        file_type,
+                        case_sensitive,
+                        logger,
+                    )
+                    results.extend(gff_results)
+            else:
+                # Parse the GFF file and cache it
+                try:
+                    gff = read_gff(resource.data())
+                    gff_cache[resource] = gff
+                    gff_results = _search_gff_for_resref_with_gff(
+                        resource,
+                        gff,
+                        resref,
+                        search_pattern,
+                        field_names,
+                        field_types,
+                        file_type,
+                        case_sensitive,
+                        logger,
+                    )
+                    results.extend(gff_results)
+                except (ValueError, OSError):
+                    gff_cache[resource] = None
 
         # Search NCS files if requested
         if search_ncs and restype is ResourceType.NCS:
@@ -323,6 +352,11 @@ def find_field_value_references(
     # Pre-compute GFF extensions set for faster membership testing
     gff_extensions = {"utc", "utd", "utm", "utp", "utt", "uti", "are", "ifo", "dlg", "git"}
 
+    # Cache parsed GFF files by FileResource to avoid re-parsing the same file
+    # This handles cases where the same resource appears multiple times in the installation iterator
+    # (e.g., in both override and modules). This is an O(n) -> O(1) optimization for parsing.
+    gff_cache: dict[FileResource, GFF | None] = {}
+
     for resource in installation:
         if not _should_search_resource(resource, file_pattern, file_types, None):
             continue
@@ -334,17 +368,41 @@ def find_field_value_references(
             if file_types and file_type not in file_types:
                 continue
 
-            gff_results = _search_gff_for_value(
-                resource,
-                search_value,
-                search_pattern,
-                field_names,
-                field_types,
-                file_type,
-                case_sensitive,
-                logger,
-            )
-            results.extend(gff_results)
+            # Check cache first - if we've already parsed this resource, reuse the parsed GFF
+            if resource in gff_cache:
+                cached_gff = gff_cache[resource]
+                if cached_gff is not None:
+                    gff_results = _search_gff_for_value_with_gff(
+                        resource,
+                        cached_gff,
+                        search_value,
+                        search_pattern,
+                        field_names,
+                        field_types,
+                        file_type,
+                        case_sensitive,
+                        logger,
+                    )
+                    results.extend(gff_results)
+            else:
+                # Parse the GFF file and cache it
+                try:
+                    gff = read_gff(resource.data())
+                    gff_cache[resource] = gff
+                    gff_results = _search_gff_for_value_with_gff(
+                        resource,
+                        gff,
+                        search_value,
+                        search_pattern,
+                        field_names,
+                        field_types,
+                        file_type,
+                        case_sensitive,
+                        logger,
+                    )
+                    results.extend(gff_results)
+                except (ValueError, OSError):
+                    gff_cache[resource] = None
 
     return results
 
@@ -389,12 +447,28 @@ def _search_gff_for_resref(
     logger: Callable[[str], None] | None,
 ) -> list[ReferenceSearchResult]:
     """Search a GFF file for ResRef references."""
-    results: list[ReferenceSearchResult] = []
-
     try:
         gff = read_gff(resource.data())
     except (ValueError, OSError):
-        return results
+        return []
+    return _search_gff_for_resref_with_gff(
+        resource, gff, resref, search_pattern, field_names, field_types, file_type, case_sensitive, logger
+    )
+
+
+def _search_gff_for_resref_with_gff(
+    resource: FileResource,
+    gff: GFF,
+    resref: str,
+    search_pattern: re.Pattern[str],
+    field_names: set[str] | None,
+    field_types: set[GFFFieldType],
+    file_type: str,
+    case_sensitive: bool,
+    logger: Callable[[str], None] | None,
+) -> list[ReferenceSearchResult]:
+    """Search a parsed GFF file for ResRef references."""
+    results: list[ReferenceSearchResult] = []
 
     # Pre-compute search value for direct comparison (faster than regex when possible)
     search_lower = resref.lower() if not case_sensitive else resref
@@ -518,12 +592,28 @@ def _search_gff_for_value(
     logger: Callable[[str], None] | None,
 ) -> list[ReferenceSearchResult]:
     """Search a GFF file for string/value references."""
-    results: list[ReferenceSearchResult] = []
-
     try:
         gff = read_gff(resource.data())
     except (ValueError, OSError):
-        return results
+        return []
+    return _search_gff_for_value_with_gff(
+        resource, gff, search_value, search_pattern, field_names, field_types, file_type, case_sensitive, logger
+    )
+
+
+def _search_gff_for_value_with_gff(
+    resource: FileResource,
+    gff: GFF,
+    search_value: str,
+    search_pattern: re.Pattern[str],
+    field_names: set[str] | None,
+    field_types: set[GFFFieldType],
+    file_type: str,
+    case_sensitive: bool,
+    logger: Callable[[str], None] | None,
+) -> list[ReferenceSearchResult]:
+    """Search a parsed GFF file for string/value references."""
+    results: list[ReferenceSearchResult] = []
 
     # Pre-compute search value for direct comparison (faster than regex when possible)
     search_lower = search_value.lower() if not case_sensitive else search_value
