@@ -546,11 +546,11 @@ class TextureList(MainWindowList):
 
     def resizeEvent(self, a0: QResizeEvent):  # pylint: disable=W0613
         """Ensures icons that come into view are queued to load when the widget is resized."""
-        QTimer.singleShot(0, self.queue_load_visible_icons)
+        QTimer.singleShot(0, lambda: self.queue_load_visible_icons(0))
 
     def showEvent(self, a0: QShowEvent):  # pylint: disable=W0613
         """Ensures icons that come into view are queued to load when the widget is shown."""
-        QTimer.singleShot(0, self.queue_load_visible_icons)
+        QTimer.singleShot(0, lambda: self.queue_load_visible_icons(0))
 
     def mouseMoveEvent(self, event: QMouseEvent):  # pylint: disable=W0613
         """Prioritize loading textures for the currently hovered item."""

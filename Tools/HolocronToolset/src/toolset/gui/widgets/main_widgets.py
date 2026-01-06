@@ -79,7 +79,11 @@ class ResourceList(MainWindowList):
 
     HORIZONTAL_HEADER_LABELS: ClassVar[list[str]] = ["ResRef", "Type"]
 
-    def __init__(self, parent: QWidget):
+    def __init__(
+        self,
+        parent: QWidget,
+    ):
+        """Initialize the resource list."""
         super().__init__(parent)
         from toolset.uic.qtpy.widgets.resource_list import Ui_Form
 
@@ -144,7 +148,10 @@ class ResourceList(MainWindowList):
                 continue
             self.ui.sectionCombo.setCurrentIndex(i)
 
-    def set_installation(self, installation: HTInstallation):
+    def set_installation(
+        self,
+        installation: HTInstallation,
+    ):
         """Set the installation for the resource list."""
         self._installation: HTInstallation = installation
 
@@ -241,7 +248,10 @@ class ResourceList(MainWindowList):
 
     @Slot()
     @Slot(bool)
-    def on_reload_clicked(self, checked: bool = False):
+    def on_reload_clicked(
+        self,
+        checked: bool = False,
+    ):
         """Handle the reload button click event.
 
         Args:
@@ -252,13 +262,19 @@ class ResourceList(MainWindowList):
         self.sig_request_reload.emit(data)
 
     @Slot(bool)
-    def on_refresh_clicked(self, checked: bool = False):
+    def on_refresh_clicked(
+        self,
+        checked: bool = False,
+    ):
         """Handle the refresh button click event."""
         self._clear_modules_model()
         self.sig_request_refresh.emit()
 
     @Slot(QPoint)
-    def on_resource_context_menu(self, point: QPoint):
+    def on_resource_context_menu(
+        self,
+        point: QPoint,
+    ):
         resources: list[FileResource] = self.selected_resources()
         if not resources:
             return
@@ -369,7 +385,10 @@ class ResourceList(MainWindowList):
         return False
 
     @Slot(bool)
-    def on_open_save_editor_from_context(self, checked: bool = False):
+    def on_open_save_editor_from_context(
+        self,
+        checked: bool = False,
+    ):
         """Signal the main window to open the save editor.
 
         Args:
@@ -384,7 +403,10 @@ class ResourceList(MainWindowList):
             main_window.on_open_save_editor()
 
     @Slot("QModelIndex")
-    def on_resource_double_clicked(self, index: QModelIndex | None = None):
+    def on_resource_double_clicked(
+        self,
+        index: QModelIndex | None = None,
+    ):
         """Handle double-click on a resource.
 
         Args:
@@ -393,7 +415,10 @@ class ResourceList(MainWindowList):
         """
         self.sig_request_open_resource.emit(self.selected_resources(), None)
 
-    def mouseMoveEvent(self, event: QMouseEvent):  # pylint: disable=invalid-name  # pyright: ignore[reportIncompatibleMethodOverride]
+    def mouseMoveEvent(
+        self,
+        event: QMouseEvent,  # pylint: disable=invalid-name  # pyright: ignore[reportIncompatibleMethodOverride]
+    ):
         """Show the tooltip when the mouse moves over a resource."""
         proxy_index: QModelIndex = self.ui.resourceTree.indexAt(event.pos())  # type: ignore[arg-type]
         if proxy_index.isValid():
@@ -578,16 +603,18 @@ class TextureList(MainWindowList):
 
     BLANK_IMAGE: QImage = QImage(bytes(0 for _ in range(64 * 64 * 3)), 64, 64, QImage.Format.Format_RGB888)
 
-    def __init__(self, parent: QWidget):
+    def __init__(
+        self,
+        parent: QWidget,
+    ):
         """Initialize the texture list."""
-        print(f"Initializing TextureList with parent: {parent}")
         # Ensure loader attribute exists even if initialization aborts early.
         self._loader: multiprocessing.Process | None = None
         super().__init__(parent)
 
         from toolset.uic.qtpy.widgets.texture_list import Ui_Form
 
-        self.ui = Ui_Form()
+        self.ui: Ui_Form = Ui_Form()
         self.ui.setupUi(self)
         self.ui.resourceList.setUniformItemSizes(False)  # should be default
         self.ui.resourceList.setResizeMode(QListView.ResizeMode.Adjust)
@@ -892,7 +919,11 @@ class TextureList(MainWindowList):
 
         return selected_items
 
-    def _process_all_items(self, *, reload: bool):
+    def _process_all_items(
+        self,
+        *,
+        reload: bool,
+    ):
         cur_section_name: str = self.ui.sectionCombo.currentData(Qt.ItemDataRole.UserRole)
         cur_src_model: QStandardItemModel = self.texture_source_models[cur_section_name]
         for row in range(self.textures_proxy_model.rowCount()):
@@ -911,7 +942,10 @@ class TextureList(MainWindowList):
             self.offload_texture_load(item, reload=reload)
 
     @Slot(int)
-    def queue_load_visible_icons(self, value: int = 0):
+    def queue_load_visible_icons(
+        self,
+        value: int = 0,
+    ):
         """Queue the loading of icons for visible items.
 
         Args:
@@ -1027,7 +1061,10 @@ class TextureList(MainWindowList):
                 break
 
     @Slot(bool)
-    def on_reload_clicked(self, checked: bool = False):
+    def on_reload_clicked(
+        self,
+        checked: bool = False,
+    ):
         """Handle the reload button click.
 
         Args:
@@ -1037,7 +1074,10 @@ class TextureList(MainWindowList):
         self._process_all_items(reload=True)
 
     @Slot(bool)
-    def on_refresh_clicked(self, checked: bool = False):
+    def on_refresh_clicked(
+        self,
+        checked: bool = False,
+    ):
         """Handle the refresh button click.
 
         Args:
@@ -1049,7 +1089,7 @@ class TextureList(MainWindowList):
     @Slot(Future)
     def on_icon_loaded(
         self,
-        future: Future[tuple[tuple[str, int], TPCMipmap]],
+        future: Future[tuple[tuple[str, int], TPCMipmap]],  # pyright: ignore[reportArgumentType]
     ):
         """Handle the completion of an icon load."""
         # print("Icon loaded callback triggered")
@@ -1086,13 +1126,19 @@ class TextureList(MainWindowList):
         """
         self.sig_request_open_resource.emit(self.selected_resources(), None)
 
-    def resizeEvent(self, a0: QResizeEvent):  # pylint: disable=unused-argument,invalid-name  # pyright: ignore[reportIncompatibleMethodOverride]
+    def resizeEvent(
+        self,
+        a0: QResizeEvent,  # pylint: disable=unused-argument,invalid-name  # pyright: ignore[reportIncompatibleMethodOverride]
+    ):
         """Ensures icons that come into view are queued to load when the widget is resized."""
-        QTimer.singleShot(0, self.queue_load_visible_icons)
+        QTimer.singleShot(0, lambda: self.queue_load_visible_icons(0))
 
-    def showEvent(self, a0: QShowEvent):  # pylint: disable=unused-argument,invalid-name,  # pyright: ignore[reportIncompatibleMethodOverride]
+    def showEvent(
+        self,
+        a0: QShowEvent,  # pylint: disable=unused-argument,invalid-name,  # pyright: ignore[reportIncompatibleMethodOverride]
+    ):
         """Ensures icons that come into view are queued to load when the widget is shown."""
-        QTimer.singleShot(0, self.queue_load_visible_icons)
+        QTimer.singleShot(0, lambda: self.queue_load_visible_icons(0))
 
 
 T = TypeVar("T")
