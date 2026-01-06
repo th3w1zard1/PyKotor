@@ -6,7 +6,7 @@ from copy import deepcopy
 from typing import TYPE_CHECKING
 
 from loggerplus import RobustLogger  # type: ignore[import-untyped, note]
-from qtpy.QtWidgets import QMessageBox
+from qtpy.QtWidgets import QMessageBox, QWidget
 
 from pykotor.common.misc import ResRef
 from pykotor.common.stream import BinaryWriter
