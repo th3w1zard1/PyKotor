@@ -20,6 +20,8 @@ if TYPE_CHECKING:
 
     from qtpy.QtWidgets import QWidget
 
+    from pykotor.tools.reference_finder import ReferenceSearchResult
+
 
 
 @dataclass
@@ -197,7 +199,7 @@ class FileResults(QDialog):
     def __init__(
         self,
         parent: QWidget,
-        results: list[FileResource] | set[FileResource],
+        results: list[FileResource] | set[FileResource] | list[ReferenceSearchResult],
         installation: HTInstallation,
     ):
         """Initialize the search results dialog.
@@ -205,15 +207,16 @@ class FileResults(QDialog):
         Args:
         ----
             parent (QWidget): Parent widget
-            results (list[FileResource]): List of search results
+            results: List of FileResource or ReferenceSearchResult objects
             installation (HTInstallation): HT installation object
 
         Processing Logic:
-        ----------------
+        ---------------- 
             - Populate the list widget with search results
             - Connect button click signals to accept and open actions
             - Save search results and installation object as member variables
             - Sort results alphabetically.
+            - Display field paths for ReferenceSearchResult objects
         """
         super().__init__(parent)
         self.setWindowFlags(
@@ -241,12 +244,33 @@ class FileResults(QDialog):
         self.installation: HTInstallation = installation
 
         for result in results:
-            filename: str = result.filename()
-            filepath: Path = result.filepath()
-            parent_name: str = filepath.name if filename != filepath.name else f"{filepath.parent.name}"
-            item: QListWidgetItem = QListWidgetItem(f"{parent_name}/{filename}")
-            item.setData(Qt.ItemDataRole.UserRole, result)
-            item.setToolTip(str(result.filepath()))
+            if isinstance(result, ReferenceSearchResult):
+                # Handle ReferenceSearchResult
+                file_resource = result.file_resource
+                filename: str = file_resource.filename()
+                filepath: Path = file_resource.filepath()
+                parent_name: str = filepath.name if filename != filepath.name else f"{filepath.parent.name}"
+                display_text = f"{parent_name}/{filename}"
+                if result.field_path and result.field_path != "(NCS bytecode)":
+                    display_text += f" [{result.field_path}]"
+                item: QListWidgetItem = QListWidgetItem(display_text)
+                item.setData(Qt.ItemDataRole.UserRole, file_resource)
+                tooltip_parts = [str(file_resource.filepath())]
+                if result.field_path:
+                    tooltip_parts.append(f"Field: {result.field_path}")
+                if result.matched_value:
+                    tooltip_parts.append(f"Value: {result.matched_value}")
+                if result.byte_offset is not None:
+                    tooltip_parts.append(f"Byte offset: {result.byte_offset:#X}")
+                item.setToolTip("\n".join(tooltip_parts))
+            else:
+                # Handle FileResource
+                filename = result.filename()
+                filepath = result.filepath()
+                parent_name = filepath.name if filename != filepath.name else f"{filepath.parent.name}"
+                item = QListWidgetItem(f"{parent_name}/{filename}")
+                item.setData(Qt.ItemDataRole.UserRole, result)
+                item.setToolTip(str(result.filepath()))
             self.ui.resultList.addItem(item)  # type: ignore[arg-type]
 
         self.ui.resultList.sortItems(Qt.SortOrder.AscendingOrder)  # type: ignore[arg-type]

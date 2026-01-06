@@ -133,7 +133,18 @@ class ComboBox2DA(QComboBox):
     def on_context_menu(self, point: QPoint):
         menu: QMenu = QMenu(self)
         if self._installation is not None and self._resname is not None and self._this2DA is not None:
-            menu.addAction(f"Open '{self._resname}.2da' in 2DAEditor").triggered.connect(self.open_in_2da_editor)
+            open_action = QAction(f"Open '{self._resname}.2da' in 2DAEditor", self)
+            assert open_action is not None, "Failed to create 'Open in 2DAEditor' action."
+            open_action.triggered.connect(self.open_in_2da_editor)
+            menu.addAction(open_action)
+            
+            # Add "Find References" action for 2DA row
+            row_index = self.currentIndex()
+            if row_index >= 0:
+                find_refs_action = QAction("Find References...", self)
+                find_refs_action.triggered.connect(lambda checked=False: self._find_2da_row_references(row_index))
+                menu.addAction(find_refs_action)
+        
         toggle_sort_action = QAction("Toggle Sorting", self)
         toggle_sort_action.setCheckable(True)
         toggle_sort_action.setChecked(self._sort_alphabetically)
@@ -223,3 +234,177 @@ class ComboBox2DA(QComboBox):
         add_window(editor)
         editor.show()
         editor.activateWindow()
+
+    def _find_2da_row_references(
+        self,
+        row_index: int,
+    ) -> None:
+        """Find references to a 2DA row in the installation.
+
+        Args:
+        ----
+            row_index: The row index in the 2DA file
+        """
+        if self._installation is None or self._resname is None or self._this2DA is None:
+            return
+
+        from toolset.gui.dialogs.asyncloader import AsyncLoader
+        from toolset.gui.dialogs.reference_search_options import ReferenceSearchOptions
+        from toolset.gui.dialogs.search import FileResults
+        from toolset.utils.window import add_window
+        from pykotor.tools.reference_finder import ReferenceSearchResult, find_field_value_references
+        from qtpy.QtWidgets import QDialog
+
+        # Get the row label/text for searching
+        row_label = self._this2DA.get_cell(row_index, 0) if row_index < self._this2DA.get_height() else ""
+        
+        # Also check for stringref values in this row
+        strref_values: list[int] = []
+        if row_index < self._this2DA.get_height():
+            # Check all columns for stringref values
+            for col_name in self._this2DA.get_headers():
+                if col_name and col_name != ">>##HEADER##<<":
+                    cell_value = self._this2DA.get_cell(row_index, col_name)
+                    if cell_value and cell_value.strip().isdigit():
+                        try:
+                            strref = int(cell_value.strip())
+                            if strref > 0:  # Valid stringref
+                                strref_values.append(strref)
+                        except ValueError:
+                            pass
+
+        # Show search options dialog
+        options_dialog = ReferenceSearchOptions(self)
+        if options_dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+
+        partial_match = options_dialog.get_partial_match()
+        case_sensitive = options_dialog.get_case_sensitive()
+        file_pattern = options_dialog.get_file_pattern()
+        file_types = options_dialog.get_file_types()
+
+        all_results: list[ReferenceSearchResult] = []
+
+        # Search for row label/text if available
+        if row_label and row_label.strip():
+            def search_label_fn() -> list[ReferenceSearchResult]:
+                return find_field_value_references(
+                    self._installation,
+                    row_label,
+                    partial_match=partial_match,
+                    case_sensitive=case_sensitive,
+                    file_pattern=file_pattern,
+                    file_types=file_types,
+                )
+            
+            loader = AsyncLoader(
+                self,
+                f"Searching for references to 2DA row '{row_label}'...",
+                search_label_fn,
+                error_title="An unexpected error occurred searching for references.",
+                start_immediately=False,
+            )
+            loader.setModal(False)
+            loader.show()
+
+            def handle_label_search_completed(results_list: list[ReferenceSearchResult]):
+                all_results.extend(results_list)
+                # If we have stringrefs to search, do that next, otherwise show results
+                if strref_values:
+                    _search_stringrefs()
+                else:
+                    _show_results()
+
+            loader.optional_finish_hook.connect(handle_label_search_completed)
+            loader.start_worker()
+            add_window(loader)
+
+        def _search_stringrefs():
+            """Search for stringref references."""
+            from pykotor.tools.reference_cache import find_strref_references, GFFRefLocation, NCSRefLocation, SSFRefLocation, TwoDARefLocation
+            
+            def search_strref_fn() -> list[ReferenceSearchResult]:
+                all_strref_results: list[ReferenceSearchResult] = []
+                for strref in strref_values:
+                    strref_results = find_strref_references(self._installation, strref)
+                    for result in strref_results:
+                        for location in result.locations:
+                            if isinstance(location, GFFRefLocation):
+                                field_path = location.field_path
+                                byte_offset = None
+                            elif isinstance(location, TwoDARefLocation):
+                                field_path = f"Row {location.row_index}, Column '{location.column_name}'"
+                                byte_offset = None
+                            elif isinstance(location, SSFRefLocation):
+                                field_path = f"Sound index {location.sound.strref}"
+                                byte_offset = None
+                            elif isinstance(location, NCSRefLocation):
+                                field_path = "(NCS bytecode)"
+                                byte_offset = location.byte_offset
+                            else:
+                                field_path = "(unknown)"
+                                byte_offset = None
+                            
+                            restype = result.resource.restype()
+                            file_type = restype.extension.upper() if restype else "UNKNOWN"
+                            
+                            all_strref_results.append(
+                                ReferenceSearchResult(
+                                    file_resource=result.resource,
+                                    field_path=field_path,
+                                    matched_value=str(strref),
+                                    file_type=file_type,
+                                    byte_offset=byte_offset,
+                                )
+                            )
+                return all_strref_results
+
+            loader2 = AsyncLoader(
+                self,
+                f"Searching for stringref references in row {row_index}...",
+                search_strref_fn,
+                error_title="An unexpected error occurred searching for references.",
+                start_immediately=False,
+            )
+            loader2.setModal(False)
+            loader2.show()
+
+            def handle_strref_search_completed(results_list: list[ReferenceSearchResult]):
+                all_results.extend(results_list)
+                _show_results()
+
+            loader2.optional_finish_hook.connect(handle_strref_search_completed)
+            loader2.start_worker()
+            add_window(loader2)
+
+        def _show_results():
+            """Show search results."""
+            if not all_results:
+                from toolset.gui.common.localization import tr, trf
+                QMessageBox(
+                    QMessageBox.Icon.Information,
+                    tr("No references found"),
+                    trf("No references found for 2DA row {row_index} in '{resname}.2da'", row_index=row_index, resname=self._resname),
+                    parent=self,
+                ).exec()
+                return
+
+            results_dialog = FileResults(self, all_results, self._installation)
+            results_dialog.show()
+            results_dialog.activateWindow()
+            from toolset.gui.common.localization import trf
+            results_dialog.setWindowTitle(trf("{count} reference(s) found for row {row_index} in '{resname}.2da'", count=len(all_results), row_index=row_index, resname=self._resname))
+            add_window(results_dialog)
+
+        # If no row label, just search stringrefs
+        if not row_label or not row_label.strip():
+            if strref_values:
+                _search_stringrefs()
+            else:
+                from toolset.gui.common.localization import tr, trf
+                QMessageBox(
+                    QMessageBox.Icon.Information,
+                    tr("No searchable data"),
+                    trf("Row {row_index} in '{resname}.2da' has no searchable label or stringref values.", row_index=row_index, resname=self._resname),
+                    parent=self,
+                ).exec()

@@ -1739,6 +1739,15 @@ Should return 1 or 0, representing a boolean.
         assert find_references_action is not None, "Failed to create 'Find References' action."
         find_references_action.triggered.connect(lambda: self.find_references(item))
         find_references_action.setVisible(not_an_orphan)
+        
+        # Add "Find References in Installation" action for dialog resref
+        if self._installation is not None and self.core_dlg is not None:
+            find_installation_refs_action: _QAction | None = menu.addAction("Find References in Installation...")
+            assert find_installation_refs_action is not None, "Failed to create 'Find References in Installation' action."
+            dialog_resref: str = str(self.core_dlg.resref) if hasattr(self.core_dlg, "resref") else ""
+            if dialog_resref:
+                find_installation_refs_action.triggered.connect(lambda checked=False, resref=dialog_resref: self._find_dialog_references_in_installation(resref))
+            find_installation_refs_action.setVisible(not_an_orphan and bool(dialog_resref))
 
         # Play menu for both
         play_menu: _QMenu | None = menu.addMenu("Play")  # pyright: ignore[reportAssignmentType, reportAttributeAccessIssue]
@@ -1957,6 +1966,81 @@ Should return 1 or 0, representing a boolean.
             self.current_reference_index += 1
             references, item_html = self.reference_history[self.current_reference_index]
             self.show_reference_dialog(references, item_html)
+
+    def _find_dialog_references_in_installation(
+        self,
+        dialog_resref: str,
+    ) -> None:
+        """Find references to this dialog resref in the installation.
+
+        Args:
+        ----
+            dialog_resref: The dialog resref to search for
+        """
+        if self._installation is None:
+            return
+
+        from toolset.gui.dialogs.asyncloader import AsyncLoader
+        from toolset.gui.dialogs.reference_search_options import ReferenceSearchOptions
+        from toolset.gui.dialogs.search import FileResults
+        from toolset.utils.window import add_window
+        from pykotor.tools.reference_finder import find_conversation_references, ReferenceSearchResult
+
+        # Show search options dialog
+        options_dialog = ReferenceSearchOptions(self)
+        if options_dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+
+        partial_match = options_dialog.get_partial_match()
+        case_sensitive = options_dialog.get_case_sensitive()
+        file_pattern = options_dialog.get_file_pattern()
+        file_types = options_dialog.get_file_types()
+
+        def search_fn() -> list[ReferenceSearchResult]:
+            return find_conversation_references(
+                self._installation,
+                dialog_resref,
+                partial_match=partial_match,
+                case_sensitive=case_sensitive,
+                file_pattern=file_pattern,
+                file_types=file_types,
+            )
+
+        loader = AsyncLoader(
+            self,
+            f"Searching for references to dialog '{dialog_resref}'...",
+            search_fn,
+            error_title="An unexpected error occurred searching for references.",
+            start_immediately=False,
+        )
+        loader.setModal(False)
+        loader.show()
+
+        def handle_search_completed(results_list: list[ReferenceSearchResult]):
+            if not results_list:
+                from toolset.gui.common.localization import tr, trf
+
+                QMessageBox(
+                    QMessageBox.Icon.Information,
+                    tr("No references found"),
+                    trf("No references found for dialog '{dialog_resref}'", dialog_resref=dialog_resref),
+                    parent=self,
+                ).exec()
+                return
+
+            results_dialog = FileResults(self, results_list, self._installation)
+            results_dialog.show()
+            results_dialog.activateWindow()
+            from toolset.gui.common.localization import trf
+
+            results_dialog.setWindowTitle(
+                trf("{count} reference(s) found for dialog '{dialog_resref}'", count=len(results_list), dialog_resref=dialog_resref)
+            )
+            add_window(results_dialog)
+
+        loader.optional_finish_hook.connect(handle_search_completed)
+        loader.start_worker()
+        add_window(loader)
 
     # region Events
     def focusOutEvent(  # pyright: ignore[reportIncompatibleMethodOverride]

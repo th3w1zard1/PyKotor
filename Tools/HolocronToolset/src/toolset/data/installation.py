@@ -16,8 +16,10 @@ from qtpy.QtGui import QImage, QPixmap, QTransform
 from qtpy.QtWidgets import (
     QAction,  # pyright: ignore[reportPrivateImportUsage]
     QComboBox,
+    QDialog,
     QLineEdit,
     QMenu,
+    QWidget,
 )
 
 from pykotor.extract.chitin import Chitin
@@ -344,11 +346,23 @@ class HTInstallation(Installation):
         widget_text: str,
         resref_type: list[ResourceType] | list[ResourceIdentifier],
         order: list[SearchLocation] | None = None,
+        enable_reference_search: bool = False,
+        reference_search_type: str | None = None,
     ) -> None:
         """Populate `root_menu` with the standard 'file(s) located' menu for a resref.
 
         This is the shared implementation used by the toolset wherever we show the
         '# file(s) located…' expander + per-location actions + Details… dialog.
+
+        Args:
+        ----
+            root_menu: The menu to populate
+            parent_widget: Parent widget for menu actions
+            widget_text: The resref/text value to search for
+            resref_type: Resource types to search for file locations
+            order: Search location order
+            enable_reference_search: If True, add "Find References..." action
+            reference_search_type: Type of reference search ("script", "tag", "template_resref", "conversation", or None for generic resref)
         """
         from toolset.gui.dialogs.load_from_location_result import ResourceItems
 
@@ -409,23 +423,49 @@ class HTInstallation(Installation):
                 action.setText(f"{len(flat_locations)} file(s) located")
                 break
 
+        # Add "Find References..." action if enabled
+        if enable_reference_search and widget_text.strip():
+            root_menu.addSeparator()
+            find_refs_action = QAction("Find References...", parent_widget)
+            find_refs_action.triggered.connect(
+                lambda checked=False, search_text=widget_text.strip(), search_type=reference_search_type: self._find_references(
+                    parent_widget,
+                    search_text,
+                    search_type,
+                ),
+            )
+            root_menu.addAction(find_refs_action)
+
     def setup_file_context_menu(
         self,
         widget: QPlainTextEdit | QLineEdit | QComboBox,
         resref_type: list[ResourceType] | list[ResourceIdentifier],
         order: list[SearchLocation] | None = None,
+        enable_reference_search: bool = False,
+        reference_search_type: str | None = None,
     ):
 
         @Slot(QPoint)
         def extend_context_menu(pos: QPoint):
             root_menu = QMenu(widget) if isinstance(widget, QComboBox) else widget.createStandardContextMenu()
-            widget_text: str = widget.currentText().strip() if isinstance(widget, QComboBox) else (widget.text() if isinstance(widget, QLineEdit) else widget.toPlainText()).strip()
+            assert root_menu is not None, f"{type(self).__name__}.setup_file_context_menu: root_menu cannot be None"
+            widget_text: str = str(
+                widget.currentText()
+                if isinstance(widget, QComboBox)
+                else (
+                    widget.text()
+                    if isinstance(widget, QLineEdit)
+                    else widget.toPlainText()
+                )
+            )
             self.build_file_context_menu(
                 root_menu,
                 parent_widget=widget,
-                widget_text=widget_text,
+                widget_text=widget_text.strip(),
                 resref_type=resref_type,
                 order=order,
+                enable_reference_search=enable_reference_search,
+                reference_search_type=reference_search_type,
             )
             root_menu.exec(widget.mapToGlobal(pos))
 
@@ -440,6 +480,128 @@ class HTInstallation(Installation):
         selection_window.show()
         selection_window.activateWindow()
         add_window(selection_window)
+
+    def _find_references(
+        self,
+        parent_widget: QWidget,
+        search_text: str,
+        search_type: str | None,
+    ) -> None:
+        """Perform a reference search and display results.
+
+        Args:
+        ----
+            parent_widget: Parent widget for dialogs
+            search_text: The text/resref to search for
+            search_type: Type of search ("script", "tag", "template_resref", "conversation", or None)
+        """
+        from toolset.gui.dialogs.asyncloader import AsyncLoader
+        from toolset.gui.dialogs.reference_search_options import ReferenceSearchOptions
+        from toolset.gui.dialogs.search import FileResults
+        from toolset.utils.window import add_window
+        from pykotor.tools.reference_finder import (
+            ReferenceSearchResult,
+            find_conversation_references,
+            find_script_references,
+            find_tag_references,
+            find_template_resref_references,
+            find_resref_references,
+        )
+
+        # Show search options dialog
+        options_dialog = ReferenceSearchOptions(parent_widget)
+        if options_dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+
+        partial_match = options_dialog.get_partial_match()
+        case_sensitive = options_dialog.get_case_sensitive()
+        file_pattern = options_dialog.get_file_pattern()
+        file_types = options_dialog.get_file_types()
+
+        # Determine which search function to use
+        def search_fn() -> list[ReferenceSearchResult]:
+            if search_type == "script":
+                return find_script_references(
+                    self,
+                    search_text,
+                    partial_match=partial_match,
+                    case_sensitive=case_sensitive,
+                    file_pattern=file_pattern,
+                    file_types=file_types,
+                )
+            elif search_type == "tag":
+                return find_tag_references(
+                    self,
+                    search_text,
+                    partial_match=partial_match,
+                    case_sensitive=case_sensitive,
+                    file_pattern=file_pattern,
+                    file_types=file_types,
+                )
+            elif search_type == "template_resref":
+                return find_template_resref_references(
+                    self,
+                    search_text,
+                    partial_match=partial_match,
+                    case_sensitive=case_sensitive,
+                    file_pattern=file_pattern,
+                    file_types=file_types,
+                )
+            elif search_type == "conversation":
+                return find_conversation_references(
+                    self,
+                    search_text,
+                    partial_match=partial_match,
+                    case_sensitive=case_sensitive,
+                    file_pattern=file_pattern,
+                    file_types=file_types,
+                )
+            else:
+                # Generic resref search
+                return find_resref_references(
+                    self,
+                    search_text,
+                    partial_match=partial_match,
+                    case_sensitive=case_sensitive,
+                    file_pattern=file_pattern,
+                    file_types=file_types,
+                )
+
+        loader = AsyncLoader(
+            parent_widget,
+            f"Searching for references to '{search_text}'...",
+            search_fn,
+            error_title="An unexpected error occurred searching for references.",
+            start_immediately=False,
+        )
+        loader.setModal(False)
+        loader.show()
+
+        def handle_search_completed(results_list: list[ReferenceSearchResult]):
+            if not results_list:
+                from qtpy.QtWidgets import QMessageBox
+                from toolset.gui.common.localization import tr, trf
+
+                QMessageBox(
+                    QMessageBox.Icon.Information,
+                    tr("No references found"),
+                    trf("No references found for '{search_text}'", search_text=search_text),
+                    parent=parent_widget,
+                ).exec()
+                return
+
+            # Pass ReferenceSearchResult objects directly to FileResults for field path display
+            results_dialog = FileResults(parent_widget, results_list, self)
+            results_dialog.show()
+            results_dialog.activateWindow()
+            results_dialog.setWindowTitle(
+                trf("{count} reference(s) found for '{search_text}'", count=len(results_list), search_text=search_text)
+            )
+            add_window(results_dialog)
+
+        loader.optional_finish_hook.connect(handle_search_completed)
+        loader.start_worker()
+        add_window(loader)
 
     @Slot(list)
     def handle_file_system_changes(self, changed_files: list[str]):

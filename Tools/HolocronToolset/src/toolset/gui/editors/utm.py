@@ -9,6 +9,7 @@ from pykotor.extract.capsule import Capsule
 from pykotor.resource.formats.gff import write_gff
 from pykotor.resource.generics.utm import UTM, dismantle_utm, read_utm
 from pykotor.resource.type import ResourceType
+from toolset.gui.common.localization import translate as tr
 from toolset.gui.dialogs.edit.locstring import LocalizedStringDialog
 from toolset.gui.dialogs.inventory import InventoryEditor
 from toolset.gui.editor import Editor
@@ -28,8 +29,7 @@ class UTMEditor(Editor):
     def __init__(
         self,
         parent: QWidget | None,
-        installation: HTInstallation
-        | None = None,
+        installation: HTInstallation | None = None,
     ):
         """Initialize the Merchant Editor window.
 
@@ -51,6 +51,7 @@ class UTMEditor(Editor):
         self._utm: UTM = UTM()
 
         from toolset.uic.qtpy.editors.utm import Ui_MainWindow
+
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self._setup_menus()
@@ -58,9 +59,10 @@ class UTMEditor(Editor):
         self._setup_signals()
         if installation is not None:  # will only be none in the unittests
             self._setup_installation(installation)
-        
+
         # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
+
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
 
@@ -91,6 +93,18 @@ class UTMEditor(Editor):
         """
         self._installation = installation
         self.ui.nameEdit.set_installation(installation)
+
+        # Setup reference search for script field
+        self._installation.setup_file_context_menu(self.ui.onOpenEdit, [ResourceType.NSS, ResourceType.NCS], enable_reference_search=True, reference_search_type="script")
+        self.ui.onOpenEdit.setToolTip(tr("Right-click to find references to this script in the installation."))
+
+        # Setup reference search for Tag field
+        self._installation.setup_file_context_menu(self.ui.tagEdit, [], enable_reference_search=True, reference_search_type="tag")
+        self.ui.tagEdit.setToolTip(tr("Right-click to find references to this tag in the installation."))
+
+        # Setup reference search for TemplateResRef field
+        self._installation.setup_file_context_menu(self.ui.resrefEdit, [], enable_reference_search=True, reference_search_type="template_resref")
+        self.ui.resrefEdit.setToolTip(tr("Right-click to find references to this template resref in the installation."))
 
     def load(
         self,

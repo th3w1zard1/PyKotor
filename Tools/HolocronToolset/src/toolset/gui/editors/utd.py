@@ -5,9 +5,9 @@ import os
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
-from loggerplus import RobustLogger  # type: ignore[import-untyped, note]
 from qtpy.QtWidgets import QMessageBox, QWidget
 
+from loggerplus import RobustLogger  # type: ignore[import-untyped, note]
 from pykotor.common.misc import ResRef
 from pykotor.common.stream import BinaryWriter
 from pykotor.extract.installation import SearchLocation
@@ -24,10 +24,10 @@ from toolset.gui.widgets.settings.installations import GlobalSettings
 from toolset.utils.window import open_resource_editor
 
 if TYPE_CHECKING:
-    from qtpy.QtWidgets import QWidget
+    from qtpy.QtWidgets import QComboBox, QLineEdit, QMessageBox, QPlainTextEdit, QWidget
 
     from pykotor.extract.file import ResourceResult
-    from pykotor.resource.formats.twoda.twoda_data import TwoDA
+    from pykotor.resource.formats.twoda import TwoDA
 
 
 class UTDEditor(Editor):
@@ -153,7 +153,7 @@ class UTDEditor(Editor):
         self.handle_widget_with_tsl(self.ui.difficultyModLabel, installation)
 
         # Setup context menus for script fields with reference search enabled
-        script_fields: list[QWidget] = [
+        script_fields: list[QPlainTextEdit | QLineEdit | QComboBox] = [
             self.ui.onClickEdit,
             self.ui.onClosedEdit,
             self.ui.onDamagedEdit,

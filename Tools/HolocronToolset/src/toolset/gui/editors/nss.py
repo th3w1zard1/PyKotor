@@ -1002,6 +1002,12 @@ class NSSEditor(Editor):
             assert action_find_all_refs is not None, "Find all references action should not be None"
             action_find_all_refs.setShortcut(QKeySequence("Shift+F12"))
             action_find_all_refs.triggered.connect(lambda: self._find_all_references(word_under_cursor))
+            
+            # Add "Find References in Installation" action
+            if hasattr(self, "_installation") and self._installation is not None and word_under_cursor:
+                action_find_installation_refs: QAction | None = menu.addAction("Find References in Installation...")
+                assert action_find_installation_refs is not None, "Find references in installation action should not be None"
+                action_find_installation_refs.triggered.connect(lambda checked=False, script_name=word_under_cursor: self._find_script_references_in_installation(script_name))
 
         action_go_to_line: QAction | None = menu.addAction("Go to Line...")
         assert action_go_to_line is not None, "Go to line action should not be None"
@@ -1234,6 +1240,76 @@ class NSSEditor(Editor):
             QMessageBox.information(self, "Find All References", f"No references to '{word}' found in current file.")
         else:
             self._log_to_output(f"Found {len(self._find_results)} reference(s) to '{word}'")
+
+    def _find_script_references_in_installation(
+        self,
+        script_name: str,
+    ) -> None:
+        """Find references to a script in the installation (GFF files and NCS bytecode).
+
+        Args:
+        ----
+            script_name: The script name/resref to search for
+        """
+        if not hasattr(self, "_installation") or self._installation is None:
+            return
+
+        from toolset.gui.dialogs.asyncloader import AsyncLoader
+        from toolset.gui.dialogs.reference_search_options import ReferenceSearchOptions
+        from toolset.gui.dialogs.search import FileResults
+        from toolset.utils.window import add_window
+        from pykotor.tools.reference_finder import find_script_references, ReferenceSearchResult
+        from qtpy.QtWidgets import QDialog, QMessageBox
+
+        # Show search options dialog
+        options_dialog = ReferenceSearchOptions(self)
+        if options_dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+
+        partial_match = options_dialog.get_partial_match()
+        case_sensitive = options_dialog.get_case_sensitive()
+        file_pattern = options_dialog.get_file_pattern()
+        file_types = options_dialog.get_file_types()
+
+        def search_fn() -> list[ReferenceSearchResult]:
+            return find_script_references(
+                self._installation,
+                script_name,
+                partial_match=partial_match,
+                case_sensitive=case_sensitive,
+                file_pattern=file_pattern,
+                file_types=file_types,
+            )
+
+        loader = AsyncLoader(
+            self,
+            f"Searching for references to script '{script_name}'...",
+            search_fn,
+            error_title="An unexpected error occurred searching for references.",
+            start_immediately=False,
+        )
+        loader.setModal(False)
+        loader.show()
+
+        def handle_search_completed(results_list: list[ReferenceSearchResult]):
+            if not results_list:
+                QMessageBox(
+                    QMessageBox.Icon.Information,
+                    "No references found",
+                    f"No references found for script '{script_name}'",
+                    parent=self,
+                ).exec()
+                return
+
+            results_dialog = FileResults(self, results_list, self._installation)
+            results_dialog.show()
+            results_dialog.activateWindow()
+            results_dialog.setWindowTitle(f"{len(results_list)} reference(s) found for script '{script_name}'")
+            add_window(results_dialog)
+
+        loader.optional_finish_hook.connect(handle_search_completed)
+        loader.start_worker()
+        add_window(loader)
 
     def _insert_snippet_dialog(self):
         """Open dialog to select and insert a snippet."""

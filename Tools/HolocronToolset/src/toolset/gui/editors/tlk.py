@@ -50,6 +50,7 @@ if TYPE_CHECKING:
     from typing_extensions import Literal  # pyright: ignore[reportMissingModuleSource]
 
     from pykotor.extract.file import FileResource
+    from pykotor.tools.reference_finder import ReferenceSearchResult
     from toolset.data.installation import HTInstallation
 
 
@@ -82,9 +83,10 @@ class TLKEditor(Editor):
         self.proxy_model.setSourceModel(self.source_model)
         self.proxy_model.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
         self.ui.talkTable.setModel(self.proxy_model)
-        
+
         # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
+
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
 
@@ -100,26 +102,26 @@ class TLKEditor(Editor):
             assert isinstance(table_view, RobustTableView)
             proxy_table_model: QAbstractItemModel | None = table_view.model()
             assert isinstance(proxy_table_model, QSortFilterProxyModel)
-            
+
             # Get the source row number from spinbox
             source_row = self.ui.jumpSpinbox.value()
-            
+
             # Validate the row is within bounds
             if source_row < 0 or source_row >= self.source_model.rowCount():
                 return
-            
+
             # Get the source model index
             source_index: QModelIndex = self.source_model.index(source_row, 0)
             if not source_index.isValid():
                 return
-            
+
             # Map source index to proxy index
             proxy_index: QModelIndex = proxy_table_model.mapFromSource(source_index)
             if not proxy_index.isValid():
                 # If the row is filtered out, we can't jump to it
                 # In this case, clear the filter temporarily or just return
                 return
-            
+
             # Scroll to and select the index
             self.ui.talkTable.scrollTo(proxy_index)
             self.ui.talkTable.setCurrentIndex(proxy_index)
@@ -159,9 +161,9 @@ class TLKEditor(Editor):
         self._language_actions: dict[Language, QAction] = {}
         self._auto_detect_action: QAction | None = None
         self.populate_language_menu()
-        
+
         # Connect auto-detect action from UI if it exists
-        if hasattr(self.ui, 'actionAuto_detect_slower'):
+        if hasattr(self.ui, "actionAuto_detect_slower"):
             self.ui.actionAuto_detect_slower.triggered.connect(lambda: self.on_language_selected("auto_detect"))
 
     def populate_language_menu(self):
@@ -191,17 +193,17 @@ class TLKEditor(Editor):
     def _update_language_menu_checkmarks(self):
         """Update the checkmarks in the language menu to reflect the current language."""
         # Skip if language not yet initialized
-        if not hasattr(self, 'language') or not hasattr(self, '_language_actions'):
+        if not hasattr(self, "language") or not hasattr(self, "_language_actions"):
             return
-        
+
         # Uncheck all language actions
         for action in self._language_actions.values():
             action.setChecked(False)
-        
+
         # Check the current language action
         if self.language in self._language_actions:
             self._language_actions[self.language].setChecked(True)
-        
+
         # Uncheck auto-detect (it's only checked when explicitly selected and no file is loaded)
         if self._auto_detect_action is not None:
             self._auto_detect_action.setChecked(False)
@@ -226,11 +228,11 @@ class TLKEditor(Editor):
     ):  # sourcery skip: class-extract-method
         self.language = language
         self._update_language_menu_checkmarks()
-        
+
         # Only reload if we have revert data (file was loaded)
         if not self._revert:
             return
-        
+
         tlk: TLK = read_tlk(self._revert, language=language)
         self.source_model.clear()
         self.source_model.setColumnCount(2)
@@ -267,9 +269,9 @@ class TLKEditor(Editor):
         assert sel_model is not None
         sel_model.selectionChanged.connect(self.selection_changed)
         self.ui.jumpSpinbox.setMaximum(self.source_model.rowCount())
-        
+
         # Update language from loaded TLK if available
-        if hasattr(dialog, 'language'):
+        if hasattr(dialog, "language"):
             self.language = dialog.language
             self._update_language_menu_checkmarks()
 
@@ -293,13 +295,58 @@ class TLKEditor(Editor):
         # Implement the logic to find references based on the provided index
         stringref: int = index.row()
         print(f"Finding references to stringref: {stringref}")
-        from pykotor.tools.reference_cache import find_tlk_entry_references  # noqa: PLC0415
 
         assert self._installation is not None
 
-        def search_fn() -> set[FileResource]:
+        def search_fn() -> list[ReferenceSearchResult]:
             assert self._installation is not None
-            return find_tlk_entry_references(self._installation, stringref)
+            from pykotor.tools.reference_cache import (  # noqa: PLC0415
+                GFFRefLocation,
+                NCSRefLocation,
+                SSFRefLocation,
+                StrRefSearchResult,
+                TwoDARefLocation,
+                find_strref_references,
+            )
+            from pykotor.tools.reference_finder import ReferenceSearchResult
+
+            # Use find_strref_references which returns detailed results with field paths
+            strref_results: list[StrRefSearchResult] = find_strref_references(self._installation, stringref)
+
+            # Convert StrRefSearchResult to ReferenceSearchResult for consistent display
+            reference_results: list[ReferenceSearchResult] = []
+            for result in strref_results:
+                for location in result.locations:
+                    if isinstance(location, GFFRefLocation):
+                        field_path = location.field_path
+                        byte_offset = None
+                    elif isinstance(location, TwoDARefLocation):
+                        field_path = f"Row {location.row_index}, Column '{location.column_name}'"
+                        byte_offset = None
+                    elif isinstance(location, SSFRefLocation):
+                        field_path = f"Sound index {location.sound.strref}"
+                        byte_offset = None
+                    elif isinstance(location, NCSRefLocation):
+                        field_path = "(NCS bytecode)"
+                        byte_offset = location.byte_offset
+                    else:
+                        field_path = "(unknown)"
+                        byte_offset = None
+
+                    restype = result.resource.restype()
+                    file_type = restype.extension.upper() if restype else "UNKNOWN"
+
+                    reference_results.append(
+                        ReferenceSearchResult(
+                            file_resource=result.resource,
+                            field_path=field_path,
+                            matched_value=str(stringref),
+                            file_type=file_type,
+                            byte_offset=byte_offset,
+                        )
+                    )
+
+            return reference_results
 
         loader = AsyncLoader(
             self,
@@ -312,13 +359,13 @@ class TLKEditor(Editor):
         loader.show()
 
         def handle_search_completed(
-            results_list: list[FileResource] | set[FileResource],
+            results_list: list[ReferenceSearchResult],
         ):
             if not results_list:
                 QMessageBox(
                     QMessageBox.Icon.Information,
                     tr("No resources found"),
-                    trf("There are no GFFs that reference this tlk entry (stringref {stringref})", stringref=stringref),
+                    trf("There are no references to this tlk entry (stringref {stringref})", stringref=stringref),
                     parent=self,
                 ).exec()
                 return
@@ -326,7 +373,9 @@ class TLKEditor(Editor):
             results_dialog = FileResults(self, results_list, self._installation)
             results_dialog.show()
             results_dialog.activateWindow()
-            results_dialog.setWindowTitle(trf("{count} results for stringref '{stringref}' in {path}", count=len(results_list), stringref=stringref, path=str(self._installation.path())))
+            results_dialog.setWindowTitle(
+                trf("{count} results for stringref '{stringref}' in {path}", count=len(results_list), stringref=stringref, path=str(self._installation.path()))
+            )
             add_window(results_dialog)
             results_dialog.sig_searchresults_selected.connect(self.handle_results_selection)
 
@@ -510,10 +559,10 @@ class LoaderDialog(QDialog):
         if self.worker.isRunning():
             self.worker.wait()
         self.close()
-    
+
     def closeEvent(self, event: QCloseEvent):  # pyright: ignore[reportIncompatibleMethodOverride]
         """Ensure worker thread is properly cleaned up when dialog closes."""
-        if hasattr(self, 'worker') and self.worker.isRunning():
+        if hasattr(self, "worker") and self.worker.isRunning():
             self.worker.quit()
             self.worker.wait(1000)  # Wait up to 1 second for graceful shutdown
             if self.worker.isRunning():

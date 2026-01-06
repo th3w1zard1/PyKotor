@@ -29,7 +29,7 @@ from toolset.utils.window import open_resource_editor
 if TYPE_CHECKING:
     import os
 
-    from qtpy.QtWidgets import QWidget
+    from qtpy.QtWidgets import QComboBox, QLineEdit, QPlainTextEdit, QWidget
 
     from pykotor.extract.file import ResourceResult
     from pykotor.extract.installation import SearchLocation
@@ -70,12 +70,13 @@ class UTPEditor(Editor):
 
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        
+
         # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
+
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
-        
+
         self._setup_menus()
         self._add_help_action()
         self._setup_signals()
@@ -157,7 +158,7 @@ class UTPEditor(Editor):
         self.ui.difficultyModLabel.setVisible(installation.tsl)
 
         # Setup context menus for script fields with reference search enabled
-        script_fields: list[QWidget] = [
+        script_fields: list[QLineEdit | QComboBox | QPlainTextEdit] = [
             self.ui.onClosedEdit,
             self.ui.onDamagedEdit,
             self.ui.onDeathEdit,
@@ -178,11 +179,11 @@ class UTPEditor(Editor):
             field.setToolTip(tr("Right-click to find references to this script in the installation."))
         installation.setup_file_context_menu(self.ui.conversationEdit, [ResourceType.DLG], enable_reference_search=True, reference_search_type="conversation")
         self.ui.conversationEdit.setToolTip(tr("Right-click to find references to this conversation in the installation."))
-        
+
         # Setup reference search for Tag field
         installation.setup_file_context_menu(self.ui.tagEdit, [], enable_reference_search=True, reference_search_type="tag")
         self.ui.tagEdit.setToolTip(tr("Right-click to find references to this tag in the installation."))
-        
+
         # Setup reference search for TemplateResRef field
         installation.setup_file_context_menu(self.ui.resrefEdit, [], enable_reference_search=True, reference_search_type="template_resref")
         self.ui.resrefEdit.setToolTip(tr("Right-click to find references to this template resref in the installation."))

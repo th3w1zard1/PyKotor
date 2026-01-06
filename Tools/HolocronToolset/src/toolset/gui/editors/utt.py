@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from qtpy.QtWidgets import QWidget
 
     from pykotor.common.module import GFF
-    from pykotor.resource.formats.twoda.twoda_data import TwoDA
+    from pykotor.resource.formats.twoda import TwoDA
 
 
 class UTTEditor(Editor):
