@@ -388,35 +388,57 @@ class MDLAsciiWriter(ResourceWriter):
         node: MDLNode,
         parent: MDLNode | None = None,
     ) -> None:
-        """Write a node and its children."""
-        # Node type determination must match MDLOps exactly
-        # Reference: vendor/MDLOps/MDLOpsM.pm:3095-3121
-        # Order: DUMMY, LIGHT, EMITTER, DANGLYMESH, SKIN, TRIMESH, AABB, REFERENCE, SABER
-        if node.node_type == MDLNodeType.DUMMY:
+        """Write a node and its children.
+        
+        Node type determination matches MDLOps exactly.
+        Reference: vendor/MDLOps/MDLOpsM.pm:3095-3121
+        MDLOps checks nodetype integer value directly ($nodetype == NODE_SKIN), not data presence.
+        """
+        # Build type_id from flags exactly like MDLOps stores it (combined integer value)
+        # This matches how MDLOps reads nodetype from binary: combined flag value
+        # Reference: vendor/MDLOps/MDLOpsM.pm:3812-3833 equivalent logic
+        type_id = 1  # HEADER
+        if node.mesh:
+            type_id |= 0x20  # MESH
+        if node.skin:
+            type_id |= 0x40  # SKIN
+        if node.dangly:
+            type_id |= 0x100  # DANGLY
+        if node.saber:
+            type_id |= 0x800  # SABER
+        if node.aabb:
+            type_id |= 0x200  # AABB
+        if node.emitter:
+            type_id |= 0x4  # EMITTER
+        if node.light:
+            type_id |= 0x2  # LIGHT
+        if node.reference:
+            type_id |= 0x10  # REFERENCE
+        
+        # MDLOps checks against NODE_ constants: NODE_DUMMY=1, NODE_LIGHT=3, NODE_EMITTER=5,
+        # NODE_REFERENCE=17, NODE_TRIMESH=33, NODE_SKIN=97, NODE_DANGLYMESH=289,
+        # NODE_AABB=545, NODE_SABER=2081
+        # Reference: vendor/MDLOps/MDLOpsM.pm:315-323 (NODE_ constants)
+        # Reference: vendor/MDLOps/MDLOpsM.pm:3095-3121 (exact if/elsif order)
+        if type_id == 1:  # NODE_DUMMY
             node_type_str = "dummy"
-        elif node.light is not None or node.node_type == MDLNodeType.LIGHT:
+        elif type_id == 3:  # NODE_LIGHT
             node_type_str = "light"
-        elif node.emitter is not None or node.node_type == MDLNodeType.EMITTER:
+        elif type_id == 5:  # NODE_EMITTER
             node_type_str = "emitter"
-        elif isinstance(node.mesh, MDLDangly) or node.node_type == MDLNodeType.DANGLYMESH:
+        elif type_id == 289:  # NODE_DANGLYMESH
             node_type_str = "danglymesh"
-        elif node.skin is not None:
-            # SKIN nodes: NODE_SKIN = 97 = HEADER + MESH + SKIN (0x061)
-            # Reference: vendor/MDLOps/MDLOpsM.pm:320 (NODE_SKIN = 97), 3105-3108
-            # When convert_skin is False, SKIN nodes are written as "skin"
-            # When convert_skin is True, SKIN nodes are written as "trimesh"
-            # Reference: vendor/MDLOps/MDLOpsM.pm:3105-3108
-            if self._convert_skin:
-                node_type_str = "trimesh"
-            else:
-                node_type_str = "skin"
-        elif node.mesh is not None or node.node_type == MDLNodeType.TRIMESH:
+        elif type_id == 97 and not self._convert_skin:  # NODE_SKIN
+            node_type_str = "skin"
+        elif type_id == 97 and self._convert_skin:  # NODE_SKIN (convert to trimesh)
             node_type_str = "trimesh"
-        elif node.aabb is not None or node.node_type == MDLNodeType.AABB:
+        elif type_id == 33:  # NODE_TRIMESH
+            node_type_str = "trimesh"
+        elif type_id == 545:  # NODE_AABB
             node_type_str = "aabb"
-        elif node.reference is not None or node.node_type == MDLNodeType.REFERENCE:
+        elif type_id == 17:  # NODE_REFERENCE
             node_type_str = "reference"
-        elif node.saber is not None or node.node_type == MDLNodeType.SABER:
+        elif type_id == 2081:  # NODE_SABER
             node_type_str = "lightsaber"
         else:
             node_type_str = "dummy"
