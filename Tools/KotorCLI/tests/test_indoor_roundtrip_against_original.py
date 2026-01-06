@@ -41,8 +41,13 @@ _add_sys_path(PYKOTOR_PATH)
 _add_sys_path(UTILITY_PATH)
 
 
+import difflib
+from io import StringIO
+
 from kotorcli.__main__ import cli_main
+from pykotor.common.indoormap import IndoorMap
 from pykotor.common.module import Module, ModuleResource
+from pykotor.common.modulekit import ModuleKitManager
 from pykotor.extract.installation import Installation
 from pykotor.resource.formats.bwm import read_bwm
 from pykotor.resource.formats.erf import read_erf
@@ -418,3 +423,67 @@ def test_indoor_roundtrip_flip_rotation_preserved(rt_run: dict[str, Any]) -> Non
         assert a["flip_x"] == b["flip_x"], f"flip_x mismatch at index {i}: {a['flip_x']} != {b['flip_x']}"
         assert a["flip_y"] == b["flip_y"], f"flip_y mismatch at index {i}: {a['flip_y']} != {b['flip_y']}"
         assert float(a["rotation"]) == float(b["rotation"]), f"rotation mismatch at index {i}: {a['rotation']} != {b['rotation']}"
+
+
+def test_indoor_roundtrip_using_comparable_mixin(rt_run: dict[str, Any]) -> None:
+    """Test .indoor -> .mod -> .indoor roundtrip using ComparableMixin.compare() with udiff output."""
+    game: str = rt_run["game"]
+    install_dir: Path = rt_run["install_dir"]
+    indoor0_raw: bytes = rt_run["indoor0_raw"]
+    indoor1_raw: bytes = rt_run["indoor1_raw"]
+
+    installation = Installation(CaseAwarePath(install_dir))
+    mk_mgr = ModuleKitManager(installation)
+
+    # Load both indoor maps
+    original_map = IndoorMap()
+    missing = original_map.load(indoor0_raw, [], module_kit_manager=mk_mgr)
+    assert missing == [], f"Missing rooms/components in original: {missing}"
+
+    roundtripped_map = IndoorMap()
+    missing = roundtripped_map.load(indoor1_raw, [], module_kit_manager=mk_mgr)
+    assert missing == [], f"Missing rooms/components in roundtripped: {missing}"
+
+    # Compare using ComparableMixin.compare() with udiff output
+    diff_lines: list[str] = []
+    log_buffer = StringIO()
+
+    def log_func(msg: str) -> None:
+        diff_lines.append(msg)
+        log_buffer.write(msg + "\n")
+
+    is_identical = original_map.compare(roundtripped_map, log_func=log_func)
+
+    if not is_identical:
+        # Generate udiff format output
+        original_json = original_map.write().decode("utf-8")
+        roundtripped_json = roundtripped_map.write().decode("utf-8")
+
+        original_lines = original_json.splitlines(keepends=True)
+        roundtripped_lines = roundtripped_json.splitlines(keepends=True)
+
+        udiff = list(
+            difflib.unified_diff(
+                original_lines,
+                roundtripped_lines,
+                fromfile="original (.indoor)",
+                tofile="roundtripped (.indoor -> .mod -> .indoor)",
+                lineterm="",
+            )
+        )
+
+        # Print the udiff
+        print("\n" + "=" * 80)
+        print("Unified diff (udiff format):")
+        print("=" * 80)
+        for line in udiff:
+            print(line)
+        print("=" * 80)
+
+        # Also print the structured comparison output
+        print("\nStructured comparison differences:")
+        print("-" * 80)
+        print(log_buffer.getvalue())
+        print("-" * 80)
+
+    assert is_identical, "IndoorMap objects should be identical after .indoor -> .mod -> .indoor roundtrip"

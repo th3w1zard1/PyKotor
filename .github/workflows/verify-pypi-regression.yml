@@ -190,7 +190,13 @@ jobs:
           python -m kotordiff --help 2>&1 || echo "kotordiff help not available"
         continue-on-error: true
 
-      - name: Test kotorcli CLI
+      - name: Test pykotor CLI
+        run: |
+          pykotor --help 2>&1 || python -m pykotor --help 2>&1 || echo "pykotor help not available"
+          pykotorcli --help 2>&1 || echo "pykotorcli help not available"
+        continue-on-error: true
+
+      - name: Test kotorcli CLI (shim)
         run: |
           kotorcli --help 2>&1 || python -m kotorcli --help 2>&1 || echo "kotorcli help not available"
         continue-on-error: true

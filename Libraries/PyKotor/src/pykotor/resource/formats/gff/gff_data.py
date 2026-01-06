@@ -316,16 +316,16 @@ class GFF(ComparableMixin):
             length_or_id: int = -2
             gff_struct: GFFStruct = value
             gff_list: GFFList = value
-            if field_type is GFFFieldType.Struct:
+            if field_type == GFFFieldType.Struct:
                 length_or_id = gff_struct.struct_id
-            if field_type is GFFFieldType.List:
+            if field_type == GFFFieldType.List:
                 length_or_id = len(gff_list)
 
             print(("  " * indent + label).ljust(column_len), " ", length_or_id)
 
-            if field_type is GFFFieldType.Struct:
+            if field_type == GFFFieldType.Struct:
                 self.print_tree(value, indent + 1)
-            if field_type is GFFFieldType.List:
+            if field_type == GFFFieldType.List:
                 for i, gff_struct in enumerate(value):
                     print(
                         f'  {"  " * indent}[Struct {i}]'.ljust(column_len),

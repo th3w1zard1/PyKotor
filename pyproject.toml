@@ -16,12 +16,12 @@ license = {text = "LGPL-3.0-or-later License"}
 keywords = ["kotor", "library", "holocron", "toolset", "pykotor", "editor", "holopatcher", "tslpatcher"]
 requires-python = ">=3.8"
 dependencies = [
-    "pykotor>=2.0.2",
+    "pykotor>=2.1.0",
 ]
 
 [project.optional-dependencies]
 # Extension libraries (now part of pykotor package)
-all-extensions = ["pykotor>=2.0.2"]
+all-extensions = ["pykotor>=2.1.0"]
 
 # Tools (lowercase PyPI names)
 holocrontoolset = ["holocrontoolset"]
@@ -33,7 +33,7 @@ holopazaak = ["holopazaak"]
 
 # Everything
 all = [
-    "pykotor>=2.0.2",
+    "pykotor>=2.1.0",
     "holocrontoolset",
     "holopatcher",
     "kotor-diff",
@@ -109,7 +109,7 @@ all-tools = [
 
 # Everything
 all = [
-    "pykotor>=2.0.2",
+    "pykotor>=2.1.0",
     "holocrontoolset",
     "holopatcher",
     "kotordiff",

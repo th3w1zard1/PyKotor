@@ -2478,7 +2478,7 @@ class Installation:
                 are: GFF = read_gff(area_resource.data())
                 if are.root.exists("Name"):
                     actual_ftype = are.root.what_type("Name")
-                    if actual_ftype is not GFFFieldType.LocalizedString:
+                    if actual_ftype != GFFFieldType.LocalizedString:
                         RobustLogger().warning(f"{area_resource.filename()} has incorrect field 'Name' type '{actual_ftype.name}', expected type 'List'")
                     locstring: LocalizedString | None = are.root.get_locstring("Name")
                     if locstring is None:

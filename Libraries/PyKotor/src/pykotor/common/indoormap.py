@@ -17,8 +17,9 @@ import itertools
 import json
 import math
 
+import pathlib
 from copy import copy, deepcopy
-from typing import TYPE_CHECKING, Any, NamedTuple, TypedDict
+from typing import TYPE_CHECKING, Any, Callable, NamedTuple, TypedDict
 
 from loggerplus import RobustLogger
 from pykotor.common.indoorkit import Kit, KitComponent, KitComponentHook, KitDoor
@@ -26,6 +27,7 @@ from pykotor.common.language import LocalizedString
 from pykotor.common.misc import Color, Game, ResRef
 from pykotor.common.modulekit import ModuleKit, ModuleKitManager
 from pykotor.extract.installation import Installation, SearchLocation
+from pykotor.resource.formats._base import ComparableMixin
 from pykotor.resource.formats.bwm import BWM, bytes_bwm, read_bwm
 from pykotor.resource.formats.erf import ERF, ERFType, write_erf
 from pykotor.resource.formats.lyt import LYT, LYTRoom, bytes_lyt
@@ -148,12 +150,22 @@ def _ensure_embedded_kit(kits: list[Kit]) -> EmbeddedKit:
     return ek
 
 
-class IndoorMap:
+class IndoorMap(ComparableMixin):
     """Headless indoor map model + builder.
 
     This is a migrated version of HolocronToolset `toolset.data.indoormap.IndoorMap`,
     refactored to remove UI (`qtpy`) dependencies so it can be used by library code and KotorCLI.
     """
+
+    COMPARABLE_FIELDS: tuple[str, ...] = (
+        "module_id",
+        "name",
+        "lighting",
+        "skybox",
+        "warp_point",
+        "target_game_type",
+    )
+    COMPARABLE_SEQUENCE_FIELDS: tuple[str, ...] = ("rooms",)
 
     def __init__(
         self,
@@ -769,7 +781,16 @@ class IndoorMap:
         self.target_game_type = None
 
 
-class IndoorMapRoom:
+class IndoorMapRoom(ComparableMixin):
+    COMPARABLE_FIELDS: tuple[str, ...] = (
+        "position",
+        "rotation",
+        "flip_x",
+        "flip_y",
+        "walkmesh_override",
+    )
+    COMPARABLE_SEQUENCE_FIELDS: tuple[str, ...] = ()
+
     def __init__(
         self,
         component: KitComponent,
@@ -786,6 +807,66 @@ class IndoorMapRoom:
         self.flip_x: bool = flip_x
         self.flip_y: bool = flip_y
         self.walkmesh_override: BWM | None = None
+
+    def compare(
+        self,
+        other: object,
+        log_func: Callable[[str], Any] = print,
+        path: pathlib.PurePath | str | None = None,
+    ) -> bool:
+        """Compare IndoorMapRoom objects, handling component comparison by ID and hooks carefully."""
+        if not isinstance(other, IndoorMapRoom):
+            log_func(f"Type mismatch: '{self.__class__.__name__}' vs '{other.__class__.__name__ if isinstance(other, object) else type(other)}'")
+            return False
+
+        is_same: bool = True
+
+        # Compare component by ID (not object identity, since roundtrips may create different instances)
+        if self.component.id != other.component.id:
+            log_func(f"Component ID mismatch: '{self.component.id}' vs '{other.component.id}'")
+            is_same = False
+        if self.component.name != other.component.name:
+            log_func(f"Component name mismatch: '{self.component.name}' vs '{other.component.name}'")
+            is_same = False
+
+        # Compare other fields using parent implementation
+        if path is not None:
+            prefix = f"{path} "
+            log_func = self._prefixed_logger(log_func, prefix)
+
+        # Compare scalar fields
+        comparable_fields = type(self).COMPARABLE_FIELDS
+        for field_name in comparable_fields:
+            try:
+                old_value = getattr(self, field_name)
+                new_value = getattr(other, field_name)
+            except AttributeError:
+                log_func(f"Missing attribute '{field_name}' on one of the objects")
+                is_same = False
+                continue
+
+            if not self._compare_values(field_name, old_value, new_value, log_func):
+                is_same = False
+
+        # Compare hooks - but only by component ID to avoid circular references
+        # We compare hook connections by checking if connected rooms have matching component IDs
+        if len(self.hooks) != len(other.hooks):
+            log_func(f"Hooks length mismatch: {len(self.hooks)} vs {len(other.hooks)}")
+            is_same = False
+        else:
+            for i, (hook1, hook2) in enumerate(zip(self.hooks, other.hooks)):
+                if hook1 is None and hook2 is None:
+                    continue
+                if hook1 is None or hook2 is None:
+                    log_func(f"Hook {i} connection mismatch: one is None, other is not")
+                    is_same = False
+                    continue
+                # Compare connected rooms by component ID to avoid circular comparison
+                if hook1.component.id != hook2.component.id:
+                    log_func(f"Hook {i} connected to different components: '{hook1.component.id}' vs '{hook2.component.id}'")
+                    is_same = False
+
+        return is_same
 
     def hook_position(
         self,

@@ -13,7 +13,7 @@
 -r Tools/HolocronToolset/requirements.txt
 -r Tools/HoloPatcher/requirements.txt
 -r Tools/BatchPatcher/requirements.txt
--r Tools/KotorCLI/requirements.txt
+# Tools/KotorCLI requirements are now part of Libraries/PyKotor
 -r Tools/KotorDiff/requirements.txt
 -r Tools/HoloPazaak/requirements.txt
 -r Tools/HolocronAI/requirements.txt

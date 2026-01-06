@@ -1991,25 +1991,14 @@ class IncrementalTSLPatchDataWriter:
 
                 # If from_extension fails, try to determine from filename
                 if restype is None or not restype.is_valid():
-                    # Try mapping common GFF extensions
-                    gff_extension_map: dict[str, ResourceType] = {
-                        "are": ResourceType.ARE,
-                        "dlg": ResourceType.DLG,
-                        "fac": ResourceType.FAC,
-                        "gff": ResourceType.GFF,
-                        "git": ResourceType.GIT,
-                        "gui": ResourceType.GUI,
-                        "ifo": ResourceType.IFO,
-                        "jrl": ResourceType.JRL,
-                        "utc": ResourceType.UTC,
-                        "utd": ResourceType.UTD,
-                        "ute": ResourceType.UTE,
-                        "uti": ResourceType.UTI,
-                        "utm": ResourceType.UTM,
-                        "utp": ResourceType.UTP,
-                        "utw": ResourceType.UTW,
-                    }
-                    restype = gff_extension_map.get(ext)
+                    # Check if this is a GFF extension using centralized method
+                    if ext in GFFContent.get_extensions():
+                        # Build mapping from GFF ResourceTypes dynamically
+                        gff_restypes = GFFContent.get_restypes()
+                        for gff_restype in gff_restypes:
+                            if gff_restype.extension == ext:
+                                restype = gff_restype
+                                break
 
                 if restype is None or not restype.is_valid():
                     msg = f"Could not determine valid ResourceType for GFF file {actual_filename} (extension: {ext})"

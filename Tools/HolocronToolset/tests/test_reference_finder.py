@@ -188,7 +188,10 @@ class TestFindScriptReferences:
 class TestFindTagReferences:
     """Tests for find_tag_references function."""
 
-    def test_find_tag_references_basic(self, installation: HTInstallation):
+    def test_find_tag_references_basic(
+        self,
+        installation: HTInstallation,
+    ):
         """Test finding tag references with basic search."""
         # Search for a common tag that should exist
         results = find_tag_references(
@@ -213,11 +216,16 @@ class TestFindTagReferences:
         for result in results:
             assert isinstance(result, ReferenceSearchResult)
             assert result.file_resource is not None
-            assert result.field_path == "Tag" or "ItemList" in result.field_path
+            # Field path can be "Tag" or contain "Tag" or "ItemList" in nested structures
+            assert result.field_path == "Tag" or ".Tag" in result.field_path or "Tag]" in result.field_path or "ItemList" in result.field_path
             assert result.matched_value is not None
-            assert result.file_type in {"UTC", "UTD", "UTP", "UTT", "UTI", "GIT"}
+            # Tag fields can be in various GFF file types
+            assert result.file_type in {"UTC", "UTD", "UTP", "UTT", "UTI", "UTM", "UTW", "GIT"}
 
-    def test_find_tag_references_partial_match(self, installation: HTInstallation):
+    def test_find_tag_references_partial_match(
+        self,
+        installation: HTInstallation,
+    ):
         """Test finding tag references with partial matching."""
         results = find_tag_references(
             installation,

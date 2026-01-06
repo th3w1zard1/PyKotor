@@ -311,7 +311,7 @@ class ModuleLinkPiece(ModulePieceResource):
         gff_ifo: GFF = self.ifo()
         if gff_ifo.root.exists("Mod_Area_list"):
             actual_ftype: GFFFieldType = gff_ifo.root.what_type("Mod_Area_list")
-            if actual_ftype is not GFFFieldType.List:
+            if actual_ftype != GFFFieldType.List:
                 RobustLogger().warning(f"{self.filename()} has IFO with incorrect field 'Mod_Area_list' type '{actual_ftype.name}', expected 'List'")
             else:
                 area_list: GFFList | None = gff_ifo.root.get_list("Mod_Area_list")
@@ -334,7 +334,7 @@ class ModuleLinkPiece(ModulePieceResource):
             gff_are: GFF = read_gff(area_file_res.data())
             if gff_are.root.exists("Name"):
                 actual_ftype: GFFFieldType = gff_are.root.what_type("Name")
-                if actual_ftype is not GFFFieldType.LocalizedString:
+                if actual_ftype != GFFFieldType.LocalizedString:
                     raise ValueError(f"{self.filename()} has IFO with incorrect field 'Name' type '{actual_ftype.name}', expected 'LocalizedString'")
                 result: LocalizedString | None = gff_are.root.get_locstring("Name")
                 if result is None:

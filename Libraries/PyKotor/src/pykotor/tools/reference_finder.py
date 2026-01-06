@@ -10,14 +10,14 @@ from __future__ import annotations
 
 import fnmatch
 import re
+
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Callable
 
 from pykotor.common.stream import BinaryReader
 from pykotor.extract.file import FileResource
-from pykotor.resource.formats.gff.gff_auto import read_gff
-from pykotor.resource.formats.gff.gff_data import GFF, GFFFieldType, GFFList, GFFStruct
-from pykotor.resource.formats.ncs.ncs_data import NCSByteCode, NCSInstructionQualifier
+from pykotor.resource.formats.gff import GFF, GFFFieldType, GFFList, GFFStruct, read_gff
+from pykotor.resource.formats.ncs import NCSByteCode, NCSInstructionQualifier
 from pykotor.resource.type import ResourceType
 
 if TYPE_CHECKING:
@@ -244,8 +244,6 @@ def find_resref_references(
 
     results: list[ReferenceSearchResult] = []
 
-    # Pre-compute GFF extensions set for faster membership testing
-    gff_extensions = {"utc", "utd", "utm", "utp", "utt", "uti", "are", "ifo", "dlg", "git"}
     exclude_types = {ResourceType.NCS} if search_ncs else None
 
     # Cache parsed GFF files by FileResource to avoid re-parsing the same file
@@ -259,9 +257,8 @@ def find_resref_references(
             continue
 
         restype = resource.restype()
-        extension = restype.extension
-        if extension in gff_extensions:
-            file_type = extension.upper()
+        if restype.is_gff():
+            file_type = restype.extension.upper()
             if file_types and file_type not in file_types:
                 continue
 
@@ -345,12 +342,9 @@ def find_field_value_references(
         field_types = {GFFFieldType.String, GFFFieldType.ResRef}
 
     # Build search pattern
-    search_pattern = _build_search_pattern(search_value, partial_match, case_sensitive)
+    search_pattern: re.Pattern[str] = _build_search_pattern(search_value, partial_match, case_sensitive)
 
     results: list[ReferenceSearchResult] = []
-
-    # Pre-compute GFF extensions set for faster membership testing
-    gff_extensions = {"utc", "utd", "utm", "utp", "utt", "uti", "are", "ifo", "dlg", "git"}
 
     # Cache parsed GFF files by FileResource to avoid re-parsing the same file
     # This handles cases where the same resource appears multiple times in the installation iterator
@@ -362,9 +356,8 @@ def find_field_value_references(
             continue
 
         restype = resource.restype()
-        extension = restype.extension
-        if extension in gff_extensions:
-            file_type = extension.upper()
+        if restype.is_gff():
+            file_type = restype.extension.upper()
             if file_types and file_type not in file_types:
                 continue
 
@@ -451,9 +444,7 @@ def _search_gff_for_resref(
         gff = read_gff(resource.data())
     except (ValueError, OSError):
         return []
-    return _search_gff_for_resref_with_gff(
-        resource, gff, resref, search_pattern, field_names, field_types, file_type, case_sensitive, logger
-    )
+    return _search_gff_for_resref_with_gff(resource, gff, resref, search_pattern, field_names, field_types, file_type, case_sensitive, logger)
 
 
 def _search_gff_for_resref_with_gff(
@@ -475,8 +466,6 @@ def _search_gff_for_resref_with_gff(
     # Detect if this is a partial match pattern (no word boundaries)
     pattern_str = search_pattern.pattern
     is_partial = "\\b" not in pattern_str
-    # Pre-compute field name set membership check (faster than repeated 'in' checks)
-    field_names_is_none = field_names is None
     # Pre-compute ResRef and String type checks (most common case)
     check_resref = GFFFieldType.ResRef in field_types
     check_string = GFFFieldType.String in field_types
@@ -486,7 +475,7 @@ def _search_gff_for_resref_with_gff(
         # Use direct field access instead of iteration when possible for better performance
         for label, field_type, value in gff_struct:
             # Early exit: skip field name check if we're filtering by field names
-            if not field_names_is_none and label not in field_names:
+            if field_names is not None and label not in field_names:
                 # Still need to recurse into nested structures even if we skip this field
                 if field_type == GFFFieldType.Struct and isinstance(value, GFFStruct):
                     new_path = f"{path_prefix}.{label}" if path_prefix else label
@@ -563,7 +552,7 @@ def _search_gff_for_resref_with_gff(
                         file_type=file_type,
                     ),
                 )
-                if logger:
+                if logger is not None:
                     logger(f"Found '{resref}' in {resource.filename()} at {field_path}")
 
             # Recurse into nested structures (only once, not multiple times)
@@ -597,7 +586,15 @@ def _search_gff_for_value(
     except (ValueError, OSError):
         return []
     return _search_gff_for_value_with_gff(
-        resource, gff, search_value, search_pattern, field_names, field_types, file_type, case_sensitive, logger
+        resource=resource,
+        gff=gff,
+        search_value=search_value,
+        search_pattern=search_pattern,
+        field_names=field_names,
+        field_types=field_types,
+        file_type=file_type,
+        case_sensitive=case_sensitive,
+        logger=logger,
     )
 
 
@@ -620,8 +617,6 @@ def _search_gff_for_value_with_gff(
     # Detect if this is a partial match pattern (no word boundaries)
     pattern_str = search_pattern.pattern
     is_partial = "\\b" not in pattern_str
-    # Pre-compute field name set membership check (faster than repeated 'in' checks)
-    field_names_is_none = field_names is None
     # Pre-compute ResRef and String type checks (most common case)
     check_resref = GFFFieldType.ResRef in field_types
     check_string = GFFFieldType.String in field_types
@@ -631,7 +626,7 @@ def _search_gff_for_value_with_gff(
         # Use direct field access instead of iteration when possible for better performance
         for label, field_type, value in gff_struct:
             # Early exit: skip field name check if we're filtering by field names
-            if not field_names_is_none and label not in field_names:
+            if field_names is not None and label not in field_names:
                 # Still need to recurse into nested structures even if we skip this field
                 if field_type == GFFFieldType.Struct and isinstance(value, GFFStruct):
                     new_path = f"{path_prefix}.{label}" if path_prefix else label
@@ -708,7 +703,7 @@ def _search_gff_for_value_with_gff(
                         file_type=file_type,
                     ),
                 )
-                if logger:
+                if logger is not None:
                     logger(f"Found '{search_value}' in {resource.filename()} at {field_path}")
 
             # Recurse into nested structures (only once, not multiple times)
@@ -770,7 +765,7 @@ def _search_ncs_for_string(
                                     byte_offset=string_offset,
                                 ),
                             )
-                            if logger:
+                            if logger is not None:
                                 logger(f"Found '{search_string}' in {resource.filename()} at byte offset {string_offset:#X}")
 
                 # Skip to next instruction based on opcode/qualifier
@@ -789,17 +784,17 @@ def _search_ncs_for_string(
                 elif opcode == NCSByteCode.STORE_STATE:
                     reader.skip(8)
                 elif opcode in (
-                    NCSByteCode.MOVSP,
-                    NCSByteCode.JMP,
-                    NCSByteCode.JSR,
-                    NCSByteCode.JZ,
-                    NCSByteCode.JNZ,
-                    NCSByteCode.DECxSP,
-                    NCSByteCode.INCxSP,
                     NCSByteCode.CPDOWNBP,
                     NCSByteCode.CPTOPBP,
                     NCSByteCode.DECxBP,
+                    NCSByteCode.DECxSP,
                     NCSByteCode.INCxBP,
+                    NCSByteCode.INCxSP,
+                    NCSByteCode.JMP,
+                    NCSByteCode.JNZ,
+                    NCSByteCode.JSR,
+                    NCSByteCode.JZ,
+                    NCSByteCode.MOVSP,
                 ):
                     reader.skip(4)
                 elif opcode == NCSByteCode.ACTION:
@@ -817,4 +812,3 @@ def _search_ncs_for_string(
         pass
 
     return results
-

@@ -665,7 +665,7 @@ def construct_utc(
     # SkillList is a GFF List containing 8 structs, each with a "Rank" uint8 field
     # Skill order: [0] Computer Use, [1] Demolitions, [2] Stealth, [3] Awareness,
     #              [4] Persuade, [5] Repair, [6] Security, [7] Treat Injury
-    if not root.exists("SkillList") or root.what_type("SkillList") is not GFFFieldType.List:
+    if not root.exists("SkillList") or root.what_type("SkillList") != GFFFieldType.List:
         if root.exists("SkillList"):
             RobustLogger().error("SkillList in UTC's must be a GFFList, recreating now...")
             del root._fields["SkillList"]

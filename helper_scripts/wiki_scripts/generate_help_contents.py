@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 """Generate help contents.xml from wiki and xoreos-docs files."""
+
 from __future__ import annotations
 
 import os
+
 from pathlib import Path
-from xml.etree import ElementTree as ET
 from xml.dom import minidom
+from xml.etree import ElementTree as ET
 
 
 def prettify(elem: ET.Element):
@@ -50,7 +52,7 @@ def categorize_wiki_files(files: list[str]):
         "HoloPatcher": [],
         "Other": [],
     }
-    
+
     for file in files:
         if file.startswith("2DA-") and file != "2DA-File-Format.md":
             categories["2DA Files"].append(file)
@@ -71,17 +73,36 @@ def categorize_wiki_files(files: list[str]):
         elif any(
             file.startswith(prefix)
             for prefix in [
-                "BIF-", "BWM-", "ERF-", "KEY-", "LIP-", "LTR-", "LYT-",
-                "MDL-", "NCS-", "NSS-File-Format", "SSF-", "TLK-", "TPC-",
-                "TXI-", "VIS-", "WAV-", "Bioware-Aurora-", "Rendering-",
-                "Kit-", "Mod-", "Indoor-", "Home.md", "Explanations-",
-                "Installing-"
+                "BIF-",
+                "BWM-",
+                "ERF-",
+                "KEY-",
+                "LIP-",
+                "LTR-",
+                "LYT-",
+                "MDL-",
+                "NCS-",
+                "NSS-File-Format",
+                "SSF-",
+                "TLK-",
+                "TPC-",
+                "TXI-",
+                "VIS-",
+                "WAV-",
+                "Bioware-Aurora-",
+                "Rendering-",
+                "Kit-",
+                "Mod-",
+                "Indoor-",
+                "Home.md",
+                "Explanations-",
+                "Installing-",
             ]
         ):
             categories["File Formats"].append(file)
         else:
             categories["Other"].append(file)
-    
+
     return categories
 
 
@@ -106,7 +127,7 @@ def generate_contents_xml():
     """Generate the contents.xml file."""
     root = ET.Element("Contents")
     root.set("version", "4")
-    
+
     # Introduction (existing)
     intro_folder = ET.Element("Folder")
     intro_folder.set("name", "Introduction")
@@ -115,14 +136,14 @@ def generate_contents_xml():
     intro_folder.append(create_document("Modules Tab", "introduction3-moduleResources.md"))
     intro_folder.append(create_document("Override Tab", "introduction4-overrideResources.md"))
     root.append(intro_folder)
-    
+
     # Tools (existing)
     tools_folder = ET.Element("Folder")
     tools_folder.set("name", "Tools")
     tools_folder.append(create_document("Module Editor", "tools/1-moduleEditor.md"))
     tools_folder.append(create_document("Map Builder", "tools/2-mapBuilder.md"))
     root.append(tools_folder)
-    
+
     # Tutorials (existing)
     tutorials_folder = ET.Element("Folder")
     tutorials_folder.set("name", "Tutorials")
@@ -131,11 +152,11 @@ def generate_contents_xml():
     tutorials_folder.append(create_document("Area Transitions", "tutorials/3-areaTransition.md"))
     tutorials_folder.append(create_document("DLG Static Cameras", "tutorials/4-creatingStaticCameras.md"))
     root.append(tutorials_folder)
-    
+
     # Get and categorize wiki files
     wiki_files: list[str] = get_wiki_files()
     categories: dict[str, list[str]] = categorize_wiki_files(wiki_files)
-    
+
     # File Formats
     if categories["File Formats"]:
         formats_folder = ET.Element("Folder")
@@ -147,7 +168,7 @@ def generate_contents_xml():
             name = " ".join(word.capitalize() for word in name.split())
             formats_folder.append(create_document(name, file))
         root.append(formats_folder)
-    
+
     # 2DA Files
     if categories["2DA Files"]:
         twoda_folder = ET.Element("Folder")
@@ -156,7 +177,7 @@ def generate_contents_xml():
             name = file.replace(".md", "").replace("2DA-", "").replace("-", " ").title()
             twoda_folder.append(create_document(name, file))
         root.append(twoda_folder)
-    
+
     # GFF Files
     if categories["GFF Files"]:
         gff_folder = ET.Element("Folder")
@@ -165,7 +186,7 @@ def generate_contents_xml():
             name = file.replace(".md", "").replace("GFF-", "").replace("-", " ")
             gff_folder.append(create_document(name, file))
         root.append(gff_folder)
-    
+
     # NSS Scripting folders
     if categories["NSS Scripting - Shared Constants"]:
         nss_const_folder = ET.Element("Folder")
@@ -174,7 +195,7 @@ def generate_contents_xml():
             name = file.replace(".md", "").replace("NSS-Shared-Constants-", "").replace("-", " ")
             nss_const_folder.append(create_document(name, file))
         root.append(nss_const_folder)
-    
+
     if categories["NSS Scripting - Shared Functions"]:
         nss_func_folder = ET.Element("Folder")
         nss_func_folder.set("name", "NSS Scripting - Shared Functions")
@@ -182,7 +203,7 @@ def generate_contents_xml():
             name = file.replace(".md", "").replace("NSS-Shared-Functions-", "").replace("-", " ")
             nss_func_folder.append(create_document(name, file))
         root.append(nss_func_folder)
-    
+
     if categories["NSS Scripting - K1 Only"]:
         nss_k1_folder = ET.Element("Folder")
         nss_k1_folder.set("name", "NSS Scripting - K1 Only")
@@ -190,7 +211,7 @@ def generate_contents_xml():
             name = file.replace(".md", "").replace("NSS-K1-Only-", "").replace("-", " ")
             nss_k1_folder.append(create_document(name, file))
         root.append(nss_k1_folder)
-    
+
     if categories["NSS Scripting - TSL Only"]:
         nss_tsl_folder = ET.Element("Folder")
         nss_tsl_folder.set("name", "NSS Scripting - TSL Only")
@@ -198,7 +219,7 @@ def generate_contents_xml():
             name = file.replace(".md", "").replace("NSS-TSL-Only-", "").replace("-", " ")
             nss_tsl_folder.append(create_document(name, file))
         root.append(nss_tsl_folder)
-    
+
     # TSLPatcher
     if categories["TSLPatcher"]:
         tslpatcher_folder = ET.Element("Folder")
@@ -207,7 +228,7 @@ def generate_contents_xml():
             name = file.replace(".md", "").replace("TSLPatcher-", "").replace("TSLPatcher_", "").replace("-", " ").replace("'s", "'s")
             tslpatcher_folder.append(create_document(name, file))
         root.append(tslpatcher_folder)
-    
+
     # HoloPatcher
     if categories["HoloPatcher"]:
         holopatcher_folder = ET.Element("Folder")
@@ -216,7 +237,7 @@ def generate_contents_xml():
             name = file.replace(".md", "").replace("HoloPatcher-", "").replace("-", " ")
             holopatcher_folder.append(create_document(name, file))
         root.append(holopatcher_folder)
-    
+
     # Other
     if categories["Other"]:
         other_folder = ET.Element("Folder")
@@ -225,7 +246,7 @@ def generate_contents_xml():
             name = file.replace(".md", "").replace("-", " ")
             other_folder.append(create_document(name, file))
         root.append(other_folder)
-    
+
     # Xoreos Docs
     xoreos_doc_files: list[os.PathLike] | list[str] = get_xoreos_docs()
     if xoreos_doc_files:
@@ -237,18 +258,18 @@ def generate_contents_xml():
             name = Path(file).stem.replace("-", " ").replace("_", " ").title()
             xoreos_folder.append(create_document(name, help_path))
         root.append(xoreos_folder)
-    
+
     return root
 
 
 def main():
     """Main function."""
     root = generate_contents_xml()
-    
+
     # Write to file
     output_path = Path("Tools/HolocronToolset/src/toolset/help/contents.xml")
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    
+
     # Prettify and write
     xml_str = prettify(root)
     # Remove the XML declaration line that minidom adds
@@ -256,11 +277,10 @@ def main():
     if lines[0].startswith("<?xml"):
         lines = lines[1:]
     xml_str = "\n".join(lines).strip()
-    
+
     output_path.write_text(xml_str, encoding="utf-8")
     print(f"Generated {output_path} with {len(list(root))} top-level folders")
 
 
 if __name__ == "__main__":
     main()
-

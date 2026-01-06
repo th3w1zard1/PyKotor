@@ -854,7 +854,8 @@ class DiffAnalyzerFactory:
         if is_twoda:
             return TwoDADiffAnalyzer()
 
-        is_gff = resource_type_lower in ("gff", "utc", "uti", "utp", "ute", "utm", "utd", "utw", "dlg", "are", "git", "ifo", "gui", "jrl", "fac")
+        # Check if this is a GFF extension using centralized method
+        is_gff = resource_type_lower in GFFContent.get_extensions() or resource_type_lower == "gff"
         if is_gff:
             return GFFDiffAnalyzer()
 

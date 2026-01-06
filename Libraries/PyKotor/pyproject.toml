@@ -40,6 +40,8 @@ classifiers = [
 dependencies = [
     "ply>=3.11,<4",
     "pycryptodome>=3.19.0",
+    "tomli>=2.0.0; python_version<'3.11'",
+    "tomli-w>=1.0.0",
 ]
 
 [project.optional-dependencies]
@@ -125,3 +127,6 @@ package-dir = {"" = "src"}
 where = ["src"]
 namespaces = true
 
+[project.scripts]
+pykotor = "pykotor.cli.__main__:main"
+pykotorcli = "pykotor.cli.__main__:main"

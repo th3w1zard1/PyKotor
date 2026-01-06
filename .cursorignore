@@ -1,8 +1,5 @@
-
+_tmp*
 .*
-
-tslpatchdata/
-
 *.cpuprofile
 *.egg-info*
 *.exe.manifest
@@ -50,22 +47,14 @@ tests/test_tslpatcher/reference_changes.ini
 tests/tmp/*
 tests/tslpatcher/tmp/*
 tests/Vanilla_KOTOR_Script_Source
-Tools/*/.github/
 this file has no permissions.txt
+Tools/*/.github/
 tox.ini
 Tree-*.toc
+tslpatchdata/
 typings/*
 vendor/KotOR_IO
-venv*/
 
-!tslpatchdata/changes.ini
-!tslpatchdata/generated_ini_output.log
-!tslpatchdata/test_kotordiff_profile_summary.txt
-!tslpatchdata/test_kotordiff_profile.prof
-!tslpatchdata/test_step1_generate_patch_profile_summary.txt
-!tslpatchdata/test_step1_generate_patch_profile.prof
-!tslpatchdata/test_step2_install_patch_profile_summary.txt
-!tslpatchdata/test_step2_install_patch_profile.prof
 !.cursor
 !.cursorignore
 !.cursorrules
@@ -76,6 +65,15 @@ venv*/
 !.gitmodules
 !.idea
 !.pre-commit-config.yaml
-!.venv*/Lib/site-packages/**/*.py
+!**/.venv*/Lib/site-packages/**/*.py
+!**/.venv*/Lib/site-packages/**/*.pyi
+!**/.venv*/**/*.pyi
 !.vscode
-_tmp*
+!tslpatchdata/changes.ini
+!tslpatchdata/generated_ini_output.log
+!tslpatchdata/test_kotordiff_profile_summary.txt
+!tslpatchdata/test_kotordiff_profile.prof
+!tslpatchdata/test_step1_generate_patch_profile_summary.txt
+!tslpatchdata/test_step1_generate_patch_profile.prof
+!tslpatchdata/test_step2_install_patch_profile_summary.txt
+!tslpatchdata/test_step2_install_patch_profile.prof */

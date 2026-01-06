@@ -160,63 +160,63 @@ class GFFBinaryReader(ResourceReader):
         if field_type in _COMPLEX_FIELD:
             offset = self._reader.read_uint32()  # relative to field data
             self._reader.seek(self._field_data_offset + offset)
-            if field_type is GFFFieldType.UInt64:
+            if field_type == GFFFieldType.UInt64:
                 # vendor/reone/src/libs/resource/format/gffreader.cpp:89-90
                 gff_struct.set_uint64(label, self._reader.read_uint64())
-            elif field_type is GFFFieldType.Int64:
+            elif field_type == GFFFieldType.Int64:
                 # vendor/reone/src/libs/resource/format/gffreader.cpp:92-95
                 gff_struct.set_int64(label, self._reader.read_int64())
-            elif field_type is GFFFieldType.Double:
+            elif field_type == GFFFieldType.Double:
                 gff_struct.set_double(label, self._reader.read_double())
-            elif field_type is GFFFieldType.String:
+            elif field_type == GFFFieldType.String:
                 # vendor/reone/src/libs/resource/format/gffreader.cpp:166-170
                 length = self._reader.read_uint32()
                 gff_struct.set_string(label, self._reader.read_string(length))
-            elif field_type is GFFFieldType.ResRef:
+            elif field_type == GFFFieldType.ResRef:
                 # vendor/reone/src/libs/resource/format/gffreader.cpp:173-177
                 length = self._reader.read_uint8()
                 resref = ResRef(self._reader.read_string(length).strip())
                 gff_struct.set_resref(label, resref)
-            elif field_type is GFFFieldType.LocalizedString:
+            elif field_type == GFFFieldType.LocalizedString:
                 # vendor/reone/src/libs/resource/format/gffreader.cpp:180-196
                 # NOTE: reone warns if count > 1, but PyKotor reads all substrings
                 gff_struct.set_locstring(label, self._reader.read_locstring())
-            elif field_type is GFFFieldType.Binary:
+            elif field_type == GFFFieldType.Binary:
                 # vendor/reone/src/libs/resource/format/gffreader.cpp:207-211
                 length = self._reader.read_uint32()
                 gff_struct.set_binary(label, self._reader.read_bytes(length))
-            elif field_type is GFFFieldType.Vector3:
+            elif field_type == GFFFieldType.Vector3:
                 gff_struct.set_vector3(label, self._reader.read_vector3())
-            elif field_type is GFFFieldType.Vector4:
+            elif field_type == GFFFieldType.Vector4:
                 gff_struct.set_vector4(label, self._reader.read_vector4())
-        elif field_type is GFFFieldType.Struct:
+        elif field_type == GFFFieldType.Struct:
             # vendor/reone/src/libs/resource/format/gffreader.cpp:108-110
             struct_index = self._reader.read_uint32()
             new_struct = GFFStruct()
             self._load_struct(new_struct, struct_index)
             gff_struct.set_struct(label, new_struct)
-        elif field_type is GFFFieldType.List:
+        elif field_type == GFFFieldType.List:
             # vendor/reone/src/libs/resource/format/gffreader.cpp:112-114
             self._load_list(gff_struct, label)
-        elif field_type is GFFFieldType.UInt8:
+        elif field_type == GFFFieldType.UInt8:
             # vendor/reone/src/libs/resource/format/gffreader.cpp:79-82
             gff_struct.set_uint8(label, self._reader.read_uint8())
-        elif field_type is GFFFieldType.Int8:
+        elif field_type == GFFFieldType.Int8:
             # vendor/reone/src/libs/resource/format/gffreader.cpp:84-87
             gff_struct.set_int8(label, self._reader.read_int8())
-        elif field_type is GFFFieldType.UInt16:
+        elif field_type == GFFFieldType.UInt16:
             # vendor/reone/src/libs/resource/format/gffreader.cpp:79-82
             gff_struct.set_uint16(label, self._reader.read_uint16())
-        elif field_type is GFFFieldType.Int16:
+        elif field_type == GFFFieldType.Int16:
             # vendor/reone/src/libs/resource/format/gffreader.cpp:84-87
             gff_struct.set_int16(label, self._reader.read_int16())
-        elif field_type is GFFFieldType.UInt32:
+        elif field_type == GFFFieldType.UInt32:
             # vendor/reone/src/libs/resource/format/gffreader.cpp:79-82
             gff_struct.set_uint32(label, self._reader.read_uint32())
-        elif field_type is GFFFieldType.Int32:
+        elif field_type == GFFFieldType.Int32:
             # vendor/reone/src/libs/resource/format/gffreader.cpp:84-87
             gff_struct.set_int32(label, self._reader.read_int32())
-        elif field_type is GFFFieldType.Single:
+        elif field_type == GFFFieldType.Single:
             # vendor/reone/src/libs/resource/format/gffreader.cpp:97-98
             gff_struct.set_single(label, self._reader.read_single())
         # NOTE: StrRef field type not supported (reone supports at gffreader.cpp:141-142, 199-204)
@@ -374,44 +374,44 @@ class GFFBinaryWriter(ResourceWriter):
             self._field_writer.write_uint32(self._field_data_writer.size())
 
             self._field_data_writer.end()
-            if field_type is GFFFieldType.UInt64:
+            if field_type == GFFFieldType.UInt64:
                 self._field_data_writer.write_uint64(value)
-            elif field_type is GFFFieldType.Int64:
+            elif field_type == GFFFieldType.Int64:
                 self._field_data_writer.write_int64(value)
-            elif field_type is GFFFieldType.Double:
+            elif field_type == GFFFieldType.Double:
                 self._field_data_writer.write_double(value)
-            elif field_type is GFFFieldType.String:
+            elif field_type == GFFFieldType.String:
                 self._field_data_writer.write_string(value, prefix_length=4)
-            elif field_type is GFFFieldType.ResRef:
+            elif field_type == GFFFieldType.ResRef:
                 self._field_data_writer.write_string(str(value), prefix_length=1)
-            elif field_type is GFFFieldType.LocalizedString:
+            elif field_type == GFFFieldType.LocalizedString:
                 self._field_data_writer.write_locstring(value)
-            elif field_type is GFFFieldType.Binary:
+            elif field_type == GFFFieldType.Binary:
                 self._field_data_writer.write_uint32(len(value))
                 self._field_data_writer.write_bytes(value)
-            elif field_type is GFFFieldType.Vector4:
+            elif field_type == GFFFieldType.Vector4:
                 self._field_data_writer.write_vector4(value)
-            elif field_type is GFFFieldType.Vector3:
+            elif field_type == GFFFieldType.Vector3:
                 self._field_data_writer.write_vector3(value)
-        elif field_type is GFFFieldType.Struct:
+        elif field_type == GFFFieldType.Struct:
             self._field_writer.write_uint32(self._struct_count)
             self._build_struct(value)
-        elif field_type is GFFFieldType.List:
+        elif field_type == GFFFieldType.List:
             self._field_writer.write_uint32(self._list_indices_writer.size())
             self._build_list(value)
-        elif field_type is GFFFieldType.UInt8:
+        elif field_type == GFFFieldType.UInt8:
             self._field_writer.write_uint32(value, max_neg1=True)
-        elif field_type is GFFFieldType.Int8:
+        elif field_type == GFFFieldType.Int8:
             self._field_writer.write_int32(value)
-        elif field_type is GFFFieldType.UInt16:
+        elif field_type == GFFFieldType.UInt16:
             self._field_writer.write_uint32(value, max_neg1=True)
-        elif field_type is GFFFieldType.Int16:
+        elif field_type == GFFFieldType.Int16:
             self._field_writer.write_int32(value)
-        elif field_type is GFFFieldType.UInt32:
+        elif field_type == GFFFieldType.UInt32:
             self._field_writer.write_uint32(value, max_neg1=True)
-        elif field_type is GFFFieldType.Int32:
+        elif field_type == GFFFieldType.Int32:
             self._field_writer.write_int32(value)
-        elif field_type is GFFFieldType.Single:
+        elif field_type == GFFFieldType.Single:
             self._field_writer.write_single(value)
         else:
             msg = f"Unknown field type '{field_type}'"

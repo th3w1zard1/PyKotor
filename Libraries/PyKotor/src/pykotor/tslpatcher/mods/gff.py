@@ -589,7 +589,7 @@ class ModifyFieldGFF(ModifyGFF):
             return
 
         logger.add_verbose(f"Direct set value of determined field type '{field_type.name}' at GFF path '{self.path}' to new value '{value}'. INI section: [{self.identifier}]")
-        if field_type is not GFFFieldType.LocalizedString:
+        if field_type != GFFFieldType.LocalizedString:
             FIELD_TYPE_TO_SETTER[field_type](navigated_struct, label, value, memory)
             return
 

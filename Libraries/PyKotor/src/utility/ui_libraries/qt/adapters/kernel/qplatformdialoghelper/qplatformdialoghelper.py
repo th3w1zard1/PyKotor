@@ -5,73 +5,329 @@ import re
 import sys
 
 from abc import abstractmethod
-from enum import Flag
-from typing import TYPE_CHECKING
+from enum import IntEnum, IntFlag
+from typing import Iterable, TYPE_CHECKING
 
-from qtpy.QtCore import (
-    QObject,
-    Signal,  # pyright: ignore[reportPrivateImportUsage]
-)
+from qtpy.QtCore import QObject, QUrl, Qt, Signal  # pyright: ignore[reportPrivateImportUsage]
 from qtpy.QtGui import QColor, QFont
 from qtpy.QtWidgets import QFileDialog, QMessageBox, QStyle
 
+from utility.ui_libraries.qt.adapters.kernel.qplatformdialoghelper.qfiledialogoptions import QFileDialogOptions
+
 if TYPE_CHECKING:
-    from qtpy.QtCore import QUrl, Qt
     from typing_extensions import Self
+
+
+class StyleHint(IntEnum):
+    DialogIsQtWindow = 0
+
+
+class DialogCode(IntEnum):
+    Rejected = 0
+    Accepted = 1
+
+
+class StandardButton(IntFlag):
+    NoButton = 0x00000000
+    Ok = 0x00000400
+    Save = 0x00000800
+    SaveAll = 0x00001000
+    Open = 0x00002000
+    Yes = 0x00004000
+    YesToAll = 0x00008000
+    No = 0x00010000
+    NoToAll = 0x00020000
+    Abort = 0x00040000
+    Retry = 0x00080000
+    Ignore = 0x00100000
+    Close = 0x00200000
+    Cancel = 0x00400000
+    Discard = 0x00800000
+    Help = 0x01000000
+    Apply = 0x02000000
+    Reset = 0x04000000
+    RestoreDefaults = 0x08000000
+
+
+class ButtonRole(IntFlag):
+    InvalidRole = -1
+    AcceptRole = 0
+    RejectRole = 1
+    DestructiveRole = 2
+    ActionRole = 3
+    HelpRole = 4
+    YesRole = 5
+    NoRole = 6
+    ResetRole = 7
+    ApplyRole = 8
+    RoleMask = 0x0FFFFFFF
+    AlternateRole = 0x10000000
+    Stretch = 0x20000000
+    Reverse = 0x40000000
+    EOL = InvalidRole
+
+
+class ButtonLayout(IntEnum):
+    UnknownLayout = -1
+    WinLayout = 0
+    MacLayout = 1
+    KdeLayout = 2
+    GnomeLayout = 3
+    AndroidLayout = 4
+
+
+BUTTON_ROLE_LAYOUTS = (
+    (
+        (
+            ButtonRole.ResetRole,
+            ButtonRole.Stretch,
+            ButtonRole.YesRole,
+            ButtonRole.AcceptRole,
+            ButtonRole.AlternateRole,
+            ButtonRole.DestructiveRole,
+            ButtonRole.NoRole,
+            ButtonRole.ActionRole,
+            ButtonRole.RejectRole,
+            ButtonRole.ApplyRole,
+            ButtonRole.HelpRole,
+            ButtonRole.EOL,
+            ButtonRole.EOL,
+            ButtonRole.EOL,
+        ),
+        (
+            ButtonRole.HelpRole,
+            ButtonRole.ResetRole,
+            ButtonRole.ApplyRole,
+            ButtonRole.ActionRole,
+            ButtonRole.Stretch,
+            ButtonRole.DestructiveRole | ButtonRole.Reverse,
+            ButtonRole.AlternateRole | ButtonRole.Reverse,
+            ButtonRole.RejectRole | ButtonRole.Reverse,
+            ButtonRole.AcceptRole | ButtonRole.Reverse,
+            ButtonRole.NoRole | ButtonRole.Reverse,
+            ButtonRole.YesRole | ButtonRole.Reverse,
+            ButtonRole.EOL,
+            ButtonRole.EOL,
+        ),
+        (
+            ButtonRole.HelpRole,
+            ButtonRole.ResetRole,
+            ButtonRole.Stretch,
+            ButtonRole.YesRole,
+            ButtonRole.NoRole,
+            ButtonRole.ActionRole,
+            ButtonRole.AcceptRole,
+            ButtonRole.AlternateRole,
+            ButtonRole.ApplyRole,
+            ButtonRole.DestructiveRole,
+            ButtonRole.RejectRole,
+            ButtonRole.EOL,
+        ),
+        (
+            ButtonRole.HelpRole,
+            ButtonRole.ResetRole,
+            ButtonRole.Stretch,
+            ButtonRole.ActionRole,
+            ButtonRole.ApplyRole | ButtonRole.Reverse,
+            ButtonRole.DestructiveRole | ButtonRole.Reverse,
+            ButtonRole.AlternateRole | ButtonRole.Reverse,
+            ButtonRole.RejectRole | ButtonRole.Reverse,
+            ButtonRole.AcceptRole | ButtonRole.Reverse,
+            ButtonRole.NoRole | ButtonRole.Reverse,
+            ButtonRole.YesRole | ButtonRole.Reverse,
+            ButtonRole.EOL,
+        ),
+        (
+            ButtonRole.HelpRole,
+            ButtonRole.ResetRole,
+            ButtonRole.ApplyRole,
+            ButtonRole.ActionRole,
+            ButtonRole.Stretch,
+            ButtonRole.RejectRole | ButtonRole.Reverse,
+            ButtonRole.NoRole | ButtonRole.Reverse,
+            ButtonRole.DestructiveRole | ButtonRole.Reverse,
+            ButtonRole.AlternateRole | ButtonRole.Reverse,
+            ButtonRole.AcceptRole | ButtonRole.Reverse,
+            ButtonRole.YesRole | ButtonRole.Reverse,
+            ButtonRole.EOL,
+            ButtonRole.EOL,
+        ),
+    ),
+    (
+        (
+            ButtonRole.ActionRole,
+            ButtonRole.YesRole,
+            ButtonRole.AcceptRole,
+            ButtonRole.AlternateRole,
+            ButtonRole.DestructiveRole,
+            ButtonRole.NoRole,
+            ButtonRole.RejectRole,
+            ButtonRole.ApplyRole,
+            ButtonRole.ResetRole,
+            ButtonRole.HelpRole,
+            ButtonRole.Stretch,
+            ButtonRole.EOL,
+            ButtonRole.EOL,
+            ButtonRole.EOL,
+        ),
+        (
+            ButtonRole.YesRole,
+            ButtonRole.NoRole,
+            ButtonRole.AcceptRole,
+            ButtonRole.RejectRole,
+            ButtonRole.AlternateRole,
+            ButtonRole.DestructiveRole,
+            ButtonRole.Stretch,
+            ButtonRole.ActionRole,
+            ButtonRole.ApplyRole,
+            ButtonRole.ResetRole,
+            ButtonRole.HelpRole,
+            ButtonRole.EOL,
+            ButtonRole.EOL,
+        ),
+        (
+            ButtonRole.AcceptRole,
+            ButtonRole.AlternateRole,
+            ButtonRole.ApplyRole,
+            ButtonRole.ActionRole,
+            ButtonRole.YesRole,
+            ButtonRole.NoRole,
+            ButtonRole.Stretch,
+            ButtonRole.ResetRole,
+            ButtonRole.DestructiveRole,
+            ButtonRole.RejectRole,
+            ButtonRole.HelpRole,
+            ButtonRole.EOL,
+        ),
+        (
+            ButtonRole.YesRole,
+            ButtonRole.NoRole,
+            ButtonRole.AcceptRole,
+            ButtonRole.RejectRole,
+            ButtonRole.AlternateRole,
+            ButtonRole.DestructiveRole,
+            ButtonRole.ApplyRole,
+            ButtonRole.ActionRole,
+            ButtonRole.Stretch,
+            ButtonRole.ResetRole,
+            ButtonRole.HelpRole,
+            ButtonRole.EOL,
+            ButtonRole.EOL,
+            ButtonRole.EOL,
+        ),
+        (
+            ButtonRole.YesRole,
+            ButtonRole.AcceptRole,
+            ButtonRole.AlternateRole,
+            ButtonRole.DestructiveRole,
+            ButtonRole.NoRole,
+            ButtonRole.RejectRole,
+            ButtonRole.Stretch,
+            ButtonRole.ActionRole,
+            ButtonRole.ApplyRole,
+            ButtonRole.ResetRole,
+            ButtonRole.HelpRole,
+            ButtonRole.EOL,
+            ButtonRole.EOL,
+        ),
+    ),
+)
 
 
 class QPlatformDialogHelper(QObject):
     accept: Signal = Signal()
     reject: Signal = Signal()
 
-    StyleHint = QStyle.StyleHint
-    DialogCode = QFileDialog.DialogCode
+    StyleHint = StyleHint
+    DialogCode = DialogCode
+    StandardButton = StandardButton
+    ButtonRole = ButtonRole
+    ButtonLayout = ButtonLayout
 
-    def __new__(cls, *args, **kwargs) -> Self:
-        new_cls: type[Self] = cls
+    def __new__(cls, *args, **kwargs) -> Self:  # type: ignore[name-defined]
+        new_cls = cls
         if cls is QPlatformDialogHelper:
             if sys.platform in ("win32", "cygwin"):
                 from utility.ui_libraries.qt.adapters.kernel.qplatformdialoghelper.qwindowsdialoghelpers import QWindowsDialogHelper
-                new_cls = QWindowsDialogHelper  # type: ignore[misc]
+
+                new_cls = QWindowsDialogHelper
             elif sys.platform == "linux":
                 from utility.ui_libraries.qt.adapters.kernel.qplatformdialoghelper.qlinuxdialoghelpers import LinuxFileDialogHelper
-                new_cls = LinuxFileDialogHelper  # type: ignore[misc]
+
+                new_cls = LinuxFileDialogHelper
             elif sys.platform == "darwin":
                 from utility.ui_libraries.qt.adapters.kernel.qplatformdialoghelper.qmacdialoghelpers import QMacDialogHelper
-                new_cls = QMacDialogHelper  # type: ignore[misc]
-            raise NotImplementedError(f"No dialog helper implemented for {sys.platform}")
+
+                new_cls = QMacDialogHelper
+            else:
+                raise NotImplementedError(f"No dialog helper implemented for {sys.platform}")
         return super().__new__(new_cls)
 
-    @abstractmethod
     def exec(self) -> DialogCode:
-        ...
+        raise NotImplementedError()
 
-    @abstractmethod
-    def show(self, window_flags: QObject, window_state: Qt.WindowState, parent: QObject | None):
-        ...
+    def show(self, window_flags: Qt.WindowFlags, window_state: Qt.WindowState, parent: QObject | None):
+        raise NotImplementedError()
 
-    @abstractmethod
     def hide(self):
-        ...
+        raise NotImplementedError()
 
     def selectMimeTypeFilter(self, filter: str) -> None:
-        """TODO: Platform specific implementation."""
+        self._selected_mime_type_filter = filter
+
     def selectedMimeTypeFilter(self) -> str:
-        """TODO: Platform specific implementation."""
+        return getattr(self, "_selected_mime_type_filter", "")
 
     def isSupportedUrl(self, url: QUrl) -> bool:
         return url.isLocalFile()
 
-    def setOptions(self, options: QFileDialog.Option) -> None:
-        self._private.options = options
-    def testOption(self, option: QFileDialog.Option) -> bool:
-        return self._private.options & option
-
     def defaultStyleHint(self) -> StyleHint:
-        return self.StyleHint(0)
+        return StyleHint.DialogIsQtWindow
 
     def styleHint(self) -> StyleHint:
         return self.defaultStyleHint()
+
+    @staticmethod
+    def buttonRole(button: StandardButton) -> ButtonRole:
+        if button in (
+            StandardButton.Ok,
+            StandardButton.Save,
+            StandardButton.Open,
+            StandardButton.SaveAll,
+            StandardButton.Retry,
+            StandardButton.Ignore,
+        ):
+            return ButtonRole.AcceptRole
+        if button in (StandardButton.Cancel, StandardButton.Close, StandardButton.Abort):
+            return ButtonRole.RejectRole
+        if button is StandardButton.Discard:
+            return ButtonRole.DestructiveRole
+        if button is StandardButton.Help:
+            return ButtonRole.HelpRole
+        if button is StandardButton.Apply:
+            return ButtonRole.ApplyRole
+        if button in (StandardButton.Yes, StandardButton.YesToAll):
+            return ButtonRole.YesRole
+        if button in (StandardButton.No, StandardButton.NoToAll):
+            return ButtonRole.NoRole
+        if button in (StandardButton.RestoreDefaults, StandardButton.Reset):
+            return ButtonRole.ResetRole
+        return ButtonRole.InvalidRole
+
+    @staticmethod
+    def buttonLayout(orientation: Qt.Orientation = Qt.Orientation.Horizontal, policy: ButtonLayout = ButtonLayout.UnknownLayout) -> tuple[ButtonRole, ...]:
+        layout_policy = policy
+        if layout_policy == ButtonLayout.UnknownLayout:
+            if sys.platform == "darwin":
+                layout_policy = ButtonLayout.MacLayout
+            elif sys.platform.startswith("linux") or os.name == "posix":
+                layout_policy = ButtonLayout.KdeLayout
+            elif sys.platform.startswith("android"):
+                layout_policy = ButtonLayout.AndroidLayout
+            else:
+                layout_policy = ButtonLayout.WinLayout
+        orientation_index = 1 if orientation == Qt.Orientation.Vertical else 0
+        return BUTTON_ROLE_LAYOUTS[orientation_index][layout_policy]
 
 
 class QPlatformColorDialogHelper(QPlatformDialogHelper):
@@ -86,87 +342,87 @@ class QPlatformColorDialogHelper(QPlatformDialogHelper):
         ...
 
 
-class QPlatformFileDialogHelper(QPlatformDialogHelper if TYPE_CHECKING else QObject):
-    """Abstract base class for platform-specific file dialog helpers.
-    This class defines the interface for creating and managing file dialogs across different platforms.
-
-    This is a massive TODO as it would be an enormous amount of work to implement this for all platforms.
-    Therefore, this class is currently a stub and will be implemented in the future.
-    """
+class QPlatformFileDialogHelper(QPlatformDialogHelper):
     filterRegExp = r"^(.+)\s*\((.*)\)$"
 
-    def __init__(self, options: int):
+    FileMode = QFileDialog.FileMode
+    AcceptMode = QFileDialog.AcceptMode
+    Option = QFileDialog.Option
+
+    fileSelected = Signal(QUrl)
+    filesSelected = Signal(list)
+    currentChanged = Signal(QUrl)
+    directoryEntered = Signal(QUrl)
+    filterSelected = Signal(str)
+
+    def __init__(self, options: QFileDialogOptions | None = None):
         super().__init__()
-        self._options: int = options
+        self._options: QFileDialogOptions = options or QFileDialogOptions()
         self._directory: str = ""
-        self._selectedFiles: list[str] = []
-        self._selectedNameFilter: str = ""
-        self._selectedMimeTypeFilter: str = ""
+        self._selected_files: list[str] = []
+        self._selected_name_filter: str = ""
 
     @staticmethod
     def cleanFilterList(filter: str) -> list[str]:
-        """
-        Mirror Qt's QPlatformFileDialogHelper::cleanFilterList behaviour.
-
-        The incoming string can contain an optional human readable label followed by
-        one or more glob patterns enclosed in parentheses, e.g. "Images (*.png *.jpg)".
-        """
-
         if not filter:
             return []
 
-        filter = filter.strip()
-        match = re.match(QPlatformFileDialogHelper.filterRegExp, filter)
+        match = re.match(QPlatformFileDialogHelper.filterRegExp, filter.strip())
         if not match:
-            # No parenthesised pattern list – treat the entire string as a pattern.
-            return [filter]
+            return [filter.strip()]
 
-        pattern_section: str = match.group(2).strip()
+        pattern_section = match.group(2).strip()
         if not pattern_section:
             return []
 
-        # Patterns are separated by whitespace in Qt's implementation.
         return [pattern for pattern in pattern_section.split() if pattern]
 
-    FileMode = QFileDialog.FileMode.AnyFile
-    AcceptMode = QFileDialog.AcceptMode.AcceptOpen
-    Option = QFileDialog.Option.ReadOnly & ~QFileDialog.Option.ReadOnly
+    def options(self) -> QFileDialogOptions:
+        return self._options
 
-    fileSelected = Signal(str)
-    filesSelected = Signal(list)
-    currentChanged = Signal(str)
-    directoryEntered = Signal(str)
-    filterSelected = Signal(str)
+    def setOptions(self, options: QFileDialogOptions) -> None:
+        self._options = options
 
     def isSupportedUrl(self, url: QUrl) -> bool:
-        return os.path.exists(url.toLocalFile())  # noqa: PTH110
+        scheme = url.scheme()
+        return scheme in self._options.supportedSchemes() and (url.isLocalFile() or url.isValid())
 
     def setDirectory(self, directory: str) -> None:
         self._directory = directory
+        self._options.setInitialDirectory(QUrl.fromLocalFile(directory))
 
     def directory(self) -> str:
         return self._directory
 
     def selectFile(self, filename: QUrl) -> None:
-        self._selectedFiles = [filename.toString()]
+        if filename.isLocalFile():
+            self._selected_files = [filename.toLocalFile()]
+        else:
+            self._selected_files = [filename.toString()]
 
     def selectedFiles(self) -> list[str]:
-        return self._selectedFiles
+        return list(self._selected_files)
 
     def setFilter(self) -> None:
         pass
 
-    def selectMimeTypeFilter(self, filter: str) -> None:  # noqa: A002
-        self._selectedMimeTypeFilter = filter
-
-    def selectedMimeTypeFilter(self) -> str:
-        return self._selectedMimeTypeFilter
-
     def selectNameFilter(self, filter: str) -> None:  # noqa: A002
-        self._selectedNameFilter = filter
+        self._selected_name_filter = filter
+        self._options.selectNameFilter(filter)
 
     def selectedNameFilter(self) -> str:
-        return self._selectedNameFilter
+        if self._options.selectedNameFilter():
+            return self._options.selectedNameFilter()
+        return self._selected_name_filter
+
+    def selectedMimeTypeFilter(self) -> str:
+        return self._options.selectedMimeTypeFilter()
+
+    def selectMimeTypeFilter(self, filter: str) -> None:  # noqa: A002
+        self._options.selectMimeTypeFilter(filter)
+
+    def defaultNameFilterString(self) -> str:
+        return self._options.defaultNameFilterString()
 
 
 class QPlatformFontDialogHelper(QPlatformDialogHelper):

@@ -1779,9 +1779,6 @@ version = "1.2.1"
 source = { editable = "Tools/KotorCLI" }
 dependencies = [
     { name = "pykotor" },
-    { name = "tomli", marker = "python_full_version < '3.11'" },
-    { name = "tomli-w", version = "1.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
-    { name = "tomli-w", version = "1.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
 ]
 
 [package.optional-dependencies]
@@ -1798,8 +1795,6 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.0.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5.3" },
-    { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0.0" },
-    { name = "tomli-w", specifier = ">=1.0.0" },
 ]
 provides-extras = ["dev"]
 
@@ -3025,11 +3020,14 @@ wheels = [
 
 [[package]]
 name = "pykotor"
-version = "2.0.5"
+version = "2.1.0"
 source = { editable = "Libraries/PyKotor" }
 dependencies = [
     { name = "ply" },
     { name = "pycryptodome" },
+    { name = "tomli", marker = "python_full_version < '3.11'" },
+    { name = "tomli-w", version = "1.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
+    { name = "tomli-w", version = "1.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
 ]
 
 [package.optional-dependencies]
@@ -3089,6 +3087,8 @@ requires-dist = [
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.0.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5.3" },
+    { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0.0" },
+    { name = "tomli-w", specifier = ">=1.0.0" },
 ]
 provides-extras = ["font", "gl", "newgl", "secure-xml", "encodings", "all", "dev"]
 

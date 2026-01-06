@@ -23,11 +23,16 @@ def read_requirements() -> list[str]:
 
 setup(
     name="pykotor",
-    version="2.0.3",
+    version="2.1.0",
     description="Read, modify and write files used by KotOR's game engine.",
     packages=find_packages(where="src"),
     package_dir={"": "src"},
     install_requires=read_requirements(),
     python_requires=">=3.8",
-
+    entry_points={
+        "console_scripts": [
+            "pykotor=pykotor.cli.__main__:main",
+            "pykotorcli=pykotor.cli.__main__:main",
+        ],
+    },
 )

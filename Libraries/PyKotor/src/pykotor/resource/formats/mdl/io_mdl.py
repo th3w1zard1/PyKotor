@@ -9,12 +9,12 @@ from pykotor.common.misc import Color, Game
 from pykotor.common.stream import BinaryReader, BinaryWriter
 from pykotor.resource.formats.mdl.mdl_data import (
     MDL,
-    MDLAnimation,
     MDLAABBNode,
+    MDLAnimation,
     MDLBoneVertex,
+    MDLConstraint,
     MDLController,
     MDLControllerRow,
-    MDLConstraint,
     MDLEvent,
     MDLFace,
     MDLMesh,
@@ -165,7 +165,7 @@ class _GeometryHeader:
 
     # MDLOps uses these specific padding bytes when compiling ASCII to binary.
     # Using the same values ensures byte-level parity with MDLOps output.
-    MDLOPS_PADDING: ClassVar[bytes] = b"\x31\x96\xBD"
+    MDLOPS_PADDING: ClassVar[bytes] = b"\x31\x96\xbd"
 
     def __init__(self):
         self.function_pointer0: int = 0
@@ -208,7 +208,7 @@ class _GeometryHeader:
         writer.write_bytes(self.unknown0)
         writer.write_uint8(self.geometry_type)
         # Always write MDLOps padding bytes for parity
-        #writer.write_bytes(self.padding)
+        # writer.write_bytes(self.padding)
         writer.write_bytes(self.MDLOPS_PADDING)
 
 
@@ -540,13 +540,11 @@ class _Node:
                     data_idx += 1
             # Write data values
             # Check if this is a compressed quaternion controller (type 20, column_count 2)
-            is_compressed_quat = (
-                controller.type_id == int(MDLControllerType.ORIENTATION)
-                and controller.column_count == 2
-            )
+            is_compressed_quat = controller.type_id == int(MDLControllerType.ORIENTATION) and controller.column_count == 2
             if is_compressed_quat:
                 # Compressed quaternions: write as uint32s (1 per row, reinterpreted from float)
                 import struct as struct_module
+
                 for _ in range(controller.row_count):
                     if data_idx < len(self.w_controller_data):
                         # Reinterpret float as uint32 (same bits, NOT numeric conversion)
@@ -575,7 +573,7 @@ class _Node:
 
     def _write_trimesh_data(self, writer: BinaryWriter):
         """Write trimesh data in MDLOps order.
-        
+
         Reference: vendor/MDLOps/MDLOpsM.pm:7903-7940
         MDLOps writes mesh data in this order:
         1. faces (7903-7907)
@@ -624,7 +622,7 @@ class _Node:
 
     def _write_aabb_extra(self, writer: BinaryWriter) -> None:
         """Write AABB tree recursively, matching MDLOps depth-first traversal.
-        
+
         Reference: vendor/MDLOps/MDLOpsM.pm:1471-1513 (writeaabb)
         Format: Each node is 40 bytes: 6 floats (bbox) + 4 int32s (child offsets + face_index + unknown)
         """
@@ -636,28 +634,28 @@ class _Node:
 
         tree_start = writer.position()
         node_index = [0]  # Mutable counter for tracking which node we're writing
-        
+
         def _write_aabb_recursive(writer: BinaryWriter, start_pos: int) -> int:
             """Recursively write AABB node and return last written position.
-            
+
             Args:
                 writer: BinaryWriter instance
                 start_pos: Position to write this node at
-            
+
             Returns:
                 Last written position (end of subtree rooted at this node)
             """
             if node_index[0] >= len(aabb_nodes):
                 return start_pos
-            
+
             idx = node_index[0]
             node = aabb_nodes[idx]
-            
+
             # Write bbox (6 floats = 24 bytes)
             writer.seek(start_pos)
             writer.write_vector3(node.bbox_min)
             writer.write_vector3(node.bbox_max)
-            
+
             if node.face_index != -1:
                 # Leaf node: write (0, 0, face_index, 0)
                 # Reference: vendor/MDLOps/MDLOpsM.pm:1490 - always writes 0 for unknown
@@ -674,7 +672,7 @@ class _Node:
                 node_index[0] += 1
                 right_child_pos = _write_aabb_recursive(writer, left_child_pos)
                 last_pos = _write_aabb_recursive(writer, right_child_pos)
-                
+
                 # Seek back to write child pointers (at offset 24 from start_pos)
                 # Format: (left_offset - 12, right_offset - 12, -1, 0)
                 # Reference: vendor/MDLOps/MDLOpsM.pm:1507 - always writes 0 for unknown
@@ -683,12 +681,12 @@ class _Node:
                 writer.write_int32(right_child_pos - 12)
                 writer.write_int32(-1)
                 writer.write_int32(0)  # MDLOps always writes 0, not node.unknown
-                
+
                 return last_pos
-        
+
         # Write recursively starting from tree_start
         _write_aabb_recursive(writer, tree_start)
-        
+
         # Seek to end of AABB tree (calculated as tree_start + count * 40)
         final_pos = tree_start + len(aabb_nodes) * 40
         writer.seek(final_pos)
@@ -1170,6 +1168,7 @@ class _TrimeshHeader:
         self.uv_direction = reader.read_vector2()
         self.uv_jitter = reader.read_single()
         self.uv_speed = reader.read_single()
+
         # MDLOps `l[13]` (signed). Convert negative values to the sentinel 0xFFFFFFFF.
         def _read_i32_as_u32() -> int:
             v = reader.read_int32()
@@ -1206,7 +1205,7 @@ class _TrimeshHeader:
             # Read hologram_donotdraw as uint32, but only set to True if the value is explicitly 1
             # Some models may have uninitialized memory (non-zero garbage) that should be treated as 0
             hologram_value = reader.read_uint32()
-            self.hologram_donotdraw = (hologram_value == 1)
+            self.hologram_donotdraw = hologram_value == 1
             # Store in tail fields for compatibility (not used in K2)
             self.tail_short = 0
             self.k2_tail_long1 = reader.read_uint32()
@@ -1329,6 +1328,7 @@ class _TrimeshHeader:
         writer.write_vector2(self.uv_direction)
         writer.write_single(self.uv_jitter)
         writer.write_single(self.uv_speed)
+
         # MDLOps writes these as signed int32 values. Emit 0xFFFFFFFF as -1.
         def _write_u32_as_i32(v: int) -> None:
             writer.write_int32(-1 if v == 0xFFFFFFFF else int(v))
@@ -1396,7 +1396,7 @@ class _TrimeshHeader:
 
     def vertex_indices_size(self) -> int:
         """Size of vertex indices array (3 int16s per face = 6 bytes per face).
-        
+
         Reference: vendor/MDLOps/MDLOpsM.pm:7936-7940 (vertindexes writing)
         """
         return len(self.faces) * 6  # 3 shorts per face
@@ -1713,9 +1713,9 @@ class _EmitterHeader:
         self.y_grid: int = 0  # L
         self.spawn_type: int = 0  # L (spawntype)
 
-        self.update: str = ""   # Z[32]
-        self.render: str = ""   # Z[32]
-        self.blend: str = ""    # Z[32]
+        self.update: str = ""  # Z[32]
+        self.render: str = ""  # Z[32]
+        self.blend: str = ""  # Z[32]
         self.texture: str = ""  # Z[32]
         self.chunk_name: str = ""  # Z[16]
 
@@ -2209,24 +2209,24 @@ class MDLBinaryReader:
         name_indexes_raw = self._reader.read_bytes(4 * name_indexes_count)
         name_indexes_unpacked = []
         for i in range(name_indexes_count):
-            name_indexes_unpacked.append(int.from_bytes(name_indexes_raw[i*4:(i+1)*4], byteorder="little", signed=True))
-        
+            name_indexes_unpacked.append(int.from_bytes(name_indexes_raw[i * 4 : (i + 1) * 4], byteorder="little", signed=True))
+
         names_size = model_header.offset_to_animations - (model_header.offset_to_name_offsets + (4 * name_indexes_count))
         names_raw = self._reader.read_bytes(names_size)
-        
+
         names_list = []
         current_pos = 0
         for _ in range(name_indexes_count):
-            null_pos = names_raw.find(b'\x00', current_pos)
+            null_pos = names_raw.find(b"\x00", current_pos)
             if null_pos == -1:
                 null_pos = len(names_raw)
             name_bytes = names_raw[current_pos:null_pos]
-            name = name_bytes.decode('ascii', errors='ignore')
+            name = name_bytes.decode("ascii", errors="ignore")
             names_list.append(name)
             current_pos = null_pos + 1
             if current_pos >= len(names_raw):
                 break
-        
+
         self._names = names_list
 
     def _get_node_order(
@@ -2237,11 +2237,11 @@ class MDLBinaryReader:
         self._reader.seek(startnode + 4)
         name_index = self._reader.read_uint16()
         self._order2nameindex.append(name_index)
-        
+
         self._reader.seek(startnode + 44)
         child_array_offset = self._reader.read_uint32()
         child_array_length = self._reader.read_uint32()
-        
+
         if child_array_length > 0 and child_array_offset not in (0, 0xFFFFFFFF):
             self._reader.seek(child_array_offset + 12)
             child_offsets = [self._reader.read_uint32() for _ in range(child_array_length)]
@@ -2270,7 +2270,7 @@ class MDLBinaryReader:
         # A node can have both MESH and AABB flags (walkmesh with visible geometry)
         if bin_node.header.type_id & MDLNodeFlags.AABB:
             node.node_type = MDLNodeType.AABB
-            from pykotor.resource.formats.mdl.mdl_data import MDLWalkmesh, MDLAABBNode
+            from pykotor.resource.formats.mdl.mdl_data import MDLAABBNode, MDLWalkmesh
 
             if node.aabb is None:
                 node.aabb = MDLWalkmesh()
@@ -2281,7 +2281,7 @@ class MDLBinaryReader:
                 # Reference: vendor/MDLOps/MDLOpsM.pm:1440-1466 (readaabb)
                 def _read_aabb_recursive(reader: BinaryReader, offset: int) -> tuple[int, list[MDLAABBNode]]:
                     """Recursively read AABB tree node and its children.
-                    
+
                     Returns:
                         (count, nodes): Number of nodes read and list of AABB nodes
                     """
@@ -2332,7 +2332,7 @@ class MDLBinaryReader:
         # Check for LIGHT flag - nodes with LIGHT flag should be marked as LIGHT type
         if bin_node.header.type_id & MDLNodeFlags.LIGHT:
             node.node_type = MDLNodeType.LIGHT
-            from pykotor.resource.formats.mdl.mdl_data import MDLLight, MDLDynamicType
+            from pykotor.resource.formats.mdl.mdl_data import MDLDynamicType, MDLLight
 
             if bin_node.light is not None:
                 node.light = MDLLight()
@@ -2343,11 +2343,11 @@ class MDLBinaryReader:
                 node.light.light_priority = bin_node.light.light_priority
                 node.light.fading_light = bool(bin_node.light.fading_light)
                 node.light.flare_radius = bin_node.light.flare_radius
-                
+
                 # Read flare data (sizes, positions, colors, textures)
                 # Reference: vendor/MDLOps/MDLOpsM.pm:1875-1954 (flare data reading)
                 light_header = bin_node.light
-                
+
                 # Flare textures: array of string pointers, each pointing to a 12-byte null-terminated string
                 if light_header.flare_textures_count > 0 and light_header.offset_to_flare_textures not in (0, 0xFFFFFFFF):
                     node.light.flare_textures = []
@@ -2361,7 +2361,7 @@ class MDLBinaryReader:
                                 ptr = self._reader.read_uint32()
                                 if ptr not in (0, 0xFFFFFFFF):
                                     texture_pointers.append(ptr)
-                        
+
                         # Read texture names from pointers
                         for texture_ptr in texture_pointers:
                             if texture_ptr <= self._reader.size() - 12:
@@ -2371,7 +2371,7 @@ class MDLBinaryReader:
                                     node.light.flare_textures.append(texture_name)
                     finally:
                         self._reader.seek(saved_pos)
-                
+
                 # Flare sizes: array of floats (4 bytes each)
                 if light_header.flare_sizes_count > 0 and light_header.offset_to_flare_sizes not in (0, 0xFFFFFFFF):
                     node.light.flare_sizes = []
@@ -2384,7 +2384,7 @@ class MDLBinaryReader:
                                 node.light.flare_sizes.append(size)
                     finally:
                         self._reader.seek(saved_pos)
-                
+
                 # Flare positions: array of floats (4 bytes each)
                 if light_header.flare_positions_count > 0 and light_header.offset_to_flare_positions not in (0, 0xFFFFFFFF):
                     node.light.flare_positions = []
@@ -2397,7 +2397,7 @@ class MDLBinaryReader:
                                 node.light.flare_positions.append(position)
                     finally:
                         self._reader.seek(saved_pos)
-                
+
                 # Flare color shifts: array of Vector3 (12 bytes each = 3 floats)
                 if light_header.flare_colors_count > 0 and light_header.offset_to_flare_colors not in (0, 0xFFFFFFFF):
                     node.light.flare_color_shifts = []
@@ -2455,6 +2455,7 @@ class MDLBinaryReader:
             # Check for DANGLY flag - danglymesh nodes should use MDLDangly
             if bin_node.header.type_id & MDLNodeFlags.DANGLY:
                 from pykotor.resource.formats.mdl.mdl_data import MDLDangly
+
                 node.dangly = MDLDangly()
                 node.mesh = node.dangly  # MDLDangly inherits from MDLMesh
                 node.node_type = MDLNodeType.DANGLYMESH
@@ -2503,35 +2504,39 @@ class MDLBinaryReader:
             # Match MDLOps exactly: use vertex_count from header, no verification, no inference, no fallbacks
             vcount = bin_node.trimesh.vertex_count
             node.mesh.vertex_positions = []
-            
+
             # Read vertices: try MDX first if valid, otherwise fall back to MDL
             vertices_read = False
-            if (bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX) 
-                and self._reader_ext is not None 
+            if (
+                bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.VERTEX)
+                and self._reader_ext is not None
                 and self._reader_ext.size() > 0
-                and bin_node.trimesh.mdx_data_offset not in (0, 0xFFFFFFFF) 
-                and bin_node.trimesh.mdx_data_size > 0 
-                and vcount > 0):
+                and bin_node.trimesh.mdx_data_offset not in (0, 0xFFFFFFFF)
+                and bin_node.trimesh.mdx_data_size > 0
+                and vcount > 0
+            ):
                 # Read from MDX
                 vertex_offset = 0 if bin_node.trimesh.mdx_vertex_offset == 0xFFFFFFFF else bin_node.trimesh.mdx_vertex_offset
                 for i in range(vcount):
                     seek_pos = bin_node.trimesh.mdx_data_offset + i * bin_node.trimesh.mdx_data_size + vertex_offset
                     if seek_pos + 12 <= self._reader_ext.size():
                         self._reader_ext.seek(seek_pos)
-                        node.mesh.vertex_positions.append(Vector3(
-                            self._reader_ext.read_single(),
-                            self._reader_ext.read_single(),
-                            self._reader_ext.read_single(),
-                        ))
+                        node.mesh.vertex_positions.append(
+                            Vector3(
+                                self._reader_ext.read_single(),
+                                self._reader_ext.read_single(),
+                                self._reader_ext.read_single(),
+                            )
+                        )
                 vertices_read = True
-            
+
             if not vertices_read and vcount > 0 and bin_node.trimesh.vertices_offset not in (0, 0xFFFFFFFF):
                 # Read from MDL
                 vertices_bytes = vcount * 12
                 if bin_node.trimesh.vertices_offset + vertices_bytes <= self._reader.size():
                     self._reader.seek(bin_node.trimesh.vertices_offset)
                     node.mesh.vertex_positions = [self._reader.read_vector3() for _ in range(vcount)]
-            
+
             if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.NORMAL) and self._reader_ext is not None and self._reader_ext.size() > 0:
                 node.mesh.vertex_normals = []
             if bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX0) and self._reader_ext is not None and self._reader_ext.size() > 0:
@@ -2643,6 +2648,7 @@ class MDLBinaryReader:
                                 # Store constraint as a simple value (MDLDangly.constraints is list[MDLConstraint])
                                 # For now, we'll store the float value directly in a constraint object
                                 from pykotor.resource.formats.mdl.mdl_data import MDLConstraint
+
                                 constraint = MDLConstraint()
                                 # Use type field to store the float value (temporary workaround)
                                 constraint.type = int(constraint_value * 1000000) if constraint_value != 0.0 else 0
@@ -2822,7 +2828,7 @@ class MDLBinaryReader:
             except ValueError:
                 # Controller type not in enum, use INVALID
                 controller_type_enum = MDLControllerType.INVALID
-        
+
         # Handle case where we didn't read all rows due to bounds issues
         actual_row_count = min(len(time_keys), len(data), row_count)
         rows: list[MDLControllerRow] = [MDLControllerRow(time_keys[i], data[i]) for i in range(actual_row_count)]
@@ -2988,6 +2994,7 @@ class MDLBinaryWriter:
             # If mesh is None but node_type indicates mesh, create empty mesh to preserve structure
             if not mdl_node.mesh:
                 from pykotor.resource.formats.mdl.mdl_data import MDLMesh
+
                 mdl_node.mesh = MDLMesh()
             bin_node.trimesh = _TrimeshHeader()
             bin_node.trimesh.function_pointer0 = fp0
@@ -3003,7 +3010,7 @@ class MDLBinaryWriter:
                 bin_node.dangly.constraints_count2 = len(mdl_node.dangly.constraints)
                 # Store constraints for writing later (store on bin_node for access during write)
                 bin_node._dangly_constraints = list(mdl_node.dangly.constraints)
-            
+
             # Store AABB tree for writing later if this is an AABB node
             # Always initialize _aabb_nodes when aabb exists, even if empty, to match AABB flag behavior
             if mdl_node.aabb:
@@ -3073,9 +3080,9 @@ class MDLBinaryWriter:
             # Preserve original indices_offsets_count from binary header if available, otherwise use array length
             original_count = int(mdl_node.mesh.indices_offsets_count)
             if original_count > 0:
-                    bin_node.trimesh.indices_offsets_count = bin_node.trimesh.indices_offsets_count2 = original_count
-                    if not bin_node.trimesh.indices_offsets:
-                        bin_node.trimesh.indices_offsets = [0] * original_count
+                bin_node.trimesh.indices_offsets_count = bin_node.trimesh.indices_offsets_count2 = original_count
+                if not bin_node.trimesh.indices_offsets:
+                    bin_node.trimesh.indices_offsets = [0] * original_count
             else:
                 bin_node.trimesh.indices_offsets_count = bin_node.trimesh.indices_offsets_count2 = len(bin_node.trimesh.indices_offsets)
 
@@ -3170,6 +3177,7 @@ class MDLBinaryWriter:
         if mdl_node.emitter or mdl_node.node_type == MDLNodeType.EMITTER:
             if not mdl_node.emitter:
                 from pykotor.resource.formats.mdl.mdl_data import MDLEmitter
+
                 mdl_node.emitter = MDLEmitter()
             bin_node.emitter = _EmitterHeader()
             emitter = mdl_node.emitter
@@ -3238,11 +3246,7 @@ class MDLBinaryWriter:
             # Handle compressed quaternions for orientation controllers
             # If compress_quaternions is set and this is an orientation controller with 4 floats per row,
             # set column_count to 2 (compressed quaternions use 2 columns: compressed uint32 + padding)
-            if (
-                self._mdl.compress_quaternions == 1
-                and mdl_controller.controller_type == MDLControllerType.ORIENTATION
-                and data_floats_per_row == 4
-            ):
+            if self._mdl.compress_quaternions == 1 and mdl_controller.controller_type == MDLControllerType.ORIENTATION and data_floats_per_row == 4:
                 bin_controller.column_count = 2  # Compressed quaternions use 2 columns
             # Encode bezier flag in column_count bit 4 (16) as per mdlops.
             # For bezier controllers, each logical column stores 3 floats per row.
@@ -3279,9 +3283,7 @@ class MDLBinaryWriter:
                     bin_controller.unknown1 = b"\xe3\x77\x11"  # 227,119,17
                 elif ctrl_type == MDLControllerType.SCALE:  # 36
                     bin_controller.unknown1 = b"\x32\x12\x00"  # 50,18,0
-                elif (node_type == MDLNodeFlags.LIGHT or True) and ctrl_type in (
-                    MDLControllerType.RADIUS, MDLControllerType.MULTIPLIER, MDLControllerType.COLOR
-                ):
+                elif (node_type == MDLNodeFlags.LIGHT or True) and ctrl_type in (MDLControllerType.RADIUS, MDLControllerType.MULTIPLIER, MDLControllerType.COLOR):
                     # Light controllers: radius(88), multiplier(140), color(76)
                     bin_controller.unknown1 = b"\xff\x72\x11"  # 255,114,17
                 elif node_type & MDLNodeFlags.EMITTER:
@@ -3296,11 +3298,7 @@ class MDLBinaryWriter:
 
             # Adjust float offset calculation for compressed quaternions
             # Compressed quaternions use 1 float per row (just the uint32 reinterpreted as float)
-            if (
-                self._mdl.compress_quaternions == 1
-                and mdl_controller.controller_type == MDLControllerType.ORIENTATION
-                and data_floats_per_row == 4
-            ):
+            if self._mdl.compress_quaternions == 1 and mdl_controller.controller_type == MDLControllerType.ORIENTATION and data_floats_per_row == 4:
                 # Compressed quaternions: 1 float per row (compressed uint32 as float)
                 # Plus row_count for time keys
                 cur_float_offset += bin_controller.row_count + bin_controller.row_count
@@ -3316,17 +3314,14 @@ class MDLBinaryWriter:
                 # Handle compressed quaternions for orientation controllers
                 # If compress_quaternions is set and this is an orientation controller with 4 floats per row,
                 # compress the quaternion data
-                if (
-                    self._mdl.compress_quaternions == 1
-                    and controller.controller_type == MDLControllerType.ORIENTATION
-                    and len(row.data) == 4
-                ):
+                if self._mdl.compress_quaternions == 1 and controller.controller_type == MDLControllerType.ORIENTATION and len(row.data) == 4:
                     # Compress quaternion (x, y, z, w) into a single uint32
                     quat = Vector4(row.data[0], row.data[1], row.data[2], row.data[3])
                     compressed = _compress_quaternion(quat)
                     # Reinterpret uint32 as float (same bits, NOT numeric conversion)
                     # MDLOps stores compressed quaternions as raw uint32 bytes in the float array
                     import struct
+
                     compressed_as_float = struct.unpack("<f", struct.pack("<I", compressed))[0]
                     bin_node.w_controller_data.append(compressed_as_float)
                     # MDLOps does NOT write a padding float - column_count=2 is just a flag
@@ -3723,7 +3718,7 @@ class MDLBinaryWriter:
         bin_node: _Node,
     ) -> None:
         """Calculate AABB tree offset.
-        
+
         AABB tree is written after all other node data (faces, vertices, etc.).
         Reference: vendor/MDLOps/MDLOpsM.pm:7279-7312 (AABB tree writing)
         """
@@ -3743,7 +3738,7 @@ class MDLBinaryWriter:
         # The layout is: headers -> aabbloc field (4 bytes) -> AABB tree -> faces
         # So the AABB tree position is: node_offset + all_headers_size + 4 (for aabbloc field)
         aabb_tree_offset = node_offset + bin_node.all_headers_size(self.game) + 4
-        
+
         # AABB tree size: 40 bytes per node
         aabb_tree_size = len(aabb_nodes) * 40
         bin_node.trimesh.offset_to_aabb = aabb_tree_offset

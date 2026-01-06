@@ -57,6 +57,7 @@ if TYPE_CHECKING:
     from typing_extensions import Self
 
     from utility.system.win32.winapi.device_iocontrol import IOCTL
+
     T = TypeVar("T", bound=_CData)
 else:
     T = TypeVar("T")
@@ -189,6 +190,7 @@ if os.name == "nt":
             ("FileNameNamespace", ctypes.c_ubyte),
             # FileName follows in memory, need manual parsing
         ]
+
     class BY_HANDLE_FILE_INFORMATION(Structure):  # noqa: N801
         _fields_: Sequence[tuple[str, type[_CData]] | tuple[str, type[_CData], int]] = [
             ("dwFileAttributes", wintypes.DWORD),
@@ -220,7 +222,6 @@ if os.name == "nt":
             self.lpSecurityDescriptor = security_descriptor
             self.bInheritHandle = inherit_handle
 
-
     class OVERLAPPED(Structure):  # Define the OVERLAPPED structure
         _fields_: Sequence[tuple[str, type[_CData]] | tuple[str, type[_CData], int]] = [
             ("Internal", wintypes.PULONG),
@@ -232,6 +233,7 @@ if os.name == "nt":
 
     class WindowsDataClass(PlatformSpecificDataClass):
         supported_platforms: ClassVar[list[str]] = ["win32"]
+
         @classmethod
         def device_io_control(  # noqa: PLR0913
             cls,
@@ -244,7 +246,7 @@ if os.name == "nt":
             bytes_returned: wintypes.DWORD | _CArgObject | None = None,
             overlapped: _Pointer[OVERLAPPED] | None = None,
             *,
-            err_msg: str | None = None
+            err_msg: str | None = None,
         ) -> HRESULT | bytes:
             """Executes a device-specific operation using the Windows `DeviceIoControl` API.
 
@@ -322,7 +324,7 @@ if os.name == "nt":
             flags: FileFlags = FileFlags.NONE,
             template_file: wintypes.HANDLE | None = None,
             *,
-            err_msg: str | None = None
+            err_msg: str | None = None,
         ) -> wintypes.HANDLE:
             """Retrieves a handle to an existing file using the Windows API.
 
@@ -378,7 +380,6 @@ if os.name == "nt":
                 return ctypes_array.value
             raise ValueError(f"The input's value attr must be a bytes, not {ctypes_array.value.__class__.__name__}")
 
-
     @dataclass(frozen=True)
     class WindowsExtendedAttributes(WindowsDataClass):
         extended_attributes: dict[str, bytes]
@@ -407,12 +408,12 @@ if os.name == "nt":
                     size,
                     byref(size),
                     False,  # Process the data  # noqa: FBT003
-                    True,   # Start reading from the beginning  # noqa: FBT003
-                    byref(context)
+                    True,  # Start reading from the beginning  # noqa: FBT003
+                    byref(context),
                 )
 
                 while more:
-                    ea = buffer.raw[:size.value].split(b"\x00")
+                    ea = buffer.raw[: size.value].split(b"\x00")
                     if ea[0]:
                         attributes[ea[0].decode()] = ea[1]
                     more = windll.kernel32.BackupRead(
@@ -422,7 +423,7 @@ if os.name == "nt":
                         byref(size),
                         False,  # Process the data  # noqa: FBT003
                         False,  # Continue reading  # noqa: FBT003
-                        byref(context)
+                        byref(context),
                     )
             finally:
                 # Clean up the context and handle
@@ -431,9 +432,9 @@ if os.name == "nt":
                     None,
                     wintypes.DWORD(0),
                     None,
-                    True,   # End the read operation  # noqa: FBT003
+                    True,  # End the read operation  # noqa: FBT003
                     False,  # noqa: FBT003
-                    byref(context)
+                    byref(context),
                 )
                 windll.kernel32.CloseHandle(hFile)
 
@@ -468,8 +469,7 @@ if os.name == "nt":
             if success == 0:
                 raise OSError(f"Failed to retrieve integrity information for {filepath}")
 
-            return cls(integrity_status=buffer.raw[:bytes_returned.value])
-
+            return cls(integrity_status=buffer.raw[: bytes_returned.value])
 
     @dataclass(frozen=True)
     class WindowsFileIndex(WindowsDataClass):
@@ -491,7 +491,6 @@ if os.name == "nt":
 
             file_index = (file_info.nFileIndexHigh << 32) | file_info.nFileIndexLow
             return cls(file_index=file_index)
-
 
     @dataclass(frozen=True)
     class WindowsSparseFileRegions(WindowsDataClass):
@@ -524,12 +523,11 @@ if os.name == "nt":
 
             regions = []
             for i in range(0, bytes_returned.value, sizeof(wintypes.LARGE_INTEGER) * 2):
-                offset = c_ulonglong.from_buffer_copy(buffer.raw[i:i + 8])
-                length = c_ulonglong.from_buffer_copy(buffer.raw[i + 8:i + 16])
+                offset = c_ulonglong.from_buffer_copy(buffer.raw[i : i + 8])
+                length = c_ulonglong.from_buffer_copy(buffer.raw[i + 8 : i + 16])
                 regions.append((offset.value, length.value))
 
             return cls(regions=regions)
-
 
     @dataclass(frozen=True)
     class WindowsFileLocks(WindowsDataClass):
@@ -562,7 +560,7 @@ if os.name == "nt":
 
             locks = []
             for i in range(0, bytes_returned.value, sizeof(LOCK_INFO)):
-                lock_info = LOCK_INFO.from_buffer_copy(buffer.raw[i:i + sizeof(LOCK_INFO)])
+                lock_info = LOCK_INFO.from_buffer_copy(buffer.raw[i : i + sizeof(LOCK_INFO)])
                 locks.append(
                     {
                         "offset": lock_info.Offset,
@@ -609,7 +607,6 @@ if os.name == "nt":
 
             return cls(alternate_data_streams=ads_list)
 
-
     @dataclass(frozen=True)
     class WindowsHardLinks(WindowsDataClass):
         hard_link_count: int
@@ -655,7 +652,6 @@ if os.name == "nt":
 
             return cls(hard_link_count=hard_link_count, hard_link_paths=hard_link_paths)
 
-
     @dataclass(frozen=True)
     class WindowsVolumeInformation(WindowsDataClass):
         volume_serial_number: int
@@ -689,7 +685,6 @@ if os.name == "nt":
                 file_system_flags=file_system_flags.value,
             )
 
-
     @dataclass(frozen=True)
     class WindowsFileCompression(WindowsDataClass):
         compression_format: bytes | None
@@ -720,7 +715,6 @@ if os.name == "nt":
                 raise OSError(f"Failed to retrieve compression information for {filepath}")
 
             return cls(compression_format=buffer.raw[: bytes_returned.value])
-
 
     @dataclass(frozen=True)
     class WindowsFileEncryption(WindowsDataClass):
@@ -753,7 +747,6 @@ if os.name == "nt":
 
             return cls(encryption_status=buffer.raw[: bytes_returned.value])
 
-
     @dataclass(frozen=True)
     class WindowsFileSparsity(WindowsDataClass):
         sparse_status: bytes | None
@@ -784,7 +777,6 @@ if os.name == "nt":
                 raise OSError(f"Failed to retrieve sparsity information for {filepath}")
 
             return cls(sparse_status=buffer.raw[: bytes_returned.value])
-
 
     @dataclass(frozen=True)
     class WindowsFileQuotas(WindowsDataClass):
@@ -817,7 +809,6 @@ if os.name == "nt":
 
             return cls(quota_information=buffer.raw[: bytes_returned.value])
 
-
     @dataclass(frozen=True)
     class WindowsFileResources(WindowsDataClass):
         resources: list[dict[str, Any]]
@@ -844,7 +835,6 @@ if os.name == "nt":
                     resources.append({"type": res_type, "name": res_name, "data": string_at(res_data, res_size)})
             windll.kernel32.FreeLibrary(module)
             return cls(resources=resources)
-
 
     @dataclass(frozen=True)
     class WindowsFileVersion(WindowsDataClass):
@@ -900,7 +890,6 @@ if os.name == "nt":
                 company_name=ver_info.get("CompanyName"),
                 file_description=ver_info.get("FileDescription"),
             )
-
 
     @dataclass(frozen=True)
     class WindowsFileSecurityInfo(WindowsDataClass):
@@ -969,14 +958,12 @@ if os.name == "nt":
             sid = cast(sid_start, POINTER(c_void_p))
             return WindowsFileSecurityInfo._lookup_account_sid(sid.contents)
 
-
     class CompressionFormat(IntEnum):
         NONE = 0
         DEFAULT = 1
         LZNT1 = 2
         XPRESS = 3
         XPRESS_HUFF = 4
-
 
     class UsnReason(IntEnum):
         NONE = 0x00000000  # e.g. when the entry represents a file creation or deletion event where no other specific reason is applicable
@@ -1004,7 +991,6 @@ if os.name == "nt":
         INTEGRITY_CHANGE = 0x00800000
         CLOSE = 0x80000000
 
-
     class FileHandle(int):
         def __new__(cls, handle: int | None) -> Self:
             if handle is None or handle == windll.kernel32.INVALID_HANDLE_VALUE:
@@ -1031,18 +1017,12 @@ if os.name == "nt":
             buffer = create_string_buffer(num_bytes)
             bytes_read = c_ulong(0)
 
-            success = windll.kernel32.ReadFile(
-                self.handle,
-                buffer,
-                num_bytes,
-                byref(bytes_read),
-                None
-            )
+            success = windll.kernel32.ReadFile(self.handle, buffer, num_bytes, byref(bytes_read), None)
 
             if not success:
                 raise WinError()
 
-            return buffer.raw[:bytes_read.value]
+            return buffer.raw[: bytes_read.value]
 
         def close(self) -> None:
             """Close the file handle."""
@@ -1111,7 +1091,7 @@ if os.name == "nt":
                 None,
                 FileCreationDisposition.OPEN_EXISTING,
                 FileFlags.FILE_FLAG_BACKUP_SEMANTICS,
-                volume_handle
+                volume_handle,
             )
 
             windll.kernel32.CloseHandle(volume_handle)
@@ -1143,8 +1123,7 @@ if os.name == "nt":
         RECALL_ON_DATA_ACCESS = 0x00400000
 
         def __repr__(self) -> str:
-            active_flags = [name for name, value in self.__class__.__members__.items()
-                            if self & value]
+            active_flags = [name for name, value in self.__class__.__members__.items() if self & value]
             if not active_flags:
                 return f"{self.__class__.__name__}.NONE"
             return f"{' | '.join(f'{self.__class__.__name__}.{flag}' for flag in active_flags)}"
@@ -1175,6 +1154,7 @@ if os.name == "nt":
 
             This structure is essential for querying the state of the USN Journal using the FSCTL_QUERY_USN_JOURNAL control code.
             """
+
             _fields_: Sequence[tuple[str, type[_CData]] | tuple[str, type[_CData], int]] = [
                 ("UsnJournalID", wintypes.LARGE_INTEGER),
                 ("FirstUsn", wintypes.LARGE_INTEGER),
@@ -1182,24 +1162,28 @@ if os.name == "nt":
                 ("LowestValidUsn", wintypes.LARGE_INTEGER),
                 ("MaxUsn", wintypes.LARGE_INTEGER),
                 ("MaxSize", wintypes.DWORD),
-                ("AllocationDelta", wintypes.DWORD)
+                ("AllocationDelta", wintypes.DWORD),
             ]
             NextUsn: int
+
         class USN_JOURNAL_DATA_V1(Structure):  # noqa: N801
             """USN_JOURNAL_DATA_V1 structure, used for querying the state of the USN Journal with additional fields."""
+
             _fields_: Sequence[tuple[str, type[_CData]] | tuple[str, type[_CData], int]] = [
                 ("UsnJournalID", wintypes.LARGE_INTEGER),
                 ("FirstUsn", wintypes.LARGE_INTEGER),
                 ("NextUsn", wintypes.LARGE_INTEGER),
                 ("LowestValidUsn", wintypes.LARGE_INTEGER),
                 ("MaxUsn", wintypes.LARGE_INTEGER),
-                ("MaximumSize", c_uint64),    # Changed from DWORD in V0
-                ("AllocationDelta", c_uint64), # Changed from DWORD in V0
+                ("MaximumSize", c_uint64),  # Changed from DWORD in V0
+                ("AllocationDelta", c_uint64),  # Changed from DWORD in V0
                 ("MinSupportedMajorVersion", wintypes.WORD),  # New in V1
-                ("MaxSupportedMajorVersion", wintypes.WORD)   # New in V1
+                ("MaxSupportedMajorVersion", wintypes.WORD),  # New in V1
             ]
+
         class USN_JOURNAL_DATA_V2(Structure):  # noqa: N801
             """USN_JOURNAL_DATA_V2 structure, which includes flags for the journal and adds new fields."""
+
             _fields_: Sequence[tuple[str, type[_CData]] | tuple[str, type[_CData], int]] = [
                 ("UsnJournalID", wintypes.LARGE_INTEGER),
                 ("FirstUsn", wintypes.LARGE_INTEGER),
@@ -1212,7 +1196,7 @@ if os.name == "nt":
                 ("MaxSupportedMajorVersion", wintypes.WORD),
                 ("Flags", wintypes.DWORD),  # New in V2, contains flags for the journal
                 ("RangeTrackChunkSize", wintypes.DWORD),  # New in V2, for managing tracking ranges
-                ("RangeTrackFileSizeThreshold", wintypes.LARGE_INTEGER)  # New in V2, threshold size for file tracking
+                ("RangeTrackFileSizeThreshold", wintypes.LARGE_INTEGER),  # New in V2, threshold size for file tracking
             ]
 
         class MFT_ENUM_DATA_V0(Structure):  # noqa: N801, D106
@@ -1222,13 +1206,15 @@ if os.name == "nt":
             ]
             FileReferenceNumber: int
             NextFileReferenceNumber: int
+
         class MFT_ENUM_DATA_V1(Structure):  # noqa: N801
             """MFT_ENUM_DATA_V1 structure, used to enumerate the MFT with more control and granularity."""
+
             _fields_: Sequence[tuple[str, type[_CData]] | tuple[str, type[_CData], int]] = [
                 ("FileReferenceNumber", wintypes.LARGE_INTEGER),
                 ("LowUsn", wintypes.LARGE_INTEGER),  # New in V1, low USN for filtering
                 ("HighUsn", wintypes.LARGE_INTEGER),  # New in V1, high USN for filtering
-                ("Flags", wintypes.DWORD)  # New in V1, to control enumeration behavior
+                ("Flags", wintypes.DWORD),  # New in V1, to control enumeration behavior
             ]
             FileReferenceNumber: int
 
@@ -1258,14 +1244,7 @@ if os.name == "nt":
             # Call DeviceIoControl to get the file record
             bytes_returned = wintypes.DWORD(0)
             success = cls.device_io_control(
-                handle,
-                FSCTL.FSCTL_GET_NTFS_FILE_RECORD,
-                input_buffer,
-                ctypes.sizeof(input_buffer),
-                output_buffer,
-                output_buffer_size,
-                ctypes.byref(bytes_returned),
-                None
+                handle, FSCTL.FSCTL_GET_NTFS_FILE_RECORD, input_buffer, ctypes.sizeof(input_buffer), output_buffer, output_buffer_size, ctypes.byref(bytes_returned), None
             )
 
             if not success:
@@ -1284,10 +1263,10 @@ if os.name == "nt":
             parent_ref = None
 
             while attr_offset < record_header.RealSize:
-                attr_type, attr_length = struct.unpack("<II", output_buffer.value[attr_offset:attr_offset + 8])
+                attr_type, attr_length = struct.unpack("<II", output_buffer.value[attr_offset : attr_offset + 8])
 
                 if attr_type == 0x30:  # File Name Attribute
-                    filename_attr = NTFS_FILE_NAME_ATTRIBUTE.from_buffer_copy(output_buffer.value[attr_offset + 16:])
+                    filename_attr = NTFS_FILE_NAME_ATTRIBUTE.from_buffer_copy(output_buffer.value[attr_offset + 16 :])
                     name_length = filename_attr.FileNameLength
                     parent_ref = FileReference(filename_attr.ParentDirectory)
                     filename = ctypes.wstring_at(ctypes.addressof(filename_attr) + ctypes.sizeof(NTFS_FILE_NAME_ATTRIBUTE), name_length)
@@ -1314,20 +1293,10 @@ if os.name == "nt":
             usn_journal_data = cls.USN_JOURNAL_DATA_V0()
             bytes_returned = wintypes.DWORD(0)
             cls.device_io_control(
-                handle,
-                FSCTL.FSCTL_QUERY_USN_JOURNAL,
-                None,
-                0,
-                ctypes.byref(usn_journal_data),
-                ctypes.sizeof(cls.USN_JOURNAL_DATA_V0),
-                ctypes.byref(bytes_returned),
-                None
+                handle, FSCTL.FSCTL_QUERY_USN_JOURNAL, None, 0, ctypes.byref(usn_journal_data), ctypes.sizeof(cls.USN_JOURNAL_DATA_V0), ctypes.byref(bytes_returned), None
             )
 
-            mft_enum_data = cls.MFT_ENUM_DATA_V0(
-                FileReferenceNumber=0,
-                NextFileReferenceNumber=usn_journal_data.NextUsn
-            )
+            mft_enum_data = cls.MFT_ENUM_DATA_V0(FileReferenceNumber=0, NextFileReferenceNumber=usn_journal_data.NextUsn)
 
             buffer_size = 65536
             buffer = ctypes.create_string_buffer(buffer_size)
@@ -1341,7 +1310,7 @@ if os.name == "nt":
                     buffer,
                     buffer_size,
                     ctypes.byref(bytes_returned),
-                    None
+                    None,
                 )
                 if not success or bytes_returned.value == 0:
                     break
@@ -1357,7 +1326,6 @@ if os.name == "nt":
                     offset += usn_record.record_length
                     changes[path / usn_record.filename] = usn_record
                     mft_enum_data.FileReferenceNumber = usn_record.file_reference_number.value
-
 
             return changes
 
@@ -1415,12 +1383,14 @@ if os.name == "nt":
                 file_reference_number=FileReference.from_bytes(data[8:16]),
                 parent_file_reference_number=FileReference.from_bytes(data[16:24]),
                 usn=int.from_bytes(data[24:32], "little"),
-                timestamp=datetime.fromtimestamp(int.from_bytes(data[32:40], "little") / 10**7),  # Assuming timestamp is in 100-nanosecond intervals since 1601-01-01  # noqa: DTZ006
+                timestamp=datetime.fromtimestamp(
+                    int.from_bytes(data[32:40], "little") / 10**7
+                ),  # Assuming timestamp is in 100-nanosecond intervals since 1601-01-01  # noqa: DTZ006
                 reason=UsnReason(int.from_bytes(data[40:44], "little")),
                 source_info=SourceInfo(int.from_bytes(data[44:48], "little")),
                 security_id=int.from_bytes(data[48:52], "little"),
                 file_attributes=FileAttributes(int.from_bytes(data[52:56], "little")),
-                filename=filename
+                filename=filename,
             )
 
         def __str__(self) -> str:
@@ -1468,7 +1438,6 @@ if os.name == "nt":
         def __str__(self) -> str:
             return f"SecurityId({self.value})"
 
-
     @dataclass(frozen=True)
     class QuotaInformationEntry:
         quota_threshold: int
@@ -1482,12 +1451,12 @@ if os.name == "nt":
             records = []
             offset = 0
             while offset < len(data):
-                entry_length = int.from_bytes(data[offset:offset + 4], "little")
+                entry_length = int.from_bytes(data[offset : offset + 4], "little")
                 if entry_length == 0:
                     break
 
                 sid_start = offset + 36
-                sid_end = sid_start + int.from_bytes(data[offset + 32:offset + 36], "little")
+                sid_end = sid_start + int.from_bytes(data[offset + 32 : offset + 36], "little")
                 sid = data[sid_start:sid_end].hex()
 
                 records.append(
@@ -1515,11 +1484,7 @@ if os.name == "nt":
             if len(data) < 8:
                 return cls(checksum_algorithm=0, flags=0, reserved=0)
 
-            return cls(
-                checksum_algorithm=int.from_bytes(data[:2], "little"),
-                flags=int.from_bytes(data[2:4], "little"),
-                reserved=int.from_bytes(data[4:8], "little")
-            )
+            return cls(checksum_algorithm=int.from_bytes(data[:2], "little"), flags=int.from_bytes(data[2:4], "little"), reserved=int.from_bytes(data[4:8], "little"))
 
     @dataclass(frozen=True)
     class ReparsePointFlags:
@@ -1527,9 +1492,7 @@ if os.name == "nt":
 
         @classmethod
         def from_int(cls, flags: int) -> ReparsePointFlags:
-            return cls(
-                is_symlink=bool(flags & 0x00000001)
-            )
+            return cls(is_symlink=bool(flags & 0x00000001))
 
     @dataclass(frozen=True)
     class ReparseData:
@@ -1550,8 +1513,8 @@ if os.name == "nt":
             print_name_length = int.from_bytes(data[14:16], "little")
 
             return cls(
-                substitute_name=data[substitute_name_offset:substitute_name_offset + substitute_name_length].decode("utf-16"),
-                print_name=data[print_name_offset:print_name_offset + print_name_length].decode("utf-16")
+                substitute_name=data[substitute_name_offset : substitute_name_offset + substitute_name_length].decode("utf-16"),
+                print_name=data[print_name_offset : print_name_offset + print_name_length].decode("utf-16"),
             )
 
     @dataclass(frozen=True)
@@ -1562,18 +1525,16 @@ if os.name == "nt":
         def from_bytes(cls, data: bytes) -> Self:
             base = MountPointReparseData.from_bytes(data)
             flags = ReparsePointFlags.from_int(int.from_bytes(data[16:20], "little"))
-            return cls(
-                substitute_name=base.substitute_name,
-                print_name=base.print_name,
-                flags=flags
-            )
+            return cls(substitute_name=base.substitute_name, print_name=base.print_name, flags=flags)
 
     class HSMFileIdentifier:
         def __init__(self):
             self.identifier: int
+
         @classmethod
         def from_null(cls) -> Self:
             return cls.__new__(cls)
+
         @classmethod
         def from_bytes(cls, identifier: bytes) -> Self:
             if not isinstance(identifier, bytes) or len(identifier) != 12:
@@ -1604,16 +1565,7 @@ if os.name == "nt":
             bytes_returned = wintypes.DWORD()
 
             # Call DeviceIoControl
-            result = WindowsDataClass.device_io_control(
-                file_handle,
-                ioctl_command,
-                buffer,
-                BUFFER_SIZE,
-                None,
-                0,
-                byref(bytes_returned),
-                None
-            )
+            result = WindowsDataClass.device_io_control(file_handle, ioctl_command, buffer, BUFFER_SIZE, None, 0, byref(bytes_returned), None)
 
             if not result:
                 error_code = GetLastError()
@@ -1678,6 +1630,7 @@ if os.name == "nt":
     class NoReparseData(ReparseData):
         def __str__(self):
             return ""
+
         def __bool__(self):
             return False
 
@@ -1749,7 +1702,6 @@ if os.name == "nt":
 
             raise ValueError(f"Invalid tag: '{tag}'")
 
-
     @dataclass(frozen=True)
     class WindowsFSCTLResult(WindowsDataClass):
         object_id: str | None = None
@@ -1768,32 +1720,22 @@ if os.name == "nt":
 
             try:
                 object_id = cls.device_io_control(
-                    handle, FSCTL.FSCTL_GET_OBJECT_ID, err_msg=f"Failed to retrieve object ID for {filepath_str}",
+                    handle,
+                    FSCTL.FSCTL_GET_OBJECT_ID,
+                    err_msg=f"Failed to retrieve object ID for {filepath_str}",
                 )
-                #assert not isinstance(object_id, HRESULT)
-                #assert object_id, f"could not retrieve object id from device_io_control. (object_id: {object_id}, type: {object_id.__class__.__name__})"
+                # assert not isinstance(object_id, HRESULT)
+                # assert object_id, f"could not retrieve object id from device_io_control. (object_id: {object_id}, type: {object_id.__class__.__name__})"
 
                 reparse_point_information = cls.device_io_control(
                     handle, FSCTL.FSCTL_GET_REPARSE_POINT, err_msg=f"Failed to retrieve reparse point information for {filepath}"
                 )
-                usn_journal_data = cls.device_io_control(
-                    handle, FSCTL.FSCTL_READ_FILE_USN_DATA, err_msg=f"Failed to retrieve USN journal information for {filepath}"
-                )
-                quota_information = cls.device_io_control(
-                    handle, FSCTL.FSCTL_GET_QUOTA_INFORMATION, err_msg=f"Failed to retrieve quota information for {filepath}"
-                )
-                sparse_status = cls.device_io_control(
-                    handle, FSCTL.FSCTL_QUERY_ALLOCATED_RANGES, err_msg=f"Failed to retrieve sparsity information for {filepath}"
-                )
-                encryption_status = cls.device_io_control(
-                    handle, FSCTL.FSCTL_GET_ENCRYPTION, err_msg=f"Failed to retrieve encryption information for {filepath}"
-                )
-                compression_format = cls.device_io_control(
-                    handle, FSCTL.FSCTL_GET_COMPRESSION, err_msg=f"Failed to retrieve compression information for {filepath}"
-                )
-                integrity_status = cls.device_io_control(
-                    handle, FSCTL.FSCTL_GET_INTEGRITY_INFORMATION, err_msg=f"Failed to retrieve integrity information for {filepath}"
-                )
+                usn_journal_data = cls.device_io_control(handle, FSCTL.FSCTL_READ_FILE_USN_DATA, err_msg=f"Failed to retrieve USN journal information for {filepath}")
+                quota_information = cls.device_io_control(handle, FSCTL.FSCTL_GET_QUOTA_INFORMATION, err_msg=f"Failed to retrieve quota information for {filepath}")
+                sparse_status = cls.device_io_control(handle, FSCTL.FSCTL_QUERY_ALLOCATED_RANGES, err_msg=f"Failed to retrieve sparsity information for {filepath}")
+                encryption_status = cls.device_io_control(handle, FSCTL.FSCTL_GET_ENCRYPTION, err_msg=f"Failed to retrieve encryption information for {filepath}")
+                compression_format = cls.device_io_control(handle, FSCTL.FSCTL_GET_COMPRESSION, err_msg=f"Failed to retrieve compression information for {filepath}")
+                integrity_status = cls.device_io_control(handle, FSCTL.FSCTL_GET_INTEGRITY_INFORMATION, err_msg=f"Failed to retrieve integrity information for {filepath}")
 
                 assert not isinstance(integrity_status, HRESULT)
                 assert not isinstance(compression_format, HRESULT)
@@ -1821,8 +1763,8 @@ if os.name == "nt":
         def parse_sparse_ranges(data: bytes) -> list[tuple[int, int]]:
             ranges = []
             for i in range(0, len(data), 16):
-                offset = int.from_bytes(data[i:i + 8], "little")
-                length = int.from_bytes(data[i + 8:i + 16], "little")
+                offset = int.from_bytes(data[i : i + 8], "little")
+                length = int.from_bytes(data[i + 8 : i + 16], "little")
                 ranges.append((offset, length))
             return ranges
 
@@ -1842,7 +1784,6 @@ if os.name == "nt":
                 return data[:hex_size].hex()
             return None
 
-
     @dataclass(frozen=True)
     class WindowsObjectIDInfo(WindowsDataClass):
         object_id: bytes | None
@@ -1851,9 +1792,7 @@ if os.name == "nt":
         def from_path(cls, filepath: os.PathLike | str) -> Self:
             filepath_str = str(WindowsPath(filepath))
             handle: wintypes.HANDLE = cls.get_file_handle_win32(
-                filepath_str,
-                flags=FileFlags.FILE_FLAG_BACKUP_SEMANTICS,
-                err_msg=f"Failed to open file handle for {filepath_str}"
+                filepath_str, flags=FileFlags.FILE_FLAG_BACKUP_SEMANTICS, err_msg=f"Failed to open file handle for {filepath_str}"
             )
 
             buffer: Array[c_char] = create_string_buffer(1024)
@@ -1975,7 +1914,6 @@ class CompleteDirInfo:
 
 
 class TestWindowsFSCTLResult(unittest.TestCase):
-
     def setUp(self):
         # Define a common directory accessible by all users
         self.common_dir: WindowsPath = WindowsPath("C:/Users/Public/TestFSCTL")
@@ -2015,6 +1953,7 @@ class TestWindowsFSCTLResult(unittest.TestCase):
     def close_open_handles(path: os.PathLike | str):
         """Close any open file handles using psutil."""
         import psutil
+
         path_str = str(WindowsPath(path).resolve())
         for proc in psutil.process_iter(["pid", "name"]):
             try:
@@ -2031,13 +1970,7 @@ class TestWindowsFSCTLResult(unittest.TestCase):
 
     def tearDown(self):
         # List of paths to handle
-        paths: list[WindowsPath] = [
-            self.test_hardlink_path,
-            self.test_symlink_path,
-            self.test_file_path,
-            self.test_folder_path,
-            self.common_dir
-        ]
+        paths: list[WindowsPath] = [self.test_hardlink_path, self.test_symlink_path, self.test_file_path, self.test_folder_path, self.common_dir]
 
         for path in paths:
             try:
@@ -2278,7 +2211,6 @@ class TestWindowsFSCTLResult(unittest.TestCase):
             assert isinstance(file_info.resources.resources[0]["name"], str), "Resource 'name' should be a string."
             assert isinstance(file_info.resources.resources[0]["data"], bytes), "Resource 'data' should be bytes."
 
-
     def test_windows_fsctl_result(self):
         # Test the complete WindowsFSCTLResult creation
         fsctl_result = WindowsFSCTLResult.from_path(self.test_file_path)
@@ -2287,7 +2219,9 @@ class TestWindowsFSCTLResult(unittest.TestCase):
         assert isinstance(fsctl_result, WindowsFSCTLResult)
 
         # Assert expected default results for a freshly created file
-        assert fsctl_result.object_id is None, f"Expected no object ID on a standard file, got '{fsctl_result.object_id}' of type '{fsctl_result.object_id.__class__.__name__}'"
+        assert fsctl_result.object_id is None, (
+            f"Expected no object ID on a standard file, got '{fsctl_result.object_id}' of type '{fsctl_result.object_id.__class__.__name__}'"
+        )
         assert isinstance(fsctl_result.reparse_point_information, ReparsePointInformation), (
             f"Assertion failed: isinstance(fsctl_result.reparse_point_information, ReparsePointInformation)\n"
             f"repr: {fsctl_result.reparse_point_information!r}\n"
@@ -2347,10 +2281,11 @@ class TestWindowsFSCTLResult(unittest.TestCase):
 
         # Further checks can be added based on the environment setup or expected specific values
 
+
 if __name__ == "__main__":
     try:
         import pytest
-    except ImportError: # pragma: no cover
+    except ImportError:  # pragma: no cover
         unittest.main()
     else:
         pytest.main(["-v", __file__])
