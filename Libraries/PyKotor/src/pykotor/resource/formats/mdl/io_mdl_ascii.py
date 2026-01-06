@@ -313,16 +313,22 @@ class MDLAsciiWriter(ResourceWriter):
         self,
         mdl: MDL,
         target: TARGET_TYPES,
+        *,
+        convert_skin: bool = False,
     ):
         """Initialize the ASCII MDL writer.
 
         Args:
             mdl: The MDL data to write
             target: The target to write to (file path, stream, or bytes buffer)
+            convert_skin: If True, write SKIN nodes as "trimesh" instead of "skin".
+                Defaults to False to match MDLOps behavior.
+                Reference: vendor/MDLOps/MDLOpsM.pm:3016-3019, 3105-3108
         """
         super().__init__(target)
         self._mdl = mdl
         self._text_buffer = io.StringIO()
+        self._convert_skin = convert_skin
 
     def write_line(self, indent: int, line: str) -> None:
         """Write a line with indentation."""
@@ -394,11 +400,16 @@ class MDLAsciiWriter(ResourceWriter):
             node_type_str = "emitter"
         elif isinstance(node.mesh, MDLDangly) or node.node_type == MDLNodeType.DANGLYMESH:
             node_type_str = "danglymesh"
-        elif node.skin is not None:
+        elif node.skin is not None or node.node_type == MDLNodeType.SKIN:
             # SKIN nodes: NODE_SKIN = 97 = HEADER + MESH + SKIN (0x061)
             # Reference: vendor/MDLOps/MDLOpsM.pm:320 (NODE_SKIN = 97), 3105-3108
-            # SKIN nodes are written as "skin" (TODO: implement convert_skin option)
-            node_type_str = "skin"
+            # When convert_skin is False, SKIN nodes are written as "skin"
+            # When convert_skin is True, SKIN nodes are written as "trimesh"
+            # Reference: vendor/MDLOps/MDLOpsM.pm:3105-3108
+            if self._convert_skin:
+                node_type_str = "trimesh"
+            else:
+                node_type_str = "skin"
         elif node.mesh is not None or node.node_type == MDLNodeType.TRIMESH:
             node_type_str = "trimesh"
         elif node.aabb is not None or node.node_type == MDLNodeType.AABB:
