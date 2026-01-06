@@ -3,12 +3,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from loggerplus import RobustLogger
-
 from pykotor.common.language import LocalizedString
 from pykotor.common.misc import EquipmentSlot, Game, InventoryItem, ResRef
-from pykotor.resource.formats.gff import GFF, GFFContent, GFFList, read_gff, write_gff
-from pykotor.resource.formats.gff.gff_auto import bytes_gff
-from pykotor.resource.formats.gff.gff_data import GFFFieldType
+from pykotor.resource.formats.gff import GFF, GFFContent, GFFFieldType, GFFList, GFFStruct, bytes_gff, read_gff, write_gff
 from pykotor.resource.type import ResourceType
 
 if TYPE_CHECKING:
@@ -333,9 +330,7 @@ class UTC:
 
     BINARY_TYPE = ResourceType.UTC
 
-    def __init__(  # noqa: PLR0915
-        self,
-    ):
+    def __init__(self):
         # internal use only, to preserve the original order:
         self._original_feat_mapping: dict[int, int] = {}
         self._extra_unimplemented_skills: list[int] = []
@@ -469,6 +464,7 @@ class UTCClass:
             Reference: reone/utc.cpp:76-78 (KnownList0 parsing)
             Reference: reone/utc.h:63 (KnownList0 vector)
     """
+
     def __init__(
         self,
         class_id: int,
@@ -481,7 +477,9 @@ class UTCClass:
         self.class_level: int = class_level
         self.powers: list[int] = []
 
-    def __repr__(self)
+    def __repr__(self) -> str:
+        return f"UTCClass(class_id={self.class_id}, class_level={self.class_level}, powers={self.powers})"
+
     def __eq__(
         self,
         other: UTCClass | object,
@@ -497,10 +495,10 @@ def construct_utc(
     gff: GFF,
 ) -> UTC:
     """Constructs a UTC object from a GFF structure.
-    
+
     Parses UTC (creature template) data from a GFF file, reading all fields
     including stats, skills, classes, feats, inventory, and equipment.
-    
+
     References:
     ----------
         vendor/reone/src/libs/resource/parser/gff/utc.cpp:82-171 (parseUTC function)
@@ -896,17 +894,20 @@ def dismantle_utc(
             power_struct.set_uint16("Spell", power)
             power_struct.set_uint8("SpellFlags", 1)
             power_struct.set_uint8("SpellMetaMagic", 0)
-        power_list._structs = sorted(
-            power_list._structs, key=lambda power_struct_local: utc_class._original_powers_mapping.get(power_struct_local.get_uint16("Spell"), float("inf"))
-        )
+
+        def _sort_powers(power_struct: GFFStruct):
+            return utc_class._original_powers_mapping.get(power_struct.get_uint16("Spell"), float("inf"))
+
+        power_list._structs = sorted(power_list._structs, key=_sort_powers)
 
     feat_list: GFFList = root.set_list("FeatList", GFFList())
     for feat in utc.feats:
         feat_list.add(1).set_uint16("Feat", feat)
 
     # Sort utc.feats according to their original index, stored in utc._original_feat_mapping
-    # Might be better to use GFFStructInterface from that PR.
-    feat_list._structs = sorted(feat_list._structs, key=lambda feat: utc._original_feat_mapping.get(feat.get_uint16("Feat"), float("inf")))
+    def _sort_feats(feat_struct: GFFStruct):
+        return utc._original_feat_mapping.get(feat_struct.get_uint16("Feat"), float("inf"))
+    feat_list._structs = sorted(feat_list._structs, key=_sort_feats)
 
     # Not sure what these are for, verified they exist in K1's 'c_drdg.utc' in data\templates.bif. Might be unused in which case this can be deleted.
     if utc._extra_unimplemented_skills:

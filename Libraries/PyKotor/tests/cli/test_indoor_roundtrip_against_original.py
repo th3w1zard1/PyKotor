@@ -16,25 +16,23 @@ Important:
 
 from __future__ import annotations
 
+# sys.path modifications removed - pykotor is now a proper package
+import difflib
 import json
-import sys
+
 from dataclasses import dataclass
+from io import StringIO
 from pathlib import Path
 from typing import Any
 
 import pytest
-
-# sys.path modifications removed - pykotor is now a proper package
-
-import difflib
-from io import StringIO
 
 from pykotor.cli.dispatch import cli_main
 from pykotor.common.indoormap import IndoorMap
 from pykotor.common.module import Module, ModuleResource
 from pykotor.common.modulekit import ModuleKitManager
 from pykotor.extract.installation import Installation
-from pykotor.resource.formats.bwm import read_bwm
+from pykotor.resource.formats.bwm import BWM, read_bwm
 from pykotor.resource.formats.erf import read_erf
 from pykotor.resource.formats.lyt import LYT, LYTRoom, read_lyt
 from pykotor.resource.type import ResourceType
@@ -66,12 +64,16 @@ def _load_module_lyt(module: Module) -> LYT:
     return lyt
 
 
-def _iter_source_rooms(lyt: LYT, *, module_root: str) -> list[str]:
+def _iter_source_rooms(
+    lyt: LYT,
+    *,
+    module_root: str,
+) -> list[str]:
     """Return room model resrefs in source order, excluding the known sky room."""
     out: list[str] = []
-    sky = f"{module_root}_sky".lower()
-    for r in lyt.rooms:
-        model = (r.model or "").strip()
+    sky: str = f"{module_root}_sky".lower()
+    for room in lyt.rooms:
+        model: str = (room.model or "").strip()
         if not model:
             continue
         if model.lower() == sky:
@@ -80,12 +82,15 @@ def _iter_source_rooms(lyt: LYT, *, module_root: str) -> list[str]:
     return out
 
 
-def _wok_bytes_from_module(module: Module, model_resref: str) -> bytes:
-    res = module.resource(model_resref, ResourceType.WOK)
+def _wok_bytes_from_module(
+    module: Module,
+    model_resref: str,
+) -> bytes:
+    res: ModuleResource[BWM] | None = module.resource(model_resref, ResourceType.WOK)
     if res is None:
         msg = f"Missing WOK for room model '{model_resref}'"
         raise AssertionError(msg)
-    data = res.data()
+    data: bytes | None = res.data()
     if data is None:
         msg = f"Empty WOK for room model '{model_resref}'"
         raise AssertionError(msg)
@@ -104,12 +109,22 @@ def _normalize_indoor_identity(d: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
-def _safe_out_module_id(*, module_root: str, game: str, room_count: int) -> str:
-    """Pick a module id that will not exceed the 16-char ResRef limit for `{id}_room{i}`."""
+def _safe_out_module_id(
+    *,
+    module_root: str,
+    game: str,
+    room_count: int,
+) -> str:
+    """Pick a module id that will not exceed the 16-char ResRef limit for `{id}_room{i}` and `lbl_map{id}`."""
     max_index = max(room_count - 1, 0)
     digits = len(str(max_index))
-    # room model resrefs are `{module_id}_room{i}`
-    max_module_id_len = 16 - (len("_room") + digits)
+    # Two constraints:
+    # 1. Room models: `{module_id}_room{i}` must fit in 16 chars
+    # 2. Minimap: `lbl_map{id}` must fit in 16 chars
+    max_for_rooms = 16 - (len("_room") + digits)
+    max_for_minimap = 16 - len("lbl_map")
+    max_module_id_len = min(max_for_rooms, max_for_minimap)
+
     if max_module_id_len <= 0:
         msg = f"Cannot construct a valid module_id for room_count={room_count} (digits={digits})"
         raise AssertionError(msg)
@@ -119,12 +134,16 @@ def _safe_out_module_id(*, module_root: str, game: str, room_count: int) -> str:
     return base[:max_module_id_len]
 
 
-def _choose_strict_module_roots(installation: Installation, *, max_roots: int) -> list[str]:
+def _choose_strict_module_roots(
+    installation: Installation,
+    *,
+    max_roots: int,
+) -> list[str]:
     """Deterministically pick module roots suitable for strict WOK roundtrip comparisons."""
     roots: list[str] = []
     # Use installation.module_names(use_hardcoded=True) for determinism.
     for module_filename in installation.module_names(use_hardcoded=True):
-        root = installation.get_module_root(module_filename)
+        root: str = installation.get_module_root(module_filename)
         if root in roots:
             continue
         try:
@@ -155,15 +174,18 @@ class RtOrigCase:
 
 
 @pytest.fixture(scope="session")
-def rt_orig_cases(k1_installation: Installation, k2_installation: Installation) -> list[RtOrigCase]:
+def rt_orig_cases(
+    k1_installation: Installation,
+    k2_installation: Installation,
+) -> list[RtOrigCase]:
     # Keep runtime reasonable but still meaningful: 3 modules per game.
-    k1_roots = _choose_strict_module_roots(k1_installation, max_roots=3)
-    k2_roots = _choose_strict_module_roots(k2_installation, max_roots=3)
+    k1_roots: list[str] = _choose_strict_module_roots(k1_installation, max_roots=3)
+    k2_roots: list[str] = _choose_strict_module_roots(k2_installation, max_roots=3)
     out: list[RtOrigCase] = []
-    for r in k1_roots:
-        out.append(RtOrigCase("k1", r, Path(k1_installation.path())))
-    for r in k2_roots:
-        out.append(RtOrigCase("k2", r, Path(k2_installation.path())))
+    for k1_root in k1_roots:
+        out.append(RtOrigCase("k1", k1_root, Path(k1_installation.path())))
+    for k2_root in k2_roots:
+        out.append(RtOrigCase("k2", k2_root, Path(k2_installation.path())))
     return out
 
 
@@ -188,7 +210,10 @@ def rt_case(
 
 
 @pytest.fixture()
-def rt_run(tmp_path: Path, rt_case: RtOrigCase) -> dict[str, Any]:
+def rt_run(
+    tmp_path: Path,
+    rt_case: RtOrigCase,
+) -> dict[str, Any]:
     module_root: str = rt_case.module_root
     game: str = rt_case.game
     install_dir: Path = rt_case.install_dir
@@ -222,6 +247,12 @@ def rt_run(tmp_path: Path, rt_case: RtOrigCase) -> dict[str, Any]:
         ]
     )
     assert rc == 0, f"indoor-extract failed for {game}:{module_root} with exit code {rc}"
+
+    # Normalize the `.indoor` module_id so the build output produces a stable module id.
+    indoor0_data = _parse_indoor(indoor0_path.read_bytes())
+    indoor0_data["warp"] = out_module_id
+    indoor0_data["module_id"] = out_module_id
+    indoor0_path.write_bytes(json.dumps(indoor0_data).encode("utf-8"))
 
     rc = _run_cli(
         [
@@ -288,7 +319,9 @@ def rt_run(tmp_path: Path, rt_case: RtOrigCase) -> dict[str, Any]:
 
 def test_orig_room_count_matches_lyt(rt_run: dict[str, Any]) -> None:
     assert len(rt_run["source_room_models"]) > 0, "No source room models found"
-    assert len(_parse_indoor(rt_run["indoor0_raw"]).get("rooms", [])) == len(rt_run["source_room_models"]), f"Room count mismatch: {len(_parse_indoor(rt_run['indoor0_raw']).get('rooms', []))} != {len(rt_run['source_room_models'])}"
+    assert len(_parse_indoor(rt_run["indoor0_raw"]).get("rooms", [])) == len(rt_run["source_room_models"]), (
+        f"Room count mismatch: {len(_parse_indoor(rt_run['indoor0_raw']).get('rooms', []))} != {len(rt_run['source_room_models'])}"
+    )
 
 
 def test_orig_lyt_positions_preserved(rt_run: dict[str, Any]) -> None:
@@ -297,11 +330,7 @@ def test_orig_lyt_positions_preserved(rt_run: dict[str, Any]) -> None:
     built_lyt: LYT = rt_run["built_lyt"]
     original_lyt: LYT = rt_run["original_lyt"]
 
-    src_rooms: list[LYTRoom] = [
-        r
-        for r in original_lyt.rooms
-        if (r.model or "").strip() and (r.model or "").lower() != f"{module_root}_sky".lower()
-    ]
+    src_rooms: list[LYTRoom] = [r for r in original_lyt.rooms if (r.model or "").strip() and (r.model or "").lower() != f"{module_root}_sky".lower()]
     assert len(built_lyt.rooms) == len(src_rooms), f"Built LYT room count mismatch: {len(built_lyt.rooms)} != {len(src_rooms)}"
 
     for i, src in enumerate(src_rooms):
@@ -349,9 +378,9 @@ def test_orig_wok_bytes_identical_per_room_index(rt_run: dict[str, Any]) -> None
             assert f_src.trans3 == f_bld.trans3, f"trans3 differs at face {fi} for room {i} ({src_model})"
 
         # Broad walkability sanity: ensure we preserve existence of walkable faces.
-        assert any(f.material.walkable() for f in src_bwm.faces) == any(
-            f.material.walkable() for f in built_bwm.faces
-        ), f"Walkable face presence mismatch for room {i} ({src_model})"
+        assert any(f.material.walkable() for f in src_bwm.faces) == any(f.material.walkable() for f in built_bwm.faces), (
+            f"Walkable face presence mismatch for room {i} ({src_model})"
+        )
 
 
 def test_orig_wok_materials_and_transitions_preserved(rt_run: dict[str, Any]) -> None:

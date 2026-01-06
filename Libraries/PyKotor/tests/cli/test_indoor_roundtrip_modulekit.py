@@ -11,14 +11,16 @@ Constraints:
 from __future__ import annotations
 
 # sys.path modifications removed - pykotor is now a proper package
-
+import difflib
 import json
+
+from argparse import Namespace
 from dataclasses import dataclass
+from io import StringIO
 from pathlib import Path
 from typing import Any
 
 import pytest
-from argparse import Namespace
 
 from pykotor.cli.commands.indoor_builder import cmd_indoor_build, cmd_indoor_extract
 from pykotor.common.indoormap import IndoorMap
@@ -395,9 +397,7 @@ def test_mim_embedded_indoormap_matches_extracted(rt: RoundtripResult):
 
 
 def test_mim_has_wok(rt: RoundtripResult):
-    assert any(
-        restype == ResourceType.WOK for (_r, restype) in rt.mod1_payloads
-    ), f"No WOK in mod1 payloads: {rt.mod1_payloads.keys()}"
+    assert any(restype == ResourceType.WOK for (_r, restype) in rt.mod1_payloads), f"No WOK in mod1 payloads: {rt.mod1_payloads.keys()}"
 
 
 def test_mim_all_woks_nonempty(rt: RoundtripResult):
@@ -444,9 +444,7 @@ def test_mim_minimap_exists(rt: RoundtripResult):
 
 
 def test_mim_git_nonempty(rt: RoundtripResult):
-    assert (
-        len(rt.mod1_payloads[(rt.module_root, ResourceType.GIT)]) > 0
-    ), f"GIT is empty: {rt.mod1_payloads[(rt.module_root, ResourceType.GIT)]}"
+    assert len(rt.mod1_payloads[(rt.module_root, ResourceType.GIT)]) > 0, f"GIT is empty: {rt.mod1_payloads[(rt.module_root, ResourceType.GIT)]}"
 
 
 def test_mim_wok_bytes_identical(rt: RoundtripResult):
@@ -475,9 +473,7 @@ def test_mim_embedded_indoormap_present_after_roundtrip(rt: RoundtripResult):
 
 
 def test_imi_indoor_bytes_identical(rt: RoundtripResult):
-    assert (
-        rt.indoor0_raw == rt.indoor1_raw
-    ), f"indoor0 raw does not match indoor1 raw: {rt.indoor0_raw} != {rt.indoor1_raw}"
+    assert rt.indoor0_raw == rt.indoor1_raw, f"indoor0 raw does not match indoor1 raw: {rt.indoor0_raw} != {rt.indoor1_raw}"
 
 
 def test_imi_indoor_json_parses(rt: RoundtripResult):
@@ -511,9 +507,7 @@ def test_imi_module_root_written(rt: RoundtripResult):
     d = _parse_indoor(rt.indoor1_raw)
     for room in d["rooms"]:
         assert "module_root" in room, f"Module_root not in room: {room}"
-        assert (
-            str(room["module_root"]).lower() == rt.source_module_root
-        ), f"Module_root does not match source module root: {room['module_root']} != {rt.source_module_root}"
+        assert str(room["module_root"]).lower() == rt.source_module_root, f"Module_root does not match source module root: {room['module_root']} != {rt.source_module_root}"
 
 
 def test_imi_warp_matches(rt: RoundtripResult):
@@ -536,9 +530,7 @@ def test_imi_components_unique(rt: RoundtripResult):
 
 def test_imi_kit_is_module_root(rt: RoundtripResult):
     d = _parse_indoor(rt.indoor1_raw)
-    assert all(
-        str(r["kit"]).lower() == rt.source_module_root for r in d["rooms"]
-    ), f"Kit does not match source module root: {d['rooms']}"
+    assert all(str(r["kit"]).lower() == rt.source_module_root for r in d["rooms"]), f"Kit does not match source module root: {d['rooms']}"
 
 
 def test_imi_loadable_with_modulekit(rt: RoundtripResult):
@@ -620,15 +612,11 @@ def test_unit_mod_has_ifo(rt: RoundtripResult):
 
 
 def test_unit_room_models_have_mdl(rt: RoundtripResult):
-    assert any(
-        restype == ResourceType.MDL for (_r, restype) in rt.mod1_payloads
-    ), f"No MDL in mod1 payloads: {rt.mod1_payloads.keys()}"
+    assert any(restype == ResourceType.MDL for (_r, restype) in rt.mod1_payloads), f"No MDL in mod1 payloads: {rt.mod1_payloads.keys()}"
 
 
 def test_unit_room_models_have_mdx(rt: RoundtripResult):
-    assert any(
-        restype == ResourceType.MDX for (_r, restype) in rt.mod1_payloads
-    ), f"No MDX in mod1 payloads: {rt.mod1_payloads.keys()}"
+    assert any(restype == ResourceType.MDX for (_r, restype) in rt.mod1_payloads), f"No MDX in mod1 payloads: {rt.mod1_payloads.keys()}"
 
 
 def test_unit_embedded_indoor_is_utf8(rt: RoundtripResult):
@@ -651,9 +639,7 @@ def test_unit_indoormap_present_in_payloads(rt: RoundtripResult):
 
 def test_unit_wok_count_matches_room_count(rt: RoundtripResult):
     room_count = len(_parse_indoor(rt.indoor1_raw)["rooms"])
-    wok_count = sum(
-        1 for (_r, t) in rt.mod1_payloads if (t == ResourceType.WOK and _r.startswith(f"{rt.module_root}_room"))
-    )
+    wok_count = sum(1 for (_r, t) in rt.mod1_payloads if (t == ResourceType.WOK and _r.startswith(f"{rt.module_root}_room")))
     assert wok_count == room_count, f"Wok count does not match room count: {wok_count} != {room_count}"
 
 
@@ -789,3 +775,71 @@ def test_unit_mod_roundtrip_payloads_match(rt: RoundtripResult):
         if k[1] == ResourceType.WOK:
             continue
         assert b1 == rt.mod2_payloads[k], f"Payload changed unexpectedly for {k}"
+
+
+# -----------------------------
+# ComparableMixin.compare() roundtrip test with udiff output
+# -----------------------------
+
+
+def test_indoor_roundtrip_using_comparable_mixin(rt: RoundtripResult) -> None:
+    """Test .indoor -> .mod -> .indoor roundtrip using ComparableMixin.compare() with udiff output.
+
+    This test ensures that the roundtrip comparison uses the ComparableMixin.compare() method
+    which provides structured field-by-field comparison, and outputs differences in unified diff format.
+    """
+    installation = Installation(CaseAwarePath(rt.install_dir))
+    mk_mgr = ModuleKitManager(installation)
+
+    # Load both indoor maps using the normalized indoor data
+    original_map = IndoorMap()
+    missing = original_map.load(rt.indoor0_normalized_raw, [], module_kit_manager=mk_mgr)
+    assert missing == [], f"Missing rooms/components in original: {missing}"
+
+    roundtripped_map = IndoorMap()
+    missing = roundtripped_map.load(rt.indoor1_raw, [], module_kit_manager=mk_mgr)
+    assert missing == [], f"Missing rooms/components in roundtripped: {missing}"
+
+    # Compare using ComparableMixin.compare() with udiff output
+    diff_lines: list[str] = []
+    log_buffer = StringIO()
+
+    def log_func(msg: str) -> None:
+        diff_lines.append(msg)
+        log_buffer.write(msg + "\n")
+
+    is_identical = original_map.compare(roundtripped_map, log_func=log_func)
+
+    if not is_identical:
+        # Generate udiff format output
+        original_json = original_map.write().decode("utf-8")
+        roundtripped_json = roundtripped_map.write().decode("utf-8")
+
+        original_lines = original_json.splitlines(keepends=True)
+        roundtripped_lines = roundtripped_json.splitlines(keepends=True)
+
+        udiff = list(
+            difflib.unified_diff(
+                original_lines,
+                roundtripped_lines,
+                fromfile="original (.indoor normalized)",
+                tofile="roundtripped (.indoor -> .mod -> .indoor)",
+                lineterm="",
+            )
+        )
+
+        # Print the udiff
+        print("\n" + "=" * 80)
+        print("Unified diff (udiff format):")
+        print("=" * 80)
+        for line in udiff:
+            print(line)
+        print("=" * 80)
+
+        # Also print the structured comparison output
+        print("\nStructured comparison differences:")
+        print("-" * 80)
+        print(log_buffer.getvalue())
+        print("-" * 80)
+
+    assert is_identical, "IndoorMap objects should be identical after .indoor -> .mod -> .indoor roundtrip"
