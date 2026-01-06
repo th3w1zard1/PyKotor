@@ -98,6 +98,7 @@ if TYPE_CHECKING:
     from qtpy.QtWidgets import QLayout
 
     from pykotor.common.indoormap import MissingRoomInfo
+    from qtpy.QtGui import QKeySequence
 
 
 # =============================================================================
@@ -666,7 +667,11 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
             RobustLogger().exception(f"Failed to load module '{module_root}'")
 
-    def on_module_component_selected(self, item: QListWidgetItem | None = None):
+    def on_module_component_selected(
+        self,
+        item: QListWidgetItem | None = None,
+        previous: QListWidgetItem | None = None,  # pyright: ignore[reportUnusedParameter]
+    ):
         """Handle module component selection from the list."""
         if item is None:
             self._set_preview_image(None)
@@ -996,16 +1001,16 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
     def _refresh_status_bar(
         self,
         screen: QPoint | Vector2 | None = None,
-        buttons: set[int | Qt.MouseButton] | None = None,
-        keys: set[int | Qt.Key] | None = None,
+        buttons: set[int | Qt.MouseButton] | set[Qt.MouseButton] | set[int | Qt.MouseButton] | set[Qt.MouseButton | int] | None = None,
+        keys: set[int | Qt.Key] | set[Qt.Key] | set[int | Qt.Key] | set[Qt.Key | int] | set[QKeySequence] | None = None,
     ):
         self._update_status_bar(screen, buttons, keys)
 
     def _update_status_bar(
         self,
         screen: QPoint | Vector2 | None = None,
-        buttons: set[int | Qt.MouseButton] | None = None,
-        keys: set[int | Qt.Key] | None = None,
+        buttons: set[int | Qt.MouseButton] | set[Qt.MouseButton] | set[int | Qt.MouseButton] | set[Qt.MouseButton | int] | None = None,
+        keys: set[int | Qt.Key] | set[Qt.Key] | set[int | Qt.Key] | set[Qt.Key | int] | set[QKeySequence] | None = None,
     ):
         """Rich status bar mirroring Module Designer style."""
         renderer = self.ui.mapRenderer
@@ -1072,7 +1077,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
         # Keys/buttons (sorted with modifiers first)
         def sort_with_modifiers(
-            items: set[int | Qt.Key | Qt.MouseButton] | set[int | Qt.Key] | set[int | Qt.MouseButton],
+            items: set[Qt.MouseButton] | set[int | Qt.Key | Qt.MouseButton] | set[int | Qt.Key] | set[Qt.Key] | set[int] | set[int | Qt.MouseButton] | set[Qt.Key | int] | set[Qt.MouseButton | int] | set[int | Qt.Key | Qt.MouseButton | int] | set[QKeySequence],
             get_string_func: Callable[[int | Qt.Key | Qt.MouseButton], str],
             qt_enum_type: str,
         ) -> list[int | Qt.Key | Qt.MouseButton]:
@@ -1129,8 +1134,8 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                 except (AttributeError, TypeError, ValueError):
                     return str(btn)
 
-        keys_sorted = sort_with_modifiers(keys, get_qt_key_string_local, "QtKey")
-        buttons_sorted = sort_with_modifiers(buttons, get_qt_button_string_local, "QtMouse")
+        keys_sorted: list[int | Qt.Key | Qt.MouseButton] = sort_with_modifiers(keys, get_qt_key_string_local, "QtKey")
+        buttons_sorted: list[int | Qt.MouseButton | Qt.Key] = sort_with_modifiers(buttons, get_qt_button_string_local, "QtMouse")
 
         def fmt(
             seq: list[int | Qt.Key | Qt.MouseButton],
@@ -1719,7 +1724,10 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
     def set_warp_point(self, x: float, y: float, z: float):
         self._map.warp_point = Vector3(x, y, z)
 
-    def on_kit_selected(self, index: int = -1):
+    def on_kit_selected(
+        self,
+        index: int = -1,  # pyright: ignore[reportUnusedParameter]
+    ):
         kit: Kit = self.ui.kitSelect.currentData()
         if not isinstance(kit, Kit):
             return
@@ -1730,7 +1738,11 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             item.setData(Qt.ItemDataRole.UserRole, component)
             self.ui.componentList.addItem(item)  # pyright: ignore[reportCallIssue, reportArgumentType]
 
-    def onComponentSelected(self, item: QListWidgetItem):
+    def onComponentSelected(
+        self,
+        item: QListWidgetItem | None = None,
+        previous: QListWidgetItem | None = None,  # pyright: ignore[reportUnusedParameter]
+    ):
         if item is None:
             self._set_preview_image(None)
             self.ui.mapRenderer.set_cursor_component(None)
@@ -1758,8 +1770,8 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self,
         screen: Vector2,
         delta: Vector2,
-        buttons: set[int | Qt.MouseButton],
-        keys: set[int | Qt.Key],
+        buttons: set[int | Qt.MouseButton] | set[Qt.MouseButton] | set[int | Qt.MouseButton] | set[Qt.MouseButton | int],
+        keys: set[int | Qt.Key] | set[Qt.Key] | set[int | Qt.Key] | set[Qt.Key | int],
     ):
         self._refresh_status_bar(screen=screen, buttons=buttons, keys=keys)
         world_delta: Vector2 = self.ui.mapRenderer.to_world_delta(delta.x, delta.y)
