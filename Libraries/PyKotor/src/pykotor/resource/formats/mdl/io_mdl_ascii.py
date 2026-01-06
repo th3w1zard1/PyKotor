@@ -2587,6 +2587,11 @@ class MDLAsciiReader(ResourceReader):
                 # MDLOps adds child to parent's children array and increments childcount
                 # Reference: vendor/MDLOps/MDLOpsM.pm:4235-4236
                 parent_node.children.append(node)
+            elif node is not self._mdl.root:
+                # If parent not found and node is not the root, attach to root to ensure it's not lost
+                # This ensures all nodes are reachable from node 0 during recursive traversal
+                # Reference: vendor/MDLOps/MDLOpsM.pm:6282 (writebinarynode starts from node 0)
+                self._mdl.root.children.append(node)
         
         # Cleanup temporary parent tracking
         for node in self._nodes:
