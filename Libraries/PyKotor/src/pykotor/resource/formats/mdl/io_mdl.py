@@ -135,9 +135,8 @@ class _ModelHeader:
         writer.write_single(self.anim_scale)
         writer.write_string(self.supermodel, string_length=32, encoding="ascii", errors="ignore")
         writer.write_uint32(self.offset_to_super_root)
-        writer.write_uint32(
-            self.unknown3
-        )  # Unknown field from Names array header (cchargin mdl_info.html). Second field after offset_to_super_root. Purpose unknown but preserved for format compatibility.
+        # Unknown field from Names array header (cchargin mdl_info.html). Second field after offset_to_super_root. Purpose unknown but preserved for format compatibility.
+        writer.write_uint32(self.unknown3)
         writer.write_uint32(self.mdx_size)
         writer.write_uint32(self.mdx_offset)
         writer.write_uint32(self.offset_to_name_offsets)
@@ -160,12 +159,12 @@ class _GeometryHeader:
     K1_ANIM_FUNCTION_POINTER1: ClassVar[Literal[0x43ECE0]] = 4451552
     K2_ANIM_FUNCTION_POINTER1: ClassVar[Literal[0x4503B0]] = 4522928
 
-    GEOM_TYPE_ROOT = 2
-    GEOM_TYPE_ANIM = 5
+    GEOM_TYPE_ROOT: ClassVar[Literal[2]] = 2
+    GEOM_TYPE_ANIM: ClassVar[Literal[5]] = 5
 
     # MDLOps uses these specific padding bytes when compiling ASCII to binary.
     # Using the same values ensures byte-level parity with MDLOps output.
-    MDLOPS_PADDING: ClassVar[bytes] = b"\x31\x96\xbd"
+    MDLOPS_PADDING: ClassVar[Literal[b"\x31\x96\xbd"]] = b"\x31\x96\xbd"
 
     def __init__(self):
         self.function_pointer0: int = 0
@@ -399,7 +398,7 @@ class _Node:
         self.dangly: _DanglymeshHeader | None = None
         self.children_offsets: list[int] = []
 
-        self.w_children = []
+        self.w_children: list[_Node] = []
         self.w_controllers: list[_Controller] = []
         self.w_controller_data: list[float] = []
 
@@ -426,22 +425,28 @@ class _Node:
             self.reference = _ReferenceHeader().read(reader)
 
         # Danglymesh sub-sub-header follows trimesh header (28 bytes: l[3]f[3]l)
-        if self.header.type_id & MDLNodeFlags.DANGLY and self.trimesh:
+        if (
+            self.header.type_id & MDLNodeFlags.DANGLY
+            and self.trimesh is not None
+        ):
             self.dangly = _DanglymeshHeader().read(reader)
 
         # AABB nodes have an extra 4-byte field (aabbloc) after the trimesh header
         # This extends the header from 332/340 bytes to 336/344 bytes
-        if self.header.type_id & MDLNodeFlags.AABB and self.trimesh:
+        if (
+            self.header.type_id & MDLNodeFlags.AABB
+            and self.trimesh is not None
+        ):
             # Read the AABB tree offset (aabbloc)
             # MDLOps stores this as (absolute_offset - 12), but since BinaryReader has
             # set_offset(+12) applied, the raw value can be used directly without adjustment.
-            aabb_offset_raw = reader.read_int32()
+            aabb_offset_raw: int = reader.read_int32()
             # Do NOT add 12 here - the reader's offset is already adjusted
             self.trimesh.offset_to_aabb = aabb_offset_raw if aabb_offset_raw > 0 else 0
 
-        if self.trimesh:
+        if self.trimesh is not None:
             self.trimesh.read_extra(reader)
-        if self.skin:
+        if self.skin is not None:
             self.skin.read_extra(reader)
 
         # Read the children offsets array.
@@ -455,7 +460,7 @@ class _Node:
 
         # MDLOps stores offsets as (absolute_offset - 12), but since BinaryReader has
         # set_offset(+12) applied, the raw value can be used directly without adjustment.
-        child_loc = self.header.offset_to_children
+        child_loc: int = self.header.offset_to_children
         if (
             child_loc in (0, 0xFFFFFFFF)
             or child_loc >= reader.size()
@@ -482,33 +487,36 @@ class _Node:
         writer: BinaryWriter,
         game: Game,
     ):
-        assert self.header is not None
+        assert self.header is not None, "Node header is required"
         self.header.write(writer)
 
-        if self.trimesh:
+        if self.trimesh is not None:
             self.trimesh.write(writer, game)
 
-        if self.skin:
+        if self.skin is not None:
             self.skin.write(writer)
 
-        if self.light:
+        if self.light is not None:
             self.light.write(writer)
 
-        if self.emitter:
+        if self.emitter is not None:
             self.emitter.write(writer)
 
-        if self.reference:
+        if self.reference is not None:
             self.reference.write(writer)
 
         # Danglymesh sub-sub-header follows trimesh header
-        if self.dangly:
+        if self.dangly is not None:
             self.dangly.write(writer)
 
         # AABB nodes have an extra 4-byte field (aabbloc) after the trimesh header
         # This extends the header from 332/340 bytes to 336/344 bytes
         # Reference: vendor/MDLOps/MDLOpsM.pm:7279-7313 (AABB writing)
         # The AABB tree is written IMMEDIATELY after the aabbloc field, not after all node data
-        if self.header.type_id & MDLNodeFlags.AABB and self.trimesh:
+        if (
+            self.header.type_id & MDLNodeFlags.AABB
+            and self.trimesh is not None
+        ):
             # Write aabbloc field: the offset to AABB tree (position + 4 = right after this field)
             # MDLOps writes: pack("L", ((tell(BMDLOUT) - 12) + 4))
             # Reference: vendor/MDLOps/MDLOpsM.pm:7282
@@ -518,11 +526,11 @@ class _Node:
             # Write AABB tree immediately after aabbloc field
             self._write_aabb_extra(writer)
 
-        if self.trimesh:
+        if self.trimesh is not None:
             self._write_trimesh_data(writer)
-        if self.dangly:
+        if self.dangly is not None:
             self._write_dangly_extra(writer)
-        if self.skin:
+        if self.skin is not None:
             self._write_skin_extra(writer)
         for child_offset in self.children_offsets:
             writer.write_uint32(child_offset)
@@ -2824,7 +2832,10 @@ class MDLBinaryReader:
         # Compressed quaternions use column_count=2 as a FLAG (not 2 values per row!)
         # Each compressed quaternion is stored as a single uint32, NOT uint32 + padding float
         # vendor/mdlops/MDLOpsM.pm:1719 - "$template .= 'L' x $_->[2]" - just row_count uint32s
-        if bin_controller.type_id == MDLControllerType.ORIENTATION and bin_controller.column_count == 2:
+        if (
+            bin_controller.type_id == MDLControllerType.ORIENTATION
+            and bin_controller.column_count == 2
+        ):
             # Detected compressed quaternions - set the model flag
             self._mdl.compress_quaternions = 1
             for _ in range(bin_controller.row_count):
@@ -2839,8 +2850,8 @@ class MDLBinaryReader:
             # Bezier controllers store 3 floats per column: (value, in_tangent, out_tangent)
             # Non-bezier controllers store 1 float per column
             if is_bezier:
-                base_columns = column_count - bezier_flag
-                effective_columns = base_columns * 3
+                base_columns: int = column_count - bezier_flag
+                effective_columns: int = base_columns * 3
             else:
                 effective_columns = column_count
 
@@ -2849,12 +2860,15 @@ class MDLBinaryReader:
                 effective_columns = column_count & ~bezier_flag  # Strip bezier flag
 
             # Read controller data with bounds checking
-            bytes_per_row = effective_columns * 4  # Each float is 4 bytes
+            bytes_per_row: int = effective_columns * 4  # Each float is 4 bytes
             for _ in range(row_count):
                 # Check bounds before reading each row
                 if self._reader.position() + bytes_per_row > self._reader.size():
                     break
-                row_data: list[float] = [self._reader.read_single() for _ in range(effective_columns)]
+                row_data: list[float] = [
+                    self._reader.read_single()
+                    for _ in range(effective_columns)
+                ]
                 data.append(row_data)
 
         controller_type: int = bin_controller.type_id
@@ -2874,10 +2888,17 @@ class MDLBinaryReader:
                 controller_type_enum = MDLControllerType.INVALID
 
         # Handle case where we didn't read all rows due to bounds issues
-        actual_row_count = min(len(time_keys), len(data), row_count)
-        rows: list[MDLControllerRow] = [MDLControllerRow(time_keys[i], data[i]) for i in range(actual_row_count)]
+        actual_row_count: int = min(len(time_keys), len(data), row_count)
+        rows: list[MDLControllerRow] = [
+            MDLControllerRow(time_keys[i], data[i])
+            for i in range(actual_row_count)
+        ]
         # vendor/mdlops/MDLOpsM.pm:1709 - Store bezier flag with controller
-        controller = MDLController(controller_type_enum, rows, is_bezier=is_bezier)
+        controller = MDLController(
+            controller_type_enum,
+            rows,
+            is_bezier=is_bezier,
+        )
         return controller
 
 
@@ -3034,7 +3055,7 @@ class MDLBinaryWriter:
         # Create trimesh header if node has a mesh or if node_type indicates it should have one
         # This ensures we preserve mesh structure even if mesh object is missing
         # Emitter, Light, AABB, and Skin nodes can also have mesh data
-        if mdl_node.mesh or mdl_node.node_type in (
+        if mdl_node.mesh is not None or mdl_node.node_type in (
             MDLNodeType.TRIMESH,
             MDLNodeType.DANGLYMESH,
             MDLNodeType.EMITTER,
@@ -3043,7 +3064,7 @@ class MDLBinaryWriter:
             MDLNodeType.SKIN,
         ):
             # If mesh is None but node_type indicates mesh, create empty mesh to preserve structure
-            if not mdl_node.mesh:
+            if mdl_node.mesh is None:
                 from pykotor.resource.formats.mdl.mdl_data import MDLMesh
 
                 mdl_node.mesh = MDLMesh()
@@ -3385,7 +3406,7 @@ class MDLBinaryWriter:
         # Clamp controller_data_length to prevent Perl from interpreting it as negative (values >= 2^31)
         # MDLOps reads this as a signed integer, so we must ensure it's < 2^31
         # If the data is too large, truncate it to match the clamped length to prevent MDLOps from reading too much
-        controller_data_length = len(bin_node.w_controller_data)
+        controller_data_length: int = len(bin_node.w_controller_data)
         if controller_data_length > 0x7FFFFFFF:
             # Truncate w_controller_data to match the clamped length to prevent MDLOps "Out of memory" errors
             # MDLOps will read exactly controller_data_length floats, so we must write exactly that many
@@ -3537,7 +3558,7 @@ class MDLBinaryWriter:
             # Note: mdx_tangent_offset is not used when only the flag is set (tangent data is calculated, not stored)
 
         # Skin nodes store per-vertex bone indices + weights (4 floats each) in MDX.
-        if mdl_node.skin and bin_node.skin is not None:
+        if mdl_node.skin is not None and bin_node.skin is not None:
             bin_node.skin.offset_to_mdx_bones = suboffset
             suboffset += 16
             bin_node.skin.offset_to_mdx_weights = suboffset
@@ -3610,44 +3631,44 @@ class MDLBinaryWriter:
                     self._writer_ext.write_single(float(w))
 
         # MDX terminator row + alignment: mirror MDLOps
-        row_floats = max(0, int(bin_node.trimesh.mdx_data_size / 4))
-        sentinel = 1_000_000.0 if mdl_node.skin else 10_000_000.0
-        zeros_to_add = max(0, row_floats - 3 - (8 if mdl_node.skin else 0))
+        row_floats: int = max(0, int(bin_node.trimesh.mdx_data_size / 4))
+        sentinel: float = 10_000_000.0 if mdl_node.skin is None else 1_000_000.0
+        zeros_to_add: int = max(0, row_floats - 3 - (0 if mdl_node.skin is None else 8))  # type: ignore[operator]
         # Terminator row
         for value in (sentinel, sentinel, sentinel):
             self._writer_ext.write_single(value)
         for _ in range(zeros_to_add):
             self._writer_ext.write_single(0.0)
         # Extra padding block for skin meshes
-        if mdl_node.skin:
+        if mdl_node.skin is not None:
             for value in (1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0):
                 self._writer_ext.write_single(value)
         # 16-byte alignment padding (MDLOps alignment rule)
-        mdx_written = self._writer_ext.size() - bin_node.trimesh.mdx_data_offset
-        alignment_padding = (16 - (mdx_written % 16)) % 16
-        if alignment_padding:
-            pad_floats = alignment_padding // 4
+        mdx_written: int = self._writer_ext.size() - bin_node.trimesh.mdx_data_offset
+        alignment_padding: int = (16 - (mdx_written % 16)) % 16
+        if alignment_padding > 0:
+            pad_floats: int = alignment_padding // 4
             for _ in range(pad_floats):
                 self._writer_ext.write_single(0.0)
 
     def _calc_top_offsets(self):
-        offset_to_name_offsets = _ModelHeader.SIZE
+        offset_to_name_offsets: int = _ModelHeader.SIZE
 
-        offset_to_names = offset_to_name_offsets + 4 * len(self._names)
-        name_offset = offset_to_names
+        offset_to_names: int = offset_to_name_offsets + 4 * len(self._names)
+        name_offset: int = offset_to_names
         for name in self._names:
             self._name_offsets.append(name_offset)
             name_offset += len(name) + 1
 
-        offset_to_anim_offsets = name_offset
-        offset_to_anims = name_offset + (4 * len(self._bin_anims))
-        anim_offset = offset_to_anims
+        offset_to_anim_offsets: int = name_offset
+        offset_to_anims: int = name_offset + (4 * len(self._bin_anims))
+        anim_offset: int = offset_to_anims
         for i, anim in enumerate(self._bin_anims):
             self._anim_offsets[i] = anim_offset
             anim_offset += anim.size()
 
-        offset_to_node_offset = anim_offset
-        node_offset = offset_to_node_offset
+        offset_to_node_offset: int = anim_offset
+        node_offset: int = offset_to_node_offset
         for i, bin_node in enumerate(self._bin_nodes):
             self._node_offsets[i] = node_offset
             node_offset += bin_node.calc_size(self.game)
@@ -3691,7 +3712,10 @@ class MDLBinaryWriter:
         if len(bin_nodes) != len(mdl_nodes):
             raise ValueError(f"bin_nodes and mdl_nodes length mismatch ({len(bin_nodes)} vs {len(mdl_nodes)})")
 
-        idx_by_id = {id(n): i for i, n in enumerate(mdl_nodes)}
+        idx_by_id: dict[int, int] = {
+            id(n): i
+            for i, n in enumerate(mdl_nodes)
+        }
         parent_by_idx: dict[int, int] = {}
         for parent_idx, parent in enumerate(mdl_nodes):
             for child in parent.children:
@@ -3700,21 +3724,21 @@ class MDLBinaryWriter:
                     parent_by_idx[child_idx] = parent_idx
 
         for i in range(len(bin_nodes)):
-            bin_node = bin_nodes[i]
-            mdl_node = mdl_nodes[i]
-            node_offset = bin_offsets[i]
+            bin_node: _Node = bin_nodes[i]
+            mdl_node: MDLNode = mdl_nodes[i]
+            node_offset: int = bin_offsets[i]
 
             # Child offsets from the MDL node tree
             bin_node.children_offsets = []
             for child in mdl_node.children:
-                child_idx = idx_by_id.get(id(child))
+                child_idx: int | None = idx_by_id.get(id(child))
                 if child_idx is not None:
                     bin_node.children_offsets.append(bin_offsets[child_idx])
 
             assert bin_node.header is not None
             # Ensure children_count matches the actual number of children_offsets
             # This is critical for MDLOps compatibility - the count must match the array length
-            actual_children_count = len(bin_node.children_offsets)
+            actual_children_count: int = len(bin_node.children_offsets)
             # Clamp to prevent Perl from interpreting it as negative (values >= 2^31)
             if actual_children_count > 0x7FFFFFFF:
                 actual_children_count = 0x7FFFFFFF
@@ -3728,8 +3752,8 @@ class MDLBinaryWriter:
                 bin_node.header.offset_to_controllers = 0
                 bin_node.header.offset_to_controller_data = 0
             else:
-                absolute_controllers_offset = node_offset + bin_node.controllers_offset(self.game)
-                absolute_controller_data_offset = node_offset + bin_node.controller_data_offset(self.game)
+                absolute_controllers_offset: int = node_offset + bin_node.controllers_offset(self.game)
+                absolute_controller_data_offset: int = node_offset + bin_node.controller_data_offset(self.game)
                 # Store as (absolute_offset - 12) to match MDLOps format
                 bin_node.header.offset_to_controllers = absolute_controllers_offset - 12
                 bin_node.header.offset_to_controller_data = absolute_controller_data_offset - 12
@@ -3740,27 +3764,27 @@ class MDLBinaryWriter:
             if actual_children_count == 0:
                 bin_node.header.offset_to_children = bin_node.header.offset_to_controllers
             else:
-                absolute_children_offset = node_offset + bin_node.children_offsets_offset(self.game)
+                absolute_children_offset: int = node_offset + bin_node.children_offsets_offset(self.game)
                 # Store as (absolute_offset - 12) to match MDLOps format
                 bin_node.header.offset_to_children = absolute_children_offset - 12
             bin_node.header.offset_to_root = 0
-            parent_idx = parent_by_idx.get(i)
+            parent_idx: int | None = parent_by_idx.get(i)
             # MDLOps stores offsets as (absolute_offset - 12) in the file format
             # Reference: vendor/MDLOps/MDLOpsM.pm:7663 - writes (header start - 12)
             if parent_idx is not None:
-                absolute_parent_offset = bin_offsets[parent_idx]
+                absolute_parent_offset: int = bin_offsets[parent_idx]
                 # Store as (absolute_offset - 12) to match MDLOps format
                 bin_node.header.offset_to_parent = absolute_parent_offset - 12
             else:
                 bin_node.header.offset_to_parent = 0
 
-            if bin_node.trimesh:
+            if bin_node.trimesh is not None:
                 self._calc_trimesh_offsets(node_offset, bin_node)
-            if bin_node.dangly:
+            if bin_node.dangly is not None:
                 self._calc_dangly_offsets(node_offset, bin_node)
-            if bin_node.skin:
+            if bin_node.skin is not None:
                 self._calc_skin_offsets(node_offset, bin_node)
-            if bin_node.header.type_id & MDLNodeFlags.AABB and bin_node.trimesh:
+            if bin_node.header.type_id & MDLNodeFlags.AABB and bin_node.trimesh is not None:
                 self._calc_aabb_offsets(node_offset, bin_node)
 
     def _calc_dangly_offsets(
@@ -3768,10 +3792,10 @@ class MDLBinaryWriter:
         node_offset: int,
         bin_node: _Node,
     ) -> None:
-        assert bin_node.dangly is not None
+        assert bin_node.dangly is not None, "Dangly node is required"
         # Constraints follow vertices
-        after_vertices = node_offset + bin_node.vertices_offset(self.game)
-        if bin_node.trimesh:
+        after_vertices: int = node_offset + bin_node.vertices_offset(self.game)
+        if bin_node.trimesh is not None:
             after_vertices += bin_node.trimesh.vertices_size()
         if bin_node.dangly.constraints_count > 0:
             # MDLOps uses offset-12 semantics for constraint pointer
@@ -3789,12 +3813,13 @@ class MDLBinaryWriter:
         AABB tree is written after all other node data (faces, vertices, etc.).
         Reference: vendor/MDLOps/MDLOpsM.pm:7279-7312 (AABB tree writing)
         """
-        assert bin_node.trimesh is not None
+        assert bin_node.trimesh is not None, "Trimesh node is required"
         # _aabb_nodes is always initialized when AABB flag is set (empty list if no aabbs)
         # Type check ensures we handle the None case (should not occur after initialization)
         if bin_node._aabb_nodes is None:
             bin_node.trimesh.offset_to_aabb = 0
             return
+
         aabb_nodes: list[MDLAABBNode] = bin_node._aabb_nodes
         if len(aabb_nodes) == 0:
             bin_node.trimesh.offset_to_aabb = 0
@@ -3804,10 +3829,10 @@ class MDLBinaryWriter:
         # Reference: vendor/MDLOps/MDLOpsM.pm layout - AABB comes before faces.
         # The layout is: headers -> aabbloc field (4 bytes) -> AABB tree -> faces
         # So the AABB tree position is: node_offset + all_headers_size + 4 (for aabbloc field)
-        aabb_tree_offset = node_offset + bin_node.all_headers_size(self.game) + 4
+        aabb_tree_offset: int = node_offset + bin_node.all_headers_size(self.game) + 4
 
         # AABB tree size: 40 bytes per node
-        aabb_tree_size = len(aabb_nodes) * 40
+        aabb_tree_size: int = len(aabb_nodes) * 40
         bin_node.trimesh.offset_to_aabb = aabb_tree_offset
         # Store size for writing
         bin_node._aabb_tree_size = aabb_tree_size
@@ -3817,13 +3842,13 @@ class MDLBinaryWriter:
         node_offset: int,
         bin_node: _Node,
     ) -> None:
-        assert bin_node.skin is not None
+        assert bin_node.skin is not None, "Skin node is required"
         # Place skin variable payload blocks immediately after the vertex array.
-        after_vertices = node_offset + bin_node.vertices_offset(self.game)
-        if bin_node.trimesh:
+        after_vertices: int = node_offset + bin_node.vertices_offset(self.game)
+        if bin_node.trimesh is not None:
             after_vertices += bin_node.trimesh.vertices_size()
 
-        cur = after_vertices
+        cur: int = after_vertices
         if bin_node.skin.bonemap_count:
             bin_node.skin.offset_to_bonemap = cur
             cur += int(bin_node.skin.bonemap_count) * 4
@@ -3853,14 +3878,17 @@ class MDLBinaryWriter:
         node_offset: int,
         bin_node: _Node,
     ):
-        assert bin_node.trimesh is not None
+        assert bin_node.trimesh is not None, "Trimesh node is required"
         bin_node.trimesh.offset_to_counters = node_offset + bin_node.inverted_counters_offset(self.game)
         bin_node.trimesh.offset_to_indices_counts = node_offset + bin_node.indices_counts_offset(self.game)
         bin_node.trimesh.offset_to_indices_offset = node_offset + bin_node.indices_offsets_offset(self.game)
         # indices_offsets stores offsets relative to the start of the indices data block
         # If indices_offsets is empty but count > 0, create the correct number of offsets (all 0)
         # This ensures the count matches the array length, preventing MDLOps from reading beyond bounds
-        if bin_node.trimesh.indices_offsets_count > 0 and not bin_node.trimesh.indices_offsets:
+        if (
+            bin_node.trimesh.indices_offsets_count > 0
+            and not bin_node.trimesh.indices_offsets
+        ):
             # No offsets preserved - create the correct number of offsets (all set to 0)
             # This matches the count that was preserved from the original binary header
             bin_node.trimesh.indices_offsets = [0] * bin_node.trimesh.indices_offsets_count
@@ -3876,11 +3904,11 @@ class MDLBinaryWriter:
         self,
         node: MDLNode,
     ) -> int:
-        type_id = 1
+        type_id: int = 1
         # Check for mesh - either explicit mesh object or node_type indicates mesh
         # This ensures we preserve mesh flags even if mesh object is missing
         # Emitter, Light, AABB, and Skin nodes can also have mesh data
-        if node.mesh or node.node_type in (
+        if node.mesh is not None or node.node_type in (
             MDLNodeType.TRIMESH,
             MDLNodeType.DANGLYMESH,
             MDLNodeType.EMITTER,
@@ -3889,19 +3917,19 @@ class MDLBinaryWriter:
             MDLNodeType.SKIN,
         ):
             type_id = type_id | MDLNodeFlags.MESH
-        if node.skin:
+        if node.skin is not None:
             type_id = type_id | MDLNodeFlags.SKIN
-        if node.dangly:
+        if node.dangly is not None:
             type_id = type_id | MDLNodeFlags.DANGLY
-        if node.saber:
+        if node.saber is not None:
             type_id = type_id | MDLNodeFlags.SABER
-        if node.aabb:
+        if node.aabb is not None:
             type_id = type_id | MDLNodeFlags.AABB
-        if node.emitter or node.node_type == MDLNodeType.EMITTER:
+        if node.emitter is not None or node.node_type == MDLNodeType.EMITTER:
             type_id = type_id | MDLNodeFlags.EMITTER
-        if node.light:
+        if node.light is not None:
             type_id = type_id | MDLNodeFlags.LIGHT
-        if node.reference:
+        if node.reference is not None:
             type_id = type_id | MDLNodeFlags.REFERENCE
         return type_id
 
@@ -3936,13 +3964,13 @@ class MDLBinaryWriter:
         # Reference: MDLOps includes all nodes in geometry header's node_count
         geom_node_count: int = len(self._mdl_nodes)
         anim_node_count: int = sum(len(list(anim.all_nodes())) for anim in self._mdl.anims)
-        node_count_actual = geom_node_count + anim_node_count
+        node_count_actual: int = geom_node_count + anim_node_count
         self._file_header.geometry.node_count = min(node_count_actual, 0x7FFFFFFF)
         self._file_header.geometry.geometry_type = 2
 
         # Handle headlink: for head models, offset_to_super_root points to neck_g node
         # Reference: vendor/MDLOps/MDLOpsM.pm:6285-6296 (headfix/headlink logic)
-        if self._mdl.headlink:
+        if (self._mdl.headlink or "").strip():
             neck_g_node_offset: int | None = None
             for i, mdl_node in enumerate(self._mdl_nodes):
                 if mdl_node.name == "neck_g":
@@ -3959,12 +3987,34 @@ class MDLBinaryWriter:
         self._file_header.mdx_size = self._writer_ext.size()
         self._file_header.mdx_offset = 0
 
-        # Preserve basic model header fields needed for roundtrip tests.
-        # `model_type` corresponds to classification in practice.
-        self._file_header.model_type = int(self._mdl.classification)
-        # unknown0 corresponds to classification_unk1
-        self._file_header.unknown0 = self._mdl.classification_unk1
+        # Write model header fields exactly as mdlops does (vendor/MDLOps/MDLOpsM.pm:6138-6160)
+        # Classification mapping: mdlops uses hash %classification (Effect=>0x01, Tile=>0x02, Character=>0x04,
+        # Door=>0x08, Lightsaber=>0x10, Placeable=>0x20, Flyer=>0x40, Other=>0x00)
+        # Reference: vendor/MDLOps/MDLOpsM.pm:238-240, 6138
+        classification_map = {
+            MDLClassification.EFFECT: 0x01,
+            MDLClassification.TILE: 0x02,
+            MDLClassification.CHARACTER: 0x04,
+            MDLClassification.DOOR: 0x08,
+            MDLClassification.LIGHTSABER: 0x10,
+            MDLClassification.PLACEABLE: 0x20,
+            MDLClassification.OTHER: 0x00,
+        }
+        # Default to 0x00 (Other) if classification not in map
+        self._file_header.model_type = classification_map.get(self._mdl.classification, 0x00)
+        
+        # classification_unk1: defaults to 4 for Placeable, 0 otherwise (mdlops:6142-6144)
+        if self._mdl.classification_unk1 is not None:
+            self._file_header.unknown0 = self._mdl.classification_unk1
+        else:
+            self._file_header.unknown0 = 4 if self._mdl.classification == MDLClassification.PLACEABLE else 0
+        
+        # fog: mdlops uses ignorefog (inverted), writes as "affectedByFog" (mdlops:6147)
+        # ignorefog ? 0 : 1 means: if ignorefog is true, fog_byte=0; if false, fog_byte=1
+        # Our fog=True means fog affects model (ignorefog=False), so write 1
+        # Our fog=False means fog doesn't affect model (ignorefog=True), so write 0
         self._file_header.fog = 1 if self._mdl.fog else 0
+        
         animation_count_actual = len(self._mdl.anims)
         animation_count_clamped = min(animation_count_actual, 0x7FFFFFFF)
         self._file_header.animation_count = self._file_header.animation_count2 = animation_count_clamped
@@ -3972,9 +4022,12 @@ class MDLBinaryWriter:
         self._file_header.bounding_box_max = self._mdl.bmax
         self._file_header.radius = self._mdl.radius
         self._file_header.anim_scale = float(self._mdl.animation_scale)
-        self._file_header.supermodel = self._mdl.supermodel
-        # TODO self._file_header.mdx_size
-        # TODO self._file_header.mdx_offset
+        
+        # supermodel: special handling for "mdlops" -> "NULL" (mdlops:6156-6160)
+        if self._mdl.supermodel == "mdlops":
+            self._file_header.supermodel = "NULL"
+        else:
+            self._file_header.supermodel = self._mdl.supermodel
         name_offsets_count_actual = len(self._names)
         name_offsets_count_clamped = min(name_offsets_count_actual, 0x7FFFFFFF)
         self._file_header.name_offsets_count = self._file_header.name_offsets_count2 = name_offsets_count_clamped
