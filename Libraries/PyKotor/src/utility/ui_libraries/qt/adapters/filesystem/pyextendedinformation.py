@@ -189,7 +189,7 @@ class PyQExtendedInformation:
         """
         return self.mFileInfo
 
-    def lastModified(self, tz: QTimeZone = QTimeZone.LocalTime) -> QDateTime:
+    def lastModified(self, tz: QTimeZone) -> QDateTime:
         """Return last modified time in timezone.
         
         Matches C++ lines 102-104:
