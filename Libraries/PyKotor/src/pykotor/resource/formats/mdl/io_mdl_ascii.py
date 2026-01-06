@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, cast
 from pykotor.common.misc import Color
 from pykotor.resource.formats.mdl.mdl_data import (
     MDL,
+    MDLAABBNode,
     MDLAnimation,
     MDLBoneVertex,
     MDLConstraint,
@@ -472,10 +473,19 @@ class MDLAsciiWriter(ResourceWriter):
         self.write_line(indent, f"backgroundgeometry {1 if mesh.background_geometry else 0}")
         self.write_line(indent, f"rotatetexture {1 if mesh.rotate_texture else 0}")
         self.write_line(indent, f"lightmapped {1 if mesh.has_lightmap else 0}")
-        if mesh.dirt_enabled or mesh.dirt_texture or mesh.dirt_coordinate_space:
+        # K2-specific dirt and hologram fields
+        # MDLOps writes these fields when they differ from defaults or when explicitly set
+        # Reference: vendor/MDLOps/MDLOpsM.pm (K2 trimesh header writing)
+        if mesh.dirt_enabled or mesh.dirt_texture != 1 or mesh.dirt_worldspace != 1 or mesh.hologram_donotdraw:
             self.write_line(indent, f"dirt_enabled {1 if mesh.dirt_enabled else 0}")
-            if mesh.dirt_texture:
+            if mesh.dirt_texture != 1:
                 self.write_line(indent, f"dirt_texture {mesh.dirt_texture}")
+            if mesh.dirt_worldspace != 1:
+                self.write_line(indent, f"dirt_worldspace {mesh.dirt_worldspace}")
+            if mesh.hologram_donotdraw:
+                self.write_line(indent, f"hologram_donotdraw {1 if mesh.hologram_donotdraw else 0}")
+        # Also write dirt_coordinate_space if it's set (legacy field)
+        if hasattr(mesh, "dirt_coordinate_space") and mesh.dirt_coordinate_space != 0:
             self.write_line(indent, f"dirt_coordinate_space {mesh.dirt_coordinate_space}")
 
         # Inverted mesh sequence counter (inv_count) - preserved for MDLOps compatibility
@@ -696,10 +706,19 @@ class MDLAsciiWriter(ResourceWriter):
         self.write_line(indent, f"saberflareradius {saber.saber_flare_radius:.7g}")
 
     def _write_walkmesh(self, indent: int, walkmesh: MDLWalkmesh) -> None:
-        """Write walkmesh data."""
+        """Write walkmesh data.
+        
+        AABB format matches MDLOps: 6 floats (bbox_min.xyz, bbox_max.xyz) + 1 int (face_index)
+        Reference: vendor/MDLOps/MDLOpsM.pm:3459 (printf format: 6 floats + 1 int)
+        """
         self.write_line(indent, "aabb " + str(len(walkmesh.aabbs)))
         for i, aabb in enumerate(walkmesh.aabbs):
-            self.write_line(indent + 1, f"{i} {aabb.position.x} {aabb.position.y} {aabb.position.z}")
+            # MDLOps format: 6 floats (bbox_min.xyz, bbox_max.xyz) + 1 int (face_index)
+            # Child offsets and unknown are not stored in ASCII format
+            self.write_line(
+                indent + 1,
+                f"      {aabb.bbox_min.x:.7g} {aabb.bbox_min.y:.7g} {aabb.bbox_min.z:.7g} {aabb.bbox_max.x:.7g} {aabb.bbox_max.y:.7g} {aabb.bbox_max.z:.7g} {aabb.face_index}"
+            )
 
     def _write_controller(self, indent: int, node: MDLNode, controller: MDLController) -> None:
         """Write controller data."""
@@ -831,6 +850,31 @@ class MDLAsciiWriter(ResourceWriter):
             self._write_controller(indent + 1, node, controller)
 
         self.write_line(indent, "endnode")
+
+
+def _parse_float_robust(value: str) -> float:
+    """Parse float value handling NaN/INF/QNAN formats from MDLOps.
+
+    MDLOps on Windows outputs NaN as '1.#QNAN', INF as '1.#INF', etc.
+    This function handles all these formats and standard Python float values.
+
+    Args:
+        value: String representation of float value
+
+    Returns:
+        Parsed float value (may be NaN or INF)
+    """
+    value = value.strip().lower()
+    # Handle Windows-style NaN representations
+    if "qnan" in value or value == "nan" or value == "-nan" or value == "+nan":
+        return float("nan")
+    # Handle Windows-style INF representations
+    if "inf" in value:
+        if value.startswith("-"):
+            return float("-inf")
+        return float("inf")
+    # Standard float parsing for normal values
+    return float(value)
 
 
 class MDLAsciiReader(ResourceReader):
@@ -990,15 +1034,15 @@ class MDLAsciiReader(ResourceReader):
             elif re.match(r"^\s*bmin\s+(\S+)\s+(\S+)\s+(\S+)", line, re.IGNORECASE) and not self._in_node:
                 match = re.match(r"^\s*bmin\s+(\S+)\s+(\S+)\s+(\S+)", line, re.IGNORECASE)
                 if match:
-                    self._mdl.bmin = Vector3(float(match.group(1)), float(match.group(2)), float(match.group(3)))
+                    self._mdl.bmin = Vector3(_parse_float_robust(match.group(1)), _parse_float_robust(match.group(2)), _parse_float_robust(match.group(3)))
             elif re.match(r"^\s*bmax\s+(\S+)\s+(\S+)\s+(\S+)", line, re.IGNORECASE) and not self._in_node:
                 match = re.match(r"^\s*bmax\s+(\S+)\s+(\S+)\s+(\S+)", line, re.IGNORECASE)
                 if match:
-                    self._mdl.bmax = Vector3(float(match.group(1)), float(match.group(2)), float(match.group(3)))
+                    self._mdl.bmax = Vector3(_parse_float_robust(match.group(1)), _parse_float_robust(match.group(2)), _parse_float_robust(match.group(3)))
             elif re.match(r"^\s*radius\s+(\S+)", line, re.IGNORECASE) and not self._in_node:
                 match = re.match(r"^\s*radius\s+(\S+)", line, re.IGNORECASE)
                 if match:
-                    self._mdl.radius = float(match.group(1))
+                    self._mdl.radius = _parse_float_robust(match.group(1))
 
         # Build node hierarchy
         self._build_node_hierarchy()
@@ -1236,9 +1280,9 @@ class MDLAsciiReader(ResourceReader):
             match = re.match(r"^\s*position\s+(\S+)\s+(\S+)\s+(\S+)", line, re.IGNORECASE)
             if match:
                 self._current_node.position = Vector3(
-                    float(match.group(1)),
-                    float(match.group(2)),
-                    float(match.group(3)),
+                    _parse_float_robust(match.group(1)),
+                    _parse_float_robust(match.group(2)),
+                    _parse_float_robust(match.group(3)),
                 )
             return
 
@@ -1247,10 +1291,10 @@ class MDLAsciiReader(ResourceReader):
             match = re.match(r"^\s*orientation\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)", line, re.IGNORECASE)
             if match:
                 self._current_node.orientation = Vector4(
-                    float(match.group(1)),
-                    float(match.group(2)),
-                    float(match.group(3)),
-                    float(match.group(4)),
+                    _parse_float_robust(match.group(1)),
+                    _parse_float_robust(match.group(2)),
+                    _parse_float_robust(match.group(3)),
+                    _parse_float_robust(match.group(4)),
                 )
             return
 
@@ -1335,8 +1379,8 @@ class MDLAsciiReader(ResourceReader):
                             if not parts:
                                 break
 
-                            time = float(parts[0])
-                            data = [float(x) for x in parts[1:]]
+                            time = _parse_float_robust(parts[0])
+                            data = [_parse_float_robust(x) for x in parts[1:]]
 
                             # Special handling for orientation (convert angle-axis to quaternion)
                             if controller_type == MDLControllerType.ORIENTATION and len(data) == 4:
@@ -1358,7 +1402,7 @@ class MDLAsciiReader(ResourceReader):
                     if match:
                         # Extract data values
                         parts = line.split()
-                        data = [float(x) for x in parts[1:]]
+                        data = [_parse_float_robust(x) for x in parts[1:]]
 
                         # Special handling for orientation
                         controller_type = _CONTROLLER_NAME_TO_TYPE.get(controller_name, MDLControllerType.INVALID)
@@ -1397,29 +1441,29 @@ class MDLAsciiReader(ResourceReader):
         if re.match(r"^\s*bmin\s+(\S+)\s+(\S+)\s+(\S+)\s*$", line, re.IGNORECASE):
             match = re.match(r"^\s*bmin\s+(\S+)\s+(\S+)\s+(\S+)\s*$", line, re.IGNORECASE)
             if match:
-                mesh.bb_min = Vector3(float(match.group(1)), float(match.group(2)), float(match.group(3)))
+                mesh.bb_min = Vector3(_parse_float_robust(match.group(1)), _parse_float_robust(match.group(2)), _parse_float_robust(match.group(3)))
             return True
         if re.match(r"^\s*bmax\s+(\S+)\s+(\S+)\s+(\S+)\s*$", line, re.IGNORECASE):
             match = re.match(r"^\s*bmax\s+(\S+)\s+(\S+)\s+(\S+)\s*$", line, re.IGNORECASE)
             if match:
-                mesh.bb_max = Vector3(float(match.group(1)), float(match.group(2)), float(match.group(3)))
+                mesh.bb_max = Vector3(_parse_float_robust(match.group(1)), _parse_float_robust(match.group(2)), _parse_float_robust(match.group(3)))
             return True
         if re.match(r"^\s*radius\s+(\S+)\s*$", line, re.IGNORECASE):
             match = re.match(r"^\s*radius\s+(\S+)\s*$", line, re.IGNORECASE)
             if match:
-                mesh.radius = float(match.group(1))
+                mesh.radius = _parse_float_robust(match.group(1))
             return True
         if re.match(r"^\s*average\s+(\S+)\s+(\S+)\s+(\S+)\s*$", line, re.IGNORECASE):
             match = re.match(r"^\s*average\s+(\S+)\s+(\S+)\s+(\S+)\s*$", line, re.IGNORECASE)
             if match:
-                mesh.average = Vector3(float(match.group(1)), float(match.group(2)), float(match.group(3)))
+                mesh.average = Vector3(_parse_float_robust(match.group(1)), _parse_float_robust(match.group(2)), _parse_float_robust(match.group(3)))
             return True
 
         # Mesh surface area (binary header field). We emit/read this for strict equality.
         if re.match(r"^\s*(area|surfacearea)\s+(\S+)\s*$", line, re.IGNORECASE):
             match = re.match(r"^\s*(area|surfacearea)\s+(\S+)\s*$", line, re.IGNORECASE)
             if match:
-                mesh.area = float(match.group(2))
+                mesh.area = _parse_float_robust(match.group(2))
             return True
 
         # Parse ambient color
@@ -1427,9 +1471,9 @@ class MDLAsciiReader(ResourceReader):
             match = re.match(r"^\s*ambient\s+(\S+)\s+(\S+)\s+(\S+)", line, re.IGNORECASE)
             if match:
                 mesh.ambient = Color(
-                    float(match.group(1)),
-                    float(match.group(2)),
-                    float(match.group(3)),
+                    _parse_float_robust(match.group(1)),
+                    _parse_float_robust(match.group(2)),
+                    _parse_float_robust(match.group(3)),
                 )
             return True
 
@@ -1438,9 +1482,9 @@ class MDLAsciiReader(ResourceReader):
             match = re.match(r"^\s*diffuse\s+(\S+)\s+(\S+)\s+(\S+)", line, re.IGNORECASE)
             if match:
                 mesh.diffuse = Color(
-                    float(match.group(1)),
-                    float(match.group(2)),
-                    float(match.group(3)),
+                    _parse_float_robust(match.group(1)),
+                    _parse_float_robust(match.group(2)),
+                    _parse_float_robust(match.group(3)),
                 )
             return True
 
@@ -1516,7 +1560,20 @@ class MDLAsciiReader(ResourceReader):
         if re.match(r"^\s*dirt_texture\s+(\S+)", line, re.IGNORECASE):
             match = re.match(r"^\s*dirt_texture\s+(\S+)", line, re.IGNORECASE)
             if match:
-                mesh.dirt_texture = match.group(1)
+                try:
+                    mesh.dirt_texture = int(match.group(1))
+                except ValueError:
+                    # If it's not a number, try to parse as string (legacy support)
+                    mesh.dirt_texture = 1  # Default to 1 if parsing fails
+            return True
+        if re.match(r"^\s*dirt_worldspace\s+(\S+)", line, re.IGNORECASE):
+            match = re.match(r"^\s*dirt_worldspace\s+(\S+)", line, re.IGNORECASE)
+            if match:
+                mesh.dirt_worldspace = int(match.group(1))
+            return True
+        v = _parse_bool_flag(r"^\s*hologram_donotdraw(?:\s+(\S+))?\s*$")
+        if v is not None:
+            mesh.hologram_donotdraw = bool(v)
             return True
         if re.match(r"^\s*dirt_coordinate_space\s+(\S+)", line, re.IGNORECASE):
             match = re.match(r"^\s*dirt_coordinate_space\s+(\S+)", line, re.IGNORECASE)
@@ -1601,17 +1658,17 @@ class MDLAsciiReader(ResourceReader):
             # Unit test fixtures also allow a compact form without an explicit index: "x y z"
             if len(parts) == 3:
                 idx = self._task_count
-                pos = Vector3(float(parts[0]), float(parts[1]), float(parts[2]))
+                pos = Vector3(_parse_float_robust(parts[0]), _parse_float_robust(parts[1]), _parse_float_robust(parts[2]))
                 mesh.vertex_positions.append(pos)
             elif len(parts) >= 4:
                 idx = int(parts[0])
-                pos = Vector3(float(parts[1]), float(parts[2]), float(parts[3]))
+                pos = Vector3(_parse_float_robust(parts[1]), _parse_float_robust(parts[2]), _parse_float_robust(parts[3]))
                 # Keep positions in encounter order; most ASCII exports are sequential.
                 mesh.vertex_positions.append(pos)
 
                 # Optional normal
                 if len(parts) >= 7:
-                    normal = Vector3(float(parts[4]), float(parts[5]), float(parts[6]))
+                    normal = Vector3(_parse_float_robust(parts[4]), _parse_float_robust(parts[5]), _parse_float_robust(parts[6]))
                     if mesh.vertex_normals is None:
                         mesh.vertex_normals = []
                     while len(mesh.vertex_normals) <= idx:
@@ -1620,7 +1677,7 @@ class MDLAsciiReader(ResourceReader):
 
                 # Optional UV1
                 if len(parts) >= 9:
-                    uv = Vector2(float(parts[7]), float(parts[8]))
+                    uv = Vector2(_parse_float_robust(parts[7]), _parse_float_robust(parts[8]))
                     if mesh.vertex_uv1 is None:
                         mesh.vertex_uv1 = []
                         mesh.vertex_uvs = mesh.vertex_uv1
@@ -1630,7 +1687,7 @@ class MDLAsciiReader(ResourceReader):
 
                 # Optional UV2
                 if len(parts) >= 11:
-                    uv = Vector2(float(parts[9]), float(parts[10]))
+                    uv = Vector2(_parse_float_robust(parts[9]), _parse_float_robust(parts[10]))
                     if mesh.vertex_uv2 is None:
                         mesh.vertex_uv2 = []
                     while len(mesh.vertex_uv2) <= idx:
@@ -1785,10 +1842,10 @@ class MDLAsciiReader(ResourceReader):
             # Unit test fixtures also allow compact form without an explicit index: "u v"
             if len(parts) == 2:
                 idx = self._task_count
-                uv = Vector2(float(parts[0]), float(parts[1]))
+                uv = Vector2(_parse_float_robust(parts[0]), _parse_float_robust(parts[1]))
             elif len(parts) >= 3:
                 idx = int(parts[0])
-                uv = Vector2(float(parts[1]), float(parts[2]))
+                uv = Vector2(_parse_float_robust(parts[1]), _parse_float_robust(parts[2]))
             else:
                 return False
 
@@ -1877,8 +1934,8 @@ class MDLAsciiReader(ResourceReader):
             if len(parts) >= 9:
                 idx = int(parts[0])
                 bone_idx = int(parts[1])
-                qbone = Vector4(float(parts[2]), float(parts[3]), float(parts[4]), float(parts[5]))
-                tbone = Vector3(float(parts[6]), float(parts[7]), float(parts[8]))
+                qbone = Vector4(_parse_float_robust(parts[2]), _parse_float_robust(parts[3]), _parse_float_robust(parts[4]), _parse_float_robust(parts[5]))
+                tbone = Vector3(_parse_float_robust(parts[6]), _parse_float_robust(parts[7]), _parse_float_robust(parts[8]))
 
                 # Update bone_indices tuple (need to convert to list, modify, convert back)
                 # Update bone_indices list
@@ -1913,7 +1970,7 @@ class MDLAsciiReader(ResourceReader):
                 while i < len(parts) - 1:
                     try:
                         bone_idx = int(parts[i])
-                        weight = float(parts[i + 1])
+                        weight = _parse_float_robust(parts[i + 1])
                     except ValueError:
                         break
                     i += 2
@@ -2090,7 +2147,7 @@ class MDLAsciiReader(ResourceReader):
         if self._task == "flarepositions":
             parts = line.split()
             if parts:
-                light.flare_positions.append(float(parts[0]))
+                light.flare_positions.append(_parse_float_robust(parts[0]))
                 self._task_count += 1
                 if self._task_count >= self._task_total:
                     self._task = ""
@@ -2099,7 +2156,7 @@ class MDLAsciiReader(ResourceReader):
         if self._task == "flaresizes":
             parts = line.split()
             if parts:
-                light.flare_sizes.append(float(parts[0]))
+                light.flare_sizes.append(_parse_float_robust(parts[0]))
                 self._task_count += 1
                 if self._task_count >= self._task_total:
                     self._task = ""
@@ -2117,7 +2174,7 @@ class MDLAsciiReader(ResourceReader):
         if self._task == "flarecolorshifts":
             parts = line.split()
             if len(parts) >= 3:
-                light.flare_color_shifts.append((float(parts[0]), float(parts[1]), float(parts[2])))
+                light.flare_color_shifts.append((_parse_float_robust(parts[0]), _parse_float_robust(parts[1]), _parse_float_robust(parts[2])))
                 self._task_count += 1
                 if self._task_count >= self._task_total:
                     self._task = ""
@@ -2345,29 +2402,30 @@ class MDLAsciiReader(ResourceReader):
 
         # Parse aabb declaration
         if re.match(r"^\s*aabb", line, re.IGNORECASE):
-            # Check if line has data: "aabb index x y z ..."
-            parts = line.split()
-            if len(parts) >= 8:
-                # Has data on same line
-                aabb_node = MDLNode()
-                aabb_node.position = Vector3(float(parts[2]), float(parts[3]), float(parts[4]))
-                walkmesh.aabbs.append(aabb_node)
-                self._task = "aabb"
-                self._task_count = 1
-            else:
-                # Just declaration, data follows
-                self._task = "aabb"
-                self._task_count = 0
+            # MDLOps format: "aabb" declaration on one line, data lines follow
+            # Reference: vendor/MDLOps/MDLOpsM.pm:3457 (prints "aabb" on same line, then data lines)
+            # Data format: 6 floats (bbox_min.xyz, bbox_max.xyz) + 1 int (face_index)
+            # Reference: vendor/MDLOps/MDLOpsM.pm:3459, 4625-4626
+            self._task = "aabb"
+            self._task_count = 0
             return True
 
         # Parse aabb data
         if self._task == "aabb":
-            # Format: "index x y z msp plane left right"
-            # Reference: vendor/mdlops/MDLOpsM.pm:4624-4627
+            # Format: "      bbox_min.x bbox_min.y bbox_min.z bbox_max.x bbox_max.y bbox_max.z face_index"
+            # MDLOps stores 7 values: 6 floats + 1 int
+            # Reference: vendor/MDLOps/MDLOpsM.pm:3459, 4625-4626
             parts = line.split()
-            if len(parts) >= 8:
-                aabb_node = MDLNode()
-                aabb_node.position = Vector3(float(parts[1]), float(parts[2]), float(parts[3]))
+            if len(parts) >= 7:
+                # Parse 6 floats (bbox_min.xyz, bbox_max.xyz) + 1 int (face_index)
+                aabb_node = MDLAABBNode(
+                    bbox_min=Vector3(_parse_float_robust(parts[0]), _parse_float_robust(parts[1]), _parse_float_robust(parts[2])),
+                    bbox_max=Vector3(_parse_float_robust(parts[3]), _parse_float_robust(parts[4]), _parse_float_robust(parts[5])),
+                    face_index=int(parts[6]),
+                    left_child_offset=0,  # Not stored in ASCII format
+                    right_child_offset=0,  # Not stored in ASCII format
+                    unknown=0,  # Not stored in ASCII format
+                )
                 walkmesh.aabbs.append(aabb_node)
                 self._task_count += 1
                 return True

@@ -637,90 +637,59 @@ class _Node:
         return len(self._dangly_constraints) * 4
 
     def _write_aabb_extra(self, writer: BinaryWriter) -> None:
-        """Write AABB tree as flat array.
-        
-        Reference: vendor/MDLOps/MDLOpsM.pm:7289-7305 (flat AABB array writing)
-        
-        AABB nodes are written sequentially in the order they were read (depth-first).
-        Each node is 40 bytes: 6 floats (bbox min/max) + 4 int32s (left child, right child, face_index, unknown).
-        
-        For branch nodes (face_index == -1), child offsets point to the position of child nodes.
-        Since nodes are already in depth-first order, we can calculate child positions from indices.
-        """
         if self._aabb_nodes is None:
             return
         aabb_nodes: list[MDLAABBNode] = self._aabb_nodes
         if len(aabb_nodes) == 0:
             return
 
-        # AABB nodes are stored as a flat array, written sequentially
-        # Child pointers are calculated based on node indices in the array
-        # MDLOps reference: $buffer .= pack('f[6]LLll', @{$aabb}[0..5], 
-        #   ($aabb->[6] != -1 ? 0 : ($totalbytes - 12) + ($aabb->[9] * 40)),
-        #   ($aabb->[6] != -1 ? 0 : ($totalbytes - 12) + ($aabb->[10] * 40)),
-        #   $aabb->[6], $aabb->[8]);
-        
         tree_start = writer.position()
         
+        def subtree_size(node_idx: int) -> int:
+            if node_idx >= len(aabb_nodes):
+                return 0
+            node = aabb_nodes[node_idx]
+            if node.face_index != -1:
+                return 1
+            size = 1
+            left_idx = node_idx + 1
+            if left_idx < len(aabb_nodes):
+                size += subtree_size(left_idx)
+                right_idx = node_idx + size
+                if right_idx < len(aabb_nodes):
+                    size += subtree_size(right_idx)
+            return size
+        
+        def get_child_indices(node_idx: int) -> tuple[int, int]:
+            node = aabb_nodes[node_idx]
+            if node.face_index != -1:
+                return (0, 0)
+            left_idx = node_idx + 1
+            left_size = subtree_size(left_idx)
+            right_idx = left_idx + left_size
+            return (left_idx, right_idx)
+        
+        child_indices: list[tuple[int, int]] = []
+        for i in range(len(aabb_nodes)):
+            child_indices.append(get_child_indices(i))
+        
         for i, node in enumerate(aabb_nodes):
-            # Write bounding box (6 floats = 24 bytes)
             writer.write_vector3(node.bbox_min)
             writer.write_vector3(node.bbox_max)
             
             if node.face_index == -1:
-                # Branch node: calculate child offsets from stored indices
-                # Note: left_child_offset and right_child_offset were stored as absolute positions
-                # during reading, but we need to convert them to indices for writing.
-                # Actually, we stored the raw file offsets which aren't useful here.
-                # 
-                # The issue is that when reading, we stored offsets, but for writing we need indices.
-                # MDLOps stores child indices (aabb->[9] and aabb->[10]) separately.
-                # 
-                # For now, since we read in depth-first order and AABB trees are binary,
-                # we can reconstruct child indices: for node at index i, if it's a branch,
-                # left child is at i+1, right child is at i+1+(left subtree size).
-                # But we don't have subtree sizes stored.
-                #
-                # Alternative: just use the stored offsets directly, converting back to writer space.
-                # But that won't work either because the offsets were for the original file.
-                #
-                # Best approach: rebuild child indices during reading and store them.
-                # For now, use a simpler heuristic: write zeros and hope it works for leaf-only cases,
-                # or use the recursive approach to properly track positions.
-                
-                # HACK: Since nodes are in DFS order, left child is at current_index + 1,
-                # and right child follows the left subtree. We need to count left subtree size.
-                # This is complex - let's use a different approach: write with stored offsets
-                # but convert them properly.
-                
-                # For branch nodes, use depth-first tree property:
-                # In a DFS traversal, if we're at node i (a branch), 
-                # the left child is at position i+1
-                # Finding the right child requires knowing the left subtree size, which we don't have.
-                # 
-                # Let's just write the offsets as we calculate them inline.
-                # Since nodes are written sequentially at tree_start + (index * 40),
-                # left child at index L would be at tree_start + L * 40.
-                
-                # We need to build child index mapping. Let's do this properly with a helper.
-                left_child_idx = i + 1  # In DFS, left child is immediately after parent
-                # Right child: need to count all nodes in left subtree
-                # For now, write placeholder and come back
-                writer.write_int32(tree_start + left_child_idx * 40)  # left child offset
-                writer.write_int32(0)  # placeholder for right child
-                writer.write_int32(-1)  # face_index = -1 for branch
+                left_idx, right_idx = child_indices[i]
+                left_offset = (tree_start - 12) + (left_idx * 40) if left_idx > 0 else 0
+                right_offset = (tree_start - 12) + (right_idx * 40) if right_idx > 0 else 0
+                writer.write_int32(left_offset)
+                writer.write_int32(right_offset)
+                writer.write_int32(-1)
                 writer.write_int32(node.unknown)
             else:
-                # Leaf node: no children
-                writer.write_int32(0)  # left child = 0
-                writer.write_int32(0)  # right child = 0
+                writer.write_int32(0)
+                writer.write_int32(0)
                 writer.write_int32(node.face_index)
                 writer.write_int32(node.unknown)
-        
-        # Second pass: fix right child offsets for branch nodes
-        # This requires knowing subtree sizes. Build a stack-based count.
-        # In DFS order: for each branch node, its left subtree ends where the right child begins.
-        # Count: when we see a branch, left child is next. When we pop back, right child follows.
         
         # Actually, let's do this properly with a recursive helper that builds indices
         if any(node.face_index == -1 for node in aabb_nodes):
