@@ -1178,19 +1178,68 @@ class PyFileSystemModel(QAbstractItemModel):
         self,
         column: int,
         order: Qt.SortOrder = Qt.SortOrder.AscendingOrder,
-    ):
-        print("<SDM> [sort scope] order: ", order, "column: ", column)
+    ) -> None:
+        """Sort model matching C++ lines 1159-1187 exactly.
 
+        Matches:
+        void QFileSystemModel::sort(int column, Qt::SortOrder order)
+        {
+            Q_D(QFileSystemModel);
+            if (d->sortOrder == order && d->sortColumn == column && !d->forceSort)
+                return;
+
+            emit layoutAboutToBeChanged();
+            QModelIndexList oldList = persistentIndexList();
+            QList<std::pair<QFileSystemModelPrivate::QFileSystemNode *, int>> oldNodes;
+            oldNodes.reserve(oldList.size());
+            for (const QModelIndex &oldNode : oldList)
+                oldNodes.emplace_back(d->node(oldNode), oldNode.column());
+
+            if (!(d->sortColumn == column && d->sortOrder != order && !d->forceSort)) {
+                //we sort only from where we are, don't need to sort all the model
+                d->sortChildren(column, index(rootPath()));
+                d->sortColumn = column;
+                d->forceSort = false;
+            }
+            d->sortOrder = order;
+
+            QModelIndexList newList;
+            newList.reserve(oldNodes.size());
+            for (const auto &[node, col]: std::as_const(oldNodes))
+                newList.append(d->index(node, col));
+
+            changePersistentIndexList(oldList, newList);
+            emit layoutChanged({}, VerticalSortHint);
+        }
+        """
         if self._sortOrder == order and self._sortColumn == column and not self._forceSort:
             return
 
         self.layoutAboutToBeChanged.emit()
+        old_list = self.persistentIndexList()
+        old_nodes: list[tuple[PyFileSystemNode, int]] = []
+        old_nodes.reserve(len(old_list)) if hasattr(old_nodes, "reserve") else None  # type: ignore[attr-defined]
+        for old_node_index in old_list:
+            old_nodes.append((self.node(old_node_index), old_node_index.column()))
 
-        self.sortChildren(column, QModelIndex())
-        self._sortColumn = column
+        if not (self._sortColumn == column and self._sortOrder != order and not self._forceSort):
+            # we sort only from where we are, don't need to sort all the model
+            self.sortChildren(column, self.index(self.rootPath()))
+            self._sortColumn = column
+            self._forceSort = False
+
         self._sortOrder = order
-        self._forceSort = False
 
+        new_list: list[QModelIndex] = []
+        new_list.reserve(len(old_nodes)) if hasattr(new_list, "reserve") else None  # type: ignore[attr-defined]
+        for node, col in old_nodes:
+            new_list.append(self._index_from_node(node, col))
+
+        self.changePersistentIndexList(old_list, new_list)
+        # layoutChanged signal - in PyQt6, the signal signature is layoutChanged(parents, hint)
+        # C++: emit layoutChanged({}, VerticalSortHint)
+        # PyQt6: layoutChanged.emit([], Qt.Orientation.Vertical) or just layoutChanged.emit()
+        # For now, emit without arguments as PyQt6 signal may not support the hint parameter directly
         self.layoutChanged.emit()
 
     def rmdir(
