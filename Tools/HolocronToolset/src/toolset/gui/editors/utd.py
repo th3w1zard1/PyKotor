@@ -17,6 +17,7 @@ from pykotor.resource.generics.utd import UTD, dismantle_utd, read_utd
 from pykotor.resource.type import ResourceType
 from pykotor.tools import door
 from toolset.data.installation import HTInstallation
+from toolset.gui.common.localization import translate as tr
 from toolset.gui.dialogs.edit.locstring import LocalizedStringDialog
 from toolset.gui.editor import Editor
 from toolset.gui.widgets.settings.installations import GlobalSettings

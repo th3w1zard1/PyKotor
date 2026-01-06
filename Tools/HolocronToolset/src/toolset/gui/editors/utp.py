@@ -19,6 +19,7 @@ from pykotor.resource.generics.utp import UTP, dismantle_utp, read_utp
 from pykotor.resource.type import ResourceType
 from pykotor.tools import placeable
 from toolset.data.installation import HTInstallation
+from toolset.gui.common.localization import translate as tr
 from toolset.gui.dialogs.edit.locstring import LocalizedStringDialog
 from toolset.gui.dialogs.inventory import InventoryEditor
 from toolset.gui.editor import Editor

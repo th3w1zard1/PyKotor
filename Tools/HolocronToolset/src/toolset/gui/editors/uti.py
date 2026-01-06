@@ -23,6 +23,7 @@ from pykotor.resource.formats.twoda.twoda_data import TwoDA
 from pykotor.resource.generics.uti import UTI, UTIProperty, dismantle_uti, read_uti
 from pykotor.resource.type import ResourceType
 from toolset.data.installation import HTInstallation
+from toolset.gui.common.localization import translate as tr
 from toolset.gui.dialogs.edit.locstring import LocalizedStringDialog
 from toolset.gui.dialogs.load_from_location_result import FileSelectionWindow, ResourceItems
 from toolset.gui.editor import Editor
