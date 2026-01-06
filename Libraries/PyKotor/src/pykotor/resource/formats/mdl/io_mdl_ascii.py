@@ -1866,10 +1866,10 @@ class MDLAsciiReader(ResourceReader):
             parts = line.split()
             if len(parts) == 2:
                 idx = self._task_count
-                uv = Vector2(float(parts[0]), float(parts[1]))
+                uv = Vector2(_parse_float_robust(parts[0]), _parse_float_robust(parts[1]))
             elif len(parts) >= 3:
                 idx = int(parts[0])
-                uv = Vector2(float(parts[1]), float(parts[2]))
+                uv = Vector2(_parse_float_robust(parts[1]), _parse_float_robust(parts[2]))
             else:
                 return False
 
