@@ -45,11 +45,9 @@ MDL_FAST_LOAD_FLAGS = {
 
 
 class _ModelHeader:
-    SIZE: ClassVar[int] = 196
+    SIZE: ClassVar[Literal[0xC4]] = 196
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self.geometry: _GeometryHeader = _GeometryHeader()
         self.model_type: int = 0
         self.unknown0: int = 0  # TODO: what is this?
@@ -150,20 +148,24 @@ class _ModelHeader:
 
 
 class _GeometryHeader:
-    SIZE = 80
+    SIZE: ClassVar[Literal[0x50]] = 80
 
-    K1_FUNCTION_POINTER0 = 4273776
-    K2_FUNCTION_POINTER0 = 4285200
-    K1_ANIM_FUNCTION_POINTER0 = 4273392
-    K2_ANIM_FUNCTION_POINTER0 = 4284816
+    K1_FUNCTION_POINTER0: ClassVar[Literal[0x413670]] = 4273776
+    K2_FUNCTION_POINTER0: ClassVar[Literal[0x416310]] = 4285200
+    K1_ANIM_FUNCTION_POINTER0: ClassVar[Literal[0x4134F0]] = 4273392
+    K2_ANIM_FUNCTION_POINTER0: ClassVar[Literal[0x416190]] = 4284816
 
-    K1_FUNCTION_POINTER1 = 4216096
-    K2_FUNCTION_POINTER1 = 4216320
-    K1_ANIM_FUNCTION_POINTER1 = 4451552
-    K2_ANIM_FUNCTION_POINTER1 = 4522928
+    K1_FUNCTION_POINTER1: ClassVar[Literal[0x405520]] = 4216096
+    K2_FUNCTION_POINTER1: ClassVar[Literal[0x405600]] = 4216320
+    K1_ANIM_FUNCTION_POINTER1: ClassVar[Literal[0x43ECE0]] = 4451552
+    K2_ANIM_FUNCTION_POINTER1: ClassVar[Literal[0x4503B0]] = 4522928
 
     GEOM_TYPE_ROOT = 2
     GEOM_TYPE_ANIM = 5
+
+    # MDLOps uses these specific padding bytes when compiling ASCII to binary.
+    # Using the same values ensures byte-level parity with MDLOps output.
+    MDLOPS_PADDING: ClassVar[bytes] = b"\x31\x96\xBD"
 
     def __init__(
         self,
@@ -175,7 +177,17 @@ class _GeometryHeader:
         self.node_count: int = 0
         self.unknown0: bytes = b"\x00" * 28
         self.geometry_type: int = 0
-        self.padding: bytes = b"\x00" * 3
+        # For writing, always use MDLOps padding bytes for parity
+        self._padding: bytes = self.MDLOPS_PADDING
+
+    @property
+    def padding(self) -> bytes:
+        return self._padding
+
+    @padding.setter
+    def padding(self, value: bytes) -> None:
+        # When reading, store the original padding bytes
+        self._padding = value
 
     def read(
         self,
@@ -206,15 +218,14 @@ class _GeometryHeader:
         writer.write_uint32(node_count_clamped)
         writer.write_bytes(self.unknown0)
         writer.write_uint8(self.geometry_type)
-        writer.write_bytes(self.padding)
+        # Always write MDLOps padding bytes for parity
+        writer.write_bytes(self.MDLOPS_PADDING)
 
 
 class _AnimationHeader:
-    SIZE = _GeometryHeader.SIZE + 56
+    SIZE: ClassVar[Literal[0x88]] = _GeometryHeader.SIZE + 56
 
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self.geometry: _GeometryHeader = _GeometryHeader()
         self.duration: float = 0.0
         self.transition: float = 0.0
@@ -261,9 +272,7 @@ class _AnimationHeader:
 
 
 class _Animation:
-    def __init__(
-        self,
-    ):
+    def __init__(self):
         self.header: _AnimationHeader = _AnimationHeader()
         self.events: list[_EventStructure] = []
         self.w_nodes: list[_Node] = []
@@ -308,7 +317,7 @@ class _Animation:
 
 
 class _EventStructure:
-    SIZE = 36
+    SIZE: ClassVar[Literal[0x24]] = 36
 
     def __init__(self):
         self.activation_time: float = 0.0
@@ -331,7 +340,7 @@ class _EventStructure:
 
 
 class _Controller:
-    SIZE = 16
+    SIZE: ClassVar[Literal[0x10]] = 16
 
     def __init__(self):
         self.type_id: int = 0
@@ -369,7 +378,7 @@ class _Controller:
 
 
 class _Node:
-    SIZE: ClassVar[int] = 80
+    SIZE: ClassVar[Literal[0x50]] = 80
 
     _dangly_constraints: list[MDLConstraint] | None = None
     _aabb_nodes: list[MDLAABBNode] | None = None
@@ -577,30 +586,40 @@ class _Node:
             raise ValueError(msg)
 
     def _write_trimesh_data(self, writer: BinaryWriter):
+        """Write trimesh data in MDLOps order.
+        
+        Reference: vendor/MDLOps/MDLOpsM.pm:7903-7940
+        MDLOps writes mesh data in this order:
+        1. faces (7903-7907)
+        2. indices_counts / pntr_to_vert_num (7909-7914)
+        3. vertices / vertcoords (7917-7921)
+        4. indices_offsets / pntr_to_vert_loc (7923-7928)
+        5. counters / array3 (7930-7934)
+        6. vertindexes (7936-7940)
+        """
         assert self.trimesh is not None
-        # Write indices counts array
-        for count in self.trimesh.indices_counts:
-            writer.write_uint32(count)
 
-        # Write indices offsets array
-        for offset in self.trimesh.indices_offsets:
-            writer.write_uint32(offset)
-
-        # Write inverted counters array (array3)
-        for counter in self.trimesh.inverted_counters:
-            writer.write_uint32(counter)
-
-        # Write faces (full _Face structs)
+        # 1. Write faces (full _Face structs)
         for face in self.trimesh.faces:
             face.write(writer)
 
-        # Write vertices (Vector3 array)
+        # 2. Write indices counts array (pntr_to_vert_num)
+        for count in self.trimesh.indices_counts:
+            writer.write_uint32(count)
+
+        # 3. Write vertices (Vector3 array / vertcoords)
         for vertex in self.trimesh.vertices:
             writer.write_vector3(vertex)
 
-        # Write vertex indices array (vertindexes)
-        # Reference: vendor/MDLOps/MDLOpsM.pm:7936-7940 (vertindexes writing)
-        # MDLOps writes face vertex indices as a separate short array after vertices
+        # 4. Write indices offsets array (pntr_to_vert_loc)
+        for offset in self.trimesh.indices_offsets:
+            writer.write_uint32(offset)
+
+        # 5. Write inverted counters array (array3)
+        for counter in self.trimesh.inverted_counters:
+            writer.write_uint32(counter)
+
+        # 6. Write vertex indices array (vertindexes)
         # Format: 3 int16s per face (vertex1, vertex2, vertex3)
         for face in self.trimesh.faces:
             writer.write_int16(face.vertex1)
@@ -753,78 +772,87 @@ class _Node:
             size += 36
         return size
 
+    def faces_offset(
+        self,
+        game: Game,
+    ) -> int:
+        # MDLOps layout: faces come immediately after headers (and AABB if present)
+        offset = self.all_headers_size(game)
+        # AABB tree (if present) comes after aabbloc field but before faces
+        if self.header and self.header.type_id & MDLNodeFlags.AABB and self.trimesh:
+            offset += 4  # aabbloc field
+            offset += self.aabb_extra_size()  # AABB tree
+        return offset
+
     def indices_counts_offset(
         self,
         game: Game,
     ) -> int:
-        return self.all_headers_size(game)
-
-    def indices_offsets_offset(
-        self,
-        game: Game,
-    ) -> int:
-        offset = self.indices_counts_offset(game)
+        # MDLOps layout: pntr_to_vert_num (indices_counts) comes right after faces
+        # Reference: vendor/MDLOps/MDLOpsM.pm:7909-7914
+        offset = self.faces_offset(game)
         if self.trimesh:
-            offset += len(self.trimesh.indices_counts) * 4
-        return offset
-
-    def inverted_counters_offset(
-        self,
-        game: Game,
-    ) -> int:
-        offset = self.indices_offsets_offset(game)
-        if self.trimesh:
-            offset += len(self.trimesh.indices_offsets) * 4
-        return offset
-
-    def indices_offset(
-        self,
-        game: Game,
-    ) -> int:
-        offset = self.inverted_counters_offset(game)
-        if self.trimesh:
-            offset += len(self.trimesh.inverted_counters) * 4
+            offset += self.trimesh.faces_size()
         return offset
 
     def vertices_offset(
         self,
         game: Game,
     ) -> int:
-        # Vertices follow the face struct array.
-        offset = self.faces_offset(game)
+        # MDLOps layout: vertcoords comes after indices_counts array
+        # Reference: vendor/MDLOps/MDLOpsM.pm:7917-7921
+        offset = self.indices_counts_offset(game)
         if self.trimesh:
-            offset += self.trimesh.faces_size()
+            offset += len(self.trimesh.indices_counts) * 4
         return offset
 
-    def faces_offset(
+    def indices_offsets_offset(
         self,
         game: Game,
     ) -> int:
-        # Faces begin immediately after all headers / index tables.
-        # (Index tables are currently treated as optional and may be empty.)
-        # AABB tree (if present) comes after aabbloc field but before faces
-        offset = self.indices_offset(game)
-        # AABB tree is written immediately after aabbloc field (4 bytes), before trimesh data
-        if self.header and self.header.type_id & MDLNodeFlags.AABB and self.trimesh:
-            offset += 4  # aabbloc field
-            offset += self.aabb_extra_size()  # AABB tree
+        # MDLOps layout: pntr_to_vert_loc (indices_offsets) comes after vertices
+        # Reference: vendor/MDLOps/MDLOpsM.pm:7923-7928
+        offset = self.vertices_offset(game)
+        if self.trimesh:
+            offset += self.trimesh.vertices_size()
+        return offset
+
+    def inverted_counters_offset(
+        self,
+        game: Game,
+    ) -> int:
+        # MDLOps layout: array3 (counters) comes after indices_offsets
+        # Reference: vendor/MDLOps/MDLOpsM.pm:7930-7934
+        offset = self.indices_offsets_offset(game)
+        if self.trimesh:
+            offset += len(self.trimesh.indices_offsets) * 4
+        return offset
+
+    def vertex_indices_offset(
+        self,
+        game: Game,
+    ) -> int:
+        # MDLOps layout: vertindexes comes after counters
+        # Reference: vendor/MDLOps/MDLOpsM.pm:7936-7940
+        offset = self.inverted_counters_offset(game)
+        if self.trimesh:
+            offset += len(self.trimesh.inverted_counters) * 4
         return offset
 
     def children_offsets_offset(
         self,
         game: Game,
     ) -> int:
-        # Children offsets follow the vertex array, vertex indices array, and any extra blocks.
-        # Reference: vendor/MDLOps/MDLOpsM.pm:7917-7940 (vertex data + vertindexes)
-        size = self.vertices_offset(game)
+        # MDLOps layout: child node indexes comes after vertindexes
+        # Reference: vendor/MDLOps/MDLOpsM.pm:7945-7951
+        offset = self.vertex_indices_offset(game)
         if self.trimesh:
-            size += self.trimesh.vertices_size()
-            size += self.trimesh.vertex_indices_size()  # vertindexes array
+            offset += self.trimesh.vertex_indices_size()
         if self.dangly:
-            size += self.dangly_extra_size()
+            offset += self.dangly_extra_size()
         if self.skin:
-            size += self.skin_extra_size()
-        return size
+            offset += self.skin_extra_size()
+        return offset
 
     def children_offsets_size(
         self,
@@ -836,6 +864,8 @@ class _Node:
         self,
         game: Game,
     ) -> int:
+        # MDLOps layout: controllers comes after children_offsets
+        # Reference: vendor/MDLOps/MDLOpsM.pm:7967-7971
         return self.children_offsets_offset(game) + self.children_offsets_size()
 
     def controllers_size(
@@ -999,27 +1029,24 @@ class _MDXDataFlags:
 
 
 class _TrimeshHeader:
-    # NOTE: These sizes reflect the actual number of bytes written/read by `_TrimeshHeader.write/read`.
-    # Historically these constants were out-of-sync, which caused MDLBinaryWriter node offset drift
-    # (bad child offsets, OOB seeks) during roundtrips.
     # MDLOps defines these as 332 (K1) and 340 (K2).
     # See `vendor/MDLOps/MDLOpsM.pm` `$structs{'subhead'}{'33k1'}` and `'33k2'`.
-    K1_SIZE: Literal[332] = 332
-    K2_SIZE: Literal[340] = 340
+    K1_SIZE: Literal[0x14C] = 332
+    K2_SIZE: Literal[0x154] = 340
 
-    K1_FUNCTION_POINTER0: Literal[4216656] = 4216656
-    K2_FUNCTION_POINTER0: Literal[4216880] = 4216880
-    K1_SKIN_FUNCTION_POINTER0: Literal[4216592] = 4216592
-    K2_SKIN_FUNCTION_POINTER0: Literal[4216816] = 4216816
-    K1_DANGLY_FUNCTION_POINTER0: Literal[4216640] = 4216640
-    K2_DANGLY_FUNCTION_POINTER0: Literal[4216864] = 4216864
+    K1_FUNCTION_POINTER0: Literal[0x405750] = 4216656
+    K2_FUNCTION_POINTER0: Literal[0x405830] = 4216880
+    K1_SKIN_FUNCTION_POINTER0: Literal[0x405710] = 4216592
+    K2_SKIN_FUNCTION_POINTER0: Literal[0x4057F0] = 4216816
+    K1_DANGLY_FUNCTION_POINTER0: Literal[0x405740] = 4216640
+    K2_DANGLY_FUNCTION_POINTER0: Literal[0x405820] = 4216864
 
-    K1_FUNCTION_POINTER1: Literal[4216672] = 4216672
-    K2_FUNCTION_POINTER1: Literal[4216896] = 4216896
-    K1_SKIN_FUNCTION_POINTER1: Literal[4216608] = 4216608
-    K2_SKIN_FUNCTION_POINTER1: Literal[4216832] = 4216832
-    K1_DANGLY_FUNCTION_POINTER1: Literal[4216624] = 4216624
-    K2_DANGLY_FUNCTION_POINTER1: Literal[4216848] = 4216848
+    K1_FUNCTION_POINTER1: Literal[0x405760] = 4216672
+    K2_FUNCTION_POINTER1: Literal[0x405840] = 4216896
+    K1_SKIN_FUNCTION_POINTER1: Literal[0x405720] = 4216608
+    K2_SKIN_FUNCTION_POINTER1: Literal[0x405800] = 4216832
+    K1_DANGLY_FUNCTION_POINTER1: Literal[0x405730] = 4216624
+    K2_DANGLY_FUNCTION_POINTER1: Literal[0x405810] = 4216848
 
     def __init__(
         self,
@@ -2951,18 +2978,28 @@ class MDLBinaryWriter:
         mdl_node: MDLNode,
         *,
         node_id_override: int | None = None,
+        is_animation: bool = False,
     ):
         assert bin_node.header is not None
         bin_node.header.type_id = self._node_type(mdl_node)
         bin_node.header.position = mdl_node.position
         bin_node.header.orientation = mdl_node.orientation
-        # children_count will be set later in _calc_node_offsets_for_context to match actual children_offsets array length
-        # This ensures the count matches the array, which is critical for MDLOps compatibility
+        # Set children_count now so calc_size() returns correct values during _calc_top_offsets()
+        # This is critical for correct node offset calculation
+        actual_children_count = len(mdl_node.children)
+        if actual_children_count > 0x7FFFFFFF:
+            actual_children_count = 0x7FFFFFFF
+        bin_node.header.children_count = bin_node.header.children_count2 = actual_children_count
         # MDLOps writes 0 for the nodeheader's 4th short; names come from partnames[node_id].
         bin_node.header.name_id = 0
         # Node IDs are positional within their node array (geometry or animation), not global by name.
         # When writing, always prefer the caller-provided order.
-        bin_node.header.node_id = node_id_override if node_id_override is not None else 0
+        node_id = node_id_override if node_id_override is not None else 0
+        bin_node.header.node_id = node_id
+        # MDLOps: padding0 (2nd uint16) is actually the supernode field.
+        # If supernode is defined, use it. Otherwise default to the node index.
+        # See MDLOpsM.pm line 6687-6691: $work = $i when supernode is undefined.
+        bin_node.header.padding0 = node_id
 
         # Determine the appropriate function pointer values to write
         if self.game == Game.K1:
@@ -3245,6 +3282,44 @@ class MDLBinaryWriter:
             else:
                 bin_controller.column_count = int(data_floats_per_row)
 
+            # MDLOps uses specific values for unknown0 and unknown1 based on controller type and context.
+            # See MDLOpsM.pm lines 7490-7556 for the complete logic.
+            ctrl_type = mdl_controller.controller_type
+            node_type = bin_node.header.type_id
+
+            if is_animation:
+                # Animation controllers use different unknown0 values
+                if ctrl_type == MDLControllerType.POSITION:
+                    bin_controller.unknown0 = 16
+                    bin_controller.unknown1 = b"\x00\x00\x00"
+                elif ctrl_type == MDLControllerType.ORIENTATION:
+                    bin_controller.unknown0 = 28
+                    bin_controller.unknown1 = b"\x00\x00\x00"
+                else:
+                    bin_controller.unknown0 = 0xFFFF
+                    bin_controller.unknown1 = b"\x00\x00\x00"
+            else:
+                # Geometry controllers
+                bin_controller.unknown0 = 0xFFFF  # Always -1 for geometry
+                if ctrl_type == MDLControllerType.POSITION:
+                    bin_controller.unknown1 = b"\x57\x49\x00"  # "WI"
+                elif ctrl_type == MDLControllerType.ORIENTATION:
+                    bin_controller.unknown1 = b"\x39\x47\x00"  # "9G"
+                elif ctrl_type in (132, MDLControllerType.SELFILLUMCOLOR):  # ALPHA=132, SELFILLUMCOLOR=100
+                    bin_controller.unknown1 = b"\xe3\x77\x11"  # 227,119,17
+                elif ctrl_type == MDLControllerType.SCALE:  # 36
+                    bin_controller.unknown1 = b"\x32\x12\x00"  # 50,18,0
+                elif (node_type == MDLNodeFlags.LIGHT or True) and ctrl_type in (
+                    MDLControllerType.RADIUS, MDLControllerType.MULTIPLIER, MDLControllerType.COLOR
+                ):
+                    # Light controllers: radius(88), multiplier(140), color(76)
+                    bin_controller.unknown1 = b"\xff\x72\x11"  # 255,114,17
+                elif node_type & MDLNodeFlags.EMITTER:
+                    # Emitter node controllers
+                    bin_controller.unknown1 = b"\x63\x79\x11"  # 99,121,17
+                else:
+                    bin_controller.unknown1 = b"\x00\x00\x00"
+
             # Offsets are float-index offsets into the controller-data array.
             bin_controller.key_offset = cur_float_offset
             bin_controller.data_offset = cur_float_offset + bin_controller.row_count
@@ -3326,7 +3401,7 @@ class MDLBinaryWriter:
         bin_nodes: list[_Node] = []
         for node_id, mdl_node in enumerate(all_nodes):
             bin_node = _Node()
-            self._update_node(bin_node, mdl_node, node_id_override=node_id)
+            self._update_node(bin_node, mdl_node, node_id_override=node_id, is_animation=True)
             bin_nodes.append(bin_node)
         bin_anim.w_nodes = bin_nodes
 
@@ -3340,10 +3415,19 @@ class MDLBinaryWriter:
 
         bin_node.trimesh.mdx_data_offset = self._writer_ext.size()
 
+        # Initialize all MDX offset fields to 0xFFFFFFFF to indicate "not present"
+        # MDLOps uses -1 (0xFFFFFFFF) as the sentinel for unused offsets
         bin_node.trimesh.mdx_vertex_offset = 0xFFFFFFFF
         bin_node.trimesh.mdx_normal_offset = 0xFFFFFFFF
+        bin_node.trimesh.mdx_color_offset = 0xFFFFFFFF
         bin_node.trimesh.mdx_texture1_offset = 0xFFFFFFFF
         bin_node.trimesh.mdx_texture2_offset = 0xFFFFFFFF
+        bin_node.trimesh.mdx_uv3_offset = 0xFFFFFFFF
+        bin_node.trimesh.mdx_uv4_offset = 0xFFFFFFFF
+        bin_node.trimesh.mdx_tangent_offset = 0xFFFFFFFF
+        bin_node.trimesh.mdx_unknown_offset = 0xFFFFFFFF
+        bin_node.trimesh.mdx_unknown2_offset = 0xFFFFFFFF
+        bin_node.trimesh.mdx_unknown3_offset = 0xFFFFFFFF
         bin_node.trimesh.mdx_data_bitmap = 0
 
         # MDLOps decompiler expects vertex coordinates to be present in MDX rows when an MDX is available,
@@ -3593,9 +3677,21 @@ class MDLBinaryWriter:
             if actual_children_count > 0x7FFFFFFF:
                 actual_children_count = 0x7FFFFFFF
             bin_node.header.children_count = bin_node.header.children_count2 = actual_children_count
-            bin_node.header.offset_to_children = node_offset + bin_node.children_offsets_offset(self.game)
-            bin_node.header.offset_to_controllers = node_offset + bin_node.controllers_offset(self.game)
-            bin_node.header.offset_to_controller_data = node_offset + bin_node.controller_data_offset(self.game)
+
+            # MDLOps writes 0 for controller offsets when both controller_count and
+            # controller_data_length are 0 (no controllers at all)
+            if bin_node.header.controller_count == 0 and bin_node.header.controller_data_length == 0:
+                bin_node.header.offset_to_controllers = 0
+                bin_node.header.offset_to_controller_data = 0
+            else:
+                bin_node.header.offset_to_controllers = node_offset + bin_node.controllers_offset(self.game)
+                bin_node.header.offset_to_controller_data = node_offset + bin_node.controller_data_offset(self.game)
+
+            # MDLOps: when children_count == 0, offset_to_children equals offset_to_controllers
+            if actual_children_count == 0:
+                bin_node.header.offset_to_children = bin_node.header.offset_to_controllers
+            else:
+                bin_node.header.offset_to_children = node_offset + bin_node.children_offsets_offset(self.game)
             bin_node.header.offset_to_root = 0
             parent_idx = parent_by_idx.get(i)
             bin_node.header.offset_to_parent = bin_offsets[parent_idx] if parent_idx is not None else 0
