@@ -11,5 +11,14 @@
   "python.analysis.extraPaths": [
     "../Utility/src",
     "./src"
-  ]
+  ],
+  "files.exclude": {
+    "**/.history/**": true
+  },
+  "search.exclude": {
+    "**/.history/**": true
+  },
+  "files.watcherExclude": {
+    "**/.history/**": true
+  }
 }

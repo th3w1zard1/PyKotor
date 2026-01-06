@@ -150,36 +150,45 @@
     "willbonus",
     "Yacht"
   ],
-"python.analysis.inlayHints.callArgumentNames": "off",
-"python.analysis.inlayHints.functionReturnTypes": true,
-"python.analysis.inlayHints.variableTypes": true,
-"python.analysis.typeCheckingMode": "basic",
-"[python]": {
-  "editor.defaultFormatter": "ms-python.black-formatter"
-},
-"files.eol": "\r\n",
-"launch": {
-  "configurations": [],
-  "compounds": [],
-  "justMyCode": true,
-  "debugStdLib": false
-},
-"debug.allowBreakpointsEverywhere": false,
-"debugStdLib": false,
-"python.analysis.enablePytestSupport": false,
-"python.testing.pytestEnabled": false,
-"python.analysis.extraPaths": [
-  "./tools/HolocronToolset/toolset",
-  "."
-],
-"python.testing.unittestEnabled": true,
-"python.missingPackage.severity": "Information",
-"python.terminal.launchArgs": [
-  "-i",
-  "-m",
-  "debugpy",
-  "--listen",
-  "5678",
-  "--wait-for-client"
-],
+  "python.analysis.inlayHints.callArgumentNames": "off",
+  "python.analysis.inlayHints.functionReturnTypes": true,
+  "python.analysis.inlayHints.variableTypes": true,
+  "python.analysis.typeCheckingMode": "basic",
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter"
+  },
+  "files.eol": "\r\n",
+  "launch": {
+    "configurations": [],
+    "compounds": [],
+    "justMyCode": true,
+    "debugStdLib": false
+  },
+  "debug.allowBreakpointsEverywhere": false,
+  "debugStdLib": false,
+  "python.analysis.enablePytestSupport": false,
+  "python.testing.pytestEnabled": false,
+  "python.analysis.extraPaths": [
+    "./tools/HolocronToolset/toolset",
+    "."
+  ],
+  "python.testing.unittestEnabled": true,
+  "python.missingPackage.severity": "Information",
+  "python.terminal.launchArgs": [
+    "-i",
+    "-m",
+    "debugpy",
+    "--listen",
+    "5678",
+    "--wait-for-client"
+  ],
+  "files.exclude": {
+    "**/.history/**": true
+  },
+  "search.exclude": {
+    "**/.history/**": true
+  },
+  "files.watcherExclude": {
+    "**/.history/**": true
+  }
 }

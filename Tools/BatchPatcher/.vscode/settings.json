@@ -26,4 +26,13 @@
     "5678",
     "--wait-for-client"
   ],
+  "files.exclude": {
+    "**/.history/**": true
+  },
+  "search.exclude": {
+    "**/.history/**": true
+  },
+  "files.watcherExclude": {
+    "**/.history/**": true
+  }
 }
