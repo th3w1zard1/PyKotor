@@ -1,0 +1,629 @@
+"""Comprehensive reference finding utilities for KotOR resources.
+
+This module provides functions to find references to scripts, tags, resrefs, conversations,
+and other values across GFF files, NCS bytecode, and 2DA files in a KotOR installation.
+
+Based on the functionality of the KotOR findrefs utility, integrated into PyKotor.
+"""
+
+from __future__ import annotations
+
+import fnmatch
+import re
+from contextlib import suppress
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Callable
+
+from pykotor.common.misc import ResRef
+from pykotor.common.stream import BinaryReader
+from pykotor.extract.file import FileResource
+from pykotor.resource.formats.gff.gff_auto import read_gff
+from pykotor.resource.formats.gff.gff_data import GFFFieldType, GFFList, GFFStruct
+from pykotor.resource.formats.ncs.ncs_auto import read_ncs
+from pykotor.resource.formats.ncs.ncs_data import NCSByteCode, NCSInstructionQualifier
+from pykotor.resource.formats.twoda.twoda_auto import read_2da
+from pykotor.resource.type import ResourceType
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from pykotor.extract.installation import Installation
+
+
+@dataclass(frozen=True)
+class ReferenceSearchResult:
+    """Result of a reference search operation.
+
+    Attributes:
+    ----------
+        file_resource: The FileResource where the reference was found
+        field_path: GFF field path where match was found (e.g., "ScriptHeartbeat", "ItemList[0].InventoryRes")
+        matched_value: The value that was matched
+        file_type: The file type abbreviation (e.g., "UTC", "UTD", "NCS")
+        byte_offset: Optional byte offset for NCS matches
+    """
+
+    file_resource: FileResource
+    field_path: str
+    matched_value: str
+    file_type: str
+    byte_offset: int | None = None
+
+
+def find_script_references(
+    installation: Installation,
+    script_resref: str,
+    *,
+    partial_match: bool = False,
+    case_sensitive: bool = False,
+    file_pattern: str | None = None,
+    file_types: set[str] | None = None,
+    logger: Callable[[str], None] | None = None,
+) -> list[ReferenceSearchResult]:
+    """Find all references to a script (NCS/NSS) resref in GFF files and NCS bytecode.
+
+    Args:
+    ----
+        installation: The installation to search
+        script_resref: The script resref to search for (without extension)
+        partial_match: If True, allow partial matches (e.g., "test" matches "testscript")
+        case_sensitive: If True, perform case-sensitive matching
+        file_pattern: Optional file pattern to filter results (e.g., "*.mod", "*_s.rim")
+        file_types: Optional set of file type abbreviations to search (e.g., {"UTC", "UTD", "ARE"})
+        logger: Optional logging function
+
+    Returns:
+    -------
+        List of ReferenceSearchResult objects
+    """
+    return find_resref_references(
+        installation=installation,
+        resref=script_resref,
+        field_types={GFFFieldType.ResRef},
+        search_ncs=True,
+        partial_match=partial_match,
+        case_sensitive=case_sensitive,
+        file_pattern=file_pattern,
+        file_types=file_types,
+        logger=logger,
+    )
+
+
+def find_tag_references(
+    installation: Installation,
+    tag: str,
+    *,
+    partial_match: bool = False,
+    case_sensitive: bool = False,
+    file_pattern: str | None = None,
+    file_types: set[str] | None = None,
+    logger: Callable[[str], None] | None = None,
+) -> list[ReferenceSearchResult]:
+    """Find all references to a tag in GFF files.
+
+    Args:
+    ----
+        installation: The installation to search
+        tag: The tag value to search for
+        partial_match: If True, allow partial matches
+        case_sensitive: If True, perform case-sensitive matching
+        file_pattern: Optional file pattern to filter results
+        file_types: Optional set of file type abbreviations to search
+        logger: Optional logging function
+
+    Returns:
+    -------
+        List of ReferenceSearchResult objects
+    """
+    return find_field_value_references(
+        installation=installation,
+        search_value=tag,
+        field_names={"Tag"},
+        field_types={GFFFieldType.String},
+        partial_match=partial_match,
+        case_sensitive=case_sensitive,
+        file_pattern=file_pattern,
+        file_types=file_types,
+        logger=logger,
+    )
+
+
+def find_template_resref_references(
+    installation: Installation,
+    template_resref: str,
+    *,
+    partial_match: bool = False,
+    case_sensitive: bool = False,
+    file_pattern: str | None = None,
+    file_types: set[str] | None = None,
+    logger: Callable[[str], None] | None = None,
+) -> list[ReferenceSearchResult]:
+    """Find all references to a TemplateResRef in GFF files.
+
+    Searches for TemplateResRef fields and InventoryRes fields within ItemList structures
+    (for UTC, UTP, UTM files).
+
+    Args:
+    ----
+        installation: The installation to search
+        template_resref: The template resref to search for
+        partial_match: If True, allow partial matches
+        case_sensitive: If True, perform case-sensitive matching
+        file_pattern: Optional file pattern to filter results
+        file_types: Optional set of file type abbreviations to search
+        logger: Optional logging function
+
+    Returns:
+    -------
+        List of ReferenceSearchResult objects
+    """
+    # Include InventoryRes to search ItemList structures in UTC/UTP/UTM
+    return find_resref_references(
+        installation=installation,
+        resref=template_resref,
+        field_names={"TemplateResRef", "InventoryRes"},
+        field_types={GFFFieldType.ResRef},
+        partial_match=partial_match,
+        case_sensitive=case_sensitive,
+        file_pattern=file_pattern,
+        file_types=file_types,
+        logger=logger,
+    )
+
+
+def find_conversation_references(
+    installation: Installation,
+    conversation_resref: str,
+    *,
+    partial_match: bool = False,
+    case_sensitive: bool = False,
+    file_pattern: str | None = None,
+    file_types: set[str] | None = None,
+    logger: Callable[[str], None] | None = None,
+) -> list[ReferenceSearchResult]:
+    """Find all references to a conversation (DLG) resref in GFF files.
+
+    Args:
+    ----
+        installation: The installation to search
+        conversation_resref: The conversation resref to search for
+        partial_match: If True, allow partial matches
+        case_sensitive: If True, perform case-sensitive matching
+        file_pattern: Optional file pattern to filter results
+        file_types: Optional set of file type abbreviations to search
+        logger: Optional logging function
+
+    Returns:
+    -------
+        List of ReferenceSearchResult objects
+    """
+    return find_resref_references(
+        installation=installation,
+        resref=conversation_resref,
+        field_names={"Conversation"},
+        field_types={GFFFieldType.ResRef},
+        partial_match=partial_match,
+        case_sensitive=case_sensitive,
+        file_pattern=file_pattern,
+        file_types=file_types,
+        logger=logger,
+    )
+
+
+def find_resref_references(
+    installation: Installation,
+    resref: str,
+    *,
+    field_names: set[str] | None = None,
+    field_types: set[GFFFieldType] | None = None,
+    search_ncs: bool = False,
+    partial_match: bool = False,
+    case_sensitive: bool = False,
+    file_pattern: str | None = None,
+    file_types: set[str] | None = None,
+    logger: Callable[[str], None] | None = None,
+) -> list[ReferenceSearchResult]:
+    """Find all references to a ResRef in GFF files and optionally NCS bytecode.
+
+    Args:
+    ----
+        installation: The installation to search
+        resref: The resref to search for
+        field_names: Optional set of specific field names to search (e.g., {"ScriptHeartbeat", "Conversation"})
+        field_types: Set of GFF field types to search (default: {GFFFieldType.ResRef})
+        search_ncs: If True, also search NCS bytecode for string constants
+        partial_match: If True, allow partial matches
+        case_sensitive: If True, perform case-sensitive matching
+        file_pattern: Optional file pattern to filter results
+        file_types: Optional set of file type abbreviations to search
+        logger: Optional logging function
+
+    Returns:
+    -------
+        List of ReferenceSearchResult objects
+    """
+    if field_types is None:
+        field_types = {GFFFieldType.ResRef}
+
+    # Build search pattern
+    search_pattern = _build_search_pattern(resref, partial_match, case_sensitive)
+
+    results: list[ReferenceSearchResult] = []
+
+    # Search GFF files
+    for resource in installation:
+        if not _should_search_resource(resource, file_pattern, file_types, {ResourceType.NCS} if search_ncs else None):
+            continue
+
+        restype = resource.restype()
+        if restype.extension in {"utc", "utd", "utm", "utp", "utt", "uti", "are", "ifo", "dlg", "git"}:
+            file_type = restype.extension.upper()
+            if file_types and file_type not in file_types:
+                continue
+
+            gff_results = _search_gff_for_resref(
+                resource,
+                resref,
+                search_pattern,
+                field_names,
+                field_types,
+                file_type,
+                case_sensitive,
+                logger,
+            )
+            results.extend(gff_results)
+
+        # Search NCS files if requested
+        if search_ncs and restype is ResourceType.NCS:
+            ncs_results = _search_ncs_for_string(resource, resref, search_pattern, case_sensitive, logger)
+            results.extend(ncs_results)
+
+    return results
+
+
+def find_field_value_references(
+    installation: Installation,
+    search_value: str,
+    *,
+    field_names: set[str] | None = None,
+    field_types: set[GFFFieldType] | None = None,
+    partial_match: bool = False,
+    case_sensitive: bool = False,
+    file_pattern: str | None = None,
+    file_types: set[str] | None = None,
+    logger: Callable[[str], None] | None = None,
+) -> list[ReferenceSearchResult]:
+    """Find all references to a field value in GFF files.
+
+    This is a generic function that can search for any string or resref value in GFF fields.
+
+    Args:
+    ----
+        installation: The installation to search
+        search_value: The value to search for
+        field_names: Optional set of specific field names to search
+        field_types: Set of GFF field types to search (default: {GFFFieldType.String, GFFFieldType.ResRef})
+        partial_match: If True, allow partial matches
+        case_sensitive: If True, perform case-sensitive matching
+        file_pattern: Optional file pattern to filter results
+        file_types: Optional set of file type abbreviations to search
+        logger: Optional logging function
+
+    Returns:
+    -------
+        List of ReferenceSearchResult objects
+    """
+    if field_types is None:
+        field_types = {GFFFieldType.String, GFFFieldType.ResRef}
+
+    # Build search pattern
+    search_pattern = _build_search_pattern(search_value, partial_match, case_sensitive)
+
+    results: list[ReferenceSearchResult] = []
+
+    for resource in installation:
+        if not _should_search_resource(resource, file_pattern, file_types, None):
+            continue
+
+        restype = resource.restype()
+        if restype.extension in {"utc", "utd", "utm", "utp", "utt", "uti", "are", "ifo", "dlg", "git"}:
+            file_type = restype.extension.upper()
+            if file_types and file_type not in file_types:
+                continue
+
+            gff_results = _search_gff_for_value(
+                resource,
+                search_value,
+                search_pattern,
+                field_names,
+                field_types,
+                file_type,
+                case_sensitive,
+                logger,
+            )
+            results.extend(gff_results)
+
+    return results
+
+
+def _build_search_pattern(value: str, partial_match: bool, case_sensitive: bool) -> re.Pattern[str]:
+    """Build a regex pattern for searching."""
+    if partial_match:
+        pattern = re.escape(value)
+    else:
+        pattern = rf"\b{re.escape(value)}\b"
+
+    flags = 0 if case_sensitive else re.IGNORECASE
+    return re.compile(pattern, flags)
+
+
+def _should_search_resource(
+    resource: FileResource,
+    file_pattern: str | None,
+    file_types: set[str] | None,
+    exclude_types: set[ResourceType] | None,
+) -> bool:
+    """Check if a resource should be searched based on filters."""
+    if exclude_types and resource.restype() in exclude_types:
+        return False
+
+    if file_pattern:
+        filename = resource.filename()
+        if not fnmatch.fnmatch(filename.lower(), file_pattern.lower()):
+            return False
+
+    return True
+
+
+def _search_gff_for_resref(
+    resource: FileResource,
+    resref: str,
+    search_pattern: re.Pattern[str],
+    field_names: set[str] | None,
+    field_types: set[GFFFieldType],
+    file_type: str,
+    case_sensitive: bool,
+    logger: Callable[[str], None] | None,
+) -> list[ReferenceSearchResult]:
+    """Search a GFF file for ResRef references."""
+    results: list[ReferenceSearchResult] = []
+
+    try:
+        gff = read_gff(resource.data())
+    except (ValueError, OSError):
+        return results
+
+    def recurse_struct(gff_struct: GFFStruct, path_prefix: str = "") -> None:
+        """Recursively search GFF struct for ResRef matches."""
+        for label, field_type, value in gff_struct:
+            field_path = f"{path_prefix}.{label}" if path_prefix else label
+
+            # Check if this field should be searched
+            if field_names and label not in field_names:
+                # Still recurse into nested structures
+                if field_type == GFFFieldType.Struct and isinstance(value, GFFStruct):
+                    recurse_struct(value, field_path)
+                elif field_type == GFFFieldType.List and isinstance(value, GFFList):
+                    for idx, item in enumerate(value):
+                        if isinstance(item, GFFStruct):
+                            list_path = f"{field_path}[{idx}]"
+                            recurse_struct(item, list_path)
+                continue
+
+            # Check field type
+            if field_type not in field_types:
+                # Still recurse into nested structures
+                if field_type == GFFFieldType.Struct and isinstance(value, GFFStruct):
+                    recurse_struct(value, field_path)
+                elif field_type == GFFFieldType.List and isinstance(value, GFFList):
+                    for idx, item in enumerate(value):
+                        if isinstance(item, GFFStruct):
+                            list_path = f"{field_path}[{idx}]"
+                            recurse_struct(item, list_path)
+                continue
+
+            # Check value match
+            if field_type == GFFFieldType.ResRef:
+                resref_str = str(value) if isinstance(value, ResRef) else str(value)
+            elif field_type == GFFFieldType.String:
+                resref_str = str(value)
+            else:
+                resref_str = ""
+
+            if resref_str and search_pattern.search(resref_str):
+                results.append(
+                    ReferenceSearchResult(
+                        file_resource=resource,
+                        field_path=field_path,
+                        matched_value=resref_str,
+                        file_type=file_type,
+                    ),
+                )
+                if logger:
+                    logger(f"Found '{resref}' in {resource.filename()} at {field_path}")
+
+            # Recurse into nested structures
+            if field_type == GFFFieldType.Struct and isinstance(value, GFFStruct):
+                recurse_struct(value, field_path)
+            elif field_type == GFFFieldType.List and isinstance(value, GFFList):
+                for idx, item in enumerate(value):
+                    if isinstance(item, GFFStruct):
+                        list_path = f"{field_path}[{idx}]"
+                        recurse_struct(item, list_path)
+
+    recurse_struct(gff.root)
+    return results
+
+
+def _search_gff_for_value(
+    resource: FileResource,
+    search_value: str,
+    search_pattern: re.Pattern[str],
+    field_names: set[str] | None,
+    field_types: set[GFFFieldType],
+    file_type: str,
+    case_sensitive: bool,
+    logger: Callable[[str], None] | None,
+) -> list[ReferenceSearchResult]:
+    """Search a GFF file for string/value references."""
+    results: list[ReferenceSearchResult] = []
+
+    try:
+        gff = read_gff(resource.data())
+    except (ValueError, OSError):
+        return results
+
+    def recurse_struct(gff_struct: GFFStruct, path_prefix: str = "") -> None:
+        """Recursively search GFF struct for value matches."""
+        for label, field_type, value in gff_struct:
+            field_path = f"{path_prefix}.{label}" if path_prefix else label
+
+            # Check if this field should be searched
+            if field_names and label not in field_names:
+                # Still recurse into nested structures
+                if field_type == GFFFieldType.Struct and isinstance(value, GFFStruct):
+                    recurse_struct(value, field_path)
+                elif field_type == GFFFieldType.List and isinstance(value, GFFList):
+                    for idx, item in enumerate(value):
+                        if isinstance(item, GFFStruct):
+                            list_path = f"{field_path}[{idx}]"
+                            recurse_struct(item, list_path)
+                continue
+
+            # Check field type
+            if field_type not in field_types:
+                # Still recurse into nested structures
+                if field_type == GFFFieldType.Struct and isinstance(value, GFFStruct):
+                    recurse_struct(value, field_path)
+                elif field_type == GFFFieldType.List and isinstance(value, GFFList):
+                    for idx, item in enumerate(value):
+                        if isinstance(item, GFFStruct):
+                            list_path = f"{field_path}[{idx}]"
+                            recurse_struct(item, list_path)
+                continue
+
+            # Check value match
+            if field_type == GFFFieldType.ResRef:
+                value_str = str(value) if isinstance(value, ResRef) else str(value)
+            elif field_type == GFFFieldType.String:
+                value_str = str(value)
+            else:
+                value_str = ""
+
+            if value_str and search_pattern.search(value_str):
+                results.append(
+                    ReferenceSearchResult(
+                        file_resource=resource,
+                        field_path=field_path,
+                        matched_value=value_str,
+                        file_type=file_type,
+                    ),
+                )
+                if logger:
+                    logger(f"Found '{search_value}' in {resource.filename()} at {field_path}")
+
+            # Recurse into nested structures
+            if field_type == GFFFieldType.Struct and isinstance(value, GFFStruct):
+                recurse_struct(value, field_path)
+            elif field_type == GFFFieldType.List and isinstance(value, GFFList):
+                for idx, item in enumerate(value):
+                    if isinstance(item, GFFStruct):
+                        list_path = f"{field_path}[{idx}]"
+                        recurse_struct(item, list_path)
+
+    recurse_struct(gff.root)
+    return results
+
+
+def _search_ncs_for_string(
+    resource: FileResource,
+    search_string: str,
+    search_pattern: re.Pattern[str],
+    case_sensitive: bool,
+    logger: Callable[[str], None] | None,
+) -> list[ReferenceSearchResult]:
+    """Search an NCS file for string constant references."""
+    results: list[ReferenceSearchResult] = []
+
+    try:
+        ncs_data = resource.data()
+        with BinaryReader.from_auto(ncs_data) as reader:
+            # Skip NCS header
+            if reader.read_string(4) != "NCS ":
+                return results
+            if reader.read_string(4) != "V1.0":
+                return results
+            magic_byte = reader.read_uint8()
+            if magic_byte != 0x42:  # noqa: PLR2004
+                return results
+            total_size = reader.read_uint32(big=True)
+
+            # Search for CONSTS (string constant) instructions
+            while reader.position() < total_size and reader.remaining() > 0:
+                opcode = reader.read_uint8()
+                qualifier = reader.read_uint8()
+
+                # Check if this is CONSTS (opcode=0x04, qualifier=0x05)
+                if opcode == NCSByteCode.CONSTx and qualifier == NCSInstructionQualifier.String:
+                    string_offset = reader.position()
+                    str_len = reader.read_uint16(big=True)
+                    if str_len > 0 and reader.remaining() >= str_len:
+                        string_value = reader.read_string(str_len, encoding="ascii", errors="ignore")
+                        if search_pattern.search(string_value):
+                            results.append(
+                                ReferenceSearchResult(
+                                    file_resource=resource,
+                                    field_path="(NCS bytecode)",
+                                    matched_value=string_value,
+                                    file_type="NCS",
+                                    byte_offset=string_offset,
+                                ),
+                            )
+                            if logger:
+                                logger(f"Found '{search_string}' in {resource.filename()} at byte offset {string_offset:#X}")
+
+                # Skip to next instruction based on opcode/qualifier
+                elif opcode == NCSByteCode.CONSTx:
+                    if qualifier == NCSInstructionQualifier.Int:
+                        reader.skip(4)
+                    elif qualifier == NCSInstructionQualifier.Float:
+                        reader.skip(4)
+                    elif qualifier == NCSInstructionQualifier.String:
+                        str_len = reader.read_uint16(big=True)
+                        reader.skip(str_len)
+                    elif qualifier == NCSInstructionQualifier.Object:
+                        reader.skip(4)
+                elif opcode in (NCSByteCode.CPDOWNSP, NCSByteCode.CPTOPSP, NCSByteCode.CPDOWNBP, NCSByteCode.CPTOPBP):
+                    reader.skip(6)
+                elif opcode == NCSByteCode.STORE_STATE:
+                    reader.skip(8)
+                elif opcode in (
+                    NCSByteCode.MOVSP,
+                    NCSByteCode.JMP,
+                    NCSByteCode.JSR,
+                    NCSByteCode.JZ,
+                    NCSByteCode.JNZ,
+                    NCSByteCode.DECxSP,
+                    NCSByteCode.INCxSP,
+                    NCSByteCode.CPDOWNBP,
+                    NCSByteCode.CPTOPBP,
+                    NCSByteCode.DECxBP,
+                    NCSByteCode.INCxBP,
+                ):
+                    reader.skip(4)
+                elif opcode == NCSByteCode.ACTION:
+                    reader.skip(3)
+                elif opcode == NCSByteCode.DESTRUCT:
+                    reader.skip(6)
+                elif opcode == NCSByteCode.EQUALxx and qualifier == NCSInstructionQualifier.StructStruct:
+                    reader.skip(2)
+                elif opcode == NCSByteCode.NEQUALxx and qualifier == NCSInstructionQualifier.StructStruct:
+                    reader.skip(2)
+                # Other instructions have no additional data
+
+    except Exception:  # noqa: BLE001
+        # If anything fails, return what we found so far
+        pass
+
+    return results
+
