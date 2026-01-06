@@ -598,7 +598,7 @@ class ToolWindow(QMainWindow):
                 resource_widget=self.get_active_resource_widget(),
             )
         self.ui.extractButton.clicked.connect(extract_resources)
-        self.ui.openButton.clicked.connect(self.get_active_resource_widget().on_resource_double_clicked)
+        self.ui.openButton.clicked.connect(lambda checked=False: self.get_active_resource_widget().on_resource_double_clicked(None))
 
         self.ui.openAction.triggered.connect(self.open_from_file)
         self.ui.actionSettings.triggered.connect(self.open_settings_dialog)
