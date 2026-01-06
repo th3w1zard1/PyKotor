@@ -1812,12 +1812,27 @@ class PyFileSystemModel(QAbstractItemModel):
 
         return QFileDevice.Permission() if r1 is None else r1  # type: ignore[attr-defined]
 
+    @overload
+    def lastModified(self, index: QModelIndex) -> QDateTime: ...
+
+    @overload
+    def lastModified(self, index: QModelIndex, tz: QTimeZone) -> QDateTime: ...
+
     def lastModified(
         self,
         index: QModelIndex,
+        tz: QTimeZone | None = None,
     ) -> QDateTime:
+        """Return last modified time matching C++ overloads.
+
+        Matches:
+        QDateTime QFileSystemModel::lastModified(const QModelIndex &index) const;
+        QDateTime QFileSystemModel::lastModified(const QModelIndex &index, const QTimeZone &tz) const;
+        """
         node = self.node(index)
-        return node.lastModified()
+        if tz is None:
+            return node.lastModified()
+        return node.lastModified(tz)
 
     def type(
         self,
