@@ -383,10 +383,16 @@ class MDLAsciiWriter(ResourceWriter):
         """Write a node and its children."""
         # Prefer emitting node type based on attached data, since many helpers/tests
         # construct nodes with mesh/light/etc but leave node.node_type at DUMMY.
+        # Priority order matches MDLOps: AABB nodes can have mesh data, so check AABB first
+        # Reference: vendor/MDLOps/MDLOpsM.pm:8406 (AABB check before other types)
         if node.saber or node.node_type == MDLNodeType.SABER:
             node_type_str = "lightsaber"
         elif isinstance(node.mesh, MDLDangly) or node.node_type == MDLNodeType.DANGLYMESH:
             node_type_str = "danglymesh"
+        elif node.aabb is not None or node.node_type == MDLNodeType.AABB:
+            # AABB nodes can have both mesh and AABB data - check AABB first
+            # Reference: vendor/MDLOps/MDLOpsM.pm:3454 (NODE_AABB = 545, can include mesh)
+            node_type_str = "aabb"
         elif node.mesh is not None or node.node_type == MDLNodeType.TRIMESH:
             node_type_str = "trimesh"
         elif node.light is not None or node.node_type == MDLNodeType.LIGHT:
@@ -395,8 +401,6 @@ class MDLAsciiWriter(ResourceWriter):
             node_type_str = "emitter"
         elif node.reference is not None or node.node_type == MDLNodeType.REFERENCE:
             node_type_str = "reference"
-        elif node.aabb is not None or node.node_type == MDLNodeType.AABB:
-            node_type_str = "aabb"
         else:
             node_type_str = "dummy"
         self.write_line(indent, f"node {node_type_str} {node.name}")
@@ -1100,7 +1104,10 @@ class MDLAsciiReader(ResourceReader):
         elif node_type == MDLNodeType.REFERENCE:
             node.reference = MDLReference()
         elif node_type == MDLNodeType.AABB:
+            # AABB nodes can have both mesh and AABB data
+            # Reference: vendor/MDLOps/MDLOpsM.pm:3454 (NODE_AABB = 545, can include mesh)
             node.aabb = MDLWalkmesh()
+            # Mesh will be created on-demand when mesh data is encountered
         elif node_type == MDLNodeType.SABER:
             node.saber = MDLSaber()
         elif node_type in (MDLNodeType.TRIMESH, MDLNodeType.DANGLYMESH):
@@ -1272,6 +1279,9 @@ class MDLAsciiReader(ResourceReader):
                         except ValueError:
                             self._current_node.parent_id = -1
                     else:
+                        # Store parent name for later resolution (parent may not be parsed yet)
+                        self._current_node.__dict__["_parent_name"] = parent_lc
+                        # Try to resolve now, but fall back to name-based resolution later
                         self._current_node.parent_id = self._node_index.get(parent_lc, -1)
             return
 
@@ -1300,7 +1310,8 @@ class MDLAsciiReader(ResourceReader):
 
         # Parse mesh data before controllers.
         # Some keywords overlap (e.g. "radius" is a mesh header scalar but also a light controller name).
-        if self._current_node.mesh:
+        # AABB nodes can have mesh data, so attempt parsing even if mesh doesn't exist yet (will be created on-demand)
+        if self._current_node.mesh or (self._current_node.node_type == MDLNodeType.AABB and self._current_node.aabb):
             if self._parse_mesh_data(line):
                 return
 
@@ -1432,7 +1443,17 @@ class MDLAsciiReader(ResourceReader):
 
         Reference: vendor/mdlops/MDLOpsM.pm:4304-4413
         """
-        if self._current_node is None or self._current_node.mesh is None:
+        if self._current_node is None:
+            return False
+        
+        # AABB nodes can have mesh data - create mesh on-demand if needed
+        # Reference: vendor/MDLOps/MDLOpsM.pm:3454 (NODE_AABB = 545, can include mesh)
+        if self._current_node.mesh is None and self._current_node.node_type == MDLNodeType.AABB:
+            # Check if this line contains mesh data (verts/faces/tverts)
+            if re.match(r"^\s*(verts|faces|tverts|tverts1|lightmaptverts)", line, re.IGNORECASE):
+                self._current_node.mesh = MDLMesh()
+        
+        if self._current_node.mesh is None:
             return False
 
         mesh = self._current_node.mesh
@@ -1630,7 +1651,11 @@ class MDLAsciiReader(ResourceReader):
 
         # Parse mesh task data (verts/faces/uvs). Other tasks (bones/weights/constraints/flare arrays)
         # are handled by their dedicated parsers.
+        # AABB nodes can have mesh data, so allow parsing even if node_type is AABB
         if self._task in ("verts", "faces", "tverts", "tverts1"):
+            # Ensure mesh exists for AABB nodes with mesh data
+            if self._current_node and self._current_node.node_type == MDLNodeType.AABB and self._current_node.mesh is None:
+                self._current_node.mesh = MDLMesh()
             return self._parse_task_data(line)
 
         # Parse skin/dangly payloads (these are stored on the node, not necessarily via mesh subclassing).
@@ -1646,7 +1671,14 @@ class MDLAsciiReader(ResourceReader):
 
         Reference: vendor/mdlops/MDLOpsM.pm:4459-4643
         """
-        if not self._current_node or not self._current_node.mesh:
+        if not self._current_node:
+            return False
+        
+        # AABB nodes can have mesh data - ensure mesh exists
+        if self._current_node.mesh is None and self._current_node.node_type == MDLNodeType.AABB:
+            self._current_node.mesh = MDLMesh()
+        
+        if not self._current_node.mesh:
             return False
 
         mesh = self._current_node.mesh
@@ -2471,15 +2503,36 @@ class MDLAsciiReader(ResourceReader):
         for node in self._nodes:
             node.children = []
 
+        # Build name-to-node lookup for hierarchy resolution
+        by_name: dict[str, MDLNode] = {n.name.lower(): n for n in self._nodes if n.name}
+
         # Build parent-child relationships
         for node in self._nodes:
-            if node.parent_id == -1:
+            parent_node: MDLNode | None = None
+            
+            # First try to resolve by stored parent name (handles cases where parent wasn't parsed yet)
+            parent_name: str | None = node.__dict__.get("_parent_name")
+            if isinstance(parent_name, str) and parent_name in by_name:
+                parent_node = by_name[parent_name]
+                # Update parent_id to match resolved parent
+                node.parent_id = self._nodes.index(parent_node) if parent_node in self._nodes else -1
+            elif node.parent_id >= 0 and node.parent_id < len(self._nodes):
+                # Fall back to index-based resolution
+                parent_node = self._nodes[node.parent_id]
+            
+            if parent_node is not None:
+                parent_node.children.append(node)
+            else:
+                # Node has no valid parent (parent_id == -1, or parent not found)
+                # Attach to root to ensure it's not lost
                 if explicit_root is None:
                     # Attach to implicit root container
                     self._mdl.root.children.append(node)
                 elif node is not explicit_root:
                     # Attach other top-level nodes under the explicit root
                     self._mdl.root.children.append(node)
-            elif node.parent_id >= 0 and node.parent_id < len(self._nodes):
-                parent = self._nodes[node.parent_id]
-                parent.children.append(node)
+                # If node IS the explicit root, it's already set as mdl.root, so no action needed
+        
+        # Cleanup temporary parent tracking
+        for node in self._nodes:
+            node.__dict__.pop("_parent_name", None)

@@ -178,16 +178,7 @@ class _GeometryHeader:
         self.unknown0: bytes = b"\x00" * 28
         self.geometry_type: int = 0
         # For writing, always use MDLOps padding bytes for parity
-        self._padding: bytes = self.MDLOPS_PADDING
-
-    @property
-    def padding(self) -> bytes:
-        return self._padding
-
-    @padding.setter
-    def padding(self, value: bytes) -> None:
-        # When reading, store the original padding bytes
-        self._padding = value
+        self.padding: bytes = self.MDLOPS_PADDING
 
     def read(
         self,
@@ -219,6 +210,7 @@ class _GeometryHeader:
         writer.write_bytes(self.unknown0)
         writer.write_uint8(self.geometry_type)
         # Always write MDLOps padding bytes for parity
+        #writer.write_bytes(self.padding)
         writer.write_bytes(self.MDLOPS_PADDING)
 
 
@@ -636,6 +628,11 @@ class _Node:
         return len(self._dangly_constraints) * 4
 
     def _write_aabb_extra(self, writer: BinaryWriter) -> None:
+        """Write AABB tree recursively, matching MDLOps depth-first traversal.
+        
+        Reference: vendor/MDLOps/MDLOpsM.pm:1471-1513 (writeaabb)
+        Format: Each node is 40 bytes: 6 floats (bbox) + 4 int32s (child offsets + face_index + unknown)
+        """
         if self._aabb_nodes is None:
             return
         aabb_nodes: list[MDLAABBNode] = self._aabb_nodes
@@ -643,82 +640,62 @@ class _Node:
             return
 
         tree_start = writer.position()
+        node_index = [0]  # Mutable counter for tracking which node we're writing
         
-        def subtree_size(node_idx: int) -> int:
-            if node_idx >= len(aabb_nodes):
-                return 0
-            node = aabb_nodes[node_idx]
-            if node.face_index != -1:
-                return 1
-            size = 1
-            left_idx = node_idx + 1
-            if left_idx < len(aabb_nodes):
-                size += subtree_size(left_idx)
-                right_idx = node_idx + size
-                if right_idx < len(aabb_nodes):
-                    size += subtree_size(right_idx)
-            return size
-        
-        def get_child_indices(node_idx: int) -> tuple[int, int]:
-            node = aabb_nodes[node_idx]
-            if node.face_index != -1:
-                return (0, 0)
-            left_idx = node_idx + 1
-            left_size = subtree_size(left_idx)
-            right_idx = left_idx + left_size
-            return (left_idx, right_idx)
-        
-        child_indices: list[tuple[int, int]] = []
-        for i in range(len(aabb_nodes)):
-            child_indices.append(get_child_indices(i))
-        
-        for i, node in enumerate(aabb_nodes):
+        def _write_aabb_recursive(writer: BinaryWriter, start_pos: int) -> int:
+            """Recursively write AABB node and return last written position.
+            
+            Args:
+                writer: BinaryWriter instance
+                start_pos: Position to write this node at
+            
+            Returns:
+                Last written position (end of subtree rooted at this node)
+            """
+            if node_index[0] >= len(aabb_nodes):
+                return start_pos
+            
+            idx = node_index[0]
+            node = aabb_nodes[idx]
+            
+            # Write bbox (6 floats = 24 bytes)
+            writer.seek(start_pos)
             writer.write_vector3(node.bbox_min)
             writer.write_vector3(node.bbox_max)
             
-            if node.face_index == -1:
-                left_idx, right_idx = child_indices[i]
-                left_offset = (tree_start - 12) + (left_idx * 40) if left_idx > 0 else 0
-                right_offset = (tree_start - 12) + (right_idx * 40) if right_idx > 0 else 0
-                writer.write_int32(left_offset)
-                writer.write_int32(right_offset)
-                writer.write_int32(-1)
-                writer.write_int32(node.unknown)
-            else:
+            if node.face_index != -1:
+                # Leaf node: write (0, 0, face_index, unknown)
                 writer.write_int32(0)
                 writer.write_int32(0)
                 writer.write_int32(node.face_index)
                 writer.write_int32(node.unknown)
+                node_index[0] += 1
+                return start_pos + 40
+            else:
+                # Branch node: write children first, then fix child pointers
+                # Left child is immediately after this node
+                left_child_pos = start_pos + 40
+                node_index[0] += 1
+                right_child_pos = _write_aabb_recursive(writer, left_child_pos)
+                last_pos = _write_aabb_recursive(writer, right_child_pos)
+                
+                # Seek back to write child pointers (at offset 24 from start_pos)
+                # Format: (left_offset - 12, right_offset - 12, -1, unknown)
+                # Reference: vendor/MDLOps/MDLOpsM.pm:1506-1508
+                writer.seek(start_pos + 24)
+                writer.write_int32(left_child_pos - 12)
+                writer.write_int32(right_child_pos - 12)
+                writer.write_int32(-1)
+                writer.write_int32(node.unknown)
+                
+                return last_pos
         
-        # Actually, let's do this properly with a recursive helper that builds indices
-        if any(node.face_index == -1 for node in aabb_nodes):
-            # Build child index map
-            child_indices: dict[int, tuple[int, int]] = {}  # node_index -> (left_idx, right_idx)
-            
-            def _count_subtree(idx: int) -> int:
-                """Count nodes in subtree rooted at idx."""
-                if idx >= len(aabb_nodes):
-                    return 0
-                if aabb_nodes[idx].face_index != -1:
-                    return 1  # Leaf
-                # Branch: 1 + left_subtree + right_subtree
-                left_size = _count_subtree(idx + 1)
-                right_start = idx + 1 + left_size
-                right_size = _count_subtree(right_start)
-                child_indices[idx] = (idx + 1, right_start)
-                return 1 + left_size + right_size
-            
-            _count_subtree(0)
-            
-            # Now fix the right child offsets
-            for idx, (left_idx, right_idx) in child_indices.items():
-                # Seek to the right child offset field for this node
-                right_offset_pos = tree_start + idx * 40 + 24 + 4  # After bbox + left_child
-                writer.seek(right_offset_pos)
-                writer.write_int32(tree_start + right_idx * 40)
+        # Write recursively starting from tree_start
+        _write_aabb_recursive(writer, tree_start)
         
-        # Seek to end of AABB tree
-        writer.seek(tree_start + len(aabb_nodes) * 40)
+        # Seek to end of AABB tree (calculated as tree_start + count * 40)
+        final_pos = tree_start + len(aabb_nodes) * 40
+        writer.seek(final_pos)
 
     def _write_dangly_extra(self, writer: BinaryWriter) -> None:
         """Write danglymesh constraints array after vertices."""
