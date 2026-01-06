@@ -2626,10 +2626,10 @@ class PyFileSystemModel(QAbstractItemModel):
     DontUseCustomDirectoryIcons: QFileSystemModel.Option = QFileSystemModel.Option.DontUseCustomDirectoryIcons  # type: ignore[attr-defined]
 
     FileIconRole: QFileSystemModel.Roles | Qt.ItemDataRole | Literal[1] = Qt.ItemDataRole.DecorationRole
-    FilePathRole: QFileSystemModel.Roles | Qt.ItemDataRole | Literal[257] = Qt.ItemDataRole.UserRole + 1  # pyright: ignore[reportAssignmentType]
-    FileNameRole: QFileSystemModel.Roles | Qt.ItemDataRole | Literal[258] = Qt.ItemDataRole.UserRole + 2  # pyright: ignore[reportAssignmentType]
-    FilePermissions: QFileSystemModel.Roles | Qt.ItemDataRole | Literal[259] = Qt.ItemDataRole.UserRole + 3  # pyright: ignore[reportAssignmentType]
-    FileInfoRole: QFileSystemModel.Roles | Qt.ItemDataRole | Literal[260] = Qt.ItemDataRole.UserRole + 4  # pyright: ignore[reportAssignmentType]
+    FilePathRole: QFileSystemModel.Roles | Qt.ItemDataRole | Literal[257] = Qt.ItemDataRole.UserRole + 1
+    FileNameRole: QFileSystemModel.Roles | Qt.ItemDataRole | Literal[258] = Qt.ItemDataRole.UserRole + 2
+    FilePermissions: QFileSystemModel.Roles | Qt.ItemDataRole | Literal[259] = Qt.ItemDataRole.UserRole + 3
+    FileInfoRole: QFileSystemModel.Roles | Qt.ItemDataRole | Literal[260] = Qt.ItemDataRole.UserRole + 4
 
     NumColumns: int = 4
 
