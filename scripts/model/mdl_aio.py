@@ -1445,15 +1445,21 @@ def cmd_node_types(args: argparse.Namespace) -> int:
 
     # Count total controllers
     total_controllers = sum(len(n.controllers) for n in pk_nodes)
+    # Count animations
+    total_anims = len(pk_mdl.animations)
+    anim_node_count = sum(len(list(a.all_nodes())) for a in pk_mdl.animations)
     
     lines = [
         f"=== Node Types for {resref} ({game.name}) ===",
         "",
         f"MDL size: {len(original.mdl)} bytes",
         f"Model header node_count: {model_header.geometry.node_count}",
+        f"Model header anim_count: {model_header.animation_count}",
+        f"Model header anim_offset: {model_header.offset_to_animations}",
         f"Root node offset: {root_node_offset}",
         f"Name offsets: offset={name_offsets_offset}, count={name_offsets_count}",
         f"Total controllers read: {total_controllers}",
+        f"Total animations read: {total_anims} ({anim_node_count} anim nodes)",
         "",
         f"Total nodes found by walk: {len(nodes)}",
         f"Type distribution: {dict(sorted(type_counts.items(), key=lambda x: -x[1]))}",
@@ -1544,7 +1550,7 @@ def build_parser() -> argparse.ArgumentParser:
     tgt.add_argument("--against", choices=("original", "pykotor", "mdlops"), default="mdlops")
     tgt.add_argument("--compare-mode", choices=("pykotor-vs-against", "original-vs-against"), default="pykotor-vs-against")
     tgt.add_argument("--mdlops-exe", type=Path, default=None)
-    tgt.add_argument("--mdlops-timeout-s", type=int, default=90)
+    tgt.add_argument("--mdlops-timeout-s", type=int, default=900)
     tgt.add_argument("--keep-dir", type=Path, default=None, help="Keep MDLOps temp artifacts here (debugging).")
 
     out = cmp.add_argument_group("report")
@@ -1570,7 +1576,7 @@ def build_parser() -> argparse.ArgumentParser:
     ex.add_argument("--output-dir", type=Path, required=True)
     ex.add_argument("--include", choices=("original", "pykotor", "mdlops"), nargs="+", default=["original", "pykotor"])
     ex.add_argument("--mdlops-exe", type=Path, default=None)
-    ex.add_argument("--mdlops-timeout-s", type=int, default=90)
+    ex.add_argument("--mdlops-timeout-s", type=int, default=900)
     ex.add_argument("--keep-dir", type=Path, default=None)
     ex.set_defaults(func=cmd_extract)
 
@@ -1585,7 +1591,7 @@ def build_parser() -> argparse.ArgumentParser:
     mr.add_argument("--node-id", type=int, default=None, help="If omitted, lists mesh nodes with MDX metadata.")
     mr.add_argument("--max-rows", type=int, default=10)
     mr.add_argument("--mdlops-exe", type=Path, default=None)
-    mr.add_argument("--mdlops-timeout-s", type=int, default=90)
+    mr.add_argument("--mdlops-timeout-s", type=int, default=900)
     mr.add_argument("--keep-dir", type=Path, default=None)
     mr.set_defaults(func=cmd_mdx_rows)
 
@@ -1597,7 +1603,7 @@ def build_parser() -> argparse.ArgumentParser:
     diag.add_argument("--mdl", type=Path, default=None, help="Path to .mdl to use as source instead of resref.")
     diag.add_argument("--mdx", type=Path, default=None, help="Optional path to .mdx for --mdl source.")
     diag.add_argument("--mdlops-exe", type=Path, default=None)
-    diag.add_argument("--mdlops-timeout-s", type=int, default=90)
+    diag.add_argument("--mdlops-timeout-s", type=int, default=900)
     diag.add_argument("--keep-dir", type=Path, default=None)
     diag.set_defaults(func=cmd_diagnose)
 
