@@ -8,6 +8,7 @@ from pykotor.resource.formats.gff import write_gff
 from pykotor.resource.generics.utt import UTT, dismantle_utt, read_utt
 from pykotor.resource.type import ResourceType
 from toolset.data.installation import HTInstallation
+from toolset.gui.common.localization import translate as tr
 from toolset.gui.dialogs.edit.locstring import LocalizedStringDialog
 from toolset.gui.editor import Editor
 
@@ -24,8 +25,7 @@ class UTTEditor(Editor):
     def __init__(
         self,
         parent: QWidget | None,
-        installation: HTInstallation
-        | None = None,
+        installation: HTInstallation | None = None,
     ):
         """Initialize the trigger editor window.
 
@@ -46,6 +46,7 @@ class UTTEditor(Editor):
         super().__init__(parent, "Trigger Editor", "trigger", supported, supported, installation)
 
         from toolset.uic.qtpy.editors.utt import Ui_MainWindow
+
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self._setup_menus()
@@ -53,9 +54,10 @@ class UTTEditor(Editor):
         self._setup_signals()
         if installation is not None:  # will only be none in the unittests
             self._setup_installation(installation)
-        
+
         # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
+
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
 
@@ -92,35 +94,34 @@ class UTTEditor(Editor):
         if traps:
             self.ui.trapSelect.set_items(traps.get_column("label"))
 
-        self.relevant_script_resnames: list[str] = sorted(
-            iter(
-                {
-                    res.resname().lower()
-                    for res in self._installation.get_relevant_resources(
-                        ResourceType.NCS, self._filepath
-                    )
-                }
-            )
-        )
+        self.relevant_script_resnames: list[str] = sorted(iter({res.resname().lower() for res in self._installation.get_relevant_resources(ResourceType.NCS, self._filepath)}))
 
         self.ui.onClickEdit.populate_combo_box(self.relevant_script_resnames)
         installation.setup_file_context_menu(self.ui.onClickEdit, [ResourceType.NCS, ResourceType.NSS], enable_reference_search=True, reference_search_type="script")
+        self.ui.onClickEdit.setToolTip(tr("Right-click to find references to this script in the installation."))
         self.ui.onDisarmEdit.populate_combo_box(self.relevant_script_resnames)
         installation.setup_file_context_menu(self.ui.onDisarmEdit, [ResourceType.NCS, ResourceType.NSS], enable_reference_search=True, reference_search_type="script")
+        self.ui.onDisarmEdit.setToolTip(tr("Right-click to find references to this script in the installation."))
         self.ui.onEnterSelect.populate_combo_box(self.relevant_script_resnames)
         installation.setup_file_context_menu(self.ui.onEnterSelect, [ResourceType.NCS, ResourceType.NSS], enable_reference_search=True, reference_search_type="script")
+        self.ui.onEnterSelect.setToolTip(tr("Right-click to find references to this script in the installation."))
         self.ui.onExitSelect.populate_combo_box(self.relevant_script_resnames)
         installation.setup_file_context_menu(self.ui.onExitSelect, [ResourceType.NCS, ResourceType.NSS], enable_reference_search=True, reference_search_type="script")
+        self.ui.onExitSelect.setToolTip(tr("Right-click to find references to this script in the installation."))
         self.ui.onTrapTriggeredEdit.populate_combo_box(self.relevant_script_resnames)
         installation.setup_file_context_menu(self.ui.onTrapTriggeredEdit, [ResourceType.NCS, ResourceType.NSS], enable_reference_search=True, reference_search_type="script")
+        self.ui.onTrapTriggeredEdit.setToolTip(tr("Right-click to find references to this script in the installation."))
         self.ui.onHeartbeatSelect.populate_combo_box(self.relevant_script_resnames)
         installation.setup_file_context_menu(self.ui.onHeartbeatSelect, [ResourceType.NCS, ResourceType.NSS], enable_reference_search=True, reference_search_type="script")
+        self.ui.onHeartbeatSelect.setToolTip(tr("Right-click to find references to this script in the installation."))
         self.ui.onUserDefinedSelect.populate_combo_box(self.relevant_script_resnames)
         installation.setup_file_context_menu(self.ui.onUserDefinedSelect, [ResourceType.NCS, ResourceType.NSS], enable_reference_search=True, reference_search_type="script")
-        
+        self.ui.onUserDefinedSelect.setToolTip(tr("Right-click to find references to this script in the installation."))
+
         # Setup reference search for Tag field
         installation.setup_file_context_menu(self.ui.tagEdit, [], enable_reference_search=True, reference_search_type="tag")
-        
+        self.ui.tagEdit.setToolTip(tr("Right-click to find references to this tag in the installation."))
+
         # Setup reference search for TemplateResRef field
         installation.setup_file_context_menu(self.ui.resrefEdit, [], enable_reference_search=True, reference_search_type="template_resref")
         self.ui.resrefEdit.setToolTip(tr("Right-click to find references to this template resref in the installation."))
