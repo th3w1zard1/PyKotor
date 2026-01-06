@@ -947,8 +947,16 @@ class _NodeHeader:
         self.controller_count = reader.read_uint32()
         self.controller_count2 = reader.read_uint32()
         self.offset_to_controller_data = reader.read_uint32()
-        self.controller_data_length = reader.read_uint32()
-        self.controller_data_length2 = reader.read_uint32()
+        # Clamp controller_data_length to prevent Perl from interpreting it as negative (values >= 2^31)
+        # MDLOps reads this as a signed integer, so we must ensure it's < 2^31
+        controller_data_length_raw = reader.read_uint32()
+        if controller_data_length_raw > 0x7FFFFFFF:
+            controller_data_length_raw = 0x7FFFFFFF
+        self.controller_data_length = controller_data_length_raw
+        controller_data_length2_raw = reader.read_uint32()
+        if controller_data_length2_raw > 0x7FFFFFFF:
+            controller_data_length2_raw = 0x7FFFFFFF
+        self.controller_data_length2 = controller_data_length2_raw
         return self
 
     def write(
@@ -2973,7 +2981,13 @@ class MDLBinaryWriter:
             fp0 = _TrimeshHeader.K2_FUNCTION_POINTER0
             fp1 = _TrimeshHeader.K2_FUNCTION_POINTER1
 
-        if mdl_node.mesh:
+        # Create trimesh header if node has a mesh or if node_type indicates it should have one
+        # This ensures we preserve mesh structure even if mesh object is missing
+        if mdl_node.mesh or mdl_node.node_type in (MDLNodeType.TRIMESH, MDLNodeType.DANGLYMESH):
+            # If mesh is None but node_type indicates mesh, create empty mesh to preserve structure
+            if not mdl_node.mesh:
+                from pykotor.resource.formats.mdl.mdl_data import MDLMesh
+                mdl_node.mesh = MDLMesh()
             bin_node.trimesh = _TrimeshHeader()
             bin_node.trimesh.function_pointer0 = fp0
             bin_node.trimesh.function_pointer1 = fp1
@@ -3792,7 +3806,9 @@ class MDLBinaryWriter:
         node: MDLNode,
     ) -> int:
         type_id = 1
-        if node.mesh:
+        # Check for mesh - either explicit mesh object or node_type indicates mesh
+        # This ensures we preserve mesh flags even if mesh object is missing
+        if node.mesh or node.node_type in (MDLNodeType.TRIMESH, MDLNodeType.DANGLYMESH):
             type_id = type_id | MDLNodeFlags.MESH
         if node.skin:
             type_id = type_id | MDLNodeFlags.SKIN
