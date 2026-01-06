@@ -1601,7 +1601,7 @@ class PyFileSystemModel(QAbstractItemModel):
         if column == 2:
             return node.type()
         if column == 3:
-            return node.lastModified().toPyDateTime()
+            return node.lastModified(QTimeZone.UTC).toPyDateTime()  # type: ignore[attr-defined]
         raise ValueError(f"No column with value of '{column}'")
 
     def icon(
