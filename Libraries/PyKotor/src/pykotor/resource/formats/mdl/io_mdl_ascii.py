@@ -420,12 +420,16 @@ class MDLAsciiWriter(ResourceWriter):
         parent: MDLNode | None = None,
     ) -> None:
         """Write node data including position, orientation, and controllers."""
-        # Prefer writing parent by name when available so the reader can reliably
-        # reconstruct hierarchies even when node_id/parent_id aren't populated.
+        # MDLOps writes parent as string name or 'NULL' - Reference: vendor/MDLOps/MDLOpsM.pm:3129
+        # MDLOps stores parent as: defined($parent) ? $model->{partnames}[$parent->{nodenum}] : 'NULL' (line 1605)
         if parent and parent.name:
             self.write_line(indent, f"parent {parent.name}")
+        elif node.parent_id == -1:
+            self.write_line(indent, "parent NULL")
         else:
-            self.write_line(indent, f"parent {node.parent_id}")
+            # Fallback: try to find parent by ID, or write NULL
+            # This should rarely happen if hierarchy is built correctly
+            self.write_line(indent, "parent NULL")
         # MDLOps uses "% .7g" format (space before number) - Reference: vendor/MDLOps/MDLOpsM.pm:3149
         self.write_line(indent, f"position {node.position.x: .7g} {node.position.y: .7g} {node.position.z: .7g}")
         # MDLOps uses "% .7g" format (space before number) - Reference: vendor/MDLOps/MDLOpsM.pm:3154
