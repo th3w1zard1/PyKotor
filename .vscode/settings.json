@@ -83,5 +83,14 @@
         "${workspaceFolder}/Tools/HoloPazaak/src",
         "${workspaceFolder}/Tools/KotorCLI/src",
         "${workspaceFolder}/Tools/KotorDiff/src"
-    ]
+    ],
+    "files.exclude": {
+      "**/.history/**": true
+    },
+    "search.exclude": {
+      "**/.history/**": true
+    },
+    "files.watcherExclude": {
+      "**/.history/**": true
+    }
 }

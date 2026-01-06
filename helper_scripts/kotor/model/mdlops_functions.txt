@@ -1,0 +1,57 @@
+412:sub modeltype
+440:sub modelversion
+465:sub facearea
+492:sub facenormal
+516:sub patchnormal {
+624:sub boundary_check {
+661:sub combinations {
+700:sub score_vector {
+718:sub readbinarymdl
+1440:sub readaabb
+1471:sub writeaabb
+1519:sub getnodeorder {
+1560:sub getnodes {
+2456:sub getnodelist {
+2478:sub convert_saber_to_trimesh {
+2570:sub convert_trimesh_to_saber {
+3004:sub writeasciimdl {
+3572:sub getcontrollername {
+3594:sub vertex_equals {
+3623:sub normalize_vector {
+3660:sub compute_vector_angle {
+3703:sub compute_vertex_angle {
+3718:sub aatoquaternion {
+3734:sub readsinglecontroller {
+3760:sub readkeyedcontroller {
+3809:sub readasciicontroller {
+3842:sub get_super_nodes {
+3916:sub readasciimdl {
+5978:sub writebinarymdl {
+6323:sub postprocessnodes {
+6472:sub buildtqbonearrays {
+6509:sub getpositionorientation {
+6532:sub getreversedpositionorientation {
+6547:sub rotatevector {
+6598:sub addvectors {
+6608:sub multiplyquaternions {
+6623:sub quaternion_multiply {
+6648:sub quaternion_apply {
+6660:sub writebinarynode
+7674:sub writerawbinarymdl {
+7816:sub writerawnodes {
+8067:sub replaceraw {
+8226:sub buildtree {
+8445:sub printhex {
+8566:sub detect_format {
+8584:sub detect_type {
+8601:sub non_walk {
+8622:sub readasciiwalkmesh {
+9123:sub face_shell_sort {
+9151:sub aabb {
+9426:sub face_normal {
+9450:sub readbinarywalkmesh {
+9559:sub writeasciiwalkmesh {
+9671:sub writebinarywalkmesh {
+9790:sub close {
+9804:sub open {
+9867:sub exists {

@@ -12,7 +12,6 @@ import json
 import subprocess
 import sys
 import time
-from datetime import datetime
 
 from typing import Any
 
@@ -118,14 +117,14 @@ def main():
     print("\n1. MANUAL FIX (Recommended):")
     print("   Visit: https://github.com/OldRepublicDevs/PyKotor/releases")
     print("   Edit each release and set the correct date")
-    print(f"\n2. Create a script using GitHub's web interface automation")
-    print(f"\n3. Contact GitHub Support for bulk date correction")
+    print("\n2. Create a script using GitHub's web interface automation")
+    print("\n3. Contact GitHub Support for bulk date correction")
 
     # Show the releases that need date fixes, sorted by original date
     print("\n" + "=" * 70)
     print("RELEASES NEEDING DATE FIXES (sorted by original date)")
     print("=" * 70)
-    
+
     sorted_fixes = sorted(date_fixes_needed, key=lambda x: x[3] if x[3] else "")
     for tag_name, release_id, source_release, original_date in sorted_fixes:
         current_date = target_by_tag[tag_name].get("published_at")
@@ -142,4 +141,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

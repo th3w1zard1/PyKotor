@@ -23,7 +23,6 @@ Rules:
 
 New .md files → only in `docs/`
 Content → only public-facing, end-user or developer info
-NEVER write progress reports or TODOs
 
 ### Verification rule (MUST follow)
 
