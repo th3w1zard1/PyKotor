@@ -1205,7 +1205,7 @@ class QFileDialogPrivate:
         parent_widget: QWidget | None = cast("QWidget", self.qFileDialogUi.treeView.parentWidget())
         if parent_widget is not None:
             self.qFileDialogUi.stackedWidget.setCurrentWidget(parent_widget)
-        self.qFileDialogUi.treeView.doItemsLayout()
+        self.qFileDialogUi.treeView.executeDelayedItemsLayout()
         if self.options.viewMode() != RealQFileDialog.ViewMode.Detail:
             self.options.setViewMode(RealQFileDialog.ViewMode.Detail)
 
