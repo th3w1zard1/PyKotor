@@ -2229,7 +2229,7 @@ class PyFileSystemModel(QAbstractItemModel):
     def flags(
         self,
         index: QModelIndex,
-    ) -> Qt.ItemFlags:  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+    ) -> Qt.ItemFlag:  # type: ignore[attr-defined]
         flags = super().flags(index)
         print("<SDM> [flags scope] flags: ", flags)
 
@@ -2239,7 +2239,7 @@ class PyFileSystemModel(QAbstractItemModel):
         node = self.node(index)
         print("<SDM> [flags node.fileName ", node.fileName)
 
-        if not self._readOnly and index.column() == 0 and bool(node.permissions() & QFileDevice.Permission.WriteUser):  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+        if not self._readOnly and index.column() == 0 and bool(node.permissions() & QFileDevice.Permission.WriteUser):  # type: ignore[attr-defined]
             flags |= Qt.ItemFlag.ItemIsEditable
             if node.isDir():
                 flags |= Qt.ItemFlag.ItemIsDropEnabled
