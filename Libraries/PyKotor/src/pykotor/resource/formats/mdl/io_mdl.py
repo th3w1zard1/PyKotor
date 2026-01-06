@@ -3443,15 +3443,17 @@ class MDLBinaryWriter:
         has_uv2 = mdl_node.mesh.vertex_uv2 is not None and uv2_len == vcount and vcount > 0
 
         # Only set TEX0 flag if texture name is valid (not None, not empty, not "NULL")
-        has_texture1 = mdl_node.mesh.texture_1 is not None and mdl_node.mesh.texture_1.strip() != "" and mdl_node.mesh.texture_1.upper() != "NULL"
+        has_texture1 = (
+            mdl_node.mesh.texture_1 is not None
+            and mdl_node.mesh.texture_1.strip() != ""
+            and mdl_node.mesh.texture_1.upper() != "NULL"
+        )
 
         if has_uv1:
             bin_node.trimesh.mdx_texture1_offset = suboffset
             bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.TEX0
             if _DEBUG_MDL:
-                print(
-                    f"DEBUG _update_mdx: Node {mdl_node.name} has_uv1=True texture1={mdl_node.mesh.texture_1} bitmap=0x{bin_node.trimesh.mdx_data_bitmap:08X} TEX0={bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX0)} texture1_offset={bin_node.trimesh.mdx_texture1_offset}"
-                )
+                print(f"DEBUG _update_mdx: Node {mdl_node.name} has_uv1=True texture1={mdl_node.mesh.texture_1} bitmap=0x{bin_node.trimesh.mdx_data_bitmap:08X} TEX0={bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX0)} texture1_offset={bin_node.trimesh.mdx_texture1_offset}")
             assert bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX0, f"Failed to set TEX0 flag for node {mdl_node.name}"
             suboffset += 8
         elif has_texture1 and vcount > 0:
@@ -3462,13 +3464,15 @@ class MDLBinaryWriter:
             bin_node.trimesh.mdx_texture1_offset = suboffset
             bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.TEX0
             if _DEBUG_MDL:
-                print(
-                    f"DEBUG _update_mdx: Node {mdl_node.name} has_uv1=False texture1={mdl_node.mesh.texture_1} vcount={vcount} generated default UVs bitmap=0x{bin_node.trimesh.mdx_data_bitmap:08X} TEX0={bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX0)}"
-                )
+                print(f"DEBUG _update_mdx: Node {mdl_node.name} has_uv1=False texture1={mdl_node.mesh.texture_1} vcount={vcount} generated default UVs bitmap=0x{bin_node.trimesh.mdx_data_bitmap:08X} TEX0={bool(bin_node.trimesh.mdx_data_bitmap & _MDXDataFlags.TEX0)}")
             suboffset += 8
 
         # Only set TEX1 flag if texture name is valid (not None, not empty, not "NULL")
-        has_texture2 = mdl_node.mesh.texture_2 is not None and mdl_node.mesh.texture_2.strip() != "" and mdl_node.mesh.texture_2.upper() != "NULL"
+        has_texture2 = (
+            mdl_node.mesh.texture_2 is not None
+            and mdl_node.mesh.texture_2.strip() != ""
+            and mdl_node.mesh.texture_2.upper() != "NULL"
+        )
 
         if has_uv2:
             bin_node.trimesh.mdx_texture2_offset = suboffset
