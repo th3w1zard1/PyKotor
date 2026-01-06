@@ -3637,21 +3637,37 @@ class MDLBinaryWriter:
 
             # MDLOps writes 0 for controller offsets when both controller_count and
             # controller_data_length are 0 (no controllers at all)
+            # MDLOps stores offsets as (absolute_offset - 12) in the file format
+            # Reference: vendor/MDLOps/MDLOpsM.pm:7596, 7653 - writes (location - 12)
             if bin_node.header.controller_count == 0 and bin_node.header.controller_data_length == 0:
                 bin_node.header.offset_to_controllers = 0
                 bin_node.header.offset_to_controller_data = 0
             else:
-                bin_node.header.offset_to_controllers = node_offset + bin_node.controllers_offset(self.game)
-                bin_node.header.offset_to_controller_data = node_offset + bin_node.controller_data_offset(self.game)
+                absolute_controllers_offset = node_offset + bin_node.controllers_offset(self.game)
+                absolute_controller_data_offset = node_offset + bin_node.controller_data_offset(self.game)
+                # Store as (absolute_offset - 12) to match MDLOps format
+                bin_node.header.offset_to_controllers = absolute_controllers_offset - 12
+                bin_node.header.offset_to_controller_data = absolute_controller_data_offset - 12
 
             # MDLOps: when children_count == 0, offset_to_children equals offset_to_controllers
+            # MDLOps stores offsets as (absolute_offset - 12) in the file format
+            # Reference: vendor/MDLOps/MDLOpsM.pm:7596 - writes (childarraylocation - 12)
             if actual_children_count == 0:
                 bin_node.header.offset_to_children = bin_node.header.offset_to_controllers
             else:
-                bin_node.header.offset_to_children = node_offset + bin_node.children_offsets_offset(self.game)
+                absolute_children_offset = node_offset + bin_node.children_offsets_offset(self.game)
+                # Store as (absolute_offset - 12) to match MDLOps format
+                bin_node.header.offset_to_children = absolute_children_offset - 12
             bin_node.header.offset_to_root = 0
             parent_idx = parent_by_idx.get(i)
-            bin_node.header.offset_to_parent = bin_offsets[parent_idx] if parent_idx is not None else 0
+            # MDLOps stores offsets as (absolute_offset - 12) in the file format
+            # Reference: vendor/MDLOps/MDLOpsM.pm:7663 - writes (header start - 12)
+            if parent_idx is not None:
+                absolute_parent_offset = bin_offsets[parent_idx]
+                # Store as (absolute_offset - 12) to match MDLOps format
+                bin_node.header.offset_to_parent = absolute_parent_offset - 12
+            else:
+                bin_node.header.offset_to_parent = 0
 
             if bin_node.trimesh:
                 self._calc_trimesh_offsets(node_offset, bin_node)
