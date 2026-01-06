@@ -872,8 +872,14 @@ class TextureList(MainWindowList):
                 continue
             self.offload_texture_load(item, reload=reload)
 
-    def queue_load_visible_icons(self):
-        """Queue the loading of icons for visible items."""
+    @Slot(int)
+    def queue_load_visible_icons(self, value: int = 0):
+        """Queue the loading of icons for visible items.
+        
+        Args:
+        ----
+            value: The scroll value from the valueChanged signal (ignored).
+        """
         visible_indexes: list[QModelIndex] = self.visible_indexes()
         if not visible_indexes:
             return
