@@ -386,7 +386,7 @@ class ResourceFileSystemWidget(QWidget):
             h.setSectionResizeMode(i, h.ResizeMode.Interactive)
 
     def onItemExpanded(self, idx: QModelIndex):
-        # sourcery skip: class-extract-method
+        """Handle item expansion event."""
         print(f"onItemExpanded, row={idx.row()}, col={idx.column()}")
         self.fsTreeView.debounce_layout_changed(pre_change_emit=True)
         item = idx.internalPointer()
@@ -396,6 +396,7 @@ class ResourceFileSystemWidget(QWidget):
         self.fsTreeView.debounce_layout_changed(pre_change_emit=False)
 
     def onItemCollapsed(self, idx: QModelIndex):
+        """Handle item collapse event."""
         print(f"onItemCollapsed, row={idx.row()}, col={idx.column()}")
         self.fsTreeView.debounce_layout_changed(pre_change_emit=True)
         item = idx.internalPointer()

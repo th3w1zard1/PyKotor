@@ -12,12 +12,12 @@ from typing import TYPE_CHECKING, Any, ClassVar, Iterable, overload
 
 import qtpy  # noqa: E402
 
-from loggerplus import RobustLogger  # noqa: E402
 from qtpy.QtCore import QAbstractItemModel, QBasicTimer, QDir, QFileDevice, QFileInfo, QMimeData, QModelIndex, QMutex, QMutexLocker, QTimer, QUrl, QVariant, Qt
 from qtpy.QtGui import QIcon  # noqa: E402
 from qtpy.QtWidgets import QApplication, QFileIconProvider, QFileSystemModel, QMainWindow, QVBoxLayout, QWidget
 
-from utility.ui_libraries.qt.widgets.itemviews.treeview import RobustTreeView
+from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
+from utility.ui_libraries.qt.widgets.itemviews.treeview import RobustTreeView  # noqa: E402
 
 
 def update_sys_path(path: pathlib.Path):
@@ -28,51 +28,38 @@ def update_sys_path(path: pathlib.Path):
 
 file_absolute_path = pathlib.Path(__file__).resolve()
 
-pykotor_path = file_absolute_path.parents[6] / "Libraries" / "PyKotor" / "src" / "pykotor"
+pykotor_path = file_absolute_path.parents[8] / "Libraries" / "PyKotor" / "src" / "pykotor"
 if pykotor_path.exists():
     update_sys_path(pykotor_path.parent)
-pykotor_gl_path = file_absolute_path.parents[6] / "Libraries" / "PyKotorGL" / "src" / "pykotor"
+pykotor_gl_path = file_absolute_path.parents[8] / "Libraries" / "PyKotorGL" / "src" / "pykotor"
 if pykotor_gl_path.exists():
     update_sys_path(pykotor_gl_path.parent)
-utility_path = file_absolute_path.parents[6] / "Libraries" / "Utility" / "src"
+utility_path = file_absolute_path.parents[5]
 if utility_path.exists():
     update_sys_path(utility_path)
-toolset_path = file_absolute_path.parents[3] / "toolset"
+toolset_path = file_absolute_path.parents[8] / "Tools/HolocronToolset/src/toolset"
 if toolset_path.exists():
     update_sys_path(toolset_path.parent)
     if __name__ == "__main__":
         os.chdir(toolset_path)
 
-from pathlib import Path  # noqa: E402
-
-from utility.ui_libraries.qt.filesystem.adapters.pyfileinfogatherer import PyFileInfoGatherer  # noqa: E402
-from utility.ui_libraries.qt.filesystem.adapters.pyfilesystemnode import PyFileSystemNode  # noqa: E402
+from utility.system.path import Path  # noqa: E402
+from utility.ui_libraries.qt.adapters.filesystem.pyfileinfogatherer import PyFileInfoGatherer  # noqa: E402
+from utility.ui_libraries.qt.adapters.filesystem.pyfilesystemnode import PyFileSystemNode  # noqa: E402
 
 if TYPE_CHECKING:
     from ctypes import _Pointer, c_bool
 
-    from qtpy.QtCore import (  # pyright: ignore[reportPrivateImportUsage]  # noqa: E402  # noqa: E402  # noqa: E402
-        QDateTime,
-        QObject,
-        QTimerEvent,
-        Signal,
-    )
+    from qtpy.QtCore import QDateTime, QObject, QTimerEvent, Signal  # pyright: ignore[reportPrivateImportUsage]  # noqa: E402  # noqa: E402  # noqa: E402
     from qtpy.QtWidgets import QScrollBar
     from typing_extensions import Literal
 
 
 if qtpy.API_NAME in ("PyQt6", "PySide6"):
     QDesktopWidget = None
-    from qtpy.QtGui import (  # pyright: ignore[reportPrivateImportUsage]  # noqa: F401
-        QUndoCommand,
-        QUndoStack,
-    )
+    from qtpy.QtGui import QUndoCommand, QUndoStack  # pyright: ignore[reportPrivateImportUsage]  # noqa: F401
 elif qtpy.API_NAME in ("PyQt5", "PySide2"):
-    from qtpy.QtWidgets import (  # noqa: F401  # pyright: ignore[reportPrivateImportUsage]
-        QDesktopWidget,
-        QUndoCommand,
-        QUndoStack,
-    )
+    from qtpy.QtWidgets import QDesktopWidget, QUndoCommand, QUndoStack  # noqa: F401  # pyright: ignore[reportPrivateImportUsage]
 else:
     raise RuntimeError(f"Unexpected qtpy version: '{qtpy.API_NAME}'")
 
@@ -88,10 +75,7 @@ if os.name == "nt_disabled":
     try:
         import comtypes  # pyright: ignore[reportMissingTypeStubs]
 
-        from comtypes.automation import (  # pyright: ignore[reportMissingTypeStubs]
-            BSTR,
-            IUnknown,
-        )
+        from comtypes.automation import BSTR, IUnknown  # pyright: ignore[reportMissingTypeStubs]
     except ImportError:
         RobustLogger().error("Could not setup the comtypes library, volume functionality will be disabled.")
     else:
@@ -706,7 +690,7 @@ class PyFileSystemModel(QAbstractItemModel):
             result |= QFileSystemModel.DontResolveSymlinks
 
         # TODO:
-        #if not self._fileInfoGatherer.isWatching():
+        # if not self._fileInfoGatherer.isWatching():
         #    result |= QFileSystemModel.DontWatchForChanges
 
         provider = self.iconProvider()
@@ -725,7 +709,7 @@ class PyFileSystemModel(QAbstractItemModel):
             self.setResolveSymlinks(not bool(options & QFileSystemModel.DontResolveSymlinks))
 
         # TODO:
-        #if bool(changed & QFileSystemModel.DontWatchForChanges):
+        # if bool(changed & QFileSystemModel.DontWatchForChanges):
         #    self._fileInfoGatherer.setWatching(not bool(options & QFileSystemModel.DontWatchForChanges))
 
         if bool(changed & QFileSystemModel.DontUseCustomDirectoryIcons):
@@ -1159,7 +1143,7 @@ class PyFileSystemModel(QAbstractItemModel):
 
         return super().headerData(section, orientation, role)
 
-    def setRootPath(self, newPath: str) -> QModelIndex:  # sourcery skip: class-extract-method  # noqa: N803
+    def setRootPath(self, newPath: str) -> QModelIndex:  # noqa: N803
         resolvedPath = Path(os.path.normpath(newPath).strip()).resolve()
         print("<SDM> [setRootPath scope] resolvedPath: ", resolvedPath)
 
@@ -1221,7 +1205,7 @@ class PyFileSystemModel(QAbstractItemModel):
     def iconProvider(self) -> QFileIconProvider:
         return self._fileInfoGatherer.m_iconProvider
 
-    def setFilter(self, filters: QDir.Filters | QDir.Filter):  # sourcery skip: class-extract-method
+    def setFilter(self, filters: QDir.Filters | QDir.Filter):
         print("<SDM> [setFilter scope] self._filters: ", int(self._filters), "filters:", filters)
         if self._filters == filters:
             return

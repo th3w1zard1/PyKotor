@@ -51,9 +51,7 @@ class SearchManager:
         self.indexed_nodes: set[DLGNode] = set()
         self.max_recent_searches: int = 10
 
-    def _iter_nodes_and_links(
-        self,
-    ) -> Generator[tuple[DLGNode, DLGLink | None], None, None]:
+    def _iter_nodes_and_links(self) -> Generator[tuple[DLGNode, DLGLink | None], None, None]:
         """Iterate through all indexed nodes and their links."""
         seen_nodes: set[DLGNode] = set()
         for node in self.indexed_nodes:

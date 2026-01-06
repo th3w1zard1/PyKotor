@@ -14,50 +14,44 @@ from pykotor.tools.path import CaseAwarePath
 
 if qtpy.API_NAME in ("PyQt6", "PySide6"):
     QDesktopWidget = None
-    from qtpy.QtGui import (  # pyright: ignore[reportPrivateImportUsage]  # noqa: F401
-        QUndoCommand,
-        QUndoStack,
-    )
+    from qtpy.QtGui import QUndoCommand, QUndoStack  # pyright: ignore[reportPrivateImportUsage]  # noqa: F401
 elif qtpy.API_NAME in ("PyQt5", "PySide2"):
-    from qtpy.QtWidgets import (  # noqa: F401  # pyright: ignore[reportPrivateImportUsage]
-        QDesktopWidget,
-        QUndoCommand,
-        QUndoStack,
-    )
+    from qtpy.QtWidgets import QDesktopWidget, QUndoCommand, QUndoStack  # noqa: F401  # pyright: ignore[reportPrivateImportUsage]
 else:
     raise RuntimeError(f"Unexpected qtpy version: '{qtpy.API_NAME}'")
 
 
+def update_sys_path(_path: pathlib.Path):
+    working_dir = str(_path)
+    print("<SDM> [update_sys_path scope] working_dir: ", working_dir)
 
-if __name__ == "__main__":
-    def update_sys_path(path: pathlib.Path):
-        working_dir = str(path)
-        if working_dir not in sys.path:
-            sys.path.append(working_dir)
-
-
-    file_absolute_path = pathlib.Path(__file__).resolve()
-
-    pykotor_path = file_absolute_path.parents[6] / "Libraries" / "PyKotor" / "src" / "pykotor"
-    if pykotor_path.exists():
-        update_sys_path(pykotor_path.parent)
-    pykotor_gl_path = file_absolute_path.parents[6] / "Libraries" / "PyKotorGL" / "src" / "pykotor"
-    if pykotor_gl_path.exists():
-        update_sys_path(pykotor_gl_path.parent)
-    utility_path = file_absolute_path.parents[6] / "Libraries" / "Utility" / "src"
-    if utility_path.exists():
-        update_sys_path(utility_path)
-    toolset_path = file_absolute_path.parents[3] / "toolset"
-    if toolset_path.exists():
-        update_sys_path(toolset_path.parent)
-        if __name__ == "__main__":
-            os.chdir(toolset_path)
+    if working_dir not in sys.path:
+        sys.path.append(working_dir)
 
 
-from pathlib import Path  # noqa: E402
+file_absolute_path = pathlib.Path(__file__).resolve()
+
+pykotor_path = file_absolute_path.parents[6] / "Libraries" / "PyKotor" / "src" / "pykotor"
+if pykotor_path.exists():
+    update_sys_path(pykotor_path.parent)
+pykotor_gl_path = file_absolute_path.parents[6] / "Libraries" / "PyKotorGL" / "src" / "pykotor"
+if pykotor_gl_path.exists():
+    update_sys_path(pykotor_gl_path.parent)
+utility_path = file_absolute_path.parents[6] / "Libraries" / "Utility" / "src"
+if utility_path.exists():
+    update_sys_path(utility_path)
+toolset_path = file_absolute_path.parents[3] / "toolset"
+if toolset_path.exists():
+    update_sys_path(toolset_path.parent)
+    if __name__ == "__main__":
+        os.chdir(toolset_path)
+
+
 from typing import TYPE_CHECKING  # noqa: E402
 
 from qtpy.QtCore import QDateTime, QFileInfo  # noqa: E402
+
+from utility.system.path import Path  # noqa: E402
 
 if TYPE_CHECKING:
     from qtpy.QtCore import QObject
@@ -107,7 +101,7 @@ class PyFileInfo:
 
     def setCaching(self, enable: bool):
         """Placeholder method for compatibility. Caching is not implemented."""
-        # Caching is not implemented in this class.
+        ...  # Caching is not implemented in this class.
 
     def caching(self) -> bool:
         """Returns False as caching is not implemented."""

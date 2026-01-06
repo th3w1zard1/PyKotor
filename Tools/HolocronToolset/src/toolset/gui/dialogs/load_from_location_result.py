@@ -265,9 +265,7 @@ class CustomItem:
             menu.addAction(action)
         return menu
 
-    def create_context_menu_dict(
-        self,
-    ) -> OrderedDict[str, tuple[QAction, Callable]]:
+    def create_context_menu_dict(self) -> OrderedDict[str, tuple[QAction, Callable]]:
         menu_dict = OrderedDict()
         selected = self.selectedItems()
         if not selected:
@@ -349,9 +347,7 @@ class FileItems(CustomItem):
             shutil.move(str(file_path), str(new_path))
             RobustLogger().info("Renamed '%s' to '%s'", file_path, new_path)
 
-    def create_context_menu_dict(
-        self,
-    ) -> OrderedDict[str, tuple[QAction, Callable]]:
+    def create_context_menu_dict(self) -> OrderedDict[str, tuple[QAction, Callable]]:
         menu_dict: OrderedDict[str, tuple[QAction, Callable]] = super().create_context_menu_dict()
         selected: set[FileTableWidgetItem] = set(self.selectedItems())
         if not selected:
