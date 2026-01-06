@@ -10,6 +10,8 @@ Private _data members are intentionally accessed for internal operations.
 
 from __future__ import annotations
 
+import importlib
+import importlib.util
 import math
 
 from typing import TYPE_CHECKING, Any, overload
@@ -19,654 +21,778 @@ import numpy as np
 if TYPE_CHECKING:
     from numpy import ndarray
 
-try:
-    import pyglm  # noqa: F401  # pyright: ignore[reportMissingImports, reportUnusedImport]
 
-    from pyglm.glm import (
-        cross,
-        decompose,
-        eulerAngles,
-        inverse,
-        length,
-        mat4,
-        mat4_cast,
-        normalize,
-        perspective,
-        quat,
-        rotate,
-        translate,
-        unProject,
-        value_ptr,
-        vec3,
-        vec4,
-    )
-except ImportError:
-    class vec3:  # noqa: N801
-        """3D vector class compatible with PyGLM vec3."""
+# TODO: inherit our geometry classes like Vector3, Vector2, etc for duck type static type enforcement support.
+class vec3:  # noqa: N801
+    """3D vector class compatible with PyGLM vec3."""
 
-        def __init__(self, x: float = 0.0, y: float = 0.0, z: float = 0.0):
-            if isinstance(x, (vec3, np.ndarray)):
-                self._data: ndarray = np.array(x._data if isinstance(x, vec3) else x, dtype=np.float32)  # noqa: SLF001
-            else:
-                self._data = np.array([x, y, z], dtype=np.float32)
+    def __init__(self, x: float = 0.0, y: float = 0.0, z: float = 0.0):
+        if isinstance(x, (vec3, np.ndarray)):
+            self._data: ndarray = np.array(x._data if isinstance(x, vec3) else x, dtype=np.float32)  # noqa: SLF001
+        else:
+            self._data = np.array([x, y, z], dtype=np.float32)
 
-        @property
-        def x(self) -> float:
-            return float(self._data[0])
+    @property
+    def x(self) -> float:
+        return float(self._data[0])
 
-        @x.setter
-        def x(self, value: float):
-            self._data[0] = value
+    @x.setter
+    def x(self, value: float):
+        self._data[0] = value
 
-        @property
-        def y(self) -> float:
-            return float(self._data[1])
+    @property
+    def y(self) -> float:
+        return float(self._data[1])
 
-        @y.setter
-        def y(self, value: float):
-            self._data[1] = value
+    @y.setter
+    def y(self, value: float):
+        self._data[1] = value
 
-        @property
-        def z(self) -> float:
-            return float(self._data[2])
+    @property
+    def z(self) -> float:
+        return float(self._data[2])
 
-        @z.setter
-        def z(self, value: float):
-            self._data[2] = value
+    @z.setter
+    def z(self, value: float):
+        self._data[2] = value
 
-        def __repr__(self) -> str:
-            return f"vec3({self.x}, {self.y}, {self.z})"
+    def __repr__(self) -> str:
+        return f"vec3({self.x}, {self.y}, {self.z})"
 
-        def __eq__(self, other: object) -> bool:
-            if not isinstance(other, vec3):
-                return NotImplemented
-            return bool(np.allclose(self._data, other._data))
-
-        def __sub__(self, other: vec3) -> vec3:
-            """Subtract another vec3 from this vec3."""
-            if not isinstance(other, vec3):
-                return NotImplemented
-            result = vec3()
-            result._data = self._data - other._data
-            return result
-
-        def __hash__(self) -> int:
-            return hash(tuple(self._data.flatten()))
-
-
-    class vec4:  # noqa: N801
-        """4D vector class compatible with PyGLM vec4."""
-
-        def __init__(self, x: float = 0.0, y: float = 0.0, z: float = 0.0, w: float = 0.0):
-            if isinstance(x, (vec4, np.ndarray)):
-                self._data: ndarray = np.array(x._data if isinstance(x, vec4) else x, dtype=np.float32)  # noqa: SLF001
-            else:
-                self._data = np.array([x, y, z, w], dtype=np.float32)
-
-        @property
-        def x(self) -> float:
-            return float(self._data[0])
-
-        @x.setter
-        def x(self, value: float):
-            self._data[0] = value
-
-        @property
-        def y(self) -> float:
-            return float(self._data[1])
-
-        @y.setter
-        def y(self, value: float):
-            self._data[1] = value
-
-        @property
-        def z(self) -> float:
-            return float(self._data[2])
-
-        @z.setter
-        def z(self, value: float):
-            self._data[2] = value
-
-        @property
-        def w(self) -> float:
-            return float(self._data[3])
-
-        @w.setter
-        def w(self, value: float):
-            self._data[3] = value
-
-        def __repr__(self) -> str:
-            return f"vec4({self.x}, {self.y}, {self.z}, {self.w})"
-
-        def __eq__(self, other: object) -> bool:
-            if not isinstance(other, vec4):
-                return NotImplemented
-            return bool(np.allclose(self._data, other._data))
-
-        def __hash__(self) -> int:
-            return hash(tuple(self._data.flatten()))
-
-
-    class quat:  # noqa: N801
-        """Quaternion class compatible with PyGLM quat."""
-
-        def __init__(self, w: float = 1.0, x: float = 0.0, y: float = 0.0, z: float = 0.0):
-            if isinstance(w, quat):
-                self._data: ndarray = np.array(w._data, dtype=np.float32)  # noqa: SLF001
-            elif isinstance(w, vec3):
-                # vec3 - Euler angles
-                self._data = self._from_euler(w)._data  # noqa: SLF001
-            else:
-                # w, x, y, z format
-                self._data = np.array([w, x, y, z], dtype=np.float32)
-
-        @staticmethod
-        def _from_euler(euler: vec3) -> quat:
-            """Create quaternion from Euler angles (in radians)."""
-            cy = math.cos(euler.z * 0.5)
-            sy = math.sin(euler.z * 0.5)
-            cp = math.cos(euler.y * 0.5)
-            sp = math.sin(euler.y * 0.5)
-            cr = math.cos(euler.x * 0.5)
-            sr = math.sin(euler.x * 0.5)
-
-            w = cr * cp * cy + sr * sp * sy
-            x = sr * cp * cy - cr * sp * sy
-            y = cr * sp * cy + sr * cp * sy
-            z = cr * cp * sy - sr * sp * cy
-
-            return quat(w, x, y, z)
-
-        @property
-        def w(self) -> float:
-            return float(self._data[0])
-
-        @w.setter
-        def w(self, value: float):
-            self._data[0] = value
-
-        @property
-        def x(self) -> float:
-            return float(self._data[1])
-
-        @x.setter
-        def x(self, value: float):
-            self._data[1] = value
-
-        @property
-        def y(self) -> float:
-            return float(self._data[2])
-
-        @y.setter
-        def y(self, value: float):
-            self._data[2] = value
-
-        @property
-        def z(self) -> float:
-            return float(self._data[3])
-
-        @z.setter
-        def z(self, value: float):
-            self._data[3] = value
-
-        def __repr__(self) -> str:
-            return f"quat({self.w}, {self.x}, {self.y}, {self.z})"
-
-        def __eq__(self, other: object) -> bool:
-            if not isinstance(other, quat):
-                return NotImplemented
-            return bool(np.allclose(self._data, other._data))
-
-        def __hash__(self) -> int:
-            return hash(tuple(self._data.flatten()))
-
-
-    class mat4:  # noqa: N801
-        """4x4 matrix class compatible with PyGLM mat4."""
-
-        def __init__(self, value: float | mat4 | np.ndarray = 1.0):
-            if isinstance(value, (mat4, np.ndarray)):
-                self._data: ndarray = np.array(value._data if isinstance(value, mat4) else value, dtype=np.float32)  # noqa: SLF001
-            else:
-                # Identity matrix scaled by value
-                self._data = np.eye(4, dtype=np.float32) * value
-
-        @overload
-        def __mul__(self, other: mat4) -> mat4: ...
-
-        @overload
-        def __mul__(self, other: vec4) -> vec4: ...
-
-        @overload
-        def __mul__(self, other: vec3) -> vec3: ...
-
-        def __mul__(self, other: mat4 | vec3 | vec4) -> mat4 | vec3 | vec4:
-            if isinstance(other, mat4):
-                result = mat4()
-                result._data = np.matmul(self._data, other._data)
-                return result
-            if isinstance(other, vec4):
-                result_data = np.matmul(self._data, other._data)
-                return vec4(result_data[0], result_data[1], result_data[2], result_data[3])
-            if isinstance(other, vec3):
-                # Treat vec3 as vec4 with w=1
-                vec4_data = np.array([other.x, other.y, other.z, 1.0], dtype=np.float32)
-                result_data = np.matmul(self._data, vec4_data)
-                return vec3(result_data[0], result_data[1], result_data[2])
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, vec3):
             return NotImplemented
+        return bool(np.allclose(self._data, other._data))
 
-        def __repr__(self) -> str:
-            return f"mat4(\n{self._data}\n)"
-
-        def __eq__(self, other: object) -> bool:
-            if not isinstance(other, mat4):
-                return NotImplemented
-            return bool(np.allclose(self._data, other._data))
-
-        def __hash__(self) -> int:
-            return hash(tuple(self._data.flatten()))
-
-
-    @overload
-    def translate(v: Any, /) -> Any: ...
-    
-    @overload
-    def translate(v: vec3, /) -> mat4: ...
-    
-    def translate(v: Any, /) -> Any:
-        """Create a translation matrix."""
-        if not isinstance(v, vec3):
-            raise TypeError(f"translate requires vec3, got {type(v)}")
-        result = mat4()
-        result._data[3, 0] = v.x
-        result._data[3, 1] = v.y
-        result._data[3, 2] = v.z
+    def __sub__(self, other: vec3) -> vec3:
+        """Subtract another vec3 from this vec3."""
+        if not isinstance(other, vec3):
+            return NotImplemented
+        result = vec3()
+        result._data = self._data - other._data
         return result
 
+    def __mul__(self, other: float | vec3) -> vec3:
+        """Multiply vec3 by scalar or another vec3 (element-wise)."""
+        if isinstance(other, (int, float)):
+            result = vec3()
+            result._data = self._data * float(other)
+            return result
+        if isinstance(other, vec3):
+            result = vec3()
+            result._data = self._data * other._data
+            return result
+        return NotImplemented
 
-    @overload
-    def rotate(m: Any, angle: float, axis: Any, /) -> Any: ...
-    
-    @overload
-    def rotate(m: mat4, angle: float, axis: vec3, /) -> mat4: ...
-    
-    def rotate(m: Any, angle: float, axis: Any, /) -> Any:
-        """Rotate a matrix by angle (radians) around axis."""
-        if not isinstance(m, mat4) or not isinstance(axis, vec3):
-            raise TypeError(f"rotate requires mat4, float, vec3, got {type(m)}, {type(axis)}")
-        # Normalize axis
-        axis_length = math.sqrt(axis.x**2 + axis.y**2 + axis.z**2)
-        if axis_length == 0:
-            return mat4(m)
+    def __rmul__(self, other: float) -> vec3:
+        """Multiply scalar by vec3 (right multiplication)."""
+        if isinstance(other, (int, float)):
+            result = vec3()
+            result._data = self._data * float(other)
+            return result
+        return NotImplemented
 
-        x = axis.x / axis_length
-        y = axis.y / axis_length
-        z = axis.z / axis_length
+    def __iter__(self):
+        """Make vec3 iterable for unpacking."""
+        yield self.x
+        yield self.y
+        yield self.z
 
-        c = math.cos(angle)
-        s = math.sin(angle)
-        t = 1 - c
-
-        # Rotation matrix
-        rot = mat4()
-        rot._data[0, 0] = t * x * x + c
-        rot._data[0, 1] = t * x * y + s * z
-        rot._data[0, 2] = t * x * z - s * y
-        rot._data[1, 0] = t * x * y - s * z
-        rot._data[1, 1] = t * y * y + c
-        rot._data[1, 2] = t * y * z + s * x
-        rot._data[2, 0] = t * x * z + s * y
-        rot._data[2, 1] = t * y * z - s * x
-        rot._data[2, 2] = t * z * z + c
-
-        return m * rot
+    def __hash__(self) -> int:
+        return hash(tuple(self._data.flatten()))
 
 
-    @overload
-    def mat4_cast(x: Any, /) -> Any: ...
-    
-    @overload
-    def mat4_cast(x: quat, /) -> mat4: ...
-    
-    def mat4_cast(x: Any, /) -> Any:
-        """Convert a quaternion to a 4x4 rotation matrix."""
-        if not isinstance(x, quat):
-            raise TypeError(f"mat4_cast requires quat, got {type(x)}")
-        q = x
-        result = mat4()
+class vec4:  # noqa: N801
+    """4D vector class compatible with PyGLM vec4."""
 
-        qw, qx, qy, qz = q.w, q.x, q.y, q.z
+    def __init__(self, x: float = 0.0, y: float = 0.0, z: float = 0.0, w: float = 0.0):
+        if isinstance(x, (vec4, np.ndarray)):
+            self._data: ndarray = np.array(x._data if isinstance(x, vec4) else x, dtype=np.float32)  # noqa: SLF001
+        else:
+            self._data = np.array([x, y, z, w], dtype=np.float32)
 
-        result._data[0, 0] = 1 - 2 * qy * qy - 2 * qz * qz
-        result._data[0, 1] = 2 * qx * qy + 2 * qz * qw
-        result._data[0, 2] = 2 * qx * qz - 2 * qy * qw
+    @property
+    def x(self) -> float:
+        return float(self._data[0])
 
-        result._data[1, 0] = 2 * qx * qy - 2 * qz * qw
-        result._data[1, 1] = 1 - 2 * qx * qx - 2 * qz * qz
-        result._data[1, 2] = 2 * qy * qz + 2 * qx * qw
+    @x.setter
+    def x(self, value: float):
+        self._data[0] = value
 
-        result._data[2, 0] = 2 * qx * qz + 2 * qy * qw
-        result._data[2, 1] = 2 * qy * qz - 2 * qx * qw
-        result._data[2, 2] = 1 - 2 * qx * qx - 2 * qy * qy
+    @property
+    def y(self) -> float:
+        return float(self._data[1])
 
-        return result
+    @y.setter
+    def y(self, value: float):
+        self._data[1] = value
 
+    @property
+    def z(self) -> float:
+        return float(self._data[2])
 
-    @overload
-    def inverse(m: Any, /) -> Any: ...
-    
-    @overload
-    def inverse(m: mat4, /) -> mat4: ...
-    
-    def inverse(m: Any, /) -> Any:
-        """Calculate the inverse of a matrix."""
-        if not isinstance(m, mat4):
-            raise TypeError(f"inverse requires mat4, got {type(m)}")
-        result = mat4()
-        try:
-            result._data = np.linalg.inv(m._data)
-        except np.linalg.LinAlgError:
-            # Return identity matrix if singular
-            result._data = np.eye(4, dtype=np.float32)
-        return result
+    @z.setter
+    def z(self, value: float):
+        self._data[2] = value
 
+    @property
+    def w(self) -> float:
+        return float(self._data[3])
 
-    def perspective(fovy: float, aspect: float, near: float, far: float, /) -> mat4:
-        """Create a perspective projection matrix.
+    @w.setter
+    def w(self, value: float):
+        self._data[3] = value
+
+    def __repr__(self) -> str:
+        return f"vec4({self.x}, {self.y}, {self.z}, {self.w})"
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, vec4):
+            return NotImplemented
+        return bool(np.allclose(self._data, other._data))
+
+    def __mul__(self, other: float | vec4) -> vec4:
+        """Multiply vec4 by scalar or another vec4 (element-wise)."""
+        if isinstance(other, (int, float)):
+            result = vec4()
+            result._data = self._data * float(other)
+            return result
+        if isinstance(other, vec4):
+            result = vec4()
+            result._data = self._data * other._data
+            return result
+        return NotImplemented
+
+    def __rmul__(self, other: float) -> vec4:
+        """Multiply scalar by vec4 (right multiplication)."""
+        if isinstance(other, (int, float)):
+            result = vec4()
+            result._data = self._data * float(other)
+            return result
+        return NotImplemented
+
+    def __iter__(self):
+        """Make vec4 iterable for unpacking."""
+        yield self.x
+        yield self.y
+        yield self.z
+        yield self.w
+
+    def __getitem__(self, index: int) -> float:
+        """Get element by index (GLM-compatible indexing).
 
         Args:
-        ----
-            fovy: Field of view in degrees
-            aspect: Aspect ratio (width/height)
-            near: Near clipping plane
-            far: Far clipping plane
+            index: Element index (0=x, 1=y, 2=z, 3=w).
 
         Returns:
-        -------
-            mat4: Perspective projection matrix
+            Element value as float.
 
+        Raises:
+            IndexError: If index is out of range.
         """
-        result = mat4(0.0)
+        if not 0 <= index < 4:
+            raise IndexError(f"vec4 index out of range: {index}")
+        return float(self._data[index])
 
-        fov_rad = math.radians(fovy)
-        tan_half_fov = math.tan(fov_rad / 2.0)
+    def __hash__(self) -> int:
+        return hash(tuple(self._data.flatten()))
 
-        result._data[0, 0] = 1.0 / (aspect * tan_half_fov)
-        result._data[1, 1] = 1.0 / tan_half_fov
-        result._data[2, 2] = -(far + near) / (far - near)
-        result._data[2, 3] = -1.0
-        result._data[3, 2] = -(2.0 * far * near) / (far - near)
 
-        return result
+class quat:  # noqa: N801
+    """Quaternion class compatible with PyGLM quat."""
 
+    def __init__(self, w: float = 1.0, x: float = 0.0, y: float = 0.0, z: float = 0.0):
+        if isinstance(w, quat):
+            self._data: ndarray = np.array(w._data, dtype=np.float32)  # noqa: SLF001
+        elif isinstance(w, vec3):
+            # vec3 - Euler angles
+            self._data = self._from_euler(w)._data  # noqa: SLF001
+        else:
+            # w, x, y, z format
+            self._data = np.array([w, x, y, z], dtype=np.float32)
+
+    @staticmethod
+    def _from_euler(euler: vec3) -> quat:
+        """Create quaternion from Euler angles (in radians)."""
+        cy = math.cos(euler.z * 0.5)
+        sy = math.sin(euler.z * 0.5)
+        cp = math.cos(euler.y * 0.5)
+        sp = math.sin(euler.y * 0.5)
+        cr = math.cos(euler.x * 0.5)
+        sr = math.sin(euler.x * 0.5)
+
+        w = cr * cp * cy + sr * sp * sy
+        x = sr * cp * cy - cr * sp * sy
+        y = cr * sp * cy + sr * cp * sy
+        z = cr * cp * sy - sr * sp * cy
+
+        return quat(w, x, y, z)
+
+    @property
+    def w(self) -> float:
+        return float(self._data[0])
+
+    @w.setter
+    def w(self, value: float):
+        self._data[0] = value
+
+    @property
+    def x(self) -> float:
+        return float(self._data[1])
+
+    @x.setter
+    def x(self, value: float):
+        self._data[1] = value
+
+    @property
+    def y(self) -> float:
+        return float(self._data[2])
+
+    @y.setter
+    def y(self, value: float):
+        self._data[2] = value
+
+    @property
+    def z(self) -> float:
+        return float(self._data[3])
+
+    @z.setter
+    def z(self, value: float):
+        self._data[3] = value
+
+    def __repr__(self) -> str:
+        return f"quat({self.w}, {self.x}, {self.y}, {self.z})"
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, quat):
+            return NotImplemented
+        return bool(np.allclose(self._data, other._data))
+
+    def __hash__(self) -> int:
+        return hash(tuple(self._data.flatten()))
+
+
+class mat4:  # noqa: N801
+    """4x4 matrix class compatible with PyGLM mat4."""
+
+    def __init__(self, value: float | mat4 | np.ndarray = 1.0):
+        if isinstance(value, (mat4, np.ndarray)):
+            self._data: ndarray = np.array(value._data if isinstance(value, mat4) else value, dtype=np.float32)  # noqa: SLF001
+        else:
+            # Identity matrix scaled by value
+            self._data = np.eye(4, dtype=np.float32) * value
 
     @overload
-    def normalize(x: Any, /) -> Any: ...
-    
-    @overload
-    def normalize(x: vec3, /) -> vec3: ...
-    
-    def normalize(x: Any, /) -> Any:
-        """Normalize a vector."""
-        if not isinstance(x, vec3):
-            raise TypeError(f"normalize requires vec3, got {type(x)}")
-        v = x
-        length = math.sqrt(v.x**2 + v.y**2 + v.z**2)
-        if length == 0:
-            return vec3(0, 0, 0)
-        return vec3(v.x / length, v.y / length, v.z / length)
-
+    def __mul__(self, other: mat4) -> mat4: ...
 
     @overload
-    def cross(x: Any, y: Any, /) -> Any: ...
-    
-    @overload
-    def cross(x: vec3, y: vec3, /) -> vec3: ...
-    
-    def cross(x: Any, y: Any, /) -> Any:
-        """Calculate the cross product of two vectors."""
-        if isinstance(x, vec3) and isinstance(y, vec3):
-            return vec3(
-                x.y * y.z - x.z * y.y,
-                x.z * y.x - x.x * y.z,
-                x.x * y.y - x.y * y.x,
-            )
-        raise TypeError(f"Unsupported types for cross: {type(x)}, {type(y)}")
-
+    def __mul__(self, other: vec4) -> vec4: ...
 
     @overload
-    def decompose(
-        modelMatrix: mat4,
-        scale: vec3,
-        orientation: quat,
-        translation: vec3,
-        skew: vec3,
-        perspective: vec4,
-        /,
-    ) -> bool: ...
-    
-    @overload
-    def decompose(
-        modelMatrix: Any,
-        scale: Any,
-        orientation: Any,
-        translation: Any,
-        skew: Any,
-        perspective: Any,
-        /,
-    ) -> bool: ...
-    
-    def decompose(
-        modelMatrix: Any,
-        scale: Any,
-        orientation: Any,
-        translation: Any,
-        skew: Any,
-        perspective: Any,
-        /,
-    ) -> bool:
-        """Decompose a transformation matrix into its components.
+    def __mul__(self, other: vec3) -> vec3: ...
+
+    def __mul__(self, other: mat4 | vec3 | vec4) -> mat4 | vec3 | vec4:
+        if isinstance(other, mat4):
+            result = mat4()
+            result._data = np.matmul(self._data, other._data)
+            return result
+        if isinstance(other, vec4):
+            result_data = np.matmul(self._data, other._data)
+            return vec4(result_data[0], result_data[1], result_data[2], result_data[3])
+        if isinstance(other, vec3):
+            # Treat vec3 as vec4 with w=1
+            vec4_data = np.array([other.x, other.y, other.z, 1.0], dtype=np.float32)
+            result_data = np.matmul(self._data, vec4_data)
+            return vec3(result_data[0], result_data[1], result_data[2])
+        return NotImplemented
+
+    def __repr__(self) -> str:
+        return f"mat4(\n{self._data}\n)"
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, mat4):
+            return NotImplemented
+        return bool(np.allclose(self._data, other._data))
+
+    def __hash__(self) -> int:
+        return hash(tuple(self._data.flatten()))
+
+    def __getitem__(self, index: int) -> vec4:
+        """Get a column vector from the matrix (GLM-compatible indexing).
+
+        In GLM, matrices are column-major, so mat4[i] returns column i as a vec4.
+        This allows syntax like m[0][0] to access element at row 0, column 0.
 
         Args:
-        ----
-            modelMatrix: The transformation matrix to decompose
-            scale: Output scale vector
-            orientation: Output rotation quaternion
-            translation: Output translation vector
-            skew: Output skew vector (not implemented)
-            perspective: Output perspective vector (not implemented)
+            index: Column index (0-3).
 
         Returns:
-        -------
-            bool: True if decomposition was successful
+            Column vector as vec4.
 
+        Raises:
+            IndexError: If index is out of range.
         """
-        if not isinstance(modelMatrix, mat4) or not isinstance(scale, vec3) or not isinstance(orientation, quat) or not isinstance(translation, vec3) or not isinstance(skew, vec3) or not isinstance(perspective, vec4):
-            raise TypeError("decompose requires mat4, vec3, quat, vec3, vec3, vec4 arguments")
-        m = modelMatrix._data
-        rotation = orientation
+        if not 0 <= index < 4:
+            raise IndexError(f"mat4 column index out of range: {index}")
+        # Return column as vec4 (GLM uses column-major order)
+        # _data is stored in row-major (numpy default), so we transpose for column access
+        return vec4(
+            float(self._data[0, index]),
+            float(self._data[1, index]),
+            float(self._data[2, index]),
+            float(self._data[3, index]),
+        )
 
-        # Extract translation
-        translation.x = float(m[3, 0])
-        translation.y = float(m[3, 1])
-        translation.z = float(m[3, 2])
 
-        # Extract scale
-        scale_x = math.sqrt(m[0, 0]**2 + m[0, 1]**2 + m[0, 2]**2)
-        scale_y = math.sqrt(m[1, 0]**2 + m[1, 1]**2 + m[1, 2]**2)
-        scale_z = math.sqrt(m[2, 0]**2 + m[2, 1]**2 + m[2, 2]**2)
+@overload
+def translate(v: Any, /) -> Any: ...
 
-        scale.x = scale_x
-        scale.y = scale_y
-        scale.z = scale_z
 
-        # Normalize matrix to extract rotation
-        if scale_x == 0 or scale_y == 0 or scale_z == 0:
-            rotation.w = 1.0
-            rotation.x = 0.0
-            rotation.y = 0.0
-            rotation.z = 0.0
-            return True
+@overload
+def translate(v: vec3, /) -> mat4: ...
 
-        rot_matrix = np.array([
+
+def translate(v: Any, /) -> Any:
+    """Create a translation matrix."""
+    if not isinstance(v, vec3):
+        raise TypeError(f"translate requires vec3, got {type(v)}")
+    result = mat4()
+    result._data[3, 0] = v.x
+    result._data[3, 1] = v.y
+    result._data[3, 2] = v.z
+    return result
+
+
+@overload
+def rotate(m: Any, angle: float, axis: Any, /) -> Any: ...
+
+
+@overload
+def rotate(m: mat4, angle: float, axis: vec3, /) -> mat4: ...
+
+
+def rotate(m: Any, angle: float, axis: Any, /) -> Any:
+    """Rotate a matrix by angle (radians) around axis."""
+    if not isinstance(m, mat4) or not isinstance(axis, vec3):
+        raise TypeError(f"rotate requires mat4, float, vec3, got {type(m)}, {type(axis)}")
+    # Normalize axis
+    axis_length = math.sqrt(axis.x**2 + axis.y**2 + axis.z**2)
+    if axis_length == 0:
+        return mat4(m)
+
+    x = axis.x / axis_length
+    y = axis.y / axis_length
+    z = axis.z / axis_length
+
+    c = math.cos(angle)
+    s = math.sin(angle)
+    t = 1 - c
+
+    # Rotation matrix
+    rot = mat4()
+    rot._data[0, 0] = t * x * x + c
+    rot._data[0, 1] = t * x * y + s * z
+    rot._data[0, 2] = t * x * z - s * y
+    rot._data[1, 0] = t * x * y - s * z
+    rot._data[1, 1] = t * y * y + c
+    rot._data[1, 2] = t * y * z + s * x
+    rot._data[2, 0] = t * x * z + s * y
+    rot._data[2, 1] = t * y * z - s * x
+    rot._data[2, 2] = t * z * z + c
+
+    return m * rot
+
+
+@overload
+def mat4_cast(x: Any, /) -> Any: ...
+
+
+@overload
+def mat4_cast(x: quat, /) -> mat4: ...
+
+
+def mat4_cast(x: Any, /) -> Any:
+    """Convert a quaternion to a 4x4 rotation matrix."""
+    if not isinstance(x, quat):
+        raise TypeError(f"mat4_cast requires quat, got {type(x)}")
+    q = x
+    result = mat4()
+
+    qw, qx, qy, qz = q.w, q.x, q.y, q.z
+
+    result._data[0, 0] = 1 - 2 * qy * qy - 2 * qz * qz
+    result._data[0, 1] = 2 * qx * qy + 2 * qz * qw
+    result._data[0, 2] = 2 * qx * qz - 2 * qy * qw
+
+    result._data[1, 0] = 2 * qx * qy - 2 * qz * qw
+    result._data[1, 1] = 1 - 2 * qx * qx - 2 * qz * qz
+    result._data[1, 2] = 2 * qy * qz + 2 * qx * qw
+
+    result._data[2, 0] = 2 * qx * qz + 2 * qy * qw
+    result._data[2, 1] = 2 * qy * qz - 2 * qx * qw
+    result._data[2, 2] = 1 - 2 * qx * qx - 2 * qy * qy
+
+    return result
+
+
+@overload
+def inverse(m: Any, /) -> Any: ...
+
+
+@overload
+def inverse(m: mat4, /) -> mat4: ...
+
+
+def inverse(m: Any, /) -> Any:
+    """Calculate the inverse of a matrix."""
+    if not isinstance(m, mat4):
+        raise TypeError(f"inverse requires mat4, got {type(m)}")
+    result = mat4()
+    try:
+        result._data = np.linalg.inv(m._data)
+    except np.linalg.LinAlgError:
+        # Return identity matrix if singular
+        result._data = np.eye(4, dtype=np.float32)
+    return result
+
+
+def perspective(fovy: float, aspect: float, near: float, far: float, /) -> mat4:
+    """Create a perspective projection matrix.
+
+    Args:
+    ----
+        fovy: Field of view in degrees
+        aspect: Aspect ratio (width/height)
+        near: Near clipping plane
+        far: Far clipping plane
+
+    Returns:
+    -------
+        mat4: Perspective projection matrix
+
+    """
+    result = mat4(0.0)
+
+    fov_rad = math.radians(fovy)
+    tan_half_fov = math.tan(fov_rad / 2.0)
+
+    result._data[0, 0] = 1.0 / (aspect * tan_half_fov)
+    result._data[1, 1] = 1.0 / tan_half_fov
+    result._data[2, 2] = -(far + near) / (far - near)
+    result._data[2, 3] = -1.0
+    result._data[3, 2] = -(2.0 * far * near) / (far - near)
+
+    return result
+
+
+@overload
+def normalize(x: Any, /) -> Any: ...
+
+
+@overload
+def normalize(x: vec3, /) -> vec3: ...
+
+
+def normalize(x: Any, /) -> Any:
+    """Normalize a vector."""
+    if not isinstance(x, vec3):
+        raise TypeError(f"normalize requires vec3, got {type(x)}")
+    v = x
+    length = math.sqrt(v.x**2 + v.y**2 + v.z**2)
+    if length == 0:
+        return vec3(0, 0, 0)
+    return vec3(v.x / length, v.y / length, v.z / length)
+
+
+@overload
+def cross(x: Any, y: Any, /) -> Any: ...
+
+
+@overload
+def cross(x: vec3, y: vec3, /) -> vec3: ...
+
+
+def cross(x: Any, y: Any, /) -> Any:
+    """Calculate the cross product of two vectors."""
+    if isinstance(x, vec3) and isinstance(y, vec3):
+        return vec3(
+            x.y * y.z - x.z * y.y,
+            x.z * y.x - x.x * y.z,
+            x.x * y.y - x.y * y.x,
+        )
+    raise TypeError(f"Unsupported types for cross: {type(x)}, {type(y)}")
+
+
+@overload
+def decompose(
+    modelMatrix: mat4,
+    scale: vec3,
+    orientation: quat,
+    translation: vec3,
+    skew: vec3,
+    perspective: vec4,
+    /,
+) -> bool: ...
+
+
+@overload
+def decompose(
+    modelMatrix: Any,
+    scale: Any,
+    orientation: Any,
+    translation: Any,
+    skew: Any,
+    perspective: Any,
+    /,
+) -> bool: ...
+
+
+def decompose(
+    modelMatrix: Any,
+    scale: Any,
+    orientation: Any,
+    translation: Any,
+    skew: Any,
+    perspective: Any,
+    /,
+) -> bool:
+    """Decompose a transformation matrix into its components.
+
+    Args:
+    ----
+        modelMatrix: The transformation matrix to decompose
+        scale: Output scale vector
+        orientation: Output rotation quaternion
+        translation: Output translation vector
+        skew: Output skew vector (not implemented)
+        perspective: Output perspective vector (not implemented)
+
+    Returns:
+    -------
+        bool: True if decomposition was successful
+
+    """
+    if (
+        not isinstance(modelMatrix, mat4)
+        or not isinstance(scale, vec3)
+        or not isinstance(orientation, quat)
+        or not isinstance(translation, vec3)
+        or not isinstance(skew, vec3)
+        or not isinstance(perspective, vec4)
+    ):
+        raise TypeError("decompose requires mat4, vec3, quat, vec3, vec3, vec4 arguments")
+    m = modelMatrix._data
+    rotation = orientation
+
+    # Extract translation
+    translation.x = float(m[3, 0])
+    translation.y = float(m[3, 1])
+    translation.z = float(m[3, 2])
+
+    # Extract scale
+    scale_x = math.sqrt(m[0, 0] ** 2 + m[0, 1] ** 2 + m[0, 2] ** 2)
+    scale_y = math.sqrt(m[1, 0] ** 2 + m[1, 1] ** 2 + m[1, 2] ** 2)
+    scale_z = math.sqrt(m[2, 0] ** 2 + m[2, 1] ** 2 + m[2, 2] ** 2)
+
+    scale.x = scale_x
+    scale.y = scale_y
+    scale.z = scale_z
+
+    # Normalize matrix to extract rotation
+    if scale_x == 0 or scale_y == 0 or scale_z == 0:
+        rotation.w = 1.0
+        rotation.x = 0.0
+        rotation.y = 0.0
+        rotation.z = 0.0
+        return True
+
+    rot_matrix = np.array(
+        [
             [m[0, 0] / scale_x, m[0, 1] / scale_x, m[0, 2] / scale_x],
             [m[1, 0] / scale_y, m[1, 1] / scale_y, m[1, 2] / scale_y],
             [m[2, 0] / scale_z, m[2, 1] / scale_z, m[2, 2] / scale_z],
-        ], dtype=np.float32)
+        ],
+        dtype=np.float32,
+    )
 
-        # Convert rotation matrix to quaternion
-        trace = rot_matrix[0, 0] + rot_matrix[1, 1] + rot_matrix[2, 2]
+    # Convert rotation matrix to quaternion
+    trace = rot_matrix[0, 0] + rot_matrix[1, 1] + rot_matrix[2, 2]
 
-        if trace > 0:
-            s = math.sqrt(trace + 1.0) * 2
-            rotation.w = 0.25 * s
-            rotation.x = (rot_matrix[2, 1] - rot_matrix[1, 2]) / s
-            rotation.y = (rot_matrix[0, 2] - rot_matrix[2, 0]) / s
-            rotation.z = (rot_matrix[1, 0] - rot_matrix[0, 1]) / s
-        elif rot_matrix[0, 0] > rot_matrix[1, 1] and rot_matrix[0, 0] > rot_matrix[2, 2]:
-            s = math.sqrt(1.0 + rot_matrix[0, 0] - rot_matrix[1, 1] - rot_matrix[2, 2]) * 2
-            rotation.w = (rot_matrix[2, 1] - rot_matrix[1, 2]) / s
-            rotation.x = 0.25 * s
-            rotation.y = (rot_matrix[0, 1] + rot_matrix[1, 0]) / s
-            rotation.z = (rot_matrix[0, 2] + rot_matrix[2, 0]) / s
-        elif rot_matrix[1, 1] > rot_matrix[2, 2]:
-            s = math.sqrt(1.0 + rot_matrix[1, 1] - rot_matrix[0, 0] - rot_matrix[2, 2]) * 2
-            rotation.w = (rot_matrix[0, 2] - rot_matrix[2, 0]) / s
-            rotation.x = (rot_matrix[0, 1] + rot_matrix[1, 0]) / s
-            rotation.y = 0.25 * s
-            rotation.z = (rot_matrix[1, 2] + rot_matrix[2, 1]) / s
-        else:
-            s = math.sqrt(1.0 + rot_matrix[2, 2] - rot_matrix[0, 0] - rot_matrix[1, 1]) * 2
-            rotation.w = (rot_matrix[1, 0] - rot_matrix[0, 1]) / s
-            rotation.x = (rot_matrix[0, 2] + rot_matrix[2, 0]) / s
-            rotation.y = (rot_matrix[1, 2] + rot_matrix[2, 1]) / s
-            rotation.z = 0.25 * s
+    if trace > 0:
+        s = math.sqrt(trace + 1.0) * 2
+        rotation.w = 0.25 * s
+        rotation.x = (rot_matrix[2, 1] - rot_matrix[1, 2]) / s
+        rotation.y = (rot_matrix[0, 2] - rot_matrix[2, 0]) / s
+        rotation.z = (rot_matrix[1, 0] - rot_matrix[0, 1]) / s
+    elif rot_matrix[0, 0] > rot_matrix[1, 1] and rot_matrix[0, 0] > rot_matrix[2, 2]:
+        s = math.sqrt(1.0 + rot_matrix[0, 0] - rot_matrix[1, 1] - rot_matrix[2, 2]) * 2
+        rotation.w = (rot_matrix[2, 1] - rot_matrix[1, 2]) / s
+        rotation.x = 0.25 * s
+        rotation.y = (rot_matrix[0, 1] + rot_matrix[1, 0]) / s
+        rotation.z = (rot_matrix[0, 2] + rot_matrix[2, 0]) / s
+    elif rot_matrix[1, 1] > rot_matrix[2, 2]:
+        s = math.sqrt(1.0 + rot_matrix[1, 1] - rot_matrix[0, 0] - rot_matrix[2, 2]) * 2
+        rotation.w = (rot_matrix[0, 2] - rot_matrix[2, 0]) / s
+        rotation.x = (rot_matrix[0, 1] + rot_matrix[1, 0]) / s
+        rotation.y = 0.25 * s
+        rotation.z = (rot_matrix[1, 2] + rot_matrix[2, 1]) / s
+    else:
+        s = math.sqrt(1.0 + rot_matrix[2, 2] - rot_matrix[0, 0] - rot_matrix[1, 1]) * 2
+        rotation.w = (rot_matrix[1, 0] - rot_matrix[0, 1]) / s
+        rotation.x = (rot_matrix[0, 2] + rot_matrix[2, 0]) / s
+        rotation.y = (rot_matrix[1, 2] + rot_matrix[2, 1]) / s
+        rotation.z = 0.25 * s
 
-        return True
-
-
-    @overload
-    def eulerAngles(x: Any, /) -> Any: ...
-    
-    @overload
-    def eulerAngles(x: quat, /) -> vec3: ...
-    
-    def eulerAngles(x: Any, /) -> Any:
-        """Convert a quaternion to Euler angles (in radians).
-
-        Args:
-        ----
-            x: Input quaternion
-
-        Returns:
-        -------
-            vec3: Euler angles (roll, pitch, yaw) in radians
-
-        """
-        if not isinstance(x, quat):
-            raise TypeError(f"eulerAngles requires quat, got {type(x)}")
-        q = x
-        # Roll (x-axis rotation)
-        sinr_cosp = 2 * (q.w * q.x + q.y * q.z)
-        cosr_cosp = 1 - 2 * (q.x * q.x + q.y * q.y)
-        roll = math.atan2(sinr_cosp, cosr_cosp)
-
-        # Pitch (y-axis rotation)
-        sinp = 2 * (q.w * q.y - q.z * q.x)
-        if abs(sinp) >= 1:
-            pitch = math.copysign(math.pi / 2, sinp)
-        else:
-            pitch = math.asin(sinp)
-
-        # Yaw (z-axis rotation)
-        siny_cosp = 2 * (q.w * q.z + q.x * q.y)
-        cosy_cosp = 1 - 2 * (q.y * q.y + q.z * q.z)
-        yaw = math.atan2(siny_cosp, cosy_cosp)
-
-        return vec3(roll, pitch, yaw)
+    return True
 
 
-    @overload
-    def value_ptr(x: mat4, /) -> np.ndarray: ...
-    
-    @overload
-    def value_ptr(x: vec3, /) -> np.ndarray: ...
-    
-    @overload
-    def value_ptr(x: vec4, /) -> np.ndarray: ...
-    
-    @overload
-    def value_ptr(x: Any, /) -> Any: ...
-    
-    def value_ptr(x: Any, /) -> Any:
-        """Get a pointer to the underlying data (returns flattened numpy array).
-
-        Args:
-        ----
-            x: Matrix or vector to get pointer from
-
-        Returns:
-        -------
-            np.ndarray: Flattened array of the data
-
-        """
-        if isinstance(x, mat4):
-            # OpenGL expects column-major order
-            return np.ascontiguousarray(x._data.T.flatten())
-        if isinstance(x, (vec3, vec4)):
-            return np.ascontiguousarray(x._data.flatten())
-        raise TypeError(f"value_ptr requires mat4, vec3, or vec4, got {type(x)}")
+@overload
+def eulerAngles(x: Any, /) -> Any: ...
 
 
-    @overload
-    def unProject(obj: Any, model: Any, proj: Any, viewport: Any, /) -> Any: ...
-    
-    @overload
-    def unProject(obj: vec3, model: mat4, proj: mat4, viewport: vec4, /) -> vec3: ...
-    
-    def unProject(obj: Any, model: Any, proj: Any, viewport: Any, /) -> Any:
-        """Unproject a window coordinate to world coordinates.
+@overload
+def eulerAngles(x: quat, /) -> vec3: ...
 
-        Args:
-        ----
-            obj: Window coordinates (x, y, z where z is depth)
-            model: Model-view matrix
-            proj: Projection matrix
-            viewport: Viewport as vec4 (x, y, width, height)
 
-        Returns:
-        -------
-            vec3: World coordinates
+def eulerAngles(x: Any, /) -> Any:
+    """Convert a quaternion to Euler angles (in radians).
 
-        """
-        if not isinstance(obj, vec3) or not isinstance(model, mat4) or not isinstance(proj, mat4) or not isinstance(viewport, vec4):
-            raise TypeError(f"unProject requires vec3, mat4, mat4, vec4, got {type(obj)}, {type(model)}, {type(proj)}, {type(viewport)}")
-        win = obj
-        # Compute the inverse of model * projection
-        m: mat4 = proj * model  # type: ignore[assignment]
-        inv_m: mat4 = inverse(m)
+    Args:
+    ----
+        x: Input quaternion
 
-        # Normalize window coordinates to NDC [-1, 1]
-        ndc = vec4(
-            (win.x - viewport.x) / viewport.z * 2.0 - 1.0,
-            (win.y - viewport.y) / viewport.w * 2.0 - 1.0,
-            2.0 * win.z - 1.0,
-            1.0,
+    Returns:
+    -------
+        vec3: Euler angles (roll, pitch, yaw) in radians
+
+    """
+    if not isinstance(x, quat):
+        raise TypeError(f"eulerAngles requires quat, got {type(x)}")
+    q = x
+    # Roll (x-axis rotation)
+    sinr_cosp = 2 * (q.w * q.x + q.y * q.z)
+    cosr_cosp = 1 - 2 * (q.x * q.x + q.y * q.y)
+    roll = math.atan2(sinr_cosp, cosr_cosp)
+
+    # Pitch (y-axis rotation)
+    sinp = 2 * (q.w * q.y - q.z * q.x)
+    if abs(sinp) >= 1:
+        pitch = math.copysign(math.pi / 2, sinp)
+    else:
+        pitch = math.asin(sinp)
+
+    # Yaw (z-axis rotation)
+    siny_cosp = 2 * (q.w * q.z + q.x * q.y)
+    cosy_cosp = 1 - 2 * (q.y * q.y + q.z * q.z)
+    yaw = math.atan2(siny_cosp, cosy_cosp)
+
+    return vec3(roll, pitch, yaw)
+
+
+@overload
+def value_ptr(x: mat4, /) -> np.ndarray: ...
+
+
+@overload
+def value_ptr(x: vec3, /) -> np.ndarray: ...
+
+
+@overload
+def value_ptr(x: vec4, /) -> np.ndarray: ...
+
+
+@overload
+def value_ptr(x: Any, /) -> Any: ...
+
+
+def value_ptr(x: Any, /) -> Any:
+    """Get a pointer to the underlying data (returns flattened numpy array).
+
+    Args:
+    ----
+        x: Matrix or vector to get pointer from
+
+    Returns:
+    -------
+        np.ndarray: Flattened array of the data
+
+    """
+    if isinstance(x, mat4):
+        # OpenGL expects column-major order
+        return np.ascontiguousarray(x._data.T.flatten())
+    if isinstance(x, (vec3, vec4)):
+        return np.ascontiguousarray(x._data.flatten())
+    raise TypeError(f"value_ptr requires mat4, vec3, or vec4, got {type(x)}")
+
+
+@overload
+def unProject(obj: Any, model: Any, proj: Any, viewport: Any, /) -> Any: ...
+
+
+@overload
+def unProject(obj: vec3, model: mat4, proj: mat4, viewport: vec4, /) -> vec3: ...
+
+
+def unProject(obj: Any, model: Any, proj: Any, viewport: Any, /) -> Any:
+    """Unproject a window coordinate to world coordinates.
+
+    Args:
+    ----
+        obj: Window coordinates (x, y, z where z is depth)
+        model: Model-view matrix
+        proj: Projection matrix
+        viewport: Viewport as vec4 (x, y, width, height)
+
+    Returns:
+    -------
+        vec3: World coordinates
+
+    """
+    if not isinstance(obj, vec3) or not isinstance(model, mat4) or not isinstance(proj, mat4) or not isinstance(viewport, vec4):
+        raise TypeError(f"unProject requires vec3, mat4, mat4, vec4, got {type(obj)}, {type(model)}, {type(proj)}, {type(viewport)}")
+    win = obj
+    # Compute the inverse of model * projection
+    m: mat4 = proj * model  # type: ignore[assignment]
+    inv_m: mat4 = inverse(m)
+
+    # Normalize window coordinates to NDC [-1, 1]
+    ndc = vec4(
+        (win.x - viewport.x) / viewport.z * 2.0 - 1.0,
+        (win.y - viewport.y) / viewport.w * 2.0 - 1.0,
+        2.0 * win.z - 1.0,
+        1.0,
+    )
+
+    # Transform NDC to world coordinates
+    world: vec4 = inv_m * ndc  # type: ignore[assignment]
+
+    # Perspective divide
+    if world.w != 0:
+        world.x /= world.w
+        world.y /= world.w
+        world.z /= world.w
+
+    return vec3(world.x, world.y, world.z)
+
+
+def length(x: Any, /) -> Any:
+    """Calculate the length of a vector."""
+    if not isinstance(x, vec3):
+        raise TypeError(f"length requires vec3, got {type(x)}")
+    return math.sqrt(x.x**2 + x.y**2 + x.z**2)
+
+
+if not TYPE_CHECKING and importlib.util.find_spec("pyglm"):
+    try:
+        from pyglm.glm import (  # pyright: ignore[reportUnreachable]
+            inverse,
+            mat4,
+            quat,
+            vec3,
+            vec4,
         )
+    except ImportError:
+        from loggerplus import RobustLogger
 
-        # Transform NDC to world coordinates
-        world: vec4 = inv_m * ndc  # type: ignore[assignment]
-
-        # Perspective divide
-        if world.w != 0:
-            world.x /= world.w
-            world.y /= world.w
-            world.z /= world.w
-
-        return vec3(world.x, world.y, world.z)
-
-    def length(x: Any, /) -> Any:
-        """Calculate the length of a vector."""
-        if not isinstance(x, vec3):
-            raise TypeError(f"length requires vec3, got {type(x)}")
-        return math.sqrt(x.x**2 + x.y**2 + x.z**2)
+        RobustLogger().debug("PyGLM not found, using NumPy-based glm_compat")
+        pass

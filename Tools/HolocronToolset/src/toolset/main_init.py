@@ -42,6 +42,7 @@ def on_app_crash(
         sys.__excepthook__(etype, exc, tback)
         return
     from loggerplus import RobustLogger  # noqa: PLC0415
+    import time  # noqa: PLC0415
     logger = RobustLogger()
     logger.critical("Uncaught exception", exc_info=(etype, exc, tback))
 
@@ -54,6 +55,62 @@ def on_app_crash(
         app = QApplication.instance()
         if app is None:
             return
+
+        # Create a fingerprint of this exception to prevent duplicate dialogs
+        # Use exception type, message, and the first frame of the traceback
+        exc_fingerprint: str
+        if tback is not None:
+            # Get the first frame's filename and line number
+            tb_frame = tback.tb_frame
+            exc_fingerprint = f"{etype.__name__}:{str(exc)[:100]}:{tb_frame.f_code.co_filename}:{tb_frame.f_lineno}"
+        else:
+            exc_fingerprint = f"{etype.__name__}:{str(exc)[:100]}"
+
+        # Initialize tracking structures if they don't exist
+        if not hasattr(on_app_crash, "_toolset_seen_exceptions"):
+            setattr(on_app_crash, "_toolset_seen_exceptions", set())
+        if not hasattr(on_app_crash, "_toolset_exception_timestamps"):
+            setattr(on_app_crash, "_toolset_exception_timestamps", {})
+        if not hasattr(on_app_crash, "_toolset_dialog_count"):
+            setattr(on_app_crash, "_toolset_dialog_count", 0)
+        if not hasattr(on_app_crash, "_toolset_crash_boxes"):
+            setattr(on_app_crash, "_toolset_crash_boxes", [])
+
+        seen_exceptions: set[str] = getattr(on_app_crash, "_toolset_seen_exceptions")
+        exception_timestamps: dict[str, float] = getattr(on_app_crash, "_toolset_exception_timestamps")
+        dialog_count: int = getattr(on_app_crash, "_toolset_dialog_count")
+        crash_boxes: list[QMessageBox] = getattr(on_app_crash, "_toolset_crash_boxes")
+
+        # Check if we've seen this exact exception recently (within 5 seconds)
+        current_time = time.time()
+        last_seen = exception_timestamps.get(exc_fingerprint, 0)
+        cooldown_period = 5.0  # seconds
+
+        # Maximum number of dialogs to show (prevent memory exhaustion)
+        max_dialogs = 3
+
+        # Skip if:
+        # 1. We've already shown a dialog for this exact exception within the cooldown period
+        # 2. We've already shown too many dialogs total
+        if (current_time - last_seen) < cooldown_period:
+            # Still log it, but don't show another dialog
+            logger.debug(f"Suppressing duplicate exception dialog: {exc_fingerprint}")
+            return
+
+        if dialog_count >= max_dialogs:
+            # Still log it, but don't show another dialog
+            logger.warning(f"Maximum dialog limit reached ({max_dialogs}), suppressing exception dialog: {exc_fingerprint}")
+            return
+
+        # Mark this exception as seen and update timestamp
+        seen_exceptions.add(exc_fingerprint)
+        exception_timestamps[exc_fingerprint] = current_time
+        setattr(on_app_crash, "_toolset_dialog_count", dialog_count + 1)
+
+        # Clean up old timestamps (older than 60 seconds) to prevent memory leak
+        cutoff_time = current_time - 60.0
+        exception_timestamps = {k: v for k, v in exception_timestamps.items() if v > cutoff_time}
+        setattr(on_app_crash, "_toolset_exception_timestamps", exception_timestamps)
 
         details = "".join(traceback.format_exception(etype, exc, tback))
 
@@ -68,11 +125,15 @@ def on_app_crash(
                 box.show()
 
                 # Keep a reference to avoid GC closing the dialog immediately.
-                crash_boxes = getattr(on_app_crash, "_toolset_crash_boxes", None)
-                if crash_boxes is None:
-                    crash_boxes = []
-                    setattr(on_app_crash, "_toolset_crash_boxes", crash_boxes)
+                # Limit the list size to prevent memory issues
                 crash_boxes.append(box)
+                if len(crash_boxes) > max_dialogs:
+                    # Remove the oldest dialog
+                    old_box = crash_boxes.pop(0)
+                    try:
+                        old_box.close()
+                    except Exception:  # noqa: BLE001
+                        pass
             except Exception:  # noqa: BLE001
                 logger.exception("Failed to show crash dialog")
 
@@ -126,8 +187,9 @@ def fix_frozen_paths():
 
     # For frozen builds, try to find utility relative to the executable
     # PyInstaller sets sys._MEIPASS to the temp directory where bundled files are extracted
-    if hasattr(sys, "_MEIPASS"):
-        meipass = pathlib.Path(sys._MEIPASS)
+    _meipass: str | None = getattr(sys, "_MEIPASS", None)
+    if _meipass is not None:
+        meipass: pathlib.Path = pathlib.Path(_meipass)
         # Utility should be bundled by PyInstaller, check if it exists
         utility_path = meipass / "utility"
         if utility_path.exists():
@@ -203,7 +265,8 @@ def main_init():
     sys.excepthook = on_app_crash
     # Ensure thread exceptions (Python 3.8+) are routed to the same handler.
     def _thread_excepthook(args: threading.ExceptHookArgs):  # noqa: ANN001
-        on_app_crash(args.exc_type, args.exc_value, args.exc_traceback)
+        if args.exc_value is not None:
+            on_app_crash(args.exc_type, args.exc_value, args.exc_traceback)
 
     threading.excepthook = _thread_excepthook
     is_main_process: bool = multiprocessing.current_process() == "MainProcess"
