@@ -381,26 +381,28 @@ class MDLAsciiWriter(ResourceWriter):
         parent: MDLNode | None = None,
     ) -> None:
         """Write a node and its children."""
-        # Prefer emitting node type based on attached data, since many helpers/tests
-        # construct nodes with mesh/light/etc but leave node.node_type at DUMMY.
-        # Priority order matches MDLOps: AABB nodes can have mesh data, so check AABB first
-        # Reference: vendor/MDLOps/MDLOpsM.pm:8406 (AABB check before other types)
-        if node.saber or node.node_type == MDLNodeType.SABER:
-            node_type_str = "lightsaber"
-        elif isinstance(node.mesh, MDLDangly) or node.node_type == MDLNodeType.DANGLYMESH:
-            node_type_str = "danglymesh"
-        elif node.aabb is not None or node.node_type == MDLNodeType.AABB:
-            # AABB nodes can have both mesh and AABB data - check AABB first
-            # Reference: vendor/MDLOps/MDLOpsM.pm:3454 (NODE_AABB = 545, can include mesh)
-            node_type_str = "aabb"
-        elif node.mesh is not None or node.node_type == MDLNodeType.TRIMESH:
-            node_type_str = "trimesh"
+        # Node type determination must match MDLOps exactly
+        # Reference: vendor/MDLOps/MDLOpsM.pm:3095-3121
+        # Order: DUMMY, LIGHT, EMITTER, DANGLYMESH, SKIN, TRIMESH, AABB, REFERENCE, SABER
+        if node.node_type == MDLNodeType.DUMMY:
+            node_type_str = "dummy"
         elif node.light is not None or node.node_type == MDLNodeType.LIGHT:
             node_type_str = "light"
         elif node.emitter is not None or node.node_type == MDLNodeType.EMITTER:
             node_type_str = "emitter"
+        elif isinstance(node.mesh, MDLDangly) or node.node_type == MDLNodeType.DANGLYMESH:
+            node_type_str = "danglymesh"
+        elif node.node_type == MDLNodeType.SKIN:
+            # SKIN nodes are written as "skin" (convert_skin option not implemented yet)
+            node_type_str = "skin"
+        elif node.mesh is not None or node.node_type == MDLNodeType.TRIMESH:
+            node_type_str = "trimesh"
+        elif node.aabb is not None or node.node_type == MDLNodeType.AABB:
+            node_type_str = "aabb"
         elif node.reference is not None or node.node_type == MDLNodeType.REFERENCE:
             node_type_str = "reference"
+        elif node.saber is not None or node.node_type == MDLNodeType.SABER:
+            node_type_str = "lightsaber"
         else:
             node_type_str = "dummy"
         self.write_line(indent, f"node {node_type_str} {node.name}")
