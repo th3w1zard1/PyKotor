@@ -684,14 +684,36 @@ class PyFileSystemModel(QAbstractItemModel):
         """
         self.sort(self._sortColumn, self._sortOrder)
 
-    def myComputer(self) -> str:
-        """While this was attempting to be respectful to the C++, this function is overly stupid.
+    def myComputer(self, role: int = Qt.ItemDataRole.DisplayRole) -> QVariant:
+        """Return data for "My Computer" item matching C++ lines 707-723 exactly.
 
-        In qt5, this just returns either "My Computer" or "Computer". It does not handle linux/mac.
-
-        therefore, this function will always return str(Path(Path().anchor).resolve()) i.e. the root.
+        Matches:
+        QVariant QFileSystemModel::myComputer(int role) const
+        {
+        #if QT_CONFIG(filesystemwatcher)
+            Q_D(const QFileSystemModel);
+        #endif
+            switch (role) {
+            case Qt::DisplayRole:
+                return QFileSystemModelPrivate::myComputer();
+        #if QT_CONFIG(filesystemwatcher)
+            case Qt::DecorationRole:
+                if (auto *provider = d->fileInfoGatherer->iconProvider())
+                    return provider->icon(QAbstractFileIconProvider::Computer);
+            break;
+        #endif
+            }
+            return QVariant();
+        }
         """
-        return str(Path(Path().anchor).resolve())
+        # QT_CONFIG(filesystemwatcher) - always true
+        if role == Qt.ItemDataRole.DisplayRole:
+            return QVariant(self._myComputer())
+        if role == Qt.ItemDataRole.DecorationRole:
+            provider = self._fileInfoGatherer.iconProvider()
+            if provider:
+                return QVariant(provider.icon(QFileIconProvider.IconType.Computer))  # type: ignore[attr-defined]
+        return QVariant()
 
     @overload
     def node(self, index: QModelIndex) -> PyFileSystemNode: ...
