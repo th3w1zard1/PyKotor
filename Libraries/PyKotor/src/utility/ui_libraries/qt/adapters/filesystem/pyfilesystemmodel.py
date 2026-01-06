@@ -14,6 +14,7 @@ import qtpy  # noqa: E402
 from qtpy.QtCore import (
     QAbstractItemModel,
     QBasicTimer,
+    QByteArray,
     QDir,
     QFileDevice,
     QFileInfo,
