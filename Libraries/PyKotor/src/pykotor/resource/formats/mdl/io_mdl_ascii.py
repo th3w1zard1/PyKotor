@@ -392,7 +392,9 @@ class MDLAsciiWriter(ResourceWriter):
             node_type_str = "emitter"
         elif isinstance(node.mesh, MDLDangly) or node.node_type == MDLNodeType.DANGLYMESH:
             node_type_str = "danglymesh"
-        elif node.node_type == MDLNodeType.SKIN:
+        elif node.skin is not None:
+            # SKIN nodes: NODE_SKIN = 97 = HEADER + MESH + SKIN (0x061)
+            # Reference: vendor/MDLOps/MDLOpsM.pm:320 (NODE_SKIN = 97), 3105-3108
             # SKIN nodes are written as "skin" (convert_skin option not implemented yet)
             node_type_str = "skin"
         elif node.mesh is not None or node.node_type == MDLNodeType.TRIMESH:
