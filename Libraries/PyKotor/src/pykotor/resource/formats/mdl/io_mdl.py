@@ -711,7 +711,10 @@ class _Node:
 
         # Write root node and all children starting at current position
         start_pos = writer.position()
-        _write_aabb_recursive(writer, start_pos)
+        _, end_pos = _write_aabb_recursive(writer, start_pos)
+        # CRITICAL: Seek to end of AABB tree so subsequent data isn't overwritten
+        # The recursive function may leave writer at wrong position due to seeking
+        writer.seek(end_pos)
 
     def _write_dangly_extra(self, writer: BinaryWriter) -> None:
         """Write danglymesh constraints array after vertices."""
