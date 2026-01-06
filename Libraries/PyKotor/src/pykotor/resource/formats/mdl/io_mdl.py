@@ -3333,8 +3333,12 @@ class MDLBinaryWriter:
         bin_node.header.controller_count = bin_node.header.controller_count2 = controller_count_clamped
         # Clamp controller_data_length to prevent Perl from interpreting it as negative (values >= 2^31)
         # MDLOps reads this as a signed integer, so we must ensure it's < 2^31
+        # If the data is too large, truncate it to match the clamped length to prevent MDLOps from reading too much
         controller_data_length = len(bin_node.w_controller_data)
         if controller_data_length > 0x7FFFFFFF:
+            # Truncate w_controller_data to match the clamped length to prevent MDLOps "Out of memory" errors
+            # MDLOps will read exactly controller_data_length floats, so we must write exactly that many
+            bin_node.w_controller_data = bin_node.w_controller_data[:0x7FFFFFFF]
             controller_data_length = 0x7FFFFFFF
         bin_node.header.controller_data_length = bin_node.header.controller_data_length2 = controller_data_length
 
