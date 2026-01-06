@@ -113,7 +113,7 @@ class PyFileSystemNode:
             return self.info.displayType
         return ""
 
-    def lastModified(self, tz: QTimeZone = QTimeZone.LocalTime) -> QDateTime:  # type: ignore[attr-defined]
+    def lastModified(self, tz: QTimeZone) -> QDateTime:  # type: ignore[attr-defined]
         """Return last modified time matching C++ line 93 exactly.
 
         Matches: inline QDateTime lastModified(const QTimeZone &tz) const { return info ? info->lastModified(tz) : QDateTime(); }
