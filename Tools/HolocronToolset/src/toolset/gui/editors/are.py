@@ -6,6 +6,7 @@ from qtpy.QtCore import Qt
 from qtpy.QtGui import QColor, QImage, QPixmap, QShortcut
 from qtpy.QtWidgets import QColorDialog
 
+from loggerplus import RobustLogger
 from pykotor.common.misc import Color, ResRef
 from pykotor.extract.file import ResourceIdentifier
 from pykotor.extract.installation import SearchLocation
@@ -15,12 +16,11 @@ from pykotor.resource.formats.lyt import read_lyt
 from pykotor.resource.generics.are import ARE, ARENorthAxis, AREWindPower, dismantle_are, read_are
 from pykotor.resource.type import ResourceType
 from toolset.data.installation import HTInstallation
+from toolset.gui.common.localization import translate as tr
 from toolset.gui.dialogs.edit.locstring import LocalizedStringDialog
 from toolset.gui.editor import Editor
 from toolset.gui.widgets.settings.widgets.module_designer import ModuleDesignerSettings
 from utility.common.geometry import SurfaceMaterial, Vector2
-
-from loggerplus import RobustLogger
 
 if TYPE_CHECKING:
     import os
@@ -48,14 +48,16 @@ class AREEditor(Editor):
         self._rooms: list[ARERoom] = []  # TODO(th3w1zard1): define somewhere in ui.
 
         from toolset.uic.qtpy.editors.are import Ui_MainWindow
+
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        
+
         # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
+
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
-        
+
         self._setup_menus()
         self._add_help_action()  # Auto-detects "GFF-ARE.md" for ARE
         self._setup_signals()
@@ -107,16 +109,7 @@ class AREEditor(Editor):
         QShortcut("Ctrl+0", self).activated.connect(self.fit_minimap_view)
 
         assert self._installation is not None, "Installation is not set"
-        self.relevant_script_resnames: list[str] = sorted(
-            iter(
-                {
-                    res.resname().lower()
-                    for res in self._installation.get_relevant_resources(
-                        ResourceType.NCS, self._filepath
-                    )
-                }
-            )
-        )
+        self.relevant_script_resnames: list[str] = sorted(iter({res.resname().lower() for res in self._installation.get_relevant_resources(ResourceType.NCS, self._filepath)}))
 
         self.ui.onEnterSelect.populate_combo_box(self.relevant_script_resnames)
         self.ui.onExitSelect.populate_combo_box(self.relevant_script_resnames)
@@ -146,10 +139,16 @@ class AREEditor(Editor):
         self.ui.lightningCheck.setVisible(installation.tsl)
         self.ui.lightningCheck.setEnabled(installation.tsl)
 
-        installation.setup_file_context_menu(self.ui.onEnterSelect, [ResourceType.NSS, ResourceType.NCS])
-        installation.setup_file_context_menu(self.ui.onExitSelect, [ResourceType.NSS, ResourceType.NCS])
-        installation.setup_file_context_menu(self.ui.onHeartbeatSelect, [ResourceType.NSS, ResourceType.NCS])
-        installation.setup_file_context_menu(self.ui.onUserDefinedSelect, [ResourceType.NSS, ResourceType.NCS])
+        # Setup context menus for script fields with reference search enabled
+        script_fields: list[QWidget] = [
+            self.ui.onEnterSelect,
+            self.ui.onExitSelect,
+            self.ui.onHeartbeatSelect,
+            self.ui.onUserDefinedSelect,
+        ]
+        for field in script_fields:
+            installation.setup_file_context_menu(field, [ResourceType.NSS, ResourceType.NCS], enable_reference_search=True, reference_search_type="script")
+            field.setToolTip(tr("Right-click to find references to this script in the installation."))
 
     def load(
         self,
@@ -286,30 +285,32 @@ class AREEditor(Editor):
 
     def build(self) -> tuple[bytes, bytes]:
         self._are = self._buildARE()
-        
+
         # Copy original values from loaded ARE to new ARE for roundtrip preservation
-        if getattr(self, '_loaded_are', None) is not None:
-            if getattr(self._loaded_are, '_has_original', False):
+        if getattr(self, "_loaded_are", None) is not None:
+            if getattr(self._loaded_are, "_has_original", False):
                 self._are._has_original = True
-                self._are._original_values = getattr(self._loaded_are, '_original_values', {}).copy()
+                self._are._original_values = getattr(self._loaded_are, "_original_values", {}).copy()
 
         if self._installation:
             game = self._installation.game()
         else:
             from pykotor.common.misc import Game
+
             game = Game.K1
         new_gff = dismantle_are(self._are, game)
-        
+
         # Preserve extra fields from original GFF if available (for roundtrip tests)
         if self._revert:
             try:
                 from pykotor.resource.formats.gff.gff_data import GFFStruct
+
                 old_gff = read_gff(self._revert)
                 GFFStruct._add_missing(new_gff.root, old_gff.root)
             except Exception:  # noqa: BLE001
                 # If preserving fails, continue without preservation
                 pass
-        
+
         data = bytearray()
         write_gff(new_gff, data)
         return bytes(data), b""
@@ -461,5 +462,5 @@ def calculate_zoom_strength(delta_y: float, sens_setting: int) -> float:
     # Mirrors `BWMEditor.calculate_zoom_strength` / `PTHEditor.calculate_zoom_strength`.
     m = 0.00202
     b = 1
-    factor_in = (m * sens_setting + b)
+    factor_in = m * sens_setting + b
     return 1 / abs(factor_in) if delta_y < 0 else abs(factor_in)

@@ -1,4 +1,5 @@
 """Editor for module info (IFO) files."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -10,6 +11,7 @@ from pykotor.resource.formats.gff import write_gff
 from pykotor.resource.generics.ifo import IFO, dismantle_ifo, read_ifo
 from pykotor.resource.type import ResourceType
 from toolset.gui.common.filters import NoScrollEventFilter
+from toolset.gui.common.localization import translate as tr
 from toolset.gui.dialogs.edit.locstring import LocalizedStringDialog
 from toolset.gui.editor import Editor
 
@@ -31,10 +33,16 @@ class IFOEditor(Editor):
         self.setup_ui()
         self._setup_menus()
         self._add_help_action()
-        
+
         # Setup event filter to prevent scroll wheel interaction with controls
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
+
+        # Setup reference search for script fields
+        if installation is not None:
+            for edit in self.script_fields.values():
+                installation.setup_file_context_menu(edit, [ResourceType.NSS, ResourceType.NCS], enable_reference_search=True, reference_search_type="script")
+                edit.setToolTip(tr("Right-click to find references to this script in the installation."))
 
     def setup_ui(self):
         """Set up the UI elements."""
@@ -163,10 +171,21 @@ class IFOEditor(Editor):
 
         self.script_fields: dict[str, QLineEdit] = {}
         for script_name in [
-            "on_heartbeat", "on_load", "on_start", "on_enter", "on_leave",
-            "on_activate_item", "on_acquire_item", "on_user_defined", "on_unacquire_item",
-            "on_player_death", "on_player_dying", "on_player_levelup", "on_player_respawn",
-            "on_player_rest", "start_movie"
+            "on_heartbeat",
+            "on_load",
+            "on_start",
+            "on_enter",
+            "on_leave",
+            "on_activate_item",
+            "on_acquire_item",
+            "on_user_defined",
+            "on_unacquire_item",
+            "on_player_death",
+            "on_player_dying",
+            "on_player_levelup",
+            "on_player_respawn",
+            "on_player_rest",
+            "start_movie",
         ]:
             edit = QLineEdit()
             edit.textChanged.connect(self.on_value_changed)

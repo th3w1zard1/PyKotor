@@ -157,20 +157,25 @@ class UTPEditor(Editor):
         self.ui.difficultyModLabel.setVisible(installation.tsl)
 
         # Setup context menus for script fields with reference search enabled
-        installation.setup_file_context_menu(self.ui.onClosedEdit, [ResourceType.NSS, ResourceType.NCS], enable_reference_search=True, reference_search_type="script")
-        installation.setup_file_context_menu(self.ui.onDamagedEdit, [ResourceType.NSS, ResourceType.NCS], enable_reference_search=True, reference_search_type="script")
-        installation.setup_file_context_menu(self.ui.onDeathEdit, [ResourceType.NSS, ResourceType.NCS], enable_reference_search=True, reference_search_type="script")
-        installation.setup_file_context_menu(self.ui.onEndConversationEdit, [ResourceType.NSS, ResourceType.NCS], enable_reference_search=True, reference_search_type="script")
-        installation.setup_file_context_menu(self.ui.onOpenFailedEdit, [ResourceType.NSS, ResourceType.NCS], enable_reference_search=True, reference_search_type="script")
-        installation.setup_file_context_menu(self.ui.onHeartbeatSelect, [ResourceType.NSS, ResourceType.NCS], enable_reference_search=True, reference_search_type="script")
-        installation.setup_file_context_menu(self.ui.onInventoryEdit, [ResourceType.NSS, ResourceType.NCS], enable_reference_search=True, reference_search_type="script")
-        installation.setup_file_context_menu(self.ui.onMeleeAttackEdit, [ResourceType.NSS, ResourceType.NCS], enable_reference_search=True, reference_search_type="script")
-        installation.setup_file_context_menu(self.ui.onSpellEdit, [ResourceType.NSS, ResourceType.NCS], enable_reference_search=True, reference_search_type="script")
-        installation.setup_file_context_menu(self.ui.onOpenEdit, [ResourceType.NSS, ResourceType.NCS], enable_reference_search=True, reference_search_type="script")
-        installation.setup_file_context_menu(self.ui.onLockEdit, [ResourceType.NSS, ResourceType.NCS], enable_reference_search=True, reference_search_type="script")
-        installation.setup_file_context_menu(self.ui.onUnlockEdit, [ResourceType.NSS, ResourceType.NCS], enable_reference_search=True, reference_search_type="script")
-        installation.setup_file_context_menu(self.ui.onUsedEdit, [ResourceType.NSS, ResourceType.NCS], enable_reference_search=True, reference_search_type="script")
-        installation.setup_file_context_menu(self.ui.onUserDefinedSelect, [ResourceType.NSS, ResourceType.NCS], enable_reference_search=True, reference_search_type="script")
+        script_fields: list[QWidget] = [
+            self.ui.onClosedEdit,
+            self.ui.onDamagedEdit,
+            self.ui.onDeathEdit,
+            self.ui.onEndConversationEdit,
+            self.ui.onOpenFailedEdit,
+            self.ui.onHeartbeatSelect,
+            self.ui.onInventoryEdit,
+            self.ui.onMeleeAttackEdit,
+            self.ui.onSpellEdit,
+            self.ui.onOpenEdit,
+            self.ui.onLockEdit,
+            self.ui.onUnlockEdit,
+            self.ui.onUsedEdit,
+            self.ui.onUserDefinedSelect,
+        ]
+        for field in script_fields:
+            installation.setup_file_context_menu(field, [ResourceType.NSS, ResourceType.NCS], enable_reference_search=True, reference_search_type="script")
+            field.setToolTip(tr("Right-click to find references to this script in the installation."))
         installation.setup_file_context_menu(self.ui.conversationEdit, [ResourceType.DLG], enable_reference_search=True, reference_search_type="conversation")
         self.ui.conversationEdit.setToolTip(tr("Right-click to find references to this conversation in the installation."))
         
