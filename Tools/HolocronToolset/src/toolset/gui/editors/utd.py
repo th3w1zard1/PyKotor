@@ -153,7 +153,7 @@ class UTDEditor(Editor):
         self.handle_widget_with_tsl(self.ui.difficultyModLabel, installation)
 
         # Setup context menus for script fields with reference search enabled
-        script_fields = [
+        script_fields: list[QWidget] = [
             self.ui.onClickEdit,
             self.ui.onClosedEdit,
             self.ui.onDamagedEdit,
