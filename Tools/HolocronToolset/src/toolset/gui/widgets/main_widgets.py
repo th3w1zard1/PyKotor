@@ -860,7 +860,10 @@ class TextureList(MainWindowList):
             write_tpc(tpc, folderpath / f"{item.resource.resname()}{target_restype.extension}", target_restype)
 
     @Slot(bool)
-    def on_reload_selected(self, checked: bool = False):
+    def on_reload_selected(
+        self,
+        checked: bool = False,
+    ):
         """Handle reloading selected textures.
         
         Args:
