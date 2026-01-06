@@ -87,6 +87,7 @@ class UTIEditor(Editor):
         # Setup reference search for Tag field
         if installation is not None:
             installation.setup_file_context_menu(self.ui.tagEdit, [], enable_reference_search=True, reference_search_type="tag")
+            self.ui.tagEdit.setToolTip(tr("Right-click to find references to this tag in the installation."))
             # Setup reference search for TemplateResRef field
             installation.setup_file_context_menu(self.ui.resrefEdit, [], enable_reference_search=True, reference_search_type="template_resref")
             self.ui.resrefEdit.setToolTip(tr("Right-click to find references to this template resref in the installation."))

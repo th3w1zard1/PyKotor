@@ -171,9 +171,11 @@ class UTPEditor(Editor):
         installation.setup_file_context_menu(self.ui.onUsedEdit, [ResourceType.NSS, ResourceType.NCS], enable_reference_search=True, reference_search_type="script")
         installation.setup_file_context_menu(self.ui.onUserDefinedSelect, [ResourceType.NSS, ResourceType.NCS], enable_reference_search=True, reference_search_type="script")
         installation.setup_file_context_menu(self.ui.conversationEdit, [ResourceType.DLG], enable_reference_search=True, reference_search_type="conversation")
+        self.ui.conversationEdit.setToolTip(tr("Right-click to find references to this conversation in the installation."))
         
         # Setup reference search for Tag field
         installation.setup_file_context_menu(self.ui.tagEdit, [], enable_reference_search=True, reference_search_type="tag")
+        self.ui.tagEdit.setToolTip(tr("Right-click to find references to this tag in the installation."))
         
         # Setup reference search for TemplateResRef field
         installation.setup_file_context_menu(self.ui.resrefEdit, [], enable_reference_search=True, reference_search_type="template_resref")
