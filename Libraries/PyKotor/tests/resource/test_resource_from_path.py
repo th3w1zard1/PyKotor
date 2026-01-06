@@ -31,7 +31,7 @@ class TestResourceType(unittest.TestCase):
             test_set: set[ResourceType | str] = {restype, restype.extension}
             assert len(test_set) == 1, f"{repr(test_set)} != 1"
 
-    def test_from_extension(self):  # sourcery skip: class-extract-method
+    def test_from_extension(self):
         acquired_type: ResourceType = ResourceType.from_extension("tlk")
         assert acquired_type == ResourceType.TLK, f"{acquired_type!r} != {ResourceType.TLK!r}"
         assert ResourceType.TLK == "tLK", f"{ResourceType.TLK!r} != tLK"

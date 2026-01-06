@@ -164,7 +164,7 @@ class TestSplitFilename(unittest.TestCase):
 
 class TestIsRelativeTo(unittest.TestCase):
     @unittest.skipIf(sys.platform == "win32", "POSIX path test - Windows uses different path format")
-    def test_basic(self):  # sourcery skip: class-extract-method
+    def test_basic(self):
         p1 = CaseAwarePath("/usr/local/bin")
         p2 = CaseAwarePath("/usr/local")
         assert p1.is_relative_to(p2)

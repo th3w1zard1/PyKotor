@@ -110,7 +110,7 @@ class TestBinaryReader(TestCase):
         assert self.reader1c.position() == 2
         assert self.reader1c.read_uint16() == 0
 
-    def test_skip(self):  # sourcery skip: class-extract-method
+    def test_skip(self):
         self.reader1.read_uint32()
         self.reader1.skip(2)
         self.reader1.skip(1)

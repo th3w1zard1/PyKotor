@@ -38,7 +38,7 @@ except ImportError:
 import unittest
 
 class TestDecodeBytes(unittest.TestCase):
-    def test_basic(self):  # sourcery skip: class-extract-method
+    def test_basic(self):
         byte_str = b"hello world"
         result = decode_bytes_with_fallbacks(byte_str)
         assert result == "hello world"

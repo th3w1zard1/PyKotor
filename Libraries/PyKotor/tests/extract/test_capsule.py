@@ -89,7 +89,7 @@ class TestCapsule(TestCase):
             assert len(erf_capsule.resource(resource_name, resource_type)) == 10
             assert resource_data == erf_capsule.resource(resource_name, resource_type)
 
-    def test_erf_capsule(self):  # sourcery skip: class-extract-method
+    def test_erf_capsule(self):
         erf_capsule = Capsule(TEST_ERF_FILE)
 
         assert len(erf_capsule) == 3
