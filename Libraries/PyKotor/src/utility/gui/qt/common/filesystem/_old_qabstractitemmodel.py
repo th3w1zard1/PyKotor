@@ -7,31 +7,36 @@ import shutil
 import sys
 
 from abc import abstractmethod
+from pathlib import Path  # noqa: E402
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, Sequence
 
 import qtpy
 
 from qtpy.QtCore import QAbstractItemModel, QDir, QModelIndex, QSize, Qt
 from qtpy.QtGui import QColor, QDrag
+from qtpy.QtWidgets import (
+    QApplication,
+    QHeaderView,
+    QMainWindow,
+    QMenu,
+    QStyle,
+    QVBoxLayout,
+    QWidget,
+)
 
 if qtpy.API_NAME in ("PyQt6", "PySide6"):
-    from qtpy.QtGui import QUndoCommand  # pyright: ignore[reportPrivateImportUsage]
+    from qtpy.QtGui import QUndoCommand, QUndoStack  # pyright: ignore[reportPrivateImportUsage]
 elif qtpy.API_NAME in ("PyQt5", "PySide2"):
-    from qtpy.QtWidgets import QUndoCommand
+    from qtpy.QtWidgets import QUndoCommand, QUndoStack  # pyright: ignore[reportPrivateImportUsage]
 else:
     raise RuntimeError(f"Unexpected qtpy version: {qtpy.API_NAME}")
-from qtpy.QtWidgets import QApplication, QHeaderView, QMainWindow, QMenu, QStyle, QUndoStack, QVBoxLayout, QWidget
-
-from pykotor.extract.capsule import LazyCapsule
-from pykotor.tools.misc import is_any_erf_type_file, is_rim_file
-from utility.system.os_helper import get_size_on_disk
 
 if __name__ == "__main__":
+
     def update_sys_path(path: pathlib.Path):
         working_dir = str(path)
         if working_dir not in sys.path:
             sys.path.append(working_dir)
-
 
     file_absolute_path = pathlib.Path(__file__).resolve()
 
@@ -51,16 +56,19 @@ if __name__ == "__main__":
             os.chdir(toolset_path)
 
 
-from pathlib import Path  # noqa: E402
-
+from pykotor.extract.capsule import LazyCapsule
 from pykotor.extract.file import FileResource  # noqa: E402
+from pykotor.tools.misc import is_any_erf_type_file, is_rim_file
 from toolset.gui.dialogs.load_from_location_result import ResourceItems  # noqa: E402
 from toolset.utils.window import open_resource_editor  # noqa: E402
+from utility.system.os_helper import get_size_on_disk
 from utility.ui_libraries.qt.widgets.itemviews.html_delegate import ICONS_DATA_ROLE, HTMLDelegate  # noqa: E402
 from utility.ui_libraries.qt.widgets.itemviews.treeview import RobustTreeView  # noqa: E402
 
 if TYPE_CHECKING:
     from qtpy.QtCore import QPoint
+    from qtpy.QtGui import QDropEvent
+    from qtpy.QtWidgets import QResizeEvent
 
 
 class TreeItem:
@@ -77,7 +85,11 @@ class TreeItem:
         """Should be overridden in subclasses to provide the specific logic for loading children."""
         return []
 
-    def child(self, row: int) -> TreeItem:
+    def child(
+        self,
+        row: int,
+    ) -> TreeItem:
+        assert row >= 0 and row < len(self.children), f"Invalid row index: {row}"
         return self.children[row]
 
     def childCount(self) -> int:
@@ -86,8 +98,13 @@ class TreeItem:
     def columnCount(self) -> Literal[1]:
         return 1
 
-    def data(self) -> str:
-        return self.path.name
+    def data(
+        self,
+        role: int = Qt.ItemDataRole.DisplayRole,
+    ) -> str:
+        if role == Qt.ItemDataRole.DisplayRole:
+            return self.path.name
+        return ""
 
     def row(self) -> int:
         if self.parent:
@@ -111,7 +128,7 @@ class DirItem(TreeItem):
         return children
 
     def icon_data(self) -> dict[str, Any]:
-        return {"icons": [(QStyle.SP_DirIcon, None, "Directory")], "spacing": 5, "columns": 1}
+        return {"icons": [(QStyle.StandardPixmap.SP_DirIcon, None, "Directory")], "spacing": 5, "columns": 1}
 
 
 class ResourceItem(TreeItem):
@@ -128,7 +145,7 @@ class ResourceItem(TreeItem):
         self.resource: FileResource = file
 
     def icon_data(self) -> dict[str, Any]:
-        return {"icons": [(QStyle.SP_FileDialogContentsView, None, "Resource File")], "spacing": 5, "columns": 1}
+        return {"icons": [(QStyle.StandardPixmap.SP_FileDialogContentsView, None, "Resource File")], "spacing": 5, "columns": 1}
 
 
 class FileItem(ResourceItem):
@@ -136,7 +153,7 @@ class FileItem(ResourceItem):
         return []
 
     def icon_data(self) -> dict[str, Any]:
-        return {"icons": [(QStyle.SP_FileIcon, None, "File")], "spacing": 5, "columns": 1}
+        return {"icons": [(QStyle.StandardPixmap.SP_FileIcon, None, "File")], "spacing": 5, "columns": 1}
 
 
 class CapsuleItem(DirItem, FileItem):
@@ -149,7 +166,7 @@ class CapsuleItem(DirItem, FileItem):
         return []
 
     def icon_data(self) -> dict[str, Any]:
-        return {"icons": [(QStyle.SP_DirLinkIcon, None, "Capsule")], "spacing": 5, "columns": 1}
+        return {"icons": [(QStyle.StandardPixmap.SP_DirLinkIcon, None, "Capsule")], "spacing": 5, "columns": 1}
 
 
 class CapsuleChildItem(ResourceItem):
@@ -157,7 +174,7 @@ class CapsuleChildItem(ResourceItem):
         return []
 
     def icon_data(self) -> dict[str, Any]:
-        return {"icons": [(QStyle.SP_FileLinkIcon, None, "Capsule Child")], "spacing": 5, "columns": 1}
+        return {"icons": [(QStyle.StandardPixmap.SP_FileLinkIcon, None, "Capsule Child")], "spacing": 5, "columns": 1}
 
 
 class NestedCapsuleItem(CapsuleChildItem, ResourceItem):
@@ -165,11 +182,16 @@ class NestedCapsuleItem(CapsuleChildItem, ResourceItem):
         return CapsuleItem.load_children(self)  # noqa: SLF001
 
     def icon_data(self) -> dict[str, Any]:
-        return {"icons": [(QStyle.SP_DirLinkOpenIcon, None, "Nested Capsule")], "spacing": 5, "columns": 1}
+        return {"icons": [(QStyle.StandardPixmap.SP_DirLinkOpenIcon, None, "Nested Capsule")], "spacing": 5, "columns": 1}
 
 
 class FileMoveCommand(QUndoCommand):
-    def __init__(self, model: ResourceFileSystemModel, source_indexes: list[QModelIndex], target_item: TreeItem):
+    def __init__(
+        self,
+        model: ResourceFileSystemModel,
+        source_indexes: list[QModelIndex],
+        target_item: TreeItem,
+    ):
         super().__init__()
         self.model: ResourceFileSystemModel = model
         self.source_indexes: list[QModelIndex] = source_indexes
@@ -192,7 +214,11 @@ class FileMoveCommand(QUndoCommand):
 
 
 class FileCopyCommand(QUndoCommand):
-    def __init__(self, model: ResourceFileSystemModel, source_indexes: list[QModelIndex]):
+    def __init__(
+        self,
+        model: ResourceFileSystemModel,
+        source_indexes: list[QModelIndex],
+    ):
         super().__init__()
         self.model: ResourceFileSystemModel = model
         self.source_indexes: list[QModelIndex] = source_indexes
@@ -220,7 +246,11 @@ class FileCopyCommand(QUndoCommand):
 
 
 class FileCutCommand(QUndoCommand):
-    def __init__(self, model: ResourceFileSystemModel, source_indexes: list[QModelIndex]):
+    def __init__(
+        self,
+        model: ResourceFileSystemModel,
+        source_indexes: list[QModelIndex],
+    ):
         super().__init__()
         self.model: ResourceFileSystemModel = model
         self.source_indexes: list[QModelIndex] = source_indexes
@@ -242,7 +272,11 @@ class FileCutCommand(QUndoCommand):
 
 
 class FilePasteCommand(QUndoCommand):
-    def __init__(self, model: ResourceFileSystemModel, target_item: TreeItem):
+    def __init__(
+        self,
+        model: ResourceFileSystemModel,
+        target_item: TreeItem,
+    ):
         super().__init__()
         self.model: ResourceFileSystemModel = model
         self.target_item: TreeItem = target_item
@@ -272,17 +306,22 @@ class FilePasteCommand(QUndoCommand):
 
 
 class FileSystemTreeView(RobustTreeView):
-    def __init__(self, parent: QWidget | None = None):
+    def __init__(
+        self,
+        parent: QWidget | None = None,
+    ):
         self.auto_resize_enabled: bool = True
         super().__init__(parent, use_columns=True)
         self.setSortingEnabled(True)
-        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.setUniformRowHeights(False)
-        self.header().setSectionsClickable(True)
-        self.header().setSortIndicatorShown(True)
-        self.header().setContextMenuPolicy(Qt.CustomContextMenu)
-        self.header().setSectionResizeMode(QHeaderView.Interactive)
-        self.header().customContextMenuRequested.connect(self.onHeaderContextMenu)
+        header = self.header()
+        assert header is not None, "Header is None somehow? This should be impossible."
+        header.setSectionsClickable(True)
+        header.setSortIndicatorShown(True)
+        header.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
+        header.customContextMenuRequested.connect(self.onHeaderContextMenu)
         self.customContextMenuRequested.connect(self.fileSystemModelContextMenu)
         self.undo_stack: QUndoStack = QUndoStack(self)  # Initialize QUndoStack
 
@@ -296,7 +335,7 @@ class FileSystemTreeView(RobustTreeView):
         assert isinstance(result, ResourceFileSystemModel)
         return result
 
-    def resizeEvent(self, event):
+    def resizeEvent(self, event: QResizeEvent):
         super().resizeEvent(event)
 
         if self.auto_resize_enabled:
@@ -304,10 +343,13 @@ class FileSystemTreeView(RobustTreeView):
 
     def adjustColumnsToFit(self):
         # Calculate total available width
-        total_width = self.viewport().width()
+        viewport = self.viewport()
+        assert viewport is not None, "Viewport is None somehow? This should be impossible."
+        total_width = viewport.width()
 
         # Calculate needed width for each column
         header = self.header()
+        assert header is not None, "Header is None somehow? This should be impossible."
         num_columns = header.count()
 
         total_needed_width = 0
@@ -327,11 +369,11 @@ class FileSystemTreeView(RobustTreeView):
     def resizeColumnsToFitContent(self):
         header = self.header()
         for col in range(self.model().columnCount()):
-            header.setSectionResizeMode(col, QHeaderView.ResizeToContents)
+            header.setSectionResizeMode(col, QHeaderView.ResizeMode.ResizeToContents)
 
     def auto_fit_columns(self):
         header = self.header()
-        assert header is not None
+        assert header is not None, "Header is None somehow? This should be impossible."
         for col in range(header.count()):
             self.resizeColumnToContents(col)
 
@@ -345,7 +387,7 @@ class FileSystemTreeView(RobustTreeView):
 
     def reset_column_widths(self):
         header = self.header()
-        assert header is not None
+        assert header is not None, "Header is None somehow? This should be impossible."
         for col in range(header.count()):
             header.resizeSection(col, header.defaultSectionSize())
 
@@ -377,10 +419,10 @@ class FileSystemTreeView(RobustTreeView):
 
     def toggleHiddenFiles(self):
         filters = self.model().filter()
-        if bool(filters & QDir.Hidden):
-            self.model().setFilter(filters & ~QDir.Hidden)
+        if bool(filters & QDir.Filter.Hidden):
+            self.model().setFilter(filters & ~QDir.Filter.Hidden)
         else:
-            self.model().setFilter(filters | QDir.Hidden)
+            self.model().setFilter(filters | QDir.Filter.Hidden)
 
     def setIconSize(self, size: QSize):
         super().setIconSize(size)
@@ -399,73 +441,105 @@ class FileSystemTreeView(RobustTreeView):
         menu = QMenu(self)
 
         large_icons_action = menu.addAction("Large Icons")
+        assert large_icons_action is not None, "Action is None somehow? This should be impossible."
         large_icons_action.setCheckable(True)
         large_icons_action.setChecked(self.iconSize().width() > 32)
         large_icons_action.triggered.connect(lambda: self.setIconSize(QSize(64, 64)))
 
         details_view_action = menu.addAction("Details")
+        assert details_view_action is not None, "Action is None somehow? This should be impossible."
         details_view_action.setCheckable(True)
         details_view_action.setChecked(self.iconSize().width() <= 32)
         details_view_action.triggered.connect(lambda: self.setIconSize(QSize(16, 16)))
 
         sort_by_menu = menu.addMenu("Sort by")
         sort_by_name_action = sort_by_menu.addAction("Name")
-        sort_by_name_action.triggered.connect(lambda: self.sortByColumn(0, Qt.AscendingOrder))
+        assert sort_by_name_action is not None, "Action is None somehow? This should be impossible."
+        sort_by_name_action.triggered.connect(lambda: self.sortByColumn(0, Qt.SortOrder.AscendingOrder))
         sort_by_size_action = sort_by_menu.addAction("Size")
-        sort_by_size_action.triggered.connect(lambda: self.sortByColumn(1, Qt.AscendingOrder))
+        assert sort_by_size_action is not None, "Action is None somehow? This should be impossible."
+        sort_by_size_action.triggered.connect(lambda: self.sortByColumn(1, Qt.SortOrder.AscendingOrder))
         sort_by_type_action = sort_by_menu.addAction("Type")
-        sort_by_type_action.triggered.connect(lambda: self.sortByColumn(2, Qt.AscendingOrder))
+        assert sort_by_type_action is not None, "Action is None somehow? This should be impossible."
+        sort_by_type_action.triggered.connect(lambda: self.sortByColumn(2, Qt.SortOrder.AscendingOrder))
         sort_by_date_modified_action = sort_by_menu.addAction("Date Modified")
-        sort_by_date_modified_action.triggered.connect(lambda: self.sortByColumn(3, Qt.AscendingOrder))
+        assert sort_by_date_modified_action is not None, "Action is None somehow? This should be impossible."
+        sort_by_date_modified_action.triggered.connect(lambda: self.sortByColumn(3, Qt.SortOrder.AscendingOrder))
 
         refresh_action = menu.addAction("Refresh")
+        assert refresh_action is not None, "Action is None somehow? This should be impossible."
         refresh_action.triggered.connect(self.refresh)
 
         new_menu = menu.addMenu("New")
         new_folder_action = new_menu.addAction("Folder")
+        assert new_folder_action is not None, "Action is None somehow? This should be impossible."
         new_folder_action.triggered.connect(self.createNewFolder)
 
         show_hidden_files_action = menu.addAction("Show Hidden Items")
+        assert show_hidden_files_action is not None, "Action is None somehow? This should be impossible."
         show_hidden_files_action.setCheckable(True)
-        show_hidden_files_action.setChecked(bool(self.model().filter() & QDir.Hidden))
+        show_hidden_files_action.setChecked(bool(self.model().filter() & QDir.Filter.Hidden))
         show_hidden_files_action.triggered.connect(self.toggleHiddenFiles)
 
         viewport = self.viewport()
+        assert viewport is not None, "Viewport is None somehow? This should be impossible."
         menu.exec(viewport.mapToGlobal(point))
 
-    def onHeaderContextMenu(self, point: QPoint):
+    def onHeaderContextMenu(
+        self,
+        point: QPoint,
+    ):
         menu = QMenu(self)
 
         # Auto Fit Columns option
         auto_fit_columns_action = menu.addAction("Auto Fit Columns")
+        assert auto_fit_columns_action is not None, "Action is None somehow? This should be impossible."
         auto_fit_columns_action.setCheckable(True)
         auto_fit_columns_action.setChecked(self.auto_resize_enabled)
         auto_fit_columns_action.triggered.connect(self.toggle_auto_fit_columns)
 
         alternate_row_colors_action = menu.addAction("Show in Groups")
+        assert alternate_row_colors_action is not None, "Action is None somehow? This should be impossible."
         alternate_row_colors_action.setCheckable(True)
         alternate_row_colors_action.setChecked(self.alternatingRowColors())
         alternate_row_colors_action.triggered.connect(self.setAlternatingRowColors)
 
         header = self.header()
+        assert header is not None, "Header is None somehow? This should be impossible."
         sort_ascending_action = menu.addAction("Sort by Ascending")
-        sort_ascending_action.triggered.connect(lambda: self.sortByColumn(header.logicalIndexAt(point), Qt.AscendingOrder))
+        assert sort_ascending_action is not None, "Action is None somehow? This should be impossible."
+
+        def sort_ascending():
+            self.sortByColumn(header.logicalIndexAt(point), Qt.SortOrder.AscendingOrder)
+
+        sort_ascending_action.triggered.connect(sort_ascending)
 
         sort_descending_action = menu.addAction("Sort by Descending")
-        sort_descending_action.triggered.connect(lambda: self.sortByColumn(header.logicalIndexAt(point), Qt.DescendingOrder))
+        assert sort_descending_action is not None, "Action is None somehow? This should be impossible."
+
+        def sort_descending():
+            self.sortByColumn(header.logicalIndexAt(point), Qt.SortOrder.DescendingOrder)
+
+        sort_descending_action.triggered.connect(sort_descending)
 
         hide_column_action = menu.addAction("Hide Column")
-        hide_column_action.triggered.connect(lambda: header.hideSection(header.logicalIndexAt(point)))
+        assert hide_column_action is not None, "Action is None somehow? This should be impossible."
+
+        def hide_column():
+            header.hideSection(header.logicalIndexAt(point))
+
+        hide_column_action.triggered.connect(hide_column)
 
         show_hidden_files_action = menu.addAction("Show Hidden Items")
+        assert show_hidden_files_action is not None, "Action is None somehow? This should be impossible."
         show_hidden_files_action.setCheckable(True)
-        show_hidden_files_action.setChecked(bool(self.model().filter() & QDir.Hidden))
+        show_hidden_files_action.setChecked(bool(self.model().filter() & QDir.Filter.Hidden))
         show_hidden_files_action.triggered.connect(self.toggleHiddenFiles)
 
         menu.exec(header.mapToGlobal(point))
 
     def fileSystemModelContextMenu(self, point: QPoint):
-        selected_indexes = self.selectedIndexes()
+        selected_indexes: list[QModelIndex] = self.selectedIndexes()
 
         if not selected_indexes:
             self.onEmptySpaceContextMenu(point)
@@ -485,9 +559,13 @@ class FileSystemTreeView(RobustTreeView):
             return
 
         menu = QMenu(self)
-        menu.addAction("Open").triggered.connect(lambda *args: (open_resource_editor(res.filepath(), res.resname(), res.restype(), res.data()) for res in resources))
-        if all(resource.restype().contents == "gff" for resource in resources):
-            menu.addAction("Open with GFF Editor").triggered.connect(
+        action = menu.addAction("Open")
+        assert action is not None, "Action is None somehow? This should be impossible."
+        action.triggered.connect(lambda *args: (open_resource_editor(res.filepath(), res.resname(), res.restype(), res.data()) for res in resources))
+        if all(resource.restype().is_gff() for resource in resources):
+            action = menu.addAction("Open with GFF Editor")
+            assert action is not None, "Action is None somehow? This should be impossible."
+            action.triggered.connect(
                 lambda *args: (open_resource_editor(res.filepath(), res.resname(), res.restype(), res.data(), gff_specialized=False) for res in resources)
             )
         menu.addSeparator()
@@ -500,13 +578,13 @@ class FileSystemTreeView(RobustTreeView):
         drag.setMimeData(mime_data)
         drag.exec(supportedActions)
 
-    def dragEnterEvent(self, event: Qt.DropActions | Qt.DropAction):
+    def dragEnterEvent(self, event: Qt.DropActions | Qt.DropAction):  # pyright: ignore[reportOptionalMemberAccess]  # type: ignore[attr-defined]
         event.acceptProposedAction()
 
-    def dragMoveEvent(self, event: Qt.DropActions | Qt.DropAction):
+    def dragMoveEvent(self, event: Qt.DropActions | Qt.DropAction):  # pyright: ignore[reportOptionalMemberAccess]  # type: ignore[attr-defined]
         event.acceptProposedAction()
 
-    def dropEvent(self, event):
+    def dropEvent(self, event: QDropEvent):  # pyright: ignore[reportOptionalMemberAccess]  # type: ignore[attr-defined]
         source_indexes = self.selectedIndexes()
         target_index = self.indexAt(event.pos())
         target_item = target_index.internalPointer()
@@ -567,11 +645,19 @@ class ResourceFileSystemModel(QAbstractItemModel):
 
     STAT_TO_COLUMN_MAP: ClassVar[dict[str, str]] = {v: k for k, v in COLUMN_TO_STAT_MAP.items()}
 
-    def __init__(self, root_path: Path | FileResource):
+    def __init__(
+        self,
+        root_path: Path | FileResource,
+    ):
         super().__init__()
         self.root_item: CapsuleChildItem | DirItem | FileItem | NestedCapsuleItem = self.create_root_item(root_path)
         self._detailed_view: bool = False  # New attribute to track detailed view state
-        self._filter: QDir.Filters = QDir.AllEntries | QDir.NoDotAndDotDot | QDir.AllDirs | QDir.Files
+        self._filter: QDir.Filters = (  # pyright: ignore[reportIncompatibleMethodOverride]  # type: ignore[attr-defined]
+            QDir.Filter.AllEntries
+            | QDir.Filter.NoDotAndDotDot
+            | QDir.Filter.AllDirs
+            | QDir.Filter.Files
+        )
         self._headers: list[str] = ["File Name", "File Path", "Offset", "Size"]
         self._detailed_headers: list[str] = [*self._headers, *self.COLUMN_TO_STAT_MAP.keys()]
 
@@ -579,7 +665,10 @@ class ResourceFileSystemModel(QAbstractItemModel):
         self._detailed_view = not self._detailed_view
         self.layoutChanged.emit()
 
-    def create_root_item(self, file: Path | FileResource) -> CapsuleChildItem | DirItem | FileItem | NestedCapsuleItem:
+    def create_root_item(
+        self,
+        file: Path | FileResource,
+    ) -> CapsuleChildItem | DirItem | FileItem | NestedCapsuleItem:
         if isinstance(file, FileResource):
             path = file.filepath()
         else:
@@ -600,26 +689,35 @@ class ResourceFileSystemModel(QAbstractItemModel):
 
         return cls(path)
 
-    def filter(self) -> QDir.Filters:
+    def filter(self) -> QDir.Filters:  # pyright: ignore[reportIncompatibleMethodOverride]  # type: ignore[attr-defined]
         return self._filter
 
-    def setFilter(self, filters):
+    def setFilter(self, filters: QDir.Filters):  # pyright: ignore[reportIncompatibleMethodOverride]  # type: ignore[attr-defined]
         self._filter = filters
 
-    def filePath(self, index: QModelIndex) -> str:
+    def filePath(
+        self,
+        index: QModelIndex,
+    ) -> str:
         if not index.isValid():
             return ""
         resource_item: TreeItem = index.internalPointer()
         return str(resource_item.path)  #
 
-    def canFetchMore(self, index: QModelIndex) -> bool:
+    def canFetchMore(
+        self,
+        index: QModelIndex,
+    ) -> bool:
         if not index.isValid():
             return False
 
         item = index.internalPointer()
         return isinstance(item, DirItem) and item.childCount() == 0
 
-    def fetchMore(self, index: QModelIndex) -> None:
+    def fetchMore(
+        self,
+        index: QModelIndex,
+    ) -> None:
         if not index.isValid():
             return
 
@@ -628,7 +726,10 @@ class ResourceFileSystemModel(QAbstractItemModel):
             item.load_children()
             self.layoutChanged.emit()
 
-    def rowCount(self, parent: QModelIndex | None = None) -> int:
+    def rowCount(
+        self,
+        parent: QModelIndex | None = None,
+    ) -> int:
         parent = QModelIndex() if parent is None else parent
         if not parent.isValid():
             parent_item = self.root_item
@@ -636,17 +737,24 @@ class ResourceFileSystemModel(QAbstractItemModel):
             parent_item = parent.internalPointer()
         return parent_item.childCount()
 
-    def columnCount(self, parent: QModelIndex | None = None) -> int:
+    def columnCount(
+        self,
+        parent: QModelIndex | None = None,
+    ) -> int:
         parent = QModelIndex() if parent is None else parent
         return len(self._detailed_headers) if self._detailed_view else len(self._headers)
 
-    def data(self, index: QModelIndex, role: int = Qt.DisplayRole) -> str | dict[str, Any] | None:
+    def data(
+        self,
+        index: QModelIndex,
+        role: int = Qt.ItemDataRole.DisplayRole,
+    ) -> str | dict[str, Any] | None:
         if not index.isValid():
             return None
         item: TreeItem = index.internalPointer()
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
             return self.get_detailed_data(index) if self._detailed_view else self.get_default_data(index)
-        if role == ICONS_DATA_ROLE:
+        if role == ICONS_DATA_ROLE:  # Qt.ItemDataRole.DecorationRole? Or is it ICONS_DATA_ROLE?
             return item.icon_data()
         return None
 
@@ -661,7 +769,10 @@ class ResourceFileSystemModel(QAbstractItemModel):
             size /= 1024.0
         return f"{size:.{decimal_places}f} {unit}"
 
-    def get_detailed_data(self, index: QModelIndex) -> str:
+    def get_detailed_data(
+        self,
+        index: QModelIndex,
+    ) -> str:
         item: FileItem = index.internalPointer()
         if not item.path.is_file():
             return "N/A"
@@ -680,7 +791,10 @@ class ResourceFileSystemModel(QAbstractItemModel):
             return f"{ratio:.2f}%"
         return "N/A"
 
-    def get_default_data(self, index: QModelIndex) -> str:
+    def get_default_data(
+        self,
+        index: QModelIndex,
+    ) -> str:
         item = index.internalPointer()
         if index.column() == 0:  # File Name
             name = item.data()
@@ -699,21 +813,34 @@ class ResourceFileSystemModel(QAbstractItemModel):
             return self.human_readable_size(item.resource.size()) if hasattr(item, "resource") else ""
         return "N/A"
 
-    def setRootPath(self, path: os.PathLike | str):
+    def setRootPath(
+        self,
+        path: os.PathLike | str,
+    ):
         self.root_item = self.create_root_item(Path(path))
         self.rootIndex = self.index(0, 0, QModelIndex())
-        if bool(self.filter() & QDir.Hidden):
-            filters = QDir.AllEntries | QDir.NoDotAndDotDot | QDir.AllDirs | QDir.Files | QDir.Hidden
+        if bool(self.filter() & QDir.Filter.Hidden):
+            filters = QDir.Filter.AllEntries | QDir.Filter.NoDotAndDotDot | QDir.Filter.AllDirs | QDir.Filter.Files | QDir.Filter.Hidden
         else:
-            filters = QDir.AllEntries | QDir.NoDotAndDotDot | QDir.AllDirs | QDir.Files
+            filters = QDir.Filter.AllEntries | QDir.Filter.NoDotAndDotDot | QDir.Filter.AllDirs | QDir.Filter.Files
         self.fileInfoList = QDir(str(self.rootPath)).entryInfoList(filters)
 
-    def headerData(self, section: int, orientation: Qt.Orientation, role: int = Qt.DisplayRole) -> Any:
-        if role == Qt.DisplayRole and orientation == Qt.Horizontal:
+    def headerData(
+        self,
+        section: int,
+        orientation: Qt.Orientation,
+        role: int = Qt.ItemDataRole.DisplayRole,
+    ) -> Any:
+        if role == Qt.ItemDataRole.DisplayRole and orientation == Qt.Orientation.Horizontal:
             return self._detailed_headers[section] if self._detailed_view else self._headers[section]
         return None
 
-    def index(self, row: int, column: int, parent: QModelIndex | None = None) -> QModelIndex:
+    def index(
+        self,
+        row: int,
+        column: int,
+        parent: QModelIndex | None = None,
+    ) -> QModelIndex:
         parent = QModelIndex() if parent is None else parent
         if not self.hasIndex(row, column, parent):
             return QModelIndex()
@@ -728,7 +855,10 @@ class ResourceFileSystemModel(QAbstractItemModel):
             return self.createIndex(row, column, child_item)
         return QModelIndex()
 
-    def parent(self, index: QModelIndex) -> QModelIndex:
+    def parent(
+        self,
+        index: QModelIndex,
+    ) -> QModelIndex:
         if not index.isValid():
             return QModelIndex()
 
@@ -740,7 +870,11 @@ class ResourceFileSystemModel(QAbstractItemModel):
 
         return self.createIndex(parent_item.row(), 0, parent_item)
 
-    def sort(self, column: int, order: Qt.SortOrder = Qt.AscendingOrder) -> None:
+    def sort(
+        self,
+        column: int,
+        order: Qt.SortOrder = Qt.SortOrder.AscendingOrder,
+    ) -> None:
         def sort_key(item: TreeItem):  # noqa: ANN202
             if self._detailed_view:
                 header = self._detailed_headers[column]
@@ -759,7 +893,7 @@ class ResourceFileSystemModel(QAbstractItemModel):
             return 0
 
         def sort_items(items):
-            items.sort(key=sort_key, reverse=(order == Qt.DescendingOrder))
+            items.sort(key=sort_key, reverse=(order == Qt.SortOrder.DescendingOrder))
             for item in items:
                 if hasattr(item, "children"):
                     sort_items(item.children)
@@ -771,22 +905,24 @@ class ResourceFileSystemModel(QAbstractItemModel):
         self.layoutChanged.emit()
 
 
-
 class MainWindow(QMainWindow):
-    def __init__(self, root_path: Path):
+    def __init__(
+        self,
+        root_path: Path,
+    ):
         super().__init__()
         self.setWindowTitle("QTreeView with HTMLDelegate")
 
-        self.model = ResourceFileSystemModel(root_path)
-        self.tree_view = FileSystemTreeView(self)
+        self.model: ResourceFileSystemModel = ResourceFileSystemModel(root_path)
+        self.tree_view: FileSystemTreeView = FileSystemTreeView(self)
         self.tree_view.setModel(self.model)
 
         # Set the custom delegate
-        self.html_delegate = HTMLDelegate(self.tree_view, word_wrap=False)
+        self.html_delegate: HTMLDelegate = HTMLDelegate(self.tree_view, word_wrap=False)
         self.tree_view.setItemDelegate(self.html_delegate)
 
         central_widget = QWidget()
-        layout = QVBoxLayout(central_widget)
+        layout: QVBoxLayout = QVBoxLayout(central_widget)
         layout.addWidget(self.tree_view)
         self.setCentralWidget(central_widget)
 
