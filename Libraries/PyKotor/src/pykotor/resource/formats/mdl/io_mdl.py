@@ -688,13 +688,13 @@ class _Node:
                 node_index[0] = next_idx
                 next_idx, last_pos = _write_aabb_recursive(writer, child2_pos)
                 
-                # Update child pointers (apply offset-12 semantics)
-                # Go back to start_pos + 24 (after 6 floats) and write child pointers
+                # Write child pointers
+                # Writer positions are already relative to the model data block (not the file),
+                # which is the same coordinate system used in the file (stored offsets = file_offset - 12).
+                # Therefore, we write writer positions directly without adjustment.
                 writer.seek(start_pos + 24)
-                left_child_offset = (child1_pos - 12) if child1_pos > 0 else 0
-                right_child_offset = (child2_pos - 12) if child2_pos > 0 else 0
-                writer.write_int32(left_child_offset)
-                writer.write_int32(right_child_offset)
+                writer.write_int32(child1_pos if child1_pos > 0 else 0)
+                writer.write_int32(child2_pos if child2_pos > 0 else 0)
                 writer.write_int32(-1)  # face_index = -1 for branch
                 writer.write_int32(node.unknown)
                 writer.seek(saved_pos)
