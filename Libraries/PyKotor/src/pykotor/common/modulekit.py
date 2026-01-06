@@ -137,11 +137,23 @@ class ModuleKit(Kit):
             # This prevents issues if multiple rooms share the same model name
             bwm = deepcopy(bwm)
 
-        # IMPORTANT: keep walkmesh and model in the same coordinate space.
+        # CRITICAL FIX (double-translation bug):
         #
-        # KotOR module room walkmeshes (WOK) are authored in the same local space as the room model (MDL),
-        # while the LYT provides placement in the area via room.position. Therefore we **do not** apply any
-        # LYT translation to the BWM here; placement is handled at the IndoorMapRoom level.
+        # Game module WOKs are stored in **world space** (coordinates already include the LYT position).
+        # The engine consumes binary WOKs without applying LYT transforms at runtime.
+        # (Reference: vendor/swkotor.c - CSWCollisionMesh__LoadMeshBinary sets field9_0x4c=1,
+        #  and CSWCollisionMesh__TransformToWorld is a no-op when field9_0x4c=1.)
+        #
+        # When we build a module, IndoorMap.process_bwm() adds room.position to the BWM.
+        # If we store the BWM in world space here, we get **double translation**:
+        #   - Original WOK is at world position (e.g. x=82)
+        #   - process_bwm adds room.position again (x += 82)
+        #   - Result: x=164 (wrong!)
+        #
+        # FIX: Subtract the LYT position from the BWM to convert to local (room) coordinates.
+        # Then when building, process_bwm will add the position back correctly.
+        if bwm.faces:
+            bwm.translate(-lyt_room.position.x, -lyt_room.position.y, -lyt_room.position.z)
 
         # Try to get the model data
         mdl = self._get_room_model(model_name, ResourceType.MDL) or b""

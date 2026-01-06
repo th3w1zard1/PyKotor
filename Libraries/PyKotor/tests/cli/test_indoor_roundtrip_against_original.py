@@ -383,6 +383,60 @@ def test_orig_wok_bytes_identical_per_room_index(rt_run: dict[str, Any]) -> None
         )
 
 
+def test_orig_wok_vertex_coordinates_match(rt_run: dict[str, Any]) -> None:
+    """CRITICAL: Verify vertex coordinates match between original and built WOK.
+
+    This test catches the double-translation bug where WOK coordinates end up at
+    2x the expected position. Without this test, all other WOK tests could pass
+    (face count, materials, etc.) while the walkmesh is in completely wrong
+    world-space coordinates - rendering the module unplayable in-game.
+
+    Tolerance: 0.1 units per vertex coordinate (accounts for floating point rounding).
+    """
+    out_id: str = rt_run["out_module_id"]
+    built_payloads: dict[tuple[str, ResourceType], bytes] = rt_run["built_payloads"]
+    original_module: Module = rt_run["original_module"]
+    source_room_models: list[str] = rt_run["source_room_models"]
+    tolerance: float = 0.1  # Allow small floating point differences
+
+    for i, src_model in enumerate(source_room_models):
+        src_bwm = read_bwm(_wok_bytes_from_module(original_module, src_model))
+        built_key: tuple[str, ResourceType] = (f"{out_id}_room{i}", ResourceType.WOK)
+        if built_key not in built_payloads:
+            continue  # Skip if missing (other test catches this)
+        built_bwm = read_bwm(built_payloads[built_key])
+
+        src_verts = list(src_bwm.vertices())
+        built_verts = list(built_bwm.vertices())
+
+        if not src_verts or not built_verts:
+            continue  # Skip empty walkmeshes
+
+        # Check vertex coordinates match within tolerance
+        for vi, (v_src, v_bld) in enumerate(zip(src_verts, built_verts)):
+            dx = abs(v_src.x - v_bld.x)
+            dy = abs(v_src.y - v_bld.y)
+            dz = abs(v_src.z - v_bld.z)
+            assert dx <= tolerance, f"Vertex {vi} X differs by {dx:.3f} for room {i} ({src_model}): src={v_src.x:.2f} built={v_bld.x:.2f}"
+            assert dy <= tolerance, f"Vertex {vi} Y differs by {dy:.3f} for room {i} ({src_model}): src={v_src.y:.2f} built={v_bld.y:.2f}"
+            assert dz <= tolerance, f"Vertex {vi} Z differs by {dz:.3f} for room {i} ({src_model}): src={v_src.z:.2f} built={v_bld.z:.2f}"
+
+        # Also verify bounding box as a quick sanity check (catches large translation errors)
+        src_min_x = min(v.x for v in src_verts)
+        src_max_x = max(v.x for v in src_verts)
+        src_min_y = min(v.y for v in src_verts)
+        src_max_y = max(v.y for v in src_verts)
+        built_min_x = min(v.x for v in built_verts)
+        built_max_x = max(v.x for v in built_verts)
+        built_min_y = min(v.y for v in built_verts)
+        built_max_y = max(v.y for v in built_verts)
+
+        assert abs(src_min_x - built_min_x) <= tolerance, f"BBox min_x differs for room {i}: {src_min_x:.2f} vs {built_min_x:.2f}"
+        assert abs(src_max_x - built_max_x) <= tolerance, f"BBox max_x differs for room {i}: {src_max_x:.2f} vs {built_max_x:.2f}"
+        assert abs(src_min_y - built_min_y) <= tolerance, f"BBox min_y differs for room {i}: {src_min_y:.2f} vs {built_min_y:.2f}"
+        assert abs(src_max_y - built_max_y) <= tolerance, f"BBox max_y differs for room {i}: {src_max_y:.2f} vs {built_max_y:.2f}"
+
+
 def test_orig_wok_materials_and_transitions_preserved(rt_run: dict[str, Any]) -> None:
     """Extra explicit checks (redundant if bytes match, but gives clearer failure signal)."""
     out_id: str = rt_run["out_module_id"]

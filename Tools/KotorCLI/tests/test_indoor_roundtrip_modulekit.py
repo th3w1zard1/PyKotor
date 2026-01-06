@@ -718,8 +718,12 @@ def test_unit_modulekit_components_have_default_position(rt: RoundtripResult):
 def test_unit_modulekit_bwm_is_room_local_via_lyt_translation(rt: RoundtripResult):
     """Validate our critical coordinate-space rule:
 
-    - Module WOKs are commonly authored in room-local space (matching MDL coordinates).
-    - ModuleKit does NOT translate them; they're already in the correct coordinate space.
+    - Game module WOKs are stored in WORLD space (already have LYT position baked in).
+    - ModuleKit converts them to LOCAL (room) space by subtracting the LYT position.
+    - This is REQUIRED because IndoorMap.process_bwm() adds the position back during build.
+    - Without this conversion, we get DOUBLE TRANSLATION: world + position = 2x position!
+
+    This test verifies that ModuleKit correctly converts WOK from world to local coords.
     """
     # Read composite module LYT+WOK via Module (supports .rim/_s.rim/_dlg.erf/.mod).
     from pykotor.common.module import Module
@@ -732,8 +736,9 @@ def test_unit_modulekit_bwm_is_room_local_via_lyt_translation(rt: RoundtripResul
     assert lyt is not None, f"LYT resource is None: {lyt}"
     assert len(lyt.rooms) > 0, f"LYT has no rooms: {lyt.rooms}"
 
-    # Build expected bbox per component id from the module's own WOKs.
-    expected_bbox_by_component_id: dict[str, tuple[float, float, float, float]] = {}
+    # Build expected LOCAL bbox per component id: take module WOK and subtract LYT position.
+    expected_local_bbox_by_component_id: dict[str, tuple[float, float, float, float]] = {}
+    lyt_positions_by_component_id: dict[str, tuple[float, float, float]] = {}
     for idx, room in enumerate(lyt.rooms):
         model = (room.model or f"room{idx}").strip().lower()
         wok_res = module.resource(model, ResourceType.WOK)
@@ -747,24 +752,27 @@ def test_unit_modulekit_bwm_is_room_local_via_lyt_translation(rt: RoundtripResul
         if not verts:
             continue
         component_id = f"{model}_{idx}"
-        expected_bbox_by_component_id[component_id] = (
-            min(v.x for v in verts),
-            max(v.x for v in verts),
-            min(v.y for v in verts),
-            max(v.y for v in verts),
+        lyt_pos = room.position
+        lyt_positions_by_component_id[component_id] = (lyt_pos.x, lyt_pos.y, lyt_pos.z)
+        # Compute expected LOCAL bbox: subtract LYT position from each vertex
+        expected_local_bbox_by_component_id[component_id] = (
+            min(v.x - lyt_pos.x for v in verts),
+            max(v.x - lyt_pos.x for v in verts),
+            min(v.y - lyt_pos.y for v in verts),
+            max(v.y - lyt_pos.y for v in verts),
         )
 
-    assert expected_bbox_by_component_id, f"Module {rt.source_module_root} has no usable WOK/BWM vertices to compare"
+    assert expected_local_bbox_by_component_id, f"Module {rt.source_module_root} has no usable WOK/BWM vertices to compare"
 
-    # Load ModuleKit component and verify coordinates match (no translation applied).
+    # Load ModuleKit component and verify it converted to local coordinates.
     mk = ModuleKitManager(installation)
     kit = mk.get_module_kit(rt.source_module_root)
     assert kit.ensure_loaded(), f"ModuleKit failed to load module: {rt.source_module_root}"
     assert kit.components, f"ModuleKit has no components: {rt.source_module_root}"
 
-    # Compare each component's bbox against its corresponding module WOK bbox.
+    # Compare each component's bbox against its expected LOCAL bbox.
     for comp in kit.components:
-        exp = expected_bbox_by_component_id.get(comp.id)
+        exp = expected_local_bbox_by_component_id.get(comp.id)
         if exp is None:
             # No usable on-disk WOK vertices for this room → not comparable.
             continue
@@ -777,10 +785,11 @@ def test_unit_modulekit_bwm_is_room_local_via_lyt_translation(rt: RoundtripResul
             min(v.y for v in verts),
             max(v.y for v in verts),
         )
-        assert abs(exp[0] - bbox[0]) < 1e-6, f"Component {comp.id} has incorrect X bbox: {bbox[0]} != {exp[0]}"
-        assert abs(exp[1] - bbox[1]) < 1e-6, f"Component {comp.id} has incorrect Y bbox: {bbox[1]} != {exp[1]}"
-        assert abs(exp[2] - bbox[2]) < 1e-6, f"Component {comp.id} has incorrect X bbox: {bbox[2]} != {exp[2]}"
-        assert abs(exp[3] - bbox[3]) < 1e-6, f"Component {comp.id} has incorrect Y bbox: {bbox[3]} != {exp[3]}"
+        lyt_pos = lyt_positions_by_component_id.get(comp.id, (0, 0, 0))
+        assert abs(exp[0] - bbox[0]) < 1e-4, f"Component {comp.id} X-min mismatch: got {bbox[0]:.4f}, expected {exp[0]:.4f} (local, LYT pos={lyt_pos})"
+        assert abs(exp[1] - bbox[1]) < 1e-4, f"Component {comp.id} X-max mismatch: got {bbox[1]:.4f}, expected {exp[1]:.4f} (local, LYT pos={lyt_pos})"
+        assert abs(exp[2] - bbox[2]) < 1e-4, f"Component {comp.id} Y-min mismatch: got {bbox[2]:.4f}, expected {exp[2]:.4f} (local, LYT pos={lyt_pos})"
+        assert abs(exp[3] - bbox[3]) < 1e-4, f"Component {comp.id} Y-max mismatch: got {bbox[3]:.4f}, expected {exp[3]:.4f} (local, LYT pos={lyt_pos})"
 
 
 def test_unit_modulekit_hook_edges_int(rt: RoundtripResult):

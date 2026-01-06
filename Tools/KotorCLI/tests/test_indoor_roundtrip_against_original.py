@@ -401,6 +401,75 @@ def test_orig_wok_bytes_identical_per_room_index(rt_run: dict[str, Any]) -> None
         ), f"Walkable face presence mismatch for room {i} ({src_model})"
 
 
+def test_orig_wok_vertex_coordinates_match(rt_run: dict[str, Any]) -> None:
+    """CRITICAL: Verify vertex coordinates match between original and built WOK.
+
+    This test catches the double-translation bug where WOK coordinates end up at
+    2x the expected position. Without this test, all other WOK tests could pass
+    (face count, materials, etc.) while the walkmesh is in completely wrong
+    world-space coordinates - rendering the module unplayable in-game.
+
+    Tolerance: 0.1 units per vertex coordinate (accounts for floating point rounding).
+    """
+    out_id: str = rt_run["out_module_id"]
+    built_payloads: dict[tuple[str, ResourceType], bytes] = rt_run["built_payloads"]
+    original_module: Module = rt_run["original_module"]
+    source_room_models: list[str] = rt_run["source_room_models"]
+    tolerance: float = 0.1  # Allow small floating point differences
+
+    for i, src_model in enumerate(source_room_models):
+        src_bwm = read_bwm(_wok_bytes_from_module(original_module, src_model))
+        built_key: tuple[str, ResourceType] = (f"{out_id}_room{i}", ResourceType.WOK)
+        if built_key not in built_payloads:
+            continue  # Skip if missing (other test catches this)
+        built_bwm = read_bwm(built_payloads[built_key])
+
+        src_verts = list(src_bwm.vertices())
+        built_verts = list(built_bwm.vertices())
+
+        if not src_verts or not built_verts:
+            continue  # Skip empty walkmeshes
+
+        # Check vertex coordinates match within tolerance
+        for vi, (v_src, v_bld) in enumerate(zip(src_verts, built_verts)):
+            dx = abs(v_src.x - v_bld.x)
+            dy = abs(v_src.y - v_bld.y)
+            dz = abs(v_src.z - v_bld.z)
+            assert dx <= tolerance, (
+                f"Vertex {vi} X coordinate mismatch for room {i} ({src_model}): "
+                f"src=({v_src.x:.2f}, {v_src.y:.2f}, {v_src.z:.2f}) "
+                f"built=({v_bld.x:.2f}, {v_bld.y:.2f}, {v_bld.z:.2f}) "
+                f"delta=({dx:.2f}, {dy:.2f}, {dz:.2f})"
+            )
+            assert dy <= tolerance, (
+                f"Vertex {vi} Y coordinate mismatch for room {i} ({src_model}): "
+                f"src=({v_src.x:.2f}, {v_src.y:.2f}, {v_src.z:.2f}) "
+                f"built=({v_bld.x:.2f}, {v_bld.y:.2f}, {v_bld.z:.2f}) "
+                f"delta=({dx:.2f}, {dy:.2f}, {dz:.2f})"
+            )
+            assert dz <= tolerance, (
+                f"Vertex {vi} Z coordinate mismatch for room {i} ({src_model}): "
+                f"src=({v_src.x:.2f}, {v_src.y:.2f}, {v_src.z:.2f}) "
+                f"built=({v_bld.x:.2f}, {v_bld.y:.2f}, {v_bld.z:.2f}) "
+                f"delta=({dx:.2f}, {dy:.2f}, {dz:.2f})"
+            )
+
+        # Calculate and verify centroid matches (catches systemic offset errors)
+        src_cx = sum(v.x for v in src_verts) / len(src_verts)
+        src_cy = sum(v.y for v in src_verts) / len(src_verts)
+        src_cz = sum(v.z for v in src_verts) / len(src_verts)
+        bld_cx = sum(v.x for v in built_verts) / len(built_verts)
+        bld_cy = sum(v.y for v in built_verts) / len(built_verts)
+        bld_cz = sum(v.z for v in built_verts) / len(built_verts)
+        centroid_delta = abs(src_cx - bld_cx) + abs(src_cy - bld_cy) + abs(src_cz - bld_cz)
+        assert centroid_delta <= tolerance * 3, (
+            f"WOK centroid mismatch for room {i} ({src_model}): "
+            f"src=({src_cx:.2f}, {src_cy:.2f}, {src_cz:.2f}) "
+            f"built=({bld_cx:.2f}, {bld_cy:.2f}, {bld_cz:.2f}) "
+            f"centroid_delta={centroid_delta:.2f}"
+        )
+
+
 def test_orig_wok_materials_and_transitions_preserved(rt_run: dict[str, Any]) -> None:
     """Extra explicit checks (redundant if bytes match, but gives clearer failure signal)."""
     out_id: str = rt_run["out_module_id"]
