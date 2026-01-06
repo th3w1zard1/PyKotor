@@ -1238,9 +1238,8 @@ class PyFileSystemModel(QAbstractItemModel):
         self.changePersistentIndexList(old_list, new_list)
         # layoutChanged signal - in PyQt6, the signal signature is layoutChanged(parents, hint)
         # C++: emit layoutChanged({}, VerticalSortHint)
-        # PyQt6: layoutChanged.emit([], Qt.Orientation.Vertical) or just layoutChanged.emit()
-        # For now, emit without arguments as PyQt6 signal may not support the hint parameter directly
-        self.layoutChanged.emit()
+        # PyQt6: layoutChanged.emit([], QAbstractItemModel.LayoutChangeHint.VerticalSortHint)
+        self.layoutChanged.emit([], QAbstractItemModel.LayoutChangeHint.VerticalSortHint)  # type: ignore[attr-defined]
 
     def rmdir(
         self,
