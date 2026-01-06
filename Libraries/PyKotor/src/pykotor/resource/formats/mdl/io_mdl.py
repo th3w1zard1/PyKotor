@@ -3881,7 +3881,11 @@ class MDLBinaryWriter:
             self._file_header.geometry.function_pointer0 = _GeometryHeader.K1_FUNCTION_POINTER0
             self._file_header.geometry.function_pointer1 = _GeometryHeader.K1_FUNCTION_POINTER1
         self._file_header.geometry.model_name = self._mdl.name
-        node_count_actual = len(self._mdl_nodes)  # TODO: need to include supermodel in count
+        # node_count must include ALL nodes: geometry nodes + animation nodes
+        # Reference: MDLOps includes all nodes in geometry header's node_count
+        geom_node_count = len(self._mdl_nodes)
+        anim_node_count = sum(len(list(anim.all_nodes())) for anim in self._mdl.anims)
+        node_count_actual = geom_node_count + anim_node_count
         self._file_header.geometry.node_count = min(node_count_actual, 0x7FFFFFFF)
         self._file_header.geometry.geometry_type = 2
 
