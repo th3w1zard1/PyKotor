@@ -2983,7 +2983,8 @@ class MDLBinaryWriter:
 
         # Create trimesh header if node has a mesh or if node_type indicates it should have one
         # This ensures we preserve mesh structure even if mesh object is missing
-        if mdl_node.mesh or mdl_node.node_type in (MDLNodeType.TRIMESH, MDLNodeType.DANGLYMESH):
+        # Emitter, Light, AABB, and Skin nodes can also have mesh data
+        if mdl_node.mesh or mdl_node.node_type in (MDLNodeType.TRIMESH, MDLNodeType.DANGLYMESH, MDLNodeType.EMITTER, MDLNodeType.LIGHT, MDLNodeType.AABB, MDLNodeType.SKIN):
             # If mesh is None but node_type indicates mesh, create empty mesh to preserve structure
             if not mdl_node.mesh:
                 from pykotor.resource.formats.mdl.mdl_data import MDLMesh
@@ -3165,7 +3166,11 @@ class MDLBinaryWriter:
             bin_node.light.flare_textures_count2 = bin_node.light.flare_textures_count
 
         # Emitter header data
-        if mdl_node.emitter:
+        # Create emitter header if node has emitter data or if node_type indicates it should be an emitter
+        if mdl_node.emitter or mdl_node.node_type == MDLNodeType.EMITTER:
+            if not mdl_node.emitter:
+                from pykotor.resource.formats.mdl.mdl_data import MDLEmitter
+                mdl_node.emitter = MDLEmitter()
             bin_node.emitter = _EmitterHeader()
             emitter = mdl_node.emitter
             bin_node.emitter.dead_space = emitter.dead_space
@@ -3812,7 +3817,8 @@ class MDLBinaryWriter:
         type_id = 1
         # Check for mesh - either explicit mesh object or node_type indicates mesh
         # This ensures we preserve mesh flags even if mesh object is missing
-        if node.mesh or node.node_type in (MDLNodeType.TRIMESH, MDLNodeType.DANGLYMESH):
+        # Emitter, Light, AABB, and Skin nodes can also have mesh data
+        if node.mesh or node.node_type in (MDLNodeType.TRIMESH, MDLNodeType.DANGLYMESH, MDLNodeType.EMITTER, MDLNodeType.LIGHT, MDLNodeType.AABB, MDLNodeType.SKIN):
             type_id = type_id | MDLNodeFlags.MESH
         if node.skin:
             type_id = type_id | MDLNodeFlags.SKIN
@@ -3822,7 +3828,7 @@ class MDLBinaryWriter:
             type_id = type_id | MDLNodeFlags.SABER
         if node.aabb:
             type_id = type_id | MDLNodeFlags.AABB
-        if node.emitter:
+        if node.emitter or node.node_type == MDLNodeType.EMITTER:
             type_id = type_id | MDLNodeFlags.EMITTER
         if node.light:
             type_id = type_id | MDLNodeFlags.LIGHT
