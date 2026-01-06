@@ -512,10 +512,10 @@ class _Node:
         # The AABB tree is written IMMEDIATELY after the aabbloc field, not after all node data
         if self.header.type_id & MDLNodeFlags.AABB and self.trimesh:
             # Write aabbloc field: the offset to AABB tree (position + 4 = right after this field)
-            # The reading code was changed to NOT add 12, expecting the raw value to be usable directly
-            # with the reader's set_offset(+12). Therefore, we write the raw absolute position.
-            # The AABB tree will be at (writer.position() + 4).
-            aabb_tree_pos = writer.position() + 4
+            # MDLOps writes: pack("L", ((tell(BMDLOUT) - 12) + 4))
+            # Reference: vendor/MDLOps/MDLOpsM.pm:7282
+            # This matches MDLOps exactly: (current_position - 12) + 4
+            aabb_tree_pos = (writer.position() - 12) + 4
             writer.write_int32(aabb_tree_pos)
             # Write AABB tree immediately after aabbloc field
             self._write_aabb_extra(writer)
