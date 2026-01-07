@@ -2465,9 +2465,16 @@ class Installation:
         try:
             module_path: Path = self.module_path()
             if not is_mod_file(module_filename):
-                relevant_capsule = Capsule(module_path.joinpath(f"{root}.rim"))
+                file_path = module_path.joinpath(f"{root}.rim")
             else:
-                relevant_capsule = Capsule(module_path.joinpath(module_filename))
+                file_path = module_path.joinpath(module_filename)
+            
+            # Check if file exists before trying to build Capsule (handles deleted files gracefully)
+            if not file_path.is_file():
+                RobustLogger().warning(f"Module file does not exist: 'Modules/{module_filename}', returning root name")
+                return root
+            
+            relevant_capsule = Capsule(file_path)
         except Exception:  # noqa: BLE001
             RobustLogger().exception(f"Could not build capsule for 'Modules/{module_filename}'")
             return root
