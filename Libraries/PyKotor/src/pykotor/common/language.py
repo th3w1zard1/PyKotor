@@ -164,6 +164,18 @@ class Language(IntEnum):
     LADIN = 98
     FRIULIAN = 99
 
+    # Additional Pacific languages (cp1252 / ISO-8859-1)
+    NIUEAN = 100
+    TOKELAUAN = 101
+    TUVALUAN = 102
+    ROTOKAS = 103
+
+    # Additional Central/Eastern European languages (cp1250 / ISO-8859-2)
+    TURKMEN = 104
+
+    # Additional Baltic languages (cp1257 / ISO-8859-13)
+    LATGALIAN = 105
+
     # The following languages are supported in the GFF/TLK file formats, but are probably not encodable to 8-bit without significant loss of information
     # therefore are probably incompatible with KOTOR.
     KOREAN = 128
@@ -276,6 +288,10 @@ class Language(IntEnum):
             Language.ROMANSH,
             Language.LADIN,
             Language.FRIULIAN,
+            Language.NIUEAN,
+            Language.TOKELAUAN,
+            Language.TUVALUAN,
+            Language.ROTOKAS,
         }:
             return "cp1252"
 
@@ -291,6 +307,7 @@ class Language(IntEnum):
             Language.SLOVENE,
             Language.BOSNIAN,
             Language.MONTENEGRIN,
+            Language.TURKMEN,
         }:
             return "cp1250"
 
@@ -334,6 +351,7 @@ class Language(IntEnum):
             Language.ESTONIAN,
             Language.LATVIAN,
             Language.LITHUANIAN,
+            Language.LATGALIAN,
         }:
             return "cp1257"
 
@@ -497,6 +515,15 @@ class Language(IntEnum):
             Language.ROMANSH: "rm",
             Language.LADIN: "lld",
             Language.FRIULIAN: "fur",
+            # Additional Pacific languages
+            Language.NIUEAN: "niu",
+            Language.TOKELAUAN: "tkl",
+            Language.TUVALUAN: "tvl",
+            Language.ROTOKAS: "roo",
+            # Additional Central/Eastern European
+            Language.TURKMEN: "tk",
+            # Additional Baltic
+            Language.LATGALIAN: "ltg",
             # Non-SBCS languages
             Language.KOREAN: "ko",
             Language.CHINESE_TRADITIONAL: "zh-TW",  # zh-Hant
