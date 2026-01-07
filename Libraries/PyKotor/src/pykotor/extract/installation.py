@@ -2360,8 +2360,14 @@ class Installation:
 
         area_names: dict[str, str | None] = {}
         root_to_extensions: dict[str, dict[str, str | None]] = {}
+        module_path_obj = self.module_path()
 
         for module in self._modules:
+            # Skip modules that no longer exist on disk (handles deleted files gracefully)
+            module_file = module_path_obj.joinpath(module)
+            if not module_file.is_file():
+                RobustLogger().debug(f"Skipping deleted module file: 'Modules/{module}'")
+                continue
             lower_module = module.lower()
             root = self.get_module_root(lower_module)
             lower_root = root.lower()
