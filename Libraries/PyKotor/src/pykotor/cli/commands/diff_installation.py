@@ -73,6 +73,8 @@ def cmd_diff_installation(args: Namespace, logger: Logger) -> int:
             argv.append("--console")
         if hasattr(args, "gui") and args.gui:
             argv.append("--gui")
+        if hasattr(args, "output_mode") and args.output_mode:
+            argv.extend(["--output-mode", str(args.output_mode)])
 
         return kotordiff_main(argv)
     except ImportError:

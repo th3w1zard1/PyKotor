@@ -579,7 +579,7 @@ def run_application(config: DiffConfig) -> int:
             stop_profiler(profiler)
 
         # Format and return final output
-        if comparison is not None:
+        if comparison is not None and config.output_mode != "quiet":
             return _format_comparison_output(comparison, config)
 
     except KeyboardInterrupt:

@@ -189,6 +189,7 @@ class KotorDiffWindow(QMainWindow):
         output_layout = QVBoxLayout()
         self.output_text = QTextEdit()
         self.output_text.setReadOnly(True)
+        self.output_text.setAcceptRichText(False)  # Use plain text mode to preserve newlines
         output_layout.addWidget(self.output_text)
         output_group.setLayout(output_layout)
         main_layout.addWidget(output_group)
@@ -417,7 +418,7 @@ class KotorDiffWindow(QMainWindow):
             ini_filename=self.ini_name_edit.text().strip() or "changes.ini",
             output_log_path=None,
             log_level=self.log_level_combo.currentText(),
-            output_mode="full",
+            output_mode="quiet",
             use_colors=False,
             compare_hashes=self.compare_hashes_check.isChecked(),
             use_profiler=False,
@@ -433,9 +434,12 @@ class KotorDiffWindow(QMainWindow):
 
     def _append_output(self, text: str):
         """Append text to the output area."""
-        self.output_text.moveCursor(QTextCursor.End)
-        self.output_text.insertPlainText(text)
-        self.output_text.moveCursor(QTextCursor.End)
+        cursor = self.output_text.textCursor()
+        cursor.movePosition(QTextCursor.End)
+        cursor.insertText(text)
+        self.output_text.setTextCursor(cursor)
+        # Ensure the view scrolls to the bottom
+        self.output_text.ensureCursorVisible()
 
     def _diff_finished(self, exit_code: int):
         """Handle diff completion."""
