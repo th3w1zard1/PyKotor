@@ -43,15 +43,19 @@ if TYPE_CHECKING:
     from toolset.data.installation import HTInstallation
 
 
+# Import localization function
+from toolset.gui.common.localization import translate as tr
+
+# Localized skill names
 SKILL_NAMES = [
-    "Computer Use",
-    "Demolitions",
-    "Stealth",
-    "Awareness",
-    "Persuade",
-    "Repair",
-    "Security",
-    "Treat Injury",
+    tr("Computer Use"),
+    tr("Demolitions"),
+    tr("Stealth"),
+    tr("Awareness"),
+    tr("Persuade"),
+    tr("Repair"),
+    tr("Security"),
+    tr("Treat Injury"),
 ]
 
 

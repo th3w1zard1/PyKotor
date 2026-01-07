@@ -601,6 +601,15 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Right Status": "Right Status",
         "00:00 / 00:00": "00:00 / 00:00",
         "Please check the log for more details.": "Please check the log for more details.",
+        # Game content strings
+        "Computer Use": "Computer Use",
+        "Demolitions": "Demolitions",
+        "Stealth": "Stealth",
+        "Awareness": "Awareness",
+        "Persuade": "Persuade",
+        "Repair": "Repair",
+        "Security": "Security",
+        "Treat Injury": "Treat Injury",
     },
     ToolsetLanguage.FRENCH: {
         # Main Window
@@ -1138,6 +1147,15 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Right Status": "Statut droite",
         "00:00 / 00:00": "00:00 / 00:00",
         "Please check the log for more details.": "Veuillez vérifier le journal pour plus de détails.",
+        # Game content strings
+        "Computer Use": "Utilisation d'ordinateur",
+        "Demolitions": "Démolitions",
+        "Stealth": "Furtivité",
+        "Awareness": "Conscience",
+        "Persuade": "Persuasion",
+        "Repair": "Réparation",
+        "Security": "Sécurité",
+        "Treat Injury": "Soins",
     },
     ToolsetLanguage.GERMAN: {
         # Main Window
@@ -1675,6 +1693,15 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Right Status": "Rechter Status",
         "00:00 / 00:00": "00:00 / 00:00",
         "Please check the log for more details.": "Bitte überprüfen Sie das Protokoll für weitere Details.",
+        # Game content strings
+        "Computer Use": "Computerbenutzung",
+        "Demolitions": "Sprengstoff",
+        "Stealth": "Schleichen",
+        "Awareness": "Wachsamkeit",
+        "Persuade": "Überreden",
+        "Repair": "Reparieren",
+        "Security": "Sicherheit",
+        "Treat Injury": "Wunden behandeln",
     },
     ToolsetLanguage.ITALIAN: {
         # Main Window
@@ -2212,6 +2239,15 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Right Status": "Stato destro",
         "00:00 / 00:00": "00:00 / 00:00",
         "Please check the log for more details.": "Controlla il log per ulteriori dettagli.",
+        # Game content strings
+        "Computer Use": "Uso del computer",
+        "Demolitions": "Demolizioni",
+        "Stealth": "Furtività",
+        "Awareness": "Consapevolezza",
+        "Persuade": "Persuasione",
+        "Repair": "Riparazione",
+        "Security": "Sicurezza",
+        "Treat Injury": "Curare ferite",
     },
     ToolsetLanguage.SPANISH: {
         # Main Window
@@ -2749,6 +2785,15 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Right Status": "Estado derecho",
         "00:00 / 00:00": "00:00 / 00:00",
         "Please check the log for more details.": "Por favor, verifica el registro para más detalles.",
+        # Game content strings
+        "Computer Use": "Uso de computadora",
+        "Demolitions": "Demoliciones",
+        "Stealth": "Sigilo",
+        "Awareness": "Percepción",
+        "Persuade": "Persuasión",
+        "Repair": "Reparación",
+        "Security": "Seguridad",
+        "Treat Injury": "Tratar heridas",
     },
     ToolsetLanguage.POLISH: {
         # Main Window
@@ -3286,6 +3331,15 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Right Status": "Status prawy",
         "00:00 / 00:00": "00:00 / 00:00",
         "Please check the log for more details.": "Sprawdź dziennik, aby uzyskać więcej szczegółów.",
+        # Game content strings
+        "Computer Use": "Korzystanie z komputera",
+        "Demolitions": "Materiały wybuchowe",
+        "Stealth": "Skradanie się",
+        "Awareness": "Świadomość",
+        "Persuade": "Perswazja",
+        "Repair": "Naprawa",
+        "Security": "Bezpieczeństwo",
+        "Treat Injury": "Leczenie ran",
     },
     ToolsetLanguage.RUSSIAN: {
         # Main Window
@@ -3824,6 +3878,15 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Right Status": "Правый статус",
         "00:00 / 00:00": "00:00 / 00:00",
         "Please check the log for more details.": "Пожалуйста, проверьте журнал для получения дополнительной информации.",
+        # Game content strings
+        "Computer Use": "Использование компьютера",
+        "Demolitions": "Взрывчатка",
+        "Stealth": "Скрытность",
+        "Awareness": "Восприятие",
+        "Persuade": "Убеждение",
+        "Repair": "Ремонт",
+        "Security": "Безопасность",
+        "Treat Injury": "Лечение ран",
     },
 }
 
