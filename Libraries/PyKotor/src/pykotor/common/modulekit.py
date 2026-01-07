@@ -153,7 +153,18 @@ class ModuleKit(Kit):
         # FIX: Subtract the LYT position from the BWM to convert to local (room) coordinates.
         # Then when building, process_bwm will add the position back correctly.
         if bwm.faces:
-            bwm.translate(-lyt_room.position.x, -lyt_room.position.y, -lyt_room.position.z)
+            try:
+                bwm.translate(-lyt_room.position.x, -lyt_room.position.y, -lyt_room.position.z)
+            except Exception as e:
+                # Defensive: if translation fails, log but don't crash
+                # This should never happen, but protects against edge cases
+                RobustLogger().warning(
+                    "Failed to translate BWM for room %d (model=%s): %s. "
+                    "BWM will remain in world coordinates (may cause double-translation).",
+                    idx,
+                    model_name,
+                    e,
+                )
 
         # Try to get the model data
         mdl = self._get_room_model(model_name, ResourceType.MDL) or b""
