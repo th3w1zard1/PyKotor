@@ -751,7 +751,7 @@ The PyKotor `Language` enum currently includes **128 SBCS languages** (IDs 0-127
 
 - ISO/IEC 8859 series standards (ISO/IEC 8859-1 through 8859-16)
 - Microsoft Windows Code Page documentation
-- IANA Character Sets registry (https://www.iana.org/assignments/character-sets)
+- IANA Character Sets registry (<https://www.iana.org/assignments/character-sets>)
 - Unicode Consortium documentation
 - RFC 1456 (VISCII)
 - RFC 1489 (KOI8-R)
@@ -759,3 +759,4 @@ The PyKotor `Language` enum currently includes **128 SBCS languages** (IDs 0-127
 - Various vendor documentation (IBM, Apple, etc.)
 - TCVN 5712:1993 (Vietnamese Standard Code for Information Interchange)
 - TIS-620 (Thai Industrial Standard 620-2533)
+
