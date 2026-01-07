@@ -209,7 +209,7 @@ class ERFEditor(Editor):
 
         self.source_model.clear()
         self.source_model.setColumnCount(3)
-        self.source_model.setHorizontalHeaderLabels(["ResRef", "Type", "Size", "Offset"])
+        self.source_model.setHorizontalHeaderLabels([tr("ResRef"), tr("Type"), tr("Size"), tr("Offset")])
         self.ui.refreshButton.setEnabled(True)
 
         if restype.name in (ResourceType.ERF, ResourceType.MOD, ResourceType.SAV):
@@ -263,10 +263,10 @@ class ERFEditor(Editor):
                 source_index: QModelIndex = self._proxy_model.mapToSource(self._proxy_model.index(i, 0))
                 item: QStandardItem | None = self.source_model.itemFromIndex(source_index)
                 if item is None:
-                    RobustLogger().warning(f"item was None in ERFEditor.build() at index {source_index}")
+                    RobustLogger().warning("ERFEditor: item was None in build() at index %s", source_index)
                     continue
                 resource = item.data()
-                assert isinstance(resource, RIMResource), "resource is not a valid RIM resource type"
+                assert isinstance(resource, RIMResource), "Resource '{resource.resref}' is not a valid RIM resource type"
                 rim.set_data(str(resource.resref), resource.restype, resource.data)
             write_rim(rim, data)
 
@@ -278,27 +278,27 @@ class ERFEditor(Editor):
                 source_index: QModelIndex = self._proxy_model.mapToSource(self._proxy_model.index(i, 0))
                 item = self.source_model.itemFromIndex(source_index)
                 if item is None:
-                    RobustLogger().warning("item was None in ERFEditor.build() at index %s", source_index)
+                    RobustLogger().warning("ERFEditor: item was None in build() at index %s", source_index)
                     continue
                 resource = item.data()
-                assert isinstance(resource, ERFResource), "resource is not a valid ERF resource type"
+                assert isinstance(resource, ERFResource), "Resource '{resource.resref}' is not a valid ERF resource type"
                 erf.set_data(str(resource.resref), resource.restype, resource.data)
             write_erf(erf, data)
 
-        elif self._restype in (ResourceType.BIF, ResourceType.BZF):
+        elif self._restype == ResourceType.BIF:
             bif = BIF(BIFType.from_extension(self._restype.extension))
             for i in range(self._proxy_model.rowCount()):
                 source_index = self._proxy_model.mapToSource(self._proxy_model.index(i, 0))
                 item = self.source_model.itemFromIndex(source_index)
                 if item is None:
-                    RobustLogger().warning("item was None in ERFEditor.build() at index %s", source_index)
+                    RobustLogger().warning("ERFEditor: item was None in build() at index %s", source_index)
                     continue
                 resource = item.data()
-                assert isinstance(resource, BIFResource), "resource is not a valid BIF resource type"
+                assert isinstance(resource, BIFResource), "Resource '{resource.resref}' is not a valid BIF resource type"
                 bif.set_data(ResRef(resource.name), resource.type, bytes(resource.bif_index), int(resource.res_index))
             write_bif(bif, data)
         else:
-            raise ValueError(f"Invalid restype for ERFEditor: {self._restype!r}")
+            raise ValueError(trf("Invalid restype for ERFEditor: {restype}", restype=self._restype))
 
         return bytes(data), b""
 
@@ -403,22 +403,29 @@ class ERFEditor(Editor):
     def rename_selected(self):
         indexes: list[QModelIndex] = self.ui.tableView.selectedIndexes()
         if not indexes:
+            RobustLogger().warning("ERFEditor: no indexes in rename_selected()")
             return
 
         index: QModelIndex = indexes[0]
         source_index: QModelIndex = self._proxy_model.mapToSource(index)
         item: QStandardItem | None = self.source_model.itemFromIndex(source_index)
         if item is None:
-            RobustLogger().warning("item was None in ERFEditor.rename_selected() at index %s", index)
+            RobustLogger().warning("ERFEditor: item was None in rename_selected() at index %s", index)
             return
         resource: ERFResource = item.data()
 
-        erfrim_filename: str = "ERF/RIM/BIF" if self._resname is None or self._restype is None else f"{self._resname}.{self._restype.extension}"
-        new_resname, ok = self.get_validated_resref(erfrim_filename, resource)
-        if ok:
-            resource.resref = ResRef(new_resname)
-            item.setText(new_resname)
-            self._has_changes = True
+        erfrim_name: str = (
+            tr("ERF/RIM/BIF")
+            if self._resname is None or self._restype is None
+            else trf("{resname}.{extension}", resname=self._resname, extension=self._restype.extension)
+        )
+        new_resname, ok = self.get_validated_resref(erfrim_name, resource)
+        if not ok:
+            RobustLogger().warning("ERFEditor: invalid resname in rename_selected()")
+            return
+        resource.resref = ResRef(new_resname)
+        item.setText(new_resname)
+        self._has_changes = True
 
     def get_validated_resref(
         self,
