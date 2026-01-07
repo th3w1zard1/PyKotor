@@ -945,8 +945,8 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                 self._blender_progress_dialog.hide()
             QMessageBox.warning(
                 self,
-                "Blender Connection Error",
-                "Failed to connect to Blender. Please check that Blender is running and kotorblender is installed.",
+                tr("Blender Connection Error"),
+                tr("Failed to connect to Blender. Please check that Blender is running and kotorblender is installed."),
             )
 
     def _on_blender_module_loaded(self):
@@ -1241,8 +1241,8 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         if not self._undo_stack.isClean():
             result = QMessageBox.question(
                 self,
-                "Unsaved Changes",
-                "You have unsaved changes. Do you want to save before creating a new map?",
+                tr("Unsaved Changes"),
+                tr("You have unsaved changes. Do you want to save before creating a new map?"),
                 QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel,
             )
             if result == QMessageBox.StandardButton.Save:

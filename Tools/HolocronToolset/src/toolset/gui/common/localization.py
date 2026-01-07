@@ -634,6 +634,12 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Enter search term:": "Enter search term:",
         "Rename Item": "Rename Item",
         "Enter new name:": "Enter new name:",
+        # Blender connection errors
+        "Blender Connection Error": "Blender Connection Error",
+        "Failed to connect to Blender. Please check that Blender is running and kotorblender is installed.": "Failed to connect to Blender. Please check that Blender is running and kotorblender is installed.",
+        # Unsaved changes dialogs
+        "Unsaved Changes": "Unsaved Changes",
+        "You have unsaved changes. Do you want to save before creating a new map?": "You have unsaved changes. Do you want to save before creating a new map?",
     },
     ToolsetLanguage.FRENCH: {
         # Main Window
@@ -1204,6 +1210,12 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Enter search term:": "Entrez le terme de recherche :",
         "Rename Item": "Renommer l'élément",
         "Enter new name:": "Entrez le nouveau nom :",
+        # Blender connection errors
+        "Blender Connection Error": "Erreur de connexion Blender",
+        "Failed to connect to Blender. Please check that Blender is running and kotorblender is installed.": "Échec de la connexion à Blender. Veuillez vérifier que Blender est en cours d'exécution et que kotorblender est installé.",
+        # Unsaved changes dialogs
+        "Unsaved Changes": "Modifications non enregistrées",
+        "You have unsaved changes. Do you want to save before creating a new map?": "Vous avez des modifications non enregistrées. Voulez-vous enregistrer avant de créer une nouvelle carte ?",
     },
     ToolsetLanguage.GERMAN: {
         # Main Window
@@ -1774,6 +1786,12 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Enter search term:": "Suchbegriff eingeben:",
         "Rename Item": "Element umbenennen",
         "Enter new name:": "Neuen Namen eingeben:",
+        # Blender connection errors
+        "Blender Connection Error": "Blender-Verbindungsfehler",
+        "Failed to connect to Blender. Please check that Blender is running and kotorblender is installed.": "Verbindung zu Blender fehlgeschlagen. Bitte überprüfen Sie, dass Blender läuft und kotorblender installiert ist.",
+        # Unsaved changes dialogs
+        "Unsaved Changes": "Nicht gespeicherte Änderungen",
+        "You have unsaved changes. Do you want to save before creating a new map?": "Sie haben nicht gespeicherte Änderungen. Möchten Sie vor dem Erstellen einer neuen Karte speichern?",
     },
     ToolsetLanguage.ITALIAN: {
         # Main Window
@@ -2344,6 +2362,12 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Enter search term:": "Inserisci termine di ricerca:",
         "Rename Item": "Rinomina elemento",
         "Enter new name:": "Inserisci nuovo nome:",
+        # Blender connection errors
+        "Blender Connection Error": "Errore connessione Blender",
+        "Failed to connect to Blender. Please check that Blender is running and kotorblender is installed.": "Connessione a Blender fallita. Verifica che Blender sia in esecuzione e kotorblender sia installato.",
+        # Unsaved changes dialogs
+        "Unsaved Changes": "Modifiche non salvate",
+        "You have unsaved changes. Do you want to save before creating a new map?": "Hai modifiche non salvate. Vuoi salvare prima di creare una nuova mappa?",
     },
     ToolsetLanguage.SPANISH: {
         # Main Window
@@ -2914,6 +2938,12 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Enter search term:": "Introducir término de búsqueda:",
         "Rename Item": "Renombrar elemento",
         "Enter new name:": "Introducir nuevo nombre:",
+        # Blender connection errors
+        "Blender Connection Error": "Error de conexión con Blender",
+        "Failed to connect to Blender. Please check that Blender is running and kotorblender is installed.": "Error al conectar con Blender. Verifique que Blender esté ejecutándose y kotorblender esté instalado.",
+        # Unsaved changes dialogs
+        "Unsaved Changes": "Cambios sin guardar",
+        "You have unsaved changes. Do you want to save before creating a new map?": "Tiene cambios sin guardar. ¿Desea guardar antes de crear un nuevo mapa?",
     },
     ToolsetLanguage.POLISH: {
         # Main Window
@@ -3484,6 +3514,12 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Enter search term:": "Wprowadź wyszukiwany termin:",
         "Rename Item": "Zmień nazwę elementu",
         "Enter new name:": "Wprowadź nową nazwę:",
+        # Blender connection errors
+        "Blender Connection Error": "Błąd połączenia z Blenderem",
+        "Failed to connect to Blender. Please check that Blender is running and kotorblender is installed.": "Nie udało się połączyć z Blenderem. Sprawdź, czy Blender jest uruchomiony i czy kotorblender jest zainstalowany.",
+        # Unsaved changes dialogs
+        "Unsaved Changes": "Niezapisane zmiany",
+        "You have unsaved changes. Do you want to save before creating a new map?": "Masz niezapisane zmiany. Czy chcesz zapisać przed utworzeniem nowej mapy?",
     },
     ToolsetLanguage.RUSSIAN: {
         # Main Window
@@ -4055,6 +4091,12 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Enter search term:": "Введите поисковый запрос:",
         "Rename Item": "Переименовать элемент",
         "Enter new name:": "Введите новое имя:",
+        # Blender connection errors
+        "Blender Connection Error": "Ошибка подключения к Blender",
+        "Failed to connect to Blender. Please check that Blender is running and kotorblender is installed.": "Не удалось подключиться к Blender. Проверьте, что Blender запущен и kotorblender установлен.",
+        # Unsaved changes dialogs
+        "Unsaved Changes": "Несохраненные изменения",
+        "You have unsaved changes. Do you want to save before creating a new map?": "У вас есть несохраненные изменения. Хотите сохранить перед созданием новой карты?",
     },
 }
 
