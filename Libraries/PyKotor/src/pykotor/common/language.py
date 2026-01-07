@@ -35,105 +35,96 @@ class Language(IntEnum):
     ITALIAN = 3
     SPANISH = 4
     POLISH = 5  # cp-1250, only released for K1.
-    # The following custom languages have been added for additional localization support within PyKotor.
-    # cp-1252
-    AFRIKAANS = 6
-    BASQUE = 7
-    BRETON = 9
-    CATALAN = 10
-    CHAMORRO = 11
-    CHICHEWA = 12
-    CORSICAN = 13
-    DANISH = 14
-    DUTCH = 15
-    FAROESE = 16
-    FILIPINO = 18
-    FINNISH = 19
-    FLEMISH = 20
-    FRISIAN = 21
-    GALICIAN = 22
-    GANDA = 23
-    HAITIAN_CREOLE = 24
-    HAUSA_LATIN = 25
-    HAWAIIAN = 26
-    ICELANDIC = 27
-    IDO = 28
-    INDONESIAN = 29
-    IGBO = 30
-    IRISH = 31
-    INTERLINGUA = 32
-    JAVANESE_LATIN = 33
-    LATIN = 34
-    LUXEMBOURGISH = 35
-    MALTESE = 36
-    NORWEGIAN = 37
-    OCCITAN = 38
-    PORTUGUESE = 39
-    SCOTS = 40
-    SCOTTISH_GAELIC = 41
-    SHONA = 42
-    SOTO = 43
-    SUNDANESE_LATIN = 44
-    SWAHILI = 45
-    SWEDISH = 46
-    TAGALOG = 47
-    TAHITIAN = 48
-    TONGAN = 49
+
+    # Western European languages (cp1252 / ISO-8859-1)
+    DUTCH = 6
+    PORTUGUESE = 7
+    DANISH = 8
+    NORWEGIAN = 9
+    SWEDISH = 10
+    FINNISH = 11
+    ICELANDIC = 12
+    IRISH = 13
+    SCOTTISH_GAELIC = 14
+    WELSH = 15
+    BRETON = 16
+    CORNISH = 17
+    MANX = 18
+    CATALAN = 19
+    BASQUE = 20
+    GALICIAN = 21
+    AFRIKAANS = 22
+    SWAHILI = 23
+    INDONESIAN = 24
+    LUXEMBOURGISH = 25
+    FAROESE = 26
+    FRISIAN = 27
+    OCCITAN = 28
+    LATIN = 29
+    ESPERANTO = 30
+    MALTESE = 31
+
+    # Central/Eastern European languages (cp1250 / ISO-8859-2)
+    CZECH = 32
+    SLOVAK = 33
+    HUNGARIAN = 34
+    ROMANIAN = 35
+    CROATIAN = 36
+    SERBIAN_LATIN = 37
+    SLOVENE = 38
+    BOSNIAN = 39
+    MONTENEGRIN = 40
+
+    # Cyrillic languages (cp1251 / ISO-8859-5 / KOI8-R)
+    RUSSIAN = 41
+    UKRAINIAN = 42
+    BELARUSIAN = 43
+    BULGARIAN = 44
+    MACEDONIAN = 45
+    SERBIAN_CYRILLIC = 46
+
+    # Greek (cp1253 / ISO-8859-7)
+    GREEK = 47
+
+    # Turkish (cp1254 / ISO-8859-9)
+    TURKISH = 48
+    AZERI_LATIN = 49
     UZBEK_LATIN = 50
-    WALLOON = 51
-    XHOSA = 52
-    YORUBA = 53
-    WELSH = 54
-    ZULU = 55
-    # cp-1251
-    BULGARIAN = 58
-    BELARISIAN = 59
-    MACEDONIAN = 60
-    RUSSIAN = 61
-    SERBIAN_CYRILLIC = 62
-    TAJIK = 63
-    TATAR_CYRILLIC = 64
-    UKRAINIAN = 66
-    UZBEK = 67
-    # cp-1250
-    ALBANIAN = 68
-    BOSNIAN_LATIN = 69
-    CZECH = 70
-    SLOVAK = 71
-    SLOVENE = 72
-    CROATIAN = 73
-    HUNGARIAN = 75
-    ROMANIAN = 76  # before 1993 reform
-    # cp-1253
-    GREEK = 77
-    # ISO-8859-3
-    ESPERANTO = 78  # loss of information if encoded to cp-1253
-    # cp-1254
-    AZERBAIJANI_LATIN = 79
-    TURKISH = 81
-    TURKMEN_LATIN = 82
-    # cp-1255
-    HEBREW = 83
-    # cp-1256
-    ARABIC = 84
-    # cp-1257
-    ESTONIAN = 85
-    LATVIAN = 86
-    LITHUANIAN = 87
-    # cp-1258
-    VIETNAMESE = 88
-    # cp-874
-    # The following languages aren't fully encodeable to 8-bit without loss of information:
-    # cp-1252
-    AYMARA = 90
-    KINYARWANDA = 91
-    KURDISH_LATIN = 92
-    MALAGASY = 93
-    MALAY_LATIN = 94
-    MAORI = 95
-    MOLDOVAN_LATIN = 96
-    SAMOAN = 97
-    SOMALI = 98
+
+    # Hebrew (cp1255 / ISO-8859-8)
+    HEBREW = 51
+
+    # Arabic (cp1256 / ISO-8859-6)
+    ARABIC = 52
+    PERSIAN = 53
+    URDU = 54
+
+    # Baltic languages (cp1257 / ISO-8859-13)
+    ESTONIAN = 55
+    LATVIAN = 56
+    LITHUANIAN = 57
+
+    # Vietnamese (cp1258)
+    VIETNAMESE = 58
+
+    # Thai (cp874 / ISO-8859-11 / TIS-620)
+    THAI = 59
+
+    # Celtic languages (ISO-8859-14)
+    IRISH_GAELIC = 60  # Additional Celtic variant
+
+    # Nordic languages (ISO-8859-10)
+    GREENLANDIC = 61
+    SAMI = 62
+
+    # Additional languages with SBCS support
+    ALBANIAN = 63
+    ASTURIAN = 64
+    GUARANI = 65
+    IGBO = 66
+    NAURUAN = 67
+    YORUBA = 68
+    TSWANA = 69
 
     # The following languages are supported in the GFF/TLK file formats, but are probably not encodable to 8-bit without significant loss of information
     # therefore are probably incompatible with KOTOR.
@@ -141,6 +132,8 @@ class Language(IntEnum):
     CHINESE_TRADITIONAL = 129
     CHINESE_SIMPLIFIED = 130
     JAPANESE = 131
+
+    UNSET = 0x7FFFFFFF
 
     @classmethod
     def _missing_(cls, value: Any) -> Language:
@@ -177,124 +170,123 @@ class Language(IntEnum):
             - Check if language is in list of Central European languages and return "cp1250" encoding
             - Check individual languages and return their specific encodings.
         """
-        if self in {
-            Language.ALBANIAN,
-            Language.BOSNIAN_LATIN,
-            Language.CROATIAN,
-            Language.CZECH,
-            Language.HUNGARIAN,
-            Language.MOLDOVAN_LATIN,
-            Language.POLISH,
-            Language.ROMANIAN,  # before 1993 reform
-            Language.SLOVAK,
-            Language.SLOVENE,
-        }:
-            return "cp1250"
-        if self in {
-            Language.BULGARIAN,
-            Language.BELARISIAN,
-            Language.MACEDONIAN,
-            Language.RUSSIAN,
-            Language.SERBIAN_CYRILLIC,
-            Language.TAJIK,
-            Language.TATAR_CYRILLIC,
-            Language.UKRAINIAN,
-            Language.UZBEK,
-        }:
-            return "cp1251"
+        # Western European languages (cp1252 / ISO-8859-1)
         if self in {
             Language.ENGLISH,
             Language.FRENCH,
             Language.GERMAN,
             Language.ITALIAN,
             Language.SPANISH,
-            Language.AFRIKAANS,
-            Language.BASQUE,
-            Language.BRETON,
-            Language.CATALAN,
-            Language.CHAMORRO,
-            Language.CHICHEWA,
-            Language.CORSICAN,
-            Language.DANISH,
             Language.DUTCH,
-            Language.FAROESE,
-            Language.FILIPINO,
-            Language.FINNISH,
-            Language.FLEMISH,
-            Language.FRISIAN,
-            Language.GALICIAN,
-            Language.GANDA,
-            Language.HAITIAN_CREOLE,
-            Language.HAUSA_LATIN,
-            Language.HAWAIIAN,
-            Language.ICELANDIC,
-            Language.IDO,
-            Language.INDONESIAN,
-            Language.IGBO,
-            Language.IRISH,
-            Language.INTERLINGUA,
-            Language.JAVANESE_LATIN,
-            Language.LATIN,
-            Language.LUXEMBOURGISH,
-            Language.MALTESE,
-            Language.MAORI,
-            Language.NORWEGIAN,
-            Language.OCCITAN,
             Language.PORTUGUESE,
-            Language.SCOTS,
-            Language.SCOTTISH_GAELIC,
-            Language.SHONA,
-            Language.SOTO,
-            Language.SUNDANESE_LATIN,
-            Language.SWAHILI,
+            Language.DANISH,
+            Language.NORWEGIAN,
             Language.SWEDISH,
-            Language.TAGALOG,
-            Language.TAHITIAN,
-            Language.TONGAN,
-            Language.UZBEK_LATIN,
-            Language.WALLOON,
-            Language.XHOSA,
-            Language.YORUBA,
+            Language.FINNISH,
+            Language.ICELANDIC,
+            Language.IRISH,
+            Language.SCOTTISH_GAELIC,
             Language.WELSH,
-            Language.ZULU,
+            Language.BRETON,
+            Language.CORNISH,
+            Language.MANX,
+            Language.CATALAN,
+            Language.BASQUE,
+            Language.GALICIAN,
+            Language.AFRIKAANS,
+            Language.SWAHILI,
+            Language.INDONESIAN,
+            Language.LUXEMBOURGISH,
+            Language.FAROESE,
+            Language.FRISIAN,
+            Language.OCCITAN,
+            Language.LATIN,
+            Language.ESPERANTO,
+            Language.MALTESE,
+            Language.GREENLANDIC,
+            Language.ALBANIAN,
+            Language.ASTURIAN,
+            Language.GUARANI,
+            Language.IGBO,
+            Language.NAURUAN,
+            Language.YORUBA,
+            Language.TSWANA,
         }:
             return "cp1252"
+
+        # Central/Eastern European languages (cp1250 / ISO-8859-2)
+        if self in {
+            Language.POLISH,
+            Language.CZECH,
+            Language.SLOVAK,
+            Language.HUNGARIAN,
+            Language.ROMANIAN,
+            Language.CROATIAN,
+            Language.SERBIAN_LATIN,
+            Language.SLOVENE,
+            Language.BOSNIAN,
+            Language.MONTENEGRIN,
+        }:
+            return "cp1250"
+
+        # Cyrillic languages (cp1251 / ISO-8859-5)
+        if self in {
+            Language.RUSSIAN,
+            Language.UKRAINIAN,
+            Language.BELARUSIAN,
+            Language.BULGARIAN,
+            Language.MACEDONIAN,
+            Language.SERBIAN_CYRILLIC,
+        }:
+            return "cp1251"
+
+        # Greek (cp1253 / ISO-8859-7)
         if self == Language.GREEK:
             return "cp1253"
+
+        # Turkish (cp1254 / ISO-8859-9)
         if self in {
-            Language.AZERBAIJANI_LATIN,
             Language.TURKISH,
-            Language.TURKMEN_LATIN,
+            Language.AZERI_LATIN,
+            Language.UZBEK_LATIN,
         }:
             return "cp1254"
+
+        # Hebrew (cp1255 / ISO-8859-8)
         if self == Language.HEBREW:
             return "cp1255"
-        if self == Language.ARABIC:
+
+        # Arabic (cp1256 / ISO-8859-6)
+        if self in {
+            Language.ARABIC,
+            Language.PERSIAN,
+            Language.URDU,
+        }:
             return "cp1256"
+
+        # Baltic languages (cp1257 / ISO-8859-13)
         if self in {
             Language.ESTONIAN,
             Language.LATVIAN,
             Language.LITHUANIAN,
         }:
             return "cp1257"
+
+        # Vietnamese (cp1258)
         if self == Language.VIETNAMESE:
             return "cp1258"
-        if self in {
-            Language.MALAY_LATIN,
-            Language.SAMOAN,
-            Language.SOMALI,
-        }:
-            return "ISO-8859-1"
-        if self in {
-            Language.AYMARA,
-            Language.ESPERANTO,
-            Language.MALAGASY,
-        }:
-            return "ISO-8859-3"
-        if self == Language.KURDISH_LATIN:
-            return "ISO-8859-9"
-        if self == Language.KINYARWANDA:
-            return "ISO-8859-10"
+
+        # Thai (cp874 / ISO-8859-11 / TIS-620)
+        if self == Language.THAI:
+            return "cp874"
+
+        # Celtic languages (ISO-8859-14) - can use cp1252 as fallback
+        if self == Language.IRISH_GAELIC:
+            return "cp1252"  # ISO-8859-14 not widely supported, cp1252 is close
+
+        # Nordic languages (ISO-8859-10) - can use cp1252 as fallback
+        if self == Language.SAMI:
+            return "cp1252"  # ISO-8859-10 not widely supported, cp1252 is close
 
         # The following languages/encodings may not be 8-bit and need additional information in order to be supported.
         if self == Language.KOREAN:
@@ -310,102 +302,95 @@ class Language(IntEnum):
 
     def get_bcp47_code(self):
         lang_map = {
+            # Official releases
             Language.ENGLISH: "en",
             Language.FRENCH: "fr",
             Language.GERMAN: "de",
             Language.ITALIAN: "it",
             Language.SPANISH: "es",
             Language.POLISH: "pl",
-            Language.AFRIKAANS: "af",
-            Language.BASQUE: "eu",
-            Language.BRETON: "br",
-            Language.CATALAN: "ca",
-            Language.CHAMORRO: "ch",
-            Language.CHICHEWA: "ny",
-            Language.CORSICAN: "co",
-            Language.DANISH: "da",
+            # Western European
             Language.DUTCH: "nl",
-            Language.FAROESE: "fo",
-            Language.FILIPINO: "filipino",
-            Language.FINNISH: "fi",
-            Language.FLEMISH: "nl-BE",
-            Language.FRISIAN: "fy",
-            Language.GALICIAN: "gl",
-            Language.GANDA: "lg",
-            Language.HAITIAN_CREOLE: "ht",
-            Language.HAUSA_LATIN: "ha",
-            Language.HAWAIIAN: "haw",
-            Language.ICELANDIC: "is",
-            Language.IDO: "io",
-            Language.INDONESIAN: "id",
-            Language.IGBO: "ig",
-            Language.IRISH: "ga",
-            Language.INTERLINGUA: "ia",
-            Language.JAVANESE_LATIN: "jv",  # jv-Latn
-            Language.LATIN: "la",
-            Language.LUXEMBOURGISH: "lb",
-            Language.MALTESE: "mt",
-            Language.NORWEGIAN: "no",
-            Language.OCCITAN: "oc",
             Language.PORTUGUESE: "pt",
-            Language.SCOTS: "sco",
-            Language.SCOTTISH_GAELIC: "gd",
-            Language.SHONA: "sn",
-            Language.SOTO: "st",
-            Language.SUNDANESE_LATIN: "su",  # su-Latn
-            Language.SWAHILI: "sw",
+            Language.DANISH: "da",
+            Language.NORWEGIAN: "no",
             Language.SWEDISH: "sv",
-            Language.TAGALOG: "tl",
-            Language.TAHITIAN: "ty",
-            Language.TONGAN: "to",
-            Language.UZBEK_LATIN: "uz",  # uz-Latn
-            Language.WALLOON: "wa",
-            Language.XHOSA: "xh",
-            Language.YORUBA: "yo",
+            Language.FINNISH: "fi",
+            Language.ICELANDIC: "is",
+            Language.IRISH: "ga",
+            Language.SCOTTISH_GAELIC: "gd",
             Language.WELSH: "cy",
-            Language.ZULU: "zu",
-            Language.BULGARIAN: "bg",
-            Language.BELARISIAN: "be",
-            Language.MACEDONIAN: "mk",
-            Language.RUSSIAN: "ru",
-            Language.SERBIAN_CYRILLIC: "sr",  # sr-Cyrl
-            Language.TAJIK: "tg",
-            Language.TATAR_CYRILLIC: "tt",  # tt-Cyrl
-            Language.UKRAINIAN: "uk",
-            Language.UZBEK: "uz",  # uz-Cyrl
-            Language.ALBANIAN: "sq",
-            Language.BOSNIAN_LATIN: "bs",
+            Language.BRETON: "br",
+            Language.CORNISH: "kw",
+            Language.MANX: "gv",
+            Language.CATALAN: "ca",
+            Language.BASQUE: "eu",
+            Language.GALICIAN: "gl",
+            Language.AFRIKAANS: "af",
+            Language.SWAHILI: "sw",
+            Language.INDONESIAN: "id",
+            Language.LUXEMBOURGISH: "lb",
+            Language.FAROESE: "fo",
+            Language.FRISIAN: "fy",
+            Language.OCCITAN: "oc",
+            Language.LATIN: "la",
+            Language.ESPERANTO: "eo",
+            Language.MALTESE: "mt",
+            # Central/Eastern European
             Language.CZECH: "cs",
             Language.SLOVAK: "sk",
-            Language.SLOVENE: "sl",
-            Language.CROATIAN: "hr",
             Language.HUNGARIAN: "hu",
             Language.ROMANIAN: "ro",
+            Language.CROATIAN: "hr",
+            Language.SERBIAN_LATIN: "sr-Latn",
+            Language.SLOVENE: "sl",
+            Language.BOSNIAN: "bs",
+            Language.MONTENEGRIN: "cnr",
+            # Cyrillic
+            Language.RUSSIAN: "ru",
+            Language.UKRAINIAN: "uk",
+            Language.BELARUSIAN: "be",
+            Language.BULGARIAN: "bg",
+            Language.MACEDONIAN: "mk",
+            Language.SERBIAN_CYRILLIC: "sr-Cyrl",
+            # Greek
             Language.GREEK: "el",
-            Language.ESPERANTO: "eo",
-            Language.AZERBAIJANI_LATIN: "az",  # az-Latn
+            # Turkish
             Language.TURKISH: "tr",
-            Language.TURKMEN_LATIN: "tk",  # tk-Latn
+            Language.AZERI_LATIN: "az",
+            Language.UZBEK_LATIN: "uz-Latn",
+            # Hebrew
             Language.HEBREW: "he",
+            # Arabic
             Language.ARABIC: "ar",
+            Language.PERSIAN: "fa",
+            Language.URDU: "ur",
+            # Baltic
             Language.ESTONIAN: "et",
             Language.LATVIAN: "lv",
             Language.LITHUANIAN: "lt",
+            # Vietnamese
             Language.VIETNAMESE: "vi",
-            Language.AYMARA: "ay",
-            Language.KINYARWANDA: "rw",
-            Language.KURDISH_LATIN: "ku",  # ku-Latn
-            Language.MALAGASY: "mg",
-            Language.MALAY_LATIN: "ms",  # ms-Latn
-            Language.MAORI: "mi",
-            Language.MOLDOVAN_LATIN: "mo",  # mo-Latn
-            Language.SAMOAN: "sm",
-            Language.SOMALI: "so",
+            # Thai
+            Language.THAI: "th",
+            # Celtic
+            Language.IRISH_GAELIC: "ga",
+            # Nordic
+            Language.GREENLANDIC: "kl",
+            Language.SAMI: "se",
+            # Additional
+            Language.ALBANIAN: "sq",
+            Language.ASTURIAN: "ast",
+            Language.GUARANI: "gn",
+            Language.IGBO: "ig",
+            Language.NAURUAN: "na",
+            Language.YORUBA: "yo",
+            Language.TSWANA: "tn",
+            # Non-SBCS languages
             Language.KOREAN: "ko",
             Language.CHINESE_TRADITIONAL: "zh-TW",  # zh-Hant
             Language.CHINESE_SIMPLIFIED: "zh-CN",  # zh-Hans
             Language.JAPANESE: "ja",
-            # Add any additional languages if necessary
         }
         return lang_map.get(self)
 

@@ -1,0 +1,352 @@
+# Single-Byte Character Set (SBCS) Encodings
+
+This document provides a comprehensive reference of all Single-Byte Character Set (SBCS) encodings that can represent languages using 256 characters or less (one byte per character).
+
+## Overview
+
+SBCS encodings are character encodings that use exactly one byte (8 bits) for each graphic character, allowing a maximum of 256 distinct characters (0-255). The first 128 characters (0-127) are typically identical to ASCII, with the upper 128 characters (128-255) containing language-specific characters.
+
+## Windows Code Pages (CP125x Series)
+
+### CP1250 (Windows-1250) - Central European
+**Encoding:** `cp1250`, `windows-1250`  
+**Languages:** Czech, Polish, Slovak, Hungarian, Slovene, Serbo-Croatian (Latin script), Montenegrin, Romanian (before 1993 spelling reform), Turkmen, Rotokas, Albanian, English, German, Irish, Luxembourgish, Dutch  
+**ISO Equivalent:** ISO-8859-2 (with differences)
+
+### CP1251 (Windows-1251) - Cyrillic
+**Encoding:** `cp1251`, `windows-1251`  
+**Languages:** Russian, Bulgarian, Belarusian, Macedonian, Serbian (Cyrillic), Ukrainian  
+**ISO Equivalent:** ISO-8859-5 (with differences)
+
+### CP1252 (Windows-1252) - Western European
+**Encoding:** `cp1252`, `windows-1252`  
+**Languages:** Albanian, Basque, Breton, Catalan, Danish, Dutch, English, Faroese, Finnish, French, German, Greenlandic, Icelandic, Irish Gaelic, Italian, Latin, Luxemburgish, Norwegian, Portuguese, Rhaeto-Romanic, Scottish Gaelic, Spanish, Swedish, Afrikaans, Swahili, Indonesian  
+**ISO Equivalent:** ISO-8859-1 (with differences - uses C1 control area for additional characters)
+
+### CP1253 (Windows-1253) - Greek
+**Encoding:** `cp1253`, `windows-1253`  
+**Languages:** Greek  
+**ISO Equivalent:** ISO-8859-7 (with differences)
+
+### CP1254 (Windows-1254) - Turkish
+**Encoding:** `cp1254`, `windows-1254`  
+**Languages:** Turkish, Azeri (Latin), Uzbek (Latin)  
+**ISO Equivalent:** ISO-8859-9 (with differences)
+
+### CP1255 (Windows-1255) - Hebrew
+**Encoding:** `cp1255`, `windows-1255`  
+**Languages:** Hebrew  
+**ISO Equivalent:** ISO-8859-8 (with differences)
+
+### CP1256 (Windows-1256) - Arabic
+**Encoding:** `cp1256`, `windows-1256`  
+**Languages:** Arabic, Farsi (Persian), Urdu  
+**ISO Equivalent:** ISO-8859-6 (with differences)
+
+### CP1257 (Windows-1257) - Baltic
+**Encoding:** `cp1257`, `windows-1257`  
+**Languages:** Estonian, Latvian, Lithuanian, Polish  
+**ISO Equivalent:** ISO-8859-13 (with differences)
+
+### CP1258 (Windows-1258) - Vietnamese
+**Encoding:** `cp1258`, `windows-1258`  
+**Languages:** Vietnamese, English, French, German, Spanish, Danish, Norwegian, Swedish, Finnish, Irish, Albanian, Luxembourgish, Dutch. With combining diacritics: Asturian, Estonian, Italian, Portuguese, Guarani, Igbo, Nauruan, Yoruba  
+**Note:** Uses combining diacritics for Vietnamese tone marks
+
+### CP874 (Windows-874) - Thai
+**Encoding:** `cp874`, `windows-874`, `tis-620`  
+**Languages:** Thai  
+**ISO Equivalent:** ISO-8859-11 / TIS-620 (with differences)
+
+## ISO/IEC 8859 Series
+
+### ISO-8859-1 (Latin-1) - Western European
+**Encoding:** `iso-8859-1`, `latin1`, `l1`  
+**Languages:** Afrikaans, Albanian, Basque, Breton, Catalan, Cornish, Danish, Dutch, English, Faroese, Finnish, French, Frisian, Galician, German, Greenlandic, Icelandic, Irish, Italian, Latin, Luxemburgish, Norwegian, Portuguese, Rhaeto-Romanic, Scottish Gaelic, Spanish, Swedish, Swahili, Indonesian  
+**Windows Equivalent:** CP1252 (with differences)
+
+### ISO-8859-2 (Latin-2) - Central and Eastern European
+**Encoding:** `iso-8859-2`, `latin2`, `l2`  
+**Languages:** Bosnian, Croatian, Czech, German, Hungarian, Polish, Romanian (with ş/ţ instead of ș/ț), Slovak, Slovene, Serbian (Latin script)  
+**Windows Equivalent:** CP1250 (with differences)
+
+### ISO-8859-3 (Latin-3) - South European
+**Encoding:** `iso-8859-3`, `latin3`, `l3`  
+**Languages:** Afrikaans, Catalan, Dutch, English, Esperanto, German, Italian, Maltese, Spanish, Turkish  
+**Status:** Largely superseded by ISO-8859-9 for Turkish
+
+### ISO-8859-4 (Latin-4) - North European
+**Encoding:** `iso-8859-4`, `latin4`, `l4`  
+**Languages:** Danish, English, Estonian, Finnish, German, Greenlandic, Latin, Latvian, Lithuanian, Norwegian, Sámi (Lappish), Slovenian, Swedish  
+**Status:** Largely superseded by ISO-8859-10 and ISO-8859-13
+
+### ISO-8859-5 (Latin/Cyrillic)
+**Encoding:** `iso-8859-5`, `cyrillic`  
+**Languages:** Belarusian, Bulgarian, Macedonian, Russian, Serbian (Cyrillic), Ukrainian  
+**Windows Equivalent:** CP1251 (with differences)  
+**Note:** Less commonly used than KOI8-R or Windows-1251
+
+### ISO-8859-6 (Latin/Arabic)
+**Encoding:** `iso-8859-6`, `arabic`  
+**Languages:** Arabic  
+**Windows Equivalent:** CP1256 (with differences)  
+**Note:** Basic Arabic alphabet only, no vowel signs
+
+### ISO-8859-7 (Latin/Greek)
+**Encoding:** `iso-8859-7`, `greek`, `greek8`  
+**Languages:** Greek  
+**Windows Equivalent:** CP1253 (with differences)
+
+### ISO-8859-8 (Latin/Hebrew)
+**Encoding:** `iso-8859-8`, `hebrew`  
+**Languages:** Hebrew  
+**Windows Equivalent:** CP1255 (with differences)  
+**Note:** Hebrew letters without vowel signs
+
+### ISO-8859-9 (Latin-5) - Turkish
+**Encoding:** `iso-8859-9`, `latin5`, `l5`  
+**Languages:** Turkish, Azeri (Latin), Uzbek (Latin)  
+**Windows Equivalent:** CP1254 (with differences)  
+**Note:** Similar to ISO-8859-1 but replaces Icelandic characters with Turkish ones
+
+### ISO-8859-10 (Latin-6) - Nordic
+**Encoding:** `iso-8859-10`, `latin6`, `l6`  
+**Languages:** Danish, English, Estonian, Finnish, German, Greenlandic, Icelandic, Latvian, Lithuanian, Norwegian, Sámi (Lappish), Swedish  
+**Note:** Rearrangement of Latin-4 to cover entire Nordic area
+
+### ISO-8859-11 (Latin/Thai)
+**Encoding:** `iso-8859-11`, `tis-620`  
+**Languages:** Thai  
+**Windows Equivalent:** CP874 (with differences)  
+**Note:** Nearly identical to TIS-620 (Thai Industrial Standard 620-2533)
+
+### ISO-8859-13 (Latin-7) - Baltic Rim
+**Encoding:** `iso-8859-13`, `latin7`  
+**Languages:** Estonian, Latvian, Lithuanian, Polish  
+**Windows Equivalent:** CP1257 (with differences)
+
+### ISO-8859-14 (Latin-8) - Celtic
+**Encoding:** `iso-8859-14`, `latin8`, `l8`, `celtic`  
+**Languages:** Welsh, Irish Gaelic, Scottish Gaelic, Manx, Cornish, Breton, Old Irish  
+**Note:** Covers Celtic languages
+
+### ISO-8859-15 (Latin-9) - Western European (Revised)
+**Encoding:** `iso-8859-15`, `latin9`, `l9`  
+**Languages:** Same as ISO-8859-1, plus: French, Finnish  
+**Note:** Revision of ISO-8859-1 with Euro sign and additional French/Finnish characters
+
+### ISO-8859-16 (Latin-10) - South-Eastern European
+**Encoding:** `iso-8859-16`, `latin10`, `l10`  
+**Languages:** Albanian, Croatian, Hungarian, Italian, Polish, Romanian, Serbian, Slovenian, plus: Finnish, French, German, Irish Gaelic  
+**Note:** Intended for Central, Eastern and Southern European languages
+
+## DOS Code Pages (OEM)
+
+### CP437 - US English
+**Encoding:** `cp437`, `ibm437`, `437`  
+**Languages:** English, German, Swedish  
+**Note:** Original IBM PC code page with box-drawing characters
+
+### CP737 - Greek
+**Encoding:** `cp737`, `ibm737`  
+**Languages:** Greek  
+**Note:** DOS Greek
+
+### CP775 - Baltic
+**Encoding:** `cp775`, `ibm775`  
+**Languages:** Estonian, Lithuanian, Latvian  
+**Note:** DOS Baltic
+
+### CP850 - Multilingual Latin-1
+**Encoding:** `cp850`, `ibm850`, `850`  
+**Languages:** Danish, Dutch, English, French, German, Icelandic, Italian, Norwegian, Portuguese, Spanish, Swedish  
+**Note:** DOS version of Latin-1, retains some box-drawing characters
+
+### CP852 - Central/Eastern European
+**Encoding:** `cp852`, `ibm852`, `852`  
+**Languages:** Czech, Polish, Slovak, Hungarian, Croatian, Slovene, Romanian  
+**Note:** DOS version of Latin-2, different arrangement than ISO-8859-2
+
+### CP855 - Cyrillic
+**Encoding:** `cp855`, `ibm855`  
+**Languages:** Bulgarian, Belarusian, Macedonian, Russian, Serbian (Cyrillic), Ukrainian  
+**Note:** DOS Cyrillic, different arrangement than ISO-8859-5
+
+### CP857 - Turkish
+**Encoding:** `cp857`, `ibm857`  
+**Languages:** Turkish  
+**Note:** DOS Turkish
+
+### CP860 - Portuguese
+**Encoding:** `cp860`, `ibm860`  
+**Languages:** Portuguese  
+**Note:** DOS Portuguese
+
+### CP861 - Icelandic
+**Encoding:** `cp861`, `ibm861`  
+**Languages:** Icelandic  
+**Note:** DOS Icelandic
+
+### CP862 - Hebrew
+**Encoding:** `cp862`, `ibm862`  
+**Languages:** Hebrew  
+**Note:** DOS Hebrew
+
+### CP863 - Canadian French
+**Encoding:** `cp863`, `ibm863`  
+**Languages:** French (Canadian)  
+**Note:** DOS Canadian French
+
+### CP864 - Arabic
+**Encoding:** `cp864`, `ibm864`  
+**Languages:** Arabic  
+**Note:** DOS Arabic
+
+### CP865 - Nordic
+**Encoding:** `cp865`, `ibm865`  
+**Languages:** Danish, Norwegian  
+**Note:** DOS Nordic
+
+### CP866 - Cyrillic (Russian)
+**Encoding:** `cp866`, `ibm866`  
+**Languages:** Russian, Belarusian, Ukrainian  
+**Note:** DOS Russian Cyrillic, most common DOS Cyrillic encoding
+
+### CP869 - Greek
+**Encoding:** `cp869`, `ibm869`  
+**Languages:** Greek  
+**Note:** DOS Modern Greek
+
+## KOI8 Encodings
+
+### KOI8-R - Russian
+**Encoding:** `koi8-r`, `cskoi8r`  
+**Languages:** Russian, Bulgarian  
+**Note:** Most widely used Cyrillic encoding in Unix systems and email
+
+### KOI8-U - Ukrainian
+**Encoding:** `koi8-u`  
+**Languages:** Ukrainian, Russian, Bulgarian  
+**Note:** Based on KOI8-R with Ukrainian-specific characters (Ґ, Є, І, Ї)
+
+### KOI8-RU - Russian/Ukrainian/Belarusian
+**Encoding:** `koi8-ru`  
+**Languages:** Russian, Ukrainian, Belarusian  
+**Note:** Extension of KOI8-U with Belarusian character Ў
+
+## Macintosh Encodings
+
+### MacRoman - Western European
+**Encoding:** `mac-roman`, `macintosh`, `x-mac-roman`  
+**Languages:** English, French, German, and other Western European languages  
+**Note:** Original Macintosh character encoding
+
+### MacCentralEurope - Central European
+**Encoding:** `mac-centraleurope`, `mac-latin2`, `x-mac-ce`  
+**Languages:** Czech, Slovak, Hungarian, Polish, Estonian, Latvian, Lithuanian  
+**Note:** Macintosh Central European
+
+### MacCyrillic - Cyrillic
+**Encoding:** `mac-cyrillic`, `x-mac-cyrillic`  
+**Languages:** Belarusian, Bulgarian, Macedonian, Russian, Serbian (Cyrillic)  
+**Note:** Macintosh Cyrillic
+
+### MacGreek - Greek
+**Encoding:** `mac-greek`, `x-mac-greek`  
+**Languages:** Greek  
+**Note:** Macintosh Greek
+
+### MacHebrew - Hebrew
+**Encoding:** `mac-hebrew`, `x-mac-hebrew`  
+**Languages:** Hebrew  
+**Note:** Macintosh Hebrew
+
+### MacIceland - Icelandic
+**Encoding:** `mac-iceland`, `x-mac-iceland`  
+**Languages:** Icelandic  
+**Note:** Macintosh Icelandic
+
+### MacTurkish - Turkish
+**Encoding:** `mac-turkish`, `x-mac-turkish`  
+**Languages:** Turkish  
+**Note:** Macintosh Turkish
+
+### MacThai - Thai
+**Encoding:** `mac-thai`, `x-mac-thai`  
+**Languages:** Thai  
+**Note:** Macintosh Thai, variant of TIS-620
+
+### MacUkraine - Ukrainian
+**Encoding:** `mac-ukraine`, `x-mac-ukraine`  
+**Languages:** Ukrainian  
+**Note:** Macintosh Ukrainian
+
+### MacCroatian - Croatian
+**Encoding:** `mac-croatian`, `x-mac-croatian`  
+**Languages:** Croatian  
+**Note:** Macintosh Croatian
+
+### MacRomania - Romanian
+**Encoding:** `mac-romania`, `x-mac-romania`  
+**Languages:** Romanian  
+**Note:** Macintosh Romanian
+
+### MacArabic - Arabic
+**Encoding:** `mac-arabic`, `x-mac-arabic`  
+**Languages:** Arabic  
+**Note:** Macintosh Arabic
+
+## Language Coverage Summary
+
+### Languages with Full SBCS Support
+
+**Western European Languages:**
+- English, French, German, Spanish, Italian, Portuguese, Dutch, Danish, Norwegian, Swedish, Finnish, Icelandic, Irish, Scottish Gaelic, Welsh, Breton, Cornish, Manx
+
+**Central/Eastern European Languages:**
+- Czech, Slovak, Polish, Hungarian, Romanian, Croatian, Serbian (Latin), Slovenian, Bosnian, Montenegrin
+
+**Cyrillic Languages:**
+- Russian, Ukrainian, Belarusian, Bulgarian, Macedonian, Serbian (Cyrillic)
+
+**Other European Languages:**
+- Greek, Albanian, Estonian, Latvian, Lithuanian, Turkish, Maltese
+
+**Middle Eastern Languages:**
+- Arabic, Hebrew
+
+**Southeast Asian Languages:**
+- Thai, Vietnamese
+
+**African Languages:**
+- Afrikaans, Swahili
+
+**Other Languages:**
+- Esperanto, Latin, Indonesian
+
+### Languages with Partial SBCS Support
+
+Some languages can be represented in SBCS but may require compromises:
+- Languages using combining diacritics (some characters may require multiple bytes in practice)
+- Languages with extensive character sets that may need multiple code pages
+
+## Notes on Implementation
+
+1. **Encoding Compatibility:** Many encodings are similar but not identical. For example, Windows-1252 and ISO-8859-1 differ in the C1 control area (128-159).
+
+2. **Character Limitations:** SBCS encodings are limited to 256 characters, which may not be sufficient for languages with:
+   - Large character sets (Chinese, Japanese, Korean require MBCS/DBCS)
+   - Extensive use of combining diacritics
+   - Complex writing systems
+
+3. **Modern Usage:** While SBCS encodings are still used in legacy systems, modern applications should prefer UTF-8 for maximum compatibility and language support.
+
+4. **Game Compatibility:** For KOTOR, only 8-bit encodings are compatible. Languages requiring more than 256 characters cannot be fully represented.
+
+## References
+
+- ISO/IEC 8859 series standards
+- Microsoft Windows Code Page documentation
+- IANA Character Sets registry
+- Unicode Consortium documentation
+- Various vendor documentation (IBM, Apple, etc.)
