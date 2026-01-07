@@ -26,7 +26,7 @@ from qtpy.QtCore import (
     QSize,
     QTimer,  # pyright: ignore[reportPrivateImportUsage]
     Qt,
-    Signal,
+    Signal,  # pyright: ignore[reportPrivateImportUsage]
 )
 from qtpy.QtGui import QAction, QActionGroup, QDrag, QHelpEvent, QIcon, QKeySequence, QPainter, QPalette, QPixmap, QShortcut, QUndoCommand
 from qtpy.QtWidgets import (
@@ -188,9 +188,9 @@ class LYTEditorWidget(QWidget):
 
         # Action buttons
         button_layout = QHBoxLayout()
-        self.add_room_btn = QPushButton("Add Room")
-        self.add_door_btn = QPushButton("Add Door Hook")
-        self.delete_btn = QPushButton("Delete Selected")
+        self.add_room_btn = QPushButton(tr("Add Room"))
+        self.add_door_btn = QPushButton(tr("Add Door Hook"))
+        self.delete_btn = QPushButton(tr("Delete Selected"))
         button_layout.addWidget(self.add_room_btn)
         button_layout.addWidget(self.add_door_btn)
         button_layout.addWidget(self.delete_btn)
@@ -362,12 +362,12 @@ class LYTEditorWidget(QWidget):
         self._undo_action: _QAction = QAction(tr("Undo"), self)
         self._undo_action.setShortcut(QKeySequence.StandardKey.Undo)
         self._undo_action.setIcon(QIcon(":/icons/undo.png"))
-        self._undo_action.setToolTip("Undo last action")
+        self._undo_action.setToolTip(tr("Undo last action"))
 
         self._redo_action: _QAction = QAction(tr("Redo"), self)
         self._redo_action.setShortcut(QKeySequence.StandardKey.Redo)
         self._redo_action.setIcon(QIcon(":/icons/redo.png"))
-        self._redo_action.setToolTip("Redo last action")
+        self._redo_action.setToolTip(tr("Redo last action"))
 
         self.process_pool: ProcessPoolExecutor = ProcessPoolExecutor(
             max_workers=max(1, os.cpu_count() - 1),
@@ -461,12 +461,12 @@ class LYTEditorWidget(QWidget):
         from qtpy.QtWidgets import QUndoView
 
         self.undo_view: QUndoView = QUndoView(self.undo_stack)
-        self.undo_view.setWindowTitle("Command History")
+        self.undo_view.setWindowTitle(tr("Command History"))
         self.undo_view.show()
 
     def setup_error_handler(self):
         self.error_dialog: QErrorMessage = QErrorMessage(self)
-        self.error_dialog.setWindowTitle("Error")
+        self.error_dialog.setWindowTitle(tr("Error"))
         self.error_dialog.setMinimumSize(400, 300)
         self.error_dialog.setPalette(self.error_dialog.palette())
 
@@ -500,7 +500,7 @@ class LYTEditorWidget(QWidget):
     def setup_main_toolbar(self):
         # Room actions
         self.room_actions: list[_QAction] = []
-        room_menu: _QMenu = QMenu("Room Actions", self)
+        room_menu: _QMenu = QMenu(tr("Room Actions"), self)
         add_room_action: _QAction = room_menu.addAction(QIcon("path/to/add_room_icon.png"), "Add Room")
         add_room_action.triggered.connect(self.lyt_editor.add_room)
         resize_room_action: _QAction = room_menu.addAction(QIcon("path/to/resize_room_icon.png"), "Resize Room")
@@ -520,7 +520,7 @@ class LYTEditorWidget(QWidget):
 
         # Walkmesh actions
         self.walkmesh_actions: list[_QAction] = []
-        walkmesh_menu: _QMenu = QMenu("Walkmesh Actions", self)
+        walkmesh_menu: _QMenu = QMenu(tr("Walkmesh Actions"), self)
 
         generate_walkmesh_action: _QAction = walkmesh_menu.addAction(QIcon("path/to/generate_walkmesh_icon.png"), "Generate Walkmesh")
         generate_walkmesh_action.triggered.connect(self.generate_walkmesh)
@@ -537,7 +537,7 @@ class LYTEditorWidget(QWidget):
 
         # Texture actions
         self.texture_actions: list[_QAction] = []
-        texture_menu = QMenu("Texture Actions", self)
+        texture_menu = QMenu(tr("Texture Actions"), self)
         import_texture_action: _QAction = texture_menu.addAction(QIcon("path/to/import_texture_icon.png"), "Import Texture")
         import_texture_action.triggered.connect(self.import_texture)
         manage_textures_action: _QAction = texture_menu.addAction(QIcon("path/to/manage_textures_icon.png"), "Manage Textures")
@@ -1043,7 +1043,7 @@ class LYTEditorWidget(QWidget):
         info_box = QMessageBox(self)
         info_box.setIcon(QMessageBox.Icon.Information)
         info_box.setText(message)
-        info_box.setWindowTitle("Information")
+        info_box.setWindowTitle(tr("Information"))
         info_box.exec()
         RobustLogger().info(message)
 
@@ -1154,7 +1154,7 @@ class LYTEditorWidget(QWidget):
 
     def show_search_results(self, results: list[tuple[str, str]]):
         result_dialog = QDialog(self)
-        result_dialog.setWindowTitle("Search Results")
+        result_dialog.setWindowTitle(tr("Search Results"))
         layout = QVBoxLayout(result_dialog)
         for result_type, result_name in results:
             result_label = QLabel(f"{result_type}: {result_name}")
@@ -1162,7 +1162,7 @@ class LYTEditorWidget(QWidget):
             result_label.setCursor(Qt.CursorShape.PointingHandCursor)
             result_label.setToolTip("Click to go to this item")
             layout.addWidget(result_label)
-        layout.addWidget(QPushButton("Close", clicked=result_dialog.accept))
+        layout.addWidget(QPushButton(tr("Close"), clicked=result_dialog.accept))
         result_dialog.setModal(False)
         result_dialog.exec()
 
@@ -1302,7 +1302,7 @@ class LYTEditorWidget(QWidget):
 
     def show_quick_search_results(self, results: list[tuple[str, str]]):
         result_dialog = QDialog(self)
-        result_dialog.setWindowTitle("Quick Search Results")
+        result_dialog.setWindowTitle(tr("Quick Search Results"))
         layout = QVBoxLayout(result_dialog)
         for result_type, result_name in results:
             result_label = QLabel(f"{result_type}: {result_name}")
@@ -1310,7 +1310,7 @@ class LYTEditorWidget(QWidget):
             result_label.setCursor(Qt.CursorShape.PointingHandCursor)
             result_label.setToolTip("Click to go to this item")
             layout.addWidget(result_label)
-        layout.addWidget(QPushButton("Close", clicked=result_dialog.accept))
+        layout.addWidget(QPushButton(tr("Close"), clicked=result_dialog.accept))
         result_dialog.setModal(False)
         result_dialog.exec()
 

@@ -2090,7 +2090,7 @@ class ToolWindow(QMainWindow):
             # Signal may not be connected yet during initialization
             pass
         self.ui.gameCombo.clear()  # without above disconnect, would call ToolWindow().changeActiveInstallation(-1)
-        self.ui.gameCombo.addItem("[None]")  # without above disconnect, would call ToolWindow().changeActiveInstallation(0)
+        self.ui.gameCombo.addItem(tr("[None]"))  # without above disconnect, would call ToolWindow().changeActiveInstallation(0)
 
         for installation in self.settings.installations().values():
             self.ui.gameCombo.addItem(installation.name)

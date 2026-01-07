@@ -190,7 +190,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         # Add a missing "Open .mod" action at runtime (UI code is generated; do not edit it).
         self._action_open_mod: QAction = QAction(tr("Open .mod..."), self)
         self._action_open_mod.setShortcut("Ctrl+Shift+O")
-        self._action_open_mod.setStatusTip("Open a built module (.mod) and load its embedded indoor map")
+        self._action_open_mod.setStatusTip(tr("Open a built module (.mod) and load its embedded indoor map"))
         # Put it right after "Open" in File menu and toolbar.
         try:
             self.ui.menuFile.insertAction(self.ui.actionSave, self._action_open_mod)
@@ -757,7 +757,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
         self._blender_log_view = QPlainTextEdit(container)
         self._blender_log_view.setReadOnly(True)
-        self._blender_log_view.setPlaceholderText("Blender log output will appear here once the IPC bridge starts…")
+        self._blender_log_view.setPlaceholderText(tr("Blender log output will appear here once the IPC bridge starts…"))
         layout.addWidget(self._blender_log_view, 1)
 
         return container

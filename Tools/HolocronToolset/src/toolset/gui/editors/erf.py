@@ -34,7 +34,7 @@ from pykotor.resource.formats.rim import RIM, read_rim, write_rim
 from pykotor.resource.type import ResourceType
 from pykotor.tools.misc import is_capsule_file
 from toolset.gui.common.filters import RobustSortFilterProxyModel
-from toolset.gui.common.localization import translate as tr
+from toolset.gui.common.localization import translate as tr, trf
 from toolset.gui.dialogs.save.generic_file_saver import FileSaveHandler
 from toolset.gui.editor import Editor
 from toolset.gui.widgets.settings.installations import GlobalSettings
@@ -426,22 +426,23 @@ class ERFEditor(Editor):
         resource: ERFResource,
     ) -> tuple[str, bool]:
         dialog: QInputDialog = QInputDialog(self)
-        dialog.setWindowTitle(f"Rename {erfrim_name} Resource ResRef")
-        dialog.setLabelText(f"Enter new ResRef ({resource.resref}):")
+        dialog.setWindowTitle(tr(f"Rename {erfrim_name} Resource ResRef"))
+        dialog.setLabelText(trf("Enter new ResRef ({resref}):", resref=resource.resref))
         dialog.setTextValue(str(resource.resref))
         dialog.setInputMode(QInputDialog.InputMode.TextInput)
 
         input_field: QLineEdit | None = dialog.findChild(QLineEdit)
-        if input_field is None:
-            RobustLogger().warning("input_field could not be found in parent class QLineEdit")
-            return "", False
         input_field.setValidator(self.resref_validator())
 
         while dialog.exec() == QInputDialog.DialogCode.Accepted:
             new_resname: str = dialog.textValue()
             if ResRef.is_valid(new_resname):
                 return new_resname, True
-            QMessageBox.warning(self, tr("Invalid ResRef"), tr("ResRefs must adhere to SBCS encoding standards (typically cp1252) and be a maximum of 16 characters."))
+            QMessageBox.warning(
+                self,
+                tr("Invalid ResRef"),
+                tr("ResRefs must adhere to SBCS encoding standards (typically cp1252) and be a maximum of 16 characters."),
+            )
         return "", False
 
     def resref_validator(self) -> QRegExpValidator:
@@ -449,8 +450,15 @@ class ERFEditor(Editor):
 
     def remove_selected(self):
         self._has_changes = True
-        for index in reversed([index for index in self.ui.tableView.selectedIndexes() if not index.column()]):
-            item: QStandardItem | None = self.source_model.itemFromIndex(self._proxy_model.mapToSource(index))
+        for index in reversed(
+            [
+                index
+                for index in self.ui.tableView.selectedIndexes()
+                if not index.column()
+            ]
+        ):
+            source_index: QModelIndex = self._proxy_model.mapToSource(index)
+            item: QStandardItem | None = self.source_model.itemFromIndex(source_index)
             if item is None:
                 RobustLogger().warning("item was None in ERFEditor.remove_selected() at index %s", index)
                 continue
@@ -480,8 +488,13 @@ class ERFEditor(Editor):
                 QMessageBox(
                     QMessageBox.Icon.Critical,
                     tr("Failed to add resource"),
-                    f"Could not add resource at '{r_filepath.absolute()}'<br><br>{error_msg}",
-                    flags=Qt.WindowType.Dialog | Qt.WindowType.Window | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.WindowSystemMenuHint,
+                    tr(f"Could not add resource at '{r_filepath.absolute()}'<br><br>{error_msg}"),
+                    flags=(
+                        Qt.WindowType.Dialog
+                        | Qt.WindowType.Window
+                        | Qt.WindowType.WindowStaysOnTopHint
+                        | Qt.WindowType.WindowSystemMenuHint
+                    ),
                 ).exec()
 
     def select_files_to_add(self):
@@ -497,17 +510,30 @@ class ERFEditor(Editor):
         if sel_model is None:
             RobustLogger().warning("ERFEditor: selectionModel was None in open_selected()")
             return
-        erf_resources: list[ERFResource] = [self.source_model.itemFromIndex(self._proxy_model.mapToSource(index)).data() for index in sel_model.selectedRows()]
+        selected_rows: list[QModelIndex] = sel_model.selectedRows()
+        if not selected_rows:
+            RobustLogger().warning("ERFEditor: no selected rows in open_selected()")
+            return
+        erf_resources: list[ERFResource] = [
+            self.source_model.itemFromIndex(self._proxy_model.mapToSource(index)).data()
+            for index in selected_rows
+        ]
         if not erf_resources:
+            RobustLogger().warning("ERFEditor: no erf_resources in open_selected()")
             return
         if self._filepath is None:
             QMessageBox(
                 QMessageBox.Icon.Critical,
-                f"Cannot edit resource {erf_resources[0].identifier()}. Filepath not set.",
-                "This ERF/RIM must be saved to disk first, do so and try again.",
+                tr(f"Cannot edit resource {erf_resources[0].identifier()}. Filepath not set."),
+                tr("This ERF/RIM must be saved to disk first, do so and try again."),
                 QMessageBox.StandardButton.Ok,
                 self,
-                flags=Qt.WindowType.Dialog | Qt.WindowType.Window | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.WindowSystemMenuHint,
+                flags=(
+                    Qt.WindowType.Dialog
+                    | Qt.WindowType.Window
+                    | Qt.WindowType.WindowStaysOnTopHint
+                    | Qt.WindowType.WindowSystemMenuHint
+                ),
             ).exec()
             return
 
@@ -530,8 +556,17 @@ class ERFEditor(Editor):
     ):
         for resource in resources:
             new_filepath: Path = filepath
-            if resource.restype in (ResourceType.ERF, ResourceType.SAV, ResourceType.RIM, ResourceType.MOD):
-                RobustLogger().info(f"Nested capsule selected for opening, appending resref/restype '{resource.resref}.{resource.restype}' to the filepath.")
+            if resource.restype in (
+                ResourceType.ERF,
+                ResourceType.SAV,
+                ResourceType.RIM,
+                ResourceType.MOD,
+            ):
+                RobustLogger().info(
+                    "Nested capsule selected for opening, appending resref/restype '%s.%s' to the filepath.",
+                    resource.resref,
+                    resource.restype,
+                )
                 new_filepath /= str(ResourceIdentifier(str(resource.resref), resource.restype))
 
             # IMPORTANT:
@@ -556,11 +591,16 @@ class ERFEditor(Editor):
         if self._filepath is None:
             QMessageBox(
                 QMessageBox.Icon.Critical,
-                "Nothing to refresh.",
-                "This ERFEditor was never loaded from a file, so there's nothing to refresh.",
+                tr("Nothing to refresh."),
+                tr("This ERFEditor was never loaded from a file, so there's nothing to refresh."),
                 QMessageBox.StandardButton.Ok,
                 self,
-                flags=Qt.WindowType.Dialog | Qt.WindowType.Window | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.WindowSystemMenuHint,
+                flags=(
+                    Qt.WindowType.Dialog
+                    | Qt.WindowType.Window
+                    | Qt.WindowType.WindowStaysOnTopHint
+                    | Qt.WindowType.WindowSystemMenuHint
+                ),
             ).exec()
             return
         self._has_changes = False
@@ -681,8 +721,8 @@ class ERFEditorTable(RobustTableView):
                 f"{source_model.index(row, 0).data()}.{source_model.index(row, 1).data()}".strip().lower()
                 for row in range(source_model.rowCount())
             }
-            always = False
-            never = False
+            always: bool = False
+            never: bool = False
             to_skip: list[str] = []
             links: list[str] = [str(url.toLocalFile()) for url in mime_data.urls()]
             for link in links:
@@ -694,19 +734,25 @@ class ERFEditorTable(RobustTableView):
                     else:
                         msg_box = QMessageBox()
                         msg_box.setIcon(QMessageBox.Icon.Warning)
-                        msg_box.setWindowTitle("Duplicate Resource dropped.")
-                        msg_box.setText(f"'{link}' already exists in the table. Do you want to overwrite?")
-                        msg_box.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.YesToAll | QMessageBox.StandardButton.No | QMessageBox.StandardButton.NoToAll | QMessageBox.StandardButton.Abort)  # noqa: E501
+                        msg_box.setWindowTitle(tr("Duplicate Resource dropped."))
+                        msg_box.setText(tr("'{link}' already exists in the table. Do you want to overwrite?"))
+                        msg_box.setStandardButtons(
+                            QMessageBox.StandardButton.Yes
+                            | QMessageBox.StandardButton.YesToAll
+                            | QMessageBox.StandardButton.No
+                            | QMessageBox.StandardButton.NoToAll
+                            | QMessageBox.StandardButton.Abort
+                        )
                         button_yes: QAbstractButton | None = msg_box.button(QMessageBox.StandardButton.Yes)
                         if button_yes is None:
                             RobustLogger().warning("ERFEditorTable: button_yes was None in dropEvent()")
                             return
-                        button_yes.setText("Overwrite")
+                        button_yes.setText(tr("Overwrite"))
                         button_yes_to_all: QAbstractButton | None = msg_box.button(QMessageBox.StandardButton.YesToAll)
                         if button_yes_to_all is None:
                             RobustLogger().warning("ERFEditorTable: button_yes_to_all was None in dropEvent()")
                             return
-                        button_yes_to_all.setText("Overwrite All")
+                        button_yes_to_all.setText(tr("Overwrite All"))
                     if response == QMessageBox.StandardButton.Yes:
                         model: QAbstractItemModel | None = self.model()
                         if model is None:
@@ -723,7 +769,7 @@ class ERFEditorTable(RobustTableView):
                                 continue
                             filename: str = f"{cell_col_0.text()}.{cell_col_1.text()}".strip().lower()
                             if filename == link.lower().strip():
-                                print(f"Removing '{filename}' from the erf/rim.")
+                                RobustLogger().info(f"Removing '{filename}' from the erf/rim.")
                                 model.removeRow(row)
                                 break
                     elif response == QMessageBox.StandardButton.No:
@@ -747,7 +793,7 @@ class ERFEditorTable(RobustTableView):
                                 continue
                             filename = f"{cell_col_0.text()}.{cell_col_1.text()}".strip().lower()
                             if filename == link.lower().strip():
-                                print(f"Removing '{filename}' from the erf/rim.")
+                                RobustLogger().info(f"Removing '{filename}' from the erf/rim.")
                                 model.removeRow(row)
                                 break
                     elif response == QMessageBox.StandardButton.NoToAll:
@@ -755,10 +801,10 @@ class ERFEditorTable(RobustTableView):
                         to_skip.append(link)
 
             for link in to_skip:
-                print(f"Skipping dropped filename '{link}'")
+                RobustLogger().info(f"Skipping dropped filename '{link}'")
                 links.remove(link)
             if not links:
-                print("Nothing dropped, or everything dropped was skipped.")
+                RobustLogger().info("Nothing dropped, or everything dropped was skipped.")
                 return
             self.sig_resource_dropped.emit(links)
         else:
@@ -766,10 +812,9 @@ class ERFEditorTable(RobustTableView):
 
     def startDrag(
         self,
-        actions: Qt.DropAction,
-    ):  # pyright: ignore[reportIncompatibleMethodOverride]
+        actions: Qt.DropAction | Qt.DropActions | None = None,  # pyright: ignore[reportAttributeAccessIssue, reportIncompatibleMethodOverride]
+    ):
         temp_dir = Path(GlobalSettings().extractPath)
-
         # Ensure the temp directory exists and is valid
         exists: bool = temp_dir.exists()
         if not exists or not temp_dir.is_dir():
