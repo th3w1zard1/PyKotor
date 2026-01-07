@@ -372,7 +372,7 @@ class SaveGameEditor(Editor):
         self._screenshot_original_pixmap = None
         self._screenshot_original_size = None
         if hasattr(self.ui, 'labelScreenshotPreview'):
-            self.ui.labelScreenshotPreview.setText("No screenshot available")
+            self.ui.labelScreenshotPreview.setText(tr("No screenshot available"))
             self.ui.labelScreenshotPreview.setPixmap(QPixmap())
             self.ui.labelScreenshotPreview.setToolTip("")
     

@@ -646,6 +646,8 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         # Module opening errors
         "Cannot Open Module": "Cannot Open Module",
         "This .mod is not inside the active installation's Modules folder, so the Toolset cannot resolve its resources.\n\nTip: copy it into the active installation's Modules folder, then re-open.": "This .mod is not inside the active installation's Modules folder, so the Toolset cannot resolve its resources.\n\nTip: copy it into the active installation's Modules folder, then re-open.",
+        # UI status messages
+        "No screenshot available": "No screenshot available",
     },
     ToolsetLanguage.FRENCH: {
         # Main Window
@@ -1228,6 +1230,8 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         # Module opening errors
         "Cannot Open Module": "Impossible d'ouvrir le module",
         "This .mod is not inside the active installation's Modules folder, so the Toolset cannot resolve its resources.\n\nTip: copy it into the active installation's Modules folder, then re-open.": "Ce .mod n'est pas dans le dossier Modules de l'installation active, donc l'outil ne peut pas résoudre ses ressources.\n\nAstuce : copiez-le dans le dossier Modules de l'installation active, puis rouvrez-le.",
+        # UI status messages
+        "No screenshot available": "Aucune capture d'écran disponible",
     },
     ToolsetLanguage.GERMAN: {
         # Main Window
@@ -1810,6 +1814,8 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         # Module opening errors
         "Cannot Open Module": "Modul kann nicht geöffnet werden",
         "This .mod is not inside the active installation's Modules folder, so the Toolset cannot resolve its resources.\n\nTip: copy it into the active installation's Modules folder, then re-open.": "Diese .mod befindet sich nicht im Modules-Ordner der aktiven Installation, daher kann das Toolset seine Ressourcen nicht auflösen.\n\nTipp: Kopieren Sie sie in den Modules-Ordner der aktiven Installation und öffnen Sie sie dann erneut.",
+        # UI status messages
+        "No screenshot available": "Kein Screenshot verfügbar",
     },
     ToolsetLanguage.ITALIAN: {
         # Main Window
@@ -2392,6 +2398,8 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         # Module opening errors
         "Cannot Open Module": "Impossibile aprire il modulo",
         "This .mod is not inside the active installation's Modules folder, so the Toolset cannot resolve its resources.\n\nTip: copy it into the active installation's Modules folder, then re-open.": "Questo .mod non è nella cartella Modules dell'installazione attiva, quindi il Toolset non può risolvere le sue risorse.\n\nSuggerimento: copialo nella cartella Modules dell'installazione attiva, quindi riaprilo.",
+        # UI status messages
+        "No screenshot available": "Nessuna schermata disponibile",
     },
     ToolsetLanguage.SPANISH: {
         # Main Window
@@ -2974,6 +2982,8 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         # Module opening errors
         "Cannot Open Module": "No se puede abrir el módulo",
         "This .mod is not inside the active installation's Modules folder, so the Toolset cannot resolve its resources.\n\nTip: copy it into the active installation's Modules folder, then re-open.": "Este .mod no está dentro de la carpeta Modules de la instalación activa, por lo que el Toolset no puede resolver sus recursos.\n\nConsejo: cópielo en la carpeta Modules de la instalación activa, luego vuelva a abrirlo.",
+        # UI status messages
+        "No screenshot available": "No hay captura de pantalla disponible",
     },
     ToolsetLanguage.POLISH: {
         # Main Window
@@ -3556,6 +3566,8 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         # Module opening errors
         "Cannot Open Module": "Nie można otworzyć modułu",
         "This .mod is not inside the active installation's Modules folder, so the Toolset cannot resolve its resources.\n\nTip: copy it into the active installation's Modules folder, then re-open.": "Ten .mod nie znajduje się w folderze Modules aktywnej instalacji, więc Toolset nie może rozwiązać jego zasobów.\n\nWskazówka: skopiuj go do folderu Modules aktywnej instalacji, a następnie otwórz ponownie.",
+        # UI status messages
+        "No screenshot available": "Brak dostępnego zrzutu ekranu",
     },
     ToolsetLanguage.RUSSIAN: {
         # Main Window
@@ -4139,6 +4151,8 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         # Module opening errors
         "Cannot Open Module": "Невозможно открыть модуль",
         "This .mod is not inside the active installation's Modules folder, so the Toolset cannot resolve its resources.\n\nTip: copy it into the active installation's Modules folder, then re-open.": "Этот .mod не находится в папке Modules активной установки, поэтому Toolset не может разрешить его ресурсы.\n\nСовет: скопируйте его в папку Modules активной установки, затем откройте снова.",
+        # UI status messages
+        "No screenshot available": "Скриншот недоступен",
     },
 }
 
