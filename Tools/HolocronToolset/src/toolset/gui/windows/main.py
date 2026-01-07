@@ -83,6 +83,7 @@ from toolset.gui.editors.uts import UTSEditor
 from toolset.gui.editors.utt import UTTEditor
 from toolset.gui.editors.utw import UTWEditor
 from toolset.gui.widgets.main_widgets import ResourceList, ResourceStandardItem
+from toolset.gui.widgets.kotor_filesystem_model import ResourceFileSystemWidget
 from toolset.gui.widgets.settings.widgets.misc import GlobalSettings
 from toolset.gui.windows.help import HelpWindow
 from toolset.gui.windows.indoor_builder import IndoorMapBuilder
@@ -657,6 +658,18 @@ class ToolWindow(QMainWindow):
         # Setup Language menu
         self._setup_language_menu()
 
+        # Setup View menu - Legacy Layout toggle
+        self._use_legacy_layout: bool = self.settings.value("useLegacyLayout", False, type=bool)
+        if hasattr(self.ui, "actionLegacyLayout"):
+            self.ui.actionLegacyLayout.setChecked(self._use_legacy_layout)
+            self.ui.actionLegacyLayout.triggered.connect(self._on_legacy_layout_toggled)
+        
+        # Initialize view switching (will be set up after UI is ready)
+        self._fs_core_widget: ResourceFileSystemWidget | None = None
+        self._fs_modules_widget: ResourceFileSystemWidget | None = None
+        self._fs_override_widget: ResourceFileSystemWidget | None = None
+        self._fs_saves_widget: ResourceFileSystemWidget | None = None
+
     @Slot(bool)
     def _open_theme_dialog(
         self,
@@ -757,6 +770,150 @@ class ToolWindow(QMainWindow):
         # Apply translations after setting up menu
         self.apply_translations()
 
+    def _setup_view_switching(self):
+        """Set up view switching between filesystem view and legacy layout."""
+        # Apply initial view mode
+        if self.active is not None:
+            self._apply_view_mode()
+
+    @Slot(bool)
+    def _on_legacy_layout_toggled(self, checked: bool):
+        """Handle Legacy Layout menu action toggle.
+
+        Args:
+        ----
+            checked: Whether legacy layout is enabled
+        """
+        self._use_legacy_layout = checked
+        self.settings.setValue("useLegacyLayout", checked)
+        self._apply_view_mode()
+
+    def _apply_view_mode(self):
+        """Apply the current view mode (filesystem or legacy)."""
+        if self._use_legacy_layout:
+            self._switch_to_legacy_view()
+        else:
+            self._switch_to_filesystem_view()
+
+    def _switch_to_legacy_view(self):
+        """Switch to legacy ResourceList view."""
+        # Hide filesystem widgets and show legacy widgets
+        if self._fs_core_widget is not None:
+            self._fs_core_widget.hide()
+        self.ui.coreWidget.show()
+
+        if self._fs_modules_widget is not None:
+            self._fs_modules_widget.hide()
+        self.ui.modulesWidget.show()
+
+        if self._fs_override_widget is not None:
+            self._fs_override_widget.hide()
+        self.ui.overrideWidget.show()
+
+        if self._fs_saves_widget is not None:
+            self._fs_saves_widget.hide()
+        self.ui.savesWidget.show()
+
+    def _switch_to_filesystem_view(self):
+        """Switch to filesystem view with archive-as-folder support."""
+        if self.active is None:
+            return
+
+        # Store references to legacy widgets
+        legacy_core = self.ui.coreWidget
+        legacy_modules = self.ui.modulesWidget
+        legacy_override = self.ui.overrideWidget
+        legacy_saves = self.ui.savesWidget
+
+        # Create filesystem widgets if they don't exist
+        if self._fs_core_widget is None:
+            # Get the parent widget (the tab container)
+            core_parent = legacy_core.parent()
+            if core_parent is not None:
+                self._fs_core_widget = ResourceFileSystemWidget(core_parent)
+                # Insert into the same layout position as legacy widget
+                layout = core_parent.layout()
+                if layout is not None:
+                    # Find the index of the legacy widget
+                    for i in range(layout.count()):
+                        item = layout.itemAt(i)
+                        if item and item.widget() == legacy_core:
+                            layout.insertWidget(i, self._fs_core_widget)
+                            break
+                # Set root path to installation path
+                install_path = self.active.path()
+                if install_path.exists():
+                    self._fs_core_widget.setRootPath(install_path)
+
+        if self._fs_modules_widget is None:
+            modules_parent = legacy_modules.parent()
+            if modules_parent is not None:
+                self._fs_modules_widget = ResourceFileSystemWidget(modules_parent)
+                layout = modules_parent.layout()
+                if layout is not None:
+                    for i in range(layout.count()):
+                        item = layout.itemAt(i)
+                        if item and item.widget() == legacy_modules:
+                            layout.insertWidget(i, self._fs_modules_widget)
+                            break
+                # Set root path to modules directory
+                module_path = self.active.module_path()
+                if module_path.exists():
+                    self._fs_modules_widget.setRootPath(module_path)
+
+        if self._fs_override_widget is None:
+            override_parent = legacy_override.parent()
+            if override_parent is not None:
+                self._fs_override_widget = ResourceFileSystemWidget(override_parent)
+                layout = override_parent.layout()
+                if layout is not None:
+                    for i in range(layout.count()):
+                        item = layout.itemAt(i)
+                        if item and item.widget() == legacy_override:
+                            layout.insertWidget(i, self._fs_override_widget)
+                            break
+                # Set root path to override directory
+                override_path = self.active.override_path()
+                if override_path.exists():
+                    self._fs_override_widget.setRootPath(override_path)
+
+        if self._fs_saves_widget is None:
+            saves_parent = legacy_saves.parent()
+            if saves_parent is not None:
+                self._fs_saves_widget = ResourceFileSystemWidget(saves_parent)
+                layout = saves_parent.layout()
+                if layout is not None:
+                    for i in range(layout.count()):
+                        item = layout.itemAt(i)
+                        if item and item.widget() == legacy_saves:
+                            layout.insertWidget(i, self._fs_saves_widget)
+                            break
+                # Set root path to first save location, or installation path if no saves
+                save_locations = self.active.save_locations()
+                if save_locations and len(save_locations) > 0 and save_locations[0].exists() and save_locations[0].is_dir():
+                    self._fs_saves_widget.setRootPath(save_locations[0])
+                else:
+                    install_path = self.active.path()
+                    if install_path.exists():
+                        self._fs_saves_widget.setRootPath(install_path)
+
+        # Show filesystem widgets and hide legacy widgets
+        if self._fs_core_widget is not None:
+            self._fs_core_widget.show()
+        legacy_core.hide()
+
+        if self._fs_modules_widget is not None:
+            self._fs_modules_widget.show()
+        legacy_modules.hide()
+
+        if self._fs_override_widget is not None:
+            self._fs_override_widget.show()
+        legacy_override.hide()
+
+        if self._fs_saves_widget is not None:
+            self._fs_saves_widget.show()
+        legacy_saves.hide()
+
     def _update_language_menu_checkmarks(
         self,
         language: ToolsetLanguage,
@@ -775,6 +932,8 @@ class ToolWindow(QMainWindow):
         # Translate menu titles
         self.ui.menuFile.setTitle(tr("File"))
         self.ui.menuEdit.setTitle(tr("Edit"))
+        if hasattr(self.ui, "menuView"):
+            self.ui.menuView.setTitle(tr("View"))
         self.ui.menuTools.setTitle(tr("Tools"))
         self.ui.menuTheme.setTitle(tr("Theme"))
         self.ui.menuLanguage.setTitle(tr("Language"))
@@ -797,6 +956,8 @@ class ToolWindow(QMainWindow):
         self.ui.actionTSLPatchDataEditor.setText(tr("TSLPatchData Editor"))
         self.ui.actionFileSearch.setText(tr("File Search"))
         self.ui.actionCloneModule.setText(tr("Clone Module"))
+        if hasattr(self.ui, "actionLegacyLayout"):
+            self.ui.actionLegacyLayout.setText(tr("Legacy Layout"))
         self.ui.actionDiscordHolocronToolset.setText(tr("Holocron Toolset"))
         self.ui.actionDiscordKotOR.setText(tr("KOTOR Community Portal"))
         self.ui.actionDiscordDeadlyStream.setText(tr("Deadly Stream"))
@@ -1287,6 +1448,8 @@ class ToolWindow(QMainWindow):
             self.sig_installation_changed.emit(self.active)
             # Set up file system watcher for auto-detecting module/override changes
             self._setup_file_watcher()
+            # Apply view mode after installation is set
+            self._apply_view_mode()
 
     # FileSearcher/FileResults
     @Slot(list, HTInstallation)
