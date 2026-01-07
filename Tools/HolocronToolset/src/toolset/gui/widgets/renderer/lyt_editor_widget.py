@@ -16,7 +16,6 @@ from typing import TYPE_CHECKING, Any, Callable, Optional, cast
 
 import qtpy
 
-from loggerplus import RobustLogger
 from qtpy.QtCore import (
     QByteArray,
     QEvent,
@@ -28,6 +27,7 @@ from qtpy.QtCore import (
     Qt,
     Signal,  # pyright: ignore[reportPrivateImportUsage]
 )
+from qtpy.QtWidgets import QDoubleSpinBox
 from qtpy.QtGui import QAction, QActionGroup, QDrag, QHelpEvent, QIcon, QKeySequence, QPainter, QPalette, QPixmap, QShortcut, QUndoCommand
 from qtpy.QtWidgets import (
     QApplication,
@@ -55,15 +55,17 @@ from qtpy.QtWidgets import (
     QWidget,
 )
 
+from loggerplus import RobustLogger
 from pykotor.resource.formats.lyt.lyt_auto import write_lyt
 from pykotor.resource.formats.lyt.lyt_data import LYT, LYTDoorHook, LYTRoom
 from pykotor.resource.resource_auto import BWM
-from toolset.data.lyt_structures import ExtendedLYTObstacle, ExtendedLYTTrack
-from toolset.gui.dialogs.lyt_dialogs import ObstaclePropertiesDialog, RoomPropertiesDialog, TrackPropertiesDialog
+from toolset.data.lyt_structures import ExtendedLYTDoorHook, ExtendedLYTObstacle, ExtendedLYTRoom, ExtendedLYTTrack
+from toolset.gui.common.localization import translate as tr
+from toolset.gui.dialogs.lyt_dialogs import DoorHookPropertiesDialog, ObstaclePropertiesDialog, RoomPropertiesDialog, TrackPropertiesDialog
 from toolset.gui.editors.lyt import LYTEditor
+from toolset.gui.widgets.renderer.lyt_renderer import LYTRenderer
 from toolset.gui.widgets.renderer.module import ModuleRenderer
 from toolset.gui.widgets.renderer.texture_browser import TextureBrowser
-from toolset.gui.common.localization import translate as tr
 from toolset.gui.widgets.renderer.walkmesh_editor import DoorHookPropertiesDialog, WalkmeshEditor
 from utility.common.geometry import Vector3
 
@@ -84,6 +86,7 @@ if TYPE_CHECKING:
         QObject,
     )
     from qtpy.QtGui import (
+        QAction,
         QCloseEvent,
         QContextMenuEvent,
         QDragEnterEvent,
@@ -96,12 +99,10 @@ if TYPE_CHECKING:
         QPaintEvent,
         QShowEvent,
         QWheelEvent,
-        QAction,
     )
     from qtpy.QtWidgets import QMenu
     from typing_extensions import Literal
 
-    from toolset.data.lyt_structures import ExtendedLYTDoorHook, ExtendedLYTRoom
     from toolset.gui.editors.lyt import LYTEditor
     from toolset.gui.widgets.renderer.module import ModuleRenderer
 
@@ -124,13 +125,13 @@ class LYTEditorWidget(QWidget):
     - Managing door connections
     """
 
-    sig_lyt_updated = Signal(LYT)
+    sig_lyt_updated: Signal = Signal(LYT)
 
     def __init__(self, parent: LYTEditor):
         super().__init__(parent)
-        self._lyt: Optional[LYT] = None
-        self._selected_room: Optional[LYTRoom] = None
-        self._selected_door: Optional[LYTDoorHook] = None
+        self._lyt: LYT | None = None
+        self._selected_room: LYTRoom | None = None
+        self._selected_door: LYTDoorHook | None = None
 
         self._init_ui()
         self._setup_signals()
@@ -146,9 +147,9 @@ class LYTEditorWidget(QWidget):
         # Position controls
         pos_layout = QHBoxLayout()
         pos_layout.addWidget(QLabel(tr("Position:")))
-        self.pos_x = QSpinBox()
-        self.pos_y = QSpinBox()
-        self.pos_z = QSpinBox()
+        self.pos_x = QDoubleSpinBox()
+        self.pos_y = QDoubleSpinBox()
+        self.pos_z = QDoubleSpinBox()
         for spin in (self.pos_x, self.pos_y, self.pos_z):
             spin.setRange(-99999, 99999)
             pos_layout.addWidget(spin)
@@ -169,9 +170,9 @@ class LYTEditorWidget(QWidget):
         # Door position
         door_pos_layout = QHBoxLayout()
         door_pos_layout.addWidget(QLabel(tr("Position:")))
-        self.door_pos_x = QSpinBox()
-        self.door_pos_y = QSpinBox()
-        self.door_pos_z = QSpinBox()
+        self.door_pos_x = QDoubleSpinBox()
+        self.door_pos_y = QDoubleSpinBox()
+        self.door_pos_z = QDoubleSpinBox()
         for spin in (self.door_pos_x, self.door_pos_y, self.door_pos_z):
             spin.setRange(-99999, 99999)
             door_pos_layout.addWidget(spin)
@@ -223,17 +224,17 @@ class LYTEditorWidget(QWidget):
         self._selected_door = None
         self._update_ui()
 
-    def get_lyt(self) -> Optional[LYT]:
+    def get_lyt(self) -> LYT | None:
         """Get the current LYT."""
         return self._lyt
 
-    def select_room(self, room: Optional[LYTRoom]):
+    def select_room(self, room: LYTRoom | None):
         """Select a room for editing."""
         self._selected_room = room
         self._selected_door = None
         self._update_ui()
 
-    def select_door(self, door: Optional[LYTDoorHook]):
+    def select_door(self, door: LYTDoorHook | None):
         """Select a door hook for editing."""
         self._selected_door = door
         self._selected_room = None
@@ -246,16 +247,16 @@ class LYTEditorWidget(QWidget):
 
         # Update room controls
         if room_selected:
-            self.pos_x.setValue(self._selected_room.position.x)
-            self.pos_y.setValue(self._selected_room.position.y)
-            self.pos_z.setValue(self._selected_room.position.z)
+            self.pos_x.setValue(float(self._selected_room.position.x))
+            self.pos_y.setValue(float(self._selected_room.position.y))
+            self.pos_z.setValue(float(self._selected_room.position.z))
             self.model_name.setText(self._selected_room.model)
 
         # Update door controls
         if door_selected:
-            self.door_pos_x.setValue(self._selected_door.position.x)
-            self.door_pos_y.setValue(self._selected_door.position.y)
-            self.door_pos_z.setValue(self._selected_door.position.z)
+            self.door_pos_x.setValue(float(self._selected_door.position.x))
+            self.door_pos_y.setValue(float(self._selected_door.position.y))
+            self.door_pos_z.setValue(float(self._selected_door.position.z))
             self.room_id.setValue(self._selected_door.room_id)
 
         # Enable/disable controls
@@ -267,13 +268,13 @@ class LYTEditorWidget(QWidget):
     def _on_room_pos_changed(self):
         """Handle room position changes."""
         if self._selected_room and self._lyt:
-            self._selected_room.position = Vector3(self.pos_x.value(), self.pos_y.value(), self.pos_z.value())
+            self._selected_room.position = Vector3(float(self.pos_x.value()), float(self.pos_y.value()), float(self.pos_z.value()))
             self.sig_lyt_updated.emit(self._lyt)
 
     def _on_door_pos_changed(self):
         """Handle door hook position changes."""
         if self._selected_door and self._lyt:
-            self._selected_door.position = Vector3(self.door_pos_x.value(), self.door_pos_y.value(), self.door_pos_z.value())
+            self._selected_door.position = Vector3(float(self.door_pos_x.value()), float(self.door_pos_y.value()), float(self.door_pos_z.value()))
             self.sig_lyt_updated.emit(self._lyt)
 
     def _on_door_room_changed(self):
@@ -1034,7 +1035,7 @@ class LYTEditorWidget(QWidget):
         selected_room = self.lyt_editor.get_selected_room()  # FIXME: get_selected_room attribute not found
         selected_texture = self.texture_browser.get_selected_texture()  # FIXME: get_selected_texture attribute not found
         room_info = f"Selected Room: {selected_room.name if selected_room else 'None'}" if selected_room else ""
-        walkmesh_info: Literal["Walkmesh visible", "Walkmesh hidden"] = "Walkmesh visible" if self.walkmesh_editor.isVisible() else "Walkmesh hidden"
+        walkmesh_info: Literal["Walkmesh visible", "Walkmesh hidden"] = tr("Walkmesh visible") if self.walkmesh_editor.isVisible() else tr("Walkmesh hidden")
         search_info = f"Search results: {len(self.search_results)}" if self.search_results else ""
         status_message = f"Active tasks: {self.active_tasks} | Rooms: {len(lyt.rooms) if lyt else 0} | Zoom: {self.zoom_pan_widget.zoom_factor:.2f}x | {room_info} | Selected Texture: {selected_texture if selected_texture else 'None'} | {walkmesh_info} | {search_info}"
         self.status_bar.showMessage(status_message)

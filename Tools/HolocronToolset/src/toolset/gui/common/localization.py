@@ -626,6 +626,8 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Equipment Removed": "Equipment Removed",
         "Equipment removed from {slot_name}.": "Equipment removed from {slot_name}.",
         "Failed to flush EventQueue:\n{error}": "Failed to flush EventQueue:\n{error}",
+        "Walkmesh visible": "Walkmesh visible",
+        "Walkmesh hidden": "Walkmesh hidden",
     },
     ToolsetLanguage.FRENCH: {
         # Main Window
@@ -1188,6 +1190,8 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Equipment Removed": "Équipement retiré",
         "Equipment removed from {slot_name}.": "Équipement retiré de {slot_name}.",
         "Failed to flush EventQueue:\n{error}": "Échec de la purge d'EventQueue :\n{error}",
+        "Walkmesh visible": "Walkmesh visible",
+        "Walkmesh hidden": "Walkmesh masqué",
     },
     ToolsetLanguage.GERMAN: {
         # Main Window
@@ -1750,6 +1754,8 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Equipment Removed": "Ausrüstung entfernt",
         "Equipment removed from {slot_name}.": "Ausrüstung entfernt von {slot_name}.",
         "Failed to flush EventQueue:\n{error}": "EventQueue konnte nicht geleert werden:\n{error}",
+        "Walkmesh visible": "Walkmesh sichtbar",
+        "Walkmesh hidden": "Walkmesh versteckt",
     },
     ToolsetLanguage.ITALIAN: {
         # Main Window
@@ -2312,6 +2318,8 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Equipment Removed": "Equipaggiamento rimosso",
         "Equipment removed from {slot_name}.": "Equipaggiamento rimosso da {slot_name}.",
         "Failed to flush EventQueue:\n{error}": "Impossibile svuotare EventQueue:\n{error}",
+        "Walkmesh visible": "Walkmesh visibile",
+        "Walkmesh hidden": "Walkmesh nascosto",
     },
     ToolsetLanguage.SPANISH: {
         # Main Window
@@ -2874,6 +2882,8 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Equipment Removed": "Equipo eliminado",
         "Equipment removed from {slot_name}.": "Equipo eliminado de {slot_name}.",
         "Failed to flush EventQueue:\n{error}": "Error al vaciar EventQueue:\n{error}",
+        "Walkmesh visible": "Walkmesh visible",
+        "Walkmesh hidden": "Walkmesh oculto",
     },
     ToolsetLanguage.POLISH: {
         # Main Window
@@ -3436,6 +3446,8 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Equipment Removed": "Wyposażenie usunięte",
         "Equipment removed from {slot_name}.": "Wyposażenie usunięte z {slot_name}.",
         "Failed to flush EventQueue:\n{error}": "Nie udało się opróżnić EventQueue:\n{error}",
+        "Walkmesh visible": "Walkmesh widoczny",
+        "Walkmesh hidden": "Walkmesh ukryty",
     },
     ToolsetLanguage.RUSSIAN: {
         # Main Window
@@ -3999,6 +4011,8 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Equipment Removed": "Оборудование удалено",
         "Equipment removed from {slot_name}.": "Оборудование удалено из {slot_name}.",
         "Failed to flush EventQueue:\n{error}": "Не удалось очистить EventQueue:\n{error}",
+        "Walkmesh visible": "Walkmesh видимый",
+        "Walkmesh hidden": "Walkmesh скрытый",
     },
 }
 
