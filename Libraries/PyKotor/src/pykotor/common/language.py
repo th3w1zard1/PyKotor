@@ -176,6 +176,32 @@ class Language(IntEnum):
     # Additional Baltic languages (cp1257 / ISO-8859-13)
     LATGALIAN = 105
 
+    # Additional Austronesian languages (cp1252 / ISO-8859-1)
+    CEBUANO = 106
+    ILOCANO = 107
+    WARAY = 108
+    HILIGAYNON = 109
+    BICOL = 110
+    KAPAMPANGAN = 111
+    PANGASINAN = 112
+    MALAGASY = 113
+
+    # Additional African languages (cp1252 / ISO-8859-1)
+    TWI = 114
+    WOLOF = 115
+    KINYARWANDA = 116
+    LUGANDA = 117
+    KIKUYU = 118
+    SESOTHO = 119  # Southern Sotho
+    VENDA = 120
+    TSONGA = 121
+    BEMBA = 122
+    LINGALA = 123
+    KONGO = 124
+    FULFULDE = 125
+    BAMBARA = 126
+    MALINKE = 127
+
     # The following languages are supported in the GFF/TLK file formats, but are probably not encodable to 8-bit without significant loss of information
     # therefore are probably incompatible with KOTOR.
     KOREAN = 128
@@ -292,6 +318,28 @@ class Language(IntEnum):
             Language.TOKELAUAN,
             Language.TUVALUAN,
             Language.ROTOKAS,
+            Language.CEBUANO,
+            Language.ILOCANO,
+            Language.WARAY,
+            Language.HILIGAYNON,
+            Language.BICOL,
+            Language.KAPAMPANGAN,
+            Language.PANGASINAN,
+            Language.MALAGASY,
+            Language.TWI,
+            Language.WOLOF,
+            Language.KINYARWANDA,
+            Language.LUGANDA,
+            Language.KIKUYU,
+            Language.SESOTHO,
+            Language.VENDA,
+            Language.TSONGA,
+            Language.BEMBA,
+            Language.LINGALA,
+            Language.KONGO,
+            Language.FULFULDE,
+            Language.BAMBARA,
+            Language.MALINKE,
         }:
             return "cp1252"
 
@@ -524,6 +572,30 @@ class Language(IntEnum):
             Language.TURKMEN: "tk",
             # Additional Baltic
             Language.LATGALIAN: "ltg",
+            # Additional Austronesian languages
+            Language.CEBUANO: "ceb",
+            Language.ILOCANO: "ilo",
+            Language.WARAY: "war",
+            Language.HILIGAYNON: "hil",
+            Language.BICOL: "bcl",
+            Language.KAPAMPANGAN: "pam",
+            Language.PANGASINAN: "pag",
+            Language.MALAGASY: "mg",
+            # Additional African languages
+            Language.TWI: "tw",
+            Language.WOLOF: "wo",
+            Language.KINYARWANDA: "rw",
+            Language.LUGANDA: "lg",
+            Language.KIKUYU: "ki",
+            Language.SESOTHO: "st",
+            Language.VENDA: "ve",
+            Language.TSONGA: "ts",
+            Language.BEMBA: "bem",
+            Language.LINGALA: "ln",
+            Language.KONGO: "kg",
+            Language.FULFULDE: "ff",
+            Language.BAMBARA: "bm",
+            Language.MALINKE: "mlq",
             # Non-SBCS languages
             Language.KOREAN: "ko",
             Language.CHINESE_TRADITIONAL: "zh-TW",  # zh-Hant
