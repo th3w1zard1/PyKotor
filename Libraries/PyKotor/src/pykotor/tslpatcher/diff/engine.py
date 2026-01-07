@@ -23,6 +23,7 @@ References:
 from __future__ import annotations
 
 import difflib
+import os
 import traceback
 
 from contextlib import suppress
@@ -48,11 +49,73 @@ from pykotor.tslpatcher.diff.analyzers import DiffAnalyzer, DiffAnalyzerFactory
 from pykotor.tslpatcher.mods.gff import ModificationsGFF, ModifyGFF
 from pykotor.tslpatcher.mods.install import InstallFile
 from pykotor.tslpatcher.mods.ncs import ModificationsNCS, ModifyNCS  # noqa: F401
+
+
+class DiffLogger(Protocol):
+    """Protocol for diff logging interface."""
+
+    def debug(self, message: str, *args, **kwargs) -> None:
+        """Log a debug message."""
+        ...
+
+    def info(self, message: str, *args, **kwargs) -> None:
+        """Log an info message."""
+        ...
+
+    def warning(self, message: str, *args, **kwargs) -> None:
+        """Log a warning message."""
+        ...
+
+    def error(self, message: str, *args, **kwargs) -> None:
+        """Log an error message."""
+        ...
+
+    def critical(self, message: str, *args, **kwargs) -> None:
+        """Log a critical message."""
+        ...
+
+    def diff_output(self, message: str, *args, **kwargs) -> None:
+        """Output diff-specific content that should always be shown."""
+        ...
+
+
+# Enhanced log function that supports message classification
+class EnhancedLogFunc:
+    """Enhanced log function that supports message classification."""
+
+    def __init__(self, logger: DiffLogger):
+        self.logger = logger
+
+    def __call__(
+        self,
+        message: str,
+        *,
+        separator: bool = False,
+        message_type: str = "info",
+    ) -> None:
+        """Log a message with classification.
+
+        Args:
+            message: The message to log
+            separator: Whether this is a separator message
+            message_type: Type of message - "info", "diff", "error", etc.
+        """
+        if message_type == "diff":
+            # Always output diff content
+            self.logger.diff_output(message)
+        elif message_type == "error":
+            self.logger.error(message)
+        elif message_type == "warning":
+            self.logger.warning(message)
+        elif message_type == "debug":
+            self.logger.debug(message)
+        else:
+            # Default to info
+            self.logger.info(message)
 from pykotor.tslpatcher.mods.ssf import ModificationsSSF, ModifySSF
 from pykotor.tslpatcher.mods.template import PatcherModifications
 from pykotor.tslpatcher.mods.tlk import ModificationsTLK, ModifyTLK
 from pykotor.tslpatcher.mods.twoda import Modifications2DA, Modify2DA
-from utility.error_handling import universal_simplify_exception
 from utility.misc import generate_hash
 
 if TYPE_CHECKING:
@@ -120,7 +183,8 @@ def _is_readonly_source(source_path: Path) -> bool:
         True if the source is read-only and cannot be directly modified
     """
     source_lower: str = str(source_path).lower()
-    suffix_lower: str = source_path.suffix.lower()
+    source_path_obj = Path(source_path) if isinstance(source_path, (str, os.PathLike)) else source_path
+    suffix_lower: str = source_path_obj.suffix.lower()
 
     # RIM and ERF files are read-only
     if suffix_lower in (".rim", ".erf"):
@@ -1073,6 +1137,9 @@ def compare_text_content(
     data2: bytes,
     where: str,
     log_func: Callable[[str], None],
+    format_type: str = "unified",
+    *,
+    show_header: bool = True,
 ) -> bool:
     """Compare text content using line-by-line diffing."""
     MAX_LINE_LENGTH = 200  # Maximum characters to display per line
@@ -1097,24 +1164,42 @@ def compare_text_content(
     lines1 = text1.splitlines(keepends=True)
     lines2 = text2.splitlines(keepends=True)
 
-    diff = difflib.unified_diff(
-        lines1,
-        lines2,
-        fromfile=f"(old){where}",
-        tofile=f"(new){where}",
-        lineterm="",
-    )
+    if format_type == "unified":
+        diff = difflib.unified_diff(
+            lines1,
+            lines2,
+            fromfile=f"(old){where}",
+            tofile=f"(new){where}",
+            lineterm="",
+        )
+    elif format_type == "context":
+        diff = difflib.context_diff(
+            lines1,
+            lines2,
+            fromfile=f"(old){where}",
+            tofile=f"(new){where}",
+            lineterm="",
+        )
+    else:  # default to unified
+        diff = difflib.unified_diff(
+            lines1,
+            lines2,
+            fromfile=f"(old){where}",
+            tofile=f"(new){where}",
+            lineterm="",
+        )
 
     diff_lines = list(diff)
     if diff_lines:
-        log_func(f"^ '{where}': Text content differs ^", separator=True)  # pyright: ignore[reportCallIssue]
+        if show_header:
+            log_func(f"^ '{where}': Text content differs ^", separator=True, message_type="diff")  # pyright: ignore[reportCallIssue]
         for line in diff_lines:
             # Truncate excessively long lines (likely binary data that slipped through)
             if len(line) > MAX_LINE_LENGTH:
                 truncated = line[:MAX_LINE_LENGTH] + f"... (truncated, {len(line)} chars total)"
-                log_func(truncated)
+                log_func(truncated, message_type="diff")
             else:
-                log_func(line.rstrip())
+                log_func(line.rstrip(), message_type="diff")
         return False
 
     return True
@@ -1242,6 +1327,7 @@ def diff_data(  # noqa: PLR0913
     compare_hashes: bool = True,
     modifications_by_type: ModificationsByType | None = None,
     incremental_writer: IncrementalTSLPatchDataWriter | None = None,
+    format_type: str = "unified",
 ) -> bool | None:
     """Compare two resources with appropriate format-specific handling.
 
@@ -1298,7 +1384,7 @@ def diff_data(  # noqa: PLR0913
         try:
             gff1 = gff.read_gff(data1)
         except Exception as e:  # noqa: BLE001, PERF203, S112
-            log_func(f"[Error] loading GFF {context.file1_rel.parent / where}!\n{universal_simplify_exception(e)}")
+            log_func(f"[Error] loading GFF {context.file1_rel.parent / where}!\n{(e.__class__.__name__, str(e))}")
             log_func("Full traceback:")
             for line in traceback.format_exc().splitlines():
                 log_func(f"  {line}")
@@ -1306,7 +1392,7 @@ def diff_data(  # noqa: PLR0913
         try:
             gff2 = gff.read_gff(data2)
         except Exception as e:  # noqa: BLE001, PERF203, S112
-            log_func(f"[Error] loading GFF {context.file2_rel.parent / where}!\n{universal_simplify_exception(e)}")
+            log_func(f"[Error] loading GFF {context.file2_rel.parent / where}!\n{(e.__class__.__name__, str(e))}")
             log_func("Full traceback:")
             for line in traceback.format_exc().splitlines():
                 log_func(f"  {line}")
@@ -1326,22 +1412,28 @@ def diff_data(  # noqa: PLR0913
         comparison_result = GFFComparisonResult()
         if not (gff1 and gff2):
             return True
-        are_same = gff1.compare(gff2, log_func, compare_path, comparison_result=comparison_result)
+        are_same = gff1.compare(gff2, log_func, compare_path, comparison_result=comparison_result, format_type=format_type)
         if are_same and not comparison_result.has_field_differences():
             return True
 
         # Generate INI modifications if requested (log BEFORE final separator)
         if modifications_by_type is None:
-            # Log final separator AFTER all patch info
-            log_func(f"^ '{context.where}': GFF is different ^", separator=True)
-            return False
+            # For unified diff format, continue to text comparison instead of returning early
+            if format_type != "unified":
+                # Log final separator AFTER all patch info
+                log_func(f"^ '{context.where}': GFF is different ^", separator=True, message_type="diff")
+                return False
+            # Fall through to text comparison for unified diff
 
         try:
             analyzer = DiffAnalyzerFactory.get_analyzer("gff")
             if analyzer is None:
-                # Log final separator AFTER all patch info
-                log_func(f"^ '{context.where}': GFF is different ^", separator=True)
-                return False
+                # For unified diff format, continue to text comparison instead of returning early
+                if format_type != "unified":
+                    # Log final separator AFTER all patch info
+                    log_func(f"^ '{context.where}': GFF is different ^", separator=True, message_type="diff")
+                    return False
+                # Fall through to text comparison for unified diff
 
             strref_mappings: dict[int, int] = {}
             result: PatcherModifications | tuple[PatcherModifications, dict[int, int]] | None = analyzer.analyze(data1, data2, str(context.where))
@@ -1359,7 +1451,7 @@ def diff_data(  # noqa: PLR0913
 
             if modifications is None:
                 # Log final separator AFTER all patch info
-                log_func(f"^ '{context.where}': GFF is different ^", separator=True)
+                log_func(f"^ '{context.where}': GFF is different ^", separator=True, message_type="diff")
                 return False
 
             # File exists in both vanilla and modded - this is a PATCH, not an install
@@ -1381,9 +1473,12 @@ def diff_data(  # noqa: PLR0913
             modifications.saveas = resource_name
 
             assert isinstance(modifications, ModificationsGFF), (
-                f"`modifications` is not a ModificationsGFF: {modifications} (type: {type(modifications)}) for context: {context}"
+                f"`modifications` is not a ModificationsGFF: {modifications} (type: {modifications.__class__.__name__}) for context: {context}"
             )  # noqa: E501
-            modifications_by_type.gff.append(modifications)
+
+            # Only append to modifications_by_type if it's available (not in pure diff mode)
+            if modifications_by_type is not None:
+                modifications_by_type.gff.append(modifications)
 
             modifiers: list | None = getattr(modifications, "modifiers", None)
             if modifiers:
@@ -1407,8 +1502,10 @@ def diff_data(  # noqa: PLR0913
                 log_func(f"  {line}")
 
         # Log final separator AFTER all patch info
-        log_func(f"^ '{context.where}': GFF is different ^", separator=True)
-        return False
+        if format_type != "unified":
+            log_func(f"^ '{context.where}': GFF is different ^", separator=True, message_type="diff")
+            return False
+        # Fall through to text comparison for unified diff
 
     # Define known binary formats that should never be treated as text
     BINARY_FORMATS = {
@@ -1455,21 +1552,21 @@ def diff_data(  # noqa: PLR0913
                         return True
 
                     # Provide a summary of differences
-                    log_func("NCS scripts differ:")
-                    log_func(f"  Old: {len(obj1.instructions)} instructions")
-                    log_func(f"  New: {len(obj2.instructions)} instructions")
+                    log_func("NCS scripts differ:", message_type="diff")
+                    log_func(f"  Old: {len(obj1.instructions)} instructions", message_type="diff")
+                    log_func(f"  New: {len(obj2.instructions)} instructions", message_type="diff")
 
                     # Show first few differences only
                     MAX_DIFF_LINES = 20
                     if len(comparison_lines) > MAX_DIFF_LINES:
                         for line in comparison_lines[:MAX_DIFF_LINES]:
-                            log_func(line.rstrip())
-                        log_func(f"  ... ({len(comparison_lines) - MAX_DIFF_LINES} more difference lines omitted)")
+                            log_func(line.rstrip(), message_type="diff")
+                        log_func(f"  ... ({len(comparison_lines) - MAX_DIFF_LINES} more difference lines omitted)", message_type="diff")
                     else:
                         for line in comparison_lines:
-                            log_func(line.rstrip())
+                            log_func(line.rstrip(), message_type="diff")
 
-                    log_func(f"^ '{context.where}': {context.ext.upper()} is different ^", separator=True)
+                    log_func(f"^ '{context.where}': {context.ext.upper()} is different ^", separator=True, message_type="diff")
                     return False
 
                 # Use the structured compare method for other files
@@ -1527,7 +1624,10 @@ def diff_data(  # noqa: PLR0913
                         )  # noqa: E501
                         modifications.destination = destination
                         modifications.sourcefile = resource_name  # Just the filename, not the full path
-                        modifications_by_type.twoda.append(modifications)
+
+                        # Only append to modifications_by_type if it's available (not in pure diff mode)
+                        if modifications_by_type is not None:
+                            modifications_by_type.twoda.append(modifications)
                         twoda_modifiers: list[Modify2DA] = [m for m in modifications.modifiers if isinstance(m, Modify2DA)]
 
                         if twoda_modifiers:
@@ -1573,7 +1673,9 @@ def diff_data(  # noqa: PLR0913
                                 "source_filepath": context.file1_filepath,
                             }
 
-                        modifications_by_type.tlk.append(mod_tlk)
+                        # Only append to modifications_by_type if it's available (not in pure diff mode)
+                        if modifications_by_type is not None:
+                            modifications_by_type.tlk.append(mod_tlk)
                         tlk_modifiers: list[ModifyTLK] = [m for m in mod_tlk.modifiers if isinstance(m, ModifyTLK)]
 
                         if tlk_modifiers:
@@ -1626,7 +1728,7 @@ def diff_data(  # noqa: PLR0913
 
                         # Set destination based on MODDED installation location (file2)
                         resource_name = PurePath(str(context.where)).name
-                        destination = _determine_destination_for_source(
+                        destination: str = _determine_destination_for_source(
                             context.file2_rel,  # Use MODDED installation, not vanilla
                             resource_name,
                             log_func=log_func,
@@ -1634,7 +1736,7 @@ def diff_data(  # noqa: PLR0913
                             source_filepath=context.file2_filepath,
                         )
                         assert isinstance(modifications, ModificationsGFF), (
-                            f"`modifications` is not a ModificationsGFF: {modifications} (type: {type(modifications)}) for context: {context}"
+                            f"`modifications` is not a ModificationsGFF: {modifications} (type: {modifications.__class__}) for context: {context}"
                         )  # noqa: E501
                         modifications.destination = destination
                         modifications.sourcefile = resource_name  # Just the filename, not the full path
@@ -1653,7 +1755,7 @@ def diff_data(  # noqa: PLR0913
 
                         # Write immediately if using incremental writer
                         if incremental_writer is not None:
-                            gff2_source_data: bytes = data1 if isinstance(data1, bytes) else data1.read_bytes()
+                            gff2_source_data: bytes | None = data1 if isinstance(data1, bytes) else data1.read_bytes()
                             source_path = context.file1_installation if context.file1_installation else context.file1_filepath
                             incremental_writer.write_modification(modifications, gff2_source_data, source_path)
 
@@ -1684,14 +1786,16 @@ def diff_data(  # noqa: PLR0913
                 if not compare_hashes:
                     return True
                 if generate_hash(data1) != generate_hash(data2):
-                    log_func(f"'{context.where}': SHA256 is different")
+                    log_func(f"'{context.where}': SHA256 is different", message_type="diff")
                     return False
                 return True
 
     # Check if content appears to be text (but skip for known binary formats)
-    if context.ext.lower() not in BINARY_FORMATS and is_text_content(data1) and is_text_content(data2):
-        log_func(f"Comparing text content for '{context.where}'")
-        return compare_text_content(data1, data2, str(context.where), log_func)
+    # In unified diff mode, always attempt text comparison for diff output
+    if (context.ext.lower() not in BINARY_FORMATS and is_text_content(data1) and is_text_content(data2)) or format_type == "unified":
+        if format_type != "unified":
+            log_func(f"Comparing text content for '{context.where}'", message_type="diff")
+        return compare_text_content(data1, data2, str(context.where), log_func, format_type, show_header=(format_type != "unified"))
 
     # Fallback to hash comparison for binary content
     if compare_hashes and generate_hash(data1) != generate_hash(data2):
@@ -1709,6 +1813,7 @@ def diff_files(
     compare_hashes: bool = True,
     modifications_by_type: ModificationsByType | None = None,
     incremental_writer: IncrementalTSLPatchDataWriter | None = None,
+    format_type: str = "unified",
 ) -> bool | None:
     """Compare two files.
 
@@ -1760,6 +1865,7 @@ def diff_files(
             compare_hashes=compare_hashes,
             modifications_by_type=modifications_by_type,
             incremental_writer=incremental_writer,
+            format_type=format_type,
         )
 
     ctx = DiffContext(c_file1_rel, c_file2_rel, c_file1_rel.suffix.casefold()[1:])
@@ -1771,6 +1877,7 @@ def diff_files(
         compare_hashes=compare_hashes,
         modifications_by_type=modifications_by_type,
         incremental_writer=incremental_writer,
+        format_type=format_type,
     )
 
 
@@ -1784,6 +1891,7 @@ def diff_capsule_files(  # noqa: C901, PLR0913
     compare_hashes: bool = True,
     modifications_by_type: ModificationsByType | None = None,
     incremental_writer: IncrementalTSLPatchDataWriter | None = None,
+    format_type: str = "unified",
 ) -> bool | None:
     """Handle diffing of capsule files."""
     # Check if we should use composite module loading for each file individually
@@ -1939,7 +2047,7 @@ def load_capsule(
             return CompositeModuleCapsule(file_path)
         return Capsule(file_path)
     except ValueError as e:
-        log_func(f"Could not load '{file_path}'. Reason: {universal_simplify_exception(e)}")
+        log_func(f"Could not load '{file_path}'. Reason: {(e.__class__.__name__, str(e))}")
         return None
 
 
@@ -2303,6 +2411,7 @@ def diff_directories(
     diff_cache: DiffCache | None = None,
     modifications_by_type: ModificationsByType | None = None,
     incremental_writer: IncrementalTSLPatchDataWriter | None = None,
+    format_type: str = "unified",
 ) -> bool | None:
     """Compare two directories recursively."""
     log_func(f"Finding differences in the '{dir1.name}' folders...")
@@ -2339,6 +2448,7 @@ def diff_directories(
                 log_func=log_func,
                 modifications_by_type=modifications_by_type,
                 incremental_writer=incremental_writer,
+                format_type=format_type,
             ),
         )
         is_same_result = module_result
@@ -2607,7 +2717,7 @@ def resolve_resource_with_installation(
         search_log = installation_logger.get_resource_log(f"{resource_name}.{resource_type.extension}")
 
     except Exception as e:  # noqa: BLE001, PERF203, S112
-        error_msg = f"Error resolving resource: {universal_simplify_exception(e)}"
+        error_msg = f"Error resolving resource: {(e.__class__.__name__, str(e))}"
         if installation_logger is not None:
             installation_logger(error_msg)
             search_log = installation_logger.get_resource_log(f"{resource_name}.{resource_type.extension}")
@@ -2705,7 +2815,7 @@ def resolve_resource_in_installation_impl(
         log_func(f"Found '{name_part}.{resource_type.extension}' at: {source}")
 
     except Exception as e:  # noqa: BLE001
-        error_msg = f"Error resolving resource: {universal_simplify_exception(e)}"
+        error_msg = f"Error resolving resource: {(e.__class__.__name__, str(e))}"
         log_func(error_msg)
         log_func("Full traceback:")
         for line in traceback.format_exc().splitlines():
@@ -2748,7 +2858,7 @@ def load_container_capsule(
             return CompositeModuleCapsule(container_path)
         return Capsule(container_path)
     except Exception as e:  # noqa: BLE001
-        log_func(f"Error loading container '{container_path}': {universal_simplify_exception(e)}")
+        log_func(f"Error loading container '{container_path}': {(e.__class__.__name__, str(e))}")
         log_func("Full traceback:")
         for line in traceback.format_exc().splitlines():
             log_func(f"  {line}")
@@ -2779,7 +2889,7 @@ def process_container_resource(  # noqa: PLR0913
     try:
         container_data = resource.data()
     except Exception as e:  # noqa: BLE001
-        log_func(f"Error reading resource '{resource_identifier}' from container: {universal_simplify_exception(e)}")
+        log_func(f"Error reading resource '{resource_identifier}' from container: {(e.__class__.__name__, str(e))}")
         log_func("Full traceback:")
         for line in traceback.format_exc().splitlines():
             log_func(f"  {line}")
@@ -2811,7 +2921,7 @@ def process_container_resource(  # noqa: PLR0913
             ctx = DiffContext(installation_rel, container_rel, restype.extension.casefold())
             result = diff_data_func(installation_data, container_data, ctx)
     except Exception as e:  # noqa: BLE001
-        log_func(f"Error comparing '{resource_identifier}': {universal_simplify_exception(e)}")
+        log_func(f"Error comparing '{resource_identifier}': {(e.__class__.__name__, str(e))}")
         log_func("Full traceback:")
         for line in traceback.format_exc().splitlines():
             log_func(f"  {line}")
@@ -2902,7 +3012,7 @@ def diff_resource_vs_installation(
     try:
         resource_data = resource_path.read_bytes()
     except Exception as e:  # noqa: BLE001
-        log_func(f"Error reading resource file '{resource_path}': {universal_simplify_exception(e)}")
+        log_func(f"Error reading resource file '{resource_path}': {(e.__class__.__name__, str(e))}")
         log_func("Full traceback:")
         for line in traceback.format_exc().splitlines():
             log_func(f"  {line}")
@@ -2978,7 +3088,7 @@ def validate_paths(
 
 def load_installations(
     files_and_folders_and_installations: list[Path | Installation],
-    log_func: Callable,
+    log_func: Callable[[str], None],
 ) -> list[PathInfo]:
     """Load installations for all paths, creating PathInfo objects.
 
@@ -3005,7 +3115,7 @@ def load_installations(
                 path_info = PathInfo.from_path_or_installation(installation, idx)
                 path_infos.append(path_info)
             except Exception as e:  # noqa: BLE001
-                log_func(f"Error loading installation from path {idx} '{path}': {universal_simplify_exception(e)}")
+                log_func(f"Error loading installation from path {idx} '{path}': {(e.__class__.__name__, str(e))}")
                 log_func("Full traceback:")
                 for line in traceback.format_exc().splitlines():
                     log_func(f"  {line}")
@@ -3103,7 +3213,7 @@ def collect_all_resources(
             log_func(f"  Collected {resource_count} resources from path {path_info.index}")
 
         except Exception as e:  # noqa: BLE001
-            log_func(f"Error collecting resources from path {path_info.index}: {universal_simplify_exception(e)}")
+            log_func(f"Error collecting resources from path {path_info.index}: {(e.__class__.__name__, str(e))}")
             log_func("Full traceback:")
             for line in traceback.format_exc().splitlines():
                 log_func(f"  {line}")
@@ -3159,7 +3269,7 @@ def compare_resources_n_way(  # noqa: PLR0913
 
             log_func(f"\n[UNIQUE RESOURCE] {resource_id}")
             log_func(f"  Only in path {path_index} ({path_info.name})")
-            log_func("  → Creating InstallList entry and patch")
+            log_func("  -> Creating InstallList entry and patch")
 
             # Generate install patch for unique resource
             if modifications_by_type is not None:
@@ -3203,7 +3313,7 @@ def compare_resources_n_way(  # noqa: PLR0913
                         if hasattr(resource_path, "is_file") and resource_path.is_file():
                             incremental_writer.add_install_file(destination, filename, resource_path)
                     except Exception as exc:  # noqa: BLE001
-                        log_func(f"  [Warning] Failed to stage install file '{filename}': {universal_simplify_exception(exc)}")
+                        log_func(f"  [Warning] Failed to stage install file '{filename}': {(exc.__class__.__name__, str(exc))}")
 
             diff_count += 1
             is_same_result = False
@@ -3263,13 +3373,13 @@ def compare_resources_n_way(  # noqa: PLR0913
                             create_patch=False,  # Patch already created by diff_data above
                         )
                     except Exception as e:  # noqa: BLE001, S110
-                        print(f"Error adding install entry for {resource_id}: {universal_simplify_exception(e)}")
+                        print(f"Error adding install entry for {resource_id}: {(e.__class__.__name__, str(e))}")
                         print("Full traceback:")
                         for line in traceback.format_exc().splitlines():
                             print(f"  {line}")
 
             except Exception as e:  # noqa: BLE001
-                log_func(f"Error comparing {resource_id} between paths {idx_a} and {idx_b}: {universal_simplify_exception(e)}")
+                log_func(f"Error comparing {resource_id} between paths {idx_a} and {idx_b}: {(e.__class__.__name__, str(e))}")
                 log_func("Full traceback:")
                 for line in traceback.format_exc().splitlines():
                     log_func(f"  {line}")
@@ -3301,6 +3411,7 @@ def run_differ_from_args_impl(
     compare_hashes: bool = True,
     modifications_by_type: ModificationsByType | None = None,
     incremental_writer: IncrementalTSLPatchDataWriter | None = None,
+    format_type: str = "unified",
 ) -> bool | None:
     """Run differ with N paths of any type.
 
@@ -3378,7 +3489,7 @@ def run_differ_from_args_impl(
         )
 
     except Exception as e:  # noqa: BLE001
-        log_func(f"[CRITICAL ERROR] Exception in run_differ_from_args_impl: {universal_simplify_exception(e)}")
+        log_func(f"[CRITICAL ERROR] Exception in run_differ_from_args_impl: {(e.__class__.__name__, str(e))}")
         log_func("Full traceback:")
         for line in traceback.format_exc().splitlines():
             log_func(f"  {line}")

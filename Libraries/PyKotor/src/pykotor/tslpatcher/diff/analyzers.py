@@ -12,6 +12,7 @@ from abc import ABC, abstractmethod
 from pathlib import PurePath
 from typing import TYPE_CHECKING, Any
 
+from loggerplus import RobustLogger
 from pykotor.common.language import LocalizedString
 from pykotor.common.misc import Game
 from pykotor.common.stream import BinaryReader
@@ -113,12 +114,15 @@ class TwoDADiffAnalyzer(DiffAnalyzer):
         identifier: str,
     ) -> Modifications2DA | None:
         """Analyze 2DA differences and create modification object."""
+        import logging
+        logger = logging.getLogger(__name__)
+
         try:
             left_2da = read_2da(left_data)
             right_2da = read_2da(right_data)
         except Exception as e:  # noqa: BLE001
-            print(f"Failed to parse 2DA files: identifier={identifier}, error={e}")
-            traceback.print_exc()
+            logger.error(f"Failed to parse 2DA files: identifier={identifier}, error={e}")
+            logger.debug("Traceback", exc_info=True)
             return None
 
         # Extract just the filename from the identifier (may contain full path like "install/modules/file.2da")
@@ -132,7 +136,7 @@ class TwoDADiffAnalyzer(DiffAnalyzer):
         self._analyze_rows(left_2da, right_2da, modifications, identifier)
 
         if modifications.modifiers:
-            print(f"2DA modifications: identifier={identifier}, modifier_count={len(modifications.modifiers)}")
+            logger.info(f"2DA modifications: identifier={identifier}, modifier_count={len(modifications.modifiers)}")
 
         return modifications if modifications.modifiers else None
 
@@ -141,18 +145,18 @@ class TwoDADiffAnalyzer(DiffAnalyzer):
         left_2da: TwoDA,
         right_2da: TwoDA,
         modifications: Modifications2DA,
-        identifier: str,
+        identifier: str | None = None,
     ):
         """Analyze column differences."""
-        left_headers = set(left_2da.get_headers())
-        right_headers = set(right_2da.get_headers())
+        left_headers: set[str] = set(left_2da.get_headers())
+        right_headers: set[str] = set(right_2da.get_headers())
 
         # Detect added columns
-        added_columns = right_headers - left_headers
+        added_columns: set[str] = right_headers - left_headers
 
         for col_idx, col_name in enumerate(sorted(added_columns)):
             # Determine default value
-            column_data = right_2da.get_column(col_name)
+            column_data: list[str] = right_2da.get_column(col_name)
             default_value = self._determine_default_value(column_data)
 
             # Create AddColumn2DA modifier with index-based identifier
@@ -181,7 +185,7 @@ class TwoDADiffAnalyzer(DiffAnalyzer):
         left_2da: TwoDA,
         right_2da: TwoDA,
         modifications: Modifications2DA,
-        identifier: str,
+        identifier: str | None = None,
     ):
         """Analyze row differences."""
         left_height = left_2da.get_height()
@@ -303,12 +307,16 @@ class GFFDiffAnalyzer(DiffAnalyzer):
         identifier: str,
     ) -> ModificationsGFF | None:
         """Analyze GFF differences and create modification object."""
+        import logging
+        logger = logging.getLogger(__name__)
+
+        logger.debug(f"GFFDiffAnalyzer.analyze called for {identifier}")
         try:
             left_gff = read_gff(left_data)
             right_gff = read_gff(right_data)
         except Exception as e:  # noqa: BLE001
-            print(f"Failed to parse GFF files: identifier={identifier}, error={e}")
-            traceback.print_exc()
+            logger.error(f"Failed to parse GFF files: identifier={identifier}, error={e}")
+            logger.debug("Traceback", exc_info=True)
             return None
 
         # Extract just the filename from the identifier (may contain full path like "install/modules/file.utc")
@@ -317,15 +325,20 @@ class GFFDiffAnalyzer(DiffAnalyzer):
 
         # Analyze struct differences recursively
         root_path = PurePath()
+        left_root: GFFStruct | None = left_gff.root
+        right_root: GFFStruct | None = right_gff.root
+        if left_root is None or right_root is None:
+            logger.error(f"Failed to get GFF root: identifier={identifier}")
+            return None
         self._analyze_struct(
-            left_gff.root,
-            right_gff.root,
+            left_root,
+            right_root,
             root_path,
             modifications,
         )
 
         if modifications.modifiers:
-            print(f"GFF modifications: identifier={identifier}, modifier_count={len(modifications.modifiers)}")
+            logger.info(f"GFF modifications: identifier={identifier}, modifier_count={len(modifications.modifiers)}")
 
         return modifications if modifications.modifiers else None
 
@@ -338,11 +351,11 @@ class GFFDiffAnalyzer(DiffAnalyzer):
     ):
         """Recursively analyze struct differences."""
         # Get all fields
-        left_fields = {label for label, _, _ in left_struct}
-        right_fields = {label for label, _, _ in right_struct}
+        left_fields: set[str] = {label for label, _, _ in left_struct}
+        right_fields: set[str] = {label for label, _, _ in right_struct}
 
         # Common fields - check for modifications
-        common_fields = left_fields & right_fields
+        common_fields: set[str] = left_fields & right_fields
         for field_label in common_fields:
             field_path = path / field_label
             self._analyze_field(
@@ -354,7 +367,7 @@ class GFFDiffAnalyzer(DiffAnalyzer):
             )
 
         # Added fields
-        added_fields = right_fields - left_fields
+        added_fields: set[str] = right_fields - left_fields
         for field_label in added_fields:
             field_path = path / field_label
             self._create_add_field(
@@ -404,15 +417,17 @@ class GFFDiffAnalyzer(DiffAnalyzer):
         is_struct_type = left_field_type == GFFFieldType.Struct
         if is_struct_type:
             # Recursively analyze nested struct
-            left_nested = left_struct.get_struct(field_label)
-            right_nested = right_struct.get_struct(field_label)
-            self._analyze_struct(left_nested, right_nested, field_path, modifications)
+            left_nested: GFFStruct | None = left_struct.get_struct(field_label)
+            right_nested: GFFStruct | None = right_struct.get_struct(field_label)
+            if left_nested is not None and right_nested is not None:
+                self._analyze_struct(left_nested, right_nested, field_path, modifications)
 
         elif left_field_type == GFFFieldType.List:
             # Analyze list differences
-            left_list = left_struct.get_list(field_label)
-            right_list = right_struct.get_list(field_label)
-            self._analyze_list(left_list, right_list, field_path, modifications)
+            left_list: GFFList | None = left_struct.get_list(field_label)
+            right_list: GFFList | None = right_struct.get_list(field_label)
+            if left_list is not None and right_list is not None:
+                self._analyze_list(left_list, right_list, field_path, modifications)
 
         # Scalar value comparison
         else:

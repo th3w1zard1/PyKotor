@@ -35,6 +35,8 @@ from pykotor.tslpatcher.diff.generator import (
 from pykotor.tslpatcher.writer import IncrementalTSLPatchDataWriter, ModificationsByType, TSLPatcherINISerializer
 
 if TYPE_CHECKING:
+    from typing_extensions import Literal
+
     from pykotor.tools.reference_cache import TwoDAMemoryReferenceCache
     from pykotor.tslpatcher.diff.engine import DiffContext
 
@@ -48,7 +50,7 @@ class KotorDiffConfig:
     ini_filename: str = "changes.ini"
     output_log_path: Path | None = None
     log_level: str = "info"
-    output_mode: str = "full"
+    output_mode: Literal["full", "diff_only", "quiet"] = "diff_only"
     use_colors: bool = True
     compare_hashes: bool = True
     use_profiler: bool = False
@@ -90,13 +92,6 @@ def log_output(*args, **kwargs):
         log_output_with_separator(args[0] if args else "", above=separator_above)
         return
 
-    # Check if we should suppress console output for diff_only mode
-    suppress_console = (
-        _global_config.config and
-        hasattr(_global_config.config, 'output_mode') and
-        _global_config.config.output_mode == "diff_only"
-    )
-
     # Create an in-memory text stream
     buffer = StringIO()
 
@@ -106,21 +101,15 @@ def log_output(*args, **kwargs):
     # Retrieve the printed content
     msg = buffer.getvalue()
 
-    # Print the captured output to console with Unicode error handling (unless suppressed)
-    if not suppress_console:
-        try:
-            print(*args, **kwargs)
-        except UnicodeEncodeError:
-            # Fallback: encode with error handling for Windows console
-            try:
-                safe_msg = msg.encode(sys.stdout.encoding or "utf-8", errors="replace").decode(
-                    sys.stdout.encoding or "utf-8"
-                )
-                print(safe_msg, **kwargs)
-            except Exception:  # noqa: BLE001
-                # Last resort: use ASCII with backslashreplace
-                safe_msg = msg.encode("ascii", errors="backslashreplace").decode("ascii")
-                print(safe_msg, **kwargs)
+    # Use logging instead of direct printing
+    import logging
+
+    logger = logging.getLogger(__name__)
+    if msg.strip():
+        logger.info(msg.strip())
+
+    # All output is routed through logger.info() to stderr
+    # Don't print to stdout since logging handles the stream routing
 
     if not _global_config.logging_enabled or not _global_config.config:
         return
