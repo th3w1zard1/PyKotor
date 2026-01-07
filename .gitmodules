@@ -62,7 +62,7 @@
 	url = https://github.com/th3w1zard1/KotOR.js.git
 [submodule "vendor/reone"]
 	path = vendor/reone
-	url = https://github.com/th3w1zard1/reone.git
+	url = https://github.com/modawan/reone.git
 [submodule "vendor/NorthernLights"]
 	path = vendor/NorthernLights
 	url = https://github.com/th3w1zard1/NorthernLights.git
