@@ -69,9 +69,6 @@
 [submodule "vendor/KotOR-Unity"]
 	path = vendor/KotOR-Unity
 	url = https://github.com/th3w1zard1/KotOR-Unity.git
-[submodule "vendor/kotor.three.js"]
-	path = vendor/kotor.three.js
-	url = https://github.com/th3w1zard1/kotor.three.js.git
 
 
 # ===============================
