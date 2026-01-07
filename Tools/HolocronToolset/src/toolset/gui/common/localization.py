@@ -649,6 +649,10 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         # UI status messages
         "No screenshot available": "No screenshot available",
         "Missing 2DA": "Missing 2DA",
+        # File dialog filters
+        "Module (*.mod)": "Module (*.mod)",
+        "Encapsulated Resource File (*.erf)": "Encapsulated Resource File (*.erf)",
+        "Resource Image File (*.rim)": "Resource Image File (*.rim)",
     },
     ToolsetLanguage.FRENCH: {
         # Main Window
@@ -1234,6 +1238,10 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         # UI status messages
         "No screenshot available": "Aucune capture d'écran disponible",
         "Missing 2DA": "2DA manquant",
+        # File dialog filters
+        "Module (*.mod)": "Module (*.mod)",
+        "Encapsulated Resource File (*.erf)": "Fichier de ressource encapsulé (*.erf)",
+        "Resource Image File (*.rim)": "Fichier d'image de ressource (*.rim)",
     },
     ToolsetLanguage.GERMAN: {
         # Main Window
@@ -1819,6 +1827,10 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         # UI status messages
         "No screenshot available": "Kein Screenshot verfügbar",
         "Missing 2DA": "Fehlende 2DA",
+        # File dialog filters
+        "Module (*.mod)": "Modul (*.mod)",
+        "Encapsulated Resource File (*.erf)": "Verkapselte Ressourcendatei (*.erf)",
+        "Resource Image File (*.rim)": "Ressourcen-Bilddatei (*.rim)",
     },
     ToolsetLanguage.ITALIAN: {
         # Main Window
@@ -2404,6 +2416,10 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         # UI status messages
         "No screenshot available": "Nessuna schermata disponibile",
         "Missing 2DA": "2DA mancante",
+        # File dialog filters
+        "Module (*.mod)": "Modulo (*.mod)",
+        "Encapsulated Resource File (*.erf)": "File risorsa incapsulato (*.erf)",
+        "Resource Image File (*.rim)": "File immagine risorsa (*.rim)",
     },
     ToolsetLanguage.SPANISH: {
         # Main Window
@@ -2989,6 +3005,10 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         # UI status messages
         "No screenshot available": "No hay captura de pantalla disponible",
         "Missing 2DA": "2DA faltante",
+        # File dialog filters
+        "Module (*.mod)": "Módulo (*.mod)",
+        "Encapsulated Resource File (*.erf)": "Archivo de recurso encapsulado (*.erf)",
+        "Resource Image File (*.rim)": "Archivo de imagen de recurso (*.rim)",
     },
     ToolsetLanguage.POLISH: {
         # Main Window
@@ -3574,6 +3594,10 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         # UI status messages
         "No screenshot available": "Brak dostępnego zrzutu ekranu",
         "Missing 2DA": "Brakujący 2DA",
+        # File dialog filters
+        "Module (*.mod)": "Moduł (*.mod)",
+        "Encapsulated Resource File (*.erf)": "Plik zasobu enkapsulowanego (*.erf)",
+        "Resource Image File (*.rim)": "Plik obrazu zasobu (*.rim)",
     },
     ToolsetLanguage.RUSSIAN: {
         # Main Window
@@ -4160,6 +4184,10 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         # UI status messages
         "No screenshot available": "Скриншот недоступен",
         "Missing 2DA": "Отсутствующий 2DA",
+        # File dialog filters
+        "Module (*.mod)": "Модуль (*.mod)",
+        "Encapsulated Resource File (*.erf)": "Инкапсулированный файл ресурса (*.erf)",
+        "Resource Image File (*.rim)": "Файл изображения ресурса (*.rim)",
     },
 }
 

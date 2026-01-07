@@ -2311,9 +2311,9 @@ class ToolWindow(QMainWindow):
         elif is_rim_file(c_filepath):
             capsule_type = "rim"
         extension_to_filter: dict[str, str] = {
-            ".mod": "Module (*.mod)",
-            ".erf": "Encapsulated Resource File (*.erf)",
-            ".rim": "Resource Image File (*.rim)",
+            ".mod": tr("Module (*.mod)"),
+            ".erf": tr("Encapsulated Resource File (*.erf)"),
+            ".rim": tr("Resource Image File (*.rim)"),
             ".sav": "Save ERF (*.sav)",
         }
         filepath_str, _filter = QFileDialog.getSaveFileName(
