@@ -33,7 +33,6 @@ from pykotor.tslpatcher.diff.generator import (
     determine_install_folders,
 )
 from pykotor.tslpatcher.writer import IncrementalTSLPatchDataWriter, ModificationsByType, TSLPatcherINISerializer
-from utility.error_handling import universal_simplify_exception
 
 if TYPE_CHECKING:
     from pykotor.tools.reference_cache import TwoDAMemoryReferenceCache
@@ -91,6 +90,13 @@ def log_output(*args, **kwargs):
         log_output_with_separator(args[0] if args else "", above=separator_above)
         return
 
+    # Check if we should suppress console output for diff_only mode
+    suppress_console = (
+        _global_config.config and
+        hasattr(_global_config.config, 'output_mode') and
+        _global_config.config.output_mode == "diff_only"
+    )
+
     # Create an in-memory text stream
     buffer = StringIO()
 
@@ -100,18 +106,21 @@ def log_output(*args, **kwargs):
     # Retrieve the printed content
     msg = buffer.getvalue()
 
-    # Print the captured output to console with Unicode error handling
-    try:
-        print(*args, **kwargs)
-    except UnicodeEncodeError:
-        # Fallback: encode with error handling for Windows console
+    # Print the captured output to console with Unicode error handling (unless suppressed)
+    if not suppress_console:
         try:
-            safe_msg = msg.encode(sys.stdout.encoding or "utf-8", errors="replace").decode(sys.stdout.encoding or "utf-8")
-            print(safe_msg, **kwargs)
-        except Exception:  # noqa: BLE001
-            # Last resort: use ASCII with backslashreplace
-            safe_msg = msg.encode("ascii", errors="backslashreplace").decode("ascii")
-            print(safe_msg, **kwargs)
+            print(*args, **kwargs)
+        except UnicodeEncodeError:
+            # Fallback: encode with error handling for Windows console
+            try:
+                safe_msg = msg.encode(sys.stdout.encoding or "utf-8", errors="replace").decode(
+                    sys.stdout.encoding or "utf-8"
+                )
+                print(safe_msg, **kwargs)
+            except Exception:  # noqa: BLE001
+                # Last resort: use ASCII with backslashreplace
+                safe_msg = msg.encode("ascii", errors="backslashreplace").decode("ascii")
+                print(safe_msg, **kwargs)
 
     if not _global_config.logging_enabled or not _global_config.config:
         return
@@ -499,7 +508,7 @@ def handle_diff(config: KotorDiffConfig) -> tuple[bool | None, int | None]:
                 log_output(f"  Install files: {total_install_files}")
                 log_output(f"  Install folders: {len(incremental_writer.install_folders)}")
             except Exception as gen_error:  # noqa: BLE001
-                log_output(f"[Error] Failed to finalize TSLPatcher data: {universal_simplify_exception(gen_error)}")
+                log_output(f"[Error] Failed to finalize TSLPatcher data: {(gen_error.__class__.__name__, str(gen_error))}")
                 log_output("Full traceback:")
                 for line in traceback.format_exc().splitlines():
                     log_output(f"  {line}")
@@ -516,7 +525,7 @@ def handle_diff(config: KotorDiffConfig) -> tuple[bool | None, int | None]:
                     base_data_path=base_path if isinstance(base_path, Path) else None,
                 )
             except Exception as gen_error:  # noqa: BLE001
-                log_output(f"[Error] Failed to generate TSLPatcher data: {universal_simplify_exception(gen_error)}")
+                log_output(f"[Error] Failed to generate TSLPatcher data: {(gen_error.__class__.__name__, str(gen_error))}")
                 log_output("Full traceback:")
                 for line in traceback.format_exc().splitlines():
                     log_output(f"  {line}")
@@ -599,8 +608,9 @@ def run_application(config: KotorDiffConfig) -> int:
     # Set up the logging system
     _setup_logging(config)
 
-    # Log configuration
-    _log_configuration(config)
+    # Log configuration (unless in diff_only mode)
+    if config.output_mode != "diff_only":
+        _log_configuration(config)
 
     # Run with optional profiler
     profiler: cProfile.Profile | None = None
@@ -616,7 +626,11 @@ def run_application(config: KotorDiffConfig) -> int:
 
         # Format and return final output
         if comparison is not None:
-            return _format_comparison_output(comparison, config)
+            if config.output_mode != "diff_only":
+                return _format_comparison_output(comparison, config)
+            else:
+                # In diff_only mode, just return the exit code without printing summary
+                return 0 if comparison is True else (2 if comparison is False else 3)
 
     except KeyboardInterrupt:
         log_output("KeyboardInterrupt - KotorDiff was cancelled by user.")
