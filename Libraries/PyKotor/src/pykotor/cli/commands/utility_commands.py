@@ -2,11 +2,12 @@
 
 This module provides CLI commands for utility operations (diff, grep, stats, validate, merge).
 """
+
 from __future__ import annotations
 
-import io
 import pathlib
 import sys
+
 from argparse import Namespace
 from pathlib import Path
 
@@ -47,9 +48,7 @@ def _detect_path_type(path: Path) -> str:
             # Check if it's a module piece (composite module component)
             suffix_lower = path.suffix.lower()
             stem_lower = path.stem.lower()
-            if suffix_lower in (".rim", ".erf") and (
-                stem_lower.endswith("_s") or stem_lower.endswith("_dlg") or stem_lower.endswith("_a") or stem_lower.endswith("_adx")
-            ):
+            if suffix_lower in (".rim", ".erf") and (stem_lower.endswith("_s") or stem_lower.endswith("_dlg") or stem_lower.endswith("_a") or stem_lower.endswith("_adx")):
                 return "module_piece"
             return "bioware_archive"
         return "file"
@@ -128,7 +127,12 @@ def cmd_diff(args: Namespace, logger: Logger) -> int:
         Libraries/PyKotor/src/pykotor/tslpatcher/diff/application.py
     """
     # Determine verbosity from args (check for verbose/debug flags)
-    verbose = getattr(args, "verbose", False) or getattr(args, "debug", False)
+    # These are global flags passed through from dispatch
+    verbose = False
+    if hasattr(args, "verbose") and args.verbose:
+        verbose = True
+    if hasattr(args, "debug") and args.debug:
+        verbose = True
 
     # Resolve both paths
     try:
@@ -340,4 +344,3 @@ def cmd_merge(args: Namespace, logger: Logger) -> int:
     except Exception:
         logger.exception("Failed to merge files")
         return 1
-

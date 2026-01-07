@@ -175,7 +175,8 @@ holocrontoolset = { workspace = true }
 hologenerator = { workspace = true }
 holopatcher = { workspace = true }
 holopazaak = { workspace = true }
-kotorcli = { workspace = true }
+# kotorcli is now part of pykotor package, not a separate workspace member
+# kotorcli = { workspace = true }
 kotor-diff = { workspace = true }
 
 ########################################################
