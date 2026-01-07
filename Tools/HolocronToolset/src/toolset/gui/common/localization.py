@@ -648,6 +648,7 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "This .mod is not inside the active installation's Modules folder, so the Toolset cannot resolve its resources.\n\nTip: copy it into the active installation's Modules folder, then re-open.": "This .mod is not inside the active installation's Modules folder, so the Toolset cannot resolve its resources.\n\nTip: copy it into the active installation's Modules folder, then re-open.",
         # UI status messages
         "No screenshot available": "No screenshot available",
+        "Missing 2DA": "Missing 2DA",
     },
     ToolsetLanguage.FRENCH: {
         # Main Window
@@ -1232,6 +1233,7 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "This .mod is not inside the active installation's Modules folder, so the Toolset cannot resolve its resources.\n\nTip: copy it into the active installation's Modules folder, then re-open.": "Ce .mod n'est pas dans le dossier Modules de l'installation active, donc l'outil ne peut pas résoudre ses ressources.\n\nAstuce : copiez-le dans le dossier Modules de l'installation active, puis rouvrez-le.",
         # UI status messages
         "No screenshot available": "Aucune capture d'écran disponible",
+        "Missing 2DA": "2DA manquant",
     },
     ToolsetLanguage.GERMAN: {
         # Main Window
@@ -1816,6 +1818,7 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "This .mod is not inside the active installation's Modules folder, so the Toolset cannot resolve its resources.\n\nTip: copy it into the active installation's Modules folder, then re-open.": "Diese .mod befindet sich nicht im Modules-Ordner der aktiven Installation, daher kann das Toolset seine Ressourcen nicht auflösen.\n\nTipp: Kopieren Sie sie in den Modules-Ordner der aktiven Installation und öffnen Sie sie dann erneut.",
         # UI status messages
         "No screenshot available": "Kein Screenshot verfügbar",
+        "Missing 2DA": "Fehlende 2DA",
     },
     ToolsetLanguage.ITALIAN: {
         # Main Window
@@ -2400,6 +2403,7 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "This .mod is not inside the active installation's Modules folder, so the Toolset cannot resolve its resources.\n\nTip: copy it into the active installation's Modules folder, then re-open.": "Questo .mod non è nella cartella Modules dell'installazione attiva, quindi il Toolset non può risolvere le sue risorse.\n\nSuggerimento: copialo nella cartella Modules dell'installazione attiva, quindi riaprilo.",
         # UI status messages
         "No screenshot available": "Nessuna schermata disponibile",
+        "Missing 2DA": "2DA mancante",
     },
     ToolsetLanguage.SPANISH: {
         # Main Window
@@ -2984,6 +2988,7 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "This .mod is not inside the active installation's Modules folder, so the Toolset cannot resolve its resources.\n\nTip: copy it into the active installation's Modules folder, then re-open.": "Este .mod no está dentro de la carpeta Modules de la instalación activa, por lo que el Toolset no puede resolver sus recursos.\n\nConsejo: cópielo en la carpeta Modules de la instalación activa, luego vuelva a abrirlo.",
         # UI status messages
         "No screenshot available": "No hay captura de pantalla disponible",
+        "Missing 2DA": "2DA faltante",
     },
     ToolsetLanguage.POLISH: {
         # Main Window
@@ -3568,6 +3573,7 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "This .mod is not inside the active installation's Modules folder, so the Toolset cannot resolve its resources.\n\nTip: copy it into the active installation's Modules folder, then re-open.": "Ten .mod nie znajduje się w folderze Modules aktywnej instalacji, więc Toolset nie może rozwiązać jego zasobów.\n\nWskazówka: skopiuj go do folderu Modules aktywnej instalacji, a następnie otwórz ponownie.",
         # UI status messages
         "No screenshot available": "Brak dostępnego zrzutu ekranu",
+        "Missing 2DA": "Brakujący 2DA",
     },
     ToolsetLanguage.RUSSIAN: {
         # Main Window
@@ -4153,6 +4159,7 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "This .mod is not inside the active installation's Modules folder, so the Toolset cannot resolve its resources.\n\nTip: copy it into the active installation's Modules folder, then re-open.": "Этот .mod не находится в папке Modules активной установки, поэтому Toolset не может разрешить его ресурсы.\n\nСовет: скопируйте его в папку Modules активной установки, затем откройте снова.",
         # UI status messages
         "No screenshot available": "Скриншот недоступен",
+        "Missing 2DA": "Отсутствующий 2DA",
     },
 }
 
@@ -4265,3 +4272,8 @@ def trf(text: str, **kwargs) -> str:
     except KeyError:
         # If formatting fails, return translated text without formatting
         return translated
+
+
+def translate_format(text: str, **kwargs) -> str:
+    """Alias for trf() for backward compatibility."""
+    return trf(text, **kwargs)
