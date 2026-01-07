@@ -168,47 +168,19 @@ def cmd_diff(args: Namespace, logger: Logger) -> int:
         from pykotor.tslpatcher.diff.engine import run_differ_from_args_impl  # noqa: PLC0415
 
         # Create a custom log function that filters output to udiff-only when not verbose
-        udiff_output_lines: list[str] = []
-        in_diff_block = False
+        # We need to capture ALL output and filter it properly
+        all_output_lines: list[str] = []
 
         def filtered_log_func(msg: str, *args, **kwargs) -> None:
             """Log function that filters output to udiff-only when not verbose."""
-            nonlocal in_diff_block
             if verbose:
-                # In verbose mode, print everything
+                # In verbose mode, print everything immediately
                 print(msg, *args, **kwargs)  # noqa: T201
                 return
 
-            # In non-verbose mode, filter to udiff lines only
+            # In non-verbose mode, collect all output for filtering
             msg_str = str(msg) if not args else (str(msg) + " ".join(str(a) for a in args))
-            stripped = msg_str.strip()
-
-            # Check if this is a udiff line
-            is_udiff_line = (
-                stripped.startswith("---")
-                or stripped.startswith("+++")
-                or stripped.startswith("@@")
-                or (stripped.startswith("+") and not stripped.startswith("++"))
-                or (stripped.startswith("-") and not stripped.startswith("--"))
-                or (stripped.startswith(" ") and in_diff_block)  # Context lines only if in diff block
-            )
-
-            # Track if we're in a diff block
-            if stripped.startswith("---") or stripped.startswith("+++"):
-                in_diff_block = True
-            elif stripped.startswith("@@"):
-                in_diff_block = True
-            elif stripped and not is_udiff_line and in_diff_block:
-                # End of diff block if we see a non-udiff line
-                if not stripped.startswith(" "):
-                    in_diff_block = False
-
-            # Also include error messages about missing files
-            if "Missing file:" in msg_str or ("diff:" in msg_str.lower() and "error" not in msg_str.lower()):
-                is_udiff_line = True
-
-            if is_udiff_line:
-                udiff_output_lines.append(msg_str)
+            all_output_lines.append(msg_str)
 
         # Run the diff engine directly with our filtered log function
         comparison_result = run_differ_from_args_impl(
@@ -220,9 +192,93 @@ def cmd_diff(args: Namespace, logger: Logger) -> int:
             incremental_writer=None,
         )
 
-        # If not verbose, print the filtered udiff output
-        if not verbose and udiff_output_lines:
-            print("\n".join(udiff_output_lines))  # noqa: T201
+        # If not verbose, filter and print only udiff-relevant output
+        if not verbose:
+            # Filter to show:
+            # 1. Field difference descriptions (e.g., "Field 'Int16' is different at...")
+            # 2. Unified diff lines (---, +++, @@, +, -, space)
+            # 3. Final summary lines (DOES NOT MATCH, MATCHES)
+            # 4. Missing file messages
+            # 5. GFF/Struct difference messages
+            # Exclude: DEBUG, INFO, [PATCH], [INSTALL], resolution order, writer info, etc.
+            
+            filtered_lines: list[str] = []
+            in_diff_block = False
+            skip_until_separator = False
+            
+            for line in all_output_lines:
+                stripped = line.strip()
+                
+                # Skip empty lines unless we're in a diff block
+                if not stripped and not in_diff_block:
+                    continue
+                
+                # Skip debug/info messages
+                if any(prefix in stripped for prefix in ["[DEBUG]", "[INFO]", "[PATCH]", "[INSTALL]", "Loading", "Done loading", "Collected", "Comparing", "Progress:", "N-WAY COMPARISON SUMMARY", "Total resources", "Differences found", "Errors:", "=" * 80]):
+                    continue
+                
+                # Skip resolution order and writer info
+                if any(phrase in stripped for phrase in ["Resolution:", "Destination:", "tslpatchdata:", "Will copy", "Will use", "Mode:", "Type:", "Modifications:", "Extracting", "Staged", "Created empty"]):
+                    continue
+                
+                # Include field difference descriptions and resource difference markers
+                if any(phrase in stripped for phrase in ["Field", "is different at", "GFFStruct:", "number of fields", "Struct ID", "Extra", "Missing", "GFF counts", "GFFList", "struct(s)", "[DIFFERENT RESOURCE]", "Difference between path"]):
+                    filtered_lines.append(line)
+                    in_diff_block = True  # Expect udiff to follow
+                    continue
+                
+                # Include unified diff lines
+                if (stripped.startswith("---") or stripped.startswith("+++") or 
+                    stripped.startswith("@@") or 
+                    (stripped.startswith("+") and not stripped.startswith("++")) or
+                    (stripped.startswith("-") and not stripped.startswith("--")) or
+                    (stripped.startswith(" ") and in_diff_block)):
+                    filtered_lines.append(line)
+                    in_diff_block = True
+                    continue
+                
+                # Include separator lines (like "---------------------------------------------------")
+                if stripped.startswith("-") and len(stripped) > 10 and all(c == "-" for c in stripped):
+                    filtered_lines.append(line)
+                    continue
+                
+                # Include final summary lines
+                if "DOES NOT MATCH" in stripped or "MATCHES" in stripped or "Comparison of" in stripped:
+                    filtered_lines.append(line)
+                    continue
+                
+                # Include missing file messages
+                if "Missing file:" in stripped:
+                    filtered_lines.append(line)
+                    continue
+                
+                # Include GFF difference markers
+                if "^ '" in stripped and "': GFF is different" in stripped:
+                    filtered_lines.append(line)
+                    in_diff_block = False  # End of diff block
+                    continue
+                
+                # Include file size/hash differences
+                if any(phrase in stripped for phrase in ["File sizes differ", "SHA256 is different", "bytes"]):
+                    filtered_lines.append(line)
+                    continue
+                
+                # If we're in a diff block and see a non-diff line, end the block
+                if in_diff_block and stripped and not stripped.startswith(" "):
+                    in_diff_block = False
+            
+            # Print filtered output
+            if filtered_lines:
+                print("\n".join(filtered_lines))  # noqa: T201
+            
+            # Add final summary if we have a comparison result
+            if comparison_result is not None:
+                path1_str = str(path1) if isinstance(path1, Path) else str(path1)
+                path2_str = str(path2) if isinstance(path2, Path) else str(path2)
+                if comparison_result:
+                    print(f"'{path1_str}' MATCHES '{path2_str}'")  # noqa: T201
+                else:
+                    print(f"'{path1_str}' DOES NOT MATCH '{path2_str}'")  # noqa: T201
 
         # Determine exit code
         if comparison_result is True:

@@ -3227,22 +3227,24 @@ def compare_resources_n_way(  # noqa: PLR0913
 
                 log_func(f"  Difference between path {idx_a} ({path_a.name}) and path {idx_b} ({path_b.name})")
 
-                # Generate modification patch using diff_data
-                if modifications_by_type is not None:
-                    file1_rel = Path(f"path{idx_a}_{path_a.name}") / Path(resource_id).name
-                    file2_rel = Path(f"path{idx_b}_{path_b.name}") / Path(resource_id).name
-                    context = DiffContext(file1_rel, file2_rel, resource_a.ext)
+                # Always call diff_data to output field differences, even if not generating modifications
+                file1_rel = Path(f"path{idx_a}_{path_a.name}") / Path(resource_id).name
+                file2_rel = Path(f"path{idx_b}_{path_b.name}") / Path(resource_id).name
+                context = DiffContext(file1_rel, file2_rel, resource_a.ext)
 
-                    # Use diff_data to generate proper modifications
-                    diff_data(
-                        resource_a.data,
-                        resource_b.data,
-                        context,
-                        log_func=log_func,
-                        compare_hashes=compare_hashes,
-                        modifications_by_type=modifications_by_type,
-                        incremental_writer=incremental_writer,
-                    )
+                # Use diff_data to output differences (and optionally generate modifications)
+                diff_data(
+                    resource_a.data,
+                    resource_b.data,
+                    context,
+                    log_func=log_func,
+                    compare_hashes=compare_hashes,
+                    modifications_by_type=modifications_by_type,
+                    incremental_writer=incremental_writer,
+                )
+
+                # Generate modification patch if requested
+                if modifications_by_type is not None:
 
                     # Always also add an InstallList entry so the file exists before patching
                     # Don't create patch here - diff_data already created one above
