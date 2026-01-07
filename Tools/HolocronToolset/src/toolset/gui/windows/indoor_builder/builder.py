@@ -188,7 +188,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self.ui.setupUi(self)
 
         # Add a missing "Open .mod" action at runtime (UI code is generated; do not edit it).
-        self._action_open_mod: QAction = QAction("Open .mod...", self)
+        self._action_open_mod: QAction = QAction(tr("Open .mod..."), self)
         self._action_open_mod.setShortcut("Ctrl+Shift+O")
         self._action_open_mod.setStatusTip("Open a built module (.mod) and load its embedded indoor map")
         # Put it right after "Open" in File menu and toolbar.
