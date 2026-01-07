@@ -640,6 +640,12 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         # Unsaved changes dialogs
         "Unsaved Changes": "Unsaved Changes",
         "You have unsaved changes. Do you want to save before creating a new map?": "You have unsaved changes. Do you want to save before creating a new map?",
+        # Additional unsaved changes dialogs
+        "You have unsaved changes. Do you want to save before loading a module?": "You have unsaved changes. Do you want to save before loading a module?",
+        "You have unsaved changes. Do you want to save before opening another map?": "You have unsaved changes. Do you want to save before opening another map?",
+        # Module opening errors
+        "Cannot Open Module": "Cannot Open Module",
+        "This .mod is not inside the active installation's Modules folder, so the Toolset cannot resolve its resources.\n\nTip: copy it into the active installation's Modules folder, then re-open.": "This .mod is not inside the active installation's Modules folder, so the Toolset cannot resolve its resources.\n\nTip: copy it into the active installation's Modules folder, then re-open.",
     },
     ToolsetLanguage.FRENCH: {
         # Main Window
@@ -1216,6 +1222,12 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         # Unsaved changes dialogs
         "Unsaved Changes": "Modifications non enregistrées",
         "You have unsaved changes. Do you want to save before creating a new map?": "Vous avez des modifications non enregistrées. Voulez-vous enregistrer avant de créer une nouvelle carte ?",
+        # Additional unsaved changes dialogs
+        "You have unsaved changes. Do you want to save before loading a module?": "Vous avez des modifications non enregistrées. Voulez-vous enregistrer avant de charger un module ?",
+        "You have unsaved changes. Do you want to save before opening another map?": "Vous avez des modifications non enregistrées. Voulez-vous enregistrer avant d'ouvrir une autre carte ?",
+        # Module opening errors
+        "Cannot Open Module": "Impossible d'ouvrir le module",
+        "This .mod is not inside the active installation's Modules folder, so the Toolset cannot resolve its resources.\n\nTip: copy it into the active installation's Modules folder, then re-open.": "Ce .mod n'est pas dans le dossier Modules de l'installation active, donc l'outil ne peut pas résoudre ses ressources.\n\nAstuce : copiez-le dans le dossier Modules de l'installation active, puis rouvrez-le.",
     },
     ToolsetLanguage.GERMAN: {
         # Main Window
@@ -1792,6 +1804,12 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         # Unsaved changes dialogs
         "Unsaved Changes": "Nicht gespeicherte Änderungen",
         "You have unsaved changes. Do you want to save before creating a new map?": "Sie haben nicht gespeicherte Änderungen. Möchten Sie vor dem Erstellen einer neuen Karte speichern?",
+        # Additional unsaved changes dialogs
+        "You have unsaved changes. Do you want to save before loading a module?": "Sie haben nicht gespeicherte Änderungen. Möchten Sie vor dem Laden eines Moduls speichern?",
+        "You have unsaved changes. Do you want to save before opening another map?": "Sie haben nicht gespeicherte Änderungen. Möchten Sie vor dem Öffnen einer anderen Karte speichern?",
+        # Module opening errors
+        "Cannot Open Module": "Modul kann nicht geöffnet werden",
+        "This .mod is not inside the active installation's Modules folder, so the Toolset cannot resolve its resources.\n\nTip: copy it into the active installation's Modules folder, then re-open.": "Diese .mod befindet sich nicht im Modules-Ordner der aktiven Installation, daher kann das Toolset seine Ressourcen nicht auflösen.\n\nTipp: Kopieren Sie sie in den Modules-Ordner der aktiven Installation und öffnen Sie sie dann erneut.",
     },
     ToolsetLanguage.ITALIAN: {
         # Main Window
@@ -2368,6 +2386,12 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         # Unsaved changes dialogs
         "Unsaved Changes": "Modifiche non salvate",
         "You have unsaved changes. Do you want to save before creating a new map?": "Hai modifiche non salvate. Vuoi salvare prima di creare una nuova mappa?",
+        # Additional unsaved changes dialogs
+        "You have unsaved changes. Do you want to save before loading a module?": "Hai modifiche non salvate. Vuoi salvare prima di caricare un modulo?",
+        "You have unsaved changes. Do you want to save before opening another map?": "Hai modifiche non salvate. Vuoi salvare prima di aprire un'altra mappa?",
+        # Module opening errors
+        "Cannot Open Module": "Impossibile aprire il modulo",
+        "This .mod is not inside the active installation's Modules folder, so the Toolset cannot resolve its resources.\n\nTip: copy it into the active installation's Modules folder, then re-open.": "Questo .mod non è nella cartella Modules dell'installazione attiva, quindi il Toolset non può risolvere le sue risorse.\n\nSuggerimento: copialo nella cartella Modules dell'installazione attiva, quindi riaprilo.",
     },
     ToolsetLanguage.SPANISH: {
         # Main Window
@@ -2944,6 +2968,12 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         # Unsaved changes dialogs
         "Unsaved Changes": "Cambios sin guardar",
         "You have unsaved changes. Do you want to save before creating a new map?": "Tiene cambios sin guardar. ¿Desea guardar antes de crear un nuevo mapa?",
+        # Additional unsaved changes dialogs
+        "You have unsaved changes. Do you want to save before loading a module?": "Tiene cambios sin guardar. ¿Desea guardar antes de cargar un módulo?",
+        "You have unsaved changes. Do you want to save before opening another map?": "Tiene cambios sin guardar. ¿Desea guardar antes de abrir otro mapa?",
+        # Module opening errors
+        "Cannot Open Module": "No se puede abrir el módulo",
+        "This .mod is not inside the active installation's Modules folder, so the Toolset cannot resolve its resources.\n\nTip: copy it into the active installation's Modules folder, then re-open.": "Este .mod no está dentro de la carpeta Modules de la instalación activa, por lo que el Toolset no puede resolver sus recursos.\n\nConsejo: cópielo en la carpeta Modules de la instalación activa, luego vuelva a abrirlo.",
     },
     ToolsetLanguage.POLISH: {
         # Main Window
@@ -3520,6 +3550,12 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         # Unsaved changes dialogs
         "Unsaved Changes": "Niezapisane zmiany",
         "You have unsaved changes. Do you want to save before creating a new map?": "Masz niezapisane zmiany. Czy chcesz zapisać przed utworzeniem nowej mapy?",
+        # Additional unsaved changes dialogs
+        "You have unsaved changes. Do you want to save before loading a module?": "Masz niezapisane zmiany. Czy chcesz zapisać przed załadowaniem modułu?",
+        "You have unsaved changes. Do you want to save before opening another map?": "Masz niezapisane zmiany. Czy chcesz zapisać przed otwarciem innej mapy?",
+        # Module opening errors
+        "Cannot Open Module": "Nie można otworzyć modułu",
+        "This .mod is not inside the active installation's Modules folder, so the Toolset cannot resolve its resources.\n\nTip: copy it into the active installation's Modules folder, then re-open.": "Ten .mod nie znajduje się w folderze Modules aktywnej instalacji, więc Toolset nie może rozwiązać jego zasobów.\n\nWskazówka: skopiuj go do folderu Modules aktywnej instalacji, a następnie otwórz ponownie.",
     },
     ToolsetLanguage.RUSSIAN: {
         # Main Window
@@ -4097,6 +4133,12 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         # Unsaved changes dialogs
         "Unsaved Changes": "Несохраненные изменения",
         "You have unsaved changes. Do you want to save before creating a new map?": "У вас есть несохраненные изменения. Хотите сохранить перед созданием новой карты?",
+        # Additional unsaved changes dialogs
+        "You have unsaved changes. Do you want to save before loading a module?": "У вас есть несохраненные изменения. Хотите сохранить перед загрузкой модуля?",
+        "You have unsaved changes. Do you want to save before opening another map?": "У вас есть несохраненные изменения. Хотите сохранить перед открытием другой карты?",
+        # Module opening errors
+        "Cannot Open Module": "Невозможно открыть модуль",
+        "This .mod is not inside the active installation's Modules folder, so the Toolset cannot resolve its resources.\n\nTip: copy it into the active installation's Modules folder, then re-open.": "Этот .mod не находится в папке Modules активной установки, поэтому Toolset не может разрешить его ресурсы.\n\nСовет: скопируйте его в папку Modules активной установки, затем откройте снова.",
     },
 }
 

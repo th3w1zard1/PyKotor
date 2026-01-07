@@ -1261,8 +1261,8 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         if not self._undo_stack.isClean():
             result = QMessageBox.question(
                 self,
-                "Unsaved Changes",
-                "You have unsaved changes. Do you want to save before opening another map?",
+                tr("Unsaved Changes"),
+                tr("You have unsaved changes. Do you want to save before opening another map?"),
                 QMessageBox.StandardButton.Save | QMessageBox.StandardButton.Discard | QMessageBox.StandardButton.Cancel,
             )
             if result == QMessageBox.StandardButton.Save:
@@ -1322,9 +1322,8 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
         QMessageBox.warning(
             self,
-            "Cannot Open Module",
-            "This .mod is not inside the active installation's Modules folder, so the Toolset cannot resolve its resources.\n\n"
-            "Tip: copy it into the active installation's Modules folder, then re-open.",
+            tr("Cannot Open Module"),
+            tr("This .mod is not inside the active installation's Modules folder, so the Toolset cannot resolve its resources.\n\nTip: copy it into the active installation's Modules folder, then re-open."),
         )
 
     def _show_missing_rooms_dialog(
