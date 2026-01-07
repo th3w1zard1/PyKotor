@@ -59,7 +59,6 @@ from pykotor.cli.commands import (
     cmd_xml2ssf,
     cmd_xml2tlk,
 )
-from pykotor.cli.commands.diff_installation import cmd_diff_installation
 from pykotor.cli.commands.indoor_builder import cmd_indoor_build, cmd_indoor_extract
 from pykotor.cli.logger import setup_logger
 
@@ -140,8 +139,6 @@ def cli_main(argv: Sequence[str]) -> int:  # noqa: PLR0911, PLR0912, PLR0915
         if args.command == "model-convert":
             return cmd_model_convert(args, logger)
         # Utility commands
-        if args.command in ("diff-installation", "diff-paths", "kotordiff", "diff-kotor"):
-            return cmd_diff_installation(args, logger)
         if args.command == "diff":
             return cmd_diff(args, logger)
         if args.command == "grep":

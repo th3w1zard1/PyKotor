@@ -7,7 +7,6 @@ from pykotor.cli.commands.compile import cmd_compile
 from pykotor.cli.commands.config import cmd_config
 from pykotor.cli.commands.convert import cmd_convert
 from pykotor.cli.commands.create_archive import cmd_create_archive
-from pykotor.cli.commands.diff_installation import cmd_diff_installation
 from pykotor.cli.commands.extract import cmd_extract
 from pykotor.cli.commands.format_convert import (
     cmd_2da2csv,
@@ -80,7 +79,6 @@ __all__ = [
     "cmd_csv22da",
     "cmd_decompile",
     "cmd_diff",
-    "cmd_diff_installation",
     "cmd_disassemble",
     "cmd_extract",
     "cmd_gff2json",

@@ -273,21 +273,10 @@ def create_parser() -> ArgumentParser:  # noqa: PLR0915
     model_parser.add_argument("--to-ascii", action="store_true", help="Convert to ASCII format")
     model_parser.add_argument("--mdx", help="MDX file path (for MDL<->ASCII conversion)")
 
-    # KotorDiff structured comparisons
-    diff_install_parser = subparsers.add_parser(
-        "diff-installation",
-        aliases=["diff-paths", "kotordiff", "diff-kotor"],
-        help="Compare installations/files/modules using structured KotorDiff (headless with CLI args, GUI otherwise)",
-    )
-    # Use pykotor.diff_tool's argument parser
-    from pykotor.diff_tool.cli import add_kotordiff_arguments
-
-    add_kotordiff_arguments(diff_install_parser)
-
     # Utility commands
-    diff_parser = subparsers.add_parser("diff", help="Compare two files and show differences")
-    diff_parser.add_argument("file1", help="First file")
-    diff_parser.add_argument("file2", help="Second file")
+    diff_parser = subparsers.add_parser("diff", help="Compare two paths (files, folders, installations, or bioware archives) and show unified diff")
+    diff_parser.add_argument("path1", help="First path (file, folder, installation, or bioware archive)")
+    diff_parser.add_argument("path2", help="Second path (file, folder, installation, or bioware archive)")
     diff_parser.add_argument("--output", "-o", dest="output", help="Output diff file")
     diff_parser.add_argument("--context", "-C", type=int, default=3, help="Number of context lines")
 
