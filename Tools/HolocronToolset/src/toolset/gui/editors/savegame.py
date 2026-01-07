@@ -277,8 +277,8 @@ class SaveGameEditor(Editor):
         if self._save_folder is None:
             QMessageBox.warning(
                 self,
-                "No Save Loaded",
-                "No save game is currently loaded.",
+                tr("No Save Loaded"),
+                tr("No save game is currently loaded."),
             )
             return
         
@@ -1368,8 +1368,8 @@ class SaveGameEditor(Editor):
         if not flat_locations:
             QMessageBox.warning(
                 self,
-                "No Items Found",
-                "No UTI resources found in the installation."
+                tr("No Items Found"),
+                tr("No UTI resources found in the installation.")
             )
             return
         
@@ -1394,8 +1394,8 @@ class SaveGameEditor(Editor):
                 # Show confirmation
                 QMessageBox.information(
                     self,
-                    "Equipment Updated",
-                    f"Equipment slot updated to: {new_resref}"
+                    tr("Equipment Updated"),
+                    trf("Equipment slot updated to: {new_resref}", new_resref=new_resref)
                 )
     
     def on_equipment_context_menu(self, position: QPoint):
@@ -1439,8 +1439,8 @@ class SaveGameEditor(Editor):
             
             QMessageBox.information(
                 self,
-                "Equipment Removed",
-                f"Equipment removed from {slot.name if hasattr(slot, 'name') else f'Slot {slot.value}'}."
+                tr("Equipment Removed"),
+                trf("Equipment removed from {slot_name}.", slot_name=slot.name if hasattr(slot, 'name') else f'Slot {slot.value}')
             )
 
     # ==================== Inventory Methods ====================
@@ -2020,8 +2020,8 @@ class SaveGameEditor(Editor):
         except Exception as e:
             QMessageBox.critical(
                 self,
-                "Error",
-                f"Failed to flush EventQueue:\n{e}",
+                tr("Error"),
+                trf("Failed to flush EventQueue:\n{error}", error=e),
             )
     
     def rebuild_cached_modules(self):

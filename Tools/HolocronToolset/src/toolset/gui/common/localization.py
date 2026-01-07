@@ -610,6 +610,22 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Repair": "Repair",
         "Security": "Security",
         "Treat Injury": "Treat Injury",
+        # LYT Editor strings
+        "Generate Walkmesh": "Generate Walkmesh",
+        "No LYT loaded. Please load or create a LYT first.": "No LYT loaded. Please load or create a LYT first.",
+        "LYT Saved": "LYT Saved",
+        "The layout has been saved successfully.": "The layout has been saved successfully.",
+        "Save Failed": "Save Failed",
+        "Unable to save LYT: No layout resource found in the module.": "Unable to save LYT: No layout resource found in the module.",
+        "No current LYT or module available.": "No current LYT or module available.",
+        # Savegame Editor strings
+        "No Items Found": "No Items Found",
+        "No UTI resources found in the installation.": "No UTI resources found in the installation.",
+        "Equipment Updated": "Equipment Updated",
+        "Equipment slot updated to: {new_resref}": "Equipment slot updated to: {new_resref}",
+        "Equipment Removed": "Equipment Removed",
+        "Equipment removed from {slot_name}.": "Equipment removed from {slot_name}.",
+        "Failed to flush EventQueue:\n{error}": "Failed to flush EventQueue:\n{error}",
     },
     ToolsetLanguage.FRENCH: {
         # Main Window
@@ -1156,6 +1172,22 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Repair": "Réparation",
         "Security": "Sécurité",
         "Treat Injury": "Soins",
+        # LYT Editor strings
+        "Generate Walkmesh": "Générer Walkmesh",
+        "No LYT loaded. Please load or create a LYT first.": "Aucun LYT chargé. Veuillez d'abord charger ou créer un LYT.",
+        "LYT Saved": "LYT enregistré",
+        "The layout has been saved successfully.": "La disposition a été enregistrée avec succès.",
+        "Save Failed": "Échec de l'enregistrement",
+        "Unable to save LYT: No layout resource found in the module.": "Impossible d'enregistrer LYT : Aucune ressource de disposition trouvée dans le module.",
+        "No current LYT or module available.": "Aucun LYT ou module actuel disponible.",
+        # Savegame Editor strings
+        "No Items Found": "Aucun élément trouvé",
+        "No UTI resources found in the installation.": "Aucune ressource UTI trouvée dans l'installation.",
+        "Equipment Updated": "Équipement mis à jour",
+        "Equipment slot updated to: {new_resref}": "Emplacement d'équipement mis à jour vers : {new_resref}",
+        "Equipment Removed": "Équipement retiré",
+        "Equipment removed from {slot_name}.": "Équipement retiré de {slot_name}.",
+        "Failed to flush EventQueue:\n{error}": "Échec de la purge d'EventQueue :\n{error}",
     },
     ToolsetLanguage.GERMAN: {
         # Main Window
@@ -1702,6 +1734,22 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Repair": "Reparieren",
         "Security": "Sicherheit",
         "Treat Injury": "Wunden behandeln",
+        # LYT Editor strings
+        "Generate Walkmesh": "Walkmesh generieren",
+        "No LYT loaded. Please load or create a LYT first.": "Kein LYT geladen. Bitte laden oder erstellen Sie zuerst ein LYT.",
+        "LYT Saved": "LYT gespeichert",
+        "The layout has been saved successfully.": "Das Layout wurde erfolgreich gespeichert.",
+        "Save Failed": "Speichern fehlgeschlagen",
+        "Unable to save LYT: No layout resource found in the module.": "LYT kann nicht gespeichert werden: Keine Layout-Ressource im Modul gefunden.",
+        "No current LYT or module available.": "Kein aktuelles LYT oder Modul verfügbar.",
+        # Savegame Editor strings
+        "No Items Found": "Keine Elemente gefunden",
+        "No UTI resources found in the installation.": "Keine UTI-Ressourcen in der Installation gefunden.",
+        "Equipment Updated": "Ausrüstung aktualisiert",
+        "Equipment slot updated to: {new_resref}": "Ausrüstungsplatz aktualisiert auf: {new_resref}",
+        "Equipment Removed": "Ausrüstung entfernt",
+        "Equipment removed from {slot_name}.": "Ausrüstung entfernt von {slot_name}.",
+        "Failed to flush EventQueue:\n{error}": "EventQueue konnte nicht geleert werden:\n{error}",
     },
     ToolsetLanguage.ITALIAN: {
         # Main Window
@@ -2248,6 +2296,22 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Repair": "Riparazione",
         "Security": "Sicurezza",
         "Treat Injury": "Curare ferite",
+        # LYT Editor strings
+        "Generate Walkmesh": "Genera Walkmesh",
+        "No LYT loaded. Please load or create a LYT first.": "Nessun LYT caricato. Caricare o creare prima un LYT.",
+        "LYT Saved": "LYT salvato",
+        "The layout has been saved successfully.": "Il layout è stato salvato con successo.",
+        "Save Failed": "Salvataggio fallito",
+        "Unable to save LYT: No layout resource found in the module.": "Impossibile salvare LYT: Nessuna risorsa layout trovata nel modulo.",
+        "No current LYT or module available.": "Nessun LYT o modulo corrente disponibile.",
+        # Savegame Editor strings
+        "No Items Found": "Nessun elemento trovato",
+        "No UTI resources found in the installation.": "Nessuna risorsa UTI trovata nell'installazione.",
+        "Equipment Updated": "Equipaggiamento aggiornato",
+        "Equipment slot updated to: {new_resref}": "Slot equipaggiamento aggiornato a: {new_resref}",
+        "Equipment Removed": "Equipaggiamento rimosso",
+        "Equipment removed from {slot_name}.": "Equipaggiamento rimosso da {slot_name}.",
+        "Failed to flush EventQueue:\n{error}": "Impossibile svuotare EventQueue:\n{error}",
     },
     ToolsetLanguage.SPANISH: {
         # Main Window
@@ -2794,6 +2858,22 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Repair": "Reparación",
         "Security": "Seguridad",
         "Treat Injury": "Tratar heridas",
+        # LYT Editor strings
+        "Generate Walkmesh": "Generar Walkmesh",
+        "No LYT loaded. Please load or create a LYT first.": "No hay LYT cargado. Cargue o cree un LYT primero.",
+        "LYT Saved": "LYT guardado",
+        "The layout has been saved successfully.": "El diseño se ha guardado correctamente.",
+        "Save Failed": "Error al guardar",
+        "Unable to save LYT: No layout resource found in the module.": "No se puede guardar LYT: No se encontró recurso de diseño en el módulo.",
+        "No current LYT or module available.": "No hay LYT o módulo actual disponible.",
+        # Savegame Editor strings
+        "No Items Found": "No se encontraron elementos",
+        "No UTI resources found in the installation.": "No se encontraron recursos UTI en la instalación.",
+        "Equipment Updated": "Equipo actualizado",
+        "Equipment slot updated to: {new_resref}": "Ranura de equipo actualizada a: {new_resref}",
+        "Equipment Removed": "Equipo eliminado",
+        "Equipment removed from {slot_name}.": "Equipo eliminado de {slot_name}.",
+        "Failed to flush EventQueue:\n{error}": "Error al vaciar EventQueue:\n{error}",
     },
     ToolsetLanguage.POLISH: {
         # Main Window
@@ -3340,6 +3420,22 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Repair": "Naprawa",
         "Security": "Bezpieczeństwo",
         "Treat Injury": "Leczenie ran",
+        # LYT Editor strings
+        "Generate Walkmesh": "Generuj Walkmesh",
+        "No LYT loaded. Please load or create a LYT first.": "Brak załadowanego LYT. Najpierw załaduj lub utwórz LYT.",
+        "LYT Saved": "LYT zapisany",
+        "The layout has been saved successfully.": "Układ został zapisany pomyślnie.",
+        "Save Failed": "Zapis nie powiódł się",
+        "Unable to save LYT: No layout resource found in the module.": "Nie można zapisać LYT: Nie znaleziono zasobu układu w module.",
+        "No current LYT or module available.": "Brak dostępnego bieżącego LYT lub modułu.",
+        # Savegame Editor strings
+        "No Items Found": "Nie znaleziono elementów",
+        "No UTI resources found in the installation.": "Nie znaleziono zasobów UTI w instalacji.",
+        "Equipment Updated": "Wyposażenie zaktualizowane",
+        "Equipment slot updated to: {new_resref}": "Slot wyposażenia zaktualizowany do: {new_resref}",
+        "Equipment Removed": "Wyposażenie usunięte",
+        "Equipment removed from {slot_name}.": "Wyposażenie usunięte z {slot_name}.",
+        "Failed to flush EventQueue:\n{error}": "Nie udało się opróżnić EventQueue:\n{error}",
     },
     ToolsetLanguage.RUSSIAN: {
         # Main Window
@@ -3887,6 +3983,22 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Repair": "Ремонт",
         "Security": "Безопасность",
         "Treat Injury": "Лечение ран",
+        # LYT Editor strings
+        "Generate Walkmesh": "Создать Walkmesh",
+        "No LYT loaded. Please load or create a LYT first.": "LYT не загружен. Сначала загрузите или создайте LYT.",
+        "LYT Saved": "LYT сохранен",
+        "The layout has been saved successfully.": "Макет успешно сохранен.",
+        "Save Failed": "Ошибка сохранения",
+        "Unable to save LYT: No layout resource found in the module.": "Невозможно сохранить LYT: В модуле не найдено ресурсов макета.",
+        "No current LYT or module available.": "Текущий LYT или модуль недоступен.",
+        # Savegame Editor strings
+        "No Items Found": "Элементы не найдены",
+        "No UTI resources found in the installation.": "Ресурсы UTI не найдены в установке.",
+        "Equipment Updated": "Оборудование обновлено",
+        "Equipment slot updated to: {new_resref}": "Слот оборудования обновлен до: {new_resref}",
+        "Equipment Removed": "Оборудование удалено",
+        "Equipment removed from {slot_name}.": "Оборудование удалено из {slot_name}.",
+        "Failed to flush EventQueue:\n{error}": "Не удалось очистить EventQueue:\n{error}",
     },
 }
 

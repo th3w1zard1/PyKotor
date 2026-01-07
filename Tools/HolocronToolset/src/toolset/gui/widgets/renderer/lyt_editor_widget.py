@@ -96,9 +96,9 @@ if TYPE_CHECKING:
         QPaintEvent,
         QShowEvent,
         QWheelEvent,
-        _QAction,
+        QAction,
     )
-    from qtpy.QtWidgets import _QMenu
+    from qtpy.QtWidgets import QMenu
     from typing_extensions import Literal
 
     from toolset.data.lyt_structures import ExtendedLYTDoorHook, ExtendedLYTRoom
@@ -359,12 +359,12 @@ class LYTEditorWidget(QWidget):
         self.tool_group.setExclusive(True)
 
         # Initialize actions
-        self._undo_action: _QAction = QAction(tr("Undo"), self)
+        self._undo_action: QAction = QAction(tr("Undo"), self)
         self._undo_action.setShortcut(QKeySequence.StandardKey.Undo)
         self._undo_action.setIcon(QIcon(":/icons/undo.png"))
         self._undo_action.setToolTip(tr("Undo last action"))
 
-        self._redo_action: _QAction = QAction(tr("Redo"), self)
+        self._redo_action: QAction = QAction(tr("Redo"), self)
         self._redo_action.setShortcut(QKeySequence.StandardKey.Redo)
         self._redo_action.setIcon(QIcon(":/icons/redo.png"))
         self._redo_action.setToolTip(tr("Redo last action"))
@@ -429,15 +429,21 @@ class LYTEditorWidget(QWidget):
         self.right_layout: QVBoxLayout = QVBoxLayout(self.right_panel)
 
         # Add texture browser
-        self.texture_dock: QDockWidget = QDockWidget("Textures", self)
+        self.texture_dock: QDockWidget = QDockWidget(tr("Textures"), self)
         self.texture_dock.setWidget(self.texture_browser)
-        self.texture_dock.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetMovable | QDockWidget.DockWidgetFeature.DockWidgetFloatable)
+        self.texture_dock.setFeatures(
+            QDockWidget.DockWidgetFeature.DockWidgetMovable
+            | QDockWidget.DockWidgetFeature.DockWidgetFloatable,
+        )
         self.right_layout.addWidget(self.texture_dock)
 
         # Add walkmesh editor
-        self.walkmesh_dock: QDockWidget = QDockWidget("Walkmesh Editor", self)
+        self.walkmesh_dock: QDockWidget = QDockWidget(tr("Walkmesh Editor"), self)
         self.walkmesh_dock.setWidget(self.walkmesh_editor)
-        self.walkmesh_dock.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetMovable | QDockWidget.DockWidgetFeature.DockWidgetFloatable)
+        self.walkmesh_dock.setFeatures(
+            QDockWidget.DockWidgetFeature.DockWidgetMovable
+            | QDockWidget.DockWidgetFeature.DockWidgetFloatable,
+        )
         self.right_layout.addWidget(self.walkmesh_dock)
 
         self.main_splitter.addWidget(self.right_panel)
@@ -479,9 +485,11 @@ class LYTEditorWidget(QWidget):
         select_tool.setChecked(True)
         self.current_tool = "select"
 
+        # TODO: path to room icon
         room_tool = QAction(QIcon("path/to/room_icon.png"), tr("Room"), self)
         room_tool.setCheckable(True)
 
+        # TODO: path to door icon
         door_tool = QAction(QIcon("path/to/door_icon.png"), tr("Door"), self)
         door_tool.setCheckable(True)
 
@@ -499,78 +507,78 @@ class LYTEditorWidget(QWidget):
 
     def setup_main_toolbar(self):
         # Room actions
-        self.room_actions: list[_QAction] = []
-        room_menu: _QMenu = QMenu(tr("Room Actions"), self)
-        add_room_action: _QAction = room_menu.addAction(QIcon("path/to/add_room_icon.png"), "Add Room")
+        self.room_actions: list[QAction] = []
+        room_menu: QMenu = QMenu(tr("Room Actions"), self)
+        add_room_action: QAction = room_menu.addAction(QIcon("path/to/add_room_icon.png"), "Add Room")
         add_room_action.triggered.connect(self.lyt_editor.add_room)
-        resize_room_action: _QAction = room_menu.addAction(QIcon("path/to/resize_room_icon.png"), "Resize Room")
+        resize_room_action: QAction = room_menu.addAction(QIcon("path/to/resize_room_icon.png"), "Resize Room")
         resize_room_action.triggered.connect(self.lyt_editor.resize_room)
-        rotate_room_action: _QAction = room_menu.addAction(QIcon("path/to/rotate_room_icon.png"), "Rotate Room")
+        rotate_room_action: QAction = room_menu.addAction(QIcon("path/to/rotate_room_icon.png"), "Rotate Room")
         rotate_room_action.triggered.connect(self.lyt_editor.rotate_room)
-        connect_rooms_action: _QAction = room_menu.addAction(QIcon("path/to/connect_rooms_icon.png"), "Connect Rooms")
+        connect_rooms_action: QAction = room_menu.addAction(QIcon("path/to/connect_rooms_icon.png"), "Connect Rooms")
         connect_rooms_action.triggered.connect(self.connect_rooms)
         self.room_actions.extend([add_room_action, resize_room_action, rotate_room_action, connect_rooms_action])
 
         room_tool_button = QToolButton()
         room_tool_button.setMenu(room_menu)
         room_tool_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
-        room_tool_button.setIcon(QIcon("path/to/room_icon.png"))
+        room_tool_button.setIcon(QIcon("path/to/room_icon.png"))  # TODO: path to room icon
         room_tool_button.setToolTip(self.get_tool_tip("room_actions"))
         self.main_toolbar.addWidget(room_tool_button, "Room Actions")
 
         # Walkmesh actions
-        self.walkmesh_actions: list[_QAction] = []
-        walkmesh_menu: _QMenu = QMenu(tr("Walkmesh Actions"), self)
+        self.walkmesh_actions: list[QAction] = []
+        walkmesh_menu: QMenu = QMenu(tr("Walkmesh Actions"), self)
 
-        generate_walkmesh_action: _QAction = walkmesh_menu.addAction(QIcon("path/to/generate_walkmesh_icon.png"), "Generate Walkmesh")
+        generate_walkmesh_action: QAction = walkmesh_menu.addAction(QIcon("path/to/generate_walkmesh_icon.png"), "Generate Walkmesh")
         generate_walkmesh_action.triggered.connect(self.generate_walkmesh)
-        edit_walkmesh_action: _QAction = walkmesh_menu.addAction(QIcon("path/to/edit_walkmesh_icon.png"), "Edit Walkmesh")
+        edit_walkmesh_action: QAction = walkmesh_menu.addAction(QIcon("path/to/edit_walkmesh_icon.png"), "Edit Walkmesh")
         edit_walkmesh_action.triggered.connect(self.edit_walkmesh)
 
         walkmesh_tool_button = QToolButton()
         walkmesh_tool_button.setMenu(walkmesh_menu)
         walkmesh_tool_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
-        walkmesh_tool_button.setIcon(QIcon("path/to/walkmesh_icon.png"))
+        walkmesh_tool_button.setIcon(QIcon("path/to/walkmesh_icon.png"))  # TODO: path to walkmesh icon
         walkmesh_tool_button.setToolTip(self.get_tool_tip("walkmesh_actions"))
         self.main_toolbar.addWidget(walkmesh_tool_button, "Walkmesh Actions")
         self.walkmesh_actions.extend([generate_walkmesh_action, edit_walkmesh_action])
 
         # Texture actions
-        self.texture_actions: list[_QAction] = []
+        self.texture_actions: list[QAction] = []
         texture_menu = QMenu(tr("Texture Actions"), self)
-        import_texture_action: _QAction = texture_menu.addAction(QIcon("path/to/import_texture_icon.png"), "Import Texture")
+        import_texture_action: QAction = texture_menu.addAction(QIcon("path/to/import_texture_icon.png"), "Import Texture")  # TODO: path to import texture icon
         import_texture_action.triggered.connect(self.import_texture)
-        manage_textures_action: _QAction = texture_menu.addAction(QIcon("path/to/manage_textures_icon.png"), "Manage Textures")
+        manage_textures_action: QAction = texture_menu.addAction(QIcon("path/to/manage_textures_icon.png"), "Manage Textures")  # TODO: path to manage textures icon
         manage_textures_action.triggered.connect(self.manage_textures)
 
         texture_tool_button = QToolButton()
         texture_tool_button.setMenu(texture_menu)
         texture_tool_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
-        texture_tool_button.setIcon(QIcon("path/to/texture_icon.png"))
+        texture_tool_button.setIcon(QIcon("path/to/texture_icon.png"))  # TODO: path to texture icon
         texture_tool_button.setToolTip(self.get_tool_tip("texture_actions"))
         self.main_toolbar.addWidget(texture_tool_button, "Texture Actions")
         self.texture_actions.extend([import_texture_action, manage_textures_action])
 
         # Undo/Redo actions
-        undo_action: _QAction | None = self.undo_stack.createUndoAction(self, "Undo")  # pyright: ignore[reportAssignmentType]
-        undo_action.setIcon(QIcon("path/to/undo_icon.png"))  # pyright: ignore[reportOptionalMemberAccess]
+        undo_action: QAction | None = self.undo_stack.createUndoAction(self, "Undo")  # pyright: ignore[reportAssignmentType]
+        undo_action.setIcon(QIcon("path/to/undo_icon.png"))  # pyright: ignore[reportOptionalMemberAccess] # TODO: path to undo icon
         undo_action.setShortcut(QKeySequence.StandardKey.Undo)  # pyright: ignore[reportOptionalMemberAccess]
         undo_action.setToolTip(self.get_tool_tip("undo"))  # pyright: ignore[reportOptionalMemberAccess]
         self.main_toolbar.addAction(undo_action, "Edit")
 
-        redo_action: _QAction | None = self.undo_stack.createRedoAction(self, "Redo")  # pyright: ignore[reportAssignmentType]
-        redo_action.setIcon(QIcon("path/to/redo_icon.png"))  # pyright: ignore[reportOptionalMemberAccess]
+        redo_action: QAction | None = self.undo_stack.createRedoAction(self, "Redo")  # pyright: ignore[reportAssignmentType]
+        redo_action.setIcon(QIcon("path/to/redo_icon.png"))  # pyright: ignore[reportOptionalMemberAccess] # TODO: path to redo icon
         redo_action.setShortcut(QKeySequence.StandardKey.Redo)  # pyright: ignore[reportOptionalMemberAccess]
         redo_action.setToolTip(self.get_tool_tip("redo"))  # pyright: ignore[reportOptionalMemberAccess]
         self.main_toolbar.addAction(redo_action, "Edit")
 
         # Zoom actions
-        zoom_in_action = QAction(QIcon("path/to/zoom_in_icon.png"), tr("Zoom In"), self)
+        zoom_in_action = QAction(QIcon("path/to/zoom_in_icon.png"), tr("Zoom In"), self)  # TODO: path to zoom in icon
         zoom_in_action.triggered.connect(self.zoom_pan_widget.zoom_in)
         zoom_in_action.setToolTip("Zoom In (Ctrl++)")
         self.main_toolbar.addAction(zoom_in_action, "View")
 
-        zoom_out_action = QAction(QIcon("path/to/zoom_out_icon.png"), tr("Zoom Out"), self)
+        zoom_out_action = QAction(QIcon("path/to/zoom_out_icon.png"), tr("Zoom Out"), self)  # TODO: path to zoom out icon
         zoom_out_action.triggered.connect(self.zoom_pan_widget.zoom_out)
         zoom_out_action.setToolTip("Zoom Out (Ctrl+-)")
         self.main_toolbar.addAction(zoom_out_action, "View")
@@ -603,11 +611,11 @@ class LYTEditorWidget(QWidget):
         self.context_help[widget] = help_text
 
     def setup_context_help(self):
-        self.set_context_help(self.lyt_editor, "LYT Editor: Create and edit rooms, tracks, and obstacles.")
-        self.set_context_help(self.texture_browser, "Texture Browser: Manage and apply textures to rooms.")
-        self.set_context_help(self.walkmesh_editor, "Walkmesh Editor: Edit and generate walkmeshes for your layout.")
-        self.set_context_help(self.main_toolbar, "Main Toolbar: Quick access to common actions and tools.")
-        self.set_context_help(self.zoom_pan_widget, "Zoom and Pan: Control the view of your layout.")
+        self.set_context_help(self.lyt_editor, tr("LYT Editor: Create and edit rooms, tracks, and obstacles."))
+        self.set_context_help(self.texture_browser, tr("Texture Browser: Manage and apply textures to rooms."))
+        self.set_context_help(self.walkmesh_editor, tr("Walkmesh Editor: Edit and generate walkmeshes for your layout."))
+        self.set_context_help(self.main_toolbar, tr("Main Toolbar: Quick access to common actions and tools."))
+        self.set_context_help(self.zoom_pan_widget, tr("Zoom and Pan: Control the view of your layout."))
 
         for action in self.room_actions:
             self.set_context_help(action, f"{action.text()}: {action.toolTip()}")
@@ -616,7 +624,7 @@ class LYTEditorWidget(QWidget):
         for action in self.texture_actions:
             self.set_context_help(action, f"{action.text()}: {action.toolTip()}")
 
-    def on_tool_selected(self, action: _QAction):
+    def on_tool_selected(self, action: QAction):
         self.current_tool = action.text().lower()
         self.lyt_editor.set_current_tool(self.current_tool)  # FIXME: set_current_tool attribute not found
 
@@ -713,17 +721,17 @@ class LYTEditorWidget(QWidget):
     def contextMenuEvent(self, event: QContextMenuEvent):
         context_menu = QMenu(self)
 
-        room_submenu: _QMenu | None = context_menu.addMenu("Room Actions")  # pyright: ignore[reportAssignmentType]
+        room_submenu: QMenu | None = context_menu.addMenu("Room Actions")  # pyright: ignore[reportAssignmentType]
         room_submenu.addAction("Add Room", self.lyt_editor.add_room)  # pyright: ignore[reportOptionalMemberAccess]
         room_submenu.addAction("Resize Room", self.lyt_editor.resize_room)  # pyright: ignore[reportOptionalMemberAccess]
         room_submenu.addAction("Rotate Room", self.lyt_editor.rotate_room)  # pyright: ignore[reportOptionalMemberAccess]
         room_submenu.addAction("Connect Rooms", self.connect_rooms)  # pyright: ignore[reportOptionalMemberAccess]
 
-        walkmesh_submenu: _QMenu | None = context_menu.addMenu("Walkmesh Actions")  # pyright: ignore[reportAssignmentType]
+        walkmesh_submenu: QMenu | None = context_menu.addMenu("Walkmesh Actions")  # pyright: ignore[reportAssignmentType]
         walkmesh_submenu.addAction("Generate Walkmesh", self.generate_walkmesh)  # pyright: ignore[reportOptionalMemberAccess]
         walkmesh_submenu.addAction("Edit Walkmesh", self.edit_walkmesh)  # pyright: ignore[reportOptionalMemberAccess]
 
-        texture_submenu: _QMenu | None = context_menu.addMenu("Texture Actions")  # pyright: ignore[reportAssignmentType]
+        texture_submenu: QMenu | None = context_menu.addMenu("Texture Actions")  # pyright: ignore[reportAssignmentType]
         texture_submenu.addAction("Import Texture", self.import_texture)  # pyright: ignore[reportOptionalMemberAccess]
         texture_submenu.addAction("Manage Textures", self.manage_textures)  # pyright: ignore[reportOptionalMemberAccess]
 
@@ -922,7 +930,7 @@ class LYTEditorWidget(QWidget):
             future: concurrent.futures.Future[tuple[Callable[..., Any], Any]] = self.submit_task(self.walkmesh_editor.generate_walkmesh, self.current_lyt)
             future.add_done_callback(self.on_walkmesh_generated)
         else:
-            QMessageBox.warning(self, "Generate Walkmesh", "No LYT loaded. Please load or create a LYT first.")
+            QMessageBox.warning(self, tr("Generate Walkmesh"), tr("No LYT loaded. Please load or create a LYT first."))
 
     def edit_walkmesh(self):
         self.walkmesh_editor.edit_walkmesh()  # FIXME: edit_walkmesh attribute not found
@@ -1162,7 +1170,7 @@ class LYTEditorWidget(QWidget):
             result_label.setCursor(Qt.CursorShape.PointingHandCursor)
             result_label.setToolTip("Click to go to this item")
             layout.addWidget(result_label)
-        layout.addWidget(QPushButton(tr("Close"), clicked=result_dialog.accept))
+        layout.addWidget(QPushButton(tr("Close"), clicked=result_dialog.accept))  # pyright: ignore[reportCallIssue]
         result_dialog.setModal(False)
         result_dialog.exec()
 
@@ -1279,7 +1287,7 @@ class LYTEditorWidget(QWidget):
         QWhatsThis.showText(focused_widget.mapToGlobal(QPoint(0, 0)), focused_widget.whatsThis(), focused_widget)
 
     def quick_search(self):
-        search_text, ok = QInputDialog.getText(self, "Quick Search", "Enter search term:")
+        search_text, ok = QInputDialog.getText(self, tr("Quick Search"), tr("Enter search term:"))
         if ok and search_text:
             future: Future[list[tuple[str, str]]] = self.submit_task(self.perform_quick_search, search_text)
             future.add_done_callback(lambda f: self.on_quick_search_completed(f.result()))
@@ -1340,7 +1348,7 @@ class LYTEditorWidget(QWidget):
         self.walkmesh_editor.update_preview()  # FIXME: update_preview attribute not found
 
     def setup_lyt_tools(self):
-        self.lyt_toolbar = QToolBar("LYT Tools")
+        self.lyt_toolbar = QToolBar(tr("Layout Tools"))
         self.addToolBar(self.lyt_toolbar)  # FIXME: addToolBar attribute not found
 
         self.add_room_action = QAction(tr("Add Room"), self)
@@ -1414,7 +1422,7 @@ class LYTEditorWidget(QWidget):
             self.walkmesh_editor.set_lyt(self.current_lyt)
 
     def import_custom_texture(self):
-        file_path, _ = QFileDialog.getOpenFileName(self, "Import Texture", "", "Image Files (*.png *.jpg *.bmp)")
+        file_path, _ = QFileDialog.getOpenFileName(self, tr("Import Texture"), "", tr("Image Files (*.png *.jpg *.bmp)"))
         if file_path:
             texture_name = os.path.basename(file_path)  # noqa: PTH119
             self.custom_textures[texture_name] = QPixmap(file_path)
@@ -1429,7 +1437,7 @@ class LYTEditorWidget(QWidget):
                 self.current_lyt = LYT()
                 # Generate a basic layout based on the module's area
                 self.current_lyt.rooms.append(LYTRoom())
-                self.current_lyt.rooms[0].position = Vector3(0, 0, 0)
+                self.current_lyt.rooms[0].position = Vector3(0, 0, 0)  # type: ignore
                 self.current_lyt.rooms[0].model = "default_room"
         self.update_lyt_preview()
 
@@ -1438,11 +1446,11 @@ class LYTEditorWidget(QWidget):
             lyt_resource = self.parent_ref.module.layout()
             if lyt_resource:
                 lyt_resource.save(self.current_lyt)
-                QMessageBox.information(self, "LYT Saved", "The layout has been saved successfully.")
+                QMessageBox.information(self, tr("LYT Saved"), tr("The layout has been saved successfully."))
             else:
-                QMessageBox.warning(self, "Save Failed", "Unable to save LYT: No layout resource found in the module.")
+                QMessageBox.warning(self, tr("Save Failed"), tr("Unable to save LYT: No layout resource found in the module."))
         else:
-            QMessageBox.warning(self, "Save Failed", "No current LYT or module available.")
+            QMessageBox.warning(self, tr("Save Failed"), tr("No current LYT or module available."))
 
     def edit_room_properties(self, room: ExtendedLYTRoom) -> None:
         dialog = RoomPropertiesDialog(room, self)
