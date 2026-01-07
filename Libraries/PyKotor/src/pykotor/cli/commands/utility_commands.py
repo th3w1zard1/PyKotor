@@ -10,13 +10,154 @@ import sys
 
 from argparse import Namespace
 from pathlib import Path
+from typing import Any
 
 from loggerplus import RobustLogger as Logger  # type: ignore[import-untyped]
+
+# Import the proper diff logging system
+from pykotor.diff_tool.logger import DiffLogger, LogLevel, OutputMode
 from pykotor.extract.installation import Installation
-from pykotor.resource.formats.gff.gff_auto import read_gff, write_gff
-from pykotor.resource.formats.gff.gff_data import GFF
+from pykotor.resource.formats.gff import read_gff, write_gff, GFF
 from pykotor.tools.misc import is_capsule_file
-from pykotor.tools.utilities import diff_files, get_file_stats, grep_in_file, validate_file
+from pykotor.tools.utilities import get_file_stats, grep_in_file, validate_file
+
+
+def _diff_archives_or_directories(
+    path1: Path,
+    path2: Path,
+    args: Namespace,
+    formatter: Any,
+    diff_logger: Logger | DiffLogger,
+    output_mode: OutputMode,
+) -> int:
+    """Compare two archives or directories and show unified diffs."""
+    try:
+        from pykotor.extract.capsule import Capsule
+        from pykotor.extract.installation import Installation
+        from pykotor.tslpatcher.diff.engine import DiffContext, diff_data
+
+        # Load archives/installations
+        def load_resource_container(path: Path) -> dict[str, bytes]:
+            """Load all resources from an archive or directory."""
+            raw_resource_data: dict[str, bytes] = {}
+
+            if path.is_dir():
+                # Directory - check if it's an installation
+                if (path / "chitin.key").exists():
+                    installation = Installation(path)
+                    # Load all resources from the installation
+                    for resource in installation:
+                        try:
+                            data = resource.data()
+                            if data:
+                                raw_resource_data[str(resource.identifier()).lower()] = data
+                        except Exception:
+                            continue
+                else:
+                    # Regular directory - load all files
+                    for file_path in path.rglob("*"):
+                        if file_path.is_file():
+                            try:
+                                relative_path = file_path.relative_to(path)
+                                raw_resource_data[str(relative_path).lower()] = file_path.read_bytes()
+                            except Exception:
+                                continue
+            else:
+                # Archive file
+                try:
+                    capsule = Capsule(path)
+                    for resource in capsule:
+                        try:
+                            data = resource.data()
+                            if data:
+                                raw_resource_data[str(resource.identifier()).lower()] = data
+                        except Exception:
+                            continue
+                except Exception:
+                    # Fallback: treat as single file
+                    raw_resource_data[path.name.lower()] = path.read_bytes()
+
+            return raw_resource_data
+
+        # Load resources from both paths
+        resources1 = load_resource_container(path1)
+        resources2 = load_resource_container(path2)
+
+        # Find common and unique resources
+        all_resource_keys = set(resources1.keys()) | set(resources2.keys())
+        common_keys = set(resources1.keys()) & set(resources2.keys())
+        only_in_1 = set(resources1.keys()) - set(resources2.keys())
+        only_in_2 = set(resources2.keys()) - set(resources1.keys())
+
+        differences_found = False
+
+        # Report added/removed resources
+        for resource_key in sorted(only_in_1):
+            if output_mode != OutputMode.QUIET:
+                diff_logger.info(f"Only in {args.path1}: {resource_key}")
+            differences_found = True
+
+        for resource_key in sorted(only_in_2):
+            if output_mode != OutputMode.QUIET:
+                diff_logger.info(f"Only in {args.path2}: {resource_key}")
+            differences_found = True
+
+        # Compare common resources
+        for resource_key in sorted(common_keys):
+            data1 = resources1[resource_key]
+            data2 = resources2[resource_key]
+
+            if data1 == data2:
+                continue  # Identical
+
+            # Try to diff using the existing diff system
+            try:
+                ext = resource_key.split(".")[-1] if "." in resource_key else ""
+                context = DiffContext(Path(resource_key), Path(resource_key), ext)
+
+                # Use the diff_data function to get structured diff
+                result = diff_data(data1, data2, context, log_func=diff_logger.info, compare_hashes=False)
+
+                if result is False:  # Different
+                    differences_found = True
+                    if output_mode == OutputMode.DIFF_ONLY:
+                        # Try to output unified diff for the raw data
+                        try:
+                            import difflib
+
+                            lines1 = data1.decode("utf-8", errors="replace").splitlines(keepends=True)
+                            lines2 = data2.decode("utf-8", errors="replace").splitlines(keepends=True)
+
+                            fromfile = f"a/{resource_key}"
+                            tofile = f"b/{resource_key}"
+                            diff_lines = list(difflib.unified_diff(lines1, lines2, fromfile=fromfile, tofile=tofile, lineterm="", n=getattr(args, "context", 3)))
+
+                            if diff_lines:
+                                print("".join(diff_lines), end="")
+                        except Exception:
+                            # Fallback to simple message
+                            diff_logger.info(f"Files differ: {resource_key}")
+
+            except Exception as e:
+                # If structured diff fails, fall back to simple comparison
+                if data1 != data2:
+                    differences_found = True
+                    if output_mode != OutputMode.QUIET:
+                        diff_logger.info(f"Files differ: {resource_key}")
+
+        # Summary
+        if not differences_found:
+            if output_mode != OutputMode.DIFF_ONLY:
+                diff_logger.info(f"'{args.path1}' MATCHES '{args.path2}'")
+            return 0
+        else:
+            if output_mode != OutputMode.DIFF_ONLY:
+                diff_logger.info(f"'{args.path1}' DOES NOT MATCH '{args.path2}'")
+            return 1
+
+    except Exception as e:
+        Logger().exception("Error comparing archives/directories")
+        return 1
 
 
 def _detect_path_type(path: Path) -> str:
@@ -48,7 +189,7 @@ def _detect_path_type(path: Path) -> str:
             # Check if it's a module piece (composite module component)
             suffix_lower = path.suffix.lower()
             stem_lower = path.stem.lower()
-            if suffix_lower in (".rim", ".erf") and (stem_lower.endswith("_s") or stem_lower.endswith("_dlg") or stem_lower.endswith("_a") or stem_lower.endswith("_adx")):
+            if suffix_lower in (".rim", ".erf") and ("_s" in stem_lower or "_dlg" in stem_lower or "_a" in stem_lower or "_adx" in stem_lower):
                 return "module_piece"
             return "bioware_archive"
         return "file"
@@ -56,8 +197,15 @@ def _detect_path_type(path: Path) -> str:
     return "file"
 
 
-def _resolve_path(path_str: str, verbose: bool = False) -> Path | Installation:
-    """Resolve a path string to a Path or Installation object, handling all path types.
+def _resolve_path(
+    path_str: str,
+    verbose: bool = False,
+) -> Path:
+    """Resolve a path string to a Path object for diff operations.
+
+    The diff engine uses ResourceWalker which handles all path type detection internally.
+    This function ensures all paths are returned as Path objects, letting the diff engine
+    determine how to handle each path type (file, folder, installation, archive, etc.).
 
     Args:
     ----
@@ -66,39 +214,26 @@ def _resolve_path(path_str: str, verbose: bool = False) -> Path | Installation:
 
     Returns:
     -------
-        Path or Installation object
+        Path object (always returns Path, never Installation)
 
     Raises:
     ------
         FileNotFoundError: If path doesn't exist and can't be inferred
-        ValueError: If path type can't be determined
     """
     path = Path(path_str)
 
-    path_type = _detect_path_type(path)
-
     if verbose:
-        print(f"[DEBUG] Detected path type for '{path_str}': {path_type}", file=sys.stderr)
+        path_type = _detect_path_type(path)
+        Logger().debug(f"Detected path type for '{path_str}': {path_type}")
 
-    if path_type == "installation":
-        try:
-            return Installation(path)
-        except Exception as e:  # noqa: BLE001
-            if verbose:
-                print(f"[DEBUG] Failed to create Installation, falling back to Path: {e}", file=sys.stderr)
-            return path
-
-    if path_type == "module_piece":
-        # For module pieces, we need to handle composite module loading
-        # The diff infrastructure should handle this automatically via Module.get_capsules_dict_matching
-        # We just return the path as-is, and the diff engine will detect related files
-        return path
-
-    # For bioware_archive, folder, or file, return as Path
+    # Always return Path objects - the diff engine handles type detection via ResourceWalker
     return path
 
 
-def cmd_diff(args: Namespace, logger: Logger) -> int:
+def cmd_diff(
+    args: Namespace,
+    logger: Logger,
+) -> int:
     """Compare two paths and show unified diff output.
 
     Supports any combination of:
@@ -108,14 +243,10 @@ def cmd_diff(args: Namespace, logger: Logger) -> int:
     - Bioware archives (.sav/.erf/.rim/.mod)
     - Module pieces (composite module components like _s.rim/_a.rim/.rim/_dlg.erf)
 
-    By default, outputs ONLY unified diff format. Debug/verbose information
-    (tslpatchdata, changes.ini, namespaces.ini, resolution order) is only shown
-    when --verbose or --debug flags are passed.
-
     Args:
     ----
         args: Parsed command line arguments
-        logger: Logger instance
+        logger: Logger instance (not used, we use our own diff logger)
 
     Returns:
     -------
@@ -126,173 +257,202 @@ def cmd_diff(args: Namespace, logger: Logger) -> int:
         Libraries/PyKotor/src/pykotor/tslpatcher/diff/engine.py
         Libraries/PyKotor/src/pykotor/tslpatcher/diff/application.py
     """
-    # Determine verbosity from args (check for verbose/debug flags)
-    # These are global flags passed through from dispatch
-    verbose = False
-    if hasattr(args, "verbose") and args.verbose:
-        verbose = True
-    if hasattr(args, "debug") and args.debug:
-        verbose = True
+    # Determine verbosity from args
+    verbose = getattr(args, "verbose", False) or getattr(args, "debug", False)
 
     # Resolve both paths
     try:
         path1 = _resolve_path(args.path1, verbose=verbose)
         path2 = _resolve_path(args.path2, verbose=verbose)
     except Exception as e:  # noqa: BLE001
-        logger.error(f"Failed to resolve paths: {e}")  # noqa: G004
-        if verbose:
-            logger.exception("Path resolution error")
+        print(f"Error: Failed to resolve paths: {e.__class__.__name__}: {e}", file=sys.stderr)
         return 1
 
-    # For simple file-to-file comparison, use the simple diff_files utility
-    # This provides better output for single file comparisons
+    # Set up proper diff logging system
+    output_mode_str = getattr(args, 'output_mode', 'full').lower()
+    output_mode_map = {
+        'full': OutputMode.FULL,
+        'diff_only': OutputMode.DIFF_ONLY,
+        'quiet': OutputMode.QUIET,
+    }
+    output_mode = output_mode_map.get(output_mode_str, OutputMode.FULL)
+
+    # Display CLI arguments (for parity with other diff tools)
+    if output_mode != OutputMode.QUIET:
+        print(f"Using --path1='{args.path1}'")
+        print(f"Using --path2='{args.path2}'")
+        print(f"Using --ignore-rims=False")
+        print(f"Using --ignore-tlk=False")
+        print(f"Using --ignore-lips=False")
+        print(f"Using --compare-hashes=True")
+        print(f"Using --use-profiler=False")
+        print()
+
+    # Handle special case: identical paths should always match
+    if args.path1 == args.path2:
+        if output_mode != OutputMode.DIFF_ONLY:
+            print(f"'{args.path1}' MATCHES '{args.path2}'")
+        return 0
+
+    # Handle output redirection
+    output_file = getattr(args, "output", None)
+    if output_file:
+        output_file = Path(output_file)
+        output_handle = output_file.open("w", encoding="utf-8")
+    else:
+        output_handle = None
+
+    # Create the proper diff logger
+    diff_logger = DiffLogger(
+        level=LogLevel.DEBUG if verbose else LogLevel.INFO,
+        output_mode=output_mode,
+        use_colors=False,  # CLI mode, no colors
+        output_file=output_handle,
+    )
+
+    # Create enhanced log function that the tslpatcher engine can use
+    from pykotor.tslpatcher.diff.engine import EnhancedLogFunc
+    log_func = EnhancedLogFunc(diff_logger)
+
+    # Handle special case: direct file-to-file comparison
     if isinstance(path1, Path) and isinstance(path2, Path) and path1.is_file() and path2.is_file():
-        output_path = Path(args.output) if args.output else None
-        try:
-            diff_text = diff_files(path1, path2, output_path=output_path, context_lines=args.context)
+        from pykotor.tslpatcher.diff.engine import DiffContext, diff_data
 
-            if output_path:
-                logger.info(f"Diff written to {output_path}")  # noqa: G004
-            else:
-                print(diff_text)  # noqa: T201
-
-            return 0
-        except Exception:
-            logger.exception("Failed to generate diff")
+        # For individual files, --generate-ini is nd, diff_data
+        if getattr(args, "generate_ini", False):
+            print("Error: --generate-ini is only supported for installation-wide comparisons", file=sys.stderr)
+            print("For individual files, use installation paths instead", file=sys.stderr)
             return 1
 
-    # For all other cases (installations, folders, archives, module pieces, mixed types),
-    # use the comprehensive diff infrastructure
-    try:
-        # Import the diff engine directly
-        from pykotor.tslpatcher.diff.engine import run_differ_from_args_impl  # noqa: PLC0415
+        try:
+            # Check if files exist
+            if not path1.exists():
+                print(f"Error: Missing file: {path1}", file=sys.stderr)
+                return 1
+            if not path2.exists():
+                print(f"Error: Missing file: {path2}", file=sys.stderr)
+                return 1
 
-        # Create a custom log function that filters output to udiff-only when not verbose
-        # We need to capture ALL output and filter it properly
-        all_output_lines: list[str] = []
+            # Create diff context for file comparison
+            ext = path1.suffix.casefold()[1:] if path1.suffix else ""
+            context = DiffContext(Path(path1.name), Path(path2.name), ext)
 
-        def filtered_log_func(msg: str, *args, **kwargs) -> None:
-            """Log function that filters output to udiff-only when not verbose."""
+            # Get format from args (default to unified)
+            format_type = getattr(args, "format", "unified").lower()
+
+            # Use the existing diff_data function
+            data1 = path1.read_bytes()
+            data2 = path2.read_bytes()
+            result = diff_data(data1, data2, context, log_func=log_func, compare_hashes=True, format_type=format_type)
+
+            # Add summary message
+            if result:
+                diff_logger.info(f"'{args.path1}' MATCHES '{args.path2}'")
+            else:
+                diff_logger.info(f"'{args.path1}' DOES NOT MATCH '{args.path2}'")
+
+            return 0 if result else 1
+
+        except Exception as e:
+            print(f"Error comparing files: {e}", file=sys.stderr)
             if verbose:
-                # In verbose mode, print everything immediately
-                print(msg, *args, **kwargs)  # noqa: T201
-                return
+                import traceback
 
-            # In non-verbose mode, collect all output for filtering
-            msg_str = str(msg) if not args else (str(msg) + " ".join(str(a) for a in args))
-            all_output_lines.append(msg_str)
+                traceback.print_exc()
+            return 1
+        finally:
+            if output_handle:
+                output_handle.close()
 
-        # Run the diff engine directly with our filtered log function
-        comparison_result = run_differ_from_args_impl(
-            [path1, path2],
-            filters=None,
-            log_func=filtered_log_func,
-            compare_hashes=True,
-            modifications_by_type=None,
-            incremental_writer=None,
+    # Check if we need to generate TSLPatcher INI files
+    generate_ini = getattr(args, "generate_ini", False)
+
+    if generate_ini:
+        # Use the full TSLPatcher application for INI generation
+        from pykotor.tslpatcher.diff.application import DiffConfig, handle_diff, run_application  # noqa: PLC0415
+
+        # Convert Path objects to the format expected by TSLPatcher
+        paths_for_tslpatcher = []
+        for path in [path1, path2]:
+            if _detect_path_type(path) == "installation":
+                try:
+                    paths_for_tslpatcher.append(Installation(path))
+                except Exception:  # noqa: BLE001
+                    paths_for_tslpatcher.append(path)
+            else:
+                paths_for_tslpatcher.append(path)
+
+        config = DiffConfig(
+            paths=paths_for_tslpatcher,
+            output_mode=getattr(args, "output_mode", "full").lower(),  # full by default when generating tslpatcher ini
+            use_incremental_writer=True,
         )
 
-        # If not verbose, filter and print only udiff-relevant output
-        if not verbose:
-            # Filter to show:
-            # 1. Field difference descriptions (e.g., "Field 'Int16' is different at...")
-            # 2. Unified diff lines (---, +++, @@, +, -, space)
-            # 3. Final summary lines (DOES NOT MATCH, MATCHES)
-            # 4. Missing file messages
-            # 5. GFF/Struct difference messages
-            # Exclude: DEBUG, INFO, [PATCH], [INSTALL], resolution order, writer info, etc.
-            
-            filtered_lines: list[str] = []
-            in_diff_block = False
-            skip_until_separator = False
-            
-            for line in all_output_lines:
-                stripped = line.strip()
-                
-                # Skip empty lines unless we're in a diff block
-                if not stripped and not in_diff_block:
-                    continue
-                
-                # Skip debug/info messages
-                if any(prefix in stripped for prefix in ["[DEBUG]", "[INFO]", "[PATCH]", "[INSTALL]", "Loading", "Done loading", "Collected", "Comparing", "Progress:", "N-WAY COMPARISON SUMMARY", "Total resources", "Differences found", "Errors:", "=" * 80]):
-                    continue
-                
-                # Skip resolution order and writer info
-                if any(phrase in stripped for phrase in ["Resolution:", "Destination:", "tslpatchdata:", "Will copy", "Will use", "Mode:", "Type:", "Modifications:", "Extracting", "Staged", "Created empty"]):
-                    continue
-                
-                # Include field difference descriptions and resource difference markers
-                if any(phrase in stripped for phrase in ["Field", "is different at", "GFFStruct:", "number of fields", "Struct ID", "Extra", "Missing", "GFF counts", "GFFList", "struct(s)", "[DIFFERENT RESOURCE]", "Difference between path"]):
-                    filtered_lines.append(line)
-                    in_diff_block = True  # Expect udiff to follow
-                    continue
-                
-                # Include unified diff lines
-                if (stripped.startswith("---") or stripped.startswith("+++") or 
-                    stripped.startswith("@@") or 
-                    (stripped.startswith("+") and not stripped.startswith("++")) or
-                    (stripped.startswith("-") and not stripped.startswith("--")) or
-                    (stripped.startswith(" ") and in_diff_block)):
-                    filtered_lines.append(line)
-                    in_diff_block = True
-                    continue
-                
-                # Include separator lines (like "---------------------------------------------------")
-                if stripped.startswith("-") and len(stripped) > 10 and all(c == "-" for c in stripped):
-                    filtered_lines.append(line)
-                    continue
-                
-                # Include final summary lines
-                if "DOES NOT MATCH" in stripped or "MATCHES" in stripped or "Comparison of" in stripped:
-                    filtered_lines.append(line)
-                    continue
-                
-                # Include missing file messages
-                if "Missing file:" in stripped:
-                    filtered_lines.append(line)
-                    continue
-                
-                # Include GFF difference markers
-                if "^ '" in stripped and "': GFF is different" in stripped:
-                    filtered_lines.append(line)
-                    in_diff_block = False  # End of diff block
-                    continue
-                
-                # Include file size/hash differences
-                if any(phrase in stripped for phrase in ["File sizes differ", "SHA256 is different", "bytes"]):
-                    filtered_lines.append(line)
-                    continue
-                
-                # If we're in a diff block and see a non-diff line, end the block
-                if in_diff_block and stripped and not stripped.startswith(" "):
-                    in_diff_block = False
-            
-            # Print filtered output
-            if filtered_lines:
-                print("\n".join(filtered_lines))  # noqa: T201
-            
-            # Add final summary if we have a comparison result
-            if comparison_result is not None:
-                path1_str = str(path1) if isinstance(path1, Path) else str(path1)
-                path2_str = str(path2) if isinstance(path2, Path) else str(path2)
-                if comparison_result:
-                    print(f"'{path1_str}' MATCHES '{path2_str}'")  # noqa: T201
+        run_application(config)
+        result, exit_code = handle_diff(config)
+        return 1 if exit_code is None else exit_code
+
+    # For archives and directories, implement proper diff display
+    try:
+        from pykotor.tslpatcher.diff.engine import DiffContext, diff_data
+        from pykotor.tslpatcher.diff.formatters import ContextFormatter, SideBySideFormatter, UnifiedFormatter
+
+        # Get format from args (default to unified)
+        format_type = getattr(args, "format", "unified").lower()
+
+        # Create appropriate formatter
+        if format_type == "unified":
+            formatter = UnifiedFormatter()
+        elif format_type == "context":
+            formatter = ContextFormatter()
+        elif format_type == "side_by_side":
+            formatter = SideBySideFormatter()
+        else:
+            formatter = UnifiedFormatter()
+
+        # For archives/directories, we need to walk and compare resources
+
+        # Determine if paths are archives or directories
+        def is_archive_or_installation(path: Path) -> bool:
+            if path.is_dir():
+                return (path / "chitin.key").exists()  # Installation
+            return is_capsule_file(path)
+
+        path1_is_archive = is_archive_or_installation(path1)
+        path2_is_archive = is_archive_or_installation(path2)
+
+        if path1_is_archive or path2_is_archive:
+            # Archive/directory comparison - walk and compare resources
+            return _diff_archives_or_directories(path1, path2, args, formatter, diff_logger, output_mode)
+        else:
+            # Both are regular files - direct comparison
+            ext = path1.suffix.casefold()[1:] if path1.suffix else ""
+            context = DiffContext(path1, path2, ext)
+
+            result = diff_data(path1, path2, context, log_func=diff_logger.info, compare_hashes=True)
+
+            # Add summary message (but not in diff_only mode)
+            if output_mode != OutputMode.DIFF_ONLY:
+                if result:
+                    diff_logger.info(f"'{args.path1}' MATCHES '{args.path2}'")
                 else:
-                    print(f"'{path1_str}' DOES NOT MATCH '{path2_str}'")  # noqa: T201
+                    diff_logger.info(f"'{args.path1}' DOES NOT MATCH '{args.path2}'")
 
-        # Determine exit code
-        if comparison_result is True:
-            return 0  # Identical
-        if comparison_result is False:
-            return 1  # Different
-        return 1  # Error
+            return 0 if result else 1
 
-    except Exception:
-        logger.exception("Failed to generate diff")
-        return 1
+    except Exception as e:
+        print(f"Error: Failed to generate diff: {e}", file=sys.stderr)
+        if verbose:
+            import traceback
+
+        if output_handle:
+            output_handle.close()
 
 
-def cmd_grep(args: Namespace, logger: Logger) -> int:
+def cmd_grep(
+    args: Namespace,
+    logger: Logger,
+) -> int:
     """Search for patterns in files.
 
     Supports text files and structured formats (GFF, 2DA, TLK).
@@ -321,7 +481,10 @@ def cmd_grep(args: Namespace, logger: Logger) -> int:
         return 1
 
 
-def cmd_stats(args: Namespace, logger: Logger) -> int:
+def cmd_stats(
+    args: Namespace,
+    logger: Logger,
+) -> int:
     """Show statistics about a file.
 
     References:
@@ -354,7 +517,10 @@ def cmd_stats(args: Namespace, logger: Logger) -> int:
         return 1
 
 
-def cmd_validate(args: Namespace, logger: Logger) -> int:
+def cmd_validate(
+    args: Namespace,
+    logger: Logger,
+) -> int:
     """Validate file format and structure."""
     file_path = pathlib.Path(args.file)
 
@@ -371,7 +537,10 @@ def cmd_validate(args: Namespace, logger: Logger) -> int:
         return 1
 
 
-def cmd_merge(args: Namespace, logger: Logger) -> int:
+def cmd_merge(
+    args: Namespace,
+    logger: Logger,
+) -> int:
     """Merge two GFF files.
 
     Merges fields from source file into target file, adding missing fields.

@@ -12,16 +12,16 @@ from __future__ import annotations
 
 import difflib
 import math
+import sys
 
 from contextlib import contextmanager
-from dataclasses import dataclass
 from copy import copy, deepcopy
+from dataclasses import dataclass
 from enum import Enum, IntEnum
 from pathlib import PureWindowsPath
 from typing import TYPE_CHECKING, Any, ClassVar, TypeVar
 
 from loggerplus import RobustLogger  # type: ignore[import-untyped]  # pyright: ignore[reportMissingTypeStubs]
-
 from pykotor.common.language import LocalizedString
 from pykotor.common.misc import ResRef
 from pykotor.resource.formats._base import ComparableMixin
@@ -35,6 +35,8 @@ if TYPE_CHECKING:
 
     from collections.abc import Callable, Generator, Iterator
 
+    from typing_extensions import Self
+
 T = TypeVar("T")
 U = TypeVar("U")
 GFFStructType = TypeVar("GFFStructType", bound="GFFStruct")
@@ -44,19 +46,38 @@ def format_diff(
     old_value: object,
     new_value: object,
     name: str,
+    *,
+    format_type: str = "unified",
 ) -> str:
     # Convert values to strings if they aren't already
     str_old_value: list[str] = str(old_value).splitlines(keepends=True)
     str_new_value: list[str] = str(new_value).splitlines(keepends=True)
 
-    # Generate unified diff
-    diff: Iterator[str] = difflib.unified_diff(
-        str_old_value,
-        str_new_value,
-        fromfile=f"(old){name}",
-        tofile=f"(new){name}",
-        lineterm="",
-    )
+    # Generate diff based on format type
+    if format_type == "unified":
+        diff: Iterator[str] = difflib.unified_diff(
+            str_old_value,
+            str_new_value,
+            fromfile=f"(old){name}",
+            tofile=f"(new){name}",
+            lineterm="",
+        )
+    elif format_type == "context":
+        diff = difflib.context_diff(
+            str_old_value,
+            str_new_value,
+            fromfile=f"(old){name}",
+            tofile=f"(new){name}",
+            lineterm="",
+        )
+    else:  # default to unified for unsupported formats
+        diff = difflib.unified_diff(
+            str_old_value,
+            str_new_value,
+            fromfile=f"(old){name}",
+            tofile=f"(new){name}",
+            lineterm="",
+        )
 
     # Return formatted diff
     return "\n".join(diff)
@@ -270,15 +291,31 @@ class GFFComparisonResult:
         """Increment the count for a field in a given category."""
         self.field_stats[category][field_name] = self.field_stats[category].get(field_name, 0) + 1
 
-    def add_struct_id_mismatch(self, path: str, source_id: int, target_id: int) -> None:
+    def add_struct_id_mismatch(
+        self,
+        path: str,
+        source_id: int,
+        target_id: int,
+    ) -> None:
         """Record a struct ID mismatch."""
         self.struct_id_mismatches.append((path, source_id, target_id))
 
-    def add_field_count_mismatch(self, path: str, source_count: int, target_count: int) -> None:
+    def add_field_count_mismatch(
+        self,
+        path: str,
+        source_count: int,
+        target_count: int,
+    ) -> None:
         """Record a field count mismatch."""
         self.field_count_mismatches.append((path, source_count, target_count))
 
-    def add_value_mismatch(self, path: str, field_type: str, source_val: Any, target_val: Any) -> None:
+    def add_value_mismatch(
+        self,
+        path: str,
+        field_type: str,
+        source_val: Any,
+        target_val: Any,
+    ) -> None:
         """Record a value mismatch."""
         self.value_mismatches.append((path, field_type, source_val, target_val))
 
@@ -328,7 +365,7 @@ class GFF(ComparableMixin):
             if field_type == GFFFieldType.List:
                 for i, gff_struct in enumerate(value):
                     print(
-                        f'  {"  " * indent}[Struct {i}]'.ljust(column_len),
+                        f"  {'  ' * indent}[Struct {i}]".ljust(column_len),
                         " ",
                         gff_struct.struct_id,
                     )
@@ -337,10 +374,11 @@ class GFF(ComparableMixin):
     def compare(  # noqa: C901, PLR0911, PLR0912, PLR0913, PLR0915
         self,
         other: object,
-        log_func: Callable = print,
+        log_func: Callable[..., Any] = print,
         path: PureWindowsPath | None = None,
         ignore_default_changes: bool = False,  # noqa: FBT001, FBT002
         comparison_result: GFFComparisonResult | None = None,
+        format_type: str = "structured",
     ) -> bool:
         """Compare two GFF objects.
 
@@ -363,18 +401,40 @@ class GFF(ComparableMixin):
             - Collect statistics about field usage and mismatches
             - Return comprehensive comparison results
         """
+        # Debug: check if this method is called 
+        print(f"DEBUG: GFF.compare called for {path}, len(self.root)={len(self.root)}", file=sys.stderr)
+        print(f"DEBUG: self.root: {self.root}", file=sys.stderr)
+        # For unified diff format, skip structured logging and just return comparison result
+        if format_type == "unified":
+            if not isinstance(other, GFF):
+                return False
+            comparison_result = comparison_result or GFFComparisonResult()
+            return self.root.compare(
+                other.root,
+                log_func,
+                path,
+                ignore_default_changes,
+                comparison_result=comparison_result,
+                format_type=format_type,
+            )
+
         if not isinstance(other, GFF):
-            log_func(f"GFF counts have changed at '{path}': '<unknown>' --> '<unknown>'")
-            log_func("")
-            is_same = False
-            return is_same
+            log_func("", message_type="diff")
+            log_func("", message_type="diff")
+            return False
         if len(self.root) != len(other.root):
-            log_func(f"GFF counts have changed at '{path}': '{len(self.root)}' --> '{len(other.root)}'")
-            log_func("")
-            is_same = False
-            return is_same
+            log_func(f"GFF counts have changed at '{path}': '{len(self.root)}' --> '{len(other.root)}'", message_type="diff")
+            log_func("", message_type="diff")
+            return False
         comparison_result = comparison_result or GFFComparisonResult()
-        return self.root.compare(other.root, log_func, path, ignore_default_changes, comparison_result=comparison_result)
+        return self.root.compare(
+            other.root,
+            log_func,
+            path,
+            ignore_default_changes,
+            comparison_result=comparison_result,
+            format_type=format_type,
+        )
 
 
 class _GFFField:
@@ -432,37 +492,37 @@ class _GFFField:
 
 class GFFStruct(ComparableMixin, dict):
     """Stores a collection of GFFFields in a GFF tree node.
-    
+
     GFFStruct represents a single structure (node) in the GFF tree hierarchy. Each struct
     has a user-defined ID and contains named fields that can be primitives, other structs,
     or lists of structs.
-    
+
     References:
     ----------
         GFF struct format specification
-    
+
     Attributes:
     ----------
         struct_id: User-defined struct type ID (uint32 in binary format)
             Reference: TSLPatcher/GFF.pm:90 (ID field), Kotor.NET/GFFBinaryStructure.cs:150-151
             Used to differentiate struct types (e.g., creature vs door stats)
             Typical values: 0 for most structs, specific IDs for template types
-            
+
         _fields: Dictionary mapping field labels to _GFFField instances
             Reference: TSLPatcher/GFF.pm:94 (Main struct), Kotor.NET/GFF.cs:75 (Fields list)
             Labels are ASCII strings (max 16 chars) that identify fields
             Field order matters for binary compatibility (maintains insertion order in Python 3.7+)
             Empty structs are valid (field count = 0)
-    
+
     Binary Format Notes:
     -------------------
         Each struct in binary is 12 bytes:
             - 4 bytes: struct_id (uint32)
             - 4 bytes: DataOrDataOffset (int32) - field index or field indices array offset
             - 4 bytes: FieldCount (uint32) - number of fields in struct
-        
+
         Reference: Kotor.NET/GFFBinaryStructure.cs:159-164, KotOR_IO/GFF.cs:114-152
-        
+
         Field count optimization (Kotor.NET/GFFBinaryWriter.cs:59-72):
             - If FieldCount == 0: DataOrDataOffset = -1 (empty struct)
             - If FieldCount == 1: DataOrDataOffset = field array index directly
@@ -505,7 +565,10 @@ class GFFStruct(ComparableMixin, dict):
         return new_obj
 
     @staticmethod
-    def _from_reduce(struct_id: int, fields: dict[str, _GFFField]) -> "GFFStruct":
+    def _from_reduce(
+        struct_id: int,
+        fields: dict[str, _GFFField],
+    ) -> Self:
         obj = GFFStruct(struct_id)
         obj._fields = fields
         return obj
@@ -655,6 +718,7 @@ class GFFStruct(ComparableMixin, dict):
         ignore_default_changes: bool = False,  # noqa: FBT001, FBT002
         ignore_values: dict[str, set[Any]] | None = None,
         comparison_result: GFFComparisonResult | None = None,
+        format_type: str = "structured",
     ) -> bool:
         """Recursively compares two GFFStructs.
 
@@ -673,6 +737,14 @@ class GFFStruct(ComparableMixin, dict):
         -------
             bool: True if structures are the same, False otherwise
         """
+        # For unified diff format, use a no-op logger to skip structured logging
+        if format_type == "unified":
+
+            def noop_log_func(*args, **kwargs):
+                pass
+
+            log_func = noop_log_func
+
         ignore_labels: set[str] = {
             "KTInfoDate",
             "KTGameVerIndex",
@@ -695,24 +767,28 @@ class GFFStruct(ComparableMixin, dict):
 
         current_path = PureWindowsPath(current_path or "GFFRoot")
         if not isinstance(other, GFFStruct):
-            log_func(f"GFFStruct counts have changed at '{current_path}': '{len(self)}' --> '<unknown>'")
-            log_func()
+            log_func(f"GFFStruct counts have changed at '{current_path}': '{len(self)}' --> '<unknown>'", message_type="diff")
+            log_func("", message_type="diff")
             is_same = False
             return is_same
         if len(self) != len(other) and not ignore_default_changes:
-            log_func("")
-            log_func(f"GFFStruct: number of fields have changed at '{current_path}': '{len(self)}' --> '{len(other)}'")
+            log_func("", message_type="diff")
+            log_func(f"GFFStruct: number of fields have changed at '{current_path}': '{len(self)}' --> '{len(other)}'", message_type="diff")
             is_same = False
         if self.struct_id != other.struct_id:
-            log_func(f"Struct ID is different at '{current_path}': '{self.struct_id}' --> '{other.struct_id}'")
+            log_func("", message_type="diff")
             is_same = False
 
         # Create dictionaries for both old and new structures
         old_dict: dict[str, tuple[GFFFieldType, Any]] = {
-            label or f"gffstruct({idx})": (ftype, value) for idx, (label, ftype, value) in enumerate(self) if label not in ignore_labels
+            label or f"gffstruct({idx})": (ftype, value)
+            for idx, (label, ftype, value) in enumerate(self)
+            if label not in ignore_labels
         }
         new_dict: dict[str, tuple[GFFFieldType, Any]] = {
-            label or f"gffstruct({idx})": (ftype, value) for idx, (label, ftype, value) in enumerate(other) if label not in ignore_labels
+            label or f"gffstruct({idx})": (ftype, value)
+            for idx, (label, ftype, value) in enumerate(other)
+            if label not in ignore_labels
         }
 
         # Union of labels from both old and new structures
@@ -731,18 +807,18 @@ class GFFStruct(ComparableMixin, dict):
                 if new_ftype is None:
                     msg: str = f"new_ftype shouldn't be None here. Relevance: old_ftype={old_ftype!r}, old_value={old_value!r}, new_value={new_value!r}"
                     raise RuntimeError(msg)
-                log_func(f"Extra '{new_ftype.name}' field found at '{child_path}': {format_text(safe_repr(new_value))}")
+                log_func(f"Extra '{new_ftype.name}' field found at '{child_path}': {format_text(safe_repr(new_value))}", message_type="diff")
                 comparison_result.add_field_stat("extra", label)
                 continue
 
             if new_value is None or new_ftype is None:
-                log_func(f"Missing '{old_ftype.name}' field at '{child_path}': {format_text(safe_repr(old_value))}")
+                log_func(f"Missing '{old_ftype.name}' field at '{child_path}': {format_text(safe_repr(old_value))}", message_type="diff")
                 comparison_result.add_field_stat("missing", label)
                 continue
 
             # Check if field types have changed
             if old_ftype != new_ftype:
-                log_func(f"Field type is different at '{child_path}': '{old_ftype.name}'-->'{new_ftype.name}'")
+                log_func("", message_type="diff")
                 comparison_result.add_field_stat("mismatched", label)
                 comparison_result.add_value_mismatch(str(child_path), "field_type", old_ftype.name, new_ftype.name)
                 continue
@@ -752,25 +828,45 @@ class GFFStruct(ComparableMixin, dict):
                 assert isinstance(new_value, GFFStruct), f"{type(new_value).__name__}: {new_value}"
                 cur_struct_this: GFFStruct = old_value
                 if cur_struct_this.struct_id != new_value.struct_id:
-                    log_func(f"Struct ID is different at '{child_path}': '{cur_struct_this.struct_id}'-->'{new_value.struct_id}'")
+                    log_func("", message_type="diff")
                     comparison_result.add_struct_id_mismatch(str(child_path), cur_struct_this.struct_id, new_value.struct_id)
 
-                if not cur_struct_this.compare(new_value, log_func, child_path, ignore_default_changes=ignore_default_changes, ignore_values=ignore_values, comparison_result=comparison_result):
+                if not cur_struct_this.compare(
+                    new_value,
+                    log_func,
+                    child_path,
+                    ignore_default_changes=ignore_default_changes,
+                    ignore_values=ignore_values,
+                    comparison_result=comparison_result,
+                    format_type=format_type,
+                ):
                     continue
             elif old_ftype == GFFFieldType.List:
                 gff_list: GFFList = old_value
-                if not gff_list.compare(new_value, log_func, child_path, ignore_default_changes=ignore_default_changes, ignore_values=ignore_values, comparison_result=comparison_result):
+                if not gff_list.compare(
+                    new_value,
+                    log_func,
+                    child_path,
+                    ignore_default_changes=ignore_default_changes,
+                    ignore_values=ignore_values,
+                    comparison_result=comparison_result,
+                    format_type=format_type,
+                ):
                     continue
             elif old_value != new_value:
-                if isinstance(old_value, float) and isinstance(new_value, float) and math.isclose(old_value, new_value, rel_tol=1e-4, abs_tol=1e-4):
+                if (
+                    isinstance(old_value, float)
+                    and isinstance(new_value, float)
+                    and math.isclose(old_value, new_value, rel_tol=1e-4, abs_tol=1e-4)
+                ):
                     comparison_result.add_field_stat("used", label)
                     continue
 
                 if str(old_value) == str(new_value):
                     log_func(f"Field '{old_ftype.name}' is different at '{child_path}': String representations match, but have other properties that don't (such as a lang id difference).")  # noqa: E501
                     continue
-                log_func(f"Field '{old_ftype.name}' is different at '{child_path}':")
-                log_func(format_diff(old_value, new_value, label))
+                log_func("", message_type="diff")
+                log_func(format_diff(old_value, new_value, label), message_type="diff")
                 comparison_result.add_field_stat("mismatched", label)
                 comparison_result.add_value_mismatch(str(child_path), old_ftype.name, old_value, new_value)
                 continue
@@ -808,9 +904,8 @@ class GFFStruct(ComparableMixin, dict):
         if object_type is None:
             object_type = default.__class__
         if (
-            self.exists(label)
-            and object_type is not None
-        #   and isinstance(self[label], object_type)  # TODO(th3w1zard1): uncomment this and assert type after fixing all the call typings
+            self.exists(label) and object_type is not None
+            #   and isinstance(self[label], object_type)  # TODO(th3w1zard1): uncomment this and assert type after fixing all the call typings
         ):
             value = self[label]
         if object_type is bool and value.__class__ is int:
@@ -1949,6 +2044,7 @@ class GFFList(ComparableMixin, list):
         ignore_default_changes: bool = False,
         ignore_values: dict[str, set[Any]] | None = None,
         comparison_result: GFFComparisonResult | None = None,
+        format_type: str = "structured",
     ) -> bool:
         """Compare two GFFLists recursively with content-based detection of moved/reordered entries.
 
@@ -1977,12 +2073,19 @@ class GFFList(ComparableMixin, list):
             - Detect moved/reordered structs (same content, different index)
             - Compare structs at same index that haven't moved
         """
+        # For unified diff format, use a no-op logger to skip structured logging
+        if format_type == "unified":
+
+            def noop_log_func(*args, **kwargs): ...
+
+            log_func = noop_log_func
+
         current_path = current_path or PureWindowsPath("GFFList")
         is_same_result = True
 
         if not isinstance(other, GFFList):
-            log_func(f"GFFList counts have changed at '{current_path}': '{len(self)}' --> '<unknown>'")
-            log_func("")
+            log_func(f"GFFList counts have changed at '{current_path}': '{len(self)}' --> '<unknown>'", message_type="diff")
+            log_func("", message_type="diff")
             is_same_result = False
             return is_same_result
 
@@ -1992,6 +2095,7 @@ class GFFList(ComparableMixin, list):
             from pykotor.common.language import LocalizedString
             from pykotor.common.misc import ResRef
             from utility.common.geometry import Vector3, Vector4  # Local import to avoid circular deps
+
             if value is None or isinstance(value, (int, float, str, bool, bytes)):
                 return value
             if isinstance(value, ResRef):
@@ -2077,10 +2181,10 @@ class GFFList(ComparableMixin, list):
                 for idx in indices:
                     struct = other[idx]
                     log_func(f"  [New:{idx}] Struct#{struct.struct_id} (struct_id={struct.struct_id})")
-                    log_func("  Contents of new struct:")
+                    log_func("", message_type="diff")
                     for label, field_type, field_value in struct:
                         log_func(f"    {field_type.name}: {label}: {format_text(field_value)}")
-                    log_func("")
+                    log_func("", message_type="diff")
                     reported_indices_new.add(idx)
             is_same_result = False
             if comparison_result is not None:
@@ -2094,10 +2198,10 @@ class GFFList(ComparableMixin, list):
                 for idx in indices:
                     struct = self[idx]
                     log_func(f"  [Old:{idx}] Struct#{struct.struct_id} (struct_id={struct.struct_id})")
-                    log_func("  Contents of old struct:")
+                    log_func("", message_type="diff")
                     for label, field_type, field_value in struct:
                         log_func(f"    {field_type.name}: {label}: {format_text(field_value)}")
-                    log_func("")
+                    log_func("", message_type="diff")
                     reported_indices_old.add(idx)
             is_same_result = False
             if comparison_result is not None:
@@ -2112,18 +2216,18 @@ class GFFList(ComparableMixin, list):
             # If indices don't match, structs have been moved/reordered
             if set(old_indices) != set(new_indices):
                 if moved_count == 0:
-                    log_func(f"\nStructs moved/reordered in GFFList at '{current_path}':")
+                    log_func("", message_type="diff")
                 moved_count += 1
                 struct_id = key[0]
                 old_indices_str = ", ".join(str(i) for i in sorted(old_indices))
                 new_indices_str = ", ".join(str(i) for i in sorted(new_indices))
-                log_func(f"  Struct#{struct_id}: moved from index [{old_indices_str}] to [{new_indices_str}]")
+                log_func("", message_type="diff")
                 # Mark these indices as reported so we don't double-report them
                 reported_indices_old.update(old_indices)
                 reported_indices_new.update(new_indices)
 
         if moved_count > 0:
-            log_func("")
+            log_func("", message_type="diff")
             is_same_result = False
             if comparison_result is not None:
                 comparison_result.add_field_stat("mismatched", str(current_path))
@@ -2145,10 +2249,10 @@ class GFFList(ComparableMixin, list):
             if old_key != new_key:
                 # This is a genuine content change at the same index
                 if modified_count == 0:
-                    log_func(f"\nStructs modified at same index in GFFList at '{current_path}':")
+                    log_func("", message_type="diff")
                 modified_count += 1
-                log_func(f"  [{idx}] Old: Struct#{old_struct.struct_id}")
-                log_func(f"  [{idx}] New: Struct#{new_struct.struct_id}")
+                log_func("", message_type="diff")
+                log_func("", message_type="diff")
                 # Do detailed comparison of the structs
                 if not old_struct.compare(
                     new_struct,

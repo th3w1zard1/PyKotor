@@ -112,6 +112,8 @@ class EnhancedLogFunc:
         else:
             # Default to info
             self.logger.info(message)
+
+
 from pykotor.tslpatcher.mods.ssf import ModificationsSSF, ModifySSF
 from pykotor.tslpatcher.mods.template import PatcherModifications
 from pykotor.tslpatcher.mods.tlk import ModificationsTLK, ModifyTLK
@@ -347,10 +349,7 @@ def _ensure_capsule_install(
     filename_lower = capsule_filename.lower()
     folder_lower = capsule_folder.lower()
 
-    already_present = any(
-        install_file.destination.lower() == folder_lower and install_file.saveas.lower() == filename_lower
-        for install_file in modifications_by_type.install
-    )
+    already_present = any(install_file.destination.lower() == folder_lower and install_file.saveas.lower() == filename_lower for install_file in modifications_by_type.install)
 
     if not already_present:
         install_entry = InstallFile(
@@ -1412,94 +1411,86 @@ def diff_data(  # noqa: PLR0913
         comparison_result = GFFComparisonResult()
         if not (gff1 and gff2):
             return True
-        are_same = gff1.compare(gff2, log_func, compare_path, comparison_result=comparison_result, format_type=format_type)
+        # For GFF comparison, always use structured format to get field-by-field diffs
+        are_same = gff1.compare(gff2, log_func, compare_path, comparison_result=comparison_result, format_type="structured")
         if are_same and not comparison_result.has_field_differences():
             return True
 
-        # Generate INI modifications if requested (log BEFORE final separator)
-        if modifications_by_type is None:
-            # For unified diff format, continue to text comparison instead of returning early
-            if format_type != "unified":
-                # Log final separator AFTER all patch info
-                log_func(f"^ '{context.where}': GFF is different ^", separator=True, message_type="diff")
-                return False
-            # Fall through to text comparison for unified diff
+        # For GFF files, we've already done the structured comparison above.
+        # Return False to indicate differences without falling through to binary text comparison.
+        log_func(f"^ '{context.where}': GFF is different ^", separator=True, message_type="diff")
+        return False
 
-        try:
-            analyzer = DiffAnalyzerFactory.get_analyzer("gff")
-            if analyzer is None:
-                # For unified diff format, continue to text comparison instead of returning early
-                if format_type != "unified":
-                    # Log final separator AFTER all patch info
-                    log_func(f"^ '{context.where}': GFF is different ^", separator=True, message_type="diff")
-                    return False
-                # Fall through to text comparison for unified diff
+        if modifications_by_type is not None or format_type != "unified":
+            try:
+                analyzer = DiffAnalyzerFactory.get_analyzer("gff")
+                if analyzer is None:
+                    # For unified diff format, continue to text comparison instead of returning early
+                    if format_type != "unified":
+                        # Log final separator AFTER all patch info
+                        log_func(f"^ '{context.where}': GFF is different ^", separator=True, message_type="diff")
+                        return False
+                    # Fall through to text comparison for unified diff
 
-            strref_mappings: dict[int, int] = {}
-            result: PatcherModifications | tuple[PatcherModifications, dict[int, int]] | None = analyzer.analyze(data1, data2, str(context.where))
-            assert result is not None, f"Analyzer returned None for context: {context}"
-            if isinstance(result, tuple):
-                modifications, strref_mappings = result
-                assert isinstance(modifications, PatcherModifications), (
-                    f"`modifications` is not a PatcherModifications: {modifications} (type: {type(modifications)}) for context: {context}"
+                strref_mappings: dict[int, int] = {}
+                result: PatcherModifications | tuple[PatcherModifications, dict[int, int]] | None = analyzer.analyze(data1, data2, str(context.where))
+                assert result is not None, f"Analyzer returned None for context: {context}"
+                if isinstance(result, tuple):
+                    modifications, strref_mappings = result
+                    assert isinstance(modifications, PatcherModifications), (
+                        f"`modifications` is not a PatcherModifications: {modifications} (type: {type(modifications)}) for context: {context}"
+                    )  # noqa: E501
+                else:
+                    modifications = result
+                    assert isinstance(modifications, PatcherModifications), (
+                        f"`modifications` is not a PatcherModifications: {modifications} (type: {type(modifications)}) for context: {context}"
+                    )  # noqa: E501
+
+                # File exists in both vanilla and modded - this is a PATCH, not an install
+                log_func(f"\n[PATCH] {context.where}")
+                log_func("  |-- !ReplaceFile: 0 (patch existing file, don't replace)")
+
+                # Set destination based on MODDED installation location (file2)
+                resource_name = Path(str(context.where)).name
+                destination = _determine_destination_for_source(
+                    context.file2_rel,  # Use MODDED installation, not vanilla
+                    resource_name,
+                    log_func=log_func,
+                    location_type=context.file2_location_type,
+                    source_filepath=context.file2_filepath,
+                )
+                modifications.destination = destination
+                modifications.sourcefile = resource_name  # Just the filename, not the full path
+                # saveas should also be just the filename, NOT the full path
+                modifications.saveas = resource_name
+
+                assert isinstance(modifications, ModificationsGFF), (
+                    f"`modifications` is not a ModificationsGFF: {modifications} (type: {modifications.__class__.__name__}) for context: {context}"
                 )  # noqa: E501
-            else:
-                modifications = result
-                assert isinstance(modifications, PatcherModifications), (
-                    f"`modifications` is not a PatcherModifications: {modifications} (type: {type(modifications)}) for context: {context}"
-                )  # noqa: E501
 
-            if modifications is None:
-                # Log final separator AFTER all patch info
-                log_func(f"^ '{context.where}': GFF is different ^", separator=True, message_type="diff")
-                return False
+                # Only append to modifications_by_type if it's available (not in pure diff mode)
+                if modifications_by_type is not None:
+                    modifications_by_type.gff.append(modifications)
 
-            # File exists in both vanilla and modded - this is a PATCH, not an install
-            log_func(f"\n[PATCH] {context.where}")
-            log_func("  |-- !ReplaceFile: 0 (patch existing file, don't replace)")
+                modifiers: list | None = getattr(modifications, "modifiers", None)
+                if modifiers:
+                    log_func(f"  |-- Modifications: {len(modifiers)} field/struct changes")
 
-            # Set destination based on MODDED installation location (file2)
-            resource_name = Path(str(context.where)).name
-            destination = _determine_destination_for_source(
-                context.file2_rel,  # Use MODDED installation, not vanilla
-                resource_name,
-                log_func=log_func,
-                location_type=context.file2_location_type,
-                source_filepath=context.file2_filepath,
-            )
-            modifications.destination = destination
-            modifications.sourcefile = resource_name  # Just the filename, not the full path
-            # saveas should also be just the filename, NOT the full path
-            modifications.saveas = resource_name
+                # Determine which source file to copy to tslpatchdata
+                source_to_copy = _determine_tslpatchdata_source(context.file1_rel, context.file2_rel)
+                log_func(f"  +-- tslpatchdata: Will copy from {source_to_copy}")
 
-            assert isinstance(modifications, ModificationsGFF), (
-                f"`modifications` is not a ModificationsGFF: {modifications} (type: {modifications.__class__.__name__}) for context: {context}"
-            )  # noqa: E501
-
-            # Only append to modifications_by_type if it's available (not in pure diff mode)
-            if modifications_by_type is not None:
-                modifications_by_type.gff.append(modifications)
-
-            modifiers: list | None = getattr(modifications, "modifiers", None)
-            if modifiers:
-                log_func(f"  |-- Modifications: {len(modifiers)} field/struct changes")
-
-            # Determine which source file to copy to tslpatchdata
-            source_to_copy = _determine_tslpatchdata_source(context.file1_rel, context.file2_rel)
-            log_func(f"  +-- tslpatchdata: Will copy from {source_to_copy}")
-
-            # Write immediately if using incremental writer
-            if incremental_writer is not None:
-                # Get source data (vanilla version)
-                gff_source_data: bytes = data1 if isinstance(data1, bytes) else data1.read_bytes()
-                source_path = context.file1_installation if context.file1_installation else context.file1_filepath
-                incremental_writer.write_modification(modifications, gff_source_data, source_path)
-
-        except Exception as e:  # noqa: BLE001, PERF203, S112
-            log_func(f"[Error] Failed to generate GFF modifications for '{context.where}': {e.__class__.__name__}: {e}")
-            log_func("Full traceback:")
-            for line in traceback.format_exc().splitlines():
-                log_func(f"  {line}")
+                # Write immediately if using incremental writer
+                if incremental_writer is not None:
+                    # Get source data (vanilla version)
+                    gff_source_data: bytes = data1 if isinstance(data1, bytes) else data1.read_bytes()
+                    source_path = context.file1_installation if context.file1_installation else context.file1_filepath
+                    incremental_writer.write_modification(modifications, gff_source_data, source_path)
+            except Exception as e:  # noqa: BLE001, PERF203, S112
+                log_func(f"[Error] Failed to generate GFF modifications for '{context.where}': {e.__class__.__name__}: {e}")
+                log_func("Full traceback:")
+                for line in traceback.format_exc().splitlines():
+                    log_func(f"  {line}")
 
         # Log final separator AFTER all patch info
         if format_type != "unified":
@@ -1510,15 +1501,25 @@ def diff_data(  # noqa: PLR0913
     # Define known binary formats that should never be treated as text
     BINARY_FORMATS = {
         # Scripts and models
-        "ncs", "mdl", "mdx",
+        "mdl",
+        "mdx",
+        "ncs",
         # Walkmesh formats
-        "wok", "pwk", "dwk",
+        "dwk",
+        "pwk",
+        "wok",
         # Textures
-        "tga", "tpc", "txi",
+        "tga",
+        "tpc",
+        "txi",
         # Audio/Video
-        "wav", "bik",
+        "bik",
+        "wav",
         # Capsule formats (should be handled by capsule reader, but fallback to binary if parsing fails)
-        "erf", "rim", "mod", "sav",
+        "erf",
+        "mod",
+        "rim",
+        "sav",
         # All GFF-based formats
         *gff_types,
     }
@@ -3355,7 +3356,6 @@ def compare_resources_n_way(  # noqa: PLR0913
 
                 # Generate modification patch if requested
                 if modifications_by_type is not None:
-
                     # Always also add an InstallList entry so the file exists before patching
                     # Don't create patch here - diff_data already created one above
                     try:
