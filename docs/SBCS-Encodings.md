@@ -296,6 +296,73 @@ SBCS encodings are character encodings that use exactly one byte (8 bits) for ea
 **Languages:** Arabic  
 **Note:** Macintosh Arabic
 
+## Regional and National SBCS Encodings
+
+### ArmSCII-8 - Armenian
+**Encoding:** `armscii-8`, `armscii8`  
+**Languages:** Armenian  
+**Note:** Armenian Standard Code for Information Interchange, 8-bit encoding. Lower 128 characters are ASCII, upper 128 contain Armenian alphabet.
+
+### GEOSTD8 - Georgian
+**Encoding:** `geostd8`, `georgian-academy`, `georgian-ps`  
+**Languages:** Georgian  
+**Note:** Georgian standard single-byte encoding, de-facto standard in Georgia. Developed for Microsoft Windows environments.
+
+### TSCII - Tamil
+**Encoding:** `tscii`  
+**Languages:** Tamil  
+**Note:** Tamil Script Code for Information Interchange. Bilingual 8-bit glyph-based encoding (Roman and Tamil). Lower 128 codepoints are ASCII, upper 128 are TSCII-specific Tamil characters.
+
+### Mazovia - Polish (Regional)
+**Encoding:** `mazovia`, `cp667`, `cp790`, `cp991`  
+**Languages:** Polish  
+**Note:** Character set used under DOS to represent Polish text. Derived from code page 437 with Polish letters. Maintains box-drawing characters from CP437.
+
+### Kamenický - Czech/Slovak (Regional)
+**Encoding:** `kamenicky`, `keybcs2`, `cp867`, `cp895`  
+**Languages:** Czech, Slovak  
+**Note:** Code page for DOS, very popular in Czechoslovakia (1985-1995). Based on CP437 with Czech and Slovak characters replacing similar-looking glyphs.
+
+### VISCII - Vietnamese (Legacy)
+**Encoding:** `viscii`  
+**Languages:** Vietnamese  
+**Note:** Modified ASCII character encoding for Vietnamese. Keeps 95 printable ASCII characters, replaces 6 control characters, adds 128 precomposed Vietnamese characters.
+
+### VSCII (TCVN 5712) - Vietnamese (National Standard)
+**Encoding:** `vscii`, `tcvn-5712`, `tcvn3`  
+**Languages:** Vietnamese  
+**Note:** Vietnamese Standard Code for Information Interchange. Three variants (VSCII-1, VSCII-2, VSCII-3) with different character arrangements.
+
+### VNI - Vietnamese (Legacy)
+**Encoding:** `vni`  
+**Languages:** Vietnamese  
+**Note:** Uses up to two bytes per Vietnamese vowel character (second byte for diacritical marks). More compatible than TCVN3.
+
+## EBCDIC SBCS Encodings
+
+EBCDIC (Extended Binary Coded Decimal Interchange Code) is an 8-bit character encoding used mainly on IBM mainframe systems. While EBCDIC is primarily for mainframe environments, many EBCDIC code pages are SBCS:
+
+### Common EBCDIC Code Pages
+- **CP037** - EBCDIC US-Canada
+- **CP273** - EBCDIC Germany/Austria
+- **CP277** - EBCDIC Denmark/Norway
+- **CP278** - EBCDIC Finland/Sweden
+- **CP280** - EBCDIC Italy
+- **CP284** - EBCDIC Spain
+- **CP285** - EBCDIC UK/Ireland
+- **CP297** - EBCDIC France
+- **CP420** - EBCDIC Arabic
+- **CP424** - EBCDIC Hebrew
+- **CP500** - EBCDIC International
+- **CP838** - EBCDIC Thai
+- **CP870** - EBCDIC Multilingual Latin-2
+- **CP871** - EBCDIC Icelandic
+- **CP875** - EBCDIC Greek Modern
+- **CP1026** - EBCDIC Turkish
+- **CP1047** - EBCDIC Latin-1/Open System
+
+**Note:** EBCDIC encodings are primarily used in IBM mainframe environments and are not commonly used in modern desktop applications or games.
+
 ## Language Coverage Summary
 
 ### Languages with Full SBCS Support
@@ -323,6 +390,18 @@ SBCS encodings are character encodings that use exactly one byte (8 bits) for ea
 
 **Other Languages:**
 - Esperanto, Latin, Indonesian
+
+**Armenian:**
+- Armenian (ArmSCII-8)
+
+**Georgian:**
+- Georgian (GEOSTD8)
+
+**Tamil:**
+- Tamil (TSCII)
+
+**Additional Latin-Script Languages:**
+- Tagalog, Filipino, Hawaiian, Maori, Tahitian, Tongan, Samoan, Fijian, Chamorro, Haitian Creole, Hausa (Latin), Javanese (Latin), Sundanese (Latin), Chichewa, Shona, Sotho, Xhosa, Zulu, Walloon, Corsican, Scots, Interlingua, Ido, Rhaeto-Romanic, Romansh, Ladin, Friulian
 
 ### Languages with Partial SBCS Support
 

@@ -126,6 +126,44 @@ class Language(IntEnum):
     YORUBA = 68
     TSWANA = 69
 
+    # Armenian (ArmSCII-8)
+    ARMENIAN = 70
+
+    # Georgian (GEOSTD8)
+    GEORGIAN = 71
+
+    # Tamil (TSCII)
+    TAMIL = 72
+
+    # Additional Latin-script languages
+    TAGALOG = 73
+    FILIPINO = 74
+    HAWAIIAN = 75
+    MAORI = 76
+    TAHITIAN = 77
+    TONGAN = 78
+    SAMOAN = 79
+    FIJIAN = 80
+    CHAMORRO = 81
+    HAITIAN_CREOLE = 82
+    HAUSA_LATIN = 83
+    JAVANESE_LATIN = 84
+    SUNDANESE_LATIN = 85
+    CHICHEWA = 86
+    SHONA = 87
+    SOTO = 88
+    XHOSA = 89
+    ZULU = 90
+    WALLOON = 91
+    CORSICAN = 92
+    SCOTS = 93
+    INTERLINGUA = 94
+    IDO = 95
+    RHAETO_ROMANIC = 96
+    ROMANSH = 97
+    LADIN = 98
+    FRIULIAN = 99
+
     # The following languages are supported in the GFF/TLK file formats, but are probably not encodable to 8-bit without significant loss of information
     # therefore are probably incompatible with KOTOR.
     KOREAN = 128
@@ -211,6 +249,33 @@ class Language(IntEnum):
             Language.NAURUAN,
             Language.YORUBA,
             Language.TSWANA,
+            Language.TAGALOG,
+            Language.FILIPINO,
+            Language.HAWAIIAN,
+            Language.MAORI,
+            Language.TAHITIAN,
+            Language.TONGAN,
+            Language.SAMOAN,
+            Language.FIJIAN,
+            Language.CHAMORRO,
+            Language.HAITIAN_CREOLE,
+            Language.HAUSA_LATIN,
+            Language.JAVANESE_LATIN,
+            Language.SUNDANESE_LATIN,
+            Language.CHICHEWA,
+            Language.SHONA,
+            Language.SOTO,
+            Language.XHOSA,
+            Language.ZULU,
+            Language.WALLOON,
+            Language.CORSICAN,
+            Language.SCOTS,
+            Language.INTERLINGUA,
+            Language.IDO,
+            Language.RHAETO_ROMANIC,
+            Language.ROMANSH,
+            Language.LADIN,
+            Language.FRIULIAN,
         }:
             return "cp1252"
 
@@ -287,6 +352,18 @@ class Language(IntEnum):
         # Nordic languages (ISO-8859-10) - can use cp1252 as fallback
         if self == Language.SAMI:
             return "cp1252"  # ISO-8859-10 not widely supported, cp1252 is close
+
+        # Armenian (ArmSCII-8)
+        if self == Language.ARMENIAN:
+            return "armscii-8"
+
+        # Georgian (GEOSTD8)
+        if self == Language.GEORGIAN:
+            return "geostd8"
+
+        # Tamil (TSCII)
+        if self == Language.TAMIL:
+            return "tscii"
 
         # The following languages/encodings may not be 8-bit and need additional information in order to be supported.
         if self == Language.KOREAN:
@@ -386,6 +463,40 @@ class Language(IntEnum):
             Language.NAURUAN: "na",
             Language.YORUBA: "yo",
             Language.TSWANA: "tn",
+            # Armenian
+            Language.ARMENIAN: "hy",
+            # Georgian
+            Language.GEORGIAN: "ka",
+            # Tamil
+            Language.TAMIL: "ta",
+            # Additional Latin-script languages
+            Language.TAGALOG: "tl",
+            Language.FILIPINO: "fil",
+            Language.HAWAIIAN: "haw",
+            Language.MAORI: "mi",
+            Language.TAHITIAN: "ty",
+            Language.TONGAN: "to",
+            Language.SAMOAN: "sm",
+            Language.FIJIAN: "fj",
+            Language.CHAMORRO: "ch",
+            Language.HAITIAN_CREOLE: "ht",
+            Language.HAUSA_LATIN: "ha",
+            Language.JAVANESE_LATIN: "jv",
+            Language.SUNDANESE_LATIN: "su",
+            Language.CHICHEWA: "ny",
+            Language.SHONA: "sn",
+            Language.SOTO: "st",
+            Language.XHOSA: "xh",
+            Language.ZULU: "zu",
+            Language.WALLOON: "wa",
+            Language.CORSICAN: "co",
+            Language.SCOTS: "sco",
+            Language.INTERLINGUA: "ia",
+            Language.IDO: "io",
+            Language.RHAETO_ROMANIC: "rm",
+            Language.ROMANSH: "rm",
+            Language.LADIN: "lld",
+            Language.FRIULIAN: "fur",
             # Non-SBCS languages
             Language.KOREAN: "ko",
             Language.CHINESE_TRADITIONAL: "zh-TW",  # zh-Hant
