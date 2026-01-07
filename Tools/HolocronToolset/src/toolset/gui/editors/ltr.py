@@ -14,6 +14,7 @@ from qtpy.QtWidgets import (
 from pykotor.resource.formats.ltr.ltr_auto import bytes_ltr, read_ltr
 from pykotor.resource.formats.ltr.ltr_data import LTR
 from pykotor.resource.type import ResourceType
+from toolset.gui.common.localization import translate as tr
 from toolset.gui.editor import Editor
 
 if TYPE_CHECKING:
@@ -124,13 +125,13 @@ class LTREditor(Editor):
     def show_header_context_menu(self, position: QPoint):
         menu = QMenu()
 
-        toggle_auto_fit_action = QAction("Auto-fit Columns", self)
+        toggle_auto_fit_action = QAction(tr("Auto-fit Columns"), self)
         toggle_auto_fit_action.setCheckable(True)
         toggle_auto_fit_action.setChecked(self.auto_resize_enabled)
         toggle_auto_fit_action.triggered.connect(self.toggle_auto_fit_columns)
         menu.addAction(toggle_auto_fit_action)
 
-        toggle_alternate_row_colors_action = QAction("Toggle Alternate Row Colors", self)
+        toggle_alternate_row_colors_action = QAction(tr("Toggle Alternate Row Colors"), self)
         toggle_alternate_row_colors_action.triggered.connect(self.toggle_alternate_row_colors)
         menu.addAction(toggle_alternate_row_colors_action)
 

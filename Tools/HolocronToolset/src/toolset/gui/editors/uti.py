@@ -382,19 +382,19 @@ class UTIEditor(Editor):
         texture_variation: int = self.ui.textureVarSpin.value()
         icon_path: str = self._installation.get_item_icon_path(base_item, model_variation, texture_variation)
 
-        summary_item_icon_action = QAction("Icon Summary", self)
+        summary_item_icon_action = QAction(tr("Icon Summary"), self)
         summary_item_icon_action.triggered.connect(lambda: self._copy_icon_tooltip())
 
-        copy_base_item_action = QAction(f"Base Item: {base_item}", self)
+        copy_base_item_action = QAction(trf("Base Item: {base_item}", base_item=base_item), self)
         copy_base_item_action.triggered.connect(lambda: self._copy_to_clipboard(f"{base_item}"))
 
-        copy_model_variation_action = QAction(f"Model Variation: {model_variation}", self)
+        copy_model_variation_action = QAction(trf("Model Variation: {model_variation}", model_variation=model_variation), self)
         copy_model_variation_action.triggered.connect(lambda: self._copy_to_clipboard(f"{model_variation}"))
 
-        copy_texture_variation_action = QAction(f"Texture Variation: {texture_variation}", self)
+        copy_texture_variation_action = QAction(trf("Texture Variation: {texture_variation}", texture_variation=texture_variation), self)
         copy_texture_variation_action.triggered.connect(lambda: self._copy_to_clipboard(f"{texture_variation}"))
 
-        copy_icon_path_action = QAction(f"Icon Name: '{icon_path}'", self)
+        copy_icon_path_action = QAction(trf("Icon Name: '{icon_path}'", icon_path=icon_path), self)
         copy_icon_path_action.triggered.connect(lambda: self._copy_to_clipboard(f"{icon_path}"))
 
         copy_menu.addAction(summary_item_icon_action)

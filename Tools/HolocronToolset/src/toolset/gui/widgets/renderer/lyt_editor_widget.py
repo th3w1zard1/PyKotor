@@ -63,6 +63,7 @@ from toolset.gui.dialogs.lyt_dialogs import ObstaclePropertiesDialog, RoomProper
 from toolset.gui.editors.lyt import LYTEditor
 from toolset.gui.widgets.renderer.module import ModuleRenderer
 from toolset.gui.widgets.renderer.texture_browser import TextureBrowser
+from toolset.gui.common.localization import translate as tr
 from toolset.gui.widgets.renderer.walkmesh_editor import DoorHookPropertiesDialog, WalkmeshEditor
 from utility.common.geometry import Vector3
 
@@ -358,12 +359,12 @@ class LYTEditorWidget(QWidget):
         self.tool_group.setExclusive(True)
 
         # Initialize actions
-        self._undo_action: _QAction = QAction("Undo", self)
+        self._undo_action: _QAction = QAction(tr("Undo"), self)
         self._undo_action.setShortcut(QKeySequence.StandardKey.Undo)
         self._undo_action.setIcon(QIcon(":/icons/undo.png"))
         self._undo_action.setToolTip("Undo last action")
 
-        self._redo_action: _QAction = QAction("Redo", self)
+        self._redo_action: _QAction = QAction(tr("Redo"), self)
         self._redo_action.setShortcut(QKeySequence.StandardKey.Redo)
         self._redo_action.setIcon(QIcon(":/icons/redo.png"))
         self._redo_action.setToolTip("Redo last action")
@@ -473,15 +474,15 @@ class LYTEditorWidget(QWidget):
         tool_group = QActionGroup(self)
         tool_group.setExclusive(True)
 
-        select_tool = QAction(QIcon("path/to/select_icon.png"), "Select", self)
+        select_tool = QAction(QIcon("path/to/select_icon.png"), tr("Select"), self)
         select_tool.setCheckable(True)
         select_tool.setChecked(True)
         self.current_tool = "select"
 
-        room_tool = QAction(QIcon("path/to/room_icon.png"), "Room", self)
+        room_tool = QAction(QIcon("path/to/room_icon.png"), tr("Room"), self)
         room_tool.setCheckable(True)
 
-        door_tool = QAction(QIcon("path/to/door_icon.png"), "Door", self)
+        door_tool = QAction(QIcon("path/to/door_icon.png"), tr("Door"), self)
         door_tool.setCheckable(True)
 
         tool_group.addAction(select_tool)
@@ -564,12 +565,12 @@ class LYTEditorWidget(QWidget):
         self.main_toolbar.addAction(redo_action, "Edit")
 
         # Zoom actions
-        zoom_in_action = QAction(QIcon("path/to/zoom_in_icon.png"), "Zoom In", self)
+        zoom_in_action = QAction(QIcon("path/to/zoom_in_icon.png"), tr("Zoom In"), self)
         zoom_in_action.triggered.connect(self.zoom_pan_widget.zoom_in)
         zoom_in_action.setToolTip("Zoom In (Ctrl++)")
         self.main_toolbar.addAction(zoom_in_action, "View")
 
-        zoom_out_action = QAction(QIcon("path/to/zoom_out_icon.png"), "Zoom Out", self)
+        zoom_out_action = QAction(QIcon("path/to/zoom_out_icon.png"), tr("Zoom Out"), self)
         zoom_out_action.triggered.connect(self.zoom_pan_widget.zoom_out)
         zoom_out_action.setToolTip("Zoom Out (Ctrl+-)")
         self.main_toolbar.addAction(zoom_out_action, "View")
@@ -1342,23 +1343,23 @@ class LYTEditorWidget(QWidget):
         self.lyt_toolbar = QToolBar("LYT Tools")
         self.addToolBar(self.lyt_toolbar)  # FIXME: addToolBar attribute not found
 
-        self.add_room_action = QAction("Add Room", self)
+        self.add_room_action = QAction(tr("Add Room"), self)
         self.add_room_action.triggered.connect(self.add_room)
         self.lyt_toolbar.addAction(self.add_room_action)
 
-        self.edit_room_action = QAction("Edit Room", self)
+        self.edit_room_action = QAction(tr("Edit Room"), self)
         self.edit_room_action.triggered.connect(self.editRoom)
         self.lyt_toolbar.addAction(self.edit_room_action)
 
-        self.add_track_action = QAction("Add Track", self)
+        self.add_track_action = QAction(tr("Add Track"), self)
         self.add_track_action.triggered.connect(self.add_track)
         self.lyt_toolbar.addAction(self.add_track_action)
 
-        self.add_obstacle_action = QAction("Add Obstacle", self)
+        self.add_obstacle_action = QAction(tr("Add Obstacle"), self)
         self.add_obstacle_action.triggered.connect(self.add_obstacle)
         self.lyt_toolbar.addAction(self.add_obstacle_action)
 
-        self.add_doorhook_action = QAction("Add Doorhook", self)
+        self.add_doorhook_action = QAction(tr("Add Doorhook"), self)
         self.add_doorhook_action.triggered.connect(self.add_door_hook)
         self.lyt_toolbar.addAction(self.add_doorhook_action)
 

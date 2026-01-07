@@ -170,7 +170,7 @@ class TLKEditor(Editor):
         self.ui.menuLanguage.clear()
 
         # Handle auto-detect action
-        auto_detect_action = QAction("Auto-detect (slower)", self)
+        auto_detect_action = QAction(tr("Auto-detect (slower)"), self)
         auto_detect_action.setCheckable(True)
         auto_detect_action.triggered.connect(lambda _checked=None: self.on_language_selected("auto_detect"))
         self.ui.menuLanguage.addAction(auto_detect_action)
@@ -281,7 +281,7 @@ class TLKEditor(Editor):
     ):
         index: QModelIndex = self.ui.talkTable.indexAt(position)
         menu = QMenu()
-        findAction = QAction("Find LocalizedString references", self)
+        findAction = QAction(tr("Find LocalizedString references"), self)
         findAction.triggered.connect(lambda: self.find_references(index))
         menu.addAction(findAction)
         viewport: QWidget | None = self.ui.talkTable.viewport()
