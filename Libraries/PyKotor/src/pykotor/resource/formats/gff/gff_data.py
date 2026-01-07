@@ -267,10 +267,10 @@ class GFFComparisonResult:
 
     def __init__(self):
         self.field_stats: dict[str, dict[str, int]] = {
-            "used": {},  # Fields that were successfully compared
-            "missing": {},  # Fields missing in the target GFF
             "extra": {},  # Fields present in target but not source
             "mismatched": {},  # Fields present in both but with different values
+            "missing": {},  # Fields missing in the target GFF
+            "used": {},  # Fields that were successfully compared
         }
         self.struct_id_mismatches: list[tuple[str, int, int]] = []  # (path, source_id, target_id)
         self.field_count_mismatches: list[tuple[str, int, int]] = []  # (path, source_count, target_count)
@@ -544,7 +544,7 @@ class GFFStruct(ComparableMixin, dict):
         # Ordered dictionary of field labels to field instances
         self._fields: dict[str, _GFFField] = {}
 
-    def __copy__(self) -> "GFFStruct":
+    def __copy__(self) -> Self:
         """Support `copy.copy(GFFStruct)` without going through `dict` reconstruction.
 
         `GFFStruct` subclasses `dict` for historical compatibility, but direct item-setting is
@@ -552,31 +552,32 @@ class GFFStruct(ComparableMixin, dict):
         to reconstruct the dict portion by iterating `items()` and assigning, which triggers
         our `__setitem__` guard and breaks callers (including PyKotor's own tests).
         """
-        new_obj = GFFStruct(self.struct_id)
+        new_obj = self.__class__(self.struct_id)
         # Shallow copy: preserves field objects/values but isolates the container.
         new_obj._fields = self._fields.copy()
         return new_obj
 
-    def __deepcopy__(self, memo: dict[int, object]) -> "GFFStruct":
+    def __deepcopy__(self, memo: dict[int, object]) -> Self:
         """Support `copy.deepcopy(GFFStruct)`."""
-        new_obj = GFFStruct(self.struct_id)
+        new_obj = self.__class__(self.struct_id)
         memo[id(self)] = new_obj
         new_obj._fields = deepcopy(self._fields, memo)
         return new_obj
 
-    @staticmethod
+    @classmethod
     def _from_reduce(
+        cls,
         struct_id: int,
         fields: dict[str, _GFFField],
     ) -> Self:
-        obj = GFFStruct(struct_id)
-        obj._fields = fields
+        obj = cls(struct_id)
+        obj._fields = fields  # TODO: determimne if deepcopy is needed here
         return obj
 
     def __reduce_ex__(self, protocol: int):
         """Override dict's reduce to avoid dict-item reconstruction via `__setitem__`."""
         # Shallow-copy semantics for `copy.copy`: the `copy` module uses reduce for built-ins.
-        return (GFFStruct._from_reduce, (self.struct_id, self._fields.copy()))
+        return (self.__class__._from_reduce, (self.struct_id, self._fields.copy()))
 
     def __getitem__(self, key: str) -> Any:
         """Get field value by label, supporting both dict-style and existing API access."""
@@ -679,7 +680,10 @@ class GFFStruct(ComparableMixin, dict):
 
         Returns immutable views so callers cannot mutate `_fields` directly.
         """
-        return [GFFFieldView(label or "", field.field_type(), field.value()) for label, field in self._fields.items()]
+        return [
+            self.__class__.GFFFieldView(label or "", field.field_type(), field.value())
+            for label, field in self._fields.items()
+        ]
 
     def remove(
         self,
@@ -931,7 +935,11 @@ class GFFStruct(ComparableMixin, dict):
         self._add_missing(self, other)
 
     @staticmethod
-    def _add_missing(target: GFFStruct, source: GFFStruct, relpath: PureWindowsPath | None = None):  # noqa: C901, PLR0912
+    def _add_missing(
+        target: GFFStruct,
+        source: GFFStruct,
+        relpath: PureWindowsPath | None = None,
+    ):  # noqa: C901, PLR0912
         """Static method to update target with missing fields from source, handling nested structures.
 
         Args:
@@ -949,6 +957,7 @@ class GFFStruct(ComparableMixin, dict):
                     assert isinstance(value, GFFList)
                     target_list: GFFList = target.get_list(label, GFFList())
                     for i, (target_item, source_item) in enumerate(zip(target_list, value)):
+                        assert isinstance(target_item, GFFStruct)
                         target_item._add_missing(target_item, source_item, relpath.joinpath(label, str(i)))  # noqa: SLF001  # pyright: ignore[reportOptionalMemberAccess]
             else:
                 RobustLogger().debug(f"Adding {field_type!r} '{relpath.joinpath(label)}' to target.")  # pyright: ignore[reportOptionalMemberAccess]

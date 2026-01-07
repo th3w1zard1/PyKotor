@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-import os
 import sys
+
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -19,7 +19,7 @@ def setup_paths() -> None:
     # __main__.py -> cli -> pykotor -> src -> PyKotor -> Libraries -> repo root (6 levels)
     repo_root = file_path.parents[5]  # Fixed: was 4, should be 5
 
-    paths_to_add = [
+    paths_to_add: list[Path] = [
         repo_root / "Libraries" / "PyKotor" / "src",  # ./Libraries/PyKotor/src/ (contains both pykotor and utility namespaces)
     ]
 

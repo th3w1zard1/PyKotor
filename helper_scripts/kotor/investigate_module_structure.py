@@ -26,7 +26,7 @@ if str(UTILITY_PATH) not in sys.path:
 
 from pykotor.common.module import Module  # noqa: E402
 from pykotor.extract.installation import Installation  # noqa: E402
-from pykotor.resource.formats.gff.gff_auto import read_gff  # noqa: E402
+from pykotor.resource.formats.gff import read_gff  # noqa: E402
 from pykotor.resource.formats.lyt.lyt_auto import read_lyt  # noqa: E402
 from pykotor.resource.formats.rim import read_rim  # noqa: E402
 from pykotor.resource.type import ResourceType  # noqa: E402

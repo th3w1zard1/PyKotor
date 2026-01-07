@@ -9,7 +9,6 @@ from loggerplus import RobustLogger
 
 from holopatcher import core
 from pykotor.tslpatcher.logger import PatchLogger
-from utility.error_handling import universal_simplify_exception
 
 if TYPE_CHECKING:
     from argparse import Namespace
@@ -111,7 +110,7 @@ def execute_cli(cmdline_args: Namespace):
 
     except Exception as e:  # noqa: BLE001
         logger.exception("CLI operation failed")
-        error_name, msg = universal_simplify_exception(e)
+        error_name, msg = e.__class__.__name__, str(e)
         print(f"[Error] {error_name}: {msg}", file=sys.stderr)  # noqa: T201
         sys.exit(ExitCode.EXCEPTION_DURING_INSTALL)
 

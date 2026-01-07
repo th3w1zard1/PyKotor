@@ -42,7 +42,11 @@ class GFFJSONReader(ResourceReader):
         super().__init__(source, offset, size)
 
     @autoclose
-    def load(self, *, auto_close: bool = True) -> GFF:  # noqa: FBT002, FBT001
+    def load(
+        self,
+        *,
+        auto_close: bool = True,
+    ) -> GFF:  # noqa: FBT002, FBT001
         """Load the GFF data from JSON.
 
         Args:
@@ -60,7 +64,10 @@ class GFFJSONReader(ResourceReader):
         gff.root = self._parse_struct(data)
         return gff
 
-    def _parse_struct(self, data: dict[str, Any]) -> GFFStruct:
+    def _parse_struct(
+        self,
+        data: dict[str, Any],
+    ) -> GFFStruct:
         """Parse a JSON object into a GFFStruct.
 
         Args:
@@ -76,12 +83,16 @@ class GFFJSONReader(ResourceReader):
 
         for field_name, field_data in data.get("fields", {}).items():
             field_type = GFFFieldType(field_data.get("type", 0))
-            field_value = self._parse_field_value(field_type, field_data.get("value"))
+            field_value = self._parse_field_value(field_type=field_type, value=field_data.get("value"))
             struct._fields[field_name] = _GFFField(field_type, field_value)
 
         return struct
 
-    def _parse_field_value(self, field_type: GFFFieldType, value: Any) -> Any:
+    def _parse_field_value(
+        self,
+        field_type: GFFFieldType,
+        value: Any,
+    ) -> Any:
         """Parse a field value based on its type.
 
         Args:
@@ -101,7 +112,10 @@ class GFFJSONReader(ResourceReader):
             return self._parse_locstring(value)
         return value
 
-    def _parse_list(self, data: list[dict[str, Any]]) -> GFFList:
+    def _parse_list(
+        self,
+        data: list[dict[str, Any]],
+    ) -> GFFList:
         """Parse a JSON array into a GFFList.
 
         Args:
@@ -118,7 +132,10 @@ class GFFJSONReader(ResourceReader):
             gff_list._structs.append(struct)
         return gff_list
 
-    def _parse_locstring(self, data: dict[str, Any]) -> LocalizedString:
+    def _parse_locstring(
+        self,
+        data: dict[str, Any],
+    ) -> LocalizedString:
         """Parse a JSON object into a LocalizedString.
 
         Args:
@@ -151,10 +168,14 @@ class GFFJSONWriter(ResourceWriter):
             target: The target to write the JSON data to.
         """
         super().__init__(target)
-        self._gff = gff
+        self._gff: GFF = gff
 
     @autoclose
-    def write(self, *, auto_close: bool = True):  # noqa: FBT001, FBT002, ARG002  # pyright: ignore[reportUnusedParameters]
+    def write(  # noqa: FBT001, FBT002, ARG002
+        self,
+        *,
+        auto_close: bool = True,  # pyright: ignore[reportUnusedParameters]
+    ):
         """Write the GFF data as JSON.
 
         This method converts the GFF object to a JSON object and writes it to the target.
@@ -163,7 +184,10 @@ class GFFJSONWriter(ResourceWriter):
         json_str = json.dumps(json_data, indent=2)
         self._writer.write_string(json_str)
 
-    def _serialize_struct(self, struct: GFFStruct) -> dict[str, Any]:
+    def _serialize_struct(
+        self,
+        struct: GFFStruct,
+    ) -> dict[str, Any]:
         """Serialize a GFFStruct to a JSON object.
 
         Args:
@@ -178,11 +202,14 @@ class GFFJSONWriter(ResourceWriter):
         for field_name, field in struct._fields.items():
             result["fields"][field_name] = {
                 "type": field.field_type().value,
-                "value": self._serialize_field_value(field),
+                "value": self._serialize_field_value(field=field),
             }
         return result
 
-    def _serialize_field_value(self, field: _GFFField) -> Any:
+    def _serialize_field_value(
+        self,
+        field: _GFFField,
+    ) -> Any:
         """Serialize a field value based on its type.
 
         Args:
@@ -196,14 +223,17 @@ class GFFJSONWriter(ResourceWriter):
         field_type = field.field_type()
         field_value = field.value()
         if field_type.value == GFF_FIELD_TYPE_STRUCT:
-            return self._serialize_struct(cast("GFFStruct", field_value))
+            return self._serialize_struct(cast(GFFStruct, field_value))
         if field_type.value == GFF_FIELD_TYPE_LIST:
-            return self._serialize_list(cast("GFFList", field_value))
+            return self._serialize_list(cast(GFFList, field_value))
         if field_type.value == GFF_FIELD_TYPE_LOCSTRING:
-            return self._serialize_locstring(cast("LocalizedString", field_value))
+            return self._serialize_locstring(cast(LocalizedString, field_value))
         return field_value
 
-    def _serialize_list(self, gff_list: GFFList) -> list[dict[str, Any]]:
+    def _serialize_list(
+        self,
+        gff_list: GFFList,
+    ) -> list[dict[str, Any]]:
         """Serialize a GFFList to a JSON array.
 
         Args:
@@ -214,9 +244,12 @@ class GFFJSONWriter(ResourceWriter):
         -------
             A JSON array.
         """
-        return [self._serialize_struct(struct) for struct in gff_list._structs]
+        return list(self._serialize_struct(struct) for struct in gff_list._structs)
 
-    def _serialize_locstring(self, locstring: LocalizedString) -> dict[str, Any]:
+    def _serialize_locstring(
+        self,
+        locstring: LocalizedString,
+    ) -> dict[str, Any]:
         """Serialize a LocalizedString to a JSON object.
 
         Args:

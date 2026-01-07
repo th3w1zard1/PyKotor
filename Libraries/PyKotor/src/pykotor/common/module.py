@@ -19,7 +19,7 @@ from pykotor.extract.file import FileResource, LocationResult, ResourceIdentifie
 from pykotor.extract.installation import SearchLocation
 from pykotor.resource.formats.bwm.bwm_auto import bytes_bwm, read_bwm, write_bwm
 from pykotor.resource.formats.erf.erf_auto import read_erf, write_erf
-from pykotor.resource.formats.gff.gff_auto import read_gff
+from pykotor.resource.formats.gff import read_gff
 from pykotor.resource.formats.gff.gff_data import GFF, GFFFieldType
 from pykotor.resource.formats.lyt.lyt_auto import bytes_lyt, read_lyt, write_lyt
 from pykotor.resource.formats.lyt.lyt_data import LYT

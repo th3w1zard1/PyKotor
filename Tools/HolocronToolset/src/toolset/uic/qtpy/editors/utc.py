@@ -12,7 +12,7 @@ from qtpy import QtCore, QtGui, QtWidgets
 
 
 class Ui_MainWindow(object):
-    def setupUi(self, MainWindow):
+    def setupUi(self, MainWindow: QtWidgets.QMainWindow):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1007, 585)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Expanding)
@@ -1069,7 +1069,7 @@ class Ui_MainWindow(object):
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.onBlockedEdit.sizePolicy().hasHeightForWidth())
-        self.onBlockedEdit.setSizePolicy(sizePolicy)
+        self..setSizePolicy(sizePolicy)
         self.onBlockedEdit.setObjectName("onBlockedEdit")
         self.horizontalLayout_29.addWidget(self.onBlockedEdit)
         self.formLayout_22.setLayout(0, QtWidgets.QFormLayout.FieldRole, self.horizontalLayout_29)

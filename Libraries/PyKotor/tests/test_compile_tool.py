@@ -120,7 +120,7 @@ class TestComputeFinalExecutable:
     def test_compute_final_executable_mac(self):
         """Test macOS executable path."""
         distpath = Path("/dist")
-        result = compute_final_executable(distpath, "TestTool", "Mac")
+        result = compute_final_executable(distpath, "TestTool", "Mac", windowed=True)
         assert result == Path("/dist/TestTool.app")
 
     def test_compute_final_executable_linux(self):

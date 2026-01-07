@@ -9,7 +9,6 @@ from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QDialog, QTextBrowser, QVBoxLayout
 
 from pykotor.tools.encoding import decode_bytes_with_fallbacks
-from utility.error_handling import universal_simplify_exception
 from utility.system.os_helper import is_frozen
 
 if TYPE_CHECKING:
@@ -289,7 +288,7 @@ class EditorHelpDialog(QDialog):
             <body>
             <h1>Error Loading Help File</h1>
             <p>Could not load help file: <code>{wiki_filename}</code></p>
-            <p>Error: {universal_simplify_exception(e)}</p>
+            <p>Error: {(e.__class__.__name__, str(e))}</p>
             </body>
             </html>
             """

@@ -14,7 +14,6 @@ from pykotor.extract.file import FileResource  # type: ignore[import-not-found]
 from pykotor.resource.type import ResourceType  # type: ignore[import-not-found]
 from toolset.gui.common.localization import translate as tr, trf  # type: ignore[import-not-found]
 from toolset.gui.widgets.settings.installations import GlobalSettings  # type: ignore[import-not-found]
-from utility.error_handling import universal_simplify_exception  # type: ignore[import-not-found]
 
 if TYPE_CHECKING:
     from qtpy.QtGui import QCloseEvent
@@ -357,7 +356,7 @@ def _open_resource_editor_impl(  # noqa: C901, PLR0913, PLR0912, PLR0915
         QMessageBox(
             QMessageBox.Icon.Critical,
             tr("An unexpected error has occurred"),
-            f"{universal_simplify_exception(e)}{data_signature}",
+            f"{(e.__class__.__name__, str(e))}{data_signature}",
             QMessageBox.StandardButton.Ok,
             parent_window_widget,
             flags=Qt.WindowType.Window | Qt.WindowType.Dialog | Qt.WindowType.WindowStaysOnTopHint,  # pyright: ignore[reportArgumentType]

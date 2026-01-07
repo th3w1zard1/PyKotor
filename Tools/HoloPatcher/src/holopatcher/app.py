@@ -72,7 +72,6 @@ from pykotor.tslpatcher.logger import LogType, PatchLogger  # noqa: E402
 from pykotor.tslpatcher.patcher import ModInstaller  # noqa: E402
 from pykotor.tslpatcher.reader import ConfigReader, NamespaceReader  # noqa: E402
 from pykotor.tslpatcher.uninstall import ModUninstaller  # noqa: E402
-from utility.error_handling import universal_simplify_exception  # noqa: E402
 from utility.misc import ProcessorArchitecture  # noqa: E402
 from utility.string_util import striprtf  # noqa: E402
 from utility.system.os_helper import win_get_system32_dir  # noqa: E402
@@ -595,7 +594,11 @@ class App(BaseApp):
             - If stopping fails, force terminate install thread
             - Destroy window and exit with abort code.
         """
-        if not self.task_running or not self.task_thread or not self.task_thread.is_alive():
+        if (
+            not self.task_running
+            or not self.task_thread
+            or not self.task_thread.is_alive()
+        ):
             print("Goodbye!")
             sys.exit(ExitCode.SUCCESS)
             return  # leave here for the static type checkers
@@ -1339,7 +1342,7 @@ class App(BaseApp):
             - Reraises the exception.
         """
         self.pykotor_logger.exception("Unhandled exception in HoloPatcher", exc_info=e)
-        error_name, msg = universal_simplify_exception(e)
+        error_name, msg = e.__class__.__name__, str(e)
         self.logger.add_error(f"{error_name}: {msg}{os.linesep}The installation was aborted with errors")
         messagebox.showerror(
             error_name,

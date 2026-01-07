@@ -189,8 +189,8 @@ from pykotor.extract.capsule import Capsule
 from pykotor.extract.file import ResourceIdentifier
 from pykotor.resource.formats.erf import ERFType
 from pykotor.resource.formats.erf.erf_data import ERF
-from pykotor.resource.formats.gff.gff_auto import bytes_gff, read_gff
-from pykotor.resource.formats.gff.gff_data import GFFFieldType, GFFList, GFFStruct
+from pykotor.resource.formats.gff import bytes_gff, read_gff
+from pykotor.resource.formats.gff import GFFFieldType, GFFList, GFFStruct
 from pykotor.resource.type import ResourceType
 from pykotor.tools.path import CaseAwarePath
 from utility.common.geometry import Vector3, Vector4
@@ -199,7 +199,7 @@ if TYPE_CHECKING:
     import os
 
     from pykotor.common.module import Module
-    from pykotor.resource.formats.gff.gff_data import GFF
+    from pykotor.resource.formats.gff import GFF
     from pykotor.resource.generics.utc import UTC
     from pykotor.resource.generics.uti import UTI
 
@@ -371,7 +371,7 @@ class SaveInfo:
         3. Use acquire() for safe field access (returns default if missing)
         4. Handle optional fields (TIMESTAMP, PCNAME)
         """
-        from pykotor.resource.formats.gff.gff_auto import read_gff
+        from pykotor.resource.formats.gff import read_gff
         
         gff = read_gff(self.save_info_path)
         root = gff.root
@@ -434,8 +434,8 @@ class SaveInfo:
         - Bytes: set_uint8() for CHEATUSED, hints, LIVECONTENT
         - ResRefs: set_resref() for PORTRAIT0/1/2
         """
-        from pykotor.resource.formats.gff.gff_auto import write_gff
-        from pykotor.resource.formats.gff.gff_data import GFF, GFFContent
+        from pykotor.resource.formats.gff import write_gff
+        from pykotor.resource.formats.gff import GFF, GFFContent
         
         gff = GFF(GFFContent.NFO)
         root = gff.root
@@ -668,7 +668,7 @@ class PartyTable:
         # All other fields preserved verbatim for full fidelity editing
         # Stored as mapping of label -> (field_type, deep-copied value)
         # Allows Save Editor to surface and modify any additional data
-        self.additional_fields: dict[str, tuple["GFFFieldType", Any]] = {}
+        self.additional_fields: dict[str, tuple[GFFFieldType, Any]] = {}
         self._existing_fields: set[str] = set()
         
         # K2-specific fields
@@ -776,25 +776,25 @@ class PartyTable:
         self.jnl_sort_order = _acquire("JNL_SORT_ORDER", 0)
         
         # Pazaak
-        self.pt_pazaakcards = cast("GFFList", _acquire("PT_PAZAAKCARDS", GFFList()))
-        self.pt_pazaakdecks = cast("GFFList", _acquire("PT_PAZAAKDECKS", GFFList()))
+        self.pt_pazaakcards = cast(GFFList, _acquire("PT_PAZAAKCARDS", GFFList()))
+        self.pt_pazaakdecks = cast(GFFList, _acquire("PT_PAZAAKDECKS", GFFList()))
         
         # UI
         self.pt_last_gui_pnl = int(_acquire("PT_LAST_GUI_PNL", 0))
-        self.pt_fb_msg_list = cast("GFFList", _acquire("PT_FB_MSG_LIST", GFFList()))
-        self.pt_dlg_msg_list = cast("GFFList", _acquire("PT_DLG_MSG_LIST", GFFList()))
-        self.pt_tut_wnd_shown = cast("bytes", _acquire("PT_TUT_WND_SHOWN", b""))
+        self.pt_fb_msg_list = cast(GFFList, _acquire("PT_FB_MSG_LIST", GFFList()))
+        self.pt_dlg_msg_list = cast(GFFList, _acquire("PT_DLG_MSG_LIST", GFFList()))
+        self.pt_tut_wnd_shown = cast(bytes, _acquire("PT_TUT_WND_SHOWN", b""))
         
         # Cheats
         self.pt_cheat_used = bool(_acquire("PT_CHEAT_USED", 0))
         
         # Economy
-        self.pt_cost_mult_lis = cast("GFFList", _acquire("PT_COST_MULT_LIS", GFFList()))
+        self.pt_cost_mult_lis = cast(GFFList, _acquire("PT_COST_MULT_LIS", GFFList()))
         
         # K2-specific fields
-        self.pt_item_componen = cast("int", _acquire("PT_ITEM_COMPONEN", 0))
-        self.pt_item_chemical = cast("int", _acquire("PT_ITEM_CHEMICAL", 0))
-        self.pt_pcname = cast("str", _acquire("PT_PCNAME", ""))
+        self.pt_item_componen = cast(int, _acquire("PT_ITEM_COMPONEN", 0))
+        self.pt_item_chemical = cast(int, _acquire("PT_ITEM_CHEMICAL", 0))
+        self.pt_pcname = cast(str, _acquire("PT_PCNAME", ""))
         
         # Load PT_INFLUENCE (K2 only)
         if root.exists("PT_INFLUENCE"):
@@ -842,8 +842,8 @@ class PartyTable:
         5. Atomic write to disk
         
         """
-        from pykotor.resource.formats.gff.gff_auto import write_gff
-        from pykotor.resource.formats.gff.gff_data import GFF, GFFContent
+        from pykotor.resource.formats.gff import write_gff
+        from pykotor.resource.formats.gff import GFF, GFFContent
         
         gff = GFF(GFFContent.PT)
         root = gff.root
@@ -1144,7 +1144,7 @@ class GlobalVars:
         
         Vendor ref: KSE/Functions/Globals.pm line ~90-100
         """
-        from pykotor.resource.formats.gff.gff_auto import read_gff
+        from pykotor.resource.formats.gff import read_gff
         
         globalvars_gff = read_gff(self.globals_filepath)
         root = globalvars_gff.root
@@ -1321,8 +1321,8 @@ class GlobalVars:
         Vendor ref: KSE/Functions/Globals.pm line ~300-320
         """
         from pykotor.common.stream import BinaryWriter
-        from pykotor.resource.formats.gff.gff_auto import write_gff
-        from pykotor.resource.formats.gff.gff_data import GFF, GFFContent, GFFList
+        from pykotor.resource.formats.gff import write_gff
+        from pykotor.resource.formats.gff import GFF, GFFContent, GFFList
         
         gff = GFF(GFFContent.GVT)
         root = gff.root
@@ -1707,7 +1707,7 @@ class SaveNestedCapsule:
             reload: If True, reload the capsule resources.
         """
         from pykotor.resource.formats.erf.erf_auto import read_erf
-        from pykotor.resource.formats.gff.gff_auto import read_gff
+        from pykotor.resource.formats.gff import read_gff
         from pykotor.resource.generics.utc import read_utc
         from pykotor.resource.generics.uti import construct_uti_from_struct
         
@@ -1767,8 +1767,8 @@ class SaveNestedCapsule:
     def save(self):
         """Serialize all nested resources back into raw byte form."""
         from pykotor.resource.formats.erf.erf_auto import bytes_erf
-        from pykotor.resource.formats.gff.gff_auto import bytes_gff
-        from pykotor.resource.formats.gff.gff_data import GFF, GFFContent, GFFList
+        from pykotor.resource.formats.gff import bytes_gff
+        from pykotor.resource.formats.gff import GFF, GFFContent, GFFList
         from pykotor.resource.generics.utc import dismantle_utc
         from pykotor.resource.generics.uti import dismantle_uti
 
@@ -1815,7 +1815,7 @@ class SaveNestedCapsule:
         """Add or replace a resource within SAVEGAME.sav."""
         self.resource_data[identifier] = data
         from pykotor.resource.formats.erf.erf_auto import read_erf
-        from pykotor.resource.formats.gff.gff_auto import read_gff
+        from pykotor.resource.formats.gff import read_gff
         from pykotor.resource.generics.utc import read_utc
         from pykotor.resource.generics.uti import construct_uti_from_struct
 
@@ -1953,7 +1953,7 @@ class SaveNestedCapsule:
             save.save()
         ```
         """
-        from pykotor.resource.formats.gff.gff_auto import read_gff
+        from pykotor.resource.formats.gff import read_gff
         
         # Check each cached module for EventQueue
         for module_erf in self.cached_modules.values():
@@ -2005,8 +2005,7 @@ class SaveNestedCapsule:
             save.save()
         ```
         """
-        from pykotor.resource.formats.gff.gff_auto import read_gff
-        from pykotor.resource.formats.gff.gff_data import GFFList
+        from pykotor.resource.formats.gff import read_gff, GFFList, bytes_gff
         
         # Iterate through all cached modules
         for module_erf in self.cached_modules.values():
@@ -2027,7 +2026,10 @@ class SaveNestedCapsule:
                     
                     break  # Only one module.ifo per cached module
 
-    def update_nested_module(self, module: Module):
+    def update_nested_module(
+        self,
+        module: Module,
+    ):
         """Updates a module in a save and retains all of the original bools/strings that were set.
 
         This function is useful if you've updated a module and don't want to recreate a save to test it.
@@ -2080,13 +2082,13 @@ class SaveNestedCapsule:
         
         # List of static resource types that can be safely replaced
         STATIC_RESOURCE_TYPES = {
-            ResourceType.NCS,  # Scripts
-            ResourceType.WOK,  # Walkmeshes
-            ResourceType.LYT,  # Layouts
-            ResourceType.VIS,  # Visibility
-            ResourceType.PTH,  # Paths
             ResourceType.ARE,  # Area (structure, not state)
             ResourceType.GIT,  # Game instance (template, not state)
+            ResourceType.LYT,  # Layouts
+            ResourceType.NCS,  # Scripts
+            ResourceType.PTH,  # Paths
+            ResourceType.VIS,  # Visibility
+            ResourceType.WOK,  # Walkmeshes
         }
         
         # Get module name from module
@@ -2273,7 +2275,7 @@ class SaveFolderEntry:
         
         # Load screenshot if it exists
         # Vendor ref: All implementations preserve this for save menu display
-        screenshot_path = self.save_path / str(self.SCREENSHOT_NAME)
+        screenshot_path = self.save_path / self.SCREENSHOT_NAME.resname
         if screenshot_path.exists():
             logger.debug("Loading screenshot...")
             with open(screenshot_path, "rb") as f:
@@ -2464,7 +2466,7 @@ class SaveFolderEntry:
         # STEP 5: SAVE SCREEN.TGA - Save screenshot thumbnail
         # ============================================================================
         logger.debug("[5/5] Saving Screen.tga (Screenshot)...")
-        screenshot_path = self.save_path / str(self.SCREENSHOT_NAME)
+        screenshot_path = self.save_path / self.SCREENSHOT_NAME.resname
         
         if self.screenshot is not None:
             # Write screenshot to disk

@@ -27,7 +27,7 @@ from qtpy.QtWidgets import QAbstractItemView, QApplication, QFileDialog, QHeader
 
 from loggerplus import RobustLogger  # type: ignore[import-untyped, note]  # pyright: ignore[reportMissingTypeStubs]
 from pykotor.extract.file import FileResource
-from pykotor.resource.formats.tpc import read_tpc, write_tpc, TPCMipmap, TPCTextureFormat, TPC
+from pykotor.resource.formats.tpc import TPC, TPCMipmap, TPCTextureFormat, read_tpc, write_tpc
 from pykotor.resource.type import ResourceType
 from toolset.data.installation import HTInstallation
 from toolset.gui.dialogs.load_from_location_result import ResourceItems
@@ -620,6 +620,7 @@ class TextureList(MainWindowList):
         self.ui.resourceList.setResizeMode(QListView.ResizeMode.Adjust)
         self.ui.resourceList.setMovement(QListView.Movement.Snap)
         self.ui.resourceList.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+        self.ui.resourceList.setDragDropMode(QAbstractItemView.DragDropMode.DragOnly)
         self.setup_signals()
 
         self._installation: HTInstallation | None = None
@@ -892,7 +893,7 @@ class TextureList(MainWindowList):
         checked: bool = False,
     ):
         """Handle reloading selected textures.
-        
+
         Args:
         ----
             checked: Whether the action was checked (from triggered signal, ignored).

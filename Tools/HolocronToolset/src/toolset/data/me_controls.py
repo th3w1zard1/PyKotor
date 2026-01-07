@@ -124,46 +124,46 @@ class ModuleEditorControls(ABC):
         self,
         screen: Vector2,
         delta: Vector2,
-        buttons: set[int],
-        keys: set[int],
+        buttons: set[Qt.MouseButton] | set[Qt.MouseButton] | set[int] | set[Qt.MouseButton | int],
+        keys: set[Qt.Key] | set[QKeySequence] | set[int] | set[Qt.Key | QKeySequence | int],
     ): ...
 
     @abstractmethod
     def on_mouse_scrolled(
         self,
         delta: Vector2,
-        buttons: set[int],
-        keys: set[int],
+        buttons: set[Qt.MouseButton] | set[Qt.MouseButton] | set[int] | set[Qt.MouseButton | int],
+        keys: set[Qt.Key] | set[QKeySequence] | set[int] | set[Qt.Key | QKeySequence | int],
     ): ...
 
     @abstractmethod
     def on_mouse_pressed(
         self,
         screen: Vector2,
-        buttons: set[int],
-        keys: set[int],
+        buttons: set[Qt.MouseButton] | set[Qt.MouseButton] | set[int] | set[Qt.MouseButton | int],
+        keys: set[Qt.Key] | set[QKeySequence] | set[int] | set[Qt.Key | QKeySequence | int],
     ): ...
 
     @abstractmethod
     def on_mouse_released(
         self,
         screen: Vector2,
-        buttons: set[int],
-        keys: set[int],
+        buttons: set[Qt.MouseButton] | set[Qt.MouseButton] | set[int] | set[Qt.MouseButton | int],
+        keys: set[Qt.Key] | set[QKeySequence] | set[int] | set[Qt.Key | QKeySequence | int],
     ): ...
 
     @abstractmethod
     def on_key_pressed(
         self,
-        buttons: set[int],
-        keys: set[int],
+        buttons: set[Qt.MouseButton] | set[Qt.MouseButton] | set[int] | set[Qt.MouseButton | int],
+        keys: set[Qt.Key] | set[QKeySequence] | set[int] | set[Qt.Key | QKeySequence | int],
     ): ...
 
     @abstractmethod
     def on_key_released(
         self,
-        buttons: set[int],
-        keys: set[int],
+        buttons: set[Qt.MouseButton] | set[Qt.MouseButton] | set[int] | set[Qt.MouseButton | int],
+        keys: set[Qt.Key] | set[QKeySequence] | set[int] | set[Qt.Key | QKeySequence | int],
     ): ...
 
     def getValue(
@@ -226,13 +226,14 @@ class ModuleEditorControls(ABC):
             y: float = obj.data.position.y + dy
             z: float = obj.data.position.z
 
-            point: Vector3 = Vector3(
-                obj.data.position.x + dx,
-                obj.data.position.y + dy,
-                obj.data.position.z,
-            )
             if snap:
                 point = self.renderer.walkmesh_point(x, y, z)
+            else:
+                point: Vector3 = Vector3(
+                    obj.data.position.x + dx,
+                    obj.data.position.y + dy,
+                    obj.data.position.z,
+                )
             point.z += dz
 
             instance: GITInstance = obj.data
@@ -458,8 +459,8 @@ class DynamicModuleEditorControls(ModuleEditorControls):
         self,
         screen: Vector2,
         delta: Vector2,
-        buttons: set[int],
-        keys: set[int],
+        buttons: set[Qt.MouseButton] | set[Qt.MouseButton] | set[int] | set[Qt.MouseButton | int],
+        keys: set[Qt.Key] | set[QKeySequence] | set[int] | set[Qt.Key | QKeySequence | int],
     ):
         for event in self.mouse_move_events:
             if (event.mouse == buttons or event.mouse is None) and (event.keys == keys or event.keys is None):
@@ -469,8 +470,8 @@ class DynamicModuleEditorControls(ModuleEditorControls):
     def on_mouse_scrolled(
         self,
         delta: Vector2,
-        buttons: set[int],
-        keys: set[int],
+        buttons: set[Qt.MouseButton] | set[Qt.MouseButton] | set[int] | set[Qt.MouseButton | int],
+        keys: set[Qt.Key] | set[QKeySequence] | set[int] | set[Qt.Key | QKeySequence | int],
     ):
         for event in self.mouse_scroll_events:
             if (event.mouse == buttons or event.mouse is None) and (event.keys == keys or event.keys is None):
@@ -480,8 +481,8 @@ class DynamicModuleEditorControls(ModuleEditorControls):
     def on_mouse_pressed(
         self,
         screen: Vector2,
-        buttons: set[int],
-        keys: set[int],
+        buttons: set[Qt.MouseButton] | set[Qt.MouseButton] | set[int] | set[Qt.MouseButton | int],
+        keys: set[Qt.Key] | set[QKeySequence] | set[int] | set[Qt.Key | QKeySequence | int],
     ):
         for event in self.mouse_press_events:
             if (event.mouse == buttons or event.mouse is None) and (event.keys == keys or event.keys is None):
@@ -491,8 +492,8 @@ class DynamicModuleEditorControls(ModuleEditorControls):
     def on_mouse_released(
         self,
         screen: Vector2,
-        buttons: set[int],
-        keys: set[int],
+        buttons: set[Qt.MouseButton] | set[Qt.MouseButton] | set[int] | set[Qt.MouseButton | int],
+        keys: set[Qt.Key] | set[QKeySequence] | set[int] | set[Qt.Key | QKeySequence | int],
     ):
         for event in self.mouse_release_events:
             if (event.mouse == buttons or event.mouse is None) and (event.keys == keys or event.keys is None):
@@ -501,8 +502,8 @@ class DynamicModuleEditorControls(ModuleEditorControls):
 
     def on_key_pressed(
         self,
-        buttons: set[int],
-        keys: set[int],
+        buttons: set[Qt.MouseButton] | set[Qt.MouseButton] | set[int] | set[Qt.MouseButton | int],
+        keys: set[Qt.Key] | set[QKeySequence] | set[int] | set[Qt.Key | QKeySequence | int],
     ):
         for event in self.key_press_events:
             if (event.mouse == buttons or event.mouse is None) and (event.keys == keys or event.keys is None):
@@ -511,8 +512,8 @@ class DynamicModuleEditorControls(ModuleEditorControls):
 
     def on_key_released(
         self,
-        buttons: set[int],
-        keys: set[int],
+        buttons: set[Qt.MouseButton] | set[Qt.MouseButton] | set[int] | set[Qt.MouseButton | int],
+        keys: set[Qt.Key] | set[QKeySequence] | set[int] | set[Qt.Key | QKeySequence | int],
     ):
         for event in self.key_release_events:
             if (event.mouse == buttons or event.mouse is None) and (event.keys == keys or event.keys is None):
@@ -781,25 +782,25 @@ class DCEffect(ABC):
             output = dy
 
         elif value == "cpdxFlat":
-            forward: vec3 = -dy * controls.renderer.scene.camera.forward()
-            sideward: vec3 = dx * controls.renderer.scene.camera.sideward()
+            forward: vec3 = controls.renderer.scene.camera.forward() * -dy
+            sideward: vec3 = controls.renderer.scene.camera.sideward() * dx
             output = -(forward.x + sideward.x)
         elif value == "cpdyFlat":
-            forward = -dy * controls.renderer.scene.camera.forward()
-            sideward = dx * controls.renderer.scene.camera.sideward()
+            forward = controls.renderer.scene.camera.forward() * -dy
+            sideward = controls.renderer.scene.camera.sideward() * dx
             output = -(forward.y + sideward.y)
 
         elif value == "cpdx":
-            sideward = dx * controls.renderer.scene.camera.sideward(ignore_z=False)
-            upward: vec3 = dy * controls.renderer.scene.camera.upward(ignore_xy=False)
+            sideward = controls.renderer.scene.camera.sideward(ignore_z=False) * dx
+            upward: vec3 = controls.renderer.scene.camera.upward(ignore_xy=False) * dy
             output = -(upward.x + sideward.x)
         elif value == "cpdy":
-            sideward = dx * controls.renderer.scene.camera.sideward(ignore_z=False)
-            upward = dy * controls.renderer.scene.camera.upward(ignore_xy=False)
+            sideward = controls.renderer.scene.camera.sideward(ignore_z=False) * dx
+            upward = controls.renderer.scene.camera.upward(ignore_xy=False) * dy
             output = -(upward.y + sideward.y)
         elif value == "cpdz":
-            sideward = dx * controls.renderer.scene.camera.sideward(ignore_z=False)
-            upward = dy * controls.renderer.scene.camera.upward(ignore_xy=False)
+            sideward = controls.renderer.scene.camera.sideward(ignore_z=False) * dx
+            upward = controls.renderer.scene.camera.upward(ignore_xy=False) * dy
             output = -(upward.z + sideward.z)
 
         elif value == "cpxFlat":
@@ -1070,8 +1071,9 @@ class DCEffectSnapCameraToObject(DCEffect):
         dy: float,
     ):
         if controls.renderer.scene.selection:
+            pos = controls.renderer.scene.selection[0].position()
             controls.renderer.snap_camera_to_point(
-                Vector3(*controls.renderer.scene.selection[0].position()),
+                Vector3(pos.x, pos.y, pos.z),
                 self.distance,
             )
 

@@ -56,7 +56,7 @@ class KitDownloader(QDialog):
                     try:
                         local_kit_dict = json.loads(kit_path.read_text())
                     except Exception as e:  # noqa: BLE001
-                        print(universal_simplify_exception(e), "\n in _setup_downloads for kit update check")
+                        print((e.__class__.__name__, str(e)), "\n in _setup_downloads for kit update check")
                         button.setText("Missing JSON - click to redownload.")
                         button.setEnabled(True)
                     else:
@@ -77,7 +77,7 @@ class KitDownloader(QDialog):
                     raise RuntimeError(msg)  # noqa: TRY301
                 layout.addRow(kit_name, button)
         except Exception as e:  # noqa: BLE001
-            error_msg = str(universal_simplify_exception(e)).replace("\n", "<br>")
+            error_msg = str((e.__class__.__name__, str(e))).replace("\n", "<br>")
             err_msg_box = QMessageBox(
                 QMessageBox.Icon.Information,
                 "An unexpected error occurred while setting up the kit downloader.",

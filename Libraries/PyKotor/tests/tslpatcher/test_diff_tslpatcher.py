@@ -32,7 +32,7 @@ if KOTORDIFF_PATH.joinpath("kotordiff").exists():
     add_sys_path(KOTORDIFF_PATH)
 
 
-from kotordiff.app import KotorDiffConfig, run_application  # pyright: ignore[reportMissingImports]
+from pykotor.diff_tool.app import KotorDiffConfig, run_application
 from pykotor.common.misc import Game
 from pykotor.resource.formats.gff.gff_auto import read_gff, write_gff
 from pykotor.resource.formats.gff.gff_data import GFFContent

@@ -30,13 +30,10 @@ from pykotor.tslpatcher.diff.generator import (
     determine_install_folders,
 )
 from pykotor.tslpatcher.writer import IncrementalTSLPatchDataWriter, ModificationsByType, TSLPatcherINISerializer
-from utility.error_handling import universal_simplify_exception
 
 if TYPE_CHECKING:
     from pykotor.tools.reference_cache import TwoDAMemoryReferenceCache
-    from pykotor.tslpatcher.diff.engine import (
-        DiffContext,
-    )
+    from pykotor.tslpatcher.diff.engine import DiffContext
 
 
 @dataclass
@@ -468,7 +465,7 @@ def handle_diff(config: DiffConfig) -> tuple[bool | None, int | None]:
                 log_output(f"  Install files: {total_install_files}")
                 log_output(f"  Install folders: {len(incremental_writer.install_folders)}")
             except Exception as gen_error:  # noqa: BLE001
-                log_output(f"[Error] Failed to finalize TSLPatcher data: {universal_simplify_exception(gen_error)}")
+                log_output(f"[Error] Failed to finalize TSLPatcher data: {(gen_error.__class__.__name__, str(gen_error))}")
                 log_output("Full traceback:")
                 for line in traceback.format_exc().splitlines():
                     log_output(f"  {line}")
@@ -485,7 +482,7 @@ def handle_diff(config: DiffConfig) -> tuple[bool | None, int | None]:
                     base_data_path=base_path if isinstance(base_path, Path) else None,
                 )
             except Exception as gen_error:  # noqa: BLE001
-                log_output(f"[Error] Failed to generate TSLPatcher data: {universal_simplify_exception(gen_error)}")
+                log_output(f"[Error] Failed to generate TSLPatcher data: {(gen_error.__class__.__name__, str(gen_error))}")
                 log_output("Full traceback:")
                 for line in traceback.format_exc().splitlines():
                     log_output(f"  {line}")

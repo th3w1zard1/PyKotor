@@ -3,7 +3,7 @@ from __future__ import annotations
 import zipfile
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from loggerplus import RobustLogger
 from qtpy.QtCore import Qt
@@ -13,7 +13,6 @@ from toolset.config import get_remote_toolset_update_info, is_remote_version_new
 from toolset.gui.dialogs.asyncloader import AsyncLoader
 from toolset.gui.widgets.settings.installations import GlobalSettings
 from toolset.gui.windows.help_window import HelpWindow
-from utility.error_handling import universal_simplify_exception
 from utility.system.os_helper import is_frozen
 from utility.updater.github import download_github_file
 
@@ -43,7 +42,7 @@ class HelpUpdater:
                 RobustLogger().debug("No help booklet updates available, using version %s (latest version: %s)", self.help_window.help_content.version, new_version)
                 return
         except Exception as e:  # noqa: BLE001
-            error_msg = str(universal_simplify_exception(e)).replace("\n", "<br>")
+            error_msg = str((e.__class__.__name__, str(e))).replace("\n", "<br>")
             from toolset.gui.common.localization import translate as tr
             err_msg_box = QMessageBox(
                 QMessageBox.Icon.Information,

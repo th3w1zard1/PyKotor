@@ -86,7 +86,7 @@ def on_app_crash(
         last_seen = exception_timestamps.get(exc_fingerprint, 0)
         cooldown_period = 5.0  # seconds
 
-        # Maximum number of dialogs to show (prevent memory exhaustion)
+        # Maximum number of dialogs to show (prevent infinite loops/memory exhaustion)
         max_dialogs = 3
 
         # Skip if:

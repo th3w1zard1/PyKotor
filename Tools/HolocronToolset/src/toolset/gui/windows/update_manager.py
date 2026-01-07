@@ -15,7 +15,6 @@ from qtpy.QtWidgets import QApplication, QMessageBox
 from toolset.config import CURRENT_VERSION, get_remote_toolset_update_info, is_remote_version_newer
 from toolset.gui.dialogs.select_update import ProgressDialog, UpdateDialog, run_progress_dialog
 from toolset.gui.widgets.settings.installations import GlobalSettings
-from utility.error_handling import universal_simplify_exception
 from utility.misc import ProcessorArchitecture
 from utility.updater.update import AppUpdate
 
@@ -117,7 +116,7 @@ class UpdateManager:
         if isinstance(self.master_info, Exception):
             RobustLogger().exception("Failed to fetch master update info")
             if not self.silent:
-                etype, msg = universal_simplify_exception(self.master_info)
+                etype, msg = self.master_info.__class__.__name__, str(self.master_info)
                 QMessageBox(
                     QMessageBox.Icon.Information,
                     f"Unable to fetch latest version ({etype})",
@@ -130,7 +129,7 @@ class UpdateManager:
             print("Edge info is an exception")
             RobustLogger().exception("Failed to fetch edge update info")
             if not self.silent:
-                etype, msg = universal_simplify_exception(self.edge_info)
+                etype, msg = self.edge_info.__class__.__name__, str(self.edge_info)
                 QMessageBox(
                     QMessageBox.Icon.Information,
                     f"Unable to fetch latest version ({etype})",

@@ -8,10 +8,12 @@ from __future__ import annotations
 
 import logging
 import sys
+
 from argparse import Namespace
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from pykotor.cli.indoor_builder import determine_game_from_installation, parse_game_argument
 from pykotor.common.indoormap import IndoorMap
 from pykotor.common.modulekit import ModuleKitManager
 from pykotor.extract.installation import Installation
@@ -23,9 +25,6 @@ from pykotor.tools.indoormap import (
     extract_indoor_from_module_name,
 )
 from pykotor.tools.path import CaseAwarePath
-from utility.error_handling import universal_simplify_exception
-
-from pykotor.cli.indoor_builder import determine_game_from_installation, parse_game_argument
 
 if TYPE_CHECKING:
     from loggerplus import RobustLogger
@@ -75,10 +74,7 @@ def _resolve_context(args: Namespace, logger: RobustLogger):
             injected_installation = None
         else:
             if injected_root != cli_root:
-                msg = (
-                    "Injected Installation root does not match --installation: "
-                    f"{injected_installation.path()} != {installation_path}"
-                )
+                msg = f"Injected Installation root does not match --installation: {injected_installation.path()} != {installation_path}"
                 raise ValueError(msg)
 
     installation = injected_installation or Installation(CaseAwarePath(installation_path))
@@ -191,7 +187,7 @@ def cmd_indoor_build(args: Namespace, logger: RobustLogger) -> int:  # noqa: PLR
             indoor.build(installation, kits, output_path, game_override=game, loadscreen_path=args.loading_screen)
 
     except Exception as exc:
-        error_name, msg = universal_simplify_exception(exc)
+        error_name, msg = (exc.__class__.__name__, str(exc))
         logger.exception("Indoor map build failed: %s: %s", error_name, msg)
         print(f"[Error] {error_name}: {msg}", file=sys.stderr)  # noqa: T201
         return 1
@@ -326,7 +322,7 @@ def cmd_indoor_extract(args: Namespace, logger: RobustLogger) -> int:  # noqa: P
         )
         output_path.write_bytes(indoor.write())
     except Exception as exc:
-        error_name, msg = universal_simplify_exception(exc)
+        error_name, msg = (exc.__class__.__name__, str(exc))
         logger.exception("Indoor map extraction failed: %s: %s", error_name, msg)
         print(f"[Error] {error_name}: {msg}", file=sys.stderr)  # noqa: T201
         return 1

@@ -55,7 +55,7 @@ class ComparableMixin:
     def compare(
         self,
         other: object,
-        log_func: Callable[[str], Any] = print,
+        log_func: Callable[..., Any] = print,
         path: pathlib.PurePath | str | None = None,
     ) -> bool:  # noqa: D401
         """Dynamically compare this object to another of the same type.
@@ -67,7 +67,9 @@ class ComparableMixin:
             log_func = self._prefixed_logger(log_func, prefix)
 
         if not isinstance(other, self.__class__):
-            log_func(f"Type mismatch: '{self.__class__.__name__}' vs '{other.__class__.__name__ if isinstance(other, object) else type(other)}'")
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(f"Type mismatch: '{self.__class__.__name__}' vs '{other.__class__.__name__ if isinstance(other, object) else type(other)}'")
             return False
 
         is_same: bool = True
@@ -82,7 +84,7 @@ class ComparableMixin:
                 old_value = getattr(self, field_name)
                 new_value = getattr(other, field_name)
             except AttributeError:
-                log_func(f"Missing attribute '{field_name}' on one of the objects")
+                logger.info(f"Missing attribute '{field_name}' on one of the objects")
                 is_same = False
                 continue
 
@@ -96,7 +98,7 @@ class ComparableMixin:
                 old_set_raw = getattr(self, set_name)
                 new_set_raw = getattr(other, set_name)
             except AttributeError as e:
-                log_func(f"Missing set attribute '{set_name}' on one of the objects: {e.__class__.__name__}: {e}")
+                logger.info(f"Missing set attribute '{set_name}' on one of the objects: {e.__class__.__name__}: {e}")
                 is_same = False
                 continue
 
@@ -104,7 +106,7 @@ class ComparableMixin:
                 old_set = set(old_set_raw)
                 new_set = set(new_set_raw)
             except Exception as e:  # noqa: BLE001
-                log_func(f"Error converting set '{set_name}' to set: {e.__class__.__name__}: {e}")
+                logger.info(f"Error converting set '{set_name}' to set: {e.__class__.__name__}: {e}")
                 # Fallback to direct value compare if not set-like
                 if not self._compare_values(set_name, old_set_raw, new_set_raw, log_func):
                     is_same = False
@@ -116,13 +118,17 @@ class ComparableMixin:
             missing_items = old_set - new_set
             extra_items = new_set - old_set
             if missing_items:
-                log_func(f"Set '{set_name}' missing items in new: {len(missing_items)}")
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.info(f"Set '{set_name}' missing items in new: {len(missing_items)}")
                 for item in missing_items:
-                    log_func(format_text(item))
+                    logger.info(format_text(item))
             if extra_items:
-                log_func(f"Set '{set_name}' has extra items in new: {len(extra_items)}")
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.info(f"Set '{set_name}' has extra items in new: {len(extra_items)}")
                 for item in extra_items:
-                    log_func(format_text(item))
+                    logger.info(format_text(item))
             is_same = False
 
         # Compare sequence fields (ordered)
@@ -132,12 +138,14 @@ class ComparableMixin:
                 old_seq: Sequence[Any] = getattr(self, seq_name)
                 new_seq: Sequence[Any] = getattr(other, seq_name)
             except AttributeError:
-                log_func(f"Missing sequence attribute '{seq_name}' on one of the objects")
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.info(f"Missing sequence attribute '{seq_name}' on one of the objects")
                 is_same = False
                 continue
 
             if len(old_seq) != len(new_seq):
-                log_func(f"List '{seq_name}' length mismatch. Old: {len(old_seq)}, New: {len(new_seq)}")
+                logger.info(f"List '{seq_name}' length mismatch. Old: {len(old_seq)}, New: {len(new_seq)}")
                 is_same = False
 
             for index, (old_item, new_item) in enumerate(
@@ -146,11 +154,11 @@ class ComparableMixin:
                 if old_item is None and new_item is None:
                     continue
                 if old_item is None:
-                    log_func(f"New-only item at {seq_name}[{index}]: {format_text(new_item)}")
+                    logger.info(f"New-only item at {seq_name}[{index}]: {format_text(new_item)}")
                     is_same = False
                     continue
                 if new_item is None:
-                    log_func(f"Old-only item at {seq_name}[{index}]: {format_text(old_item)}")
+                    logger.info(f"Old-only item at {seq_name}[{index}]: {format_text(old_item)}")
                     is_same = False
                     continue
 
@@ -185,10 +193,12 @@ class ComparableMixin:
         if self._values_equal(old_item, new_item):
             return True
 
-        log_func(f"Mismatch at {seq_name}[{index}]")
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"Mismatch at {seq_name}[{index}]")
         old_fmt, new_fmt = compare_and_format(old_item, new_item)
-        log_func(format_text(old_fmt))
-        log_func(format_text(new_fmt))
+        logger.info(format_text(old_fmt))
+        logger.info(format_text(new_fmt))
         return False
 
     def _compare_values(
@@ -207,10 +217,12 @@ class ComparableMixin:
         if self._values_equal(old_value, new_value):
             return True
 
-        log_func(f"Field '{name}' mismatch")
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(f"Field '{name}' mismatch")
         old_fmt, new_fmt = compare_and_format(old_value, new_value)
-        log_func(format_text(old_fmt))
-        log_func(format_text(new_fmt))
+        logger.info(format_text(old_fmt))
+        logger.info(format_text(new_fmt))
         return False
 
     @classmethod

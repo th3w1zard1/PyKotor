@@ -291,7 +291,7 @@ class AsyncLoader(QDialog, Generic[T]):
         if self.error_title:
             error_msgs = ""
             for i, e in enumerate(self.errors):
-                this_err_msg = str(universal_simplify_exception(e)).replace("\n", "<br>")
+                this_err_msg = str((e.__class__.__name__, str(e))).replace("\n", "<br>")
                 error_msgs += f"<br>Error in task {i + 1}: {this_err_msg}"
             error_msgs += " " * 700 + "<br>" * 2
             msg_box = QMessageBox(QMessageBox.Icon.Critical, self.error_title + " " * 700, error_msgs)

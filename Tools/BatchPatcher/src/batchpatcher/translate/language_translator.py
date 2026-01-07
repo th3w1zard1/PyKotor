@@ -402,6 +402,9 @@ class Translator:
         self.domain: str = "news"
         self.server_url: str | None = None
         self.use_free_api: bool = False
+        # Additional attributes used by various translation services
+        self.client_id: str | None = None
+        self.secret_key: str | None = None
 
     def initialize(self):
         """Initializes the translator.

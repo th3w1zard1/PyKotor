@@ -3,6 +3,7 @@
 This module provides the KotorDiff GUI, using the ThemedApp base class
 for a dark/orange themed interface similar to the Holocron Toolset.
 """
+
 from __future__ import annotations
 
 import os
@@ -42,7 +43,6 @@ from pykotor.tslpatcher.logger import LogType  # noqa: E402
 from utility.tkinter.base_app import ThemedApp  # noqa: E402
 
 if TYPE_CHECKING:
-
     from pykotor.tslpatcher.logger import PatchLog
 
 from pykotor.cli.version import VERSION as pykotor_version  # noqa: E402
@@ -296,11 +296,7 @@ class KotorDiffApp(ThemedApp):
 
     def _get_installation_paths(self) -> list[str]:
         """Get list of KOTOR installation paths."""
-        return [
-            str(path)
-            for game in find_kotor_paths_from_default().values()
-            for path in game
-        ]
+        return [str(path) for game in find_kotor_paths_from_default().values() for path in game]
 
     def _update_path1_state(self):
         """Update path1 combobox based on radio selection."""
@@ -467,6 +463,7 @@ class KotorDiffApp(ThemedApp):
 
     def write_log(self, log: PatchLog):
         """Write a log message to the UI."""
+
         def log_to_tag(this_log: PatchLog) -> str:
             if this_log.log_type == LogType.NOTE:
                 return "INFO"
@@ -475,4 +472,3 @@ class KotorDiffApp(ThemedApp):
             return this_log.log_type.name
 
         self._log_to_ui(log.formatted_message, log_to_tag(log))
-

@@ -21,7 +21,6 @@ from loggerplus import RobustLogger
 
 from pykotor.resource.formats.twoda import bytes_2da, read_2da
 from pykotor.tslpatcher.mods.template import PatcherModifications
-from utility.error_handling import universal_simplify_exception
 
 if TYPE_CHECKING:
     from typing_extensions import Literal  # pyright: ignore[reportMissingModuleSource]
@@ -683,7 +682,7 @@ class Modifications2DA(PatcherModifications):
             try:
                 row.apply(mutable_data, memory)
             except Exception as e:  # noqa: PERF203, BLE001
-                msg = f"{universal_simplify_exception(e)} when patching the file '{self.saveas}'"
+                msg = f"{(e.__class__.__name__, str(e))} when patching the file '{self.saveas}'"
                 RobustLogger().critical(str(e), exc_info=e)
                 if isinstance(e, WarningError):
                     logger.add_warning(msg)

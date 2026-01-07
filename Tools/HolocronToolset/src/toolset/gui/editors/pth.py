@@ -6,9 +6,10 @@ from contextlib import suppress
 from typing import TYPE_CHECKING, Any
 
 from qtpy.QtCore import Qt
-from qtpy.QtGui import QColor
+from qtpy.QtGui import QColor, QKeySequence
 from qtpy.QtWidgets import QApplication, QHBoxLayout, QLabel, QMenu, QMessageBox, QWidget
 
+from loggerplus import RobustLogger
 from pykotor.common.misc import Color
 from pykotor.extract.installation import SearchLocation
 from pykotor.resource.formats.bwm import read_bwm
@@ -20,7 +21,6 @@ from toolset.gui.editor import Editor
 from toolset.gui.widgets.settings.editor_settings.git import GITSettings
 from toolset.gui.widgets.settings.widgets.module_designer import ModuleDesignerSettings
 from utility.common.geometry import SurfaceMaterial, Vector2
-from utility.error_handling import universal_simplify_exception
 
 if TYPE_CHECKING:
     import os
@@ -29,7 +29,11 @@ if TYPE_CHECKING:
 
     from qtpy.QtCore import QPoint
     from qtpy.QtGui import QKeyEvent, QMouseEvent
-    from qtpy.QtWidgets import QStatusBar
+    from qtpy.QtWidgets import (
+        QAction,  # pyright: ignore[reportPrivateImportUsage]
+        QClipboard,
+        QStatusBar,
+    )
 
     from pykotor.extract.file import ResourceIdentifier, ResourceResult
     from pykotor.resource.formats.bwm.bwm_data import BWM
@@ -92,7 +96,7 @@ def status_bar_decorator(func: Callable[..., Any]) -> Callable[..., Any]:
             return func(self, *args, **kwargs)
         except Exception as e:
             traceback.print_exc()
-            error_message = str(universal_simplify_exception(e))
+            error_message = str((e.__class__.__name__, str(e)))
             editor.status_out.update_status_bar(stderr=error_message)  # Update the status bar with the error
             raise  # Re-raise the exception after logging it to the status bar
 
@@ -129,14 +133,16 @@ class PTHEditor(Editor):
         self.status_out: CustomStdout = CustomStdout(self)
 
         from toolset.uic.qtpy.editors.pth import Ui_MainWindow
+
         self.ui: Ui_MainWindow = Ui_MainWindow()
         self.ui.setupUi(self)
-        
+
         # Setup event filter to prevent scroll wheel interaction with controls
         from toolset.gui.common.filters import NoScrollEventFilter
+
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
-        
+
         self._setup_menus()
         self._add_help_action()
         self._setup_signals()
@@ -269,7 +275,12 @@ class PTHEditor(Editor):
         else:
             from toolset.gui.common.localization import translate as tr, trf
             from toolset.gui.helpers.callback import BetterMessageBox
-            BetterMessageBox(tr("Layout not found"), trf("PTHEditor requires {resref}.lyt in order to load '{resref}.{restype}', but it could not be found.", resref=str(resref), restype=str(restype)), icon=QMessageBox.Icon.Critical).exec()
+
+            BetterMessageBox(
+                tr("Layout not found"),
+                trf("PTHEditor requires {resref}.lyt in order to load '{resref}.{restype}', but it could not be found.", resref=str(resref), restype=str(restype)),
+                icon=QMessageBox.Icon.Critical,  # pyright: ignore[reportArgumentType]
+            ).exec()
 
         pth: PTH = read_pth(data)
         self._loadPTH(pth)
@@ -387,33 +398,33 @@ class PTHEditor(Editor):
 
     @status_bar_decorator
     def on_mouse_scrolled(self, delta: Vector2, buttons: set[int], keys: set[int]):
-        #print(f"on_mouse_scrolled(delta={delta!r})", file=self.stdout)
+        # print(f"on_mouse_scrolled(delta={delta!r})", file=self.stdout)
         self._controls.on_mouse_scrolled(delta, buttons, keys)
 
     def on_mouse_pressed(self, screen: Vector2, buttons: set[int], keys: set[int]):
-        #print(f"on_mouse_pressed(screen={screen!r})", file=self.stdout)
+        # print(f"on_mouse_pressed(screen={screen!r})", file=self.stdout)
         self._controls.on_mouse_pressed(screen, buttons, keys)
 
     @status_bar_decorator
     def on_mouse_released(self, screen: Vector2, buttons: set[int], keys: set[int]):
-        #print("on_mouse_released", file=self.stdout)
+        # print("on_mouse_released", file=self.stdout)
         self._controls.on_mouse_released(Vector2(0, 0), buttons, keys)
 
     @status_bar_decorator
     def on_key_pressed(self, buttons: set[int], keys: set[int]):
-        #print("on_key_pressed", file=self.stdout)
+        # print("on_key_pressed", file=self.stdout)
         self._controls.on_keyboard_pressed(buttons, keys)
 
     @status_bar_decorator
     def keyPressEvent(self, e: QKeyEvent):
-        #print(f"keyPressEvent(e={e!r})", file=self.stdout)
+        # print(f"keyPressEvent(e={e!r})", file=self.stdout)
         if e is None:
             return
         self.ui.renderArea.keyPressEvent(e)
 
     @status_bar_decorator
     def keyReleaseEvent(self, e: QKeyEvent):
-        #print(f"keyReleaseEvent(e={e!r})", file=self.stdout)
+        # print(f"keyReleaseEvent(e={e!r})", file=self.stdout)
         if e is None:
             return
         self.ui.renderArea.keyReleaseEvent(e)
@@ -424,7 +435,7 @@ class PTHEditor(Editor):
 def calculate_zoom_strength(delta_y: float, sensSetting: int) -> float:
     m = 0.00202
     b = 1
-    factor_in = (m * sensSetting + b)
+    factor_in = m * sensSetting + b
     return 1 / abs(factor_in) if delta_y < 0 else abs(factor_in)
 
 
@@ -445,11 +456,19 @@ class PTHControlScheme:
                 return  # sometimes it'll be zero when holding middlemouse-down.
             sensSetting = ModuleDesignerSettings().zoomCameraSensitivity2d
             zoom_factor = calculate_zoom_strength(delta.y, sensSetting)
-            #RobustLogger.debug(f"on_mouse_scrolled zoom_camera (delta.y={delta.y}, zoom_factor={zoom_factor}, sensSetting={sensSetting}))")
+            # RobustLogger.debug(f"on_mouse_scrolled zoom_camera (delta.y={delta.y}, zoom_factor={zoom_factor}, sensSetting={sensSetting}))")
             self.editor.zoom_camera(zoom_factor)
 
     @status_bar_decorator
-    def on_mouse_moved(self, screen: Vector2, screenDelta: Vector2, world: Vector2, world_delta: Vector2, buttons: set[int], keys: set[int]):
+    def on_mouse_moved(
+        self,
+        screen: Vector2,
+        screenDelta: Vector2,
+        world: Vector2,
+        world_delta: Vector2,
+        buttons: set[Qt.MouseButton] | set[Qt.MouseButton] | set[int] | set[Qt.MouseButton | int],
+        keys: set[Qt.Key] | set[QKeySequence] | set[int] | set[Qt.Key | QKeySequence | int],
+    ):
         self.editor.status_out.mouse_pos = screen
         shouldPanCamera = self.pan_camera.satisfied(buttons, keys)
         shouldrotate_camera = self.rotate_camera.satisfied(buttons, keys)
@@ -457,44 +476,75 @@ class PTHControlScheme:
             self.editor.ui.renderArea.do_cursor_lock(screen)
         if shouldPanCamera:
             moveSens = ModuleDesignerSettings().moveCameraSensitivity2d / 100
-            #RobustLogger.debug(f"on_mouse_scrolled move_camera (delta.y={screenDelta.y}, sensSetting={moveSens}))")
+            # RobustLogger.debug(f"on_mouse_scrolled move_camera (delta.y={screenDelta.y}, sensSetting={moveSens}))")
             self.editor.move_camera(-world_delta.x * moveSens, -world_delta.y * moveSens)
         if shouldrotate_camera:
             delta_magnitude = abs(screenDelta.x)
             direction = -1 if screenDelta.x < 0 else 1 if screenDelta.x > 0 else 0
             rotateSens = ModuleDesignerSettings().rotateCameraSensitivity2d / 1000
             rotateAmount = delta_magnitude * rotateSens * direction
-            #RobustLogger.debug(f"on_mouse_scrolled rotate_camera (delta_value={delta_magnitude}, rotateAmount={rotateAmount}, sensSetting={rotateSens}))")
+            # RobustLogger.debug(f"on_mouse_scrolled rotate_camera (delta_value={delta_magnitude}, rotateAmount={rotateAmount}, sensSetting={rotateSens}))")
             self.editor.rotate_camera(rotateAmount)
         if self.move_selected.satisfied(buttons, keys):
             self.editor.move_selected(world.x, world.y)
 
     @status_bar_decorator
-    def on_mouse_pressed(self, screen: Vector2, buttons: set[Qt.MouseButton], keys: set[Qt.Key]):
+    def on_mouse_pressed(
+        self,
+        screen: Vector2,
+        buttons: set[Qt.MouseButton] | set[Qt.MouseButton] | set[int] | set[Qt.MouseButton | int],
+        keys: set[Qt.Key] | set[QKeySequence] | set[int] | set[Qt.Key | QKeySequence | int],
+    ):
         if self.select_underneath.satisfied(buttons, keys):
             self.editor.select_node_under_mouse()
 
     @status_bar_decorator
-    def on_mouse_released(self, screen: Vector2, buttons: set[Qt.MouseButton], keys: set[Qt.Key]): ...
+    def on_mouse_released(
+        self,
+        screen: Vector2,
+        buttons: set[Qt.MouseButton] | set[Qt.MouseButton] | set[int] | set[Qt.MouseButton | int],
+        keys: set[Qt.Key] | set[QKeySequence] | set[int] | set[Qt.Key | QKeySequence | int],
+    ):
+        pass
 
     @status_bar_decorator
-    def on_keyboard_pressed(self, buttons: set[Qt.Key], keys: set[Qt.Key]):
+    def on_keyboard_pressed(
+        self,
+        buttons: set[Qt.MouseButton] | set[Qt.MouseButton] | set[int] | set[Qt.MouseButton | int],
+        keys: set[Qt.Key] | set[QKeySequence] | set[int] | set[Qt.Key | QKeySequence | int],
+    ):
         if self.delete_selected.satisfied(buttons, keys):
             node = None
             try:
                 node = self.editor.pth().find(self.editor.points_under_mouse()[0])
+                if node is None:
+                    RobustLogger().debug("No node found to delete")
+                    return
+                self.editor.remove_node(node)
             except Exception:
-                with suppress(Exception):
+                try:
                     node = self.editor.pth().find(self.editor.selected_nodes()[0])
+                except Exception:
+                    RobustLogger().debug("No node found to delete", exc_info=True)
             if node is None:
                 return
             self.editor.remove_node(node)
 
     @status_bar_decorator
-    def onKeyboardReleased(self, buttons: set[Qt.Key], keys: set[Qt.Key]): ...
+    def onKeyboardReleased(
+        self,
+        buttons: set[Qt.MouseButton] | set[Qt.MouseButton] | set[int] | set[Qt.MouseButton | int],
+        keys: set[Qt.Key] | set[QKeySequence] | set[int] | set[Qt.Key | QKeySequence | int],
+    ):
+        pass
 
     @status_bar_decorator
-    def on_render_context_menu(self, world: Vector2, screen: QPoint):
+    def on_render_context_menu(
+        self,
+        world: Vector2,
+        screen: QPoint,
+    ):
+        """Handle the context menu for the render area."""
         points_under_mouse: list[Vector2] = self.editor.points_under_mouse()
         selected_nodes: list[Vector2] = self.editor.selected_nodes()
 
@@ -521,16 +571,51 @@ class PTHControlScheme:
 
         menu = QMenu(self.editor)
         from toolset.gui.common.localization import translate as tr
-        menu.addAction(tr("Add Node")).triggered.connect(lambda _=None: self.editor.addNode(world.x, world.y))
-        menu.addAction(tr("Copy XY coords")).triggered.connect(lambda: QApplication.clipboard().setText(str(self.editor.status_out.mouse_pos)))  # pyright: ignore[reportOptionalMemberAccess]
+
+        add_node_action: QAction | None = menu.addAction(tr("Add Node"))
+        assert add_node_action is not None, "add_node_action is None"
+
+        def add_node():
+            self.editor.addNode(world.x, world.y)
+
+        add_node_action.triggered.connect(add_node)
+
+        copy_xy_coords_action: QAction | None = menu.addAction(tr("Copy XY coords"))
+        assert copy_xy_coords_action is not None, "copy_xy_coords_action is None"
+
+        def copy_xy_coords():
+            clipboard: QClipboard | None = QApplication.clipboard()
+            assert clipboard is not None, "clipboard is None"
+            clipboard.setText(str(self.editor.status_out.mouse_pos))
+
+        copy_xy_coords_action.triggered.connect(copy_xy_coords)
+
         if under_mouse_index is not None:
-            menu.addAction(tr("Remove Node")).triggered.connect(lambda _=None: self.editor.remove_node(under_mouse_index))
+            remove_node_action: QAction | None = menu.addAction(tr("Remove Node"))
+            assert remove_node_action is not None, "remove_node_action is None"
+
+            def remove_node():
+                self.editor.remove_node(under_mouse_index)
+
+            remove_node_action.triggered.connect(remove_node)
 
         menu.addSeparator()
 
         if under_mouse_index is not None and selected_index is not None:
-            menu.addAction("Add Edge").triggered.connect(lambda _=None: self.editor.addEdge(selected_index, under_mouse_index))
-            menu.addAction("Remove Edge").triggered.connect(lambda _=None: self.editor.removeEdge(selected_index, under_mouse_index))
+            add_edge_action: QAction | None = menu.addAction("Add Edge")
+            assert add_edge_action is not None, "add_edge_action is None"
+
+            def add_edge():
+                self.editor.addEdge(selected_index, under_mouse_index)
+
+            add_edge_action.triggered.connect(add_edge)
+            remove_edge_action: QAction | None = menu.addAction("Remove Edge")
+            assert remove_edge_action is not None, "remove_edge_action is None"
+
+            def remove_edge():
+                self.editor.removeEdge(selected_index, under_mouse_index)
+
+            remove_edge_action.triggered.connect(remove_edge)
 
         menu.popup(screen)
 
@@ -540,45 +625,39 @@ class PTHControlScheme:
         return ControlItem(self.settings.moveCameraBind)
 
     @pan_camera.setter
-    def pan_camera(self, value):
-        ...
+    def pan_camera(self, value): ...
 
     @property
     def rotate_camera(self) -> ControlItem:
         return ControlItem(self.settings.rotateCameraBind)
 
     @rotate_camera.setter
-    def rotate_camera(self, value):
-        ...
+    def rotate_camera(self, value): ...
 
     @property
     def zoom_camera(self) -> ControlItem:
         return ControlItem(self.settings.zoomCameraBind)
 
     @zoom_camera.setter
-    def zoom_camera(self, value):
-        ...
+    def zoom_camera(self, value): ...
 
     @property
     def move_selected(self) -> ControlItem:
         return ControlItem(self.settings.moveSelectedBind)
 
     @move_selected.setter
-    def move_selected(self, value):
-        ...
+    def move_selected(self, value): ...
 
     @property
     def select_underneath(self) -> ControlItem:
         return ControlItem(self.settings.selectUnderneathBind)
 
     @select_underneath.setter
-    def select_underneath(self, value):
-        ...
+    def select_underneath(self, value): ...
 
     @property
     def delete_selected(self) -> ControlItem:
         return ControlItem(self.settings.deleteSelectedBind)
 
     @delete_selected.setter
-    def delete_selected(self, value):
-        ...
+    def delete_selected(self, value): ...

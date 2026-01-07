@@ -1124,8 +1124,16 @@ class AxisAngle:
         axis: Vector3 | None = None,
         angle: float | None = None,
     ):
-        self.axis: Vector3 = axis if axis is not None else Vector3.from_null()
-        self.angle: float = angle if angle is not None else 0.0
+        self.axis: Vector3 = (
+            axis
+            if axis is not None
+            else Vector3()
+        )
+        self.angle: float = (
+            angle
+            if angle is not None
+            else 0.0
+        )
 
     @classmethod
     def from_quaternion(
@@ -1212,19 +1220,19 @@ class SurfaceMaterial(IntEnum):
     def walkable(self) -> bool:
         """Returns True if the surface material is walkable, False otherwise."""
         return self in {
-            SurfaceMaterial.DIRT,
-            SurfaceMaterial.GRASS,
-            SurfaceMaterial.STONE,
-            SurfaceMaterial.WOOD,
-            SurfaceMaterial.WATER,
             SurfaceMaterial.CARPET,
-            SurfaceMaterial.METAL,
-            SurfaceMaterial.PUDDLES,
-            SurfaceMaterial.SWAMP,
-            SurfaceMaterial.MUD,
-            SurfaceMaterial.LEAVES,
+            SurfaceMaterial.DIRT,
             SurfaceMaterial.DOOR,
+            SurfaceMaterial.GRASS,
+            SurfaceMaterial.LEAVES,
+            SurfaceMaterial.METAL,
+            SurfaceMaterial.MUD,
+            SurfaceMaterial.PUDDLES,
+            SurfaceMaterial.STONE,
+            SurfaceMaterial.SWAMP,
             SurfaceMaterial.TRIGGER,
+            SurfaceMaterial.WATER,
+            SurfaceMaterial.WOOD,
         }
 
     def is_walkable(self) -> bool:
@@ -1245,14 +1253,14 @@ class Face:
 
     def __init__(
         self,
-        v1: Vector3,
-        v2: Vector3,
-        v3: Vector3,
+        v1: Vector3 | None = None,
+        v2: Vector3 | None = None,
+        v3: Vector3 | None = None,
         material: SurfaceMaterial = SurfaceMaterial.UNDEFINED,
     ):
-        self.v1: Vector3 = v1
-        self.v2: Vector3 = v2
-        self.v3: Vector3 = v3
+        self.v1: Vector3 = Vector3() if v1 is None else v1
+        self.v2: Vector3 = Vector3() if v2 is None else v2
+        self.v3: Vector3 = Vector3() if v3 is None else v3
         self.material: SurfaceMaterial = material
 
     def __eq__(self, other: object) -> bool:

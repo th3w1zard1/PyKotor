@@ -28,7 +28,7 @@ def safe_type_getattr(
     name: str,
 ) -> Any | object:
     try:
-        return type.__getattribute__(obj, name)
+        return type.__getattribute__(obj, name)  # pyright: ignore[reportArgumentType]
     except (AttributeError, TypeError):
         return SENTINEL
 
@@ -38,7 +38,7 @@ def safe_object_getattr(
     name: str,
 ) -> Any | object:
     try:
-        return object.__getattribute__(cls, name)
+        return object.__getattribute__(cls, name)  # pyright: ignore[reportArgumentType]
     except (AttributeError, TypeError):
         return SENTINEL
 
@@ -91,7 +91,7 @@ def safe_isinstance(
     assert isinstance(cls, type)
     obj_cls_mro: tuple[type, ...] | object = fallback_unknown_getmro(obj)
     try:
-        return cls in obj_cls_mro
+        return cls in obj_cls_mro  # pyright: ignore[reportOperatorIssue]
     except Exception:  # noqa: BLE001
         return SENTINEL
 
@@ -100,14 +100,14 @@ def safe_dir(obj_or_cls: Any) -> list[str]:  # sourcery skip: assign-if-exp, rei
     obj_or_cls_dict: dict[str, Any] | object = fallback_unknown_getattr(obj_or_cls, "__dict__")
     if obj_or_cls_dict is SENTINEL:
         return []
-    return list(obj_or_cls_dict.keys())
+    return list(obj_or_cls_dict.keys())  # pyright: ignore[reportAttributeAccessIssue]
 
 
 def inherits_type_or_object(obj: object | type) -> bool | object:
     """Determine if an object inherits from type or object without invoking custom methods."""
     cls_mro: tuple[type, ...] | object = fallback_unknown_getmro(obj)
     with contextlib.suppress(Exception):
-        return type in cls_mro or object in cls_mro
+        return type in cls_mro or object in cls_mro  # pyright: ignore[reportOperatorIssue]
     return SENTINEL
 
 
@@ -231,18 +231,14 @@ def find_importing_modules(
     importing_modules: list[ModuleType] = [  # pyright: ignore[reportAssignmentType]
         name
         for name, module in sys.modules.items()
-        if (
-            module and hasattr(module, "__file__")
-            and target_module_name in sys.modules
-            and target_module_name in module.__dict__.values()
-        )
+        if (module and hasattr(module, "__file__") and target_module_name in sys.modules and target_module_name in module.__dict__.values())
     ]
     return importing_modules
 
 
 def debug_reload_pymodules(checked: bool = False):
     """Reload all imported modules that have changed on disk and log their names and file paths.
-    
+
     Args:
     ----
         checked: Whether the action was checked (from QAction.triggered signal, ignored).
@@ -264,11 +260,11 @@ def debug_reload_pymodules(checked: bool = False):
         # Populate the class mapping using id() to avoid unhashable issues
         for attr_name in safe_dir(old_module):
             try:
-                old_class = safe_object_getattr(old_module, attr_name)
+                old_class = safe_object_getattr(old_module, attr_name)  # pyright: ignore[reportArgumentType]
                 if safe_isinstance(old_class, type):
-                    new_class = safe_object_getattr(new_module, attr_name)
+                    new_class = safe_object_getattr(new_module, attr_name)  # pyright: ignore[reportArgumentType]
                     if safe_isinstance(new_class, type):
-                        class_map[id(old_class)] = new_class
+                        class_map[id(old_class)] = new_class  # pyright: ignore[reportArgumentType]
             except AttributeError:  # noqa: S112, PERF203
                 continue
 
@@ -283,10 +279,10 @@ def debug_reload_pymodules(checked: bool = False):
                     type.__setattr__(obj, "__class__", new_class)
                 # if obj_cls.__name__ not in {"TypeVar", "PurePathType"}:
                 #    print(f"Reloaded class '{new_class.__name__}'")
-            except TypeError as e:
+            except TypeError as e:  # noqa: F841
                 ...  # print(f"Failed to update instance of type '{obj_cls.__name__}': {e}", file=sys.__stderr__)
             except Exception as e:  # noqa: BLE001
-                print(f"Unexpected error occurred while updating instance of {obj_cls.__name__}: {e}", file=sys.__stderr__)
+                print(f"Unexpected error occurred while updating instance of {obj_cls.__name__}: {e}", file=sys.__stderr__)  # pyright: ignore[reportAttributeAccessIssue]
 
         # Track visited objects to avoid infinite recursion
         visited = set()
@@ -396,7 +392,7 @@ def debug_reload_pymodules(checked: bool = False):
                 if reloaded_module is not None:
                     importing_modules = find_importing_modules(name)
                     for importing_module_name in importing_modules:
-                        importing_module = sys.modules[importing_module_name]
+                        importing_module = sys.modules[importing_module_name]  # pyright: ignore[reportArgumentType]
                         reimport_dependencies(reloaded_module, importing_module)
                         loaded_module.__dict__.update(reloaded_module.__dict__)
                 if logic_to_use == -1:
@@ -406,7 +402,7 @@ def debug_reload_pymodules(checked: bool = False):
                         old_attribute = getattr(loaded_module, attribute_name)
                         if isinstance(old_attribute, type) and old_attribute not in BUILTIN_TYPES:  # check if it's a class and not a builtin type
                             new_attribute = getattr(reloaded_module, attribute_name)
-                            quick_update_class_instances(old_attribute, new_attribute)
+                            quick_update_class_instances(old_attribute, new_attribute)  # pyright: ignore[reportArgumentType]
             else:
                 reloaded_module = importlib.reload(loaded_module)
                 safe_object_setattr(reloaded_module, "__mtime__", last_file_modified_time)
@@ -414,9 +410,9 @@ def debug_reload_pymodules(checked: bool = False):
                     old_attribute = getattr(loaded_module, attribute_name)
                     if isinstance(old_attribute, type) and old_attribute not in BUILTIN_TYPES:  # check if it's a class and not a builtin type
                         new_attribute = getattr(reloaded_module, attribute_name)
-                        quick_update_class_instances(old_attribute, new_attribute)
+                        quick_update_class_instances(old_attribute, new_attribute)  # pyright: ignore[reportArgumentType]
             sys.modules[name] = reloaded_module
-        except TypeError as e:
+        except TypeError as e:  # noqa: F841
             ...
         except NotImplementedError:
             RobustLogger().warning(f"Cannot reload built-in module: {name}, falling back to alternative method!!")
@@ -424,7 +420,7 @@ def debug_reload_pymodules(checked: bool = False):
             try:
                 with Path(file_path).open("r") as f:
                     exec(f.read(), loaded_module.__dict__)
-                    RobustLogger.debug(f"Manually reloaded '{name}' from '{file_path}'.")
+                    RobustLogger().debug(f"Manually reloaded '{name}' from '{file_path}'.")
             except Exception as e:  # noqa: BLE001
                 RobustLogger().exception(f"Failed to manually reload '{name}' from '{file_path}': {e}")
         except ModuleNotFoundError as e:

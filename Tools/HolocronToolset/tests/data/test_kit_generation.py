@@ -12,6 +12,8 @@ import unittest
 from difflib import unified_diff
 from pathlib import Path
 
+import pytest
+
 # Force offscreen (headless) mode for Qt
 # This ensures tests don't fail if no display is available (e.g. CI/CD)
 # Must be set before any Qt imports

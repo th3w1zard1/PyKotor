@@ -162,7 +162,7 @@ class ERFEditor(Editor):
         sort_state: int = self._proxy_model.sort_states.get(column, 0)
         header: QHeaderView | None = self.ui.tableView.horizontalHeader()
         if header is None:
-            RobustLogger().warning("ERFEditor: horizontalHeader was None in update_sort_indicator()")
+            RobustLogger().warning(trf("ERFEditor: horizontalHeader was None in update_sort_indicator()"))
             return
         if sort_state == 0:
             header.setSortIndicator(-1, Qt.SortOrder.AscendingOrder)
@@ -188,7 +188,7 @@ class ERFEditor(Editor):
     def prompt_confirm(self) -> bool:
         result = QMessageBox.question(
             None,
-            "Changes detected.",
+            tr("Changes detected."),
             tr("The action you attempted would discard your changes. Continue?"),
             buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             defaultButton=QMessageBox.StandardButton.No,
@@ -244,13 +244,17 @@ class ERFEditor(Editor):
                 self.source_model.appendRow([resref_item, restype_item, size_item, offset_item])
 
         else:
-            from toolset.gui.common.localization import translate as tr
             QMessageBox(
                 QMessageBox.Icon.Critical,
                 tr("Unable to load file"),
                 tr("The file specified is not a MOD/ERF type file."),
                 parent=self,
-                flags=Qt.WindowType.Dialog | Qt.WindowType.Window | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.WindowSystemMenuHint,
+                flags=(
+                    Qt.WindowType.Dialog
+                    | Qt.WindowType.Window
+                    | Qt.WindowType.WindowStaysOnTopHint
+                    | Qt.WindowType.WindowSystemMenuHint
+                ),
             ).show()
 
     def build(self) -> tuple[bytes, bytes]:
@@ -263,7 +267,7 @@ class ERFEditor(Editor):
                 source_index: QModelIndex = self._proxy_model.mapToSource(self._proxy_model.index(i, 0))
                 item: QStandardItem | None = self.source_model.itemFromIndex(source_index)
                 if item is None:
-                    RobustLogger().warning("ERFEditor: item was None in build() at index %s", source_index)
+                    RobustLogger().warning(trf("ERFEditor: item was None in build() at index {source_index}", source_index=source_index))
                     continue
                 resource = item.data()
                 assert isinstance(resource, RIMResource), "Resource '{resource.resref}' is not a valid RIM resource type"
@@ -278,7 +282,7 @@ class ERFEditor(Editor):
                 source_index: QModelIndex = self._proxy_model.mapToSource(self._proxy_model.index(i, 0))
                 item = self.source_model.itemFromIndex(source_index)
                 if item is None:
-                    RobustLogger().warning("ERFEditor: item was None in build() at index %s", source_index)
+                    RobustLogger().warning(trf("ERFEditor: item was None in build() at index {source_index}", source_index=source_index))
                     continue
                 resource = item.data()
                 assert isinstance(resource, ERFResource), "Resource '{resource.resref}' is not a valid ERF resource type"
@@ -291,7 +295,7 @@ class ERFEditor(Editor):
                 source_index = self._proxy_model.mapToSource(self._proxy_model.index(i, 0))
                 item = self.source_model.itemFromIndex(source_index)
                 if item is None:
-                    RobustLogger().warning("ERFEditor: item was None in build() at index %s", source_index)
+                    RobustLogger().warning(trf("ERFEditor: item was None in build() at index {source_index}", source_index=source_index))
                     continue
                 resource = item.data()
                 assert isinstance(resource, BIFResource), "Resource '{resource.resref}' is not a valid BIF resource type"
@@ -448,7 +452,7 @@ class ERFEditor(Editor):
             QMessageBox.warning(
                 self,
                 tr("Invalid ResRef"),
-                tr("ResRefs must adhere to SBCS encoding standards (typically cp1252) and be a maximum of 16 characters."),
+                tr("ResRefs must adhere to SBCS encoding standards (typically cp1252/windows-1252/ansi) and be a maximum of 16 characters."),
             )
         return "", False
 
@@ -722,8 +726,8 @@ class ERFEditorTable(RobustTableView):
         if mime_data.hasUrls():
             event.setDropAction(Qt.DropAction.CopyAction)
             event.accept()
-            filter_model: ERFSortFilterProxyModel = cast("ERFSortFilterProxyModel", self.model())
-            source_model: QStandardItemModel = cast("QStandardItemModel", filter_model.sourceModel())
+            filter_model: ERFSortFilterProxyModel = cast(ERFSortFilterProxyModel, self.model())
+            source_model: QStandardItemModel = cast(QStandardItemModel, filter_model.sourceModel())
             existing_items: set[str] = {
                 f"{source_model.index(row, 0).data()}.{source_model.index(row, 1).data()}".strip().lower()
                 for row in range(source_model.rowCount())
@@ -834,8 +838,8 @@ class ERFEditorTable(RobustTableView):
             return
 
         urls: list[QUrl] = []
-        filter_model: ERFSortFilterProxyModel = cast("ERFSortFilterProxyModel", self.model())
-        source_model: QStandardItemModel = cast("QStandardItemModel", filter_model.sourceModel())
+        filter_model: ERFSortFilterProxyModel = cast(ERFSortFilterProxyModel, self.model())
+        source_model: QStandardItemModel = cast(QStandardItemModel, filter_model.sourceModel())
         for index in (index for index in self.selectedIndexes() if not index.column()):
             resource: ERFResource = source_model.data(
                 filter_model.mapToSource(index),

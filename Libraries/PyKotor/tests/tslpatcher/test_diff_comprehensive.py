@@ -43,7 +43,7 @@ add_sys_path(REPO_ROOT / "Libraries" / "Utility" / "src")
 add_sys_path(REPO_ROOT / "Tools" / "KotorDiff" / "src")
 
 
-from kotordiff.app import KotorDiffConfig, run_application
+from pykotor.diff_tool.app import KotorDiffConfig, run_application
 from pykotor.common.language import Gender, Language, LocalizedString
 from pykotor.common.misc import ResRef
 from pykotor.resource.formats.gff import GFF, GFFFieldType, GFFList, GFFStruct, write_gff

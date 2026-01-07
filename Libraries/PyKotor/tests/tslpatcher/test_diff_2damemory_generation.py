@@ -31,7 +31,7 @@ add_sys_path(REPO_ROOT / "Tools" / "KotorDiff" / "src")
 
 from configparser import ConfigParser
 
-from kotordiff.app import KotorDiffConfig, run_application  # pyright: ignore[reportMissingImports]
+from pykotor.diff_tool.app import KotorDiffConfig, run_application
 from pykotor.resource.formats.gff import GFF, write_gff
 from pykotor.resource.formats.twoda import TwoDA, write_2da
 from pykotor.resource.type import ResourceType

@@ -23,7 +23,6 @@ from pykotor.cli.version import VERSION as pykotor_version  # noqa: E402
 from pykotor.extract.installation import Installation  # noqa: E402
 from pykotor.tools.path import CaseAwarePath, find_kotor_paths_from_default  # noqa: E402
 from pykotor.tslpatcher.logger import LogType, PatchLogger  # noqa: E402
-from utility.error_handling import universal_simplify_exception  # noqa: E402
 from utility.tkinter.base_app import BaseApp  # noqa: E402
 
 if TYPE_CHECKING:
@@ -430,7 +429,7 @@ class App(BaseApp):
     ):
         """Handles exceptions during extraction."""
         self.pykotor_logger.exception("Unhandled exception in PyKotor CLI kit generator", exc_info=exc)
-        error_name, msg = universal_simplify_exception(exc)
+        error_name, msg = (exc.__class__.__name__, str(exc))
         self.logger.add_error(f"{error_name}: {msg}{os.linesep}The extraction was aborted with errors")
         messagebox.showerror(
             error_name,

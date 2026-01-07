@@ -338,7 +338,7 @@ class Editor(QMainWindow):
         except ValueError as e:
             exc = e
             RobustLogger().exception(f"ValueError raised, assuming invalid filename/extension '{filepath_str}'")
-            error_msg = str(universal_simplify_exception(e)).replace("\n", "<br>")
+            error_msg = str((e.__class__.__name__, str(e))).replace("\n", "<br>")
             show_invalid(exc, error_msg)
             return
 
@@ -414,7 +414,7 @@ class Editor(QMainWindow):
         except Exception as e:  # noqa: BLE001
             self.blink_window()
             RobustLogger().critical("Failed to write to file", exc_info=True)
-            msg_box = QMessageBox(QMessageBox.Icon.Critical, "Failed to write to file", str(universal_simplify_exception(e)).replace("\n", "<br>"))
+            msg_box = QMessageBox(QMessageBox.Icon.Critical, "Failed to write to file", str((e.__class__.__name__, str(e))).replace("\n", "<br>"))
             msg_box.setDetailedText(format_exception_with_variables(e))
             msg_box.exec()
         else:

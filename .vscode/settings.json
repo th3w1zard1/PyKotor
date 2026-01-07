@@ -92,5 +92,6 @@
     },
     "files.watcherExclude": {
       "**/.history/**": true
-    }
+    },
+    "cmake.ignoreCMakeListsMissing": true
 }

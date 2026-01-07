@@ -2,10 +2,7 @@
 
 from __future__ import annotations
 
-from argparse import Namespace
 from collections.abc import Sequence
-
-from loggerplus import RobustLogger  # type: ignore[import-untyped]
 
 from pykotor.cli.argparser import create_parser
 from pykotor.cli.commands import (

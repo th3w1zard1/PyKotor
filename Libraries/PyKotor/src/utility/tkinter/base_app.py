@@ -19,6 +19,7 @@ Usage:
             super().initialize_ui_controls()
             # Add tool-specific UI controls here
 """
+
 from __future__ import annotations
 
 import ctypes
@@ -34,9 +35,7 @@ from tkinter import filedialog, font as tkfont, messagebox, ttk
 from typing import TYPE_CHECKING, Any
 
 from loggerplus import RobustLogger
-
 from pykotor.tslpatcher.logger import LogType, PatchLogger
-from utility.error_handling import universal_simplify_exception
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -426,7 +425,7 @@ class BaseApp(ABC):
             msgbox: Whether to show a messagebox (default True)
         """
         self.pykotor_logger.exception(custom_msg, exc_info=exc)
-        error_name, msg = universal_simplify_exception(exc)
+        error_name, msg = (exc.__class__.__name__, str(exc))
         if msgbox:
             messagebox.showerror(
                 title or error_name,
@@ -454,6 +453,7 @@ class BaseApp(ABC):
     ):
         """Standard handler for combobox selection - adjusts cursor position."""
         from tkinter import ttk
+
         widget = event.widget
         if isinstance(widget, ttk.Combobox):
             self.root.after(10, lambda: self.move_cursor_to_end(widget))
@@ -735,4 +735,3 @@ class ThemedApp(BaseApp):
         if command is not None:
             return ttk.Button(parent, text=text, command=command, style="TButton", **kwargs)
         return ttk.Button(parent, text=text, style="TButton", **kwargs)
-

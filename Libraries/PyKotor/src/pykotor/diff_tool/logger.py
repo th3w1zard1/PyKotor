@@ -77,16 +77,17 @@ class DiffLogger:
         # Clear any existing handlers
         self._logger.handlers.clear()
 
-        # Add console handler
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setLevel(level.value)
+        # Add console handler (but not in DIFF_ONLY or QUIET modes)
+        if self.output_mode == OutputMode.FULL:
+            console_handler = logging.StreamHandler(sys.stdout)
+            console_handler.setLevel(level.value)
 
-        # Create formatter
-        if self.use_colors:
-            console_handler.setFormatter(ColoredFormatter())
-        else:
-            console_handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
-        self._logger.addHandler(console_handler)
+            # Create formatter
+            if self.use_colors:
+                console_handler.setFormatter(ColoredFormatter())
+            else:
+                console_handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+            self._logger.addHandler(console_handler)
 
         # Add file handler if specified
         if output_file:
@@ -103,7 +104,7 @@ class DiffLogger:
 
     def info(self, message: str, *args, **kwargs):
         """Log an info message."""
-        if self.output_mode != OutputMode.DIFF_ONLY:
+        if self.output_mode == OutputMode.FULL:
             self._logger.info(message, *args, **kwargs)
 
     def warning(self, message: str, *args, **kwargs):
@@ -120,11 +121,11 @@ class DiffLogger:
         self._logger.critical(message, *args, **kwargs)
 
     def diff_output(self, message: str, *args, **kwargs):
-        """Output diff-specific content that should always be shown."""
-        # Always output diff content, regardless of mode
-        print(message, *args, **kwargs)
-        if self.output_file:
-            print(message, *args, file=self.output_file, **kwargs)
+        """Output diff-specific content based on output mode."""
+        if self.output_mode == OutputMode.FULL or self.output_mode == OutputMode.DIFF_ONLY:
+            print(message, *args, **kwargs)
+            if self.output_file:
+                print(message, *args, file=self.output_file, **kwargs)
 
     def separator(
         self,

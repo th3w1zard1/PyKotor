@@ -88,7 +88,6 @@ from pykotor.tools.encoding import decode_bytes_with_fallbacks
 from pykotor.tools.misc import is_any_erf_type_file, is_capsule_file
 from pykotor.tools.path import CaseAwarePath, find_kotor_paths_from_default
 from pykotor.tslpatcher.logger import LogType, PatchLog, PatchLogger
-from utility.error_handling import universal_simplify_exception
 from utility.fonts import get_font_paths  # Font path utilities (general-purpose, not KOTOR-specific)
 
 if TYPE_CHECKING:
@@ -432,7 +431,7 @@ def process_translations(tlk: TLK, from_lang: Language):
                     log_output(f"#{strref} Translated {original_text} --> {translated_text}")
             except Exception as exc:  # pylint: disable=W0718  # noqa: BLE001
                 RobustLogger().exception(f"tlk strref {strref} generated an exception")
-                log_output(f"tlk strref {strref} generated an exception: {universal_simplify_exception(exc)}")
+                log_output(f"tlk strref {strref} generated an exception: {(exc.__class__.__name__, str(exc))}")
                 log_output(traceback.format_exc())
 
 
@@ -590,7 +589,7 @@ def patch_capsule_file(c_file: Path):
         file_capsule = Capsule(c_file)
     except ValueError as e:
         RobustLogger().exception(f"Could not load '{c_file}'")
-        log_output(f"Could not load '{c_file}'. Reason: {universal_simplify_exception(e)}")
+        log_output(f"Could not load '{c_file}'. Reason: {(e.__class__.__name__, str(e))}")
         return
 
     new_filepath: Path = c_file
@@ -804,7 +803,7 @@ def execute_patchloop_thread() -> str | None:
         RobustLogger().exception("Unhandled exception during the patching process.")
         log_output(traceback.format_exc())
         SCRIPT_GLOBALS.install_running = False
-        return messagebox.showerror("Error", f"An error occurred during patching\n{universal_simplify_exception(e)}")
+        return messagebox.showerror("Error", f"An error occurred during patching\n{(e.__class__.__name__, str(e))}")
 
 
 def do_main_patchloop() -> str:
@@ -1074,12 +1073,22 @@ class KOTORPatchingToolUI:
             if color_code[1]:
                 self.font_color.set(color_code[1])
 
-        # TODO: parse the .gui or wherever the actual color is stored.
-        # self.font_color = tk.StringVar()
-        # ttk.Label(self.root, text="Font Color:").grid(row=row, column=0)
-        # ttk.Entry(self.root, textvariable=self.font_color).grid(row=row, column=1)
-        # tk.Button(self.root, text="Choose Color", command=choose_color).grid(row=row, column=2)
-        # row += 1
+        # Parse GUI file for font color
+        self.font_color = tk.StringVar()
+        ttk.Label(self.root, text="Font Color:").grid(row=row, column=0)
+
+        # Try to parse color from GUI file first
+        gui_color = self._parse_gui_font_color()
+        if gui_color:
+            self.font_color.set(gui_color)
+            ttk.Entry(self.root, textvariable=self.font_color).grid(row=row, column=1)
+            ttk.Button(self.root, text="Choose Color", command=choose_color).grid(row=row, column=2)
+        else:
+            # Fallback to manual color selection if GUI parsing fails
+            ttk.Entry(self.root, textvariable=self.font_color).grid(row=row, column=1)
+            ttk.Button(self.root, text="Choose Color", command=choose_color).grid(row=row, column=2)
+
+        row += 1
 
         # Font Scaling
         ttk.Label(self.root, text="Font Scaling:").grid(row=row, column=0)
@@ -1254,6 +1263,102 @@ class KOTORPatchingToolUI:
         if directory:
             self.path.set(directory)
 
+    def _parse_gui_font_color(self) -> str | None:
+        """Parse GUI file to extract font color information.
+
+        Searches for GUI files in the installation path and extracts the COLOR field
+        from text controls, returning it as a hex color string.
+
+        Returns:
+        -------
+            Hex color string (e.g., "#FFFFFF") if found, None otherwise
+        """
+        if not hasattr(self, 'path') or not self.path.get():
+            return None
+
+        try:
+            from pykotor.resource.formats.gff import read_gff
+            from pykotor.resource.formats.gff.gff_data import GFFStruct, GFFList
+            from pykotor.resource.type import ResourceType
+            from pykotor.extract.installation import Installation
+            from pathlib import Path
+
+            install_path = Path(self.path.get())
+            if not install_path.exists():
+                return None
+
+            # Create installation instance
+            installation = Installation(install_path)
+
+            # Look for GUI files that might contain font color information
+            gui_files = [
+                "mainmenu.gui", "dialog.gui", "journal.gui", "charinfo.gui",
+                "ingame.gui", "loadscreen.gui", "partyselect.gui"
+            ]
+
+            for gui_filename in gui_files:
+                try:
+                    # Try to locate the GUI file
+                    gui_resource = installation.resource(gui_filename, ResourceType.GUI)
+                    if gui_resource is None:
+                        continue
+
+                    # Read the GUI file
+                    gui_data = gui_resource.data()
+                    gff = read_gff(gui_data)
+
+                    # Search for COLOR fields in text controls (labels)
+                    color = self._extract_color_from_gui_struct(gff.root)
+                    if color:
+                        return color
+
+                except Exception:
+                    # Continue to next GUI file if this one fails
+                    continue
+
+        except ImportError:
+            # PyKotor not available, fallback to manual color selection
+            pass
+        except Exception:
+            # Any other error, fallback to manual color selection
+            pass
+
+        return None
+
+    def _extract_color_from_gui_struct(self, struct: GFFStruct) -> str | None:
+        """Recursively extract color from GUI struct hierarchy.
+
+        Args:
+        ----
+            struct: GFF struct to search for color information
+
+        Returns:
+        -------
+            Hex color string if COLOR field found in text controls
+        """
+        # Check if this is a text control (Label = 5)
+        control_type = struct.acquire("CONTROLTYPE", -1)
+        if control_type == 5:  # Label/Text control
+            color_field = struct.acquire("COLOR", None)
+            if color_field is not None:
+                # COLOR is stored as a vector3 (RGB 0.0-1.0)
+                if hasattr(color_field, '__iter__') and len(color_field) >= 3:
+                    # Convert from 0.0-1.0 range to 0-255 range
+                    r = int(color_field[0] * 255)
+                    g = int(color_field[1] * 255)
+                    b = int(color_field[2] * 255)
+                    return f"#{r:02x}{g:02x}{b:02x}"
+
+        # Recursively search child controls
+        controls_list = struct.acquire("CONTROLS", None)
+        if isinstance(controls_list, GFFList):
+            for child_struct in controls_list:
+                color = self._extract_color_from_gui_struct(child_struct)
+                if color:
+                    return color
+
+        return None
+
     def browse_font_path(self):
         file = filedialog.askopenfilename()
         if file:
@@ -1269,7 +1374,7 @@ class KOTORPatchingToolUI:
             try:
                 path = Path(SCRIPT_GLOBALS.path).resolve()
             except OSError as e:
-                return messagebox.showerror("Error", f"Invalid path '{SCRIPT_GLOBALS.path}'\n{universal_simplify_exception(e)}")
+                return messagebox.showerror("Error", f"Invalid path '{SCRIPT_GLOBALS.path}'\n{(e.__class__.__name__, str(e))}")
             else:
                 if not path.exists():
                     return messagebox.showerror("Error", "Invalid path")
@@ -1281,7 +1386,7 @@ class KOTORPatchingToolUI:
             SCRIPT_GLOBALS.install_thread.start()
         except Exception as e:  # pylint: disable=W0718  # noqa: BLE001
             RobustLogger().exception("Unhandled exception during the patching process.")
-            messagebox.showerror("Unhandled exception", str(universal_simplify_exception(e) + "\n" + traceback.format_exc()))
+            messagebox.showerror("Unhandled exception", str((e.__class__.__name__, str(e)) + "\n" + traceback.format_exc()))
             SCRIPT_GLOBALS.install_running = False
             self.install_button.config(state=tk.DISABLED)
         return None

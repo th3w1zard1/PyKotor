@@ -119,9 +119,9 @@ def install_qt_signal_slot_safety_net() -> None:  # noqa: C901
         if getattr(slot, "__toolset_qt_safe_slot__", False):
             return slot
 
-        max_positional_args: int | None
+        max_positional_args: int | None = None
         try:
-            sig = inspect.signature(slot)
+            sig: inspect.Signature = inspect.signature(slot)
             if any(p.kind is inspect.Parameter.VAR_POSITIONAL for p in sig.parameters.values()):
                 max_positional_args = None
             else:
@@ -136,7 +136,7 @@ def install_qt_signal_slot_safety_net() -> None:  # noqa: C901
 
         def wrapped(*args, **kwargs):  # noqa: ANN001
             try:
-                call_args = args if max_positional_args is None else args[:max_positional_args]
+                call_args: tuple[Any, ...] = args if max_positional_args is None else args[:max_positional_args]
                 return slot(*call_args, **kwargs)
             except Exception:  # noqa: BLE001
                 # Route to global handler and swallow so Qt can continue running.
@@ -152,7 +152,7 @@ def install_qt_signal_slot_safety_net() -> None:  # noqa: C901
         try:
             if qtpy.PYQT5:
                 from PyQt5.QtCore import pyqtBoundSignal  # type: ignore
-            else:
+            elif qtpy.PYQT6:
                 from PyQt6.QtCore import pyqtBoundSignal  # type: ignore
         except Exception:  # noqa: BLE001
             RobustLogger().warning("Qt signal safety net: could not import pyqtBoundSignal")

@@ -206,7 +206,9 @@ class KotorDiffWindow(QMainWindow):
 
         self.close_btn = QPushButton("Close")
         # QPushButton.clicked emits a bool; QWidget.close takes no args.
-        self.close_btn.clicked.connect(lambda *_: self.close())
+        def _close_window(*_):
+            self.close()
+        self.close_btn.clicked.connect(_close_window)
         button_layout.addWidget(self.close_btn)
 
         main_layout.addLayout(button_layout)
@@ -414,8 +416,16 @@ class KotorDiffWindow(QMainWindow):
         # Build configuration
         config = DiffConfig(
             paths=paths,
-            tslpatchdata_path=Path(self.tslpatchdata_edit.text().strip()) if self.tslpatchdata_check.isChecked() and self.tslpatchdata_edit.text().strip() else None,
-            ini_filename=self.ini_name_edit.text().strip() or "changes.ini",
+            tslpatchdata_path=(
+                Path(self.tslpatchdata_edit.text().strip()) 
+                if self.tslpatchdata_check.isChecked() 
+                and self.tslpatchdata_edit.text().strip() 
+                else None
+            ),
+            ini_filename=(
+                self.ini_name_edit.text().strip() 
+                or "changes.ini"
+            ),
             output_log_path=None,
             log_level=self.log_level_combo.currentText(),
             output_mode="quiet",
@@ -435,7 +445,7 @@ class KotorDiffWindow(QMainWindow):
     def _append_output(self, text: str):
         """Append text to the output area."""
         cursor = self.output_text.textCursor()
-        cursor.movePosition(QTextCursor.End)
+        cursor.movePosition(QTextCursor.MoveOperation.End)
         cursor.insertText(text)
         self.output_text.setTextCursor(cursor)
         # Ensure the view scrolls to the bottom

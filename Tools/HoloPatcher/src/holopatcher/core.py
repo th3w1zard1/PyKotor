@@ -312,7 +312,7 @@ def parse_args() -> Namespace:
         try:
             kwargs.namespace_option_index = int(kwargs.namespace_option_index)
         except ValueError as e:
-            print(universal_simplify_exception(e), file=sys.stderr)  # noqa: T201
+            print((e.__class__.__name__, str(e)), file=sys.stderr)  # noqa: T201
             print(f"Invalid namespace_option_index. It should be an integer, got {kwargs.namespace_option_index}", file=sys.stderr)  # noqa: T201
             sys.exit(ExitCode.NAMESPACE_INDEX_OUT_OF_RANGE)
 

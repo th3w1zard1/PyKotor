@@ -21,11 +21,9 @@ from pykotor.extract.chitin import Chitin
 from pykotor.extract.file import FileResource, LocationResult, ResourceIdentifier, ResourceResult
 from pykotor.extract.savedata import SaveFolderEntry
 from pykotor.extract.talktable import TalkTable
-from pykotor.resource.formats.gff.gff_auto import read_gff
-from pykotor.resource.formats.gff.gff_data import GFFFieldType
-from pykotor.resource.formats.tpc.tpc_auto import read_tpc
-from pykotor.resource.formats.tpc.tpc_data import TPC
-from pykotor.resource.formats.wav.wav_auto import bytes_wav, read_wav
+from pykotor.resource.formats.gff import read_gff, GFFFieldType
+from pykotor.resource.formats.tpc import read_tpc, TPC
+from pykotor.resource.formats.wav import bytes_wav, read_wav
 from pykotor.resource.type import ResourceType
 from pykotor.tools.misc import is_capsule_file, is_erf_file, is_mod_file
 from pykotor.tools.path import CaseAwarePath
@@ -43,7 +41,7 @@ if TYPE_CHECKING:
     from pykotor.common.misc import Game
     from pykotor.extract.capsule import LazyCapsule
     from pykotor.extract.talktable import StringResult
-    from pykotor.resource.formats.gff.gff_data import GFF
+    from pykotor.resource.formats.gff import GFF
 
 
 @dataclass
@@ -172,6 +170,16 @@ class Installation:
     ):
         self._log: Logger = RobustLogger()
         self._path: CaseAwarePath = CaseAwarePath(path)
+
+        # Validate that this looks like a KOTOR installation
+        if not self._path.is_dir():
+            msg = f"Installation path must be a directory, got: {self._path}"
+            raise ValueError(msg)
+
+        chitin_key_path = self._path / "chitin.key"
+        if not chitin_key_path.is_file():
+            msg = f"Installation path must contain chitin.key file, not found at: {chitin_key_path}"
+            raise ValueError(msg)
 
         self._talktable: TalkTable = TalkTable(self._path / "dialog.tlk")
         self._female_talktable: TalkTable = TalkTable(self._path / "dialogf.tlk")
@@ -2324,15 +2332,37 @@ class Installation:
 
         results: dict[LocalizedString, str] = {}
         for locstring in queries:
-            if locstring.stringref != -1:  # TODO: use gender information from locstring.
+            if locstring.stringref != -1:
+                # First try the main talktable (typically male), then female talktable
                 if locstring.stringref in batch:
                     results[locstring] = batch[locstring.stringref].text
                 elif locstring.stringref in female_batch:
                     results[locstring] = female_batch[locstring.stringref].text
             elif len(locstring):
-                for _language, _gender, text in locstring:
-                    results[locstring] = text
-                    break
+                # No stringref, use substrings. Prefer substrings that match the gender
+                # availability in talktables (male first, then female)
+                selected_text = None
+
+                # First, try to find a male substring (gender 0)
+                for language, gender, text in locstring:
+                    if gender.name == "MALE":  # Gender.MALE = 0
+                        selected_text = text
+                        break
+
+                # If no male substring found, try female
+                if selected_text is None:
+                    for language, gender, text in locstring:
+                        if gender.name == "FEMALE":  # Gender.FEMALE = 1
+                            selected_text = text
+                            break
+
+                # If still no gender-specific substring, take the first available
+                if selected_text is None:
+                    for _language, _gender, text in locstring:
+                        selected_text = text
+                        break
+
+                results[locstring] = selected_text if selected_text is not None else default
             else:
                 results[locstring] = default
 

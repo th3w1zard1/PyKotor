@@ -6,9 +6,16 @@ resource tree synchronisation, and baseline frame rendering throughput.
 
 IMPORTANT: These tests require a real display and CANNOT run in headless mode.
 OpenGL/GL rendering requires hardware acceleration and a display server.
+
+Test execution:
+- These tests are marked as "slow" and require PYKOTOR_TEST_LEVEL=slow or higher to run.
+- Default level is "fast" which skips these tests for quick CI/pre-PyPI validation.
+- Set PYKOTOR_TEST_LEVEL=slow to run these tests.
 """
 
 from __future__ import annotations
+
+import pytest
 
 import math
 import os

@@ -16,7 +16,6 @@ from pykotor.resource.formats.ncs.compilers import ExternalNCSCompiler
 from pykotor.tools.encoding import decode_bytes_with_fallbacks
 from pykotor.tools.path import CaseAwarePath
 from pykotor.tslpatcher.mods.template import PatcherModifications
-from utility.error_handling import universal_simplify_exception
 
 if TYPE_CHECKING:
     from typing_extensions import Literal  # pyright: ignore[reportMissingModuleSource]
@@ -105,7 +104,7 @@ class ModificationsNSS(PatcherModifications):
             try:
                 return self._compile_with_external(temp_script_file, nwnnsscompiler, logger, game)
             except Exception as e:  # pylint: disable=W0718  # noqa: BLE001
-                logger.add_error(str(universal_simplify_exception(e)))
+                logger.add_error(str((e.__class__.__name__, str(e))))
 
         if is_windows:
             if not self.nwnnsscomp_path or not nwnnsscomp_exists:

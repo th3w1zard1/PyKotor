@@ -49,7 +49,6 @@ from pykotor.resource.generics.uts import UTS, dismantle_uts
 from pykotor.resource.generics.utt import UTT, dismantle_utt
 from pykotor.resource.generics.utw import UTW, dismantle_utw
 from pykotor.resource.type import ResourceType
-from utility.error_handling import universal_simplify_exception
 
 if TYPE_CHECKING:
     from pykotor.resource.type import SOURCE_TYPES
@@ -103,7 +102,7 @@ def read_resource(  # noqa: C901, PLR0911, PLR0912
         if resource_type.extension.upper() in GFFContent.__members__:
             return bytes_gff(read_gff(source))
         if resource_ext == "ncs":
-            return bytes_ncs(read_ncs(source))
+            return bytes(bytes_ncs(read_ncs(source)))
         if resource_ext == "mdl":
             return bytes_mdl(read_mdl(source))
         if resource_ext == "vis":
@@ -116,7 +115,7 @@ def read_resource(  # noqa: C901, PLR0911, PLR0912
             return bytes_bwm(read_bwm(source))
     except Exception as e:  # pylint: disable=W0718  # noqa: BLE001
         new_err = ValueError(f"Could not load resource '{source_path}' as resource type '{resource_type}")
-        print(universal_simplify_exception(new_err))
+        print((new_err.__class__.__name__, str(new_err)))
         raise new_err from e
 
     msg = f"Resource type {resource_type!r} is not supported by this library."

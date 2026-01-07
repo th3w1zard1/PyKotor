@@ -17,7 +17,6 @@ from qtpy.QtWidgets import QMessageBox
 
 # LOCAL_PROGRAM_INFO is imported inside functions to avoid circular import
 # config.py imports from config_update, so we can't import config.py at module level
-from utility.error_handling import universal_simplify_exception  # noqa: E402
 
 
 def _clean_json_trailing_commas(json_str: str) -> str:
@@ -92,7 +91,7 @@ def get_remote_toolset_update_info(
             raise TypeError(f"Expected remote_info to be a dict, instead got type {remote_info.__class__.__name__}")  # noqa: TRY301
     except ImportError as e:
         # Handle missing requests module specifically
-        err_msg: str = str(universal_simplify_exception(e))
+        err_msg: str = str((e.__class__.__name__, str(e)))
         result: int | QMessageBox.StandardButton = silent or QMessageBox.question(
             None,
             "Internet connection unavailable",
@@ -109,7 +108,7 @@ def get_remote_toolset_update_info(
             return e
         remote_info = LOCAL_PROGRAM_INFO
     except Exception as e:  # noqa: BLE001
-        err_msg = str(universal_simplify_exception(e))
+        err_msg = str((e.__class__.__name__, str(e)))
         result = silent or QMessageBox.question(
             None,
             "Error occurred fetching update information.",

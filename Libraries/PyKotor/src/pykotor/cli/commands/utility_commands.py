@@ -17,7 +17,7 @@ from loggerplus import RobustLogger as Logger  # type: ignore[import-untyped]
 # Import the proper diff logging system
 from pykotor.diff_tool.logger import DiffLogger, LogLevel, OutputMode
 from pykotor.extract.installation import Installation
-from pykotor.resource.formats.gff import read_gff, write_gff, GFF
+from pykotor.resource.formats.gff import GFF, read_gff, write_gff
 from pykotor.tools.misc import is_capsule_file
 from pykotor.tools.utilities import get_file_stats, grep_in_file, validate_file
 
@@ -41,7 +41,7 @@ def _diff_archives_or_directories(
             """Load all resources from an archive or directory."""
             raw_resource_data: dict[str, bytes] = {}
 
-            if path.is_dir():
+            if path.exists() and path.is_dir():
                 # Directory - check if it's an installation
                 if (path / "chitin.key").exists():
                     installation = Installation(path)
@@ -84,7 +84,6 @@ def _diff_archives_or_directories(
         resources2 = load_resource_container(path2)
 
         # Find common and unique resources
-        all_resource_keys = set(resources1.keys()) | set(resources2.keys())
         common_keys = set(resources1.keys()) & set(resources2.keys())
         only_in_1 = set(resources1.keys()) - set(resources2.keys())
         only_in_2 = set(resources2.keys()) - set(resources1.keys())
@@ -269,11 +268,11 @@ def cmd_diff(
         return 1
 
     # Set up proper diff logging system
-    output_mode_str = getattr(args, 'output_mode', 'full').lower()
+    output_mode_str = getattr(args, "output_mode", "full").lower()
     output_mode_map = {
-        'full': OutputMode.FULL,
-        'diff_only': OutputMode.DIFF_ONLY,
-        'quiet': OutputMode.QUIET,
+        "full": OutputMode.FULL,
+        "diff_only": OutputMode.DIFF_ONLY,
+        "quiet": OutputMode.QUIET,
     }
     output_mode = output_mode_map.get(output_mode_str, OutputMode.FULL)
 
@@ -312,6 +311,7 @@ def cmd_diff(
 
     # Create enhanced log function that the tslpatcher engine can use
     from pykotor.tslpatcher.diff.engine import EnhancedLogFunc
+
     log_func = EnhancedLogFunc(diff_logger)
 
     # Handle special case: direct file-to-file comparison
@@ -425,7 +425,8 @@ def cmd_diff(
             return _diff_archives_or_directories(
                 path1,
                 path2,
-                args,formatter,
+                args,
+                formatter,
                 diff_logger,
                 output_mode,
             )
@@ -434,7 +435,14 @@ def cmd_diff(
             ext = path1.suffix.casefold()[1:] if path1.suffix else ""
             context = DiffContext(path1, path2, ext)
 
-            result = diff_data(path1, path2, context, log_func=diff_logger.info, compare_hashes=True)
+            result = diff_data(
+                path1,
+                path2,
+                context,
+                log_func=diff_logger.info,
+                compare_hashes=True,
+                format_type=format_type,
+            )
 
             # Add summary message (but not in diff_only mode)
             if output_mode != OutputMode.DIFF_ONLY:
@@ -447,8 +455,10 @@ def cmd_diff(
 
     except Exception as e:
         logger.exception(f"Error generating diff: {e.__class__.__name__}: {e}")
-        if output_handle:
+        if output_handle is not None:
             output_handle.close()
+
+        return 1
 
 
 def cmd_grep(
@@ -478,8 +488,8 @@ def cmd_grep(
                 print(line_text)  # noqa: T201
 
         return 0
-    except Exception:
-        logger.exception(f"Failed to search {file_path}")  # noqa: G004
+    except Exception as e:
+        logger.exception(f"Failed to search {file_path}: {e.__class__.__name__}: {e}")  # noqa: G004
         return 1
 
 
@@ -514,8 +524,8 @@ def cmd_stats(
             logger.info(f"Strings: {stats.get('string_count', 0)}")  # noqa: G004
 
         return 0
-    except Exception:
-        logger.exception(f"Failed to get stats for {file_path}")  # noqa: G004
+    except Exception as e:
+        logger.exception(f"Failed to get stats for {file_path}: {e.__class__.__name__}: {e}s", exc_info=True)  # noqa: G004
         return 1
 
 
@@ -534,8 +544,8 @@ def cmd_validate(
             return 0
         logger.error(f"{file_path}: {message}")  # noqa: G004
         return 1
-    except Exception:
-        logger.exception(f"Failed to validate {file_path}")  # noqa: G004
+    except Exception as e:
+        logger.exception(f"Failed to validate {file_path}: {e.__class__.__name__}: {e}", exc_info=True)  # noqa: G004
         return 1
 
 
@@ -568,6 +578,6 @@ def cmd_merge(
         write_gff(target_gff, output_path)
         logger.info(f"Merged {source_path.name} into {target_path.name}, saved to {output_path.name}")  # noqa: G004
         return 0
-    except Exception:
-        logger.exception("Failed to merge files")
+    except Exception as e:
+        logger.exception(f"Failed to merge files: {e.__class__.__name__}: {e}", exc_info=True)
         return 1

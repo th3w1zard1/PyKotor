@@ -2,9 +2,136 @@
 
 from __future__ import annotations
 
-from argparse import ArgumentParser
+import os
+import sys
+from argparse import Action, ArgumentParser, RawDescriptionHelpFormatter
+from typing import Any
 
 from pykotor.cli.version import VERSION
+
+
+class PyKotorHelpFormatter(RawDescriptionHelpFormatter):
+    """Custom help formatter with improved structure, colors, and readability."""
+
+    def __init__(
+        self,
+        prog: str,
+        *,
+        width: int | None = None,
+        max_help_position: int = 32,
+    ) -> None:
+        super().__init__(prog, width=width, max_help_position=max_help_position)
+
+    def _get_help_string(
+        self,
+        action: Action,
+    ) -> str:
+        """Override to customize help text formatting."""
+        help_text = action.help
+        if help_text is None:
+            return ""
+
+        # Add color and formatting for better readability
+        if self.supports_color():
+            # Highlight important keywords in help text
+            help_text = help_text.replace("required", "\033[1;31mrequired\033[0m")
+            help_text = help_text.replace("default:", "\033[1;36mdefault:\033[0m")
+            help_text = help_text.replace("optional", "\033[1;32moptional\033[0m")
+
+        return help_text
+
+    def supports_color(self) -> bool:
+        """Check if terminal supports colors."""
+        return (
+            hasattr(sys.stdout, 'isatty') and
+            sys.stdout.isatty() and
+            (
+                sys.platform != "win32" or
+                "COLORTERM" in os.environ or
+                os.environ.get("TERM", "").endswith("-color") or
+                os.environ.get("FORCE_COLOR", "").lower() in ("1", "true")
+            )
+        )
+
+    def start_section(
+        self,
+        heading: str,
+    ) -> None:
+        """Start a new section with proper formatting."""
+        if heading:
+            # Add color and formatting for section headers
+            if self.supports_color():
+                heading = f"\033[1;33m{heading}\033[0m"
+            super().start_section(heading)
+
+    def _format_usage(
+        self,
+        usage: str | None,
+        actions: list[Any],
+        groups: list[Any],
+        prefix: str | None = None,
+    ) -> str:
+        """Format usage string with better styling."""
+        if prefix is None:
+            prefix = "Usage: "
+        return super()._format_usage(usage, actions, groups, prefix)
+
+    def format_help(self) -> str:
+        """Override to provide custom help formatting with command categories."""
+        help_text = super().format_help()
+
+        # Find the subcommands section and reorganize it
+        if "Available Commands" in help_text:
+            # Extract the subcommands section
+            lines = help_text.split('\n')
+            subcommands_start = None
+            subcommands_end = None
+
+            for i, line in enumerate(lines):
+                if "Available Commands" in line:
+                    subcommands_start = i
+                elif subcommands_start is not None and line.strip() == "" and i > subcommands_start + 2:
+                    subcommands_end = i
+                    break
+
+            if subcommands_start is not None and subcommands_end is not None:
+                # Extract subcommands and reorganize by category
+                categories = _organize_commands_by_category()
+
+                # Build categorized help
+                categorized_help = []
+                categorized_help.append("  \033[1;32mAvailable Commands\033[0m")
+
+                for category, commands in categories.items():
+                    categorized_help.append(f"\n{category}")
+                    for cmd in commands:
+                        # Find the command line in original help
+                        for line in lines[subcommands_start:subcommands_end]:
+                            if f"  {cmd}" in line or f"  {cmd} " in line:
+                                categorized_help.append(f"    {line.strip()}")
+                                break
+
+                # Replace the subcommands section
+                new_help = '\n'.join(lines[:subcommands_start]) + '\n'.join(categorized_help) + '\n'.join(lines[subcommands_end:])
+                return new_help
+
+        return help_text
+
+
+def _organize_commands_by_category() -> dict[str, list[str]]:
+    """Organize commands into logical categories for better help display."""
+    categories = {
+        "Build & Development": ["init", "list", "unpack", "convert", "compile", "pack", "install", "launch", "serve", "play", "test"],
+        "Format Conversion": ["gff2xml", "xml2gff", "gff2json", "json2gff", "tlk2xml", "xml2tlk", "tlk2json", "ssf2xml", "xml2ssf", "2da2csv", "csv22da"],
+        "Script Tools": ["decompile", "disassemble", "assemble"],
+        "Resource Tools": ["texture-convert", "sound-convert", "model-convert"],
+        "Archive Operations": [ "extract", "list-archive", "ls-archive", "create-archive", "pack-archive", "search-archive", "grep-archive", "cat", "key-pack", "create-key", ],
+        "Analysis & Utilities": ["diff", "grep", "stats", "validate", "merge", "config"],
+        "Validation & Investigation": [ "check-txi", "check-2da", "validate-installation", "investigate-module", "check-missing-resources", "module-resources", "kit-generate", "kit", ],
+        "GUI & Interface": ["gui-convert", "gui", "indoor-build", "indoormap-build", "indoor-extract", "indoormap-extract"],
+        "Patching": ["batch-patch", "patch-file", "patch-folder", "patch-installation"],
+    }
+    return categories
 
 
 def _add_kotordiff_arguments_fallback(parser: ArgumentParser) -> ArgumentParser:
@@ -32,10 +159,36 @@ def _add_kotordiff_arguments_fallback(parser: ArgumentParser) -> ArgumentParser:
 
 
 def create_parser() -> ArgumentParser:  # noqa: PLR0915
-    """Create the main argument parser."""
+    """Create the main argument parser with custom formatting."""
+
+    # Create enhanced description with usage examples
+    description = """
+\033[1;36mPyKotor CLI\033[0m - A comprehensive build tool for KOTOR projects
+
+\033[1;33mQuick Start:\033[0m
+  pykotor init                           # Initialize a new project
+  pykotor unpack mymod.mod               # Extract module contents
+  pykotor convert                        # Convert JSON sources to GFF
+  pykotor compile                        # Compile NSS scripts
+  pykotor pack                           # Build final module
+  pykotor install                        # Install to game directory
+
+\033[1;33mCommon Workflows:\033[0m
+  pykotor unpack mymod.mod && pykotor convert && pykotor pack
+  pykotor diff path1 path2 --output-mode diff_only
+  pykotor extract --file chitin.key --filter "*.utc"
+
+\033[1;32mGlobal Options:\033[0m
+  --yes, --no, --default    Auto-answer prompts
+  --verbose, --debug        Increase output detail
+  --quiet                   Minimal output
+  --no-color                Disable colored output
+"""
+
     parser = ArgumentParser(
         prog="pykotor",
-        description="A build tool for KOTOR projects (cli-compatible syntax)",
+        description=description,
+        formatter_class=PyKotorHelpFormatter,
         add_help=False,
     )
 
@@ -50,8 +203,14 @@ def create_parser() -> ArgumentParser:  # noqa: PLR0915
     parser.add_argument("--quiet", action="store_true", help="Disable all logging except errors")
     parser.add_argument("--no-color", action="store_true", dest="no_color", help="Disable color output")
 
-    # Subcommands
-    subparsers = parser.add_subparsers(dest="command", help="Command to execute")
+    # Create subparsers with better help text
+    subparsers = parser.add_subparsers(
+        dest="command",
+        title="\033[1;32mAvailable Commands\033[0m",
+        description="Choose a command to execute. Use 'pykotor <command> --help' for detailed help.",
+        metavar="COMMAND",
+        help="Command to execute"
+    )
 
     # config command
     config_parser = subparsers.add_parser("config", help="Get, set, or unset user-defined configuration options")
@@ -154,7 +313,21 @@ def create_parser() -> ArgumentParser:  # noqa: PLR0915
         launch_parser.add_argument("--serverBin", help="Path to the kotor server binary file (if applicable)")
 
     # extract command
-    extract_parser = subparsers.add_parser("extract", help="Extract resources from archive files (KEY/BIF, RIM, ERF, etc.)")
+    extract_parser = subparsers.add_parser(
+        "extract",
+        help="Extract resources from Bioware archives",
+        description="""
+Extract files from Bioware archive formats including:
+• ERF files (.erf, .mod, .sav)
+• RIM files (.rim)
+• KEY/BIF archives (chitin.key)
+
+\033[1;36mExamples:\033[0m
+  pykotor extract --file mymodule.mod
+  pykotor extract --file chitin.key --filter "*.utc" --output extracted
+  pykotor extract --file module.rim --filter p_* --key-file custom.key
+"""
+    )
     extract_parser.add_argument("--file", dest="file", required=True, help="Archive file to extract")
     extract_parser.add_argument("--output", "-o", dest="output", help="Output directory (default: archive_name)")
     extract_parser.add_argument("--filter", help="Filter resources by name (resref, resref.ext, or glob like p_cand* / p_cand.utc)")
@@ -274,11 +447,33 @@ def create_parser() -> ArgumentParser:  # noqa: PLR0915
     model_parser.add_argument("--mdx", help="MDX file path (for MDL<->ASCII conversion)")
 
     # Utility commands
-    diff_parser = subparsers.add_parser("diff", help="Compare two paths (files, folders, installations, or bioware archives) and show unified diff")
-    diff_parser.add_argument("path1", help="First path (file, folder, installation, or bioware archive)")
-    diff_parser.add_argument("path2", help="Second path (file, folder, installation, or bioware archive)")
-    diff_parser.add_argument("--output", "-o", dest="output", help="Output diff file")
-    diff_parser.add_argument("--context", "-C", type=int, default=3, help="Number of context lines")
+    diff_parser = subparsers.add_parser(
+        "diff",
+        help="Compare files, folders, or KOTOR installations",
+        description="""
+Compare two paths and show differences. Supports any combination of:
+• Individual files (GFF, 2DA, TLK, etc.)
+• Folders containing game assets
+• Complete KOTOR installations
+• Bioware archives (.mod, .sav, .erf, .rim)
+
+\033[1;36mExamples:\033[0m
+  pykotor diff module1.mod module2.mod
+  pykotor diff /path/to/kotor1 /path/to/kotor2 --output-mode diff_only
+  pykotor diff file1.gff file2.gff --format side_by_side
+  pykotor diff --generate-ini installation1 installation2
+"""
+    )
+    diff_parser.add_argument("path1", help="First path (file, folder, installation, or archive)")
+    diff_parser.add_argument("path2", help="Second path (file, folder, installation, or archive)")
+    diff_parser.add_argument("--format", choices=["unified", "context", "side_by_side"], default="unified",
+                           help="Output format: unified (default), context, or side_by_side")
+    diff_parser.add_argument("--output-mode", choices=["full", "diff_only", "quiet"], default="full",
+                           help="Output mode: full (with logging), diff_only (diffs only), quiet (minimal)")
+    diff_parser.add_argument("--generate-ini", action="store_true",
+                           help="Generate TSLPatcher changes.ini and tslpatchdata folder")
+    diff_parser.add_argument("--output", "-o", dest="output", help="Write diff output to file")
+    diff_parser.add_argument("--context", "-C", type=int, default=3, help="Lines of context around changes (default: 3)")
 
     grep_parser = subparsers.add_parser("grep", help="Search for patterns in files")
     grep_parser.add_argument("file", help="File to search")
@@ -379,7 +574,9 @@ def create_parser() -> ArgumentParser:  # noqa: PLR0915
     indoor_extract_parser.add_argument("--module-file", required=False, help="Extract an indoor map from a specific module container file (.mod/.rim/.erf/.sav).")
     indoor_extract_parser.add_argument("--output", "-o", required=True, help="Output .indoor file")
     indoor_extract_parser.add_argument("--installation", required=True, help="Path to KOTOR installation")
-    indoor_extract_parser.add_argument("--implicit-kit", action="store_true", help="Extract using implicit ModuleKit components derived from module resources (no external kits required)")
+    indoor_extract_parser.add_argument(
+        "--implicit-kit", action="store_true", help="Extract using implicit ModuleKit components derived from module resources (no external kits required)"
+    )
     indoor_extract_parser.add_argument("--kits", "-k", required=False, help="(Deprecated) Path to kits directory (only needed for reverse-extraction in non-implicit mode).")
     indoor_extract_parser.add_argument("--game", "-g", choices=["k1", "k2", "kotor1", "kotor2", "tsl"], help="Target game version (default: auto-detect from installation)")
     indoor_extract_parser.add_argument("--log-level", choices=["debug", "info", "warning", "error", "critical"], default="info", help="Logging level")

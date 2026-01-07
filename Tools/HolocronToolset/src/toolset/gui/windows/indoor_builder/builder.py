@@ -702,7 +702,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self.ui.mapRenderer.set_cursor_component(component)
 
     def _refresh_window_title(self):
-        from toolset.gui.common.localization import translate as tr, trf
+        from toolset.gui.common.localization import translate as tr, translate_format as trf
 
         if not self._installation:
             title = tr("No installation - Indoor Map Builder")
@@ -1284,7 +1284,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                 if missing_rooms:
                     self._show_missing_rooms_dialog(missing_rooms)
             except OSError as e:
-                from toolset.gui.common.localization import translate as tr, trf
+                from toolset.gui.common.localization import translate as tr, translate_format as trf
 
                 QMessageBox(
                     QMessageBox.Icon.Critical,
@@ -1323,7 +1323,9 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         QMessageBox.warning(
             self,
             tr("Cannot Open Module"),
-            tr("This .mod is not inside the active installation's Modules folder, so the Toolset cannot resolve its resources.\n\nTip: copy it into the active installation's Modules folder, then re-open."),
+            tr(
+                "This .mod is not inside the active installation's Modules folder, so the Toolset cannot resolve its resources.\n\nTip: copy it into the active installation's Modules folder, then re-open."
+            ),
         )
 
     def _show_missing_rooms_dialog(
@@ -1331,7 +1333,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         missing_rooms: list[MissingRoomInfo],
     ):
         """Show a dialog with information about missing rooms/kits."""
-        from toolset.gui.common.localization import translate as tr, trf
+        from toolset.gui.common.localization import translate as tr, translate_format as trf
 
         missing_kits = [r for r in missing_rooms if r.reason == "kit_missing"]
         missing_components = [r for r in missing_rooms if r.reason == "component_missing"]
@@ -1523,7 +1525,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
             # Show success message
             room_count = len(self._map.rooms)
-            from toolset.gui.common.localization import translate as tr, trf
+            from toolset.gui.common.localization import translate as tr, translate_format as trf
 
             QMessageBox(
                 QMessageBox.Icon.Information,
@@ -1535,7 +1537,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
         except Exception as e:  # noqa: BLE001
             from loggerplus import RobustLogger  # type: ignore[import-untyped, note]  # pyright: ignore[reportMissingTypeStubs]
-            from toolset.gui.common.localization import translate as tr, trf
+            from toolset.gui.common.localization import translate as tr, translate_format as trf
 
             RobustLogger().exception(f"Failed to load module '{module_name}'")
             QMessageBox(

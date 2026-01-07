@@ -7,8 +7,6 @@ from argparse import Namespace
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from utility.error_handling import universal_simplify_exception
-
 from pykotor.cli.kit_generator import generate_kit, normalize_module_name
 
 if TYPE_CHECKING:
@@ -65,7 +63,7 @@ def cmd_kit_generate(args: Namespace, logger: RobustLogger) -> int:
         logger.info("Kit extraction completed successfully!")
         return 0
     except Exception as exc:  # noqa: BLE001
-        error_name, msg = universal_simplify_exception(exc)
+        error_name, msg = (exc.__class__.__name__, str(exc))
         logger.exception("Kit generation failed: %s: %s", error_name, msg)
         print(f"[Error] {error_name}: {msg}", file=sys.stderr)  # noqa: T201
         return 1

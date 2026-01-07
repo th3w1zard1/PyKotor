@@ -204,7 +204,10 @@ def _save_profile_stats(profiler: cProfile.Profile, output_path: Path):
         RobustLogger().error(f"Failed to save profile statistics: {e}")
 
 
-def _prune_old_profiles(profile_dir: Path, max_profiles: int = 10):
+def _prune_old_profiles(
+    profile_dir: Path,
+    max_profiles: int = 10,
+):
     """Keep only the newest `max_profiles` profile files (prof+txt)."""
     try:
         profs = sorted(profile_dir.glob("toolset_profile_*.prof"), key=lambda p: p.stat().st_mtime, reverse=True)

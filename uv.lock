@@ -56,7 +56,6 @@ members = [
     "holopatcher",
     "holopazaak",
     "kotor-diff",
-    "kotorcli",
     "pykotor",
     "pykotor-workspace",
 ]
@@ -1776,27 +1775,17 @@ provides-extras = ["dev"]
 [[package]]
 name = "kotorcli"
 version = "1.2.1"
-source = { editable = "Tools/KotorCLI" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "pykotor" },
+    { name = "tomli", marker = "python_full_version < '3.11'" },
+    { name = "tomli-w", version = "1.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
+    { name = "tomli-w", version = "1.2.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
 ]
-
-[package.optional-dependencies]
-dev = [
-    { name = "pytest" },
-    { name = "pytest-cov", version = "5.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.9'" },
-    { name = "pytest-cov", version = "7.0.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.9'" },
-    { name = "ruff" },
+sdist = { url = "https://files.pythonhosted.org/packages/05/61/b26de603fe500968729d5c85a73606fd8a47d57e9099307b280380fd24b0/kotorcli-1.2.1.tar.gz", hash = "sha256:d65590b03a3b2f27a91ff2ce6362a1841f331099400cad404e8ad21d85a55474", size = 86459, upload-time = "2025-12-27T04:06:35.116Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/71/5d/878889a5ac897dea5ae14c4b15ad8fcf9c3dbf9e48524c6f88bf2c3496d9/kotorcli-1.2.1-py3-none-any.whl", hash = "sha256:30fafecc3143ed91acb81be6364c0b98d1625f634ffa92fbed7dd5da0f5fb30a", size = 90170, upload-time = "2025-12-27T04:06:28.121Z" },
 ]
-
-[package.metadata]
-requires-dist = [
-    { name = "pykotor", editable = "Libraries/PyKotor" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0.0" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.0.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.5.3" },
-]
-provides-extras = ["dev"]
 
 [[package]]
 name = "loguru"
@@ -3020,7 +3009,7 @@ wheels = [
 
 [[package]]
 name = "pykotor"
-version = "2.1.0"
+version = "2.0.5"
 source = { editable = "Libraries/PyKotor" }
 dependencies = [
     { name = "ply" },
@@ -3171,8 +3160,8 @@ requires-dist = [
     { name = "iniconfig", marker = "python_full_version >= '3.8' and extra == 'dev'", specifier = ">=2.1.0" },
     { name = "kotor-diff", marker = "extra == 'all'", editable = "Tools/KotorDiff" },
     { name = "kotor-diff", marker = "extra == 'kotor-diff'", editable = "Tools/KotorDiff" },
-    { name = "kotorcli", marker = "extra == 'all'", editable = "Tools/KotorCLI" },
-    { name = "kotorcli", marker = "extra == 'kotorcli'", editable = "Tools/KotorCLI" },
+    { name = "kotorcli", marker = "extra == 'all'" },
+    { name = "kotorcli", marker = "extra == 'kotorcli'" },
     { name = "mypy", marker = "python_full_version >= '3.8' and extra == 'dev'", specifier = ">=1.0.0,<1.10.0" },
     { name = "mypy-extensions", marker = "python_full_version >= '3.8' and extra == 'dev'", specifier = ">=1.1.0" },
     { name = "pyflakes", marker = "python_full_version >= '3.8' and extra == 'dev'", specifier = ">=2.0.0,<3.4.0" },

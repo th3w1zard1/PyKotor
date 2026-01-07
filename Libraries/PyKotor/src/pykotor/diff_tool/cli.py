@@ -7,6 +7,7 @@ separate from the GUI to allow CLI usage without tkinter installed.
 from __future__ import annotations
 
 import io
+import os
 import sys
 import traceback
 
@@ -153,16 +154,17 @@ def execute_cli(cmdline_args: Namespace):
     Args:
         cmdline_args: Parsed command line arguments
     """
+    print("execute_cli called", file=sys.stderr)
     from pykotor.diff_tool.app import KotorDiffConfig, run_application
     from pykotor.extract.installation import Installation
 
-    # Get output mode to control verbosity
-    output_mode = getattr(cmdline_args, "output_mode", "full")
-    log_level_arg: str | None = (getattr(cmdline_args, "log_level", "") or "").strip()
-
-    # Configure logging based on output mode or explicit log level
+    # Set up logging ONCE at the CLI level
     import logging
 
+    output_mode = getattr(cmdline_args, "output_mode", "full")
+    log_level_arg = getattr(cmdline_args, "log_level", None)
+
+    # Determine log level based on output_mode or explicit log_level
     if log_level_arg:
         log_level_map = {
             "debug": logging.DEBUG,
@@ -171,27 +173,25 @@ def execute_cli(cmdline_args: Namespace):
             "error": logging.ERROR,
             "critical": logging.CRITICAL,
         }
-        log_level: int = log_level_map.get(log_level_arg.lower(), logging.INFO)
+        log_level = log_level_map.get(log_level_arg.lower(), logging.INFO)
     else:
+        # Default log levels based on output mode
         log_level = {
             "full": logging.INFO,
-            "diff_only": logging.WARNING,
+            "diff_only": 100,  # Disable ALL logging for pure diff output (level higher than CRITICAL)
             "quiet": logging.ERROR,
         }.get(output_mode, logging.INFO)
 
-    # Set up logging
+    # Configure logging once - all code uses standard logging calls
     logging.basicConfig(
         level=log_level,
-        format="%(levelname)s(%(name)s): %(message)s",
-        stream=sys.stderr,  # Log to stderr so stdout is clean for diff output
+        format="%(levelname)s: %(message)s",
+        stream=sys.stderr,  # All logging goes to stderr
     )
 
-    # Ensure the root logger level is set
-    root_logger = logging.getLogger()
-    assert root_logger is not None, "Root logger is None"
-    root_logger.setLevel(log_level)
-
-    print(f"[DEBUG] Root logger level: {root_logger.level}", file=sys.stderr)
+    if output_mode == "diff_only" and log_level >= logging.CRITICAL:
+        # Disable all logging for pure diff output when using default logging level
+        logging.disable(logging.CRITICAL)
 
     # Configure console for UTF-8 output on Windows
     if sys.platform == "win32":
@@ -212,8 +212,7 @@ def execute_cli(cmdline_args: Namespace):
             logging.error("Failed to configure console for UTF-8 output on Windows")
             logging.error(traceback.format_exc())
 
-    if output_mode != "diff_only":
-        print(f"KotorDiff version {CURRENT_VERSION}")
+    logging.info(f"KotorDiff version {CURRENT_VERSION}")
 
     # Gather all path inputs
     raw_path_inputs: list[str] = []
@@ -230,32 +229,37 @@ def execute_cli(cmdline_args: Namespace):
             raw_path_inputs.append(normalize_path_arg(p))
 
     if len(raw_path_inputs) < 2:  # noqa: PLR2004
-        if output_mode != "diff_only":
-            print("[Error] At least 2 paths are required for comparison.", file=sys.stderr)
-            print("[Info] Use --help to see CLI options", file=sys.stderr)
+        logging.error("At least 2 paths are required for comparison.")
+        logging.info("Use --help to see CLI options")
         sys.exit(1)
 
     # Convert string paths to Path/Installation objects
     resolved_paths: list[Path | Installation] = []
+    logging.error(f"raw_path_inputs: {raw_path_inputs}")
     for path_str in raw_path_inputs:
         path_obj = Path(path_str)
         try:
             # Try to create an Installation object (for KOTOR installations)
             installation = Installation(path_obj)
             resolved_paths.append(installation)
-            if output_mode != "diff_only":
-                print(f"[DEBUG] Loaded Installation for: {path_str}")
+            logging.debug(f"Loaded Installation for: {path_str}")
         except Exception as e:  # noqa: BLE001
             # Fall back to Path object (for folders/files)
             resolved_paths.append(path_obj)
-            if output_mode != "diff_only":
-                print(f"[DEBUG] Using Path (not Installation) for: {path_str}")
-                print(f"[DEBUG] Installation load failed: {e.__class__.__name__}: {e}")
+            logging.debug(f"Using Path (not Installation) for: {path_str}")
+            logging.debug(f"Installation load failed: {e.__class__.__name__}: {e}")
 
     # Special case: if comparing exactly two files, use direct diff
-    if len(resolved_paths) == 2 and all(isinstance(path, Path) and path.is_file() for path in resolved_paths) and output_mode == "diff_only":
+    print(f"[DEBUG] Checking special case: len={len(resolved_paths)}, output_mode={output_mode}", file=sys.stderr)
+    if (
+        len(resolved_paths) == 2
+        and all(isinstance(path, Path)
+        and path.is_file()
+        for path in resolved_paths)
+        and output_mode == "diff_only"
+    ):
+        print("[DEBUG] Using special case for file-to-file diff", file=sys.stderr)
         # Use direct file-to-file diff for unified output
-        from pykotor.diff_tool.logger import DiffLogger, LogLevel, OutputMode
         from pykotor.tslpatcher.diff.engine import DiffContext, diff_data
 
         # Create a custom log function that sends diff output to stdout
@@ -263,33 +267,59 @@ def execute_cli(cmdline_args: Namespace):
             message: str,
             *,
             message_type: str = "info",
+            separator: bool = False,  # pyright: ignore[reportUnusedParameter]
+            **kwargs,  # pyright: ignore[reportUnusedParameter]
         ) -> None:
             """Route diff output to stdout, everything else to logging."""
             import logging
+
             if message_type == "diff":
                 print(message)  # Print diff to stdout
-            else:
-                logger = logging.getLogger(__name__)
-                if message_type == "error":
-                    logger.error(message)
-                elif message_type == "warning":
-                    logger.warning(message)
-                elif message_type == "debug":
-                    logger.debug(message)
-                else:
-                    logger.info(message)
+            # For diff_only mode, suppress all other output completely
 
         path1, path2 = resolved_paths
-        ext = path1.suffix.casefold()[1:] if path1.suffix else ""
-        context = DiffContext(path1.name, path2.name, ext)
+        context = DiffContext(
+            file1_rel=Path(
+                os.path.relpath(
+                    os.path.dirname(path1.path() if isinstance(path1, Installation) else path1),
+                    path1.path() if isinstance(path1, Installation) else path1,
+                )
+            ),
+            file2_rel=Path(
+                os.path.relpath(
+                    os.path.dirname(path2.path() if isinstance(path2, Installation) else path2),
+                    path2.path() if isinstance(path2, Installation) else path2,
+                )
+            ),
+            ext=(
+                (path1.path() if isinstance(path1, Installation) else path1).suffix.casefold().lstrip(".").strip()
+                or (path2.path() if isinstance(path2, Installation) else path2).suffix.casefold().lstrip(".").strip()
+            ),
+            resname=(path1.path() if isinstance(path1, Installation) else path1).name,
+            file1_location_type="Installation" if isinstance(path1, Installation) else "Path",
+            file2_location_type="Installation" if isinstance(path2, Installation) else "Path",
+            file1_filepath=(path1.path() if isinstance(path1, Installation) else path1),
+            file2_filepath=(path2.path() if isinstance(path2, Installation) else path2),
+            file1_installation=path1 if isinstance(path1, Installation) else None,
+            file2_installation=path2 if isinstance(path2, Installation) else None,
+        )
 
         try:
-            result = diff_data(path1, path2, context, log_func=stdout_log_func, compare_hashes=True, format_type="unified")
+            result = diff_data(
+                (path1.path() if isinstance(path1, Installation) else path1).read_bytes(),
+                (path2.path() if isinstance(path2, Installation) else path2).read_bytes(),
+                context,
+                log_func=stdout_log_func,
+                compare_hashes=True,
+                format_type="unified",
+            )
+            # DO NOT REMOVE THIS LOG LINE!
             sys.exit(0 if result else 1)
         except Exception as e:
             import logging
+
             logger = logging.getLogger(__name__)
-            logger.error(f"Error comparing files: {e}")
+            logger.error(f"Error comparing files: {e.__class__.__name__}: {e}")
             sys.exit(1)
 
     # Create configuration object
@@ -314,4 +344,9 @@ def execute_cli(cmdline_args: Namespace):
 
 def has_cli_paths(cmdline_args: Namespace) -> bool:
     """Check if CLI paths were provided."""
-    return bool(cmdline_args.path1 or cmdline_args.path2 or cmdline_args.path3 or cmdline_args.extra_paths)
+    return bool(
+        cmdline_args.path1
+        or cmdline_args.path2
+        or cmdline_args.path3
+        or cmdline_args.extra_paths
+    )

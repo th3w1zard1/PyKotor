@@ -5,7 +5,7 @@ import re
 import sys
 
 from abc import abstractmethod
-from enum import IntEnum, IntFlag
+from enum import Flag, IntEnum, IntFlag
 from typing import Iterable, TYPE_CHECKING
 
 from qtpy.QtCore import QObject, QUrl, Qt, Signal  # pyright: ignore[reportPrivateImportUsage]

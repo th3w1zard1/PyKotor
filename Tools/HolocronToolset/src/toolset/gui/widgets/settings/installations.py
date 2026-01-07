@@ -340,6 +340,10 @@ class GlobalSettings(Settings):
         "firstTime",
         True,
     )
+    maxChildProcesses: SettingsProperty[int] = Settings.addSetting(
+        "maxChildProcesses",
+        1,
+    )
     gffSpecializedEditors: SettingsProperty[bool] = Settings.addSetting(
         "gffSpecializedEditors",
         True,

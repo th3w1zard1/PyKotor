@@ -7,7 +7,9 @@
 
 ### **A powerful CLI to easily compare KOTOR file formats, installations, and modules.**
 
-KotorDiff is a comprehensive command-line tool built on PyKotor that allows you to compare KOTOR files, directories, modules, and entire installations with detailed, structured output. Whether you're debugging TSLPatcher issues, validating mod installations, or analyzing differences between game versions, KotorDiff provides the precision you need.
+KotorDiff is a comprehensive command-line tool built on PyKotor that allows you to compare KOTOR files, directories, modules, and entire installations with detailed, structured unified diff output. Whether you're debugging TSLPatcher issues, validating mod installations, or analyzing differences between game versions, KotorDiff provides the precision you need.
+
+The `pykotorcli diff` command produces output identical to `git diff`, making it machine-readable for other tools and scripts.
 
 ### **Why KotorDiff?**
 
@@ -19,22 +21,26 @@ KotorDiff's output reveals the shocking truth - changing a single field results 
 
 ## Features
 
+- **Git Diff Compatible**: Produces unified diff output identical to `git diff`, making it machine-readable for other tools
 - **Multiple Comparison Types**: Compare files, directories, modules, or entire installations
 - **Advanced Module Resolution**: Intelligent handling of composite modules (`.rim` + `_s.rim` + `_dlg.erf`)
 - **Flexible Filtering**: Target specific modules or resources during installation-wide comparisons
 - **Detailed Logging**: Comprehensive resource resolution tracking with verbose search information
-- **Format-Aware Diffing**: Structured comparison of GFF, TLK, and capsule files
-- **3-Way Merging**: Support for merge conflicts and TSLPatcher integration
-- **Multiple Output Formats**: Default, unified, context, and side-by-side diff formats
+- **Format-Aware Diffing**: Structured comparison of GFF, TLK, and capsule files using ComparableMixin
+- **TSLPatcher Integration**: Generate `changes.ini` and `tslpatchdata` for mod creation
+- **Multiple Output Formats**: Unified (default), context, and side-by-side diff formats
+- **Comprehensive Testing**: 27 test cases covering all path types and comparison scenarios
 
 ## Installation
 
-```bash
-# Install dependencies
-uv install
+The diff functionality is now integrated into PyKotor CLI:
 
-# Run directly
-uv run src/kotordiff/__main__.py [options]
+```bash
+# Install PyKotor
+pip install pykotor
+
+# Run the diff command
+pykotorcli diff <path1> <path2> [options]
 ```
 
 ## Usage
@@ -42,140 +48,206 @@ uv run src/kotordiff/__main__.py [options]
 ### Basic Syntax
 
 ```bash
-kotordiff --path1 <path1> --path2 <path2> [options]
+# Compare two paths (files, folders, installations, or archives)
+pykotorcli diff <path1> <path2> [options]
+
+# Examples
+pykotorcli diff path/to/file1.utc path/to/file2.utc
+pykotorcli diff path/to/folder1 path/to/folder2
+pykotorcli diff /path/to/kotor1 /path/to/kotor2
+pykotorcli diff module.rim another_module.rim
 ```
 
 ### Comparison Types
 
-#### 1. File vs File
+The `pykotorcli diff` command automatically detects path types and handles **ALL combinations** of different path types. Path1 and path2 can be **any** of the supported types below - they do not need to be the same type.
 
-Compare two individual files of any supported format:
+#### Supported Path Types
 
+##### 1. **File Paths**
+Individual files of any supported format:
+- **GFF files**: `.utc`, `.utd`, `.utp`, `.uti`, `.utm`, `.uts`, `.utt`, `.utw`, `.ute`, `.are`, `.ifo`, `.git`, `.dlg`, `.gui`, etc.
+- **TalkTable files**: `.tlk`
+- **2DA files**: `.2da`
+- **Text files**: `.txt`, `.nss` (scripts), etc.
+- **Binary files**: Any unsupported format (compared by hash)
+
+##### 2. **Folder/Directory Paths**
+Any directory containing KOTOR files:
+- **Override folders**: `C:\Games\KOTOR\Override`
+- **Module folders**: `C:\Games\KOTOR\Modules`
+- **Custom mod folders**: Any directory with KOTOR files
+- **Working directories**: Development folders with source files
+
+##### 3. **Installation Paths**
+Complete KOTOR game installations:
+- **Full game paths**: `C:\Games\KOTOR`, `C:\Games\TSL`
+- **Must contain `chitin.key`** in the root directory
+- **Supports all KOTOR 1 and TSL installations**
+
+##### 4. **Bioware Archive Paths**
+Various archive formats used by KOTOR:
+
+###### **Composite Modules**
+Complete module packages with multiple files:
 ```bash
-kotordiff --path1 character1.utc --path2 character2.utc
+# Example: tat_m17ac module consists of:
+tat_m17ac.rim      # Main module data
+tat_m17ac_s.rim    # Supplementary data (sounds/models)
+tat_m17ac_dlg.erf  # Dialog data (TSL only)
+
+# Usage: specify any one file, diff detects the composite
+pykotorcli diff tat_m17ac.rim another_module.rim
 ```
 
-#### 2. Directory vs Directory
-
-Compare all files within two directories:
-
+###### **Single-File Modules**
+Standalone module files:
 ```bash
-kotordiff --path1 "mod_folder_1" --path2 "mod_folder_2"
+# .mod files (community overrides, highest priority)
+pykotorcli diff custom_module.mod vanilla_module.mod
+
+# .rim files when _s.rim/_dlg.erf don't exist
+pykotorcli diff standalone.rim another.rim
+
+# .sav files (savegames)
+pykotorcli diff savegame1.sav savegame2.sav
 ```
 
-#### 3. Installation vs Installation
-
-Compare two complete KOTOR installations:
-
+###### **Generic Archives**
+Non-module archives treated as generic containers:
 ```bash
-kotordiff --path1 "C:\Games\KOTOR" --path2 "C:\Games\KOTOR_Modded"
+# .erf files (patches, generic data)
+pykotorcli diff patch.erf another_patch.erf
+
+# .bif files (from chitin.key, compared as archives)
+pykotorcli diff data.bif modified_data.bif
 ```
 
-#### 4. Module vs Module
+**Priority Order for Archives:**
+1. `.mod` files (highest - community override)
+2. `.rim` + `_s.rim` + `_dlg.erf` (composite modules)
+3. Single `.rim`, `.erf`, `.sav` files
+4. `.bif` files (lowest priority)
 
-Compare modules using intelligent composite loading:
+#### Path1 vs Path2 Combinations
 
+The diff command supports **ALL possible combinations** of the above path types. Here are examples of how different path types work together:
+
+##### File vs File
 ```bash
-# Compare complete modules (automatically finds .rim, _s.rim, _dlg.erf)
-kotordiff --path1 "modules/tat_m17ac" --path2 "modules_backup/tat_m17ac"
-
-# Compare specific module files
-kotordiff --path1 "tat_m17ac.rim" --path2 "tat_m17ac_modified.rim"
+pykotorcli diff character1.utc character2.utc
+pykotorcli diff dialog1.dlg dialog2.dlg
+pykotorcli diff script1.nss script2.nss
 ```
 
-#### 5. Module vs Installation
-
-Compare a module against its counterpart in an installation:
-
+##### File vs Folder
 ```bash
-kotordiff --path1 "installation_path" --path2 "modules/tat_m17ac.rim"
+# Compare a single file against all files in a folder
+pykotorcli diff character.utc "Override/"
+# Finds character.utc in Override/ and compares it
 ```
 
-#### 6. Resource vs Installation
-
-Compare a single resource against its installation version:
-
+##### File vs Installation
 ```bash
-kotordiff --path1 "installation_path" --path2 "character.utc"
+# Compare a file against the entire game installation
+pykotorcli diff custom_character.utc "C:\Games\KOTOR"
+# Searches entire installation for matching resources
 ```
 
-### Advanced Options
-
-#### Filtering (`--filter`)
-
-Target specific modules or resources during installation comparisons:
-
+##### File vs Archive
 ```bash
-# Compare only the tat_m18ac module between installations
-kotordiff --path1 "install1" --path2 "install2" --filter "tat_m18ac"
-
-# Compare specific resources across installations
-kotordiff --path1 "install1" --path2 "install2" --filter "p_bastilla.utc" --filter "dialog.tlk"
-
-# Multiple filters for complex comparisons
-kotordiff --path1 "install1" --path2 "install2" --filter "tat_m17ac" --filter "danm13" --filter "kas_m22aa"
+# Compare a file against contents of an archive
+pykotorcli diff character.utc module.rim
+pykotorcli diff dialog.dlg savegame.sav
 ```
 
-#### Output Formats (`--format`)
-
-Choose from multiple diff output formats:
-
+##### Folder vs Folder
 ```bash
-# Default structured format (recommended)
-kotordiff --path1 file1 --path2 file2 --format default
-
-# Unified diff format (git-style)
-kotordiff --path1 file1 --path2 file2 --format unified
-
-# Context diff format
-kotordiff --path1 file1 --path2 file2 --format context
-
-# Side-by-side comparison
-kotordiff --path1 file1 --path2 file2 --format side_by_side
+pykotorcli diff "mod_folder_1/" "mod_folder_2/"
+pykotorcli diff "Override/" "Backup_Override/"
 ```
 
-#### Logging and Output Control
-
+##### Folder vs Installation
 ```bash
-# Set logging level
-kotordiff --path1 file1 --path2 file2 --log-level debug
-
-# Control output verbosity
-kotordiff --path1 file1 --path2 file2 --output-mode diff_only  # Only show differences
-kotordiff --path1 file1 --path2 file2 --output-mode quiet     # Minimal output
-
-# Save to specific log file
-kotordiff --path1 file1 --path2 file2 --output-log "my_diff.log"
-
-# Disable colored output
-kotordiff --path1 file1 --path2 file2 --no-color
+# Compare a mod folder against a full installation
+pykotorcli diff "My_Mod_Override/" "C:\Games\KOTOR"
 ```
 
-#### Selective Comparison (`--ignore-*`)
-
-Skip specific file types during comparison:
-
+##### Folder vs Archive
 ```bash
-# Ignore RIM files
-kotordiff --path1 install1 --path2 install2 --ignore-rims True
-
-# Ignore TLK files
-kotordiff --path1 install1 --path2 install2 --ignore-tlk True
-
-# Ignore LIP files
-kotordiff --path1 install1 --path2 install2 --ignore-lips True
+# Compare folder contents against archive contents
+pykotorcli diff "Override/" module.rim
+pykotorcli diff "source_files/" patch.erf
 ```
 
-### 3-Way Merging
+##### Installation vs Installation
+```bash
+pykotorcli diff "C:\Games\KOTOR" "C:\Games\KOTOR_Modded"
+pykotorcli diff "vanilla_kotor/" "modded_kotor/"
+```
 
-KotorDiff supports 3-way merging for advanced conflict resolution:
+##### Installation vs Archive
+```bash
+# Compare entire installation against a module
+pykotorcli diff "C:\Games\KOTOR" tat_m17ac.rim
+```
+
+##### Archive vs Archive
+```bash
+pykotorcli diff module1.rim module2.rim
+pykotorcli diff savegame1.sav savegame2.sav
+pykotorcli diff patch1.erf patch2.erf
+```
+
+#### Advanced Examples
 
 ```bash
-# 3-way merge with automatic TSLPatcher generation
-kotordiff --mine "my_version" --older "original" --yours "target_version"
+# Mix any types - these all work:
+pykotorcli diff character.utc module.rim           # File vs Archive
+pykotorcli diff "Override/" "C:\Games\KOTOR"      # Folder vs Installation
+pykotorcli diff tat_m17ac.rim "Modules/"          # Archive vs Folder
+pykotorcli diff savegame.sav character.utc        # Archive vs File
+pykotorcli diff "C:\Games\KOTOR" patch.erf        # Installation vs Archive
 
-# Generate changes.ini for TSLPatcher
-kotordiff --mine "my_mod" --older "vanilla" --yours "final_state" --generate-ini
+# Cross-game comparisons work too:
+pykotorcli diff "C:\Games\KOTOR" "C:\Games\TSL"    # K1 vs TSL installations
+```
+
+### Output Formats
+
+Choose from multiple diff output formats (default: unified):
+
+```bash
+# Unified diff (git-style, default)
+pykotorcli diff file1.utc file2.utc
+
+# Context diff
+pykotorcli diff file1.utc file2.utc --format context
+
+# Side-by-side (not fully implemented)
+pykotorcli diff file1.utc file2.utc --format side_by_side
+```
+
+### TSLPatcher Integration
+
+Generate TSLPatcher `changes.ini` and `tslpatchdata` folder:
+
+```bash
+# Generate TSLPatcher files for installation differences
+pykotorcli diff "vanilla_install" "modded_install" --generate-ini
+```
+
+### Output Control
+
+```bash
+# Write diff to file
+pykotorcli diff file1.utc file2.utc --output diff.patch
+
+# Show verbose debug information
+pykotorcli diff file1.utc file2.utc --verbose
+
+# Show debug information
+pykotorcli diff file1.utc file2.utc --debug
 ```
 
 ## Module Resolution System
@@ -235,6 +307,19 @@ Installation-wide search for 'module.ifo':
 - **Audio Files**: WAV, MP3
 - **Other**: Any unsupported format falls back to SHA256 hash comparison
 
+## Output Format
+
+The `pykotorcli diff` command produces unified diff output identical to `git diff`, making it machine-readable for scripts and automation tools. The output format is:
+
+1. **Field difference descriptions**: Shows which fields differ with their paths
+2. **Unified diff blocks**: Standard `---`, `+++`, `@@` format showing exact changes
+3. **Final summary**: Either `MATCHES` or `DOES NOT MATCH` indicating overall result
+
+Exit codes follow standard conventions:
+- `0`: Files/paths are identical
+- `1`: Files/paths differ
+- `2`: Error occurred
+
 ## Output Examples
 
 ### GFF File Differences
@@ -253,6 +338,7 @@ Field 'String' is different at 'character.utc\Tag':
 @@ -1 +1 @@
 -OldTag
 +NewTag
+'C:\path\to\character.utc' DOES NOT MATCH 'C:\path\to\modified_character.utc'
 ```
 
 ### Module Comparison
@@ -289,7 +375,13 @@ Installation comparison complete
 
 ## Exit Codes
 
-KotorDiff uses standard exit codes for integration with scripts and automation:
+PyKotor CLI diff uses standard exit codes for integration with scripts and automation:
+
+- **0**: Files/paths match perfectly (`MATCHES`)
+- **1**: Files/paths differ (`DOES NOT MATCH`) or system error
+- **2**: Error occurred during comparison
+
+Legacy KotorDiff uses different exit codes:
 
 - **0**: Files/installations match perfectly
 - **1**: System error (file not found, permission denied, etc.)
@@ -312,14 +404,31 @@ if %ERRORLEVEL% == 0 (
 )
 ```
 
-### **Command Line Options:**
+### **PyKotor CLI Diff Command (Recommended):**
+
+The `pykotorcli diff` command provides unified diff output identical to `git diff`, making it machine-readable for scripts and other tools.
+
+```bash
+pykotorcli diff <path1> <path2> [--format FORMAT] [--generate-ini] [--verbose] [--debug] [--quiet] [--no-color]
+```
+
+- `path1`: First path (file, folder, installation, or bioware archive)
+- `path2`: Second path (file, folder, installation, or bioware archive)
+- `--format`: Diff output format: `unified` (default), `context`, or `side_by_side`
+- `--generate-ini`: Generate TSLPatcher changes.ini and tslpatchdata folder (installation comparisons only)
+- `--verbose`: Increase output verbosity
+- `--debug`: Enable debug logging
+- `--quiet`: Disable all logging except errors
+- `--no-color`: Disable colored output
+
+### **Legacy KotorDiff Options:**
 
 ```bash
 kotordiff [--path1 PATH1] [--path2 PATH2] [--output-log FILE] [--ignore-rims] [--ignore-tlk] [--ignore-lips] [--compare-hashes] [--logging] [--use-profiler]
 ```
 
 - `--path1`: Path to the first K1/TSL install, file, or directory to diff
-- `--path2`: Path to the second K1/TSL install, file, or directory to diff  
+- `--path2`: Path to the second K1/TSL install, file, or directory to diff
 - `--output-log`: Filepath of the desired output logfile
 - `--ignore-rims`: Whether to compare RIMS (default is False)
 - `--ignore-tlk`: Whether to compare TLK files (default is False)

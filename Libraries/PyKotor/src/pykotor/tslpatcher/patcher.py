@@ -25,7 +25,6 @@ from pykotor.tslpatcher.memory import PatcherMemory
 from pykotor.tslpatcher.mods.install import InstallFile, create_backup
 from pykotor.tslpatcher.mods.nss import ModificationsNSS, MutableString
 from pykotor.tslpatcher.mods.template import OverrideType
-from utility.error_handling import universal_simplify_exception
 
 if TYPE_CHECKING:
     from threading import Event
@@ -155,12 +154,12 @@ class ModInstaller:
             if uninstall_dir.is_dir():
                 shutil.rmtree(uninstall_dir)
         except (PermissionError, OSError) as e:
-            self.log.add_warning(f"Could not initialize uninstall directory: {universal_simplify_exception(e)}")
+            self.log.add_warning(f"Could not initialize uninstall directory: {(e.__class__.__name__, str(e))}")
         backup_dir = backup_dir / "backup" / timestamp
         try:  # sourcery skip: remove-redundant-exception
             backup_dir.mkdir(parents=True, exist_ok=True)
         except (PermissionError, OSError) as e:
-            self.log.add_warning(f"Could not create backup folder: {universal_simplify_exception(e)}")
+            self.log.add_warning(f"Could not create backup folder: {(e.__class__.__name__, str(e))}")
         self.log.add_note(f"Using backup directory: '{backup_dir}'")
         self._backup = backup_dir
         self._processed_backup_files = set()
@@ -267,7 +266,7 @@ class ModInstaller:
                 return self.load_resource_file(output_container_path / patch.saveas)
             return capsule.resource(*ResourceIdentifier.from_path(patch.saveas).unpack())
         except OSError as e:
-            self.log.add_error(f"Could not load source file to {patch.action.lower().strip()}:{os.linesep}{universal_simplify_exception(e)}")
+            self.log.add_error(f"Could not load source file to {patch.action.lower().strip()}:{os.linesep}{(e.__class__.__name__, str(e))}")
             return None
 
     def handle_modrim_shadow(
@@ -319,7 +318,7 @@ class ModInstaller:
                     shutil.move(str(override_resource_path), str(renamed_file_path))
                 except Exception as e:  # pylint: disable=W0718  # noqa: BLE001
                     # Handle exceptions such as permission errors or file in use.
-                    self.log.add_error(f"Could not rename '{patch.saveas}' to '{renamed_file_path.name}' in the Override folder: {universal_simplify_exception(e)}")  # noqa: E501
+                    self.log.add_error(f"Could not rename '{patch.saveas}' to '{renamed_file_path.name}' in the Override folder: {(e.__class__.__name__, str(e))}")  # noqa: E501
             elif override_type == OverrideType.WARN:
                 self.log.add_warning(f"A resource located at '{override_resource_path}' is shadowing this mod's changes in {patch.destination}!")  # noqa: E501
 
@@ -459,7 +458,7 @@ class ModInstaller:
                     BinaryWriter.dump(output_container_path / patch.saveas, patched_data)
                 self.log.complete_patch()
             except Exception as e:  # pylint: disable=W0718  # noqa: BLE001
-                exc_type, exc_msg = universal_simplify_exception(e)
+                exc_type, exc_msg = (e.__class__.__name__, str(e))
                 fmt_exc_str = f"{exc_type}: {exc_msg}"
                 msg = f"An error occurred in patchlist {patch.__class__.__name__}:\n{fmt_exc_str}\n"
                 self.log.add_error(msg)

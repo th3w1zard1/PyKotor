@@ -287,11 +287,44 @@ class MediaPlayerWidget(QWidget):
         super().showEvent(event)
 
 
-# TODO: Creating a child editor from this class is not intuitive, document the requirements at some point.
 class Editor(QMainWindow):
     """Editor is a base class for all file-specific editors.
 
     Provides methods for saving and loading files that are stored directly in folders and for files that are encapsulated in a MOD or RIM.
+
+    ## Child Editor (Capsule Editor) Requirements
+
+    A "child editor" or "capsule editor" is an editor that can contain other editors within it (e.g., ERF Editor containing multiple file editors).
+    Creating a child editor from this base class requires careful setup:
+
+    ### Required Setup:
+    1. **Set Capsule Flag**: Set `self._is_capsule_editor = True` in your editor's `__init__` method
+    2. **Handle Nested Saving**: Implement proper handling of nested capsule saving in your save methods
+    3. **Parent-Child Relationships**: Understand that child editors modify data within their parent capsule
+
+    ### Key Behaviors:
+    - **Save Logic**: When `_is_capsule_editor` is True, the save process handles nested capsules differently
+    - **Data Flow**: Child editors save their data back to their parent capsule, not to disk directly
+    - **Nested Capsules**: Support for ERF/RIM files containing other ERF/RIM files (nested capsules)
+
+    ### Implementation Example:
+    ```python
+    class MyCapsuleEditor(Editor):
+        def __init__(self, parent, ...):
+            super().__init__(parent, title, icon, read_types, write_types, installation)
+            self._is_capsule_editor = True  # Required for capsule editor behavior
+            # ... rest of initialization
+    ```
+
+    ### Save Process for Child Editors:
+    1. Child editor saves its data to the in-memory capsule structure
+    2. Parent capsule editor(s) handle writing the complete nested structure to disk
+    3. Each level of nesting is properly serialized from inner to outer capsules
+
+    ### Common Pitfalls:
+    - Forgetting to set `_is_capsule_editor = True` causes incorrect save behavior
+    - Not handling nested capsule paths properly in save operations
+    - Incorrect parent-child data flow assumptions
     """
 
     newFile = QtCore.Signal()  # pyright: ignore[reportPrivateImportUsage]
@@ -545,7 +578,7 @@ class Editor(QMainWindow):
         except ValueError as e:
             invalid = True
             RobustLogger().exception("ValueError raised, assuming invalid filename/extension '%s'", filepath_str)
-            error_msg = str(universal_simplify_exception(e)).replace("\n", "<br>")
+            error_msg = str((e.__class__.__name__, str(e))).replace("\n", "<br>")
         if invalid:
             msgBox = QMessageBox(
                 QMessageBox.Icon.Critical,
@@ -640,7 +673,7 @@ class Editor(QMainWindow):
         except Exception as e:  # pylint: disable=W0718  # noqa: BLE001
             self.blinkWindow()
             RobustLogger().critical("Failed to write to file", exc_info=True)
-            msgBox = QMessageBox(QMessageBox.Icon.Critical, "Failed to write to file", str(universal_simplify_exception(e)).replace("\n", "<br>"))
+            msgBox = QMessageBox(QMessageBox.Icon.Critical, "Failed to write to file", str((e.__class__.__name__, str(e))).replace("\n", "<br>"))
             msgBox.setDetailedText(format_exception_with_variables(e))
             msgBox.exec_()
 

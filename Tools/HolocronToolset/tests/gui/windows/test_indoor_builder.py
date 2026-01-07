@@ -22,9 +22,16 @@ Runtime note:
   now limited to a small sample by default.
 - Override via env var:
   - `PYKOTOR_GUI_INDOOR_MODULE_SAMPLE=3` (default: 3)
+
+Test execution:
+- These tests are marked as "slow" and require PYKOTOR_TEST_LEVEL=slow or higher to run.
+- Default level is "fast" which skips these tests for quick CI/pre-PyPI validation.
+- Set PYKOTOR_TEST_LEVEL=slow to run these tests (takes 20+ minutes).
 """
 
 from __future__ import annotations
+
+import pytest
 
 import json
 import math

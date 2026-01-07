@@ -7,8 +7,6 @@ import re
 from contextlib import suppress
 from typing import Any
 
-from utility.error_handling import universal_simplify_exception
-
 LOCAL_PROGRAM_INFO: dict[str, Any] = {
     # <---JSON_START--->#{
     "currentVersion": "1.80",
@@ -38,8 +36,14 @@ LOCAL_PROGRAM_INFO: dict[str, Any] = {
 
 CURRENT_VERSION = LOCAL_PROGRAM_INFO["currentVersion"]
 
-def getRemoteHolopatcherUpdateInfo(*, useBetaChannel: bool = False, silent: bool = False) -> Exception | dict[str, Any]:
+
+def getRemoteHolopatcherUpdateInfo(
+    *,
+    useBetaChannel: bool = False,
+    silent: bool = False,
+) -> Exception | dict[str, Any]:
     import requests
+
     if useBetaChannel:
         UPDATE_INFO_LINK = LOCAL_PROGRAM_INFO["updateBetaInfoLink"]
     else:
@@ -65,16 +69,12 @@ def getRemoteHolopatcherUpdateInfo(*, useBetaChannel: bool = False, silent: bool
         if not isinstance(remote_info, dict):
             raise TypeError(f"Expected remoteInfo to be a dict, instead got type {remote_info.__class__.__name__}")  # noqa: TRY301
     except Exception as e:  # noqa: BLE001
-        err_msg = str(universal_simplify_exception(e))
+        err_msg = str((e.__class__.__name__, str(e)))
         from tkinter import messagebox
+
         if silent or messagebox.askyesno(
             "Error occurred fetching update information.",
-            (
-                "An error occurred while fetching the latest toolset information.\n\n"
-                + err_msg
-                + "\n\n"
-                + "Would you like to check against the local database instead?"
-            ),
+            ("An error occurred while fetching the latest toolset information.\n\n" + err_msg + "\n\n" + "Would you like to check against the local database instead?"),
         ):
             remote_info = LOCAL_PROGRAM_INFO
         else:

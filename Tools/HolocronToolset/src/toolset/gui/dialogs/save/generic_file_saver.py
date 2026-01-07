@@ -12,7 +12,6 @@ from qtpy.QtWidgets import QFileDialog, QMessageBox
 from pykotor.extract.file import FileResource, ResourceIdentifier, ResourceResult
 from pykotor.resource.formats.erf.erf_data import ERFResource
 from pykotor.resource.formats.rim.rim_data import RIMResource
-from utility.error_handling import universal_simplify_exception
 
 if TYPE_CHECKING:
     from qtpy.QtWidgets import QWidget
@@ -227,7 +226,7 @@ class FileSaveHandler(Generic[T]):
         msg_box.setIcon(QMessageBox.Icon.Critical)
         msg_box.setWindowTitle(tr("Failed to extract files to disk."))
         msg_box.setText(trf("{count} files FAILED to to be saved<br><br>Press 'show details' for information.", count=len(failed_extractions)))
-        detailed_info = "\n".join(f"{file}: {universal_simplify_exception(exc)}" for file, exc in failed_extractions.items())
+        detailed_info = "\n".join(f"{file}: {exc.__class__.__name__}: {exc}" for file, exc in failed_extractions.items())
         msg_box.setWindowFlags(Qt.WindowType.Dialog | Qt.WindowType.Window | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.WindowSystemMenuHint)  # pyright: ignore[reportArgumentType]
         msg_box.setDetailedText(detailed_info)
         msg_box.exec()

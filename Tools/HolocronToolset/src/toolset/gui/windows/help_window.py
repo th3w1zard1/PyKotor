@@ -11,7 +11,6 @@ from qtpy.QtWidgets import QMainWindow, QMessageBox
 from pykotor.tools.encoding import decode_bytes_with_fallbacks
 from toolset.gui.windows.help_content import HelpContent
 from toolset.gui.windows.help_paths import get_help_base_paths, get_help_file_path
-from utility.error_handling import universal_simplify_exception
 
 if TYPE_CHECKING:
     import os
@@ -85,7 +84,7 @@ class HelpWindow(QMainWindow):
             QMessageBox(
                 QMessageBox.Icon.Critical,
                 tr("Failed to open help file"),
-                trf("Could not access '{filepath}'.\n{error}", filepath=str(filepath), error=str(universal_simplify_exception(e))),
+                trf("Could not access '{filepath}'.\n{error}", filepath=str(filepath), error=str((e.__class__.__name__, str(e)))),
             ).exec()
 
     def on_contents_clicked(self):

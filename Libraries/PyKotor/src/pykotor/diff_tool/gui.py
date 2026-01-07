@@ -3,6 +3,7 @@
 This module provides the KotorDiff GUI, using the ThemedApp base class
 for a dark/orange themed interface similar to the Holocron Toolset.
 """
+
 from __future__ import annotations
 
 import os
@@ -43,7 +44,6 @@ from pykotor.tslpatcher.logger import LogType  # noqa: E402
 from utility.tkinter.base_app import ThemedApp  # noqa: E402
 
 if TYPE_CHECKING:
-
     from pykotor.tslpatcher.logger import PatchLog
 
 CURRENT_VERSION = pykotor_version
@@ -188,7 +188,14 @@ class KotorDiffApp(ThemedApp):
         self.path2_combobox = ttk.Combobox(paths_frame, style="TCombobox")
         self.path2_combobox.grid(row=5, column=0, columnspan=3, sticky="ew", padx=5, pady=2)
         self.path2_combobox["values"] = self._get_installation_paths()
-        self.path2_combobox.bind("<<ComboboxSelected>>", lambda e: self.root.after(10, lambda: self.move_cursor_to_end(cast("ttk.Combobox", e.widget))))
+
+        def on_path2_combobox_selected(event: tk.Event):
+            def move_cursor_later():
+                self.move_cursor_to_end(cast("ttk.Combobox", event.widget))
+
+            self.root.after(10, move_cursor_later)
+
+        self.path2_combobox.bind("<<ComboboxSelected>>", on_path2_combobox_selected)
 
         self.path2_browse_button = self.create_themed_button(paths_frame, "Browse...", self._browse_path2)
         self.path2_browse_button.grid(row=5, column=3, padx=5, pady=2)
@@ -295,11 +302,7 @@ class KotorDiffApp(ThemedApp):
 
     def _get_installation_paths(self) -> list[str]:
         """Get list of KOTOR installation paths."""
-        return [
-            str(path)
-            for game in find_kotor_paths_from_default().values()
-            for path in game
-        ]
+        return [str(path) for game in find_kotor_paths_from_default().values() for path in game]
 
     def _update_path1_state(self):
         """Update path1 combobox based on radio selection."""
@@ -466,6 +469,7 @@ class KotorDiffApp(ThemedApp):
 
     def write_log(self, log: PatchLog):
         """Write a log message to the UI."""
+
         def log_to_tag(this_log: PatchLog) -> str:
             if this_log.log_type == LogType.NOTE:
                 return "INFO"
@@ -474,4 +478,3 @@ class KotorDiffApp(ThemedApp):
             return this_log.log_type.name
 
         self._log_to_ui(log.formatted_message, log_to_tag(log))
-

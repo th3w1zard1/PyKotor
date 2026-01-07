@@ -23,7 +23,6 @@ from typing import TYPE_CHECKING, Callable
 from pykotor.extract.installation import Installation
 from pykotor.resource.formats.gff.gff_data import GFFContent
 from pykotor.tslpatcher.diff.engine import get_module_root
-from utility.error_handling import universal_simplify_exception
 
 if TYPE_CHECKING:
     from pykotor.extract.file import FileResource, ResourceIdentifier
@@ -1195,7 +1194,7 @@ def _diff_installations_with_resolution_impl(  # noqa: PLR0913, PLR0915, C901
                         incremental_writer=incremental_writer,
                     )
                 except Exception as e:  # noqa: BLE001
-                    log_func(f"Error adding install entry for {identifier.resname}.{identifier.restype.extension}: {universal_simplify_exception(e)}")
+                    log_func(f"Error adding install entry for {identifier.resname}.{identifier.restype.extension}: {(e.__class__.__name__, str(e))}")
                     log_func("Full traceback:")
                     for line in traceback.format_exc().splitlines():
                         log_func(f"  {line}")

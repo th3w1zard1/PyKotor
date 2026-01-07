@@ -7,7 +7,6 @@ from typing import TYPE_CHECKING, Any
 
 from pykotor.common.stream import BinaryReader
 from pykotor.tslpatcher.mods.template import PatcherModifications
-from utility.error_handling import universal_simplify_exception
 
 if TYPE_CHECKING:
     import os
@@ -83,7 +82,7 @@ def create_backup(
             try:  # sourcery skip: remove-redundant-exception
                 shutil.copy(destination_filepath, backup_filepath)
             except (OSError, PermissionError) as e:
-                log.add_warning(f"Failed to create backup of '{destination_file_str}': {universal_simplify_exception(e)}")
+                log.add_warning(f"Failed to create backup of '{destination_file_str}': {(e.__class__.__name__, str(e))}")
         else:
             # Write the file path to remove these files.txt in backup directory
             removal_files_txt: CaseAwarePath = backup_folderpath.joinpath("remove these files.txt")

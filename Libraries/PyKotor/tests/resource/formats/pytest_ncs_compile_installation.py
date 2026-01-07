@@ -322,7 +322,7 @@ def _handle_compile_exc(
     compiler_identifier: str,
     game: Game,
 ):
-    exc_type_name, exc_basic_info_str = universal_simplify_exception(e)
+    exc_type_name, exc_basic_info_str = (e.__class__.__name__, str(e))
     exc_debug_info_str = format_exception_with_variables(e)
 
     prefix_msg = "Could not compile " if e.__class__ is CompileError else f"Unexpected exception of type '{exc_type_name}' occurred when compiling"

@@ -8,7 +8,6 @@ exclusively on CLI argument parsing.
 from __future__ import annotations
 
 import cProfile
-import sys
 import traceback
 
 from dataclasses import dataclass
@@ -23,15 +22,8 @@ from pykotor.tools.reference_cache import StrRefReferenceCache
 
 # Cache support removed
 from pykotor.tslpatcher.diff.analyzers import analyze_tlk_strref_references
-from pykotor.tslpatcher.diff.engine import (
-    diff_data,
-    get_module_root,
-    run_differ_from_args_impl,
-)
-from pykotor.tslpatcher.diff.generator import (
-    TSLPatchDataGenerator,
-    determine_install_folders,
-)
+from pykotor.tslpatcher.diff.engine import diff_data, get_module_root, run_differ_from_args_impl
+from pykotor.tslpatcher.diff.generator import TSLPatchDataGenerator, determine_install_folders
 from pykotor.tslpatcher.writer import IncrementalTSLPatchDataWriter, ModificationsByType, TSLPatcherINISerializer
 
 if TYPE_CHECKING:
@@ -86,6 +78,7 @@ def log_output(*args, **kwargs):
     # Filter out custom kwargs that print() doesn't accept
     separator_above = kwargs.pop("separator_above", False)
     separator = kwargs.pop("separator", False)
+    message_type = kwargs.pop("message_type", "info")
 
     # Handle separator logic
     if separator or separator_above:
@@ -101,15 +94,16 @@ def log_output(*args, **kwargs):
     # Retrieve the printed content
     msg = buffer.getvalue()
 
-    # Use logging instead of direct printing
-    import logging
+    # For diff output, print directly to stdout
+    if message_type == "diff":
+        print(msg, end="")
+        return
 
+    # Use logging for other messages
+    import logging
     logger = logging.getLogger(__name__)
     if msg.strip():
         logger.info(msg.strip())
-
-    # All output is routed through logger.info() to stderr
-    # Don't print to stdout since logging handles the stream routing
 
     if not _global_config.logging_enabled or not _global_config.config:
         return
@@ -420,14 +414,18 @@ def handle_diff(config: KotorDiffConfig) -> tuple[bool | None, int | None]:
         If comparison_result is not None, use that for final output
         Otherwise use exit_code
     """
-    # Create modifications collection for INI generation
-    _global_config.modifications_by_type = ModificationsByType.create_empty()
+    # For diff_only mode, skip TSLPatcher generation and just do diff output
+    if config.output_mode == "diff_only":
+        _global_config.modifications_by_type = None
+    else:
+        # Create modifications collection for INI generation
+        _global_config.modifications_by_type = ModificationsByType.create_empty()
 
     # Use paths from config
     all_paths: list[Path | Installation] = config.paths
 
     # Create incremental writer if requested
-    incremental_writer = None
+    incremental_writer: IncrementalTSLPatchDataWriter | None = None
     base_path: Path | Installation | None = None
     if config.tslpatchdata_path:
         for candidate_path in all_paths:
@@ -456,7 +454,7 @@ def handle_diff(config: KotorDiffConfig) -> tuple[bool | None, int | None]:
             from utility.common.more_collections import CaseInsensitiveDict  # noqa: PLC0415
 
             twoda_caches: dict[int, CaseInsensitiveDict[TwoDAMemoryReferenceCache]] = {}
-            if game:
+            if game is not None:
                 # Initialize caches for each path index
                 for idx in range(len(all_paths)):
                     twoda_caches[idx] = CaseInsensitiveDict()

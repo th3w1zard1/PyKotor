@@ -17,7 +17,7 @@ from pykotor.resource.formats.twoda import TwoDA, read_2da, write_2da
 from pykotor.resource.type import ResourceType
 from toolset.gui.editor import Editor
 from toolset.gui.widgets.settings.installations import GlobalSettings
-from utility.error_handling import assert_with_variable_trace, universal_simplify_exception
+from utility.error_handling import assert_with_variable_trace
 
 if TYPE_CHECKING:
     import os
@@ -159,7 +159,7 @@ class TwoDAEditor(Editor):
         try:
             self._load_main(data)
         except ValueError as e:
-            error_msg = str(universal_simplify_exception(e)).replace("\n", "<br>")
+            error_msg = str((e.__class__.__name__, str(e))).replace("\n", "<br>")
             from toolset.gui.common.localization import translate as tr, trf
             QMessageBox(QMessageBox.Icon.Critical, tr("Failed to load file."), trf("Failed to open or load file data.<br>{error}", error=error_msg)).exec()
             self.proxy_model.setSourceModel(self.source_model)
