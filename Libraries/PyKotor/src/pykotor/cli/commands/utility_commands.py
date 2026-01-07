@@ -281,11 +281,11 @@ def cmd_diff(
     if output_mode != OutputMode.QUIET:
         print(f"Using --path1='{args.path1}'")
         print(f"Using --path2='{args.path2}'")
-        print(f"Using --ignore-rims=False")
-        print(f"Using --ignore-tlk=False")
-        print(f"Using --ignore-lips=False")
-        print(f"Using --compare-hashes=True")
-        print(f"Using --use-profiler=False")
+        print("Using --ignore-rims=False")
+        print("Using --ignore-tlk=False")
+        print("Using --ignore-lips=False")
+        print("Using --compare-hashes=True")
+        print("Using --use-profiler=False")
         print()
 
     # Handle special case: identical paths should always match
@@ -318,11 +318,7 @@ def cmd_diff(
     if isinstance(path1, Path) and isinstance(path2, Path) and path1.is_file() and path2.is_file():
         from pykotor.tslpatcher.diff.engine import DiffContext, diff_data
 
-        # For individual files, --generate-ini is nd, diff_data
-        if getattr(args, "generate_ini", False):
-            print("Error: --generate-ini is only supported for installation-wide comparisons", file=sys.stderr)
-            print("For individual files, use installation paths instead", file=sys.stderr)
-            return 1
+        # --generate-ini is supported for any path type
 
         try:
             # Check if files exist
@@ -343,7 +339,14 @@ def cmd_diff(
             # Use the existing diff_data function
             data1 = path1.read_bytes()
             data2 = path2.read_bytes()
-            result = diff_data(data1, data2, context, log_func=log_func, compare_hashes=True, format_type=format_type)
+            result = diff_data(
+                data1,
+                data2,
+                context,
+                log_func=log_func,
+                compare_hashes=True,
+                format_type=format_type,
+            )
 
             # Add summary message
             if result:
@@ -354,11 +357,7 @@ def cmd_diff(
             return 0 if result else 1
 
         except Exception as e:
-            print(f"Error comparing files: {e}", file=sys.stderr)
-            if verbose:
-                import traceback
-
-                traceback.print_exc()
+            logger.exception(f"Error comparing files: {e.__class__.__name__}: {e}")
             return 1
         finally:
             if output_handle:
@@ -423,7 +422,13 @@ def cmd_diff(
 
         if path1_is_archive or path2_is_archive:
             # Archive/directory comparison - walk and compare resources
-            return _diff_archives_or_directories(path1, path2, args, formatter, diff_logger, output_mode)
+            return _diff_archives_or_directories(
+                path1,
+                path2,
+                args,formatter,
+                diff_logger,
+                output_mode,
+            )
         else:
             # Both are regular files - direct comparison
             ext = path1.suffix.casefold()[1:] if path1.suffix else ""
@@ -441,10 +446,7 @@ def cmd_diff(
             return 0 if result else 1
 
     except Exception as e:
-        print(f"Error: Failed to generate diff: {e}", file=sys.stderr)
-        if verbose:
-            import traceback
-
+        logger.exception(f"Error generating diff: {e.__class__.__name__}: {e}")
         if output_handle:
             output_handle.close()
 
