@@ -28,7 +28,7 @@ from qtpy.QtWidgets import (
 
 from pykotor.common.misc import ResRef
 from pykotor.extract.file import ResourceIdentifier
-from pykotor.resource.formats.bif import read_bif
+from pykotor.resource.formats.bif import BIFType, read_bif, write_bif
 from pykotor.resource.formats.erf import ERF, ERFResource, ERFType, read_erf, write_erf
 from pykotor.resource.formats.rim import RIM, read_rim, write_rim
 from pykotor.resource.type import ResourceType
@@ -39,7 +39,6 @@ from toolset.gui.dialogs.save.generic_file_saver import FileSaveHandler
 from toolset.gui.editor import Editor
 from toolset.gui.widgets.settings.installations import GlobalSettings
 from toolset.utils.window import open_resource_editor
-from utility.error_handling import universal_simplify_exception
 from utility.ui_libraries.qt.widgets.itemviews.tableview import RobustTableView
 
 if TYPE_CHECKING:
@@ -227,21 +226,21 @@ class ERFEditor(Editor):
         elif restype is ResourceType.RIM:
             rim: RIM = read_rim(data)
             for resource in rim:
-                resref_item: QStandardItem = QStandardItem(str(resource.resref))
+                resref_item = QStandardItem(str(resource.resref))
                 resref_item.setData(resource)
-                restype_item: QStandardItem = QStandardItem(resource.restype.extension.upper())
-                size_item: QStandardItem = QStandardItem(human_readable_size(len(resource.data)))
-                offset_item: QStandardItem = QStandardItem(f"0x{rim.get_resource_offset(resource):X}")
+                restype_item = QStandardItem(resource.restype.extension.upper())
+                size_item = QStandardItem(human_readable_size(len(resource.data)))
+                offset_item = QStandardItem(f"0x{rim.get_resource_offset(resource):X}")
                 self.source_model.appendRow([resref_item, restype_item, size_item, offset_item])
 
         elif restype is ResourceType.BIF:
             bif: BIF = read_bif(data)
             for resource in bif:
-                resref_item: QStandardItem = QStandardItem(str(resource.resref))
+                resref_item = QStandardItem(str(resource.resref))
                 resref_item.setData(resource)
-                restype_item: QStandardItem = QStandardItem(resource.restype.extension.upper())
-                size_item: QStandardItem = QStandardItem(human_readable_size(len(resource.data)))
-                offset_item: QStandardItem = QStandardItem(f"0x{bif.get_resource_offset(resource):X}")
+                restype_item = QStandardItem(resource.restype.extension.upper())
+                size_item = QStandardItem(human_readable_size(len(resource.data)))
+                offset_item = QStandardItem(f"0x{bif.get_resource_offset(resource):X}")
                 self.source_model.appendRow([resref_item, restype_item, size_item, offset_item])
 
         else:
@@ -266,23 +265,38 @@ class ERFEditor(Editor):
                 if item is None:
                     RobustLogger().warning(f"item was None in ERFEditor.build() at index {source_index}")
                     continue
-                resource: ERFResource = item.data()
+                resource = item.data()
+                assert isinstance(resource, RIMResource), "resource is not a valid RIM resource type"
                 rim.set_data(str(resource.resref), resource.restype, resource.data)
             write_rim(rim, data)
 
-        elif self._restype in (ResourceType.ERF, ResourceType.MOD, ResourceType.SAV, ResourceType.BIF):  # sourcery skip: split-or-ifs
+        elif self._restype in (ResourceType.ERF, ResourceType.MOD, ResourceType.SAV):  # sourcery skip: split-or-ifs
             erf = ERF(ERFType.from_extension(self._restype.extension))
             if self._restype is ResourceType.SAV:
                 erf.is_save = True
             for i in range(self._proxy_model.rowCount()):
                 source_index: QModelIndex = self._proxy_model.mapToSource(self._proxy_model.index(i, 0))
-                item: QStandardItem | None = self.source_model.itemFromIndex(source_index)
+                item = self.source_model.itemFromIndex(source_index)
                 if item is None:
                     RobustLogger().warning("item was None in ERFEditor.build() at index %s", source_index)
                     continue
                 resource = item.data()
+                assert isinstance(resource, ERFResource), "resource is not a valid ERF resource type"
                 erf.set_data(str(resource.resref), resource.restype, resource.data)
             write_erf(erf, data)
+
+        elif self._restype in (ResourceType.BIF, ResourceType.BZF):
+            bif = BIF(BIFType.from_extension(self._restype.extension))
+            for i in range(self._proxy_model.rowCount()):
+                source_index = self._proxy_model.mapToSource(self._proxy_model.index(i, 0))
+                item = self.source_model.itemFromIndex(source_index)
+                if item is None:
+                    RobustLogger().warning("item was None in ERFEditor.build() at index %s", source_index)
+                    continue
+                resource = item.data()
+                assert isinstance(resource, BIFResource), "resource is not a valid BIF resource type"
+                bif.set_data(ResRef(resource.name), resource.type, bytes(resource.bif_index), int(resource.res_index))
+            write_bif(bif, data)
         else:
             raise ValueError(f"Invalid restype for ERFEditor: {self._restype!r}")
 
@@ -338,11 +352,11 @@ class ERFEditor(Editor):
 
         main_menu = QMenu(self)
 
-        extract_action = QAction("Extract to...", self)
+        extract_action = QAction(tr("Extract to..."), self)
         extract_action.triggered.connect(self.extract_selected)
         main_menu.addAction(extract_action)
 
-        rename_action = QAction("Rename", self)
+        rename_action = QAction(tr("Rename"), self)
         rename_action.triggered.connect(self.rename_selected)
         main_menu.addAction(rename_action)
         if len(sel_resources) != 1:
@@ -351,13 +365,13 @@ class ERFEditor(Editor):
         if self._filepath is not None:
             main_menu.addSeparator()
             if all(resource.restype.target_type().contents == "gff" for resource in sel_resources):
-                main_menu.addAction("Open with GFF Editor").triggered.connect(lambda *args, fp=self._filepath, **kwargs: self.open_in_resource_editor(fp, sel_resources, self._installation, gff_specialized=False))  # noqa: E501
+                main_menu.addAction(tr("Open with GFF Editor")).triggered.connect(lambda *args, fp=self._filepath, **kwargs: self.open_in_resource_editor(fp, sel_resources, self._installation, gff_specialized=False))  # noqa: E501
                 if self._installation is not None:
-                    main_menu.addAction("Open with Specialized Editor").triggered.connect(lambda *args, fp=self._filepath, **kwargs: self.open_in_resource_editor(fp, sel_resources, self._installation, gff_specialized=True))  # noqa: E501
-                    main_menu.addAction("Open with Default Editor").triggered.connect(lambda *args, fp=self._filepath, **kwargs: self.open_in_resource_editor(fp, sel_resources, self._installation, gff_specialized=None))  # noqa: E501
+                    main_menu.addAction(tr("Open with Specialized Editor")).triggered.connect(lambda *args, fp=self._filepath, **kwargs: self.open_in_resource_editor(fp, sel_resources, self._installation, gff_specialized=True))  # noqa: E501
+                    main_menu.addAction(tr("Open with Default Editor")).triggered.connect(lambda *args, fp=self._filepath, **kwargs: self.open_in_resource_editor(fp, sel_resources, self._installation, gff_specialized=None))  # noqa: E501
 
             elif self._installation is not None:
-                main_menu.addAction("Open with Editor").triggered.connect(lambda *args, fp=self._filepath, **kwargs: self.open_in_resource_editor(fp, sel_resources, self._installation, gff_specialized=True))  # noqa: E501
+                main_menu.addAction(tr("Open with Editor")).triggered.connect(lambda *args, fp=self._filepath, **kwargs: self.open_in_resource_editor(fp, sel_resources, self._installation, gff_specialized=True))  # noqa: E501
 
         viewport: QWidget | None = self.ui.tableView.viewport()
         if viewport is None:
@@ -378,7 +392,13 @@ class ERFEditor(Editor):
         if not selected_resources:
             RobustLogger().info("ERFEditor: Nothing selected to save, no selected resources.")
             return
-        FileSaveHandler(selected_resources, parent=self).save_files()
+
+        file_handler = FileSaveHandler(selected_resources, parent=self)
+        successful_paths = file_handler.save_files()
+
+        # Show extraction feedback dialog
+        from toolset.gui.common.extraction_feedback import show_extraction_results
+        show_extraction_results(self, successful_paths, folder_path=None)
 
     def rename_selected(self):
         indexes: list[QModelIndex] = self.ui.tableView.selectedIndexes()
@@ -421,7 +441,7 @@ class ERFEditor(Editor):
             new_resname: str = dialog.textValue()
             if ResRef.is_valid(new_resname):
                 return new_resname, True
-            QMessageBox.warning(self, "Invalid ResRef", "ResRefs must adhere to SBCS encoding standards (typically cp1252) and be a maximum of 16 characters.")
+            QMessageBox.warning(self, tr("Invalid ResRef"), tr("ResRefs must adhere to SBCS encoding standards (typically cp1252) and be a maximum of 16 characters."))
         return "", False
 
     def resref_validator(self) -> QRegExpValidator:
@@ -456,16 +476,16 @@ class ERFEditor(Editor):
                 self.source_model.appendRow([resref_item, restype_item, size_item])
             except Exception as e:  # noqa: BLE001
                 RobustLogger().exception("Failed to add resource at '%s'", r_filepath.absolute())
-                error_msg: str = str(universal_simplify_exception(e)).replace("\n", "<br>")
+                error_msg: str = str((e.__class__.__name__, str(e))).replace("\n", "<br>")
                 QMessageBox(
                     QMessageBox.Icon.Critical,
-                    "Failed to add resource",
+                    tr("Failed to add resource"),
                     f"Could not add resource at '{r_filepath.absolute()}'<br><br>{error_msg}",
                     flags=Qt.WindowType.Dialog | Qt.WindowType.Window | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.WindowSystemMenuHint,
                 ).exec()
 
     def select_files_to_add(self):
-        filepaths: list[str] = QFileDialog.getOpenFileNames(self, "Load files into module")[:-1][0]
+        filepaths: list[str] = QFileDialog.getOpenFileNames(self, tr("Load files into module"))[:-1][0]
         self.add_resources(filepaths)
 
     def open_selected(
