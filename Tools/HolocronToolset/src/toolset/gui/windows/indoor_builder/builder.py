@@ -608,9 +608,9 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         first_row.setContentsMargins(0, 0, 0, 0)
         first_row.setSpacing(8)
 
-        self._mouse_label = QLabel("Coords:")
-        self._hover_label = QLabel("Hover:")
-        self._selection_label = QLabel("Selection:")
+        self._mouse_label = QLabel(tr("Coords:"))
+        self._hover_label = QLabel(tr("Hover:"))
+        self._selection_label = QLabel(tr("Selection:"))
         self._keys_label = QLabel("Keys/Buttons:")
         for lbl in (self._mouse_label, self._hover_label, self._selection_label, self._keys_label):
             lbl.setTextFormat(Qt.TextFormat.RichText)

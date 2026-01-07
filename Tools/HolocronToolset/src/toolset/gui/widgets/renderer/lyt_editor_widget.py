@@ -145,7 +145,7 @@ class LYTEditorWidget(QWidget):
 
         # Position controls
         pos_layout = QHBoxLayout()
-        pos_layout.addWidget(QLabel("Position:"))
+        pos_layout.addWidget(QLabel(tr("Position:")))
         self.pos_x = QSpinBox()
         self.pos_y = QSpinBox()
         self.pos_z = QSpinBox()
@@ -155,7 +155,7 @@ class LYTEditorWidget(QWidget):
         room_layout.addLayout(pos_layout, 0, 0, 1, 2)
 
         # Model name
-        room_layout.addWidget(QLabel("Model:"), 1, 0)
+        room_layout.addWidget(QLabel(tr("Model:")), 1, 0)
         self.model_name = QLabel()
         room_layout.addWidget(self.model_name, 1, 1)
 
@@ -168,7 +168,7 @@ class LYTEditorWidget(QWidget):
 
         # Door position
         door_pos_layout = QHBoxLayout()
-        door_pos_layout.addWidget(QLabel("Position:"))
+        door_pos_layout.addWidget(QLabel(tr("Position:")))
         self.door_pos_x = QSpinBox()
         self.door_pos_y = QSpinBox()
         self.door_pos_z = QSpinBox()
@@ -178,7 +178,7 @@ class LYTEditorWidget(QWidget):
         door_layout.addLayout(door_pos_layout, 0, 0, 1, 2)
 
         # Room ID
-        door_layout.addWidget(QLabel("Room:"), 1, 0)
+        door_layout.addWidget(QLabel(tr("Room:")), 1, 0)
         self.room_id = QSpinBox()
         self.room_id.setRange(0, 999)
         door_layout.addWidget(self.room_id, 1, 1)
