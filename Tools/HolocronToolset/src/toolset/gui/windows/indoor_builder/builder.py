@@ -60,6 +60,7 @@ from toolset.blender.integration import BlenderEditorMixin
 from toolset.data.indoorkit.qt_preview import ensure_component_image
 from toolset.data.installation import HTInstallation
 from toolset.gui.common.filters import NoScrollEventFilter
+from toolset.gui.common.localization import translate as tr, translate_format as trf
 from toolset.gui.dialogs.asyncloader import AsyncLoader
 from toolset.gui.dialogs.indoor_settings import IndoorMapSettings
 from toolset.gui.widgets.settings.widgets.module_designer import ModuleDesignerSettings
@@ -94,10 +95,10 @@ from toolset.utils.misc import get_qt_button_string, get_qt_key_string
 from utility.common.geometry import SurfaceMaterial, Vector2, Vector3
 
 if TYPE_CHECKING:
+    from qtpy.QtGui import QKeySequence
     from qtpy.QtWidgets import QLayout
 
     from pykotor.common.indoormap import MissingRoomInfo
-    from qtpy.QtGui import QKeySequence
 
 
 # =============================================================================
@@ -372,8 +373,8 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self._undo_stack.cleanChanged.connect(self._refresh_window_title)  # Update title when clean state changes
 
         # Update action text with command names
-        self._undo_stack.undoTextChanged.connect(lambda text: self.ui.actionUndo.setText(f"Undo {text}" if text else "Undo"))
-        self._undo_stack.redoTextChanged.connect(lambda text: self.ui.actionRedo.setText(f"Redo {text}" if text else "Redo"))
+        self._undo_stack.undoTextChanged.connect(lambda text: self.ui.actionUndo.setText(f"{tr('Undo')} {text}" if text else tr("Undo")))
+        self._undo_stack.redoTextChanged.connect(lambda text: self.ui.actionRedo.setText(f"{tr('Redo')} {text}" if text else tr("Redo")))
 
         # Initial state
         self.ui.actionUndo.setEnabled(False)
@@ -1095,7 +1096,16 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
         # Keys/buttons (sorted with modifiers first)
         def sort_with_modifiers(
-            items: set[Qt.MouseButton] | set[int | Qt.Key | Qt.MouseButton] | set[int | Qt.Key] | set[Qt.Key] | set[int] | set[int | Qt.MouseButton] | set[Qt.Key | int] | set[Qt.MouseButton | int] | set[int | Qt.Key | Qt.MouseButton | int] | set[QKeySequence],
+            items: set[Qt.MouseButton]
+            | set[int | Qt.Key | Qt.MouseButton]
+            | set[int | Qt.Key]
+            | set[Qt.Key]
+            | set[int]
+            | set[int | Qt.MouseButton]
+            | set[Qt.Key | int]
+            | set[Qt.MouseButton | int]
+            | set[int | Qt.Key | Qt.MouseButton | int]
+            | set[QKeySequence],
             get_string_func: Callable[[int | Qt.Key | Qt.MouseButton], str],
             qt_enum_type: str,
         ) -> list[int | Qt.Key | Qt.MouseButton]:
@@ -1260,7 +1270,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             elif result == QMessageBox.StandardButton.Cancel:
                 return
 
-        filepath, _ = QFileDialog.getOpenFileName(self, "Open Map", "", "Indoor Map File (*.indoor)")
+        filepath, _ = QFileDialog.getOpenFileName(self, tr("Open Map"), "", "Indoor Map File (*.indoor)")
         if filepath and str(filepath).strip():
             try:
                 missing_rooms = self._map.load(Path(filepath).read_bytes(), self._kits, self._module_kit_manager)
@@ -1292,7 +1302,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             QMessageBox.warning(self, tr("No Installation"), tr("Please select an installation first."))
             return
 
-        filepath, _ = QFileDialog.getOpenFileName(self, "Open Module", "", "Module (*.mod);;All Files (*)")
+        filepath, _ = QFileDialog.getOpenFileName(self, tr("Open Module"), "", "Module (*.mod);;All Files (*)")
         if not filepath or not str(filepath).strip():
             return
 
@@ -1527,7 +1537,6 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         except Exception as e:  # noqa: BLE001
             from loggerplus import RobustLogger  # type: ignore[import-untyped, note]  # pyright: ignore[reportMissingTypeStubs]
             from toolset.gui.common.localization import translate as tr, trf
-            from utility.error_handling import universal_simplify_exception
 
             RobustLogger().exception(f"Failed to load module '{module_name}'")
             QMessageBox(

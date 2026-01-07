@@ -27,12 +27,12 @@ from qtpy.QtCore import (
     Qt,
     Signal,  # pyright: ignore[reportPrivateImportUsage]
 )
-from qtpy.QtWidgets import QDoubleSpinBox
 from qtpy.QtGui import QAction, QActionGroup, QDrag, QHelpEvent, QIcon, QKeySequence, QPainter, QPalette, QPixmap, QShortcut, QUndoCommand
 from qtpy.QtWidgets import (
     QApplication,
     QDialog,
     QDockWidget,
+    QDoubleSpinBox,
     QErrorMessage,
     QFileDialog,
     QGridLayout,
@@ -1103,7 +1103,7 @@ class LYTEditorWidget(QWidget):
             self.undo_stack.push(RenameItemCommand(self.lyt_editor, selected_item))
 
     def show_search_dialog(self):
-        search_text, ok = QInputDialog.getText(self, "Search", "Enter search term:")
+        search_text, ok = QInputDialog.getText(self, tr("Search"), tr("Enter search term:"))
         if ok and search_text:
             self.perform_search(search_text)
 
@@ -1551,7 +1551,7 @@ class RenameItemCommand(QUndoCommand):
 
     def redo(self):
         if not self.new_name:
-            self.new_name, ok = QInputDialog.getText(None, "Rename Item", "Enter new name:", text=self.old_name)
+            self.new_name, ok = QInputDialog.getText(None, tr("Rename Item"), tr("Enter new name:"), text=self.old_name)
             if not ok:
                 return
         self.item.name = self.new_name

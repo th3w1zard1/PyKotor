@@ -628,6 +628,12 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Failed to flush EventQueue:\n{error}": "Failed to flush EventQueue:\n{error}",
         "Walkmesh visible": "Walkmesh visible",
         "Walkmesh hidden": "Walkmesh hidden",
+        # Dialog titles and prompts
+        "Open Map": "Open Map",
+        "Open Module": "Open Module",
+        "Enter search term:": "Enter search term:",
+        "Rename Item": "Rename Item",
+        "Enter new name:": "Enter new name:",
     },
     ToolsetLanguage.FRENCH: {
         # Main Window
@@ -1192,6 +1198,12 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Failed to flush EventQueue:\n{error}": "Échec de la purge d'EventQueue :\n{error}",
         "Walkmesh visible": "Walkmesh visible",
         "Walkmesh hidden": "Walkmesh masqué",
+        # Dialog titles and prompts
+        "Open Map": "Ouvrir carte",
+        "Open Module": "Ouvrir module",
+        "Enter search term:": "Entrez le terme de recherche :",
+        "Rename Item": "Renommer l'élément",
+        "Enter new name:": "Entrez le nouveau nom :",
     },
     ToolsetLanguage.GERMAN: {
         # Main Window
@@ -1756,6 +1768,12 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Failed to flush EventQueue:\n{error}": "EventQueue konnte nicht geleert werden:\n{error}",
         "Walkmesh visible": "Walkmesh sichtbar",
         "Walkmesh hidden": "Walkmesh versteckt",
+        # Dialog titles and prompts
+        "Open Map": "Karte öffnen",
+        "Open Module": "Modul öffnen",
+        "Enter search term:": "Suchbegriff eingeben:",
+        "Rename Item": "Element umbenennen",
+        "Enter new name:": "Neuen Namen eingeben:",
     },
     ToolsetLanguage.ITALIAN: {
         # Main Window
@@ -2320,6 +2338,12 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Failed to flush EventQueue:\n{error}": "Impossibile svuotare EventQueue:\n{error}",
         "Walkmesh visible": "Walkmesh visibile",
         "Walkmesh hidden": "Walkmesh nascosto",
+        # Dialog titles and prompts
+        "Open Map": "Apri mappa",
+        "Open Module": "Apri modulo",
+        "Enter search term:": "Inserisci termine di ricerca:",
+        "Rename Item": "Rinomina elemento",
+        "Enter new name:": "Inserisci nuovo nome:",
     },
     ToolsetLanguage.SPANISH: {
         # Main Window
@@ -2884,6 +2908,12 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Failed to flush EventQueue:\n{error}": "Error al vaciar EventQueue:\n{error}",
         "Walkmesh visible": "Walkmesh visible",
         "Walkmesh hidden": "Walkmesh oculto",
+        # Dialog titles and prompts
+        "Open Map": "Abrir mapa",
+        "Open Module": "Abrir módulo",
+        "Enter search term:": "Introducir término de búsqueda:",
+        "Rename Item": "Renombrar elemento",
+        "Enter new name:": "Introducir nuevo nombre:",
     },
     ToolsetLanguage.POLISH: {
         # Main Window
@@ -3448,6 +3478,12 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Failed to flush EventQueue:\n{error}": "Nie udało się opróżnić EventQueue:\n{error}",
         "Walkmesh visible": "Walkmesh widoczny",
         "Walkmesh hidden": "Walkmesh ukryty",
+        # Dialog titles and prompts
+        "Open Map": "Otwórz mapę",
+        "Open Module": "Otwórz moduł",
+        "Enter search term:": "Wprowadź wyszukiwany termin:",
+        "Rename Item": "Zmień nazwę elementu",
+        "Enter new name:": "Wprowadź nową nazwę:",
     },
     ToolsetLanguage.RUSSIAN: {
         # Main Window
@@ -4013,6 +4049,12 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Failed to flush EventQueue:\n{error}": "Не удалось очистить EventQueue:\n{error}",
         "Walkmesh visible": "Walkmesh видимый",
         "Walkmesh hidden": "Walkmesh скрытый",
+        # Dialog titles and prompts
+        "Open Map": "Открыть карту",
+        "Open Module": "Открыть модуль",
+        "Enter search term:": "Введите поисковый запрос:",
+        "Rename Item": "Переименовать элемент",
+        "Enter new name:": "Введите новое имя:",
     },
 }
 
