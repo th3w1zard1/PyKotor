@@ -74,7 +74,6 @@ from toolset.gui.widgets.settings.installations import GlobalSettings, NoConfigu
 from toolset.gui.widgets.terminal_widget import TerminalWidget  # pyright: ignore[reportPrivateImportUsage]
 from toolset.utils.script import ht_compile_script  # pyright: ignore[reportPrivateImportUsage]
 from toolset.utils.window import open_resource_editor  # pyright: ignore[reportPrivateImportUsage]
-from utility.error_handling import universal_simplify_exception  # pyright: ignore[reportPrivateImportUsage]
 from utility.misc import is_debug_mode  # pyright: ignore[reportPrivateImportUsage]
 from utility.updater.github import download_github_file  # pyright: ignore[reportPrivateImportUsage]
 
@@ -1237,7 +1236,7 @@ class NSSEditor(Editor):
         self.ui.panelTabs.setCurrentWidget(self.ui.findResultsTab)
 
         if not self._find_results:
-            QMessageBox.information(self, "Find All References", f"No references to '{word}' found in current file.")
+            QMessageBox.information(self, tr("Find All References"), trf("No references to '{word}' found in current file.", word=word))
         else:
             self._log_to_output(f"Found {len(self._find_results)} reference(s) to '{word}'")
 
@@ -1334,7 +1333,7 @@ class NSSEditor(Editor):
             word = cursor.selectedText()
 
         if not word or not word.strip():
-            QMessageBox.information(self, "Go to Definition", "No symbol selected.")
+            QMessageBox.information(self, tr("Go to Definition"), tr("No symbol selected."))
             return
 
         # First try to find in outline (functions, structs, globals)
@@ -1406,10 +1405,10 @@ class NSSEditor(Editor):
                         if list_item and list_item.text().lower() == word.lower():
                             self.ui.constantList.setCurrentItem(list_item)
                             self.ui.constantList.scrollToItem(list_item)
-                            QMessageBox.information(self, "Go to Definition", f"Constant '{word}' is a built-in constant.\nSee the Constants tab for more information.")
+                            QMessageBox.information(self, tr("Go to Definition"), trf("Constant '{word}' is a built-in constant.\nSee the Constants tab for more information.", word=word))
                             return
 
-            QMessageBox.information(self, "Go to Definition", f"Definition for '{word}' not found in current file.")
+            QMessageBox.information(self, tr("Go to Definition"), trf("Definition for '{word}' not found in current file.", word=word))
 
     def _setup_file_explorer(self):
         """Set up the file explorer with filtering and navigation."""
@@ -1467,7 +1466,7 @@ class NSSEditor(Editor):
             root_index = self.file_system_model.index(str(path))
             self.ui.fileExplorerView.setRootIndex(root_index)
         else:
-            QMessageBox.warning(self, "Invalid Path", f"The path '{path_text}' does not exist or is not a directory.")
+            QMessageBox.warning(self, tr("Invalid Path"), trf("The path '{path_text}' does not exist or is not a directory.", path_text=path_text))
             # Reset to current root
             current_root = self.file_system_model.rootPath()
             self.ui.lineEdit.setText(current_root)
@@ -1586,7 +1585,7 @@ class NSSEditor(Editor):
             QMessageBox.warning(
                 self,
                 "Failed to Open File",
-                f"Could not open file '{file_path_str}':\n{universal_simplify_exception(e)}",
+                f"Could not open file '{file_path_str}':\n{(e.__class__.__name__, str(e))}",
             )
 
     def _update_completer_model(
@@ -2224,7 +2223,7 @@ class NSSEditor(Editor):
             self._setup_file_explorer()
 
     def _handle_exc_debug_mode(self, err_msg: str, e: Exception) -> bool:
-        QMessageBox(QMessageBox.Icon.Critical, err_msg, str(universal_simplify_exception(e))).exec()
+        QMessageBox(QMessageBox.Icon.Critical, err_msg, str((e.__class__.__name__, str(e)))).exec()
         if is_debug_mode():
             raise e
         return True
@@ -2381,9 +2380,9 @@ class NSSEditor(Editor):
                 # Save using the overridden filepath and resource type.
                 self.save()
             except ValueError as e:
-                QMessageBox(QMessageBox.Icon.Critical, "Failed to compile", str(universal_simplify_exception(e))).exec()
+                QMessageBox(QMessageBox.Icon.Critical, tr("Failed to compile"), str((e.__class__.__name__, str(e)))).exec()
             except OSError as e:
-                QMessageBox(QMessageBox.Icon.Critical, "Failed to save file", str(universal_simplify_exception(e))).exec()
+                QMessageBox(QMessageBox.Icon.Critical, tr("Failed to save file"), str((e.__class__.__name__, str(e)))).exec()
 
     def _compiled_resource_saved(
         self,
@@ -3556,7 +3555,7 @@ Code Operations:
             try:
                 ncs = ht_compile_script(text, self._installation.path(), tsl=self._is_tsl)
             except Exception as e:
-                QMessageBox.critical(self, "Compilation Error", f"Cannot start test run: script has compilation errors.\n\n{universal_simplify_exception(e)}")
+                QMessageBox.critical(self, "Compilation Error", f"Cannot start test run: script has compilation errors.\n\n{(e.__class__.__name__, str(e))}")
                 return
 
             if ncs is None:
@@ -3611,7 +3610,7 @@ Code Operations:
             self._update_debug_widgets()
 
         except Exception as e:
-            QMessageBox.critical(self, "Test Run Error", f"Failed to start test run:\n\n{universal_simplify_exception(e)}")
+            QMessageBox.critical(self, "Test Run Error", f"Failed to start test run:\n\n{(e.__class__.__name__, str(e))}")
             RobustLogger().error("Failed to start test run", exc_info=True)
 
     def _stop_debugging(self):
@@ -3783,8 +3782,8 @@ Code Operations:
 
     def _on_debugger_error(self, error: Exception):
         """Handle debugger error."""
-        self._log_to_output(f"Debugger error: {universal_simplify_exception(error)}")
-        QMessageBox.critical(self, "Debugger Error", f"An error occurred during debugging:\n\n{universal_simplify_exception(error)}")
+        self._log_to_output(f"Debugger error: {error.__class__.__name__}: {error}")
+        QMessageBox.critical(self, "Debugger Error", f"An error occurred during debugging:\n\n{error.__class__.__name__}: {error}")
         self._stop_debugging()
 
     def _update_debug_visualization(self):

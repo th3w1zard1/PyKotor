@@ -92,7 +92,6 @@ from toolset.gui.windows.indoor_builder.undo_commands import (
 )
 from toolset.utils.misc import get_qt_button_string, get_qt_key_string
 from utility.common.geometry import SurfaceMaterial, Vector2, Vector3
-from utility.error_handling import universal_simplify_exception
 
 if TYPE_CHECKING:
     from qtpy.QtWidgets import QLayout
@@ -1280,7 +1279,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                 QMessageBox(
                     QMessageBox.Icon.Critical,
                     tr("Failed to load file"),
-                    trf("{error}", error=str(universal_simplify_exception(e))),
+                    trf("{error}", error=str((e.__class__.__name__, str(e)))),
                 ).exec()
 
     def open_mod(self):
@@ -1290,7 +1289,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         reconstructible from real module resources.
         """
         if not isinstance(self._installation, HTInstallation):
-            QMessageBox.warning(self, "No Installation", "Please select an installation first.")
+            QMessageBox.warning(self, tr("No Installation"), tr("Please select an installation first."))
             return
 
         filepath, _ = QFileDialog.getOpenFileName(self, "Open Module", "", "Module (*.mod);;All Files (*)")
@@ -1299,7 +1298,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
         mod_path = Path(filepath)
         if not mod_path.is_file():
-            QMessageBox.warning(self, "Invalid File", f"File not found:\n{mod_path}")
+            QMessageBox.warning(self, tr("Invalid File"), trf("File not found:\n{mod_path}", mod_path=mod_path))
             return
 
         # Only possible if the module exists in the active installation.
@@ -1421,7 +1420,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
     def build_map(self):
         if not isinstance(self._installation, HTInstallation):
-            QMessageBox.warning(self, "No Installation", "Please select an installation first.")
+            QMessageBox.warning(self, tr("No Installation"), tr("Please select an installation first."))
             return
         path: Path = self._installation.module_path() / f"{self._map.module_id}.mod"
 
@@ -1433,7 +1432,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         msg += f"Map files can be found in:\n{path}"
         loader = AsyncLoader(self, "Building Map...", task, "Failed to build map.")
         if loader.exec():
-            QMessageBox(QMessageBox.Icon.Information, "Map built", msg).exec()
+            QMessageBox(QMessageBox.Icon.Information, tr("Map built"), msg).exec()
 
     def load_module_from_name(self, module_name: str) -> bool:
         """Load a module by extracting it from the installation.
@@ -1534,7 +1533,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             QMessageBox(
                 QMessageBox.Icon.Critical,
                 tr("Failed to load module"),
-                trf("Failed to load module '{module}': {error}", module=module_name, error=str(universal_simplify_exception(e))),
+                trf("Failed to load module '{module}': {error}", module=module_name, error=str((e.__class__.__name__, str(e)))),
             ).exec()
             return False
 

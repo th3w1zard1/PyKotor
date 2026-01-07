@@ -9,7 +9,7 @@ from collections import defaultdict
 from contextlib import suppress
 from datetime import datetime, timezone
 from pathlib import Path, PurePath
-from typing import TYPE_CHECKING, Any, cast
+from typing import TYPE_CHECKING, Any, Callable, cast
 
 import qtpy
 
@@ -17,6 +17,7 @@ from qtpy import QtCore
 from qtpy.QtCore import (
     QCoreApplication,
     QFileSystemWatcher,
+    QMimeData,
     QSortFilterProxyModel,
     QThread,
     QTimer,
@@ -28,21 +29,23 @@ from qtpy.QtGui import QIcon, QPixmap, QStandardItem
 from qtpy.QtWidgets import (
     QAction,  # pyright: ignore[reportPrivateImportUsage]
     QApplication,
+    QBoxLayout,
     QFileDialog,
     QHBoxLayout,
     QMainWindow,
     QMessageBox,
     QPushButton,
     QSizePolicy,
+    QStackedLayout,
     QVBoxLayout,
 )
 
 from loggerplus import RobustLogger  # pyright: ignore[reportMissingTypeStubs]
 from pykotor.extract.file import FileResource, ResourceIdentifier, ResourceResult
 from pykotor.extract.installation import SearchLocation
-from pykotor.resource.formats.erf import read_erf, write_erf, ERF, ERFType
+from pykotor.resource.formats.erf import ERF, ERFType, read_erf, write_erf
 from pykotor.resource.formats.mdl import read_mdl, write_mdl
-from pykotor.resource.formats.rim import read_rim, write_rim, RIM
+from pykotor.resource.formats.rim import RIM, read_rim, write_rim
 from pykotor.resource.formats.tpc import read_tpc, write_tpc
 from pykotor.resource.type import ResourceType
 from pykotor.tools import module
@@ -82,8 +85,8 @@ from toolset.gui.editors.utp import UTPEditor
 from toolset.gui.editors.uts import UTSEditor
 from toolset.gui.editors.utt import UTTEditor
 from toolset.gui.editors.utw import UTWEditor
-from toolset.gui.widgets.main_widgets import ResourceList, ResourceStandardItem
 from toolset.gui.widgets.kotor_filesystem_model import ResourceFileSystemWidget
+from toolset.gui.widgets.main_widgets import ResourceList, ResourceStandardItem
 from toolset.gui.widgets.settings.widgets.misc import GlobalSettings
 from toolset.gui.windows.help import HelpWindow
 from toolset.gui.windows.indoor_builder import IndoorMapBuilder
@@ -92,8 +95,6 @@ from toolset.gui.windows.module_designer import ModuleDesigner
 from toolset.gui.windows.update_manager import UpdateManager
 from toolset.utils.misc import open_link
 from toolset.utils.window import add_window, open_resource_editor
-from utility.error_handling import universal_simplify_exception
-from utility.misc import is_debug_mode
 from utility.tricks import debug_reload_pymodules
 
 if TYPE_CHECKING:
@@ -104,7 +105,7 @@ if TYPE_CHECKING:
         QPoint,
     )
     from qtpy.QtGui import QCloseEvent, QKeyEvent, QMouseEvent, QPalette, QShowEvent, QStandardItemModel
-    from qtpy.QtWidgets import QComboBox, QStyle, QWidget
+    from qtpy.QtWidgets import QBoxLayout, QComboBox, QStackedLayout, QStyle, QWidget
     from typing_extensions import Literal  # pyright: ignore[reportMissingModuleSource]
 
     from pykotor.extract.file import LocationResult, ResourceResult
@@ -209,75 +210,52 @@ class ToolWindow(QMainWindow):
     sig_installation_changed: Signal = Signal(HTInstallation)
 
     def __init__(self):
-        """Initialize the main window.
-
-        Args:
-        ----
-            self: The object instance
-            parent: The parent widget
-        """
-        RobustLogger().debug("TRACE: ToolWindow.__init__ called")
-        RobustLogger().debug("TRACE: Calling super().__init__()")
+        """Initialize the main window for the Holocron Toolset."""
         super().__init__()
-        RobustLogger().debug("TRACE: super().__init__() completed")
 
-        RobustLogger().debug("TRACE: Initializing instance variables")
+        # Core application state
         self.active: HTInstallation | None = None
         self.installations: dict[str, HTInstallation] = {}
-
-        RobustLogger().debug("TRACE: Creating GlobalSettings")
         self.settings: GlobalSettings = GlobalSettings()
-        RobustLogger().debug("TRACE: GlobalSettings created")
-        RobustLogger().debug("TRACE: Creating UpdateManager")
         self.update_manager: UpdateManager = UpdateManager(silent=True)
-        RobustLogger().debug("TRACE: UpdateManager created")
 
-        # Theme setup
+        # Theme and styling setup
         q_style: QStyle | None = self.style()
         assert q_style is not None, "window style was somehow None"
         self.original_style: str = q_style.objectName()
         self.original_palette: QPalette = self.palette()
-        RobustLogger().debug(f"TRACE: ThemeManager({self.original_style})")
         self.theme_manager: ThemeManager = ThemeManager(self.original_style)
-        RobustLogger().debug("TRACE: ThemeManager created")
         # Apply both theme and style on initialization
         self.theme_manager._apply_theme_and_style(self.settings.selectedTheme, self.settings.selectedStyle)
 
+        # UI state management
         self.previous_game_combo_index: int = 0
         self._mouse_move_pos: QPoint | None = None
-        # Initialize theme dialog (non-blocking)
+
+        # Dialog management (lazy-loaded)
         self._theme_dialog: ThemeSelectorDialog | None = None
-        # Initialize language menu action dictionary
         self._language_actions: dict[int, QAction] = {}
 
         # File system watcher for auto-detecting module/override changes
-        RobustLogger().debug("TRACE: Creating file system watcher")
         self._file_watcher: QFileSystemWatcher = QFileSystemWatcher(self)
-        RobustLogger().debug("TRACE: File system watcher created")
         self._pending_module_changes: list[str] = []
         self._pending_override_changes: list[str] = []
         self._last_watcher_update: datetime = datetime.now(tz=timezone.utc).astimezone()
+
         # Debounce timer to batch multiple rapid file changes
-        RobustLogger().debug("TRACE: Creating watcher debounce timer")
         self._watcher_debounce_timer: QTimer = QTimer(self)
         self._watcher_debounce_timer.setSingleShot(True)
         self._watcher_debounce_timer.setInterval(500)  # 500ms debounce
         self._watcher_debounce_timer.timeout.connect(self._process_pending_file_changes)
 
         RobustLogger().debug("TRACE: About to call _initUi()")
+        # Initialize UI and setup
         self._initUi()
-        RobustLogger().debug("TRACE: _initUi() completed")
-        RobustLogger().debug("TRACE: About to call _setup_signals()")
         self._setup_signals()
-        RobustLogger().debug("TRACE: _setup_signals() completed")
+
         # Language system will set the title in apply_translations()
-        RobustLogger().debug("TRACE: About to call reload_settings()")
         self.reload_settings()
-        RobustLogger().debug("TRACE: reload_settings() completed")
-        RobustLogger().debug("TRACE: About to call unset_installation()")
         self.unset_installation()
-        RobustLogger().debug("TRACE: unset_installation() completed")
-        RobustLogger().debug("TRACE: ToolWindow.__init__ returning")
 
     def _setup_file_watcher(self):
         """Set up file system watcher for the current installation's modules and override folders."""
@@ -466,36 +444,64 @@ class ToolWindow(QMainWindow):
         self.setup_modules_tab()
 
     def setup_modules_tab(self):
+        """Set up the modules tab UI components and layout."""
+        self._setup_erf_editor_button()
+        self._reorganize_modules_ui_layout()
+
+    def _setup_erf_editor_button(self):
+        """Create and configure the ERF Editor button for the modules tab."""
         self.erf_editor_button = QPushButton(tr("ERF Editor"), self)
         self.erf_editor_button.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Fixed)
-        self.erf_editor_button.clicked.connect(self._open_module_tab_erf_editor)  # Connect to the ERF Editor functionality
+        self.erf_editor_button.clicked.connect(self._open_module_tab_erf_editor)
         self.ui.verticalLayoutRightPanel.insertWidget(2, self.erf_editor_button)  # pyright: ignore[reportArgumentType]
         self.erf_editor_button.hide()
+
+    def _reorganize_modules_ui_layout(self):
+        """Reorganize the modules UI layout to stack buttons vertically next to the section combo."""
+        # Get references to UI components
         modules_resource_list = self.ui.modulesWidget.ui
         modules_section_combo: QComboBox = modules_resource_list.sectionCombo  # type: ignore[attr-defined]
         refresh_button: QPushButton = modules_resource_list.refreshButton  # type: ignore[attr-defined]
         designer_button: QPushButton = self.ui.specialActionButton  # type: ignore[attr-defined]
         level_builder_button: QPushButton = self.ui.levelBuilderButton  # type: ignore[attr-defined]
+
+        # Remove existing horizontal layout containing combo and refresh button
         modules_resource_list.horizontalLayout_2.removeWidget(modules_section_combo)  # type: ignore[arg-type]
         modules_resource_list.horizontalLayout_2.removeWidget(refresh_button)  # type: ignore[arg-type]
         modules_resource_list.verticalLayout.removeItem(modules_resource_list.horizontalLayout_2)  # type: ignore[arg-type]
+
+        # Configure button size policies
         refresh_button.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)  # type: ignore[arg-type]
         designer_button.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)  # type: ignore[arg-type]
         level_builder_button.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.Preferred)  # type: ignore[arg-type]
+
+        # Create vertical button stack layout
         stack_button_layout = QVBoxLayout()
         stack_button_layout.setSpacing(1)
         stack_button_layout.addWidget(refresh_button)  # type: ignore[arg-type]
         stack_button_layout.addWidget(designer_button)  # type: ignore[arg-type]
         stack_button_layout.addWidget(level_builder_button)  # type: ignore[arg-type]
+
+        # Create top layout combining section combo with button stack
         top_layout = QHBoxLayout()
         top_layout.addWidget(modules_section_combo)  # type: ignore[arg-type]
         top_layout.addLayout(stack_button_layout)
+
+        # Insert the new top layout at the beginning of the modules tab
         self.ui.verticalLayoutModulesTab.insertLayout(0, top_layout)  # type: ignore[attributeAccessIssue]
+
+        # Add the resource tree widget to complete the layout
         modules_resource_list.verticalLayout.addWidget(modules_resource_list.resourceTree)  # type: ignore[arg-type]
 
-    def _setup_signals(self):  # sourcery skip: remove-unreachable-code  # noqa: PLR0915
-        self.ui.gameCombo.currentIndexChanged.connect(self.change_active_installation)
+    def _setup_signals(self):
+        """Set up all signal connections for the main window."""
+        self._setup_core_signals()
+        self._setup_widget_signals()
+        self._setup_action_signals()
 
+    def _setup_core_signals(self):
+        """Set up core application signals."""
+        self.ui.gameCombo.currentIndexChanged.connect(self.change_active_installation)
         self.sig_module_files_updated.connect(self.on_module_file_updated)
         self.sig_override_files_update.connect(self.on_override_file_updated)
 
@@ -503,10 +509,14 @@ class ToolWindow(QMainWindow):
         self._file_watcher.directoryChanged.connect(self._on_watched_directory_changed)
         self._file_watcher.fileChanged.connect(self._on_watched_file_changed)
 
+    def _setup_widget_signals(self):
+        """Set up signals for resource list widgets."""
+        # Core widget signals
         self.ui.coreWidget.sig_request_extract_resource.connect(self.on_extract_resources)
         self.ui.coreWidget.sig_request_refresh.connect(self.on_core_refresh)
         self.ui.coreWidget.sig_request_open_resource.connect(self.on_open_resources)
 
+        # Modules widget signals
         self.ui.modulesWidget.sig_section_changed.connect(self.on_module_changed)
         self.ui.modulesWidget.sig_request_reload.connect(self.on_module_reload)
         self.ui.modulesWidget.sig_request_refresh.connect(self.on_module_refresh)
@@ -514,6 +524,7 @@ class ToolWindow(QMainWindow):
         self.ui.modulesWidget.sig_request_open_resource.connect(self.on_open_resources)
         self.sig_installation_changed.connect(self.ui.modulesWidget.set_installation)
 
+        # Saves widget signals
         self.ui.savesWidget.sig_section_changed.connect(self.on_savepath_changed)
         self.ui.savesWidget.sig_request_reload.connect(self.on_save_reload)
         self.ui.savesWidget.sig_request_refresh.connect(self.on_save_refresh)
@@ -521,70 +532,82 @@ class ToolWindow(QMainWindow):
         self.ui.savesWidget.sig_request_open_resource.connect(self.on_open_resources)
         self.sig_installation_changed.connect(self.ui.savesWidget.set_installation)
 
+        # Override widget signals
+        self.ui.overrideWidget.sig_section_changed.connect(self.on_override_changed)
+        self.ui.overrideWidget.sig_request_reload.connect(self.on_override_reload)
+        self.ui.overrideWidget.sig_request_refresh.connect(self.on_override_refresh)
+        self.ui.overrideWidget.sig_request_extract_resource.connect(self.on_extract_resources)
+        self.ui.overrideWidget.sig_request_open_resource.connect(self.on_open_resources)
+        self.sig_installation_changed.connect(self.ui.overrideWidget.set_installation)
+
+        # Textures widget signals
+        self.ui.texturesWidget.sig_section_changed.connect(self.on_textures_changed)
+        self.ui.texturesWidget.sig_request_open_resource.connect(self.on_open_resources)
+        self.sig_installation_changed.connect(self.ui.texturesWidget.set_installation)
+
+    def _setup_action_signals(self):
+        """Set up signals for action buttons and UI controls."""
         # Save Editor button
         self.ui.openSaveEditorButton.clicked.connect(self.on_open_save_editor)
 
         # Enable/disable Open Save Editor button based on selection
-        selectionModel = self.ui.savesWidget.ui.resourceTree.selectionModel()
-        assert selectionModel is not None, "Selection model not found in saves widget"
-        selectionModel.selectionChanged.connect(self.on_save_selection_changed)
+        selection_model = self.ui.savesWidget.ui.resourceTree.selectionModel()
+        assert selection_model is not None, "Selection model not found in saves widget"
+        selection_model.selectionChanged.connect(self.on_save_selection_changed)
+
+        # Tab change signal
         self.ui.resourceTabs.currentChanged.connect(self.on_tab_changed)
 
-        def open_module_designer(*args) -> ModuleDesigner | None:
-            """Open the module designer."""
-            assert self.active is not None
-            module_data = self.ui.modulesWidget.ui.sectionCombo.currentData(Qt.ItemDataRole.UserRole)
-            module_path: Path | None = None
-            if module_data:
-                module_path = self.active.module_path() / Path(str(module_data))
-            try:
-                designer_window = ModuleDesigner(  # pyright: ignore[call-arg]
-                    None,
-                    self.active,
-                    mod_filepath=module_path,
-                )
-            except TypeError as exc:
-                RobustLogger().warning(f"ModuleDesigner signature mismatch: {exc}. Falling back without module path.")
-                designer_window = ModuleDesigner(None, self.active)
-                if module_path is not None:
-                    QTimer.singleShot(33, lambda: designer_window.open_module(module_path))
+        # Action button signals
+        self.ui.specialActionButton.clicked.connect(self._open_module_designer_action)
+        self.ui.levelBuilderButton.clicked.connect(self._open_indoor_map_builder_action)
 
-            designer_window.setWindowIcon(cast("QApplication", QApplication.instance()).windowIcon())
-            add_window(designer_window)
+    def _open_module_designer_action(self):
+        """Open the module designer for the currently selected module."""
+        assert self.active is not None
+        module_data = self.ui.modulesWidget.ui.sectionCombo.currentData(Qt.ItemDataRole.UserRole)
+        module_path: Path | None = None
+        if module_data:
+            module_path = self.active.module_path() / Path(str(module_data))
 
-        self.ui.specialActionButton.clicked.connect(open_module_designer)
+        try:
+            designer_window = ModuleDesigner(  # pyright: ignore[call-arg]
+                None,
+                self.active,
+                mod_filepath=module_path,
+            )
+        except TypeError as exc:
+            RobustLogger().warning(f"ModuleDesigner signature mismatch: {exc}. Falling back without module path.")
+            designer_window = ModuleDesigner(None, self.active)
+            if module_path is not None:
+                QTimer.singleShot(33, lambda: designer_window.open_module(module_path))
 
-        def open_indoor_map_builder_with_module(*args) -> IndoorMapBuilder | None:
-            """Open the Indoor Map Builder with the selected module."""
-            assert self.active is not None
-            module_data = self.ui.modulesWidget.ui.sectionCombo.currentData(Qt.ItemDataRole.UserRole)
-            if not module_data:
-                from qtpy.QtWidgets import QMessageBox
+        designer_window.setWindowIcon(cast("QApplication", QApplication.instance()).windowIcon())
+        add_window(designer_window)
 
-                from toolset.gui.common.localization import translate as tr
+    def _open_indoor_map_builder_action(self):
+        """Open the Indoor Map Builder with the currently selected module."""
+        assert self.active is not None
+        module_data = self.ui.modulesWidget.ui.sectionCombo.currentData(Qt.ItemDataRole.UserRole)
+        if not module_data:
+            QMessageBox.warning(
+                self,
+                tr("No Module Selected"),
+                tr("Please select a module from the Modules tab before opening the Level Builder."),
+            )
+            return
 
-                QMessageBox.warning(
-                    self,
-                    tr("No Module Selected"),
-                    tr("Please select a module from the Modules tab before opening the Level Builder."),
-                )
-                return None
+        # Use the selected module file name and strip extension robustly.
+        module_name = PurePath(str(module_data)).stem
 
-            # Use the selected module file name and strip extension robustly.
-            module_name = PurePath(str(module_data)).stem
+        builder = IndoorMapBuilder(None, self.active)
+        builder.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)
+        builder.show()
+        builder.activateWindow()
+        add_window(builder)
 
-            builder = IndoorMapBuilder(None, self.active)
-            builder.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose)  # Set the window to delete on close, so it doesn't hang around after the function returns.
-            builder.show()  # Show the window
-            builder.activateWindow()  # Bring the window to the front
-            add_window(builder)  # Add the window to the window manager
-
-            # Load the selected module (use QTimer to ensure window is fully initialized)
-            QTimer.singleShot(33, lambda: builder.load_module_from_name(module_name))  # Load the module after the window is fully initialized
-
-            return builder
-
-        self.ui.levelBuilderButton.clicked.connect(open_indoor_map_builder_with_module)
+        # Load the selected module (use QTimer to ensure window is fully initialized)
+        QTimer.singleShot(33, lambda: builder.load_module_from_name(module_name))
 
         self.ui.overrideWidget.sig_section_changed.connect(self.on_override_changed)
         self.ui.overrideWidget.sig_request_reload.connect(self.on_override_reload)
@@ -660,10 +683,9 @@ class ToolWindow(QMainWindow):
 
         # Setup View menu - Legacy Layout toggle
         self._use_legacy_layout: bool = self.settings.value("useLegacyLayout", False, type=bool)
-        if hasattr(self.ui, "actionLegacyLayout"):
-            self.ui.actionLegacyLayout.setChecked(self._use_legacy_layout)
-            self.ui.actionLegacyLayout.triggered.connect(self._on_legacy_layout_toggled)
-        
+        self.ui.actionLegacyLayout.setChecked(self._use_legacy_layout)
+        self.ui.actionLegacyLayout.triggered.connect(self._on_legacy_layout_toggled)
+
         # Initialize view switching (will be set up after UI is ready)
         self._fs_core_widget: ResourceFileSystemWidget | None = None
         self._fs_modules_widget: ResourceFileSystemWidget | None = None
@@ -829,11 +851,11 @@ class ToolWindow(QMainWindow):
         if self._fs_core_widget is None:
             # Get the parent widget (the tab container)
             core_parent = legacy_core.parent()
-            if core_parent is not None:
+            if core_parent is not None and isinstance(core_parent, QWidget):
                 self._fs_core_widget = ResourceFileSystemWidget(core_parent)
                 # Insert into the same layout position as legacy widget
                 layout = core_parent.layout()
-                if layout is not None:
+                if layout is not None and isinstance(layout, (QBoxLayout, QStackedLayout)):
                     # Find the index of the legacy widget
                     for i in range(layout.count()):
                         item = layout.itemAt(i)
@@ -932,8 +954,7 @@ class ToolWindow(QMainWindow):
         # Translate menu titles
         self.ui.menuFile.setTitle(tr("File"))
         self.ui.menuEdit.setTitle(tr("Edit"))
-        if hasattr(self.ui, "menuView"):
-            self.ui.menuView.setTitle(tr("View"))
+        self.ui.menuView.setTitle(tr("View"))
         self.ui.menuTools.setTitle(tr("Tools"))
         self.ui.menuTheme.setTitle(tr("Theme"))
         self.ui.menuLanguage.setTitle(tr("Language"))
@@ -956,8 +977,7 @@ class ToolWindow(QMainWindow):
         self.ui.actionTSLPatchDataEditor.setText(tr("TSLPatchData Editor"))
         self.ui.actionFileSearch.setText(tr("File Search"))
         self.ui.actionCloneModule.setText(tr("Clone Module"))
-        if hasattr(self.ui, "actionLegacyLayout"):
-            self.ui.actionLegacyLayout.setText(tr("Legacy Layout"))
+        self.ui.actionLegacyLayout.setText(tr("Legacy Layout"))
         self.ui.actionDiscordHolocronToolset.setText(tr("Holocron Toolset"))
         self.ui.actionDiscordKotOR.setText(tr("KOTOR Community Portal"))
         self.ui.actionDiscordDeadlyStream.setText(tr("Deadly Stream"))
@@ -1314,52 +1334,86 @@ class ToolWindow(QMainWindow):
         self.ui.texturesWidget.set_resources(self.active.texturepack_resources(texturepackName))
 
     @Slot(int)
-    def change_active_installation(
-        self,
-        index: int,  # noqa: PLR0915, C901, PLR0912
-    ):
-        RobustLogger().debug(f"TRACE: change_active_installation({index}) called")
+    def change_active_installation(self, index: int):
+        """Change the active game installation based on combo box selection.
+
+        Args:
+        ----
+            index: The index of the selected installation in the combo box
+        """
         if index < 0:  # self.ui.gameCombo.clear() will call this function with -1
-            RobustLogger().debug("TRACE: change_active_installation: index < 0, returning early")
             return
 
         prev_index: int = self.previous_game_combo_index
         # Only set index if it's different to avoid unnecessary signal emission
         current_index = self.ui.gameCombo.currentIndex()
         if current_index != index:
-            RobustLogger().debug(f"TRACE: change_active_installation: prev_index={prev_index}, current_index={current_index}, about to call setCurrentIndex({index})")
             self.ui.gameCombo.setCurrentIndex(index)
-            RobustLogger().debug(f"TRACE: change_active_installation: setCurrentIndex({index}) completed")
-        else:
-            RobustLogger().debug(f"TRACE: change_active_installation: index already {index}, skipping setCurrentIndex")
 
         if index == 0:
-            RobustLogger().debug("TRACE: change_active_installation: index == 0, about to call unset_installation()")
             self.unset_installation()
-            RobustLogger().debug("TRACE: change_active_installation: unset_installation() returned")
             self.previous_game_combo_index = 0
-            RobustLogger().debug("TRACE: change_active_installation: returning (index == 0)")
             return
 
+        # Get installation details from settings
         name: str = self.ui.gameCombo.itemText(index)
-        path: str = self.settings.installations()[name].path.strip()
-        tsl: bool = self.settings.installations()[name].tsl
+        installation_config = self.settings.installations()[name]
+        path: str = installation_config.path.strip()
+        tsl: bool = installation_config.tsl
 
-        # If the user has not set a path for the particular game yet, ask them too.
-        if not path or not path.strip() or not Path(path).exists() or not Path(path).is_dir():
-            if path and path.strip():
-                QMessageBox(QMessageBox.Icon.Warning, f"Installation '{path}' not found", "Select another path now.").exec()
-            path = QFileDialog.getExistingDirectory(self, trf("Select the game directory for {name}", name=name), "Knights of the Old Republic II" if tsl else "swkotor")
-
-        # If the user still has not set a path, then return them to the [None] option.
-        if not path or not path.strip():
-            self.ui.gameCombo.setCurrentIndex(prev_index)
+        # Validate and prompt for installation path if needed
+        path = self._validate_installation_path(name, path, tsl, prev_index)
+        if not path:
             return
 
-        # KEEP UI CODE IN MAIN THREAD!
+        # Enable resource tabs for the selected installation
         self.ui.resourceTabs.setEnabled(True)
 
-        def create_installation_task(loader: AsyncLoader) -> HTInstallation:
+        # Load or create the installation
+        self._load_installation(name, path, tsl, prev_index)
+
+    def _validate_installation_path(self, name: str, path: str, tsl: bool, prev_index: int) -> str:
+        """Validate the installation path and prompt user if needed.
+
+        Args:
+        ----
+            name: Installation name
+            path: Current path from settings
+            tsl: Whether this is TSL installation
+            prev_index: Previous combo box index for fallback
+
+        Returns:
+        -------
+            Valid installation path or empty string if cancelled
+        """
+        # Check if path is valid
+        if not path or not path.strip() or not Path(path).exists() or not Path(path).is_dir():
+            if path and path.strip():
+                QMessageBox(QMessageBox.Icon.Warning, trf("Installation '{path}' not found", path=path), tr("Select another path now.")).exec()
+
+            # Prompt user for installation directory
+            default_dir = "Knights of the Old Republic II" if tsl else "swkotor"
+            path = QFileDialog.getExistingDirectory(self, trf("Select the game directory for {name}", name=name), default_dir)
+
+        # Return to previous selection if no path provided
+        if not path or not path.strip():
+            self.ui.gameCombo.setCurrentIndex(prev_index)
+            return ""
+
+        return path
+
+    def _load_installation(
+        self,
+        name: str,
+        path: str,
+        tsl: bool,
+        prev_index: int,
+    ) -> None:
+        """Load or create the installation instance."""
+
+        def create_installation_task(
+            loader: AsyncLoader | None = None,
+        ) -> HTInstallation:
             """Creates and returns a new HTInstallation instance.
 
             Returns:
@@ -1367,21 +1421,30 @@ class ToolWindow(QMainWindow):
                 HTInstallation: The newly created installation instance
             """
             if loader is not None and loader._realtime_progress:  # noqa: SLF001
-                return HTInstallation(Path(path), name, tsl=tsl, progress_callback=loader.progress_callback_api)
+                return HTInstallation(
+                    Path(path),
+                    name,
+                    tsl=tsl,
+                    progress_callback=loader.progress_callback_api,
+                )
             return HTInstallation(Path(path), name, tsl=tsl)
 
+        # Get or create installation instance
         active: HTInstallation | None = self.installations.get(name)
         if active is None:
-            installation_loader = AsyncLoader.__new__(AsyncLoader)
-            installation_loader.__init__(
+
+            def create_installation_with_loader() -> HTInstallation:
+                return create_installation_task(loader=installation_loader)
+
+            installation_loader: AsyncLoader = AsyncLoader(
                 self,
                 "Creating installation...",
-                lambda: create_installation_task(installation_loader),
+                create_installation_with_loader,
                 "Failed to create installation",
                 realtime_progress=True,
             )
             if not installation_loader.exec():
-                RobustLogger().error("installation_loader.exec() failed.")
+                RobustLogger().error("Failed to create installation")
                 self.ui.gameCombo.setCurrentIndex(prev_index)
                 return
             self.active = installation_loader.value
@@ -1390,66 +1453,95 @@ class ToolWindow(QMainWindow):
         else:
             self.active = active
 
-        def prepare_task() -> tuple[list[QStandardItem] | None, ...]:
-            """Prepares the lists of modules, overrides, and textures for the active installation.
+        # Prepare resource lists for the installation
+        self._prepare_installation_resources(prev_index)
 
-            Returns:
-            -------
-                tuple[list[QStandardItem] | None, ...]: A tuple containing the lists of modules, overrides, and textures.
-            """
-            ret_tuple: tuple[list[QStandardItem] | None, ...] = (
+    def _prepare_installation_resources(
+        self,
+        prev_index: int,
+    ) -> None:
+        """Prepare and initialize all resource lists for the active installation."""
+
+        def prepare_task(loader: AsyncLoader | None = None) -> tuple[list[QStandardItem] | None, ...]:
+            """Prepare resource lists for modules, overrides, and textures."""
+            return (
                 self._get_modules_list(reload=False),
                 self._get_override_list(reload=False),
                 self._get_texture_pack_list(),
             )
-            return ret_tuple
 
-        prepare_loader = AsyncLoader(self, "Preparing resources...", lambda: prepare_task(), "Failed to load installation")
+        prepare_loader = AsyncLoader(
+            self,
+            "Preparing resources...",
+            prepare_task,
+            "Failed to prepare installation resources",
+            realtime_progress=True,
+        )
         if not prepare_loader.exec():
-            RobustLogger().error("prepare_loader.exec() failed.")
+            RobustLogger().error("Failed to prepare installation resources")
             self.ui.gameCombo.setCurrentIndex(prev_index)
             return
+
         assert prepare_loader.value is not None
         assert self.active is not None
 
-        # Any issues past this point must call self.unset_installation()
+        # Initialize UI with prepared resource lists
         try:
-            RobustLogger().debug("Set sections of prepared lists")
             module_items, override_items, texture_items = prepare_loader.value
-            assert module_items is not None
-            assert override_items is not None
-            assert texture_items is not None
+            assert module_items is not None, "Module items should not be None"
+            assert override_items is not None, "Override items should not be None"
+            assert texture_items is not None, "Texture items should not be None"
+
             self.ui.modulesWidget.set_sections(module_items)
             self.ui.overrideWidget.set_sections(override_items)
             self.ui.overrideWidget.ui.sectionCombo.setVisible(self.active.tsl)
             self.ui.overrideWidget.ui.refreshButton.setVisible(self.active.tsl)
             self.ui.texturesWidget.set_sections(texture_items)
+
             self.refresh_core_list(reload=False)
             self.refresh_saves_list(reload=False)
-        except Exception as e:  # noqa: BLE001  # pylint: disable=broad-exception-caught
+
+        except Exception as e:  # noqa: BLE001
             RobustLogger().exception("Failed to initialize the installation")
             QMessageBox(
                 QMessageBox.Icon.Critical,
                 "An unexpected error occurred initializing the installation.",
-                f"Failed to initialize the installation {name}<br><br>{e}",
+                f"Failed to initialize the installation {self.active.name}<br><br>{e}",
             ).exec()
             self.unset_installation()
             self.previous_game_combo_index = 0
-        else:
-            self.update_menus()
-            RobustLogger().info("Loader task completed.")
-            self.settings.installations()[name].path = path
-            self.installations[name] = self.active  # pyright: ignore[reportArgumentType]
+            return
+
+        # Finalize installation setup
+        self._finalize_installation_setup()
+
+    def _finalize_installation_setup(self):
+        """Finalize the installation setup after successful loading."""
+        assert self.active is not None, "Active installation should not be None here after loading"
+
+        self.update_menus()
+        RobustLogger().info(f"Successfully loaded installation: {self.active.name}")
+
+        # Update settings and cache
+        name = self.active.name
+        self.settings.installations()[name].path = str(self.active.path())
+        self.installations[name] = self.active
+
+        # Show and activate window
         self.show()
         self.activateWindow()
-        self.previous_game_combo_index = index
 
-        if self.active:
-            self.sig_installation_changed.emit(self.active)
-            # Set up file system watcher for auto-detecting module/override changes
-            self._setup_file_watcher()
-            # Apply view mode after installation is set
-            self._apply_view_mode()
+        # Update UI state
+        self.previous_game_combo_index = self.ui.gameCombo.currentIndex()
+
+        # Emit installation changed signal
+        self.sig_installation_changed.emit(self.active)
+
+        # Set up file system watcher for auto-detecting changes
+        self._setup_file_watcher()
+
+        # Apply current view mode
+        self._apply_view_mode()
 
     # FileSearcher/FileResults
     @Slot(list, HTInstallation)
@@ -1485,12 +1577,10 @@ class ToolWindow(QMainWindow):
     # region Events
     def showEvent(
         self,
-        event: QShowEvent | None,  # pyright: ignore[reportIncompatibleMethodOverride]
-    ):
+        event: QShowEvent | None = None,
+    ) -> None:
         """Called when the window is shown."""
-        RobustLogger().debug("TRACE: ToolWindow.showEvent() called")
-        super().showEvent(event) if event else None
-        RobustLogger().debug("TRACE: ToolWindow.showEvent() completed - super().showEvent() returned")
+        super().showEvent(event)
 
     def closeEvent(
         self,
@@ -1509,7 +1599,11 @@ class ToolWindow(QMainWindow):
         if event.buttons() == Qt.MouseButton.LeftButton:
             if self._mouse_move_pos is None:
                 return
-            globalPos = event.globalPos() if qtpy.QT5 else event.globalPosition().toPoint()  # pyright: ignore[reportAttributeAccessIssue]
+            globalPos = (
+                event.globalPos()  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+                if qtpy.QT5
+                else event.globalPosition().toPoint()  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+            )
             self.move(self.mapFromGlobal(self.mapToGlobal(self.pos()) + (globalPos - self._mouse_move_pos)))
             self._mouse_move_pos = globalPos
 
@@ -1518,7 +1612,11 @@ class ToolWindow(QMainWindow):
         event: QMouseEvent,  # pyright: ignore[reportIncompatibleMethodOverride]
     ):
         if event.button() == Qt.MouseButton.LeftButton:
-            self._mouse_move_pos = event.globalPos() if qtpy.QT5 else event.globalPosition().toPoint()  # pyright: ignore[reportAttributeAccessIssue]
+            self._mouse_move_pos = (
+                event.globalPos()  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+                if qtpy.QT5
+                else event.globalPosition().toPoint()  # pyright: ignore[reportAttributeAccessIssue]  # type: ignore[attr-defined]
+            )
 
     def mouseReleaseEvent(
         self,
@@ -1539,7 +1637,7 @@ class ToolWindow(QMainWindow):
     ):
         if e is None:
             return
-        event_mimedata = e.mimeData()
+        event_mimedata: QMimeData | None = e.mimeData()
         if event_mimedata is None:
             return
         if not event_mimedata.hasUrls():
@@ -1548,30 +1646,50 @@ class ToolWindow(QMainWindow):
             try:
                 filepath = url.toLocalFile()
                 _resref, restype = ResourceIdentifier.from_path(filepath).unpack()
+                if not restype.is_valid():
+                    RobustLogger().debug(f"Not processing dragged-in item '{filepath}'. Unsupported restype '{restype}'.")
+                    continue
             except Exception:  # noqa: BLE001, PERF203
                 RobustLogger().exception("Could not process dragged-in item.")
                 e.ignore()
                 return
             else:
-                if restype:
+                if restype is not None:
                     continue
-                RobustLogger().debug(f"Not processing dragged-in item '{filepath}'. Unsupported restype.")
         e.accept()
 
-    def dropEvent(self, e: QtGui.QDropEvent | None):  # pyright: ignore[reportIncompatibleMethodOverride]
+    def dropEvent(
+        self,
+        e: QtGui.QDropEvent | None = None,  # pyright: ignore[reportIncompatibleMethodOverride]
+    ) -> None:
         if e is None:
             return
-        event_mimedata = e.mimeData()
+        event_mimedata: QMimeData | None = e.mimeData()
         if event_mimedata is None:
             return
+        if not event_mimedata.hasUrls():
+            return
         for url in event_mimedata.urls():
-            filepath: str = url.toLocalFile()
-            resname, restype = ResourceIdentifier.from_path(filepath).unpack()
-            if not restype:
-                RobustLogger().debug(f"Not loading dropped file '{filepath}'. Unsupported restype.")
-                continue
-            resource = FileResource(resname, restype, os.path.getsize(filepath), 0x0, filepath)  # noqa: PTH202
-            open_resource_editor(resource, self.active, self, gff_specialized=GlobalSettings().gffSpecializedEditors)
+            try:
+                filepath: str = url.toLocalFile()
+                resname, restype = ResourceIdentifier.from_path(filepath).unpack()
+                if not restype or not restype.is_valid():
+                    RobustLogger().debug(f"Not loading dropped file '{filepath}'. Unsupported restype '{restype}'.")
+                    continue
+                resource = FileResource(resname, restype, os.path.getsize(filepath), 0x0, filepath)  # noqa: PTH202
+                editor_filepath, editor = open_resource_editor(resource, self.active, self, gff_specialized=GlobalSettings().gffSpecializedEditors)
+            except Exception:  # noqa: BLE001, PERF203
+                RobustLogger().exception("Could not process dropped file.")
+                e.ignore()
+            else:
+                if editor_filepath is not None:
+                    RobustLogger().debug(f"Dropped file '{str(editor_filepath)}' processed successfully.")
+                    e.accept()
+                    return
+                if editor is None:
+                    RobustLogger().warning(f"Dropped file '{filepath}' could not be processed. No editor nor filepath returned.")
+                    e.ignore()
+                    return
 
     # endregion
 
@@ -1580,51 +1698,51 @@ class ToolWindow(QMainWindow):
         version = "x" if self.active is None else "2" if self.active.tsl else "1"
 
         dialog_icon_path = f":/images/icons/k{version}/dialog.png"
-        self.ui.actionNewDLG.setIcon(QIcon(QPixmap(dialog_icon_path)))  # type: ignore[arg-type]
+        self.ui.actionNewDLG.setIcon(QIcon(QPixmap(dialog_icon_path)))  # pyright: ignore[reportArgumentType]  # type: ignore[arg-type]
         self.ui.actionNewDLG.setEnabled(self.active is not None)
 
         tlk_icon_path = f":/images/icons/k{version}/tlk.png"
-        self.ui.actionNewTLK.setIcon(QIcon(QPixmap(tlk_icon_path)))  # type: ignore[arg-type]
+        self.ui.actionNewTLK.setIcon(QIcon(QPixmap(tlk_icon_path)))  # pyright: ignore[reportArgumentType]  # type: ignore[arg-type]
         self.ui.actionNewTLK.setEnabled(True)
 
         script_icon_path = f":/images/icons/k{version}/script.png"
-        self.ui.actionNewNSS.setIcon(QIcon(QPixmap(script_icon_path)))  # type: ignore[arg-type]
+        self.ui.actionNewNSS.setIcon(QIcon(QPixmap(script_icon_path)))  # pyright: ignore[reportArgumentType]  # type: ignore[arg-type]
         self.ui.actionNewNSS.setEnabled(self.active is not None)
 
         creature_icon_path = f":/images/icons/k{version}/creature.png"
-        self.ui.actionNewUTC.setIcon(QIcon(QPixmap(creature_icon_path)))  # type: ignore[arg-type]
+        self.ui.actionNewUTC.setIcon(QIcon(QPixmap(creature_icon_path)))  # pyright: ignore[reportArgumentType]  # type: ignore[arg-type]
         self.ui.actionNewUTC.setEnabled(self.active is not None)
 
         placeable_icon_path = f":/images/icons/k{version}/placeable.png"
-        self.ui.actionNewUTP.setIcon(QIcon(QPixmap(placeable_icon_path)))  # type: ignore[arg-type]
+        self.ui.actionNewUTP.setIcon(QIcon(QPixmap(placeable_icon_path)))  # pyright: ignore[reportArgumentType]  # type: ignore[arg-type]
         self.ui.actionNewUTP.setEnabled(self.active is not None)
 
         door_icon_path = f":/images/icons/k{version}/door.png"
-        self.ui.actionNewUTD.setIcon(QIcon(QPixmap(door_icon_path)))  # type: ignore[arg-type]
+        self.ui.actionNewUTD.setIcon(QIcon(QPixmap(door_icon_path)))  # pyright: ignore[reportArgumentType]  # type: ignore[arg-type]
         self.ui.actionNewUTD.setEnabled(self.active is not None)
 
         item_icon_path = f":/images/icons/k{version}/item.png"
-        self.ui.actionNewUTI.setIcon(QIcon(QPixmap(item_icon_path)))  # type: ignore[arg-type]
+        self.ui.actionNewUTI.setIcon(QIcon(QPixmap(item_icon_path)))  # pyright: ignore[reportArgumentType]  # type: ignore[arg-type]
         self.ui.actionNewUTI.setEnabled(self.active is not None)
 
         sound_icon_path = f":/images/icons/k{version}/sound.png"
-        self.ui.actionNewUTS.setIcon(QIcon(QPixmap(sound_icon_path)))  # type: ignore[arg-type]
+        self.ui.actionNewUTS.setIcon(QIcon(QPixmap(sound_icon_path)))  # pyright: ignore[reportArgumentType]  # type: ignore[arg-type]
         self.ui.actionNewUTS.setEnabled(self.active is not None)
 
         trigger_icon_path = f":/images/icons/k{version}/trigger.png"
-        self.ui.actionNewUTT.setIcon(QIcon(QPixmap(trigger_icon_path)))  # type: ignore[arg-type]
+        self.ui.actionNewUTT.setIcon(QIcon(QPixmap(trigger_icon_path)))  # pyright: ignore[reportArgumentType]  # type: ignore[arg-type]
         self.ui.actionNewUTT.setEnabled(self.active is not None)
 
         merchant_icon_path = f":/images/icons/k{version}/merchant.png"
-        self.ui.actionNewUTM.setIcon(QIcon(QPixmap(merchant_icon_path)))  # type: ignore[arg-type]
+        self.ui.actionNewUTM.setIcon(QIcon(QPixmap(merchant_icon_path)))  # pyright: ignore[reportArgumentType]  # type: ignore[arg-type]
         self.ui.actionNewUTM.setEnabled(self.active is not None)
 
         waypoint_icon_path = f":/images/icons/k{version}/waypoint.png"
-        self.ui.actionNewUTW.setIcon(QIcon(QPixmap(waypoint_icon_path)))  # type: ignore[arg-type]
+        self.ui.actionNewUTW.setIcon(QIcon(QPixmap(waypoint_icon_path)))  # pyright: ignore[reportArgumentType]  # type: ignore[arg-type]
         self.ui.actionNewUTW.setEnabled(self.active is not None)
 
         encounter_icon_path = f":/images/icons/k{version}/encounter.png"
-        self.ui.actionNewUTE.setIcon(QIcon(QPixmap(encounter_icon_path)))  # type: ignore[arg-type]
+        self.ui.actionNewUTE.setIcon(QIcon(QPixmap(encounter_icon_path)))  # pyright: ignore[reportArgumentType]  # type: ignore[arg-type]
         self.ui.actionNewUTE.setEnabled(self.active is not None)
 
         self.ui.actionEditTLK.setEnabled(self.active is not None)
@@ -1714,6 +1832,7 @@ class ToolWindow(QMainWindow):
                 QMessageBox.Icon.Information,
                 "dialog.tlk not found",
                 f"Could not open the TalkTable editor, dialog.tlk not found at the expected location<br><br>{c_filepath}.",
+                # flags=Qt.WindowType.Window | Qt.WindowType.Dialog | Qt.WindowType.WindowStaysOnTopHint,
             ).exec()
             return
         resource = FileResource("dialog", ResourceType.TLK, os.path.getsize(c_filepath), 0x0, c_filepath)  # noqa: PTH202
@@ -1737,7 +1856,12 @@ class ToolWindow(QMainWindow):
             [SearchLocation.OVERRIDE, SearchLocation.CHITIN],
         )
         if not journal_resources or not journal_resources.get(jrl_ident):
-            QMessageBox(QMessageBox.Icon.Critical, "global.jrl not found", "Could not open the journal editor: 'global.jrl' not found.").exec()
+            QMessageBox(
+                QMessageBox.Icon.Critical,
+                "global.jrl not found",
+                "Could not open the journal editor: 'global.jrl' not found.",
+                flags=Qt.WindowType.Window | Qt.WindowType.Dialog | Qt.WindowType.WindowStaysOnTopHint,
+            ).exec()
             return
         relevant: list[LocationResult] = journal_resources[jrl_ident]
         if len(relevant) > 1:
@@ -1761,9 +1885,9 @@ class ToolWindow(QMainWindow):
         assert self.active is not None, "No installation active"
         file_searcher_dialog = FileSearcher(self, self.installations)
         file_searcher_dialog.setModal(False)  # Make the dialog non-modal
-        file_searcher_dialog.show()  # Show the dialog without blocking
         file_searcher_dialog.file_results.connect(self.handle_search_completed)
         add_window(file_searcher_dialog)
+        file_searcher_dialog.show()  # Show the dialog without blocking
 
     @Slot(bool)
     def open_indoor_map_builder(
@@ -1974,53 +2098,33 @@ class ToolWindow(QMainWindow):
 
     @Slot()
     def unset_installation(self):
-        """Unset the current installation."""
-        RobustLogger().debug("TRACE: unset_installation() called")
+        """Unset the current installation and clear all UI state."""
         # Clear file system watcher before clearing the installation
-        RobustLogger().debug("TRACE: unset_installation: about to call _clear_file_watcher()")
         self._clear_file_watcher()
-        RobustLogger().debug("TRACE: unset_installation: _clear_file_watcher() returned")
 
         # Disconnect signal to prevent recursive call when setting index to 0
-        RobustLogger().debug("TRACE: unset_installation: about to disconnect currentIndexChanged signal")
         try:
             self.ui.gameCombo.currentIndexChanged.disconnect(self.change_active_installation)
-            RobustLogger().debug("TRACE: unset_installation: signal disconnected")
         except (TypeError, RuntimeError):
             # Signal may not be connected yet during initialization
-            RobustLogger().debug("TRACE: unset_installation: signal was not connected, skipping disconnect")
-        RobustLogger().debug("TRACE: unset_installation: about to call setCurrentIndex(0)")
+            pass
+
         self.ui.gameCombo.setCurrentIndex(0)
-        RobustLogger().debug("TRACE: unset_installation: setCurrentIndex(0) returned")
+
         # Reconnect signal after setting index
-        RobustLogger().debug("TRACE: unset_installation: about to reconnect currentIndexChanged signal")
         self.ui.gameCombo.currentIndexChanged.connect(self.change_active_installation)
-        RobustLogger().debug("TRACE: unset_installation: signal reconnected")
 
-        RobustLogger().debug("TRACE: unset_installation: about to call coreWidget.set_resources([])")
+        # Clear all resource lists
         self.ui.coreWidget.set_resources([])
-        RobustLogger().debug("TRACE: unset_installation: coreWidget.set_resources([]) returned")
-        RobustLogger().debug("TRACE: unset_installation: about to call modulesWidget.set_sections([])")
         self.ui.modulesWidget.set_sections([])
-        RobustLogger().debug("TRACE: unset_installation: modulesWidget.set_sections([]) returned")
-        RobustLogger().debug("TRACE: unset_installation: about to call modulesWidget.set_resources([])")
         self.ui.modulesWidget.set_resources([])
-        RobustLogger().debug("TRACE: unset_installation: modulesWidget.set_resources([]) returned")
-        RobustLogger().debug("TRACE: unset_installation: about to call overrideWidget.set_sections([])")
         self.ui.overrideWidget.set_sections([])
-        RobustLogger().debug("TRACE: unset_installation: overrideWidget.set_sections([]) returned")
-        RobustLogger().debug("TRACE: unset_installation: about to call overrideWidget.set_resources([])")
         self.ui.overrideWidget.set_resources([])
-        RobustLogger().debug("TRACE: unset_installation: overrideWidget.set_resources([]) returned")
 
-        RobustLogger().debug("TRACE: unset_installation: about to call resourceTabs.setEnabled(False)")
+        # Disable resource tabs and update menus
         self.ui.resourceTabs.setEnabled(False)
-        RobustLogger().debug("TRACE: unset_installation: resourceTabs.setEnabled(False) returned")
-        RobustLogger().debug("TRACE: unset_installation: about to call update_menus()")
         self.update_menus()
-        RobustLogger().debug("TRACE: unset_installation: update_menus() returned")
         self.active = None
-        RobustLogger().debug("TRACE: unset_installation: returning")
 
     # endregion
 
@@ -2226,10 +2330,10 @@ class ToolWindow(QMainWindow):
             if is_mod_file(r_save_filepath):
                 if capsule_type == "mod":
                     write_erf(read_erf(c_filepath), r_save_filepath)
-                    QMessageBox(QMessageBox.Icon.Information, "Module Saved", f"Module saved to '{r_save_filepath}'").exec()
+                    QMessageBox(QMessageBox.Icon.Information, tr("Module Saved"), trf("Module saved to '{r_save_filepath}'", r_save_filepath=r_save_filepath)).exec()
                 else:
                     module.rim_to_mod(r_save_filepath, self.active.module_path(), module_name, self.active.game())
-                    QMessageBox(QMessageBox.Icon.Information, "Module Built", f"Module built from relevant RIMs/ERFs and saved to '{r_save_filepath}'").exec()
+                    QMessageBox(QMessageBox.Icon.Information, tr("Module Built"), trf("Module built from relevant RIMs/ERFs and saved to '{r_save_filepath}'", r_save_filepath=r_save_filepath)).exec()
                 return
 
             erf_or_rim: ERF | RIM = read_erf(c_filepath) if is_any_erf_type_file(c_filepath) else read_rim(c_filepath)
@@ -2237,24 +2341,37 @@ class ToolWindow(QMainWindow):
                 if isinstance(erf_or_rim, ERF):
                     erf_or_rim = erf_or_rim.to_rim()
                 write_rim(erf_or_rim, r_save_filepath)
-                QMessageBox(QMessageBox.Icon.Information, "RIM Saved", f"Resource Image File saved to '{r_save_filepath}'").exec()
+                QMessageBox(QMessageBox.Icon.Information, tr("RIM Saved"), trf("Resource Image File saved to '{r_save_filepath}'", r_save_filepath=r_save_filepath)).exec()
 
             elif is_any_erf_type_file(r_save_filepath):
                 if isinstance(erf_or_rim, RIM):
                     erf_or_rim = erf_or_rim.to_erf()
                 erf_or_rim.erf_type = ERFType.from_extension(r_save_filepath)
                 write_erf(erf_or_rim, r_save_filepath)
-                QMessageBox(QMessageBox.Icon.Information, "ERF Saved", f"Encapsulated Resource File saved to '{r_save_filepath}'").exec()
+                QMessageBox(QMessageBox.Icon.Information, tr("ERF Saved"), trf("Encapsulated Resource File saved to '{r_save_filepath}'", r_save_filepath=r_save_filepath)).exec()
 
         except Exception as e:  # noqa: BLE001  # pylint: disable=broad-exception-caught
             RobustLogger().exception("Error extracting capsule file '%s'", module_name)
-            QMessageBox(QMessageBox.Icon.Critical, "Error saving capsule file", str(universal_simplify_exception(e))).exec()
+            QMessageBox(QMessageBox.Icon.Critical, tr("Error saving capsule file"), str((e.__class__.__name__, str(e)))).exec()
 
     def build_extract_save_paths(
         self,
         resources: list[FileResource],
     ) -> tuple[Path, dict[FileResource, Path]] | tuple[None, None]:
-        # TODO(th3w1zard1): currently doesn't handle same filenames existing for extra extracts e.g. tpcTxiCheckbox.isChecked() or mdlTexturesCheckbox.isChecked()
+        """Build extraction save paths for resources, handling filename conflicts for extra extracts.
+
+        This method ensures that when extracting resources with additional files (like TXI files
+        for textures or texture subfolders for models), no filename conflicts occur between
+        different resources that might have the same base name.
+
+        Args:
+        ----
+            resources: List of FileResource objects to extract
+
+        Returns:
+        -------
+            Tuple of (folder_path, paths_to_write_dict) or (None, None) if cancelled
+        """
         paths_to_write: dict[FileResource, Path] = {}
 
         folder_path_str: str = QFileDialog.getExistingDirectory(self, tr("Extract to folder"))
@@ -2263,15 +2380,64 @@ class ToolWindow(QMainWindow):
             return None, None
 
         folder_path = Path(folder_path_str)
+
+        # Track all potential output filenames to detect conflicts
+        used_filenames: set[str] = set()
+        resource_conflict_counts: dict[str, int] = {}
+
         for resource in resources:
             identifier: ResourceIdentifier = resource.identifier()
-            save_path: Path = folder_path / str(identifier)
-            # Determine the final save path based on UI checks
+            base_name: str = identifier.resname
+            base_path: Path = folder_path / base_name
+
+            # Determine the main file save path based on UI checks
+            main_save_path: Path = base_path
             if resource.restype() is ResourceType.TPC and self.ui.tpcDecompileCheckbox.isChecked():
-                save_path = save_path.with_suffix(".tga")
+                main_save_path = main_save_path.with_suffix(".tga")
             elif resource.restype() is ResourceType.MDL and self.ui.mdlDecompileCheckbox.isChecked():
-                save_path = save_path.with_suffix(".mdl.ascii")
-            paths_to_write[resource] = save_path
+                main_save_path = main_save_path.with_suffix(".mdl.ascii")
+            else:
+                main_save_path = main_save_path.with_suffix(f".{identifier.restype.extension}")
+
+            # Check for conflicts with the main file and adjust if necessary
+            main_filename: str = main_save_path.name
+            if main_filename in used_filenames:
+                # Increment conflict count for this base name
+                conflict_count = resource_conflict_counts.get(base_name, 0) + 1
+                resource_conflict_counts[base_name] = conflict_count
+
+                # Create unique filename by appending suffix
+                stem = main_save_path.stem
+                suffix = main_save_path.suffix
+                main_save_path = main_save_path.with_name(f"{stem}_{conflict_count}{suffix}")
+
+            used_filenames.add(main_save_path.name)
+
+            # For TPC resources, also check TXI file conflicts if that option is enabled
+            if resource.restype() is ResourceType.TPC and self.ui.tpcTxiCheckbox.isChecked():
+                txi_path: Path = main_save_path.with_suffix(".txi")
+                txi_filename: str = txi_path.name
+                if txi_filename in used_filenames:
+                    # Use the same conflict resolution as the main file
+                    conflict_count = resource_conflict_counts.get(base_name, 0)
+                    if conflict_count > 0:
+                        stem = txi_path.stem
+                        txi_path = txi_path.with_name(f"{stem}_{conflict_count}.txi")
+
+                used_filenames.add(txi_path.name)
+
+            # For MDL resources, check potential texture subfolder conflicts if texture extraction is enabled
+            if resource.restype() is ResourceType.MDL and self.ui.mdlTexturesCheckbox.isChecked():
+                model_subfolder_name: str = f"model_{base_name}"
+                if model_subfolder_name in used_filenames:
+                    conflict_count = resource_conflict_counts.get(base_name, 0)
+                    if conflict_count > 0:
+                        model_subfolder_name = f"model_{base_name}_{conflict_count}"
+
+                used_filenames.add(model_subfolder_name)
+
+            paths_to_write[resource] = main_save_path
+
         return folder_path, paths_to_write
 
     @Slot(list, object)
@@ -2285,47 +2451,102 @@ class ToolWindow(QMainWindow):
             if folder_path is None or paths_to_write is None:
                 return
             failed_savepath_handlers: dict[Path, Exception] = {}
-            resource_save_paths: dict[FileResource, Path] = FileSaveHandler(selected_resources).determine_save_paths(paths_to_write, failed_savepath_handlers)
+            resource_save_paths: dict[FileResource, Path] = FileSaveHandler(selected_resources).determine_save_paths(
+                paths_to_write,
+                failed_savepath_handlers,
+            )
             if not resource_save_paths:
                 return
             loader = AsyncLoader.__new__(AsyncLoader)
             seen_resources: dict[LocationResult, Path] = {}
-            tasks = [lambda res=resource, fp=save_path: self._extract_resource(res, fp, loader, seen_resources) for resource, save_path in resource_save_paths.items()]
+
+            def _make_extract_task(
+                resource: FileResource,
+                save_path: Path,
+                loader: AsyncLoader = loader,
+                seen_resources: dict[LocationResult, Path] = seen_resources,
+            ) -> Callable[[], None]:
+                def task():
+                    self._extract_resource(
+                        resource=resource,
+                        save_path=save_path,
+                        loader=loader,
+                        seen_resources=seen_resources,
+                    )
+
+                return task
+
+            tasks: list[Callable[[], None]] = [
+                _make_extract_task(
+                    resource=resource,
+                    save_path=save_path,
+                    loader=loader,
+                    seen_resources=seen_resources,
+                )
+                for resource, save_path in resource_save_paths.items()
+            ]
+
             loader.__init__(  # pylint: disable=unnecessary-dunder-call
                 self,
                 "Extracting Resources",
                 tasks,
                 "Failed to Extract Resources",
             )
-            if is_debug_mode():
-                loader.errors.extend(failed_savepath_handlers.values())
-                loader.exec()
-            else:
-                for resource, save_path in resource_save_paths.items():
-                    self._extract_resource(resource, save_path, loader, seen_resources)
+            loader.errors.extend(failed_savepath_handlers.values())
+            loader.exec()
 
             # quick main thread/ui check.
-            if QThread.currentThread() != cast("QApplication", QApplication.instance()).thread():
+            if QThread.currentThread() != cast(QApplication, QApplication.instance()).thread():
+                print("on_extract_resources: Not on main thread, returning")
                 return
-            if loader.errors:
+
+            num_errors = len(loader.errors)
+            num_successes = len(resource_save_paths) - num_errors
+
+            # Always show one message box, with both successes and errors listed intuitively.
+            if num_errors or num_successes:
+                if num_errors and num_successes > 0:
+                    title = tr("Extraction completed with some errors.")
+                    summary = trf(
+                        "Saved {success_count} files to {path}.\nFailed to save {error_count} files.",
+                        success_count=num_successes,
+                        error_count=num_errors,
+                        path=folder_path,
+                    )
+                elif num_errors:
+                    title = tr("Failed to extract all items.")
+                    summary = trf("Failed to save all {count} files!", count=num_errors)
+                else:
+                    title = tr("Extraction successful.")
+                    summary = trf(
+                        "Successfully saved {count} files to {path}",
+                        count=len(resource_save_paths),
+                        path=folder_path,
+                    )
+
                 msg_box = QMessageBox(
                     QMessageBox.Icon.Information,
-                    tr("Failed to extract some items."),
-                    trf("Failed to save {count} files!", count=len(loader.errors)),
-                    flags=Qt.WindowType.Dialog | Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint | Qt.WindowType.WindowStaysOnTopHint,
+                    title,
+                    summary,
+                    flags=(
+                        Qt.WindowType.Dialog
+                        | Qt.WindowType.WindowTitleHint
+                        | Qt.WindowType.WindowCloseButtonHint
+                        | Qt.WindowType.WindowStaysOnTopHint
+                    ),
                 )
-
-                msg_box.setDetailedText("\n".join(f"{e.__class__.__name__}: {e}" for e in loader.errors))
-                msg_box.exec()
-            else:
-                msg_box = QMessageBox(
-                    QMessageBox.Icon.Information,
-                    tr("Extraction successful."),
-                    trf("Successfully saved {count} files to {path}", count=len(paths_to_write), path=folder_path),
-                    flags=Qt.WindowType.Dialog | Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint | Qt.WindowType.WindowStaysOnTopHint,
-                )
-
-                msg_box.setDetailedText("\n".join(str(p) for p in resource_save_paths.values()))
+                details_lines: list[str] = []
+                if num_successes > 0:
+                    details_lines.append(tr("Saved files:"))
+                    for p in resource_save_paths.values():
+                        details_lines.append(f"   {p}")
+                if num_errors:
+                    if details_lines:
+                        details_lines.append("")  # blank line
+                    details_lines.append(tr("Errors:"))
+                    for e in loader.errors:
+                        details_lines.append(f"   {e.__class__.__name__}: {e}")
+                msg_box.setDetailedText("\n".join(details_lines))
                 msg_box.exec()
         elif isinstance(resource_widget, ResourceList) and is_capsule_file(resource_widget.ui.sectionCombo.currentData(Qt.ItemDataRole.UserRole)):
             module_name = resource_widget.ui.sectionCombo.currentData(Qt.ItemDataRole.UserRole)
@@ -2377,7 +2598,11 @@ class ToolWindow(QMainWindow):
         write_tpc(tpc, data, ResourceType.TGA)
         return bytes(data)
 
-    def _decompile_mdl(self, resource: FileResource, data: SOURCE_TYPES) -> bytearray:
+    def _decompile_mdl(
+        self,
+        resource: FileResource,
+        data: SOURCE_TYPES,
+    ) -> bytearray:
         assert self.active is not None
         mdx_resource_lookup: ResourceResult | None = self.active.resource(resource.resname(), ResourceType.MDX)
         if mdx_resource_lookup is None:
@@ -2415,10 +2640,16 @@ class ToolWindow(QMainWindow):
             if not self._process_texture(item, tex_type, location_results, resource, main_subfolder, seen_resources, loader):
                 loader.errors.append(ValueError(f"Missing {tex_type} '{item}' for model '{resource.identifier()}'"))
 
-    def _locate_texture(self, texture: str) -> dict[ResourceIdentifier, list[LocationResult]]:
+    def _locate_texture(
+        self,
+        texture: str,
+    ) -> dict[ResourceIdentifier, list[LocationResult]]:
         assert self.active is not None, "self.active is None in _locate_texture"
         return self.active.locations(
-            [ResourceIdentifier(resname=texture, restype=rt) for rt in (ResourceType.TPC, ResourceType.TGA)],
+            [
+                ResourceIdentifier(resname=texture, restype=rt)
+                for rt in (ResourceType.TPC, ResourceType.TGA)
+            ],
             [
                 SearchLocation.OVERRIDE,
                 SearchLocation.TEXTURES_GUI,
@@ -2471,12 +2702,12 @@ class ToolWindow(QMainWindow):
         location: LocationResult,
         resident: ResourceIdentifier,
         subfolder: Path,
-        seen_resources: dict,
+        seen_resources: dict[LocationResult, Path],
     ):
         file_format = ResourceType.TGA if self.ui.tpcDecompileCheckbox.isChecked() else ResourceType.TPC
         seen_resources[location] = savepath = subfolder / f"{resident.resname}.{file_format.extension}"
 
-        if self.ui.tpcTxiCheckbox.isChecked() or (resident.restype is ResourceType.TPC and self.ui.tpcDecompileCheckbox.isChecked()):
+        if self.ui.tpcTxiCheckbox.isChecked() or (resident.restype == ResourceType.TPC and self.ui.tpcDecompileCheckbox.isChecked()):
             tpc = read_tpc(location.filepath, location.offset, location.size)
             subfolder.mkdir(parents=True, exist_ok=True)
             if self.ui.tpcTxiCheckbox.isChecked():
@@ -2507,10 +2738,16 @@ class ToolWindow(QMainWindow):
         for filepath in filepaths:
             r_filepath = Path(filepath)
             try:
-                file_res = FileResource(r_filepath.stem, ResourceType.from_extension(r_filepath.suffix), r_filepath.stat().st_size, 0x0, r_filepath)
+                file_res = FileResource(
+                    r_filepath.stem,
+                    ResourceType.from_extension(r_filepath.suffix),
+                    r_filepath.stat().st_size,
+                    0x0,
+                    r_filepath,
+                )
                 open_resource_editor(file_res, self.active, self)
             except (ValueError, OSError) as e:
-                etype, msg = universal_simplify_exception(e)
+                etype, msg = (e.__class__.__name__, str(e))
                 QMessageBox(QMessageBox.Icon.Critical, f"Failed to open file ({etype})", msg).exec()
 
     # endregion
