@@ -211,13 +211,83 @@ def qt_api(request: pytest.FixtureRequest):
             del sys.modules[module_name]
 
 
+# ============================================================================
+# TEST EXECUTION LEVEL SYSTEM
+# ============================================================================
+# 
+# Tests can be marked with pytest markers to control execution based on
+# the PYKOTOR_TEST_LEVEL environment variable:
+#
+# - @pytest.mark.normal: Requires PYKOTOR_TEST_LEVEL=normal or higher
+# - @pytest.mark.slow: Requires PYKOTOR_TEST_LEVEL=slow or higher
+# - @pytest.mark.comprehensive: Requires PYKOTOR_TEST_LEVEL=comprehensive
+#
+# Test levels (via PYKOTOR_TEST_LEVEL env var):
+# - "fast" (default): Only unmarked tests - for quick CI/pre-PyPI validation
+# - "normal": Includes tests marked with @pytest.mark.normal
+# - "slow": Includes tests marked with @pytest.mark.slow (20+ minute tests)
+# - "comprehensive": All tests including comprehensive/exhaustive ones
+#
+# Usage:
+#   PYKOTOR_TEST_LEVEL=fast pytest tests/        # Default: quick validation
+#   PYKOTOR_TEST_LEVEL=slow pytest tests/         # Include slow tests
+#   PYKOTOR_TEST_LEVEL=comprehensive pytest tests/  # All tests
+# ============================================================================
+
+_TEST_LEVEL = os.environ.get("PYKOTOR_TEST_LEVEL", "fast").lower()
+_TEST_LEVELS = {
+    "fast": 1,  # Only fast tests (unmarked)
+    "normal": 2,  # Fast + normal tests
+    "slow": 3,  # Fast + normal + slow tests
+    "comprehensive": 4,  # All tests
+}
+
+
+def _get_test_level() -> int:
+    """Get the current test execution level as an integer."""
+    return _TEST_LEVELS.get(_TEST_LEVEL, 1)  # Default to "fast" if invalid
+
+
+def _should_skip_test(item: pytest.Item) -> "tuple[bool, str]":
+    """Determine if a test should be skipped based on its markers and test level.
+    
+    Returns:
+        Tuple of (should_skip, reason)
+    """
+    test_level = _get_test_level()
+    
+    # Check for comprehensive marker (level 4 required)
+    if item.get_closest_marker("comprehensive"):
+        if test_level < 4:
+            return True, f"Test requires PYKOTOR_TEST_LEVEL=comprehensive (current: {_TEST_LEVEL})"
+    
+    # Check for slow marker (level 3+ required)
+    if item.get_closest_marker("slow"):
+        if test_level < 3:
+            return True, f"Test requires PYKOTOR_TEST_LEVEL=slow or higher (current: {_TEST_LEVEL})"
+    
+    # Check for normal marker (level 2+ required)
+    if item.get_closest_marker("normal"):
+        if test_level < 2:
+            return True, f"Test requires PYKOTOR_TEST_LEVEL=normal or higher (current: {_TEST_LEVEL})"
+    
+    return False, ""
+
+
 @pytest.hookimpl(tryfirst=True)
 def pytest_runtest_setup(item: pytest.Item):
     """Setup hook that runs before each test.
 
     For module designer tests, unset QT_QPA_PLATFORM to allow real display.
     For all other tests, ensure offscreen mode is set to prevent GUI windows from appearing.
+    
+    Also handles test level-based skipping.
     """
+    # Check if test should be skipped based on level
+    should_skip, reason = _should_skip_test(item)
+    if should_skip:
+        pytest.skip(str(reason))
+    
     if _is_module_designer_test(item):
         # Module designer tests need real display for OpenGL rendering
         # Remove offscreen setting to allow real display

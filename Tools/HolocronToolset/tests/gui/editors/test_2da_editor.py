@@ -159,6 +159,8 @@ from toolset.data.installation import HTInstallation
 from pykotor.resource.type import ResourceType
 
 
+@pytest.mark.skip("Crashes with Windows access violation in pytest-qt wait() - diagnostic test")
+@pytest.mark.comprehensive
 def test_twodaeditor_editor_help_dialog_opens_correct_file(qtbot, installation: HTInstallation):
     """Test that TwoDAEditor help dialog opens and displays the correct help file (not 'Help File Not Found')."""
     from toolset.gui.dialogs.editor_help import EditorHelpDialog

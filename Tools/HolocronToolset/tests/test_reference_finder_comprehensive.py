@@ -11,6 +11,11 @@ Tests cover:
 
 All tests use pytest-qt for headless testing with real installation data.
 Zero mocking - all tests use actual functionality.
+
+Test execution:
+- These tests are marked as "comprehensive" and require PYKOTOR_TEST_LEVEL=comprehensive to run.
+- Default level is "fast" which skips these tests for quick CI/pre-PyPI validation.
+- Set PYKOTOR_TEST_LEVEL=comprehensive to run these exhaustive tests.
 """
 
 from __future__ import annotations
@@ -47,6 +52,7 @@ if TYPE_CHECKING:
 class TestFindScriptReferencesComprehensive:
     """Exhaustive tests for find_script_references function."""
 
+    @pytest.mark.comprehensive
     def test_find_script_references_exact_match(self, installation: HTInstallation):
         """Test finding script references with exact match."""
         # Search for a script that should exist
@@ -68,6 +74,7 @@ class TestFindScriptReferencesComprehensive:
             # Verify matched value matches search term (case-insensitive)
             assert result.matched_value.lower() == "k_ai_master"
 
+    @pytest.mark.comprehensive
     def test_find_script_references_partial_match(self, installation: HTInstallation):
         """Test finding script references with partial matching."""
         results = find_script_references(
@@ -83,6 +90,7 @@ class TestFindScriptReferencesComprehensive:
             assert "k_ai" in result.matched_value.lower()
             assert isinstance(result, ReferenceSearchResult)
 
+    @pytest.mark.comprehensive
     def test_find_script_references_case_sensitive_exact(self, installation: HTInstallation):
         """Test case-sensitive exact matching."""
         # Case sensitive search
@@ -104,6 +112,7 @@ class TestFindScriptReferencesComprehensive:
         # Case insensitive should find same or more results
         assert len(results_insensitive) >= len(results_sensitive)
 
+    @pytest.mark.comprehensive
     def test_find_script_references_file_pattern_filter(self, installation: HTInstallation):
         """Test file pattern filtering."""
         # Search in modules only
@@ -132,6 +141,7 @@ class TestFindScriptReferencesComprehensive:
             filename = result.file_resource.filename().lower()
             assert filename.endswith(".mod") or "module" in str(result.file_resource.filepath()).lower()
 
+    @pytest.mark.comprehensive
     def test_find_script_references_file_types_filter(self, installation: HTInstallation):
         """Test file type filtering."""
         # Search only in UTC files
@@ -161,6 +171,7 @@ class TestFindScriptReferencesComprehensive:
         for result in results_are:
             assert result.file_type == "ARE"
 
+    @pytest.mark.comprehensive
     def test_find_script_references_multiple_file_types(self, installation: HTInstallation):
         """Test searching multiple file types."""
         results = find_script_references(
@@ -175,6 +186,7 @@ class TestFindScriptReferencesComprehensive:
         for result in results:
             assert result.file_type in {"UTC", "UTD", "ARE"}
 
+    @pytest.mark.comprehensive
     def test_find_script_references_ncs_bytecode(self, installation: HTInstallation):
         """Test finding script references in NCS bytecode."""
         results = find_script_references(
@@ -192,6 +204,7 @@ class TestFindScriptReferencesComprehensive:
                 assert result.byte_offset is not None
                 assert isinstance(result.byte_offset, int)
 
+    @pytest.mark.comprehensive
     def test_find_script_references_empty_result(self, installation: HTInstallation):
         """Test finding script references that don't exist."""
         results = find_script_references(
@@ -204,6 +217,7 @@ class TestFindScriptReferencesComprehensive:
         assert isinstance(results, list)
         assert len(results) == 0
 
+    @pytest.mark.comprehensive
     def test_find_script_references_with_logger(self, installation: HTInstallation):
         """Test find_script_references with logger callback."""
         log_messages: list[str] = []
@@ -228,6 +242,7 @@ class TestFindScriptReferencesComprehensive:
 class TestFindTagReferencesComprehensive:
     """Exhaustive tests for find_tag_references function."""
 
+    @pytest.mark.comprehensive
     def test_find_tag_references_exact_match(self, installation: HTInstallation):
         """Test finding tag references with exact match."""
         results = find_tag_references(
@@ -245,6 +260,7 @@ class TestFindTagReferencesComprehensive:
             assert result.matched_value.lower() == "player"
             assert result.file_type in {"UTC", "UTD", "UTP", "UTT", "UTI", "GIT"}
 
+    @pytest.mark.comprehensive
     def test_find_tag_references_partial_match(self, installation: HTInstallation):
         """Test finding tag references with partial matching."""
         results = find_tag_references(
@@ -258,6 +274,7 @@ class TestFindTagReferencesComprehensive:
         for result in results:
             assert "play" in result.matched_value.lower()
 
+    @pytest.mark.comprehensive
     def test_find_tag_references_case_sensitive(self, installation: HTInstallation):
         """Test case-sensitive tag matching."""
         results_sensitive = find_tag_references(
@@ -276,6 +293,7 @@ class TestFindTagReferencesComprehensive:
 
         assert len(results_insensitive) >= len(results_sensitive)
 
+    @pytest.mark.comprehensive
     def test_find_tag_references_file_types_filter(self, installation: HTInstallation):
         """Test file type filtering for tags."""
         results_utc = find_tag_references(
@@ -290,6 +308,7 @@ class TestFindTagReferencesComprehensive:
         for result in results_utc:
             assert result.file_type == "UTC"
 
+    @pytest.mark.comprehensive
     def test_find_tag_references_file_pattern(self, installation: HTInstallation):
         """Test file pattern filtering for tags."""
         results = find_tag_references(
@@ -309,6 +328,7 @@ class TestFindTagReferencesComprehensive:
 class TestFindTemplateResRefReferencesComprehensive:
     """Exhaustive tests for find_template_resref_references function."""
 
+    @pytest.mark.comprehensive
     def test_find_template_resref_references_exact_match(self, installation: HTInstallation):
         """Test finding template resref references with exact match."""
         results = find_template_resref_references(
@@ -326,6 +346,7 @@ class TestFindTemplateResRefReferencesComprehensive:
             assert result.matched_value.lower() == "p_hk47"
             assert result.file_type in {"UTC", "UTD", "UTP", "UTT", "UTI", "UTM"}
 
+    @pytest.mark.comprehensive
     def test_find_template_resref_references_in_itemlist(self, installation: HTInstallation):
         """Test finding template resref in ItemList structures."""
         results = find_template_resref_references(
@@ -347,6 +368,7 @@ class TestFindTemplateResRefReferencesComprehensive:
 class TestFindConversationReferencesComprehensive:
     """Exhaustive tests for find_conversation_references function."""
 
+    @pytest.mark.comprehensive
     def test_find_conversation_references_exact_match(self, installation: HTInstallation):
         """Test finding conversation references with exact match."""
         results = find_conversation_references(
@@ -363,6 +385,7 @@ class TestFindConversationReferencesComprehensive:
             assert result.matched_value.lower() == "k_pdan_m12aa"
             assert result.file_type in {"UTC", "UTD", "UTP", "IFO"}
 
+    @pytest.mark.comprehensive
     def test_find_conversation_references_partial_match(self, installation: HTInstallation):
         """Test finding conversation references with partial matching."""
         results = find_conversation_references(
@@ -380,6 +403,7 @@ class TestFindConversationReferencesComprehensive:
 class TestFindResRefReferencesComprehensive:
     """Exhaustive tests for find_resref_references function."""
 
+    @pytest.mark.comprehensive
     def test_find_resref_references_with_field_names(self, installation: HTInstallation):
         """Test finding resref references with specific field names."""
         results = find_resref_references(
@@ -396,6 +420,7 @@ class TestFindResRefReferencesComprehensive:
         for result in results:
             assert result.field_path == "ScriptHeartbeat"
 
+    @pytest.mark.comprehensive
     def test_find_resref_references_with_ncs_search(self, installation: HTInstallation):
         """Test finding resref references including NCS bytecode."""
         results = find_resref_references(
@@ -420,6 +445,7 @@ class TestFindResRefReferencesComprehensive:
 class TestFindFieldValueReferencesComprehensive:
     """Exhaustive tests for find_field_value_references function."""
 
+    @pytest.mark.comprehensive
     def test_find_field_value_references_single_field(self, installation: HTInstallation):
         """Test finding field value references in a single field."""
         results = find_field_value_references(
@@ -435,6 +461,7 @@ class TestFindFieldValueReferencesComprehensive:
         for result in results:
             assert result.field_path == "Tag"
 
+    @pytest.mark.comprehensive
     def test_find_field_value_references_multiple_fields(self, installation: HTInstallation):
         """Test finding field value references in multiple fields."""
         results = find_field_value_references(

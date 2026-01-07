@@ -260,6 +260,7 @@ class TestKitGeneration(unittest.TestCase):
         self._run_full_kit_test("dantooineestate")
 
     # Davik Estate tests
+    @pytest.mark.slow
     def test_generate_davikestate(self):
         """Generate davikestate kit and compare structure and JSON."""
         self._run_full_kit_test("davikestate")
