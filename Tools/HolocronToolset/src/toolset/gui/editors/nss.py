@@ -2470,10 +2470,12 @@ class NSSEditor(Editor):
         self.ui.actionSave_As.triggered.connect(self.save_as)
         self.ui.actionSave_All.setShortcut(QKeySequence("Ctrl+K, S"))  # VS Code style
         self.ui.actionClose.setShortcut(QKeySequence("Ctrl+W"))
-        self.ui.actionClose.triggered.connect(self.close)
+        # QAction.triggered emits a bool; QWidget.close takes no args.
+        self.ui.actionClose.triggered.connect(lambda *_: self.close())
         self.ui.actionClose_All.setShortcut(QKeySequence("Ctrl+K, W"))
         self.ui.actionExit.setShortcut(QKeySequence("Ctrl+Q"))
-        self.ui.actionExit.triggered.connect(self.close)
+        # QAction.triggered emits a bool; QWidget.close takes no args.
+        self.ui.actionExit.triggered.connect(lambda *_: self.close())
 
         # Compile
         self.ui.actionCompile.setShortcut(QKeySequence("F5"))  # Changed from Ctrl+Shift+B to F5 (VS Code style)

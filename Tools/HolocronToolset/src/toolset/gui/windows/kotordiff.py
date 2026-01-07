@@ -204,7 +204,8 @@ class KotorDiffWindow(QMainWindow):
         button_layout.addWidget(self.clear_btn)
 
         self.close_btn = QPushButton("Close")
-        self.close_btn.clicked.connect(self.close)
+        # QPushButton.clicked emits a bool; QWidget.close takes no args.
+        self.close_btn.clicked.connect(lambda *_: self.close())
         button_layout.addWidget(self.close_btn)
 
         main_layout.addLayout(button_layout)

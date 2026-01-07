@@ -3223,7 +3223,8 @@ class ThemeManager:
                 if "close" in (hint or []):
                     self.close_button = QPushButton("✕", self)
                     self.close_button.setStyleSheet(button_style)
-                    self.close_button.clicked.connect(parent.close)
+                    # QPushButton.clicked emits a bool; QWidget.close takes no args.
+                    self.close_button.clicked.connect(lambda *_: parent.close())
                     layout.addWidget(self.close_button)
 
                 self.start: QPoint = QPoint(0, 0)

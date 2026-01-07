@@ -157,7 +157,8 @@ class Editor(QMainWindow):
             
             exit_action = QAction("Exit", self)
             exit_action.setShortcut("Ctrl+Q")
-            exit_action.triggered.connect(self.close)
+            # QAction.triggered emits a bool; QWidget.close takes no args.
+            exit_action.triggered.connect(lambda *_: self.close())
             file_menu.addAction(exit_action)
         else:
             # Menubar already has menus (from UI file), connect to existing actions
@@ -181,7 +182,8 @@ class Editor(QMainWindow):
                     action.triggered.connect(self.revert)
                     action.setShortcut("Ctrl+R")
                 if action.text() == "Exit":
-                    action.triggered.connect(self.close)
+                    # QAction.triggered emits a bool; QWidget.close takes no args.
+                    action.triggered.connect(lambda *_: self.close())
                     action.setShortcut("Ctrl+Q")
 
     def _add_help_action(self, wiki_filename: str | None = None):

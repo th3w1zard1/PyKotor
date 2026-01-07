@@ -117,7 +117,8 @@ class TPCEditor(Editor):
         self.ui.actionSave.triggered.connect(self.save)
         self.ui.actionSaveAs.triggered.connect(self.save_as)
         self.ui.actionRevert.triggered.connect(self.revert)
-        self.ui.actionExit.triggered.connect(self.close)
+        # QAction.triggered emits a bool; QWidget.close takes no args.
+        self.ui.actionExit.triggered.connect(lambda *_: self.close())
 
         # Edit menu
         self.ui.actionCopy.triggered.connect(self._copy_to_clipboard)

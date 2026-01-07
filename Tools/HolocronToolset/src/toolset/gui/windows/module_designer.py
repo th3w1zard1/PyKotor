@@ -386,7 +386,8 @@ class ModuleDesigner(QMainWindow, BlenderEditorMixin):
         self.ui.actionOpen.triggered.connect(self.open_module_with_dialog)
         self.ui.actionSave.triggered.connect(self.save_git)
         self.ui.actionSettings.triggered.connect(self.open_settings_dialog)
-        self.ui.actionExit.triggered.connect(self.close)
+        # QAction.triggered emits a bool; QWidget.close takes no args.
+        self.ui.actionExit.triggered.connect(lambda *_: self.close())
         self.ui.actionInstructions.triggered.connect(self.show_help_window)
 
         self.ui.actionUndo.triggered.connect(self._on_undo)

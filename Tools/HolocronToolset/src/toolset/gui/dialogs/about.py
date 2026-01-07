@@ -47,7 +47,8 @@ class About(QDialog):
         self._no_scroll_filter = NoScrollEventFilter(self)
         self._no_scroll_filter.setup_filter(parent_widget=self)
 
-        self.ui.closeButton.clicked.connect(self.close)
+        # QPushButton.clicked emits a bool; QDialog.close takes no args.
+        self.ui.closeButton.clicked.connect(lambda *_: self.close())
 
         self.ui.aboutLabel.setText(self.ui.aboutLabel.text().replace("X.X.X", LOCAL_PROGRAM_INFO["currentVersion"]))
 

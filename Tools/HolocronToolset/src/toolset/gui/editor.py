@@ -388,7 +388,8 @@ class Editor(QMainWindow):
             if action.text() == "Revert":
                 action.setEnabled(False)
             if action.text() == "Exit":
-                action.triggered.connect(self.close)  # type: ignore[]
+                # QAction.triggered emits a bool; QWidget.close takes no args.
+                action.triggered.connect(lambda *_: self.close())
         QShortcut("Ctrl+N", self).activated.connect(self.new)
         QShortcut("Ctrl+O", self).activated.connect(self.open)
         QShortcut("Ctrl+S", self).activated.connect(self.save)

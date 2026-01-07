@@ -76,7 +76,8 @@ class CloneModuleDialog(QDialog):
         self._installations: dict[str, HTInstallation] = {active.name: active}
 
         self.ui.createButton.clicked.connect(self.ok)
-        self.ui.cancelButton.clicked.connect(self.close)
+        # QPushButton.clicked emits a bool; QDialog.close takes no args.
+        self.ui.cancelButton.clicked.connect(lambda *_: self.close())
         self.ui.filenameEdit.textChanged.connect(self.set_prefix_from_filename)
         self.ui.moduleSelect.currentIndexChanged.connect(self.changed_module)
 

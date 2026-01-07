@@ -17,6 +17,7 @@ from qtpy.QtWidgets import (
     QAction,  # pyright: ignore[reportPrivateImportUsage]
     QApplication,
     QDialog,
+    QDockWidget,
     QFileDialog,
     QHBoxLayout,
     QLabel,
@@ -26,7 +27,6 @@ from qtpy.QtWidgets import (
     QMessageBox,
     QPlainTextEdit,
     QProgressDialog,
-    QSplitter,
     QStackedWidget,
     QStatusBar,
     QVBoxLayout,
@@ -200,39 +200,16 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             # If UI structure changes, we still keep the action accessible via signal hookup below.
             pass
 
-        # Get mainSplitter - handle cases where it might not exist (new UI uses dock widgets)
-        # Fallback to finding it by object name if direct attribute access fails
-        main_splitter = getattr(self.ui, "mainSplitter", None)
-        if main_splitter is None:
-            main_splitter = self.findChild(QSplitter, "mainSplitter")
-            if main_splitter is None:
-                # Last resort: find it in the central widget
-                main_splitter = self.centralWidget().findChild(QSplitter, "mainSplitter")  # pyright: ignore[reportOptionalMemberAccess]
-            if main_splitter is not None:
-                # Store it for future access
-                self.ui.mainSplitter = main_splitter  # type: ignore[attr-defined]
-
-        if main_splitter is not None:
-            # Set initial splitter sizes (left panel ~250px, rest to map renderer)
-            # Set initial sizes: left panel gets ~250 pixels (a few inches), rest goes to map renderer
-            total_width = self.width() if self.width() > 0 else 1024
-            left_panel_size = min(300, max(200, total_width // 4))  # 200-300px or 1/4 of width, whichever is smaller
-            main_splitter.setSizes([left_panel_size, total_width - left_panel_size])
-            # Make splitter handle resizable
-            main_splitter.setChildrenCollapsible(False)
-            # Connect splitter resize to update preview image if needed
-            main_splitter.splitterMoved.connect(self._on_splitter_moved)
-        else:
-            # New UI uses dock widgets - connect to dock widget signals for preview updates
-            left_dock = getattr(self.ui, "leftDockWidget", None)
-            if left_dock is not None:
-                # Update preview when dock widget is resized or visibility changes
-                left_dock.visibilityChanged.connect(self._on_dock_visibility_changed)
-                # Use event filter to update preview after geometry changes
-                left_dock.installEventFilter(self)
-            right_dock = getattr(self.ui, "rightDockWidget", None)
-            if right_dock is not None:
-                right_dock.visibilityChanged.connect(self._on_dock_visibility_changed)
+        # New UI uses dock widgets - connect to dock widget signals for preview updates
+        left_dock: QDockWidget | None = self.ui.leftDockWidget
+        if left_dock is not None:
+            # Update preview when dock widget is resized or visibility changes
+            left_dock.visibilityChanged.connect(self._on_dock_visibility_changed)
+            # Use event filter to update preview after geometry changes
+            left_dock.installEventFilter(self)
+        right_dock: QDockWidget | None = self.ui.rightDockWidget
+        if right_dock is not None:
+            right_dock.visibilityChanged.connect(self._on_dock_visibility_changed)
 
         self._setup_status_bar()
         # Walkmesh painter state
@@ -286,7 +263,8 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self.ui.actionSaveAs.triggered.connect(self.save_as)
         self.ui.actionBuild.triggered.connect(self.build_map)
         self.ui.actionDownloadKits.triggered.connect(self.open_kit_downloader)
-        self.ui.actionExit.triggered.connect(self.close)
+        # QAction.triggered emits a bool; QWidget.close takes no args.
+        self.ui.actionExit.triggered.connect(lambda *_: self.close())
 
         # Settings
         if self._installation:
@@ -421,14 +399,20 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
                 return material
         return next(iter(self._material_colors.keys()), None)
 
-    def _toggle_paint_mode(self, enabled: bool):
+    def _toggle_paint_mode(
+        self,
+        enabled: bool,
+    ):
         self._painting_walkmesh = enabled
         self._paint_stroke_active = False
         self._paint_stroke_originals.clear()
         self._paint_stroke_new.clear()
         self._refresh_status_bar()
 
-    def _toggle_colorize_materials(self, enabled: bool):
+    def _toggle_colorize_materials(
+        self,
+        enabled: bool,
+    ):
         self._colorize_materials = enabled
         self.ui.mapRenderer.set_colorize_materials(enabled)
         self.ui.mapRenderer.mark_dirty()
@@ -442,7 +426,10 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self._undo_stack.push(cmd)
         self._refresh_window_title()
 
-    def _invalidate_rooms(self, rooms: list[IndoorMapRoom]):
+    def _invalidate_rooms(
+        self,
+        rooms: list[IndoorMapRoom],
+    ):
         self.ui.mapRenderer.invalidate_rooms(rooms)
         self._refresh_status_bar()
 
@@ -504,7 +491,10 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             display_name = self._module_kit_manager.get_module_display_name(module_root)
             self.ui.moduleSelect.addItem(display_name, module_root)
 
-    def _set_preview_image(self, image: QImage | None):
+    def _set_preview_image(
+        self,
+        image: QImage | None,
+    ):
         """Render a component preview into the unified preview pane."""
         if image is None:
             self.ui.previewImage.clear()
@@ -538,20 +528,31 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         )
         self.ui.previewImage.setPixmap(scaled)
 
-    def _on_splitter_moved(self, pos: int, index: int):
+    def _on_splitter_moved(
+        self,
+        pos: int,  # pyright: ignore[reportUnusedParameter]
+        index: int,  # pyright: ignore[reportUnusedParameter]
+    ):
         """Handle splitter movement - update preview image if it exists."""
         # Refresh preview image to match new size if one is set
         if self._preview_source_image is not None:
             # Use QTimer to update after layout has adjusted
             QTimer.singleShot(10, self._update_preview_image_size)
 
-    def _on_dock_visibility_changed(self, visible: bool):
+    def _on_dock_visibility_changed(
+        self,
+        visible: bool,
+    ):
         """Handle dock widget visibility changes - update preview image if it exists."""
         if visible and self._preview_source_image is not None:
             # Use QTimer to update after layout has adjusted
             QTimer.singleShot(10, self._update_preview_image_size)
 
-    def eventFilter(self, obj: QObject, event: QEvent) -> bool:
+    def eventFilter(
+        self,
+        obj: QObject,
+        event: QEvent,
+    ) -> bool:
         """Event filter for dock widgets to detect resize events."""
         if event.type() == QEvent.Type.Resize:
             if self._preview_source_image is not None:
@@ -630,7 +631,10 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
         bar.addWidget(container, 1)
 
-    def on_module_selected(self, index: int = -1):
+    def on_module_selected(
+        self,
+        index: int = -1,  # pyright: ignore[reportUnusedParameter]
+    ):
         """Handle module selection from the combobox.
 
         Loads module components lazily when a module is selected in the combobox.
@@ -792,7 +796,10 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         for room in self._map.rooms:
             self._room_id_lookup[id(room)] = room
 
-    def _on_blender_material_changed(self, payload: dict[str, Any]):
+    def _on_blender_material_changed(
+        self,
+        payload: dict[str, Any],
+    ):
         """Handle material/texture changes from Blender for real-time updates."""
 
         def _apply():
@@ -810,7 +817,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
             # Find the room that uses this model
             room: IndoorMapRoom | None = None
             for r in self._map.rooms:
-                if r.component.mdl == model_name or (hasattr(r.component, "name") and r.component.name == model_name):
+                if r.component.mdl == model_name or (r.component.name == model_name):
                     room = r
                     break
 
@@ -903,7 +910,10 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
         QTimer.singleShot(0, _apply)
 
-    def _on_blender_selection_changed(self, instance_ids: list[int]):
+    def _on_blender_selection_changed(
+        self,
+        instance_ids: list[int],
+    ):
         """Handle selection changes from Blender."""
 
         def _apply():
@@ -913,12 +923,18 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
         QTimer.singleShot(0, _apply)
 
-    def _on_blender_state_change(self, state: ConnectionState):
+    def _on_blender_state_change(
+        self,
+        state: ConnectionState,
+    ):
         """Handle Blender connection state changes."""
         super()._on_blender_state_change(state)
         QTimer.singleShot(0, lambda: self._handle_blender_state_change(state))
 
-    def _handle_blender_state_change(self, state: ConnectionState):
+    def _handle_blender_state_change(
+        self,
+        state: ConnectionState,
+    ):
         """Handle Blender state change on UI thread."""
         if state.value == "connected":  # ConnectionState.CONNECTED
             self._blender_connected_once = True
@@ -950,7 +966,10 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         if self._blender_log_view:
             self._blender_log_view.appendPlainText(line)
 
-    def sync_room_to_blender(self, room: IndoorMapRoom):
+    def sync_room_to_blender(
+        self,
+        room: IndoorMapRoom,
+    ):
         """Sync a room's position/rotation to Blender."""
         if not self.is_blender_mode() or self._blender_controller is None:
             return
@@ -1371,15 +1390,15 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
 
         # Store original values to detect changes
         old_module_id: str = self._map.module_id
-        old_name: str | int | None = self._map.name.stringref if hasattr(self._map.name, "stringref") else None  # type: ignore[assignment, attr-defined]
-        old_skybox: str | None = self._map.skybox if hasattr(self._map, "skybox") else None  # type: ignore[assignment, attr-defined]
+        old_name: str | int | None = self._map.name.stringref if self._map.name.stringref is not None else None  # type: ignore[assignment, attr-defined]
+        old_skybox: str | None = self._map.skybox if self._map.skybox is not None else None  # type: ignore[assignment, attr-defined]
 
         dialog = IndoorMapSettings(self, self._installation, self._map, self._kits)
         if dialog.exec() == QDialog.DialogCode.Accepted:
             # Settings were accepted - check if anything actually changed
             module_id_changed: bool = old_module_id != self._map.module_id
-            name_changed: bool = old_name != (self._map.name.stringref if hasattr(self._map.name, "stringref") else None)  # type: ignore[assignment, attr-defined]
-            skybox_changed: bool = old_skybox != (self._map.skybox if hasattr(self._map, "skybox") else None)  # type: ignore[assignment, attr-defined]
+            name_changed: bool = old_name != (self._map.name.stringref if self._map.name.stringref is not None else None)  # type: ignore[assignment, attr-defined]
+            skybox_changed: bool = old_skybox != (self._map.skybox if self._map.skybox is not None else None)  # type: ignore[assignment, attr-defined]
 
             if module_id_changed or name_changed or skybox_changed:
                 # Mark as having unsaved changes by pushing a no-op command
@@ -2182,7 +2201,11 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         self.ui.mapRenderer.update()
         self._refresh_window_title()
 
-    def _flip_selected(self, flip_x: bool, flip_y: bool):
+    def _flip_selected(
+        self,
+        flip_x: bool,
+        flip_y: bool,
+    ):
         rooms = self.ui.mapRenderer.selected_rooms()
         if not rooms:
             return
@@ -2286,7 +2309,10 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
     def keyReleaseEvent(self, e: QKeyEvent):  # type: ignore[reportIncompatibleMethodOverride]
         self.ui.mapRenderer.keyReleaseEvent(e)
 
-    def add_connected_to_selection(self, room: IndoorMapRoom):
+    def add_connected_to_selection(
+        self,
+        room: IndoorMapRoom,
+    ):
         self.ui.mapRenderer.select_room(room, clear_existing=False)
         for hook_index, _hook in enumerate(room.component.hooks):
             hook: IndoorMapRoom | None = room.hooks[hook_index]
@@ -2357,7 +2383,7 @@ class IndoorMapBuilder(QMainWindow, BlenderEditorMixin):
         # Wrap in try-except to handle case where widget is already being destroyed
         try:
             # Check if widget is still valid by accessing a safe property
-            if hasattr(self, "isVisible"):
+            if self.isVisible():
                 super().closeEvent(e)
             else:
                 # Widget is already destroyed, just accept the event
