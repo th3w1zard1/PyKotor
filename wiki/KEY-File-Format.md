@@ -97,7 +97,7 @@ Each file entry is 12 bytes:
 
 **Drive [flags](GFF-File-Format#gff-data-types) Explained:**
 
-Drive [flags](GFF-File-Format#gff-data-types) [ARE](GFF-File-Format#are-area) a legacy feature from the multi-CD distribution era:
+Drive [flags](GFF-File-Format#gff-data-types) are a legacy feature from the multi-CD distribution era:
 
 | [flag](GFF-File-Format#gff-data-types) value | Meaning | Description |
 | ---------- | ------- | ----------- |
@@ -177,10 +177,10 @@ resource_id = (bif_index << 20) | resource_index
 - Maximum [BIF files](BIF-File-Format): 4,096 (12-bit [BIF](BIF-File-Format) index)
 - Maximum resources per [BIF](BIF-File-Format): 1,048,576 (20-bit resource index)
 
-These limits [ARE](GFF-File-Format#are-area) more than sufficient for KotOR, which typically has:
+These limits are more than sufficient for KotOR, which typically has:
 
 - ~50-100 [BIF files](BIF-File-Format) in a full installation
-- ~100-10,000 resources per BIF (largest BIFs [ARE](GFF-File-Format#are-area) [texture](TPC-File-Format) packs)
+- ~100-10,000 resources per BIF (largest BIFs are [texture](TPC-File-Format) packs)
 
 **Example:**
 

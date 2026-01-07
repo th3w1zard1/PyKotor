@@ -73,14 +73,14 @@ GFF is BioWare's universal container format for structured game data. Think of i
 **Common Uses:**
 
 - Character/Creature templates ([UTC](GFF-File-Format#utc-creature), [UTP](GFF-File-Format#utp-placeable), [UTD](GFF-File-Format#utd-door), [UTE](GFF-File-Format#ute-encounter), etc.)
-- Area definitions ([ARE](GFF-File-Format#are-area), [GIT](GFF-File-Format#git-game-instance-template), [IFO](GFF-File-Format#ifo-module-info))
+- Area definitions (are, [GIT](GFF-File-Format#git-game-instance-template), [IFO](GFF-File-Format#ifo-module-info))
 - Dialogue trees ([DLG](GFF-File-Format#dlg-dialogue))
 - Quest journals ([JRL](GFF-File-Format#jrl-journal))
 - Module information ([IFO](GFF-File-Format#ifo-module-info))
 - Save game state (SAV files contain GFF resources)
 - User interface layouts ([GUI](GFF-File-Format#gui-graphical-user-interface))
 
-Every `.utc` ([UTC](GFF-File-Format#utc-creature)), `.uti` ([UTI](GFF-File-Format#uti-item)), `.dlg` ([DLG](GFF-File-Format#dlg-dialogue)), `.are` ([ARE](GFF-File-Format#are-area)), and dozens of other KotOR file types [ARE](GFF-File-Format#are-area) GFF files with different file type signatures and field schemas.
+Every `.utc` ([UTC](GFF-File-Format#utc-creature)), `.uti` ([UTI](GFF-File-Format#uti-item)), `.dlg` ([DLG](GFF-File-Format#dlg-dialogue)), `.are` (are), and dozens of other KotOR file types are GFF files with different file type signatures and field schemas.
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/gff/`](https://github.com/OldRepublicDevs/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/gff/)
 
@@ -130,7 +130,7 @@ The file header is 56 bytes in size:
 
 ### Label array
 
-Labels [ARE](GFF-File-Format#are-area) 16-[byte](GFF-File-Format#gff-data-types) [null-terminated](https://en.cppreference.com/w/c/string/byte) strings used as field names:
+Labels are 16-[byte](GFF-File-Format#gff-data-types) [null-terminated](https://en.cppreference.com/w/c/string/byte) strings used as field names:
 
 | Name   | type     | size | Description                                                      |
 | ------ | -------- | ---- | ---------------------------------------------------------------- |
@@ -190,7 +190,7 @@ When a struct has multiple fields, the struct's data field contains an offset in
 
 ### List indices
 
-Lists [ARE](GFF-File-Format#are-area) stored as arrays of struct indices. The list field contains an offset into the list indices array, which contains the struct indices that make up the list.
+Lists are stored as arrays of struct indices. The list field contains an offset into the list indices array, which contains the struct indices that make up the list.
 
 **Access Pattern**: For a LIST type field, the field's data/offset value specifies a byte offset into the list indices table. At that offset, the first uint32 is the count of entries, followed by that many uint32 values representing the struct indices.
 
@@ -276,7 +276,7 @@ fields can be accessed using type-specific getter/setter methods:
 
 ### GFFList
 
-A GFF list is an ordered collection of structs. Lists [ARE](GFF-File-Format#are-area) accessed via:
+A GFF list is an ordered collection of structs. Lists are accessed via:
 
 - `get_list(label)`: Returns a `GFFList` object
 - `GFFList.get(i)`: Gets struct at index `i`
@@ -284,7 +284,7 @@ A GFF list is an ordered collection of structs. Lists [ARE](GFF-File-Format#are-
 
 **Common List Usage:**
 
-Lists [ARE](GFF-File-Format#are-area) used extensively for variable-length arrays:
+Lists are used extensively for variable-length arrays:
 
 - **ItemList** in [UTC](GFF-File-Format#utc-creature) files: Character inventory items
 - **Equip_ItemList** in [UTC](GFF-File-Format#utc-creature) files: Equipped items
@@ -392,7 +392,7 @@ The GFF format is also known as "ITP" in [`vendor/xoreos-docs/specs/torlack/itp.
 
 ### Direct Access types
 
-Simple types (uint8, Int8, uint16, int16, uint32, int32, float) store their values directly in the field entry's data/offset field (offset 0x0008 in the element structure). These values [ARE](GFF-File-Format#are-area) stored in [little-endian](https://en.wikipedia.org/wiki/Endianness) format.
+Simple types (uint8, Int8, uint16, int16, uint32, int32, float) store their values directly in the field entry's data/offset field (offset 0x0008 in the element structure). These values are stored in [little-endian](https://en.wikipedia.org/wiki/Endianness) format.
 
 ### Indirect Access types
 

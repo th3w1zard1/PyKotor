@@ -2,7 +2,7 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines Pazaak card decks for the Pazaak mini-game. The engine uses this file to determine which cards [ARE](GFF-File-Format#are-area) available in opponent decks and player decks.
+**Engine Usage**: Defines Pazaak card decks for the Pazaak mini-game. The engine uses this file to determine which cards are available in opponent decks and player decks.
 
 **Row index**: Pazaak Deck ID (integer)
 

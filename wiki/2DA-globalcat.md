@@ -2,7 +2,7 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines global variables and their types for the game engine. The engine uses this file to initialize global variables at game start, determining which variables [ARE](GFF-File-Format#are-area) integers, floats, or strings.
+**Engine Usage**: Defines global variables and their types for the game engine. The engine uses this file to initialize global variables at game start, determining which variables are integers, floats, or strings.
 
 **Row index**: Global Variable Index (integer)
 

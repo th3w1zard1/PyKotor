@@ -2,7 +2,7 @@
 
 Part of the [GFF File Format Documentation](GFF-File-Format).
 
-[GIT files](GFF-File-Format#git-game-instance-template) store dynamic instance data for areas, defining where creatures, doors, placeables, triggers, waypoints, stores, encounters, sounds, and cameras [ARE](GFF-File-Format#are-area) positioned in the game world. While [ARE](GFF-File-Format#are-area) files define static environmental properties, [GIT files](GFF-File-Format#git-game-instance-template) contain all runtime object placement and instance-specific properties.
+[GIT files](GFF-File-Format#git-game-instance-template) store dynamic instance data for areas, defining where creatures, doors, placeables, triggers, waypoints, stores, encounters, sounds, and cameras are positioned in the game world. While are files define static environmental properties, [GIT files](GFF-File-Format#git-game-instance-template) contain all runtime object placement and instance-specific properties.
 
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/git.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/git.py)
 
@@ -268,9 +268,9 @@ Each instance type has common fields plus type-specific data:
 **Dynamic vs. Static:**
 
 - **[GIT](GFF-File-Format#git-game-instance-template)**: Dynamic, saved with game progress
-- **[ARE](GFF-File-Format#are-area)**: Static, never changes
+- **are**: Static, never changes
 - [GIT](GFF-File-Format#git-game-instance-template) instances can be destroyed, moved, modified
-- [ARE](GFF-File-Format#are-area) properties remain constant
+- are properties remain constant
 
 **Save Game Integration:**
 

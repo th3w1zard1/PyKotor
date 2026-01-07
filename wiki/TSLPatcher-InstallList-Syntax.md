@@ -77,7 +77,7 @@ File1=sound2.wav
 
 In **HoloPatcher**, the InstallList runs **first** in the patch execution order:
 
-1. **[InstallList]** - files [ARE](GFF-File-Format#are-area) installed first
+1. **[InstallList]** - files are installed first
 2. **[TLKList]** - [TLK](TLK-File-Format) modifications
 3. **[2DAList]** - [2DA file](2DA-File-Format) modifications
 4. **[GFFList]** - [GFF file](GFF-File-Format) modifications
@@ -85,7 +85,7 @@ In **HoloPatcher**, the InstallList runs **first** in the patch execution order:
 6. **[HACKList]** - Binary hacking
 7. **[SSFList]** - Sound set modifications
 
-**Note:** In original TSLPatcher, InstallList executes **after** TLKList, but HoloPatcher changed this order to allow installing a whole [dialog.tlk](TLK-File-Format) file before [TLK](TLK-File-Format) modifications [ARE](GFF-File-Format#are-area) applied. This priority change should not affect the output of mods.
+**Note:** In original TSLPatcher, InstallList executes **after** TLKList, but HoloPatcher changed this order to allow installing a whole [dialog.tlk](TLK-File-Format) file before [TLK](TLK-File-Format) modifications are applied. This priority change should not affect the output of mods.
 
 ## Folder-Level Configuration
 
@@ -107,7 +107,7 @@ The folder section contains the list of files to install. Each file entry uses o
 **Syntax Notes:**
 
 - `#` is a sequential number starting from 0 (File0, File1, File2, ..., Replace0, Replace1, etc.)
-- Numbers can be sequential, but gaps [ARE](GFF-File-Format#are-area) allowed (File0, File2, File5 is valid)
+- Numbers can be sequential, but gaps are allowed (File0, File2, File5 is valid)
 - Case-insensitive matching is used for the prefix (file, replace, file, Replace all work)
 - The filename can include subdirectories if using `!SourceFolder`
 
@@ -130,7 +130,7 @@ Each file can optionally have its own section (e.g., `[my_texture.tpc]`) for per
 |-----|------|---------|-------------|
 | `!SourceFile` | string | Same as filename in file#/Replace# entry | Alternative source filename to load from tslpatchdata. The file will be installed with the name specified in the file#/Replace# entry (or `!SaveAs`/`!Filename` if specified). |
 | `!SaveAs` | string | Same as `!SourceFile` | The final filename to save the file as at the destination. Allows renaming during installation. |
-| `!Filename` | string | Same as `!SaveAs` | Alias for `!SaveAs`. Both keys [ARE](GFF-File-Format#are-area) equivalent. |
+| `!Filename` | string | Same as `!SaveAs` | Alias for `!SaveAs`. Both keys are equivalent. |
 | `!Destination` | string | Inherited from folder section name | Override the destination folder for this specific file. Can specify a different folder or archive path. |
 | `!ReplaceFile` | 0/1 | Determined by file#/Replace# prefix | Whether to replace existing files. Takes priority over the file#/Replace# prefix syntax. `1` = replace, `0` = don't replace. |
 | `!SourceFolder` | string | Inherited from folder section `!SourceFolder` | Override the source folder for this specific file. Relative path within tslpatchdata. |
@@ -244,7 +244,7 @@ File1=conversation2.wav
 - Use **backslashes** (`\`) for path separators (TSLPatcher convention)
 - HoloPatcher/PyKotor will normalize both forward slashes (`/`) and backslashes (`\`)
 - If the specified folder path does not exist, it will be **automatically created**
-- Folder creation happens recursively (parent folders [ARE](GFF-File-Format#are-area) created as needed)
+- Folder creation happens recursively (parent folders are created as needed)
 
 ### Game Root Folder
 
@@ -359,7 +359,7 @@ This will:
 
 **Notes:**
 
-- `!SaveAs` and `!Filename` [ARE](GFF-File-Format#are-area) equivalent - use either one
+- `!SaveAs` and `!Filename` are equivalent - use either one
 - If `!SourceFile` is not specified, the filename from the file#/Replace# entry is used as the source
 - The source file must exist in the tslpatchdata folder (or `!SourceFolder` if specified)
 
@@ -406,10 +406,10 @@ In this example:
 ### Source Folder Notes
 
 - `!SourceFolder` is a **HoloPatcher extension** - original TSLPatcher may not support this feature
-- Paths [ARE](GFF-File-Format#are-area) relative to the `tslpatchdata` folder
+- Paths are relative to the `tslpatchdata` folder
 - Use `.` (period) to reference the root tslpatchdata folder explicitly
 - Supports subdirectory paths: `!SourceFolder=subfolder\deeper\folder`
-- Backslashes and forward slashes [ARE](GFF-File-Format#are-area) both normalized
+- Backslashes and forward slashes are both normalized
 
 ## Override type Handling
 
@@ -591,7 +591,7 @@ The patcher will continue with the next file.
 
 ### Automatic Folder Creation
 
-Folders [ARE](GFF-File-Format#are-area) automatically created if they don't exist:
+Folders are automatically created if they don't exist:
 
 ```ini
 [InstallList]
@@ -612,9 +612,9 @@ All parent folders (`NewFolder`, `SubFolder`, `DeepFolder`) will be created auto
 
 ### Case Sensitivity
 
-- Folder and file keys [ARE](GFF-File-Format#are-area) **case-insensitive**: `File0`, `file0`, `FILE0` all work
+- Folder and file keys are **case-insensitive**: `File0`, `file0`, `FILE0` all work
 - `Replace#` prefix detection is **case-insensitive**: `Replace0`, `replace0`, `REPLACE0` all work
-- file paths on Windows [ARE](GFF-File-Format#are-area) case-insensitive, but PyKotor uses `CaseAwarePath` to preserve case when possible
+- file paths on Windows are case-insensitive, but PyKotor uses `CaseAwarePath` to preserve case when possible
 
 ### Path Separators
 
@@ -624,7 +624,7 @@ All parent folders (`NewFolder`, `SubFolder`, `DeepFolder`) will be created auto
 
 ### nwscript.nss Automatic Installation
 
-If the mod contains `nwscript.nss` in the tslpatchdata folder and there [ARE](GFF-File-Format#are-area) scripts to compile (`[CompileList]`), HoloPatcher will automatically append an InstallFile entry to install `nwscript.nss` to the Override folder. This is required for some versions of nwnnsscomp.exe that expect nwscript.nss to be in Override rather than tslpatchdata.
+If the mod contains `nwscript.nss` in the tslpatchdata folder and there are scripts to compile (`[CompileList]`), HoloPatcher will automatically append an InstallFile entry to install `nwscript.nss` to the Override folder. This is required for some versions of nwnnsscomp.exe that expect nwscript.nss to be in Override rather than tslpatchdata.
 
 This happens during the `_prepare_compilelist` phase before the main patch loop runs.
 
@@ -678,7 +678,7 @@ This happens during the `_prepare_compilelist` phase before the main patch loop 
 
 ### files Being Skipped Unexpectedly
 
-**Problem:** files that should install [ARE](GFF-File-Format#are-area) being skipped.
+**Problem:** files that should install are being skipped.
 
 **Possible Causes:**
 
@@ -723,11 +723,11 @@ Replace#=<filename.ext>             ; Install file (replace if exists)
 ## Additional Notes
 
 - All paths in TSLPatcher use backslashes (`\`) by convention, but HoloPatcher/PyKotor normalizes both slashes
-- Folder paths [ARE](GFF-File-Format#are-area) created automatically if they don't exist
+- Folder paths are created automatically if they don't exist
 - Archive paths must exist before files can be installed to them
 - InstallList runs before other patch lists in HoloPatcher (but after TLKList in original TSLPatcher)
-- files [ARE](GFF-File-Format#are-area) backed up before installation (if they exist)
-- Uninstall scripts [ARE](GFF-File-Format#are-area) generated automatically in the backup folder
+- files are backed up before installation (if they exist)
+- Uninstall scripts are generated automatically in the backup folder
 
 ## See Also
 

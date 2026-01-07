@@ -4,7 +4,7 @@ This guide explains how to modify [2DA files](2DA-File-Format) using TSLPatcher 
 
 ## Overview
 
-The `[2DAList]` section in TSLPatcher's `changes.ini` enables you to modify 2DA (Two-Dimensional array) files used throughout KotOR and TSL. [2DA files](2DA-File-Format) [ARE](GFF-File-Format#are-area) tabular data structures that store game information such as appearances, classes, feats, items, spells, and more. You can change existing rows, add new rows, copy rows, and add columns using various targeting methods and value types.
+The `[2DAList]` section in TSLPatcher's `changes.ini` enables you to modify 2DA (Two-Dimensional array) files used throughout KotOR and TSL. [2DA files](2DA-File-Format) are tabular data structures that store game information such as appearances, classes, feats, items, spells, and more. You can change existing rows, add new rows, copy rows, and add columns using various targeting methods and value types.
 
 The `[2DAList]` section is processed **after** `[TLKList]` but **before** `[GFFList]` in HoloPatcher, meaning you can use `StrRef#` tokens from [TLKList](TSLPatcher-TLKList-Syntax), and any `2DAMEMORY#` tokens you create will be available to [GFFList](TSLPatcher-GFFList-Syntax) and other sections.
 
@@ -151,16 +151,16 @@ The `[2DAList]` section declares which [2DA files](2DA-File-Format) you want to 
 - Use `Table#` to add a new [2DA file](2DA-File-Format) modification (non-replacing)
 - Use `Replace#` to replace an existing [2DA file](2DA-File-Format) before applying modifications
 - The `#` is a sequential number starting from 0 (Table0, Table1, Table2, etc.)
-- Numbers can be sequential, but gaps [ARE](GFF-File-Format#are-area) allowed (Table0, Table2, Table5 is valid)
+- Numbers can be sequential, but gaps are allowed (Table0, Table2, Table5 is valid)
 - Each file section contains modification entries (`ChangeRow#`, `AddRow#`, `CopyRow#`, `AddColumn#`)
 
 ## Processing Order
 
 In **HoloPatcher**, the 2DAList runs in the following execution order:
 
-1. **[InstallList]** - files [ARE](GFF-File-Format#are-area) installed first
+1. **[InstallList]** - files are installed first
 2. **[TLKList]** - [TLK](TLK-File-Format) modifications (creates `StrRef#` tokens)
-3. **[2DAList]** ← **You [ARE](GFF-File-Format#are-area) here** - [2DA file](2DA-File-Format) modifications (creates `2DAMEMORY#` tokens)
+3. **[2DAList]** ← **You are here** - [2DA file](2DA-File-Format) modifications (creates `2DAMEMORY#` tokens)
 4. **[GFFList]** - [GFF file](GFF-File-Format) modifications (can use `StrRef#` and `2DAMEMORY#` tokens)
 5. **[CompileList]** - Script compilation (can use `[StrRef](TLK-File-Format#string-references-strref)#` and `2DAMEMORY#` tokens)
 6. **[HACKList]** - Binary hacking (can use `[StrRef](TLK-File-Format#string-references-strref)#` and `2DAMEMORY#` tokens)
@@ -199,7 +199,7 @@ Each [2DA file](2DA-File-Format) requires its own section (e.g., `[appearance.2d
 **Syntax Notes:**
 
 - `!DefaultSourceFolder` and `!SourceFolder` default to `.` which refers to the `tslpatchdata` folder itself
-- When specifying paths, use backslashes (`\`) as path separators (TSLPatcher style), though forward slashes (`/`) [ARE](GFF-File-Format#are-area) also accepted and normalized
+- When specifying paths, use backslashes (`\`) as path separators (TSLPatcher style), though forward slashes (`/`) are also accepted and normalized
 - Path resolution: `mod_path / !SourceFolder / !SourceFile` (or section name if `!SourceFile` is not set)
 
 ## Modification types
@@ -251,9 +251,9 @@ StrRef20=name             ; Store name stringref in TLK memory token 20
 **Behavior:**
 
 - If the target row is not found, a warning is logged and the modification is skipped
-- Existing cell values [ARE](GFF-File-Format#are-area) overwritten with new values
-- Columns that [ARE](GFF-File-Format#are-area) not specified remain unchanged
-- Memory tokens [ARE](GFF-File-Format#are-area) evaluated and stored after cell modifications [ARE](GFF-File-Format#are-area) applied
+- Existing cell values are overwritten with new values
+- Columns that are not specified remain unchanged
+- Memory tokens are evaluated and stored after cell modifications are applied
 
 ### AddRow - Add New Row
 
@@ -303,7 +303,7 @@ If a row with `label=MY_NEW_APPEARANCE` already exists, it will be modified. Oth
 - New row is added with the specified cell values
 - If `ExclusiveColumn` is specified and a matching row exists, that row is updated instead
 - Row label defaults to the current row count (as a string) if `RowLabel`/`NewRowLabel` is not specified
-- Memory tokens [ARE](GFF-File-Format#are-area) evaluated and stored after the row is added/modified
+- Memory tokens are evaluated and stored after the row is added/modified
 
 ### CopyRow - Copy and Conditionally Add Row
 
@@ -350,11 +350,11 @@ modeltype=3
 **Behavior:**
 
 - The source row (identified by target) is copied
-- All cell values from the source row [ARE](GFF-File-Format#are-area) preserved unless overridden
+- All cell values from the source row are preserved unless overridden
 - If `ExclusiveColumn` is specified and a matching row exists, that existing row is updated
 - If `ExclusiveColumn` is not specified or no match is found, a new row is added
 - If the source row is not found, an error is raised
-- Memory tokens [ARE](GFF-File-Format#are-area) evaluated and stored after the row is copied/modified
+- Memory tokens are evaluated and stored after the row is copied/modified
 
 ### AddColumn - Add New Column
 
@@ -374,7 +374,7 @@ Adds a new column to the [2DA file](2DA-File-Format) with a default value for al
 - `2DAMEMORY#=I#` or `2DAMEMORY#=Llabel` → Store the cell value from the new column into memory token `#` after the column is created
   - Use `I#` format to reference by row index (e.g., `2DAMEMORY10=I5` stores the value from row index 5 in the new column)
   - Use `Llabel` format to reference by row label (e.g., `2DAMEMORY10=L1` stores the value from the row with label "1" in the new column)
-  - Memory storage happens **after** the column is created and all insert values [ARE](GFF-File-Format#are-area) applied
+  - Memory storage happens **after** the column is created and all insert values are applied
 
 **Example:**
 
@@ -410,7 +410,7 @@ L5=ValueForLabel5
 - Rows specified in `I#` or `Llabel` entries get their custom values
 - If a row specified in `I#` doesn't exist, an error is raised
 - If a row specified in `Llabel` doesn't exist, an error is raised
-- **Memory Storage:** Memory tokens specified with `2DAMEMORY#=I#` or `2DAMEMORY#=Llabel` store the cell value from the new column **after** it's created and all insert values [ARE](GFF-File-Format#are-area) applied
+- **Memory Storage:** Memory tokens specified with `2DAMEMORY#=I#` or `2DAMEMORY#=Llabel` store the cell value from the new column **after** it's created and all insert values are applied
   - `2DAMEMORY#=I5` retrieves the cell value from row index 5 in the newly created column
   - `2DAMEMORY#=L1` retrieves the cell value from the row with label "1" in the newly created column
   - This allows you to capture values from the new column for use in later modifications
@@ -421,7 +421,7 @@ For `I#` and `Llabel` values (the right side of the assignment), you can use:
 
 - Constant strings: `I5=CustomValue`
 - Token references: `I5=2DAMEMORY10`, `I5=StrRef20`
-- Special functions (`high()`, `RowIndex`, `RowLabel`) [ARE](GFF-File-Format#are-area) **not supported** in AddColumn (unlike ChangeRow/AddRow/CopyRow)
+- Special functions (`high()`, `RowIndex`, `RowLabel`) are **not supported** in AddColumn (unlike ChangeRow/AddRow/CopyRow)
 
 **Memory Storage Syntax:**
 
@@ -581,7 +581,7 @@ model=2DAMEMORY5
 - Token must be defined earlier in the same or a previous [2DA file](2DA-File-Format) modification
 - value stored in the token (as a string) is used as the cell value
 - If token is not found, an error is raised
-- **Important:** `!FieldPath` tokens (used in GFFList) cannot be used here - only string values [ARE](GFF-File-Format#are-area) supported
+- **Important:** `!FieldPath` tokens (used in GFFList) cannot be used here - only string values are supported
 - The token value is looked up from `memory.memory_2da[token_id]` at runtime
 - If the token contains a `PureWindowsPath` (from GFFList `!FieldPath`), a `TypeError` will be raised
 
@@ -611,7 +611,7 @@ forcehostile=high(modeltype)  ; Maximum value from "modeltype" column
 - `high()` without column name in `RowLabel` context returns the maximum row label
 - `high()` without column name in a cell context returns the maximum value from that cell's column
 - `high(column)` returns the maximum value from the specified column
-- values [ARE](GFF-File-Format#are-area) compared as integers if possible, otherwise as strings
+- values are compared as integers if possible, otherwise as strings
 - Only works in ChangeRow, AddRow, and CopyRow (not in AddColumn)
 
 #### RowIndex - Current Row index
@@ -682,7 +682,7 @@ Stores a value in [2DA](2DA-File-Format) memory at token `#`. The token number c
 | `StrRef#` | Store the stringref value from a [TLK](TLK-File-Format) token (converted to string) | `2DAMEMORY13=StrRef50` | `RowValueTLKMemory(token_id)` |
 | `2DAMEMORY#` | Copy value from another [2DA](2DA-File-Format) token | `2DAMEMORY14=2DAMEMORY10` | References existing token |
 
-**Note:** The internal types listed above [ARE](GFF-File-Format#are-area) runtime evaluation objects that compute values when the modification is applied. They [ARE](GFF-File-Format#are-area) **only used for storage operations** (left side of `2DAMEMORY#=`), not for cell value assignments (right side of `ColumnName=`).
+**Note:** The internal types listed above are runtime evaluation objects that compute values when the modification is applied. They are **only used for storage operations** (left side of `2DAMEMORY#=`), not for cell value assignments (right side of `ColumnName=`).
 
 **Example - Storing Multiple values:**
 
@@ -707,19 +707,19 @@ appearance=2DAMEMORY10    ; Use stored row index
 
 **Behavior:**
 
-- Tokens [ARE](GFF-File-Format#are-area) stored as strings in [2DA](2DA-File-Format) memory (`memory.memory_2da[token_id]`)
-- **Evaluation Order:** Memory storage operations (`2DAMEMORY#=...`) are evaluated **after** all cell modifications [ARE](GFF-File-Format#are-area) applied within the same modification section
+- Tokens are stored as strings in [2DA](2DA-File-Format) memory (`memory.memory_2da[token_id]`)
+- **Evaluation Order:** Memory storage operations (`2DAMEMORY#=...`) are evaluated **after** all cell modifications are applied within the same modification section
 - This means you cannot use a token in a cell value (`ColumnName=2DAMEMORY#`) and create it (`2DAMEMORY#=...`) in the same section - create tokens in earlier modifications
-- Tokens [ARE](GFF-File-Format#are-area) available to all subsequent sections (GFFList, CompileList, HACKList, SSFList)
+- Tokens are available to all subsequent sections (GFFList, CompileList, HACKList, SSFList)
 - Tokens persist across multiple [2DA file](2DA-File-Format) modifications within the same `[2DAList]` section
 - If a token is referenced before being set, a `KeyError` is raised: `"2DAMEMORY{id} was not defined before use"`
-- **Storage type:** values [ARE](GFF-File-Format#are-area) stored as `str` type (or `PureWindowsPath` for GFFList `!FieldPath`, but those cannot be used in 2DAList)
+- **Storage type:** values are stored as `str` type (or `PureWindowsPath` for GFFList `!FieldPath`, but those cannot be used in 2DAList)
 
 ### [StrRef](TLK-File-Format#string-references-strref) Tokens ([TLK](TLK-File-Format) Memory)
 
 **Syntax:** `[StrRef](TLK-File-Format#string-references-strref)#=value_source`
 
-Stores a stringref value in [TLK](TLK-File-Format) memory at token `#`. These tokens [ARE](GFF-File-Format#are-area) primarily created in `[TLKList]`, but can also be set here.
+Stores a stringref value in [TLK](TLK-File-Format) memory at token `#`. These tokens are primarily created in `[TLKList]`, but can also be set here.
 
 **Available value Sources:**
 
@@ -741,10 +741,10 @@ StrRef31=StrRef30      ; Copy token 30 to token 31
 
 **Behavior:**
 
-- values [ARE](GFF-File-Format#are-area) stored as integers in [TLK](TLK-File-Format) memory
-- The source value must be convertible to an integer (stringrefs [ARE](GFF-File-Format#are-area) integers)
-- Tokens [ARE](GFF-File-Format#are-area) available to all subsequent sections
-- [StrRef](TLK-File-Format#string-references-strref) tokens [ARE](GFF-File-Format#are-area) primarily used in GFFList for localized string fields
+- values are stored as integers in [TLK](TLK-File-Format) memory
+- The source value must be convertible to an integer (stringrefs are integers)
+- Tokens are available to all subsequent sections
+- [StrRef](TLK-File-Format#string-references-strref) tokens are primarily used in GFFList for localized string fields
 
 ### Token Usage in Other Sections
 
@@ -1063,8 +1063,8 @@ name=StrRef100
 
 - Use `I#` format for row index: `2DAMEMORY#=I5` (stores value from row index 5 in the new column)
 - Use `Llabel` format for row label: `2DAMEMORY#=L1` (stores value from row with label "1" in the new column)
-- Memory is stored **after** the column is created and all insert values (`I#=` and `Llabel=`) [ARE](GFF-File-Format#are-area) applied
-- Cannot use other RowValue types (like `RowIndex`, `RowLabel`, `ColumnName`, etc.) directly in AddColumn memory storage - only `I#` and `Llabel` formats [ARE](GFF-File-Format#are-area) supported
+- Memory is stored **after** the column is created and all insert values (`I#=` and `Llabel=`) are applied
+- Cannot use other RowValue types (like `RowIndex`, `RowLabel`, `ColumnName`, etc.) directly in AddColumn memory storage - only `I#` and `Llabel` formats are supported
 - The `I#` or `Llabel` syntax tells the patcher to retrieve the cell value from that specific row in the newly created column
 
 **Example:**
@@ -1134,7 +1134,7 @@ name=StrRef500
 
 ### Creating 2DAMEMORY Tokens for GFFList
 
-Any `2DAMEMORY#` tokens you create in `[2DAList]` [ARE](GFF-File-Format#are-area) available in `[GFFList]`:
+Any `2DAMEMORY#` tokens you create in `[2DAList]` are available in `[GFFList]`:
 
 ```ini
 [2DAList]
@@ -1226,7 +1226,7 @@ Battlecry 1=2DAMEMORY10  ; Use stored value as stringref
 
 ### Modification Order Within a file
 
-Modifications within a single [2DA file](2DA-File-Format) [ARE](GFF-File-Format#are-area) processed in the order they appear in the file section:
+Modifications within a single [2DA file](2DA-File-Format) are processed in the order they appear in the file section:
 
 ```ini
 [appearance.2da]
@@ -1244,11 +1244,11 @@ Processing order:
 3. All `CopyRow#` modifications (in order)
 4. All `AddColumn#` modifications (in order)
 
-**Important:** Since AddColumn runs last, columns added by AddColumn cannot be used in earlier ChangeRow/AddRow/CopyRow modifications within the same file. However, tokens created in earlier modifications [ARE](GFF-File-Format#are-area) available for AddColumn.
+**Important:** Since AddColumn runs last, columns added by AddColumn cannot be used in earlier ChangeRow/AddRow/CopyRow modifications within the same file. However, tokens created in earlier modifications are available for AddColumn.
 
 ### Cross-file Token Availability
 
-Tokens created in earlier files [ARE](GFF-File-Format#are-area) available to later files:
+Tokens created in earlier files are available to later files:
 
 ```ini
 [2DAList]
@@ -1332,12 +1332,12 @@ The `[2DAList]` section provides powerful tools for modifying [2DA files](2DA-Fi
 
 [KEY](KEY-File-Format) points to remember:
 
-1. Tokens [ARE](GFF-File-Format#are-area) evaluated after cell modifications within the same section
+1. Tokens are evaluated after cell modifications within the same section
 2. Tokens persist across multiple files in the same `[2DAList]` section
 3. `ExclusiveColumn` provides smart duplicate prevention
 4. Special functions (`high()`, `RowIndex`, `RowLabel`) only work in ChangeRow/AddRow/CopyRow
 5. AddColumn runs last within a file, so new columns can't be used in earlier modifications
-6. All memory tokens [ARE](GFF-File-Format#are-area) available to subsequent sections (GFFList, CompileList, HACKList, SSFList)
+6. All memory tokens are available to subsequent sections (GFFList, CompileList, HACKList, SSFList)
 
 For more information on related sections, see:
 

@@ -2,7 +2,7 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines Force power progression by class and level. The engine uses this file to determine which Force powers [ARE](GFF-File-Format#are-area) available to each class at each level.
+**Engine Usage**: Defines Force power progression by class and level. The engine uses this file to determine which Force powers are available to each class at each level.
 
 **Row index**: Level (integer, typically 1-20)
 

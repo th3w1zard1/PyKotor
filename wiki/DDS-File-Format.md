@@ -24,7 +24,7 @@ This page documents how PyKotor interprets both formats and how it aligns with r
     - 16-bit RGB 5-6-5 (`F800/07E0/001F/0`) → converted to RGB
   - Cubemap detection via `dwCaps2 & 0x00000200`; faces counted from `dwCaps2 & 0x0000FC00`.
 - Each mip size is computed with the format-aware block sizing from `TPCTextureFormat.get_size`.
-- data layouts that [ARE](GFF-File-Format#are-area) not directly usable (4444, 1555, 565) [ARE](GFF-File-Format#are-area) expanded into RGBA/RGB before storing in the `TPC` object.
+- data layouts that are not directly usable (4444, 1555, 565) are expanded into RGBA/RGB before storing in the `TPC` object.
 
 Implementation reference:
 
@@ -50,9 +50,9 @@ Implementation reference:
 
 - `TPCDDSWriter` emits only standard DDS headers:
   - Supports `DXT1`, `DXT3`, `DXT5`, and uncompressed `BGR/BGRA`.
-  - Non-DDS-friendly formats [ARE](GFF-File-Format#are-area) converted (`RGB`→`BGR`, `RGBA`→`BGRA`).
+  - Non-DDS-friendly formats are converted (`RGB`→`BGR`, `RGBA`→`BGRA`).
   - Mipmap counts validated per layer; cubemaps set caps (`DDSCAPS2_CUBEMAP|ALLFACES`).
-- Payloads [ARE](GFF-File-Format#are-area) written in the already-compressed/uncompressed form stored in the `TPC` instance; no re-compression occurs.
+- Payloads are written in the already-compressed/uncompressed form stored in the `TPC` instance; no re-compression occurs.
 
 ### Detection and routing
 
@@ -79,5 +79,5 @@ Implementation reference:
 ### Notes and limits
 
 - Palette-based DDS (`DDPF_INDEXED`) is rejected.
-- Dimensions beyond 0x8000 [ARE](GFF-File-Format#are-area) rejected, matching xoreos limits.
+- Dimensions beyond 0x8000 are rejected, matching xoreos limits.
 - BioWare DDS requires power-of-two sizes; standard DDS does not enforce power-of-two beyond the existing dimension guard.

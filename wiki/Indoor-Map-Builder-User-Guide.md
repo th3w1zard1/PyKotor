@@ -87,7 +87,7 @@ The central area where you place and arrange rooms. Use mouse and keyboard contr
 
 ### Connecting Rooms
 
-Rooms automatically connect when their **hooks** (red/green circles) [ARE](GFF-File-Format#are-area) close together:
+Rooms automatically connect when their **hooks** (red/green circles) are close together:
 
 - **Red hooks**: Unconnected
 - **Green hooks**: Connected to another room
@@ -179,7 +179,7 @@ The [walkmesh](BWM-File-Format) painter allows you to change surface materials (
 ### Painting [materials](MDL-MDX-File-Format#trimesh-header)
 
 - **Shift + Left-click and drag** on [walkmesh](BWM-File-Format) [faces](MDL-MDX-File-Format#face-structure) to paint (prevents accidental dragging/selection)
-- [materials](MDL-MDX-File-Format#trimesh-header) [ARE](GFF-File-Format#are-area) colorized by default (toggle with **Colorize [materials](MDL-MDX-File-Format#trimesh-header)**)
+- [materials](MDL-MDX-File-Format#trimesh-header) are colorized by default (toggle with **Colorize [materials](MDL-MDX-File-Format#trimesh-header)**)
 - Each [material](MDL-MDX-File-Format#trimesh-header) has a distinct color for easy identification
 
 ### Resetting [walkmesh](BWM-File-Format)
@@ -205,7 +205,7 @@ The green crosshair indicates where players spawn when entering the module.
 
 ### Hooks
 
-Hooks [ARE](GFF-File-Format#are-area) connection points between rooms. You can edit them:
+Hooks are connection points between rooms. You can edit them:
 
 - **Right-click on hook** → **Select Hook** to select it
 - **Right-click on hook** → **Delete Hook** to remove it
@@ -286,7 +286,7 @@ The build process creates:
 
 ### Rooms Not Connecting
 
-- Ensure hooks [ARE](GFF-File-Format#are-area) close together (within ~1.5 units)
+- Ensure hooks are close together (within ~1.5 units)
 - Check that **Snap to Hooks** is enabled
 - Verify both rooms have compatible door types
 

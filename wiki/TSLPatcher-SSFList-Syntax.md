@@ -106,9 +106,9 @@ Pain 1=-1
 
 **Important Notes:**
 
-- Sound entry names [ARE](GFF-File-Format#are-area) **case-insensitive**
+- Sound entry names are **case-insensitive**
 - Sound entry names must match exactly (including spaces) from the allowed list
-- Negative values (including -1) [ARE](GFF-File-Format#are-area) valid and typically represent "no sound" or unused sound slots
+- Negative values (including -1) are valid and typically represent "no sound" or unused sound slots
 - Stringref values must be numeric strings
 
 ## Memory Token System
@@ -151,7 +151,7 @@ Pain 1=2DAMEMORY10
 
 ### Token Resolution
 
-Both token types [ARE](GFF-File-Format#are-area) resolved during patch application:
+Both token types are resolved during patch application:
 
 1. TLK Memory (`[StrRef](TLK-File-Format#string-references-strref)#`): Returns the stored integer stringref value
 2. 2DA Memory (`2DAMEMORY#`): Returns the stored integer value (converted from string)
@@ -194,7 +194,7 @@ If a token references an uninitialized memory slot, the behavior is undefined an
 | `Rejoin party` | 26 | REJOINED_PARTY | Party rejoin sound |
 | `Poisoned` | 27 | POISONED | Poison effect sound |
 
-**Note:** All sound entry names [ARE](GFF-File-Format#are-area) case-insensitive when used in changes.ini. The spaces in entry names must match exactly (e.g., "Battlecry 1" not "Battlecry1").
+**Note:** All sound entry names are case-insensitive when used in changes.ini. The spaces in entry names must match exactly (e.g., "Battlecry 1" not "Battlecry1").
 
 ## Examples
 
@@ -372,7 +372,7 @@ Poisoned=50120
 
 ### Example 7: Modifying [SSF](SSF-File-Format) files in Archives
 
-This example shows how to patch [SSF files](SSF-File-Format) that [ARE](GFF-File-Format#are-area) stored in [ERF](ERF-File-Format)/MOD/RIM archive files:
+This example shows how to patch [SSF files](SSF-File-Format) that are stored in [ERF](ERF-File-Format)/MOD/RIM archive files:
 
 ```ini
 [SSFList]
@@ -462,8 +462,8 @@ Battlecry 1=20001
 
 ### Compatibility Notes
 
-- [SSF files](SSF-File-Format) [ARE](GFF-File-Format#are-area) binary format files with version "V1.1"
-- All stringref values [ARE](GFF-File-Format#are-area) stored as 32-bit unsigned integers
+- [SSF files](SSF-File-Format) are binary format files with version "V1.1"
+- All stringref values are stored as 32-bit unsigned integers
 - The game engine interprets negative values (-1) as "no sound"
 - [SSF files](SSF-File-Format) have a fixed structure with exactly 28 sound slots
 - Empty or unset sound slots default to -1 when a new [SSF](SSF-File-Format) is created
@@ -480,8 +480,8 @@ Battlecry 1=20001
 
 **Problem:** Token values not resolving
 
-- **Solution:** Ensure [TLK](TLK-File-Format) memory tokens ([StrRef](TLK-File-Format#string-references-strref)#) [ARE](GFF-File-Format#are-area) set before SSFList section runs
-- **Solution:** Ensure [2DA](2DA-File-Format) memory tokens (2DAMEMORY#) [ARE](GFF-File-Format#are-area) set before SSFList section runs
+- **Solution:** Ensure [TLK](TLK-File-Format) memory tokens ([StrRef](TLK-File-Format#string-references-strref)#) are set before SSFList section runs
+- **Solution:** Ensure [2DA](2DA-File-Format) memory tokens (2DAMEMORY#) are set before SSFList section runs
 - **Solution:** Verify token IDs match between where they're set and where they're used
 
 **Problem:** file not found in destination

@@ -21,7 +21,7 @@ LTR (Letter) resources store third-order Markov chain probability tables that th
 ## file structure Overview
 
 - KotOR always uses the **28-character alphabet** (`a–z` plus `'` and `-`). **Neverwinter Nights (NWN) used 26 characters**; the header explicitly stores the count. This is a **KotOR-specific difference** from NWN.  
-- LTR files [ARE](GFF-File-Format#are-area) binary and consist of a short header followed by three probability tables (singles, doubles, triples) stored as contiguous [float](GFF-File-Format#gff-data-types) arrays.  
+- LTR files are binary and consist of a short header followed by three probability tables (singles, doubles, triples) stored as contiguous [float](GFF-File-Format#gff-data-types) arrays.  
 - field offsets below trace directly to the reader implementations in [`vendor/reone/src/libs/resource/format/ltrreader.cpp`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/ltrreader.cpp#L27-L74), [`vendor/xoreos/src/aurora/ltrfile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/ltrfile.cpp#L135-L168), and [`vendor/KotOR.js/src/resource/LTRObject.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/LTRObject.ts#L61-L117).  
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/ltr/`](https://github.com/OldRepublicDevs/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/ltr)
@@ -42,7 +42,7 @@ LTR (Letter) resources store third-order Markov chain probability tables that th
 
 ### Single-Letter Block
 
-Immediately after the header, the **single-letter** probabilities [ARE](GFF-File-Format#are-area) stored as three arrays of `letter_count` floats (start, middle, end). For the KotOR alphabet that is `28 × 3 × 4 = 336` bytes.
+Immediately after the header, the **single-letter** probabilities are stored as three arrays of `letter_count` floats (start, middle, end). For the KotOR alphabet that is `28 × 3 × 4 = 336` bytes.
 
 | Section | Entries | Description |
 | ------- | ------- | ----------- |
@@ -58,7 +58,7 @@ Total size (KotOR): `28 (letters) × 3 (position arrays) × 28 (values) × 4 byt
 
 ### Triple-Letter Blocks
 
-The **triple-letter** section encodes 2-character context. There [ARE](GFF-File-Format#are-area) `letter_count × letter_count` blocks (28 × 28 = 784 for KotOR), each with start/middle/end arrays of 28 floats.
+The **triple-letter** section encodes 2-character context. There are `letter_count × letter_count` blocks (28 × 28 = 784 for KotOR), each with start/middle/end arrays of 28 floats.
 
 Total size (KotOR): `28 × 28 × 3 × 28 × 4 = 73,472 bytes`.
 
@@ -68,7 +68,7 @@ Total size (KotOR): `28 × 28 × 3 × 28 × 4 = 73,472 bytes`.
 
 ## Probability Blocks
 
-Each block is represented by the `LTRBlock` class in PyKotor, mirroring the `LetterSet` structs in the reverse-engineered engines. Blocks store cumulative probabilities (monotonically increasing floats) that [ARE](GFF-File-Format#are-area) compared against random roll values.
+Each block is represented by the `LTRBlock` class in PyKotor, mirroring the `LetterSet` structs in the reverse-engineered engines. Blocks store cumulative probabilities (monotonically increasing floats) that are compared against random roll values.
 
 - **Singles (`_singles`)**: No context; used for the very first character.  
 - **Doubles (`_doubles`)**: Indexed by the previous character; used for the second character.  

@@ -81,6 +81,6 @@ UTE files define [encounter templates](GFF-File-Format#ute-encounter) which spaw
 
 **Implementation Notes:**
 
-- Encounters [ARE](GFF-File-Format#are-area) volumes ([geometry](MDL-MDX-File-Format#geometry-header) defined in [GIT](GFF-File-Format#git-game-instance-template))
+- Encounters are volumes ([geometry](MDL-MDX-File-Format#geometry-header) defined in [GIT](GFF-File-Format#git-game-instance-template))
 - Spawning happens when volume is entered
 - Creatures spawn at specific spawn points ([UTW](GFF-File-Format#utw-waypoint)) or random locations

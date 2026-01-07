@@ -2,7 +2,7 @@
 
 Part of the [GFF File Format Documentation](GFF-File-Format).
 
-UTW files define [waypoint templates](GFF-File-Format#utw-waypoint). Waypoints [ARE](GFF-File-Format#are-area) invisible markers used for spawn points, navigation targets, map notes, and reference points for scripts.
+UTW files define [waypoint templates](GFF-File-Format#utw-waypoint). Waypoints are invisible markers used for spawn points, navigation targets, map notes, and reference points for scripts.
 
 ## Documentation References
 

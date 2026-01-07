@@ -2,7 +2,7 @@
 
 Part of the [GFF File Format Documentation](GFF-File-Format).
 
-GUI files define the layout and behavior of the user interface. They [ARE](GFF-File-Format#are-area) [GFF files](GFF-File-Format) describing hierarchies of panels, buttons, labels, and other controls.
+GUI files define the layout and behavior of the user interface. They are [GFF files](GFF-File-Format) describing hierarchies of panels, buttons, labels, and other controls.
 
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/gui.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/gui.py)
 
@@ -72,7 +72,7 @@ All controls share these base properties:
 
 **Positioning System:**
 
-- coordinates [ARE](GFF-File-Format#are-area) relative to parent control
+- coordinates are relative to parent control
 - Base resolution is 640x480, scaled for higher resolutions
 - Negative values allowed for positioning outside parent bounds
 - Root control ([GUI](GFF-File-Format#gui-graphical-user-interface)) uses screen-relative coordinates
@@ -98,7 +98,7 @@ All controls share these base properties:
 - **FILL**: Center fill area (scaled to fit)
 - **DIMENSION**: Thickness of border [edges](BWM-File-Format#edges)
 - **FILLSTYLE**: Controls how fill [texture](TPC-File-Format) is rendered (tiled, stretched, solid color)
-- Border pieces [ARE](GFF-File-Format#are-area) tiled/repeated along [edges](BWM-File-Format#edges)
+- Border pieces are tiled/repeated along [edges](BWM-File-Format#edges)
 
 **TEXT Struct:**
 
@@ -125,7 +125,7 @@ All controls share these base properties:
 
 **Text Resolution:**
 
-- If both `TEXT` and `STRREF` [ARE](GFF-File-Format#are-area) set, `TEXT` takes precedence
+- If both `TEXT` and `STRREF` are set, `TEXT` takes precedence
 - Font [textures](TPC-File-Format) contain character glyphs in fixed grid
 - Text color modulates font texture (white = full color, black = no color)
 
@@ -416,12 +416,12 @@ All controls share these base properties:
 - Parent visibility affects children (hidden parent hides children)
 - Z-order: Children render above parents, later controls render above earlier ones (rendering order determined by control list order)
 
-**Reference**: [`vendor/reone/src/libs/gui/gui.cpp:80-92`](https://github.com/th3w1zard1/reone/blob/master/src/libs/gui/gui.cpp#L80-L92) shows children [ARE](GFF-File-Format#are-area) added to parent controls, and [`vendor/reone/src/libs/gui/control.cpp:192-194`](https://github.com/th3w1zard1/reone/blob/master/src/libs/gui/control.cpp#L192-L194) shows children [ARE](GFF-File-Format#are-area) updated/rendered in order
+**Reference**: [`vendor/reone/src/libs/gui/gui.cpp:80-92`](https://github.com/th3w1zard1/reone/blob/master/src/libs/gui/gui.cpp#L80-L92) shows children are added to parent controls, and [`vendor/reone/src/libs/gui/control.cpp:192-194`](https://github.com/th3w1zard1/reone/blob/master/src/libs/gui/control.cpp#L192-L194) shows children are updated/rendered in order
 
 **Positioning System:**
 
 - Base resolution: 640×480 pixels (engine default, scaled for higher resolutions)
-- coordinates [ARE](GFF-File-Format#are-area) pixel-based, engine scales for higher resolutions
+- coordinates are pixel-based, engine scales for higher resolutions
 - EXTENT.LEFT/TOP: position relative to parent (or screen for root)
 - Negative coordinates allowed (positioning outside parent bounds)
 - Root control EXTENT defines [GUI](GFF-File-Format#gui-graphical-user-interface) bounds
@@ -450,7 +450,7 @@ All controls share these base properties:
 
 **Text Rendering:**
 
-- Fonts [ARE](GFF-File-Format#are-area) [texture](TPC-File-Format)-based ([TPC](TPC-File-Format)/TGA files with character grid)
+- Fonts are [texture](TPC-File-Format)-based ([TPC](TPC-File-Format)/TGA files with character grid)
 - Each character has fixed width/height in font [texture](TPC-File-Format)
 - TEXT field takes precedence over [StrRef](TLK-File-Format#string-references-strref) if both set
 - [StrRef](TLK-File-Format#string-references-strref) references [dialog.tlk](TLK-File-Format) for localized strings
@@ -468,11 +468,11 @@ All controls share these base properties:
 **Control IDs:**
 
 - **ID** field: Unique identifier for script references
-- Control IDs [ARE](GFF-File-Format#are-area) used by scripts and engine systems to locate specific controls
+- Control IDs are used by scripts and engine systems to locate specific controls
 - Some engine behaviors may depend on specific Control IDs or Tags
 - IDs should remain stable across [GUI](GFF-File-Format#gui-graphical-user-interface) versions to maintain script compatibility
 
-**Note**: While control IDs [ARE](GFF-File-Format#are-area) used extensively for script references, explicit evidence of hardcoded ID dependencies in the engine is not found in vendor implementations. However, control tags (TAG field) [ARE](GFF-File-Format#are-area) commonly used for engine lookups.
+**Note**: While control IDs are used extensively for script references, explicit evidence of hardcoded ID dependencies in the engine is not found in vendor implementations. However, control tags (TAG field) are commonly used for engine lookups.
 
 **Navigation:**
 
@@ -522,7 +522,7 @@ All controls share these base properties:
 
 **KotOR-Specific Notes:**
 
-- GUIs [ARE](GFF-File-Format#are-area) loaded from `.gui` files ([GFF](GFF-File-Format) format)
+- GUIs are loaded from `.gui` files ([GFF](GFF-File-Format) format)
 - Engine scales GUIs for different resolutions
 - Some controls have hardcoded behaviors (e.g., inventory slots)
 - Scripts can access controls by TAG or ID

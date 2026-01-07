@@ -19,7 +19,7 @@ TSLPatcher's [TLK](TLK-File-Format) modification system provides several [KEY](K
 - **Cross-section token usage**: [StrRef](TLK-File-Format#string-references-strref) tokens created in `[TLKList]` can be used throughout other sections:
   - In `[2DAList]` to assign stringrefs to [2DA](2DA-File-Format) cells
   - In `[GFFList]` to assign stringrefs to [GFF](GFF-File-Format) fields (including ExoLocString fields)
-  - In `[CompileList]` scripts where `#StrRef#` tokens [ARE](GFF-File-Format#are-area) replaced during compilation
+  - In `[CompileList]` scripts where `#StrRef#` tokens are replaced during compilation
   - In `[SSFList]` to assign stringrefs to soundset entries
 
 ## Glossary
@@ -42,7 +42,7 @@ TSLPatcher's [TLK](TLK-File-Format) modification system provides several [KEY](K
 
 - **appendf.tlk**: Feminine/non-English localized version of `append.tlk`. Used exclusively for KotOR1 Polish localization. Must have exactly the same number of entries as `append.tlk`. See [Localized Versions](#localized-versions) for details.
 
-- **dialog.tlk**: The game's main [TLK file](TLK-File-Format) containing all in-game text (typically ~10 MB). Modified files [ARE](GFF-File-Format#are-area) written to the game's root directory (not override folder). TSLPatcher allows you to add new entries without distributing the entire large file.
+- **dialog.tlk**: The game's main [TLK file](TLK-File-Format) containing all in-game text (typically ~10 MB). Modified files are written to the game's root directory (not override folder). TSLPatcher allows you to add new entries without distributing the entire large file.
 
 ## Table of Contents
 
@@ -114,7 +114,7 @@ To use custom [dialog.tlk](TLK-File-Format) entries in your mod, you must create
 
 ### Localized Versions (KotOR1 Polish only)
 
-If you [ARE](GFF-File-Format#are-area) using a non-English version of KotOR1 that has a `dialogf.tlk` file (Polish localization), you must also:
+If you are using a non-English version of KotOR1 that has a `dialogf.tlk` file (Polish localization), you must also:
 
 1. **Create appendf.tlk**: Create a new file with the feminine form of your strings
 2. **Name it appendf.tlk**: Must be named exactly `appendf.tlk` (case-sensitive)
@@ -122,7 +122,7 @@ If you [ARE](GFF-File-Format#are-area) using a non-English version of KotOR1 tha
 4. **Matching indices**: Each index in `appendf.tlk` should correspond to the same index in `append.tlk`
 5. **Handle missing forms**: If a string has no specific feminine form, put the same text in both files
 
-**Important**: The entry count must match exactly. If `append.tlk` has 100 entries, `appendf.tlk` must also have exactly 100 entries, even if some [ARE](GFF-File-Format#are-area) identical between the two files.
+**Important**: The entry count must match exactly. If `append.tlk` has 100 entries, `appendf.tlk` must also have exactly 100 entries, even if some are identical between the two files.
 
 ### Using ChangeEdit (Optional)
 
@@ -180,7 +180,7 @@ AppendFile0=custom_entries.tlk
 - **type**: String (path)
 - **Default**: `.` (tslpatchdata folder)
 - **Description**: Default folder to search for [TLK](TLK-File-Format) source files (e.g., `append.tlk`). This is a relative path from `mod_path`, which is typically the `tslpatchdata` folder (the parent directory of the `changes.ini` file). The default value `.` refers to the `tslpatchdata` folder itself.
-- **Path Resolution**: files [ARE](GFF-File-Format#are-area) resolved as `mod_path / !DefaultSourceFolder / filename`. When `mod_path = "C:/Mod/tslpatchdata"`:
+- **Path Resolution**: files are resolved as `mod_path / !DefaultSourceFolder / filename`. When `mod_path = "C:/Mod/tslpatchdata"`:
   - `!DefaultSourceFolder=.` resolves to e.g. `"C:/Mod/tslpatchdata"`
   - `!DefaultSourceFolder=tlk_files` resolves to e.g. `"C:/Mod/tslpatchdata/tlk_files"`
 - **Example**: `!DefaultSourceFolder=.` (default, refers to tslpatchdata folder)
@@ -203,7 +203,7 @@ AppendFile0=custom_entries.tlk
 
 ### Unsupported Keys
 
-The following keys [ARE](GFF-File-Format#are-area) **NOT** supported in `[TLKList]`:
+The following keys are **NOT** supported in `[TLKList]`:
 
 - `!ReplaceFile` - Not applicable to [TLK files](TLK-File-Format)
 - `!OverrideType` - Not applicable to [TLK files](TLK-File-Format)
@@ -217,7 +217,7 @@ The `[TLKList]` section supports two primary entry syntax patterns, both using *
 
 ### How Token Creation Works
 
-**Important**: Tokens [ARE](GFF-File-Format#are-area) created from the **value** (the number on the right side of `=`). For `StrRef<number>=<number>` entries, the number in the [KEY](KEY-File-Format) and value must match, and this matching number determines the token name.
+**Important**: Tokens are created from the **value** (the number on the right side of `=`). For `StrRef<number>=<number>` entries, the number in the [KEY](KEY-File-Format) and value must match, and this matching number determines the token name.
 
 - `StrRef0=0` creates token `StrRef0` (reads index 0 from `append.tlk`)
 - `StrRef5=5` creates token `StrRef5` (reads index 5 from `append.tlk`)
@@ -274,8 +274,8 @@ AppendFile<anything>=<tlk_filename>
 
 - Creates a **new section** `[<tlk_filename>]` if the file doesn't exist in source
 - Maps entries from the source [TLK](TLK-File-Format) to [`dialog.tlk`](TLK-File-Format) using the subsection mappings
-- All entries [ARE](GFF-File-Format#are-area) **added** (not replaced) to [`dialog.tlk`](TLK-File-Format)
-- For AppendFile, entries [ARE](GFF-File-Format#are-area) appended and tokens [ARE](GFF-File-Format#are-area) created from the mapping values
+- All entries are **added** (not replaced) to [`dialog.tlk`](TLK-File-Format)
+- For AppendFile, entries are appended and tokens are created from the mapping values
 
 **Subsection Syntax**:
 
@@ -337,7 +337,7 @@ When TSLPatcher processes entries, it automatically uses `appendf.tlk` when the 
 
 ## Memory System
 
-When [TLK](TLK-File-Format) entries [ARE](GFF-File-Format#are-area) **added** via append operations, TSLPatcher stores them in memory for use in other patch sections.
+When [TLK](TLK-File-Format) entries are **added** via append operations, TSLPatcher stores them in memory for use in other patch sections.
 
 ### Memory Storage
 
@@ -353,7 +353,7 @@ memory.memory_str[token_identifier] = new_stringref
 
 ### Token Creation from values
 
-Tokens [ARE](GFF-File-Format#are-area) created from the matching number in both the [KEY](KEY-File-Format) and value. See [How Token Creation Works](#how-token-creation-works) for details. After processing, tokens [ARE](GFF-File-Format#are-area) available for use in other sections like `[2DAList]`, `[GFFList]`, and `[CompileList]`.
+Tokens are created from the matching number in both the [KEY](KEY-File-Format) and value. See [How Token Creation Works](#how-token-creation-works) for details. After processing, tokens are available for use in other sections like `[2DAList]`, `[GFFList]`, and `[CompileList]`.
 
 ### Using [TLK](TLK-File-Format) Memory in Other Sections
 
@@ -444,15 +444,15 @@ HoloPatcher Execution Order:
 
 - ✅ **More flexible**: Users can install a custom base [`dialog.tlk`](TLK-File-Format) file via InstallList, then [TLK](TLK-File-Format) appending modifies it
 - ✅ **Better for testing**: Allows installing known-good [TLK files](TLK-File-Format) before appending new entries
-- ✅ **Preserves dependencies**: [TLK](TLK-File-Format) entries [ARE](GFF-File-Format#are-area) still processed before [2DA](2DA-File-Format)/[GFF](GFF-File-Format)/Compile/[SSF](SSF-File-Format) sections that reference them
-- ✅ **More intuitive**: file installation happens first, then modifications [ARE](GFF-File-Format#are-area) applied
+- ✅ **Preserves dependencies**: [TLK](TLK-File-Format) entries are still processed before [2DA](2DA-File-Format)/[GFF](GFF-File-Format)/Compile/[SSF](SSF-File-Format) sections that reference them
+- ✅ **More intuitive**: file installation happens first, then modifications are applied
 
 **Critical Timing** (applies to both TSLPatcher and HoloPatcher):
 
-- [TLK](TLK-File-Format) entries [ARE](GFF-File-Format#are-area) added to the destination target [`dialog.tlk`](TLK-File-Format) **before** [2DA](2DA-File-Format) and [GFF](GFF-File-Format) modifications
-- This ensures stringrefs/[TLK](TLK-File-Format) entries [ARE](GFF-File-Format#are-area) available when referenced by other sections
+- [TLK](TLK-File-Format) entries are added to the destination target [`dialog.tlk`](TLK-File-Format) **before** [2DA](2DA-File-Format) and [GFF](GFF-File-Format) modifications
+- This ensures stringrefs/[TLK](TLK-File-Format) entries are available when referenced by other sections
 - Script compilation happens **after** [TLK](TLK-File-Format) processing, so `#[StrRef](TLK-File-Format#string-references-strref)#` tokens can be resolved
-- Tokens [ARE](GFF-File-Format#are-area) substituted in [2DA](2DA-File-Format), [GFF](GFF-File-Format), and script files after [TLK](TLK-File-Format) entries have been appended
+- Tokens are substituted in [2DA](2DA-File-Format), [GFF](GFF-File-Format), and script files after [TLK](TLK-File-Format) entries have been appended
 
 ## file structure
 
@@ -511,7 +511,7 @@ StrRef2=2
 
 **files**: `tslpatchdata/append.tlk` contains entries 0, 1, 2 with your custom text
 
-**Result**: Each entry from `append.tlk` is appended to [`dialog.tlk`](TLK-File-Format) and assigned the next available stringref (e.g., 123456, 123457, 123458). These new stringrefs [ARE](GFF-File-Format#are-area) stored in memory as tokens `StrRef0`, `StrRef1`, `StrRef2` for use in other sections.
+**Result**: Each entry from `append.tlk` is appended to [`dialog.tlk`](TLK-File-Format) and assigned the next available stringref (e.g., 123456, 123457, 123458). These new stringrefs are stored in memory as tokens `StrRef0`, `StrRef1`, `StrRef2` for use in other sections.
 
 ### Example 2: Append with Custom file
 
@@ -529,7 +529,7 @@ AppendFile0=planets.tlk
 
 **files**: `tslpatchdata/planets.tlk` contains entries at indices 10, 11, 12, etc.
 
-**Result**: Each entry from `planets.tlk` is appended to [`dialog.tlk`](TLK-File-Format) and tokens `StrRef10`, `StrRef11`, `StrRef12` [ARE](GFF-File-Format#are-area) created (from the values, not the keys).
+**Result**: Each entry from `planets.tlk` is appended to [`dialog.tlk`](TLK-File-Format) and tokens `StrRef10`, `StrRef11`, `StrRef12` are created (from the values, not the keys).
 
 ### Example 3: Combined Append Operations
 
@@ -549,7 +549,7 @@ AppendFile0=items.tlk
 
 **files**: `tslpatchdata/append.tlk` (entries 0, 1), `tslpatchdata/items.tlk` (entries 100, 101)
 
-**Processing Order**: Entries [ARE](GFF-File-Format#are-area) processed sequentially, creating tokens `StrRef0`, `StrRef1`, `StrRef100`, `StrRef101`.
+**Processing Order**: Entries are processed sequentially, creating tokens `StrRef0`, `StrRef1`, `StrRef100`, `StrRef101`.
 
 ### Example 4: Localized Version (Polish KotOR1)
 
@@ -668,7 +668,7 @@ AppendFile1=another.tlk
 
 **Solutions**:
 
-- Ensure values [ARE](GFF-File-Format#are-area) valid integers for [StrRef](TLK-File-Format#string-references-strref)/AppendFile mappings
+- Ensure values are valid integers for [StrRef](TLK-File-Format#string-references-strref)/AppendFile mappings
 - Check that numeric keys can be parsed as integers if using numeric format
 - Verify no extra spaces or invalid characters
 
@@ -730,7 +730,7 @@ StrRef0=0  ; Appends new entry, creates token StrRef0
 - Check file encoding: should be UTF-8 or cp1252
 - Ensure the file is in the tslpatchdata folder (or specified source folder)
 - Review the log for processing errors
-- Verify keys and values [ARE](GFF-File-Format#are-area) correctly formatted
+- Verify keys and values are correctly formatted
 
 ### Issue: Wrong Token Created
 
@@ -738,7 +738,7 @@ StrRef0=0  ; Appends new entry, creates token StrRef0
 
 **Solutions**:
 
-- See [How Token Creation Works](#how-token-creation-works) - tokens [ARE](GFF-File-Format#are-area) created from the **value** (matching number)
+- See [How Token Creation Works](#how-token-creation-works) - tokens are created from the **value** (matching number)
 - `StrRef0=0` creates token `StrRef0`
 - `StrRef5=5` creates token `StrRef5`
 
@@ -751,7 +751,7 @@ StrRef0=0  ; Appends new entry, creates token StrRef0
 - Verify the stringref was actually added (check logs)
 - Ensure you're using the correct token name (created from matching number)
 - Check memory is being used in the correct execution order
-- Tokens [ARE](GFF-File-Format#are-area) only created for **append** operations, not replace operations
+- Tokens are only created for **append** operations, not replace operations
 
 **Example**:
 
@@ -834,16 +834,16 @@ StrRef2=2
 
 - **Always use append for new content** - this is TSLPatcher's design
 - Never use replace functionality except for fixing existing errors (see [Replace Functionality Warning](#replace-functionality-warning))
-- Document which stringrefs [ARE](GFF-File-Format#are-area) custom vs modified
+- Document which stringrefs are custom vs modified
 - Use descriptive token names by choosing appropriate numbers
 
 ### 4. Testing
 
-- Verify all [TLK files](TLK-File-Format) [ARE](GFF-File-Format#are-area) valid before packaging
+- Verify all [TLK files](TLK-File-Format) are valid before packaging
 - Check stringref assignments in logs
 - Test with multiple mods installed to check compatibility
 - Use `KotorDiff` to compare before/after [`dialog.tlk`](TLK-File-Format)
-- Verify tokens [ARE](GFF-File-Format#are-area) correctly created and accessible
+- Verify tokens are correctly created and accessible
 
 ### 5. file Management
 
@@ -892,7 +892,7 @@ StrRef2=2
 # Memory: memory.memory_str[10] = new_stringref (from dialog.tlk append)
 ```
 
-**[KEY](KEY-File-Format) Points**: See [How Token Creation Works](#how-token-creation-works) and [Memory System](#memory-system) for details. Tokens [ARE](GFF-File-Format#are-area) available for use in `[2DAList]`, `[GFFList]`, and `[CompileList]` sections.
+**[KEY](KEY-File-Format) Points**: See [How Token Creation Works](#how-token-creation-works) and [Memory System](#memory-system) for details. Tokens are available for use in `[2DAList]`, `[GFFList]`, and `[CompileList]` sections.
 
 ### Processing Flow
 
@@ -911,7 +911,7 @@ StrRef2=2
      - Load entry from referenced file at *value* index
      - Append to dialog.tlk (gets new stringref)
      - Create token [StrRef](TLK-File-Format#string-references-strref){value} from *value* to store the new stringref
-5. Tokens [ARE](GFF-File-Format#are-area) now available for substitution in:
+5. Tokens are now available for substitution in:
    - [2DAList] sections (2DAMEMORY#=[StrRef](TLK-File-Format#string-references-strref)#)
    - [GFFList] sections (FieldName=[StrRef](TLK-File-Format#string-references-strref)#)
    - [CompileList] scripts (#[StrRef](TLK-File-Format#string-references-strref)# tokens)
@@ -930,7 +930,7 @@ StrRef2=2
 
 - Added optional `!SourceFile` and `!SourceFileF` keys to the `[TLKList]` section
 - If present, these can be used to set an alternative name of the [TLK file](TLK-File-Format) to use
-- If left out, default values [ARE](GFF-File-Format#are-area) `append.tlk` and `appendf.tlk` as before
+- If left out, default values are `append.tlk` and `appendf.tlk` as before
 - **Fixed bug**: Previously couldn't handle [TLK](TLK-File-Format) entries with strings longer than 4096 characters - now supports strings of any size
 
 **TSLPatcher v1.2.8b0 (2006-08-06)**:

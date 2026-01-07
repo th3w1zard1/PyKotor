@@ -25,7 +25,7 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **Column Details** (from reone implementation):
 
-The following columns [ARE](GFF-File-Format#are-area) accessed by the reone engine:
+The following columns are accessed by the reone engine:
 
 - `name`: string reference for skill name
 - `description`: string reference for skill description

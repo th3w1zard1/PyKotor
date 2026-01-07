@@ -105,7 +105,7 @@ Represents a single room instance placed in the map.
 **Connection System**:
 
 - Hooks connect when within 0.001 units of each other
-- Connections [ARE](GFF-File-Format#are-area) bidirectional (room1.hooks[i] = room2, room2.hooks[j] = room1)
+- Connections are bidirectional (room1.hooks[i] = room2, room2.hooks[j] = room1)
 - Rebuilt automatically when rooms move
 
 ### Kit
@@ -288,23 +288,23 @@ The build process converts `IndoorMap` data to game module files.
 5. **Generate Minimap**:
    - Render top-down view of all rooms
    - Create 512x256 [TPC](TPC-File-Format) [texture](TPC-File-Format)
-   - Set [ARE](GFF-File-Format#are-area) map points
+   - Set are map points
 
 6. **Finalize**:
-   - Set [ARE](GFF-File-Format#are-area) attributes (lighting, name, map points)
+   - Set are attributes (lighting, name, map points)
    - Set [IFO](GFF-File-Format#ifo-module-info) attributes (module ID, entry point)
    - Write all resources to [ERF file](ERF-File-Format)
 
 ### [texture](TPC-File-Format) Renaming
 
-[textures](TPC-File-Format) [ARE](GFF-File-Format#are-area) renamed to avoid conflicts:
+[textures](TPC-File-Format) are renamed to avoid conflicts:
 
 - Pattern: `{module_id}_tex{N}`
 - All references updated in [models](MDL-MDX-File-Format) and [TXI files](TXI-File-Format)
 
 ### Lightmap Processing
 
-Lightmaps [ARE](GFF-File-Format#are-area) processed per-room:
+Lightmaps are processed per-room:
 
 - Renamed: `{module_id}_lm{N}`
 - Loaded from kit first, then installation if missing
@@ -323,7 +323,7 @@ Each room's [BWM](BWM-File-Format) is transformed:
 
 ### Door Insertions
 
-Doors [ARE](GFF-File-Format#are-area) inserted at hook connection points:
+Doors are inserted at hook connection points:
 
 - One door per hook pair
 - Door type chosen from larger door (width/height)
@@ -416,7 +416,7 @@ Rooms rendered using [walkmesh](BWM-File-Format) geometry (not preview images):
 
 - Hooks rendered on the [walkmesh](BWM-File-Format) for placed rooms and cursor preview.
 - Context menu actions: Add Hook Here, Select Hook, Delete Hook, Duplicate Hook.
-- Hooks [ARE](GFF-File-Format#are-area) draggable once selected (behavior mirrors warp-point drag).
+- Hooks are draggable once selected (behavior mirrors warp-point drag).
 - Delete/Duplicate hotkeys act on the selected hook if one is selected; otherwise they act on selected rooms.
 - Editing hooks on a room that shares a component clones the component for that room so other rooms stay unchanged.
 
@@ -500,7 +500,7 @@ Allows editing surface [materials](MDL-MDX-File-Format#trimesh-header) on room [
 
 ## Hook System
 
-Hooks [ARE](GFF-File-Format#are-area) connection points between rooms.
+Hooks are connection points between rooms.
 
 ### Hook types
 
@@ -533,7 +533,7 @@ Hooks can be edited per-room:
 
 ### Save format
 
-`.indoor` files [ARE](GFF-File-Format#are-area) JSON:
+`.indoor` files are JSON:
 
 - Human-readable
 - Base64-encoded [walkmesh](BWM-File-Format) overrides

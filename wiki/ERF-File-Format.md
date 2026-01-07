@@ -1,6 +1,6 @@
 # KotOR ERF file format Documentation
 
-This document provides a detailed description of the ERF (Encapsulated Resource file) file format used in Knights of the Old Republic (KotOR) games. ERF files [ARE](GFF-File-Format#are-area) self-contained archives used for modules, save games, [texture](TPC-File-Format) packs, and hak paks.
+This document provides a detailed description of the ERF (Encapsulated Resource file) file format used in Knights of the Old Republic (KotOR) games. ERF files are self-contained archives used for modules, save games, [texture](TPC-File-Format) packs, and hak paks.
 
 ## Table of Contents
 
@@ -25,7 +25,7 @@ This document provides a detailed description of the ERF (Encapsulated Resource 
 
 ## file structure Overview
 
-ERF files [ARE](GFF-File-Format#are-area) self-contained archives that store both resource names ([ResRefs](GFF-File-Format#gff-data-types)) and data in the same file. Unlike [BIF files](BIF-File-Format) which require a [KEY file](KEY-File-Format) for filename lookups, ERF files include [ResRef](GFF-File-Format#gff-data-types) information directly in the archive.
+ERF files are self-contained archives that store both resource names ([ResRefs](GFF-File-Format#gff-data-types)) and data in the same file. Unlike [BIF files](BIF-File-Format) which require a [KEY file](KEY-File-Format) for filename lookups, ERF files include [ResRef](GFF-File-Format#gff-data-types) information directly in the archive.
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/erf/`](https://github.com/OldRepublicDevs/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/erf/)
 
@@ -76,7 +76,7 @@ The Build Year and Build Day fields timestamp when the ERF file was created:
 - **Build Year**: Years since 1900 (e.g., `103` = year 2003)
 - **Build Day**: Day of year (1-365/366, with January 1 = day 1)
 
-These timestamps [ARE](GFF-File-Format#are-area) primarily informational and used by development tools to track module versions. The game engine doesn't rely on them for functionality.
+These timestamps are primarily informational and used by development tools to track module versions. The game engine doesn't rely on them for functionality.
 
 **Example Calculation:**
 
@@ -111,7 +111,7 @@ Localized strings provide descriptions in multiple languages:
 
 **Localized string Usage:**
 
-ERF localized strings provide multi-language descriptions for the archive itself. These [ARE](GFF-File-Format#are-area) primarily used in MOD files to display module names and descriptions in the game's module selection screen.
+ERF localized strings provide multi-language descriptions for the archive itself. These are primarily used in MOD files to display module names and descriptions in the game's module selection screen.
 
 **Language IDs:**
 
@@ -127,7 +127,7 @@ ERF localized strings provide multi-language descriptions for the archive itself
 
 - Most ERF files have zero localized strings (Language count = 0)
 - MOD files may include localized module names for the load screen
-- Localized strings [ARE](GFF-File-Format#are-area) optional metadata and don't affect resource access
+- Localized strings are optional metadata and don't affect resource access
 - The Description [StrRef](TLK-File-Format#string-references-strref) field (in header) provides an alternative via [TLK](TLK-File-Format) reference
 
 **Reference**: [`vendor/reone/src/libs/resource/format/erfreader.cpp:47-65`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/erfreader.cpp#L47-L65)
@@ -145,7 +145,7 @@ Each [KEY](KEY-File-Format) entry is 24 bytes and maps ResRefs to resource indic
 
 **[ResRef](GFF-File-Format#gff-data-types) Padding Notes:**
 
-Resource names [ARE](GFF-File-Format#are-area) padded with NULL bytes to 16 characters, but [ARE](GFF-File-Format#are-area) not necessarily [null-terminated](https://en.cppreference.com/w/c/string/byte). If a resource name is exactly 16 characters long, no [null terminator](https://en.cppreference.com/w/c/string/byte) exists. Resource names can be mixed case, though most [ARE](GFF-File-Format#are-area) lowercase in practice.
+Resource names are padded with NULL bytes to 16 characters, but are not necessarily [null-terminated](https://en.cppreference.com/w/c/string/byte). If a resource name is exactly 16 characters long, no [null terminator](https://en.cppreference.com/w/c/string/byte) exists. Resource names can be mixed case, though most are lowercase in practice.
 
 **Reference**: [`vendor/Kotor.NET/Kotor.NET/Formats/KotorERF/ERFBinaryStructure.cs:115-168`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/KotorERF/ERFBinaryStructure.cs#L115-L168)  
 **Reference**: [`vendor/xoreos-docs/specs/torlack/mod.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/mod.html) - Resource structure details and [ResRef](GFF-File-Format#gff-data-types) padding notes
@@ -233,10 +233,10 @@ HAK files provide mod content that overrides base game resources:
 
 Unlike the `override/` directory, HAK files:
 
-- [ARE](GFF-File-Format#are-area) self-contained and portable
+- are self-contained and portable
 - Can be enabled/disabled per-module
 - Support multiple HAKs with defined load order
-- [ARE](GFF-File-Format#are-area) referenced by module `.ifo` files
+- are referenced by module `.ifo` files
 
 ### ERF Files (Generic Archives)
 

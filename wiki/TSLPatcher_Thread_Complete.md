@@ -31,13 +31,13 @@ It can, in general terms:
 
 - Modify and add new lines and columns to [2DA files](2DA-File-Format) that might already exist in the user's override folder, allowing different mods to modify the same [2DA file](2DA-File-Format) with less risk of causing incompatibility.
 
-- Modify values in fields and add new fields to [GFF](GFF-File-Format) format files (UT\*, [DLG](GFF-File-Format#dlg-dialogue), [JRL](GFF-File-Format#jrl-journal), [GIT](GFF-File-Format#git-game-instance-template), [ARE](GFF-File-Format#are-area), [IFO](GFF-File-Format#ifo-module-info) etc...) that might already exist in the user's override folder or inside [ERF](ERF-File-Format)/RIM archives. Again to reduce incompatibility when different mods need to do things to the same file.
+- Modify values in fields and add new fields to [GFF](GFF-File-Format) format files (UT\*, [DLG](GFF-File-Format#dlg-dialogue), [JRL](GFF-File-Format#jrl-journal), [GIT](GFF-File-Format#git-game-instance-template), are, [IFO](GFF-File-Format#ifo-module-info) etc...) that might already exist in the user's override folder or inside [ERF](ERF-File-Format)/RIM archives. Again to reduce incompatibility when different mods need to do things to the same file.
 
 - Dynamically assign StrRefs from your new [dialog.tlk](TLK-File-Format) entries to [2DA](2DA-File-Format), [GFF](GFF-File-Format), [NSS](NSS-File-Format) and [SSF](SSF-File-Format) format files, allowing you to use your new [TLK](TLK-File-Format) entries regardless of which [StrRef](TLK-File-Format#string-references-strref) indexes they were added as, through the use of token references. (E.g. add the correct [StrRef](TLK-File-Format#string-references-strref) values to the "name" and "desc" column in [spells.2da](2DA-spells) if you add a new force power.)
 
 - Dynamically assign values from [2DA](2DA-File-Format) and [GFF files](GFF-File-Format) to cells and fields in other [2DA](2DA-File-Format), [GFF](GFF-File-Format) and [NSS files](NSS-File-Format), such as the line numbers from newly added rows in a [2DA file](2DA-File-Format) or the field path label of a newly added field. This can be used to link together files that reference eachother dynamically, regardless of where in the files your additions end up. E.g. linking new heads.2da --> [appearance.2da](2DA-appearance) --> portrait.2da lines together to add a new player appearance. Or linking a new [appearance.2da](2DA-appearance) line for an NPC to the "Appearance\_Type" field in their [UTC](GFF-File-Format#utc-creature) template, just to mention a couple of potential uses.
 
-- Insert [StrRef](TLK-File-Format#string-references-strref) or [2DA](2DA-File-Format)/[GFF](GFF-File-Format) token values into scripts and recompile those scripts automatically with the correct values. (E.g. adding new Force Powers with an impact script that needs to know which lines in [spells.2da](2DA-spells) the new powers [ARE](GFF-File-Format#are-area) defined at.)
+- Insert [StrRef](TLK-File-Format#string-references-strref) or [2DA](2DA-File-Format)/[GFF](GFF-File-Format) token values into scripts and recompile those scripts automatically with the correct values. (E.g. adding new Force Powers with an impact script that needs to know which lines in [spells.2da](2DA-spells) the new powers are defined at.)
 
 - Dynamically modify SSF (Soundset) files to point to new entries you have added to [dialog.tlk](TLK-File-Format).
 
@@ -53,9 +53,9 @@ It can, in general terms:
 
 It cannot, in no uncertain terms:
 
-- Make standard game scripts that [ARE](GFF-File-Format#are-area) modified by serveral mods compatible. The structure of a script file is too dynamic to lend itself well to automatic merging (at least for someone of my skill level in programming).
+- Make standard game scripts that are modified by serveral mods compatible. The structure of a script file is too dynamic to lend itself well to automatic merging (at least for someone of my skill level in programming).
 
-- Resolve naming/priority conflicts resulting from placing several variants of files with the same name in different sub-folders inside the override folder. It will always assume that all files it is supposed to modify [ARE](GFF-File-Format#are-area) located directly in the override folder and not in any subfolders to avoid ambiguous situations.
+- Resolve naming/priority conflicts resulting from placing several variants of files with the same name in different sub-folders inside the override folder. It will always assume that all files it is supposed to modify are located directly in the override folder and not in any subfolders to avoid ambiguous situations.
 
 - Modify files held inside [BIF files](BIF-File-Format) in the game, since [KEY](KEY-File-Format)/[BIF files](BIF-File-Format) work pretty much the same as the override folder in most cases, and editing the [KEY](KEY-File-Format)/[BIF](BIF-File-Format) data can lead to problems. This does of course not prevent you from extracting whatever files you need from the [BIF](BIF-File-Format) data in advance and put them in the TSLPatcher's data folder.
 
@@ -77,7 +77,7 @@ A: This odd problem some people experience seems to be tied to what screen resol
 
 Q: When trying to install a mod it complains that it's not a valid installation location. What's wrong?
 
-A: Make sure you [ARE](GFF-File-Format#are-area) selecting the folder the game is installed in, not the override folder, when the TSLPatcher asks you where to install the mod.
+A: Make sure you are selecting the folder the game is installed in, not the override folder, when the TSLPatcher asks you where to install the mod.
 
 Q: When trying to install a mod it complains that access was denied to the [dialog.tlk](TLK-File-Format) file.
 
@@ -182,14 +182,14 @@ When I first started testing, It took me a few read throughs of the readme to ge
 
 I have uploaded a new version of the Patcher and its support applications. If anyone is interested you can download it on this page. (<http://www.starwarsknights.com/tools.php>)
 
-As before, comments, suggestions and bug reports [ARE](GFF-File-Format#are-area) welcomed.
+As before, comments, suggestions and bug reports are welcomed.
 
 This is what has changed since the first release, snipped from the Readme:
 
 TSLPatcher v1.1.1b
 ------------------------
 
-- Added a new Setting that when set will make the Patcher run in Installer mode instead. When doing this, the Patcher will not ask for each individual file. It will only ask the user for the folder where the game is installed, and then automatically use the [dialog.tlk](TLK-File-Format) file found in that folder, and the override folder located there. If no Override folder exists within the selected folder, one will be created. The patcher will then check the Override folder for the presence of any of the files (except [dialog.tlk](TLK-File-Format) of course) it should modify. If present, it will modify those existing files. If the files [ARE](GFF-File-Format#are-area) not present, the Patcher will look in the "tslpatchdata" folder for the file, which will then be copied to Override and modified there. Thus, when using the Patcher in Installer mode, all data files that make up your mod should be put in the "tslpatchdata" folder (except [dialog.tlk](TLK-File-Format)). In the case of [2DA files](2DA-File-Format), don't put the modified version here, put an unaltered copy of the [2DA files](2DA-File-Format) in "tslpatchdata". They will only be used if the user doesn't already have a custom version of that file in their Override folder.
+- Added a new Setting that when set will make the Patcher run in Installer mode instead. When doing this, the Patcher will not ask for each individual file. It will only ask the user for the folder where the game is installed, and then automatically use the [dialog.tlk](TLK-File-Format) file found in that folder, and the override folder located there. If no Override folder exists within the selected folder, one will be created. The patcher will then check the Override folder for the presence of any of the files (except [dialog.tlk](TLK-File-Format) of course) it should modify. If present, it will modify those existing files. If the files are not present, the Patcher will look in the "tslpatchdata" folder for the file, which will then be copied to Override and modified there. Thus, when using the Patcher in Installer mode, all data files that make up your mod should be put in the "tslpatchdata" folder (except [dialog.tlk](TLK-File-Format)). In the case of [2DA files](2DA-File-Format), don't put the modified version here, put an unaltered copy of the [2DA files](2DA-File-Format) in "tslpatchdata". They will only be used if the user doesn't already have a custom version of that file in their Override folder.
 
 - Added a bare bones file "installer" feature to allow the Patcher to also install files it shouldn't modify. All files must be located within the "tslpatchdata" folder, and will be copied to the specified folder within the main Game folder the user has selected (override in most cases). This will only work when the patcher runs in Installer mode. Intended to allow the patcher to fully install a mod into the game, not just the files that it should modify. Useful for things like [textures](TPC-File-Format), icons, unmodified scripts etc.
 
@@ -198,7 +198,7 @@ TSLPatcher v1.1.1b
 field: CameraList\0\orientation
 value: 12.4|6.5121|1.25|-9.6
 
-- Added a primitive way for the Patcher to modify things like [NCS](NCS-File-Format) scripts with correct [2DA](2DA-File-Format) index values and StrRefs. It is currently VERY primitive, and WILL mess up your files if you don't know what you [ARE](GFF-File-Format#are-area) doing when you configure it. As such it is not added to the ChangeEdit application, and I won't describe how it works here. If you really need to use it, ask me and I'll describe how it works.
+- Added a primitive way for the Patcher to modify things like [NCS](NCS-File-Format) scripts with correct [2DA](2DA-File-Format) index values and StrRefs. It is currently VERY primitive, and WILL mess up your files if you don't know what you are doing when you configure it. As such it is not added to the ChangeEdit application, and I won't describe how it works here. If you really need to use it, ask me and I'll describe how it works.
 
 TalkEd v0.9.9b
 ------------------

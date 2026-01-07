@@ -2,7 +2,7 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines reputation values between different factions. The engine uses this file to determine whether creatures [ARE](GFF-File-Format#are-area) enemies, friends, or neutral to each other based on their faction relationships.
+**Engine Usage**: Defines reputation values between different factions. The engine uses this file to determine whether creatures are enemies, friends, or neutral to each other based on their faction relationships.
 
 **Row index**: Faction ID (integer)
 
@@ -13,7 +13,7 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 | `label` | string | Faction label |
 | Additional columns | Integer | Reputation values for each faction (column names match faction labels) |
 
-**Note**: The `repute.2da` file is a square [matrix](BWM-File-Format#walkable-adjacencies) where each row represents a faction, and each column (after `label`) represents the reputation value toward another faction. Reputation values typically range from 0-100, where values below 50 [ARE](GFF-File-Format#are-area) enemies, above 50 [ARE](GFF-File-Format#are-area) friends, and 50 is neutral.
+**Note**: The `repute.2da` file is a square [matrix](BWM-File-Format#walkable-adjacencies) where each row represents a faction, and each column (after `label`) represents the reputation value toward another faction. Reputation values typically range from 0-100, where values below 50 are enemies, above 50 are friends, and 50 is neutral.
 
 **References**:
 

@@ -4,7 +4,7 @@ This document provides a detailed description of the TLK (Talk Table) file forma
 
 **For mod developers:** To modify TLK files in your mods, see the [TSLPatcher TLKList Syntax Guide](TSLPatcher-TLKList-Syntax). For general modding information, see [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.).
 
-**Related formats:** TLK files [ARE](GFF-File-Format#are-area) referenced by [GFF files](GFF-File-Format) (especially [DLG](GFF-File-Format#dlg-dialogue) [dialogue files](GFF-File-Format#dlg-dialogue)), [2DA files](2DA-File-Format) for item names and descriptions, and [SSF files](SSF-File-Format) for character sound sets.
+**Related formats:** TLK files are referenced by [GFF files](GFF-File-Format) (especially [DLG](GFF-File-Format#dlg-dialogue) [dialogue files](GFF-File-Format#dlg-dialogue)), [2DA files](2DA-File-Format) for item names and descriptions, and [SSF files](SSF-File-Format) for character sound sets.
 
 ## Table of Contents
 
@@ -101,7 +101,7 @@ The engine uses these [flags](GFF-File-Format#gff-data-types) to decide:
 - Whether to play voice-over audio (Sound present [flag](GFF-File-Format#gff-data-types))
 - How long to wait before auto-advancing dialog (Sound length present [flag](GFF-File-Format#gff-data-types))
 
-Missing [flags](GFF-File-Format#gff-data-types) [ARE](GFF-File-Format#are-area) treated as `false` - if Text present is not set, the string is treated as empty even if text data exists.
+Missing [flags](GFF-File-Format#gff-data-types) are treated as `false` - if Text present is not set, the string is treated as empty even if text data exists.
 
 ### string Entries
 
@@ -134,7 +134,7 @@ Each TLK entry contains:
 
 ## string References (StrRef)
 
-string references (StrRef) [ARE](GFF-File-Format#are-area) integer indices into the TLK file's entry array:
+string references (StrRef) are integer indices into the TLK file's entry array:
 
 - **StrRef 0**: First entry in the TLK file
 - **StrRef -1**: No string reference (used to indicate missing/empty strings)

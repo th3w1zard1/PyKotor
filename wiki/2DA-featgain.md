@@ -2,7 +2,7 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines feat gain progression by class and level. The engine uses this file to determine which feats [ARE](GFF-File-Format#are-area) available to each class at each level.
+**Engine Usage**: Defines feat gain progression by class and level. The engine uses this file to determine which feats are available to each class at each level.
 
 **Row index**: Feat Gain Entry ID (integer)
 

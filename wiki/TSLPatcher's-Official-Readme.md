@@ -174,7 +174,7 @@ should name them in a way (using a custom prefix or suffix in the [ResRef](GFF-F
 makes you reasonable certain others would not name their scripts the same way, to avoid
 this problem.
 
-- It will currently not modify files that [ARE](GFF-File-Format#are-area) present within sub-folders within the override
+- It will currently not modify files that are present within sub-folders within the override
 folder. This is by design to avoid ambiguity with the possibility of several copies of the same
 file being present in different sub-folders (or the user mistakenly placing the installer and
 associated files in a subfolder within the override folder). It will only look for files to modify
@@ -206,7 +206,7 @@ did not already exist in the user's override folder. Put these files in the tslp
 
 Add your new entries to this file and name it exactly append.tlk.
 
-If you [ARE](GFF-File-Format#are-area) using a non-English version of the game that has a dialogf.tlk file as well, create a
+If you are using a non-English version of the game that has a dialogf.tlk file as well, create a
 new file with the feminine form of your strings as well and name it exactly appendf.tlk.
 (Note that appendf.tlk must have exactly the same number of entries as append.tlk. If a string
 has no specific feminine form, you must put the same text in both files.) Save your
@@ -233,7 +233,7 @@ with it, and all include files those scripts use, into the tslpatchdata folder.
 ChangeEdit and name it exactly changes.ini, and save it inside the tslpatchdata folder.
 
 This file will contain all the work instructions for the TSLPatcher, telling it what to do with
-your files. Unless you really know what you [ARE](GFF-File-Format#are-area) doing you should use ChangeEdit to create
+your files. Unless you really know what you are doing you should use ChangeEdit to create
 and modify this file, though it is a plain text file you can open and edit with Notepad as
 well if you wish.
 
@@ -272,7 +272,7 @@ harder to make mistakes.
 The purpose of ChangeEdit is to create a changes.ini file. This is the file that the TSLPatcher reads
 to figure out what it should do when run. As mentioned above this is a plain text file in the
 standard Windows INI format, and can be viewed and modified by Notepad if needed. Unless
-you really know what you [ARE](GFF-File-Format#are-area) doing you should use ChangeEdit and only tweak things with
+you really know what you are doing you should use ChangeEdit and only tweak things with
 Notepad if necessary.
 
 To Create a new changes.ini file, select "New..." from the file menu. The tree view in the left
@@ -284,18 +284,18 @@ Whenever there is a button with a blue circle with a white "i" inside, clicking 
 button will display (hopefully) useful information about that feature in ChangeEdit.
 
 **Important:**
-Keep in mind as you read on that all files and modifiers [ARE](GFF-File-Format#are-area) processed in the
-order they [ARE](GFF-File-Format#are-area) listed. This usually doesn't matter, but if several modifiers
+Keep in mind as you read on that all files and modifiers are processed in the
+order they are listed. This usually doesn't matter, but if several modifiers
 depend on each other (i.e. a new row in [portraits.2da](2DA-portraits) refer to a new row in
 [appearance.2da](2DA-appearance) which refer to a new row in heads.2da), then the sequence
-things [ARE](GFF-File-Format#are-area) added becomes important.
+things are added becomes important.
 
-The different sections [ARE](GFF-File-Format#are-area):
+The different sections are:
 
 ### 3.1. Settings
 
 This section allows you to configure how the TSLPatcher should behave in general terms. There
-[ARE](GFF-File-Format#are-area) nine fields here you may edit to customize it to your liking:
+are nine fields here you may edit to customize it to your liking:
 
 #### 3.1.1. Window caption
 
@@ -313,13 +313,13 @@ as they click the Install button.
 #### 3.1.3. Log level
 
 This determines how detailed the feedback is that is displayed in the progress log as the
-TSLPatcher works. There [ARE](GFF-File-Format#are-area) five feedback levels available:
+TSLPatcher works. There are five feedback levels available:
 0) No feedback at all. The text from "info.rtf" will continue to be displayed during installation.
 
 1) Only general progress information will be displayed. Not recommended.
 2) General progress information is displayed, along with any serious errors encountered.
 
-3) General progress information, serious errors and warnings [ARE](GFF-File-Format#are-area) displayed. This is
+3) General progress information, serious errors and warnings are displayed. This is
 
 recommended for the release version of your mod.
 4) Full feedback. On top of what is displayed at level 3, it also shows verbose progress
@@ -410,7 +410,7 @@ select the newly added file in the tree view.
 The right panel will now show an empty Modifier list (since you haven't added any yet). When
 the list contains entries, you can [double](GFF-File-Format#gff-data-types)-click one of them to edit that Modifier.
 
-There [ARE](GFF-File-Format#are-area) now two possible ways to proceed:
+There are now two possible ways to proceed:
 
 #### 3.3.1. Way 1: Compare files for differences and fabricate modifiers
 
@@ -423,7 +423,7 @@ ChangeEdit will now compare the files for differences and fabricate Modifiers to
 findings.
 
 **Very Important:** The Compare function will only look for differing values with no contextual
-knowledge of how those values [ARE](GFF-File-Format#are-area) used. Thus, if there [ARE](GFF-File-Format#are-area) any fields that
+knowledge of how those values are used. Thus, if there are any fields that
 should have special token values assigned, you will have to go through the
 fabricated modifiers and add those tokens by hand.
 For example, if the Compare function added a modifier for a new line in
@@ -458,7 +458,7 @@ react to having new columns added.
 **Note:**
 In addition to creating new modifiers from scratch using the above mentioned buttons,
 you can select an existing modifier and copy it, and make the desired changes to it. This
-may be useful when you need to make many Modifiers that [ARE](GFF-File-Format#are-area) very similar, with only
+may be useful when you need to make many Modifiers that are very similar, with only
 a few values different. Select the Modifier you wish to copy in the list and click the
 Compare icon above the list to copy it.
 
@@ -495,7 +495,7 @@ have in the selected column directly in the value box. If you set the value to h
 TSLPatcher will find the highest numerical value of all rows in this column, and set the value
 for this row to that value + 1.
 
-When you [ARE](GFF-File-Format#are-area) done, add this column to the list by pressing the right arrow icon. Add any other
+When you are done, add this column to the list by pressing the right arrow icon. Add any other
 columns you wish to assign values to in the same manner. If you need to edit the value of a
 column you have already added, select it in the list to the right and press the left arrow icon.
 
@@ -504,7 +504,7 @@ Any columns you have not assigned a value to will have the default value **** se
 
 ###### 3.3.2.1.1. Special "columns"
 
-There is one special value that can be set in the Column box that [ARE](GFF-File-Format#are-area) not really a column name:
+There is one special value that can be set in the Column box that are not really a column name:
 RowLabel sets the value of the rowlabel for the line (the column on the far left in KotORTool's
 
 [2DA](2DA-File-Format) editor). If this is left out, it will be set to the line number the row is added as.
@@ -552,7 +552,7 @@ directly in the value input box. If you set the value to high(), the TSLPatcher 
 highest numerical value of all rows in this column, and set the value for this row to that value +
 1.
 
-When you [ARE](GFF-File-Format#are-area) done, add this modified column to the list by pressing the  right arrow icon. Add
+When you are done, add this modified column to the list by pressing the  right arrow icon. Add
 any other columns you wish to change values for in the same manner. If you need to edit the
 value of a column you have already added, select it in the list to the right and press the left
 arrow icon.
@@ -608,7 +608,7 @@ down list. You can, of course, type in the value you wish the row to have in the
 directly in the value input box. If you set the value to high(), the TSLPatcher will find the
 highest numerical value of all rows in this column, and set the new value to that value + 1.
 
-When you [ARE](GFF-File-Format#are-area) done, add this column to the list by pressing the right arrow icon. Add any other
+When you are done, add this column to the list by pressing the right arrow icon. Add any other
 columns you wish to change values for in the same manner. If you need to edit the value of a
 column you have already added, select it in the list to the right and press the left arrow icon.
 
@@ -654,7 +654,7 @@ any of the built-in special tokens, all (so far) assigned tokens will be listed 
 down list. You can, of course, type in the value you wish the row to have in the selected column
 directly in the value box.
 
-When you [ARE](GFF-File-Format#are-area) done, add this row modifier to the List by pressing right arrow icon. Add any
+When you are done, add this row modifier to the List by pressing right arrow icon. Add any
 other rows you wish to change values for in the same manner. If you need to edit the value of a
 row you have already added, select it in the row list to the right and press the left arrow icon.
 
@@ -682,11 +682,11 @@ etc...). Then select the newly added [GFF file](GFF-File-Format) in the tree vie
 
 The TSLPatcher normally modifies [GFF](GFF-File-Format) format files in place, rather than overwrite them, if it
 finds that one of the files already exists within the user's override folder. If you want existing
-files to be overwritten by a fresh copy from tslpatchdata before they [ARE](GFF-File-Format#are-area) modified, check the
+files to be overwritten by a fresh copy from tslpatchdata before they are modified, check the
 Replace check box.
 
 The Destination box (new in v1.2.5)  allows you to determine where the [GFF file](GFF-File-Format) is located (if
-modifying existing files) or should be saved (if adding new files). There [ARE](GFF-File-Format#are-area) two options here:
+modifying existing files) or should be saved (if adding new files). There are two options here:
 
 1) If the Destination box is empty or set to "override" (without the quotation marks), the files will be modified and/or placed in the override folder as before.
 
@@ -702,8 +702,8 @@ relative path from the game folder to where the [ERF](ERF-File-Format)/RIM file 
 example, you want to modify a [GFF file](GFF-File-Format) within the file myarea.mod located in
 the Modules folder, you would set the Destination to Modules\\myarea.mod.
 
-There [ARE](GFF-File-Format#are-area) three main things you can do in the [GFF](GFF-File-Format) panel to create instructions to modify [GFF](GFF-File-Format)
-files, which [ARE](GFF-File-Format#are-area) divided into two distinct sections:
+There are three main things you can do in the [GFF](GFF-File-Format) panel to create instructions to modify [GFF](GFF-File-Format)
+files, which are divided into two distinct sections:
 
 #### 3.4.1. Modifying existing [GFF](GFF-File-Format) fields
 
@@ -711,8 +711,8 @@ To change the value of a [GFF](GFF-File-Format) field, type in the label of the 
 is not located at the root-level (top-level) of the [GFF](GFF-File-Format) field tree, you must specify a full label
 path to the field, where each label or list-index is separated by a backslash ("\\") character. E.g.
 to change the subtype of an item property, you might enter PropertiesList\\0\\Subtype.
-Be careful when specifying the label. They [ARE](GFF-File-Format#are-area) case sensitive, thus Comments and comments
-[ARE](GFF-File-Format#are-area) not the same label. Use the [GFF](GFF-File-Format) Editor to view the field tree in the [GFF file](GFF-File-Format) you wish to
+Be careful when specifying the label. They are case sensitive, thus Comments and comments
+are not the same label. Use the [GFF](GFF-File-Format) Editor to view the field tree in the [GFF file](GFF-File-Format) you wish to
 modify.
 
 Click the Load icon to the right of the [GFF](GFF-File-Format) field box to load all currently existing field labels
@@ -725,7 +725,7 @@ In the value box, enter the new value you wish the field to have. Take care to o
 type that the type of field can handle. Trying to assign a text string to an INT field is not a good
 
 idea, for example. If you wish to assign a value stored in a [StrRef](TLK-File-Format#string-references-strref)# or 2DAMEMORY# token to a
-field, all (so far) assigned tokens [ARE](GFF-File-Format#are-area) listed in the drop down list, so you can  select the relevant
+field, all (so far) assigned tokens are listed in the drop down list, so you can  select the relevant
 token there.
 
 Press the up arrow icon to save the Modifier to the list. To edit a field value you have already
@@ -736,18 +736,18 @@ A few complex field types requires a somewhat more arcane procedure to specify t
 value:
 
 ExoLocString fields will require you to append a directive to what to edit at the end of
-the field label, since they [ARE](GFF-File-Format#are-area) made up of one [StrRef](TLK-File-Format#string-references-strref) value and optionally one or several
+the field label, since they are made up of one [StrRef](TLK-File-Format#string-references-strref) value and optionally one or several
 sub-strings. If your ExoLocString field has the label Comments, you would assign a new
 [StrRef](TLK-File-Format#string-references-strref) value to it by typing Comments([StrRef](TLK-File-Format#string-references-strref)) in the [GFF](GFF-File-Format) field box. For the
 substrings you add lang followed by the language+gender ID number of the string, like:
 Comments(lang0) to modify the English localized string the Comments field.
 
 orientation fields will require you to specify each part value separated by a pipe ("|")
-character. For example 0.05|1.2|0.0|10.0. orientation fields [ARE](GFF-File-Format#are-area) made up of 4
+character. For example 0.05|1.2|0.0|10.0. orientation fields are made up of 4
 decimal values.
 
 position fields will require you to specify each coordinate value separated by a pipe
-("|") character. For example 0.05|1.2|0.0. position fields [ARE](GFF-File-Format#are-area) made up of 3 (x,y,z)
+("|") character. For example 0.05|1.2|0.0. position fields are made up of 3 (x,y,z)
 decimal values.
 
 STRUCT and LIST fields have no value, since they only contain other fields and carry
@@ -757,7 +757,7 @@ no data themselves.
 In TSLPatcher v1.2.7b9 and onward it is possible to use the value stored in a
 2DAMEMORY# token as field path+name to modify a value. This can be useful in
 situations where you need to dynamically update fields that don't exist in the file
-already and you [ARE](GFF-File-Format#are-area) having the patcher add dynamically (see section 3.4.2 below).
+already and you are having the patcher add dynamically (see section 3.4.2 below).
 
 It can, for example, be used to insert new branches into the dialog tree in a [DLG](GFF-File-Format#dlg-dialogue) file by
 first adding the new fields and storing the path+name to the
@@ -779,7 +779,7 @@ alphanumerical characters, no spaces and is unique throughout this changes.ini f
 suggested that you name it in a way that will help you remember what the modifier does.
 
 Back in the Add [GFF](GFF-File-Format) field window you can now set the specifics for your new field. Available
-input fields [ARE](GFF-File-Format#are-area):
+input fields are:
 
 ##### 3.4.2.1. field type
 
@@ -811,9 +811,9 @@ only contain STRUCT fields, while STRUCT field can contain fields of any type.
 This is where you assign what value you wish your new field to have. Be careful to only enter
 values that will fit within the selected field type.
 
-You may use a 2DAMEMORY# or [StrRef](TLK-File-Format#string-references-strref)# token as value. STRUCTs and LISTs [ARE](GFF-File-Format#are-area) container
+You may use a 2DAMEMORY# or [StrRef](TLK-File-Format#string-references-strref)# token as value. STRUCTs and LISTs are container
 fields that only holds collections of other fields, and thus have no value. ExoLocStrings have no
-value since they [ARE](GFF-File-Format#are-area) made up of several separate data fields. All other field types should have a
+value since they are made up of several separate data fields. All other field types should have a
 value set.
 
 ##### 3.4.2.5. [StrRef](TLK-File-Format#string-references-strref)
@@ -827,7 +827,7 @@ this field to -1 if your ExoLocString doesn't use any value in [dialog.tlk](TLK-
 This field is only used when adding STRUCT type fields. When adding a STRUCT, you may set
 its type ID here. If unused, just set it to 0. The type ID is used for different things depending on
 what your STRUCT is used for. Check with a [GFF](GFF-File-Format) Editor if it appears to be used used for what
-you [ARE](GFF-File-Format#are-area) trying to do. The type Id must be a number, 0 or larger.
+you are trying to do. The type Id must be a number, 0 or larger.
 
 **Note:**
 If your struct is added to a LIST, putting ListIndex in this box will make TSLPatcher
@@ -915,7 +915,7 @@ which has had files added to them by those sections. They must still be added
 to the Install list to be put in their proper places.
 
 To add files, you can type in the name of the folder the file should be moved to in the Folder
-Name box. All folders [ARE](GFF-File-Format#are-area) assumed to be located directly in the main game folder. If you need to
+Name box. All folders are assumed to be located directly in the main game folder. If you need to
 install files into folders inside any of those folders, you must specify the relative path to that
 folder, with each folder name separated by a backslash character.
 
@@ -987,8 +987,8 @@ same folder as the script, but not added to the Script Source list unless you
 need the TSLPatcher to change anything in them.
 
 If that  is the case, those include files must be added to the Script  list
-before the scripts they [ARE](GFF-File-Format#are-area) used by, so they [ARE](GFF-File-Format#are-area) processed before the using
-script is compiled. Include files [ARE](GFF-File-Format#are-area) only processed for tokens, never compiled.
+before the scripts they are used by, so they are processed before the using
+script is compiled. Include files are only processed for tokens, never compiled.
 Make sure your include files does not contain any main() or
 StartingConditional() functions, even ones commented out, or the TSLPatcher
 may try to compile them.
@@ -1047,9 +1047,9 @@ with the same name in override, check the Replace file... check box near the bot
 panel.
 
 **Note:**
-The Unknown(#) sound entries [ARE](GFF-File-Format#are-area) present in the [SSF](SSF-File-Format) format, but I have been unable to
-determine what they [ARE](GFF-File-Format#are-area) used for, or if they [ARE](GFF-File-Format#are-area) just reserved and unused. If you figure
-out what any of those entries [ARE](GFF-File-Format#are-area) for, please let me know.
+The Unknown(#) sound entries are present in the [SSF](SSF-File-Format) format, but I have been unable to
+determine what they are used for, or if they are just reserved and unused. If you figure
+out what any of those entries are for, please let me know.
 
 ### 3.8. Setup List
 
@@ -1069,7 +1069,7 @@ folder.
 If the namespaces.ini file is present within the tslpatchdata folder a dialog box is shown when
 TSLPatcher (1.2.7 or later) is launched, presenting the user with a dropdown list of available
 installation options, and a short description of each. When the user has selected which Setup to
-use, the associated INI and RTF file [ARE](GFF-File-Format#are-area) loaded and the main TSLPatcher window is shown like
+use, the associated INI and RTF file are loaded and the main TSLPatcher window is shown like
 before. If the namespaces.ini file does not exist within the tslpatchdata folder, TSLPatcher will not
 show this dialog box and just go to the main window like it usually does.
 
@@ -1090,7 +1090,7 @@ underscores and no spaces. While it will never be displayed to the user, only us
 you should pick something that helps you remember what the setup is.
 
 To edit the values of a selected or newly created Setup, use the input boxes in the panel to the
-right. The following fields [ARE](GFF-File-Format#are-area) available:
+right. The following fields are available:
 
 **Config file name**  - This is the name of the INI file the TSLPatcher will look in for instructions
 on what to do. This is usually changes.ini, but you can specify another name here if you have
@@ -1102,7 +1102,7 @@ instructions. This is usually info.rtf, but you can pick another name for your s
 several in the tslpatchdata folder.
 
 **data folder** – This field is optional. If left blank the TSLPatcher will look for the two above
-named files, as well as any data files that [ARE](GFF-File-Format#are-area) to be installed, within the tslpatchdata folder as
+named files, as well as any data files that are to be installed, within the tslpatchdata folder as
 usual. If this field is set to the name of a sub-folder created within the tslpatchdata folder,
 TSLPatcher expects the above named INI and RTF file, along with all data files that should be
 
@@ -1119,7 +1119,7 @@ When you have typed in your desired values, press the Save Changes button to com
 values to the namespaces.ini file.
 
 **Important:**
-For multiple setups that [ARE](GFF-File-Format#are-area) placed in sub-folders and use nwnnsscomp.exe to
+For multiple setups that are placed in sub-folders and use nwnnsscomp.exe to
 recompile scripts using include files before installing them you must place
 nwnnsscomp.exe and nwscript.nss in the tslpatchdata folder, not in the individual
 sub-folders. You must use the custom version of nwnnsscomp.exe, modified by
@@ -1127,16 +1127,16 @@ tk102 for this purpose, or the compilation will not work.
 
 ## 4. Troubleshooting
 
-Here [ARE](GFF-File-Format#are-area) some problems that I have gotten a bunch of questions about, that I can remember at
-the moment. If there [ARE](GFF-File-Format#are-area) other problems that might be worth addressing here, please let me
+Here are some problems that I have gotten a bunch of questions about, that I can remember at
+the moment. If there are other problems that might be worth addressing here, please let me
 know.
 
 ### 4.1. 2DAMEMORY Trouble
 
 You: values saved to a 2DAMEMORY token don't appear to be written when I assign it to
 something!
-Me: Make sure you have assigned to token a value BEFORE you try to use it. All modifiers [ARE](GFF-File-Format#are-area)
-processed in the order they [ARE](GFF-File-Format#are-area) listed. If you try to read a token before it is set, bad things will
+Me: Make sure you have assigned to token a value BEFORE you try to use it. All modifiers are
+processed in the order they are listed. If you try to read a token before it is set, bad things will
 happen.
 
 ### 4.2. RichEdit Error
@@ -1144,7 +1144,7 @@ happen.
 You: I get "RichEdit Line Insertion error" when trying to Install something! What's going on?
 Me: I wish I knew. This is some obscure bug that apparently presents itself when the user has
 some old/custom/odd version of the RichEdit DLL files installed on their system. The RichEdit
-DLLs [ARE](GFF-File-Format#are-area) a component that comes with Windows, though some applications (such as MS
+DLLs are a component that comes with Windows, though some applications (such as MS
 Office) overwrites them for some peculiar reason. I have no idea what the cause of this problem
 is, and I am unable to reproduce the problem. To work around it, go to the Settings section in
 your changes.ini file and change the Progress Log Style setting to "Compatibility". (Or set
@@ -1267,8 +1267,8 @@ idea to keep them grouped by destination in the [CompileList] modifier list.
 
 Added optional !SourceFile and !SourceFileF keys to the [TLKList]
 section. If present they can be used to set an alternative name of the [TLK file](TLK-File-Format) to
-use to add strings into [dialog.tlk](TLK-File-Format) from. If those keys [ARE](GFF-File-Format#are-area) left out the default
-values [ARE](GFF-File-Format#are-area) append.tlk and appendf.tlk, as before.
+use to add strings into [dialog.tlk](TLK-File-Format) from. If those keys are left out the default
+values are append.tlk and appendf.tlk, as before.
 
 Fixed bug with [TLK file](TLK-File-Format) handling that prevented TSLPatcher from properly
 handling individual [TLK](TLK-File-Format) entries with strings longer than 4096 characters. It can
@@ -1309,7 +1309,7 @@ relative path (from the game folder) as well. (E.g. Modules\\904mal.rim)
 Changed the InstallList, GFFList and CompileList to allow renaming files from
 the source to install using the keys !SaveAs (to change the name the file is
 installed as) and !SourceFile (to specify another name than is listed for the file
-to copy.) These keys [ARE](GFF-File-Format#are-area) added to the sections for the file they should affect.
+to copy.) These keys are added to the sections for the file they should affect.
 This is not yet added to ChangeEdit but must be added by hand in the INI file
 for now.
 
@@ -1355,7 +1355,7 @@ Updated ChangeEdit's "New [GFF](GFF-File-Format) field" editor with a FieldPath 
 
 box, and modified the "Modify [GFF](GFF-File-Format) field" panel list to show both Added and
 Modified fields and the ability to re-arrange them (since modifiers with tokens
-as keys must always come below the Add field section in which they [ARE](GFF-File-Format#are-area) set).
+as keys must always come below the Add field section in which they are set).
 
 ### Change Log for Version 1.2.7b8 (Unreleased)
 
@@ -1379,7 +1379,7 @@ manually.
 2006-07-08
 Some improvements to the user interface of ChangeEdit. The
 "ExclusiveColumn" [KEY](KEY-File-Format) now has a text box of its own and is not added to the
-column list. Column labels [ARE](GFF-File-Format#are-area) now loaded into the dropdown boxed in the
+column list. Column labels are now loaded into the dropdown boxed in the
 Add/Copy [2DA](2DA-File-Format) line editors automatically if the [2DA](2DA-File-Format) file exists in the same folder
 as the changes.ini file (usually tslpatchdata). Fixed TSLPatcher to display the
 folder installation will be made to in the statusbar if the "Let user select" option

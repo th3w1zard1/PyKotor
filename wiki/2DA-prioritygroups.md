@@ -2,7 +2,7 @@
 
 Part of the [2DA File Format Documentation](2DA-File-Format).
 
-**Engine Usage**: Defines priority groups for sound effects, determining which sounds take precedence when multiple sounds [ARE](GFF-File-Format#are-area) playing. The engine uses this file to calculate sound priority values.
+**Engine Usage**: Defines priority groups for sound effects, determining which sounds take precedence when multiple sounds are playing. The engine uses this file to calculate sound priority values.
 
 **Row index**: Priority Group ID (integer)
 

@@ -18,10 +18,10 @@ LIP (LIP Synchronization) files drive mouth [animation](MDL-MDX-File-Format#anim
 
 ## file structure Overview
 
-- LIP files [ARE](GFF-File-Format#are-area) always binary (`"LIP V1.0"` signature) and contain only [animation](MDL-MDX-File-Format#animation-header) data.  
-- They [ARE](GFF-File-Format#are-area) paired with [WAV](WAV-File-Format) voice-over resources of identical duration; the LIP `length` field must match the [WAV](WAV-File-Format) `data` playback time for glitch-free [animation](MDL-MDX-File-Format#animation-header).  
-- [keyframes](MDL-MDX-File-Format#controller-structure) [ARE](GFF-File-Format#are-area) sorted chronologically and store a timestamp ([float](GFF-File-Format#gff-data-types) seconds) plus a 1-[byte](GFF-File-Format#gff-data-types) viseme index (0–15).  
-- The layout is identical across `vendor/reone`, `vendor/xoreos`, `vendor/Kotor.NET`, `vendor/KotOR.js`, and `vendor/mdlops`, so the header/[keyframe](MDL-MDX-File-Format#controller-structure) offsets below [ARE](GFF-File-Format#are-area) cross-confirmed against those implementations.  
+- LIP files are always binary (`"LIP V1.0"` signature) and contain only [animation](MDL-MDX-File-Format#animation-header) data.  
+- They are paired with [WAV](WAV-File-Format) voice-over resources of identical duration; the LIP `length` field must match the [WAV](WAV-File-Format) `data` playback time for glitch-free [animation](MDL-MDX-File-Format#animation-header).  
+- [keyframes](MDL-MDX-File-Format#controller-structure) are sorted chronologically and store a timestamp ([float](GFF-File-Format#gff-data-types) seconds) plus a 1-[byte](GFF-File-Format#gff-data-types) viseme index (0–15).  
+- The layout is identical across `vendor/reone`, `vendor/xoreos`, `vendor/Kotor.NET`, `vendor/KotOR.js`, and `vendor/mdlops`, so the header/[keyframe](MDL-MDX-File-Format#controller-structure) offsets below are cross-confirmed against those implementations.  
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/lip/`](https://github.com/OldRepublicDevs/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/lip)
 
@@ -63,7 +63,7 @@ LIP (LIP Synchronization) files drive mouth [animation](MDL-MDX-File-Format#anim
 | Timestamp  | [float32](GFF-File-Format#gff-data-types) | 0 (0x00)               | 4    | Seconds from [animation](MDL-MDX-File-Format#animation-header) start |
 | Shape      | [uint8](GFF-File-Format#gff-data-types)   | 4 (0x04)               | 1    | Viseme index (`0–15`) |
 
-- Entries [ARE](GFF-File-Format#are-area) stored sequentially and **must** be sorted ascending by timestamp.  
+- Entries are stored sequentially and **must** be sorted ascending by timestamp.  
 - Libraries average multiple implementations to validate this layout (`vendor/reone`, `vendor/xoreos`, `vendor/KotOR.js`, `vendor/Kotor.NET`).  
 
 **Reference:** [`vendor/KotOR.js/src/resource/LIPObject.ts:93-146`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/resource/LIPObject.ts#L93-L146)

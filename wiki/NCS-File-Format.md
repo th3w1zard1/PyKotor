@@ -58,7 +58,7 @@ NCS files contain compiled NWScript bytecode used in **KotOR and TSL**. Scripts 
 | 13 (0x0D)+  | —    | Stream of bytecode instructions |
 
 - The VM executes sequential instructions; control-flow opcodes (`JMP`, `JZ`, `JSR`) adjust the instruction pointer.  
-- KotOR introduces no custom container sections—scripts [ARE](GFF-File-Format#are-area) a flat stream.  
+- KotOR introduces no custom container sections—scripts are a flat stream.  
 - All major reverse-engineered engines (`vendor/reone`, `vendor/xoreos`, `vendor/Kotor.NET`, `vendor/NorthernLights`) decode the same structure; KotOR.js uses a WebAssembly VM but identical [byte](GFF-File-Format#gff-data-types) layouts.
 - The program size marker at offset 8 (`0x42`) is not a real instruction but a metadata field containing the total file size. Execution begins at offset 13 (0x0D) after the header.
 
@@ -69,7 +69,7 @@ NCS files contain compiled NWScript bytecode used in **KotOR and TSL**. Scripts 
 
 NWScript uses a stack-based VM where all operations work on a stack rather than CPU registers. Stack grows downward with negative offsets, 4-[byte](GFF-File-Format#gff-data-types) aligned elements.
 
-**Stack Pointer (SP):** `SP = (stackPtr + 1) * -4`. Stack positions [ARE](GFF-File-Format#are-area) negative multiples of 4 (e.g., `-4`, `-8`, `-12`).
+**Stack Pointer (SP):** `SP = (stackPtr + 1) * -4`. Stack positions are negative multiples of 4 (e.g., `-4`, `-8`, `-12`).
 
 **Stack Layout Example:**
 
@@ -190,26 +190,26 @@ Example: `ADDxx` with qualifier `IntInt` performs integer addition, while the sa
 
 **type size Information:**
 
-- All primitive types (int, [float](GFF-File-Format#gff-data-types), string pointer, object ID, engine types) [ARE](GFF-File-Format#are-area) 4 bytes
-- vectors [ARE](GFF-File-Format#are-area) 12 bytes (3 consecutive floats)
+- All primitive types (int, [float](GFF-File-Format#gff-data-types), string pointer, object ID, engine types) are 4 bytes
+- vectors are 12 bytes (3 consecutive floats)
 - structures have variable size but must be 4-[byte](GFF-File-Format#gff-data-types) aligned
 - The TT (structure) qualifier type is used for comparing ranges of elements on the stack, specifically for structures and vectors. When used with `EQUALTT` or `NEQUALTT`, it requires a 2-[byte](GFF-File-Format#gff-data-types) size field indicating how many bytes to compare (must be a multiple of 4).
 
 **type System Details:**
 
-The qualifier [byte](GFF-File-Format#gff-data-types) system allows the same opcode to operate on different data types. type qualifiers [ARE](GFF-File-Format#are-area) organized into ranges:
+The qualifier [byte](GFF-File-Format#gff-data-types) system allows the same opcode to operate on different data types. type qualifiers are organized into ranges:
 
 - Unary types (0x03-0x1F): Single operand types
 - Binary types (0x20-0x3C): Two operand type combinations
 - Special types (0x00, 0x01): Void and internal stack marker
 
-vector types [ARE](GFF-File-Format#are-area) special: they occupy 3 stack positions (12 bytes) but [ARE](GFF-File-Format#are-area) treated as a single composite type. When operations involve vectors, all three [float](GFF-File-Format#gff-data-types) components [ARE](GFF-File-Format#are-area) processed together.
+vector types are special: they occupy 3 stack positions (12 bytes) but are treated as a single composite type. When operations involve vectors, all three [float](GFF-File-Format#gff-data-types) components are processed together.
 
 **Reference:** [`vendor/reone/src/libs/script/format/ncsreader.cpp:42-190`](https://github.com/th3w1zard1/reone/blob/master/src/libs/script/format/ncsreader.cpp#L42-L190), [`vendor/xoreos/src/aurora/nwscript/ncsfile.h:131-177`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/nwscript/ncsfile.h#L131-L177), [`vendor/Kotor.NET/Kotor.NET/Formats/KotorNCS/NCS.cs`](https://github.com/th3w1zard1/Kotor.NET/blob/master/Kotor.NET/Formats/KotorNCS/NCS.cs), [`vendor/NorthernLights/Assets/Scripts/ncs/NCSReader.cs`](https://github.com/th3w1zard1/NorthernLights/blob/master/Assets/Scripts/ncs/NCSReader.cs), [`vendor/KotOR.js/src/odyssey/NWScriptInstruction.ts`](https://github.com/th3w1zard1/KotOR.js/blob/master/src/odyssey/NWScriptInstruction.ts)
 
 ### Arguments
 
-Instruction arguments follow the qualifier [byte](GFF-File-Format#gff-data-types) and vary by instruction type. All multi-[byte](GFF-File-Format#gff-data-types) values [ARE](GFF-File-Format#are-area) stored in [**big-endian**](https://en.wikipedia.org/wiki/Endianness) [byte](GFF-File-Format#gff-data-types) order.
+Instruction arguments follow the qualifier [byte](GFF-File-Format#gff-data-types) and vary by instruction type. All multi-[byte](GFF-File-Format#gff-data-types) values are stored in [**big-endian**](https://en.wikipedia.org/wiki/Endianness) [byte](GFF-File-Format#gff-data-types) order.
 
 **Argument format Patterns:**
 
@@ -236,7 +236,7 @@ Instruction arguments follow the qualifier [byte](GFF-File-Format#gff-data-types
 
 7. **Stack Copy Operations** (8 bytes total: opcode + qualifier + 4 bytes offset + 2 bytes size):
    - `CPDOWNSP`, `CPTOPSP`, `CPDOWNBP`, `CPTOPBP`: Signed 32-bit stack offset + unsigned 16-bit size
-   - Stack offset conversion: Negative [byte](GFF-File-Format#gff-data-types) offsets [ARE](GFF-File-Format#are-area) converted to stack positions by dividing by 4 (e.g., offset -4 becomes position 1, offset -8 becomes position 2)
+   - Stack offset conversion: Negative [byte](GFF-File-Format#gff-data-types) offsets are converted to stack positions by dividing by 4 (e.g., offset -4 becomes position 1, offset -8 becomes position 2)
    - size field indicates number of bytes to copy (must be multiple of 4 for alignment)
 
 8. **Engine Function Call** (5 bytes total: opcode + qualifier + 2 bytes routine + 1 [byte](GFF-File-Format#gff-data-types) arg count):
@@ -254,17 +254,17 @@ Instruction arguments follow the qualifier [byte](GFF-File-Format#gff-data-types
 10. **Struct Comparison** (4 bytes total: opcode + qualifier + 2 bytes):
 
 - `EQUALTT`, `NEQUALTT`: format: `[0x0B/0x0C][0x24][uint16 size]`
-  - `size`: Number of bytes to compare (must be multiple of 4, as structures [ARE](GFF-File-Format#are-area) 4-[byte](GFF-File-Format#gff-data-types) aligned)
+  - `size`: Number of bytes to compare (must be multiple of 4, as structures are 4-[byte](GFF-File-Format#gff-data-types) aligned)
   - Compares two structures on the stack [byte](GFF-File-Format#gff-data-types)-by-[byte](GFF-File-Format#gff-data-types) for equality/inequality
   - Both structures must be the same size
   - Only used when qualifier is `0x24` (structure, structure)
 
 **Jump offset Calculation:**
-Jump offsets [ARE](GFF-File-Format#are-area) **relative to the start of the jump instruction itself**, not the next instruction. The offset is a signed 32-bit integer allowing both forward and backward jumps.
+Jump offsets are **relative to the start of the jump instruction itself**, not the next instruction. The offset is a signed 32-bit integer allowing both forward and backward jumps.
 
 **Byte Order:**
 
-All multi-[byte](GFF-File-Format#gff-data-types) values in NCS files [ARE](GFF-File-Format#are-area) stored in **[big-endian](https://en.wikipedia.org/wiki/Endianness)** ([network byte order](https://en.wikipedia.org/wiki/Endianness#Networking)):
+All multi-[byte](GFF-File-Format#gff-data-types) values in NCS files are stored in **[big-endian](https://en.wikipedia.org/wiki/Endianness)** ([network byte order](https://en.wikipedia.org/wiki/Endianness#Networking)):
 
 - 16-bit values ([uint16](GFF-File-Format#gff-data-types), [int16](GFF-File-Format#gff-data-types)): Most significant [byte](GFF-File-Format#gff-data-types) first
 - 32-bit values ([uint32](GFF-File-Format#gff-data-types), [int32](GFF-File-Format#gff-data-types), [float32](GFF-File-Format#gff-data-types)): Most significant [byte](GFF-File-Format#gff-data-types) first
@@ -506,8 +506,8 @@ All arithmetic operations consume operands from the top of the stack and place t
 The DESTRUCT instruction is used in scenarios where multiple stack elements need to be removed, but a specific element within that range must be preserved:
 
 1. The instruction identifies a range of stack elements starting at `stackOffset` and extending for `size` bytes
-2. Within that range, `sizeNoDestroy` bytes starting at a calculated position [ARE](GFF-File-Format#are-area) preserved
-3. All other bytes in the range [ARE](GFF-File-Format#are-area) removed from the stack
+2. Within that range, `sizeNoDestroy` bytes starting at a calculated position are preserved
+3. All other bytes in the range are removed from the stack
 4. The preserved element is moved to the top of the stack (SP position 1)
 5. This is commonly used when unpacking structures: the structure occupies multiple stack positions, but only one field needs to be extracted
 
@@ -559,7 +559,7 @@ The decompiler parses this file to build a lookup table mapping routine numbers 
 - `NOP` (0x2D): No-operation, used as placeholder for debugger. format: `[0x2D][qualifier]`. Does nothing, SP remains unchanged.
 - Program size marker (0x42): Always found at offset 8 in NCS file header. format: `[0x42][uint32 fileSize]`. This is not a real instruction and is never executed. It contains the total file size in bytes ([big-endian](https://en.wikipedia.org/wiki/Endianness)). All implementations validate this marker before parsing instructions.
 
-**Note:** All multi-[byte](GFF-File-Format#gff-data-types) values in NCS files [ARE](GFF-File-Format#are-area) stored in **[big-endian](https://en.wikipedia.org/wiki/Endianness)** [byte](GFF-File-Format#gff-data-types) order. This includes all integers, floats, offsets, and size fields.
+**Note:** All multi-[byte](GFF-File-Format#gff-data-types) values in NCS files are stored in **[big-endian](https://en.wikipedia.org/wiki/Endianness)** [byte](GFF-File-Format#gff-data-types) order. This includes all integers, floats, offsets, and size fields.
 
 **Special Instruction Details:**
 
@@ -575,7 +575,7 @@ The decompiler parses this file to build a lookup table mapping routine numbers 
 - Jump instructions store relative offsets; readers resolve them to absolute positions.  
 - PyKotor's `NCS` class tracks instruction objects and rewires the `jump` attribute so tooling can walk the control-flow graph without recomputing offsets.  
 - Subroutines use `JSR` (push return address) and `RETN` (pop address and jump back).  
-- `STORE_STATE`/`DESTRUCT` manage VM save/restore for suspended scripts (cutscenes, dialogs); the semantics [ARE](GFF-File-Format#are-area) identical in Reone and Kotor.NET, while KotOR.js mirrors them for deterministic playback.
+- `STORE_STATE`/`DESTRUCT` manage VM save/restore for suspended scripts (cutscenes, dialogs); the semantics are identical in Reone and Kotor.NET, while KotOR.js mirrors them for deterministic playback.
 
 ### Subroutine Calls
 

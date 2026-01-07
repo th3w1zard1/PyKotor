@@ -57,7 +57,7 @@ Part of the [2DA File Format Documentation](2DA-File-Format).
 
 **Column Details** (from reone implementation):
 
-The following columns [ARE](GFF-File-Format#are-area) accessed by the reone engine:
+The following columns are accessed by the reone engine:
 
 - `name`: string reference for spell name
 - `spelldesc`: string reference for spell description (note: column name is `spelldesc`, not `description`)
@@ -78,7 +78,7 @@ The following columns [ARE](GFF-File-Format#are-area) accessed by the reone engi
 - `impactscript`: Impact script [ResRef](GFF-File-Format#gff-data-types)
 - `casthandvisual`: Cast hand visual effect
 
-**Note**: The `spells.2da` file contains many optional columns for projectile [models](MDL-MDX-File-Format), icons, and immunity types (numbered 1-50). These [ARE](GFF-File-Format#are-area) used for spell variations and visual effects.
+**Note**: The `spells.2da` file contains many optional columns for projectile [models](MDL-MDX-File-Format), icons, and immunity types (numbered 1-50). These are used for spell variations and visual effects.
 
 **References**:
 

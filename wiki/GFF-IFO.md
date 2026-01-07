@@ -2,7 +2,7 @@
 
 Part of the [GFF File Format Documentation](GFF-File-Format).
 
-IFO files define module-level metadata including entry configuration, expansion requirements, area lists, and module-wide script hooks. [IFO](GFF-File-Format#ifo-module-info) files [ARE](GFF-File-Format#are-area) the "main" descriptor for game modules, specifying where the player spawns and what scripts run at module scope.
+IFO files define module-level metadata including entry configuration, expansion requirements, area lists, and module-wide script hooks. [IFO](GFF-File-Format#ifo-module-info) files are the "main" descriptor for game modules, specifying where the player spawns and what scripts run at module scope.
 
 **Official Bioware Documentation:** For the authoritative Bioware Aurora Engine [IFO](GFF-File-Format#ifo-module-info) format specification, see [Bioware Aurora IFO Format](Bioware-Aurora-IFO).
 
@@ -39,7 +39,7 @@ IFO files define module-level metadata including entry configuration, expansion 
 
 **Player Spawn:**
 
-- **Mod_Entry_Area**: Initial area to load ([ARE](GFF-File-Format#are-area)/[GIT](GFF-File-Format#git-game-instance-template))
+- **Mod_Entry_Area**: Initial area to load (are/[GIT](GFF-File-Format#git-game-instance-template))
 - **Entry position**: XYZ coordinates in world space
 - **Entry Direction**: Player's initial facing angle
   - Direction computed as: `atan2(Dir_Y, Dir_X)`
@@ -47,7 +47,7 @@ IFO files define module-level metadata including entry configuration, expansion 
 **Module Start Sequence:**
 
 1. Load [IFO](GFF-File-Format#ifo-module-info) to get entry configuration
-2. Load Mod_Entry_Area ([ARE](GFF-File-Format#are-area) + [GIT](GFF-File-Format#git-game-instance-template))
+2. Load Mod_Entry_Area (are + [GIT](GFF-File-Format#git-game-instance-template))
 3. Spawn player character at Entry position
 4. Set player orientation from Entry direction
 5. Execute Mod_OnModStart script
@@ -60,7 +60,7 @@ IFO files define module-level metadata including entry configuration, expansion 
 
 **Mod_Area_list Struct fields:**
 
-- `Area_Name` ([ResRef](GFF-File-Format#gff-data-types)): [Area](GFF-File-Format#are-area) [ResRef](GFF-File-Format#gff-data-types) ([ARE](GFF-File-Format#are-area) file)
+- `Area_Name` ([ResRef](GFF-File-Format#gff-data-types)): [Area](GFF-File-Format#are-area) [ResRef](GFF-File-Format#gff-data-types) (are file)
 
 **Area Management:**
 
@@ -197,16 +197,16 @@ IFO files define module-level metadata including entry configuration, expansion 
 2. **Check Requirements**: Verify Expansion_Pack and MinGameVer
 3. **Load HAKs**: Mount HAK files in order
 4. **Play Movie**: Show Mod_StartMovie if set
-5. **Load Entry Area**: Read [ARE](GFF-File-Format#are-area) + [GIT](GFF-File-Format#git-game-instance-template) for Mod_Entry_Area
+5. **Load Entry Area**: Read are + [GIT](GFF-File-Format#git-game-instance-template) for Mod_Entry_Area
 6. **Spawn Player**: Place at Entry position/direction
 7. **Fire OnModLoad**: Execute module load script
 8. **Fire OnModStart**: Execute module start script
 9. **Start Gameplay**: Enable player control
 
-**[IFO](GFF-File-Format#ifo-module-info) vs. [ARE](GFF-File-Format#are-area) vs. GIT:**
+**[IFO](GFF-File-Format#ifo-module-info) vs. are vs. GIT:**
 
 - **[IFO](GFF-File-Format#ifo-module-info)**: Module-level metadata and entry config
-- **[ARE](GFF-File-Format#are-area)**: Static area properties (lighting, fog, grass)
+- **are**: Static area properties (lighting, fog, grass)
 - **[GIT](GFF-File-Format#git-game-instance-template)**: Dynamic object instances (creatures, doors, etc.)
 
 **Save Game Integration:**
@@ -241,7 +241,7 @@ IFO files define module-level metadata including entry configuration, expansion 
 **Script Scope Hierarchy:**
 
 1. **Module Scripts** ([IFO](GFF-File-Format#ifo-module-info)): Highest scope, module-wide
-2. **Area Scripts** ([ARE](GFF-File-Format#are-area)): Area-specific events
+2. **Area Scripts** (are): Area-specific events
 3. **Object Scripts** ([UTC](GFF-File-Format#utc-creature)/[UTD](GFF-File-Format#utd-door)/etc.): Individual object events
 
 **Common Module Configurations:**

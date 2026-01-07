@@ -55,7 +55,7 @@ Part of the [GFF File Format Documentation](GFF-File-Format).
 ## Implementation Notes
 
 - **global.jrl**: The master [journal files](GFF-File-Format#jrl-journal) for the entire game.
-- **Module JRLs**: Not typically used; most quests [ARE](GFF-File-Format#are-area) global.
+- **Module JRLs**: Not typically used; most quests are global.
 - **XP Rewards**: `XP_Percentage` scales the `journal.2da` XP value for the quest.
 
 ---

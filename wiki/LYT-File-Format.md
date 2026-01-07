@@ -1,6 +1,6 @@
 # KotOR LYT files format Documentation
 
-LYT (Layout) files define how area [room models](LYT-File-Format#room-definitions) [ARE](GFF-File-Format#are-area) positioned inside a module. They [ARE](GFF-File-Format#are-area) plain-text descriptors that list room placements, swoop-track props, obstacles, and door hook transforms. The engine combines this data with [MDL](MDL-MDX-File-Format)/[MDX](MDL-MDX-File-Format) [geometry](MDL-MDX-File-Format#geometry-header) to assemble the final area.
+LYT (Layout) files define how area [room models](LYT-File-Format#room-definitions) are positioned inside a module. They are plain-text descriptors that list room placements, swoop-track props, obstacles, and door hook transforms. The engine combines this data with [MDL](MDL-MDX-File-Format)/[MDX](MDL-MDX-File-Format) [geometry](MDL-MDX-File-Format#geometry-header) to assemble the final area.
 
 ## Table of Contents
 
@@ -19,7 +19,7 @@ LYT (Layout) files define how area [room models](LYT-File-Format#room-definition
 
 ## format Overview
 
-- LYT files [ARE](GFF-File-Format#are-area) [ASCII](https://en.wikipedia.org/wiki/ASCII) text with a deterministic order: `beginlayout`, optional sections, then `donelayout`.  
+- LYT files are [ASCII](https://en.wikipedia.org/wiki/ASCII) text with a deterministic order: `beginlayout`, optional sections, then `donelayout`.  
 - Every section declares a count and then lists entries on subsequent lines.  
 - All implementations (`vendor/reone`, `vendor/xoreos`, `vendor/KotOR.js`, `vendor/Kotor.NET`) parse identical tokens; KotOR-Unity mirrors the same structure.  
 
@@ -66,13 +66,13 @@ donelayout
 | `<room_model>` | [ResRef](GFF-File-Format#gff-data-types) of the [MDL/MDX](MDL-MDX-File-Format)/[WOK](BWM-File-Format) triple (max 16 chars, no spaces). |
 | `<x y z>` | World-space position for the room’s origin. |
 
-Rooms [ARE](GFF-File-Format#are-area) case-insensitive; PyKotor lowercases entries for caching and resource lookup.
+Rooms are case-insensitive; PyKotor lowercases entries for caching and resource lookup.
 
 **Reference:** [`vendor/reone/src/libs/resource/format/lytreader.cpp:37-77`](https://github.com/th3w1zard1/reone/blob/master/src/libs/resource/format/lytreader.cpp#L37-L77)
 
 ### Track Definitions
 
-Tracks (`LYTTrack`) [ARE](GFF-File-Format#are-area) booster elements used exclusively in swoop racing mini-games, primarily in KotOR II. Each track entry defines a booster element that can be placed along a racing track to provide speed boosts or other gameplay effects.
+Tracks (`LYTTrack`) are booster elements used exclusively in swoop racing mini-games, primarily in KotOR II. Each track entry defines a booster element that can be placed along a racing track to provide speed boosts or other gameplay effects.
 
 **format:**
 
@@ -89,7 +89,7 @@ trackcount <N>
 
 **Usage:**
 
-- Tracks [ARE](GFF-File-Format#are-area) optional - most modules omit this section entirely
+- Tracks are optional - most modules omit this section entirely
 - Primarily used in KotOR II swoop racing modules (e.g., Telos surface racing)
 - Each track element represents a booster that can be placed along the racing track
 - The engine uses these positions to spawn track boosters during racing mini-games
@@ -100,7 +100,7 @@ trackcount <N>
 
 ### Obstacle Definitions
 
-Obstacles (`LYTObstacle`) [ARE](GFF-File-Format#are-area) hazard elements used exclusively in swoop racing mini-games, primarily in KotOR II. Each obstacle entry defines a hazard element that can be placed along a racing track to create challenges or obstacles for the player.
+Obstacles (`LYTObstacle`) are hazard elements used exclusively in swoop racing mini-games, primarily in KotOR II. Each obstacle entry defines a hazard element that can be placed along a racing track to create challenges or obstacles for the player.
 
 **format:**
 
@@ -117,7 +117,7 @@ obstaclecount <N>
 
 **Usage:**
 
-- Obstacles [ARE](GFF-File-Format#are-area) optional - most modules omit this section entirely
+- Obstacles are optional - most modules omit this section entirely
 - Typically only present in KotOR II racing modules (e.g., Telos surface racing)
 - Each obstacle element represents a hazard that can be placed along the racing track
 - The engine uses these positions to spawn obstacles during racing mini-games
@@ -149,14 +149,14 @@ doorhookcount <N>
 
 **Usage:**
 
-- Door hooks define where doors [ARE](GFF-File-Format#are-area) placed in rooms to create area transitions
+- Door hooks define where doors are placed in rooms to create area transitions
 - Each door hook specifies which room it belongs to and a unique door name
 - The engine uses door hooks to position door [models](MDL-MDX-File-Format) and enable transitions between areas
-- Door hooks [ARE](GFF-File-Format#are-area) separate from [BWM](BWM-File-Format) hooks (see [BWM File Format](BWM-File-Format.md#walkmesh-properties)) - [BWM](BWM-File-Format) hooks define interaction points, while LYT doorhooks define door placement
+- Door hooks are separate from [BWM](BWM-File-Format) hooks (see [BWM File Format](BWM-File-Format.md#walkmesh-properties)) - [BWM](BWM-File-Format) hooks define interaction points, while LYT doorhooks define door placement
 
 **Relationship to [BWM](BWM-File-Format):**
 
-- Door hooks in LYT files define where doors [ARE](GFF-File-Format#are-area) placed in the layout
+- Door hooks in LYT files define where doors are placed in the layout
 - [BWM](BWM-File-Format) [walkmeshes](BWM-File-Format) may have [edge](BWM-File-Format#edges) transitions that reference these door hooks
 - The engine combines LYT doorhook positions with [BWM](BWM-File-Format) transition data to create functional doorways
 
@@ -168,8 +168,8 @@ doorhookcount <N>
 
 ## coordinate System
 
-- Units [ARE](GFF-File-Format#are-area) meters in the same left-handed coordinate system as [MDL](MDL-MDX-File-Format) [models](MDL-MDX-File-Format).  
-- PyKotor validates that room ResRefs and hook targets [ARE](GFF-File-Format#are-area) lowercase and conform to resource naming restrictions.  
+- Units are meters in the same left-handed coordinate system as [MDL](MDL-MDX-File-Format) [models](MDL-MDX-File-Format).  
+- PyKotor validates that room ResRefs and hook targets are lowercase and conform to resource naming restrictions.  
 - The engine expects rooms to be pre-aligned so that adjoining doors share positions/rotations; [VIS files](VIS-File-Format) then control visibility between those rooms.  
 
 **Reference:** [`Libraries/PyKotor/src/pykotor/resource/formats/lyt/lyt_data.py:150-267`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/formats/lyt/lyt_data.py#L150-L267)

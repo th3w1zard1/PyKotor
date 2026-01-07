@@ -2,7 +2,7 @@
 
 Part of the [GFF File Format Documentation](GFF-File-Format).
 
-UTT files define [trigger templates](GFF-File-Format#utt-trigger) for invisible volumes that fire scripts when entered, exited, or used. Triggers [ARE](GFF-File-Format#are-area) essential for area transitions, cutscenes, traps, and game logic.
+UTT files define [trigger templates](GFF-File-Format#utt-trigger) for invisible volumes that fire scripts when entered, exited, or used. Triggers are essential for area transitions, cutscenes, traps, and game logic.
 
 **Official Bioware Documentation:** For the authoritative Bioware Aurora Engine Trigger format specification, see [Bioware Aurora Trigger Format](Bioware-Aurora-Trigger).
 
@@ -64,7 +64,7 @@ UTT files define [trigger templates](GFF-File-Format#utt-trigger) for invisible 
 
 **Trap Mechanics:**
 
-- Floor traps (mines, pressure plates) [ARE](GFF-File-Format#are-area) triggers
+- Floor traps (mines, pressure plates) are triggers
 - Detection makes trap visible and clickable
 - Entering without disarm triggers trap effect
 

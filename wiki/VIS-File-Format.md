@@ -17,8 +17,8 @@ VIS (Visibility) files describe which module rooms can be seen from other rooms.
 
 ## format Overview
 
-- VIS files [ARE](GFF-File-Format#are-area) plain [ASCII](https://en.wikipedia.org/wiki/ASCII) text; each parent room line lists how many child rooms follow.  
-- Child room lines [ARE](GFF-File-Format#are-area) indented by two spaces. Empty lines [ARE](GFF-File-Format#are-area) ignored and names [ARE](GFF-File-Format#are-area) case-insensitive.  
+- VIS files are plain [ASCII](https://en.wikipedia.org/wiki/ASCII) text; each parent room line lists how many child rooms follow.  
+- Child room lines are indented by two spaces. Empty lines are ignored and names are case-insensitive.  
 - files usually ship as `moduleXXX.vis` pairs; the `moduleXXXs.vis` (or `.vis` appended inside [ERF](ERF-File-Format)) uses the same syntax.  
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/vis/`](https://github.com/OldRepublicDevs/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/vis)
@@ -76,16 +76,16 @@ room012 3
 
 - When the player stands in room `A`, the engine renders any room listed under `A` and recursively any linked lights or effects.  
 - VIS files only control visibility; collision and pathfinding still rely on [walkmeshes](BWM-File-Format) and module [GFF](GFF-File-Format) data.  
-- Editing VIS entries is a common optimization: removing unnecessary pairs prevents the renderer from drawing walls behind closed doors, while adding entries can fix disappearing [geometry](MDL-MDX-File-Format#geometry-header) when doorways [ARE](GFF-File-Format#are-area) wide open.
+- Editing VIS entries is a common optimization: removing unnecessary pairs prevents the renderer from drawing walls behind closed doors, while adding entries can fix disappearing [geometry](MDL-MDX-File-Format#geometry-header) when doorways are wide open.
 
-**NOTE**: VIS [ARE](GFF-File-Format#are-area) NOT required by the game. Most modern hardware can run kotor significantly well even without these defined. The game however does not implement frustrum culling, so you may want to regardless.
+**NOTE**: VIS are NOT required by the game. Most modern hardware can run kotor significantly well even without these defined. The game however does not implement frustrum culling, so you may want to regardless.
 
 **Performance Impact:**
 
-VIS files [ARE](GFF-File-Format#are-area) crucial for performance in large areas:
+VIS files are crucial for performance in large areas:
 
 - **Without VIS**: Engine renders all rooms, even those behind walls/doors (thousands of unnecessary polygons)
-- **With VIS**: Only visible rooms [ARE](GFF-File-Format#are-area) submitted to the renderer (10-50x fewer draw calls)
+- **With VIS**: Only visible rooms are submitted to the renderer (10-50x fewer draw calls)
 - **Overly Restrictive VIS**: Causes pop-in where rooms suddenly appear when entering adjacent areas
 - **Too Permissive VIS**: Wastes GPU resources rendering unseen [geometry](MDL-MDX-File-Format#geometry-header)
 

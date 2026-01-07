@@ -105,7 +105,7 @@ TPC supports the following encodings (documented in `TPCTextureFormat`):
 
 ## [TXI](TXI-File-Format) Metadata
 
-- If bytes remain after the texture payload, they [ARE](GFF-File-Format#are-area) treated as ASCII [TXI](TXI-File-Format) content.  
+- If bytes remain after the texture payload, they are treated as ASCII [TXI](TXI-File-Format) content.  
 - [TXI](TXI-File-Format) commands drive [animations](MDL-MDX-File-Format#animation-header), environment mapping, font metrics, downsampling directives, etc. See the [TXI File Format](TXI-File-Format) document for exhaustive command descriptions.  
 - PyKotor automatically parses the [TXI](TXI-File-Format) footer and exposes `TPC.txi` plus convenience flags (`is_animated`, `is_cube_map`).  
 

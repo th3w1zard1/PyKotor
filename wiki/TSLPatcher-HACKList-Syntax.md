@@ -111,14 +111,14 @@ offset=type:value
 
 ### Endianness
 
-All multi-[byte](GFF-File-Format#gff-data-types) values [ARE](GFF-File-Format#are-area) written in **[big-endian](https://en.wikipedia.org/wiki/Endianness)** (network [byte](GFF-File-Format#gff-data-types) order), which is standard for KOTOR's binary formats.
+All multi-[byte](GFF-File-Format#gff-data-types) values are written in **[big-endian](https://en.wikipedia.org/wiki/Endianness)** (network [byte](GFF-File-Format#gff-data-types) order), which is standard for KOTOR's binary formats.
 
 ### type Compatibility Notes
 
 **Historical Background:** TSLPatcher originally distinguished between `strref` and `strref32` (and `2damemory` vs `2damemory32`), but PyKotor's implementation unifies these:
 
-- `[StrRef](TLK-File-Format#string-references-strref)#` tokens [ARE](GFF-File-Format#are-area) automatically handled as 32-bit values
-- `2DAMEMORY#` tokens [ARE](GFF-File-Format#are-area) automatically handled as 32-bit values
+- `[StrRef](TLK-File-Format#string-references-strref)#` tokens are automatically handled as 32-bit values
+- `2DAMEMORY#` tokens are automatically handled as 32-bit values
 
 If you need legacy 16-bit compatibility, use explicit type specifiers like `u16:StrRef5`, though this is not typically necessary.
 
@@ -174,7 +174,7 @@ File0=myscript.ncs
 - Patching appearance/spell IDs to reference new rows
 - Updating hardcoded IDs to mod-added entries
 
-**Important Limitation:** `!FieldPath` values [ARE](GFF-File-Format#are-area) NOT supported in HACKList. Only numeric memory values can be used.
+**Important Limitation:** `!FieldPath` values are NOT supported in HACKList. Only numeric memory values can be used.
 
 ## offset Calculation
 
@@ -236,7 +236,7 @@ To modify the CONSTI value at 0x0E, you'd patch bytes 0x0F-0x12.
 
 ### Hex vs Decimal offsets
 
-Both formats [ARE](GFF-File-Format#are-area) supported:
+Both formats are supported:
 
 - **Hexadecimal**: `0x20`, `0x100`, `0xFF`
 - **Decimal**: `32`, `256`, `255`
@@ -575,20 +575,20 @@ File0=buggy_script.ncs
 3. 2DAList (modify [2DA files](2DA-File-Format))
 4. GFFList (modify [GFF](GFF-File-Format) files)
 5. **CompileList** (compile [NSS](NSS-File-Format) to [NCS](NCS-File-Format))
-6. **HACKList** (modify [NCS](NCS-File-Format) bytecode) ← **You [ARE](GFF-File-Format#are-area) here**
+6. **HACKList** (modify [NCS](NCS-File-Format) bytecode) ← **You are here**
 7. SSFList (modify soundset files)
 
 **Important:** This differs from TSLPatcher's original order, where HACKList executes before CompileList. HoloPatcher runs CompileList first to allow scripts to be compiled and then potentially edited. This order change is intentional and should not affect mod compatibility in practice.
 
-All memory tokens from TLKList and 2DAList [ARE](GFF-File-Format#are-area) available during HACKList processing.
+All memory tokens from TLKList and 2DAList are available during HACKList processing.
 
 ### Byte-Level Writing
 
-All multi-[byte](GFF-File-Format#gff-data-types) values [ARE](GFF-File-Format#are-area) written in **[big-endian](https://en.wikipedia.org/wiki/Endianness)** format:
+All multi-[byte](GFF-File-Format#gff-data-types) values are written in **[big-endian](https://en.wikipedia.org/wiki/Endianness)** format:
 
 - `u16:0x1234` writes `12 34`
 - `u32:0x12345678` writes `12 34 56 78`
-- Bytes [ARE](GFF-File-Format#are-area) written from most significant to least significant
+- Bytes are written from most significant to least significant
 
 ### ReplaceFile Behavior
 
@@ -611,7 +611,7 @@ I have no idea why this is the exclusive instance of Stoffe's variables that doe
 - PyKotor's HACKList implementation is compatible with TSLPatcher v1.2.10b+
 - All [NCS](NCS-File-Format) versions V1.0 are supported
 - Archive insertion works for [ERF](ERF-File-Format), MOD, and RIM formats
-- Memory tokens from TLKList and 2DAList [ARE](GFF-File-Format#are-area) fully supported
+- Memory tokens from TLKList and 2DAList are fully supported
 - `!FieldPath` is **not** supported (only numeric values)
 
 ## See Also
@@ -629,7 +629,7 @@ When working with [NCS](NCS-File-Format) bytecode, be aware of alignment require
 
 - Instructions start on any [byte](GFF-File-Format#gff-data-types) boundary (no alignment enforced)
 - Operands follow immediately after opcodes
-- Multi-[byte](GFF-File-Format#gff-data-types) values [ARE](GFF-File-Format#are-area) written as-is without padding
+- Multi-[byte](GFF-File-Format#gff-data-types) values are written as-is without padding
 
 ### Inserting vs Modifying
 
@@ -660,7 +660,7 @@ HACKList myscript.ncs: writing unsigned WORD (16-bit) 12345 at offset 0x20
 
 ### Performance Considerations
 
-HACKList modifications [ARE](GFF-File-Format#are-area) very fast since they're simple binary writes. However:
+HACKList modifications are very fast since they're simple binary writes. However:
 
 - Large files with many patches may take slightly longer
 - Archive insertion requires archive rewriting

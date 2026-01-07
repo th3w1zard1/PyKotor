@@ -1,4 +1,4 @@
-_This page explains how to create a mod with HoloPatcher. If you [ARE](GFF-File-Format#are-area) an end user you may be looking for [How to Use HoloPatcher](https://github.com/OldRepublicDevs/PyKotor/wiki/Installing-Mods-with-HoloPatcher)_
+_This page explains how to create a mod with HoloPatcher. If you are an end user you may be looking for [How to Use HoloPatcher](https://github.com/OldRepublicDevs/PyKotor/wiki/Installing-Mods-with-HoloPatcher)_
 
 ## Creating a HoloPatcher mod
 
@@ -48,7 +48,7 @@ Don't use the 'ignore' syntax or the 'range' syntax, these won't be documented o
 
 ### HACKList (Editing [NCS](NCS-File-Format) directly)
 
-This is a TSLPatcher feature that was [not documented in the TSLPatcher readme.](https://github.com/OldRepublicDevs/PyKotor/wiki/TSLPatcher's-Official-Readme). We can only guess why this is. The only known uses we know about [ARE](GFF-File-Format#are-area) [Stoffe's HLFP mod](https://deadlystream.com/files/file/832-high-level-force-powers/) and some starwarsknights/lucasforums archives on waybackmachine pointing to files that [ARE](GFF-File-Format#are-area) unavailable.
+This is a TSLPatcher feature that was [not documented in the TSLPatcher readme.](https://github.com/OldRepublicDevs/PyKotor/wiki/TSLPatcher's-Official-Readme). We can only guess why this is. The only known uses we know about are [Stoffe's HLFP mod](https://deadlystream.com/files/file/832-high-level-force-powers/) and some starwarsknights/lucasforums archives on waybackmachine pointing to files that are unavailable.
 
 Due to this feature being highly undocumented and only one known usage, our implementation might not match exactly. If you happen to find an old TSLPatcher mod that produces different HACKList results than HoloPatcher, [please report them here](https://github.com/OldRepublicDevs/PyKotor/issues/24)
 

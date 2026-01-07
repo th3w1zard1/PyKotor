@@ -2,9 +2,9 @@
 
 Part of the [GFF File Format Documentation](GFF-File-Format).
 
-ARE files define static [area properties](GFF-File-Format#are-area) including lighting, weather, ambient audio, grass rendering, fog settings, script hooks, and minimap data. [ARE](GFF-File-Format#are-area) files contain environmental and atmospheric data for game areas, while dynamic object placement is handled by [GIT](GFF-File-Format#git-game-instance-template) files.
+ARE files define static [area properties](GFF-File-Format#are-area) including lighting, weather, ambient audio, grass rendering, fog settings, script hooks, and minimap data. are files contain environmental and atmospheric data for game areas, while dynamic object placement is handled by [GIT](GFF-File-Format#git-game-instance-template) files.
 
-**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine [ARE](GFF-File-Format#are-area) format specification, see [Bioware Aurora Area File Format](Bioware-Aurora-AreaFile).
+**Official Bioware Documentation:** For the authoritative Bioware Aurora Engine are format specification, see [Bioware Aurora Area File Format](Bioware-Aurora-AreaFile).
 
 **Reference**: [`Libraries/PyKotor/src/pykotor/resource/generics/are.py`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/are.py)
 
@@ -216,7 +216,7 @@ ARE files define static [area properties](GFF-File-Format#are-area) including li
 
 ## Minimap coordinate System
 
-The [ARE](GFF-File-Format#are-area) file contains a `Map` struct that defines how the minimap texture (`lbl_map<resname>`) aligns with the world space [walkmesh](BWM-File-Format). This coordinate system allows the game to display the player's position on the minimap and render map notes at correct locations.
+The are file contains a `Map` struct that defines how the minimap texture (`lbl_map<resname>`) aligns with the world space [walkmesh](BWM-File-Format). This coordinate system allows the game to display the player's position on the minimap and render map notes at correct locations.
 
 ### Map Struct fields
 
@@ -325,7 +325,7 @@ The minimap [texture](TPC-File-Format) is loaded from [texture](TPC-File-Format)
 
 **coordinate Precision:**
 
-- Map points [ARE](GFF-File-Format#are-area) normalized (0.0-1.0) and require high precision (6+ decimal places)
+- Map points are normalized (0.0-1.0) and require high precision (6+ decimal places)
 - Rounding errors can cause misalignment between [walkmesh](BWM-File-Format) and minimap [texture](TPC-File-Format)
 - Always preserve full precision when editing map coordinates
 
@@ -347,8 +347,8 @@ When rendering the minimap [texture](TPC-File-Format) over the [walkmesh](BWM-Fi
 **Reference Implementations:**
 
 - `vendor/reone/src/libs/game/gui/map.cpp` - `getMapPosition()` function
-- `vendor/reone/src/libs/resource/parser/gff/are.cpp` - [ARE](GFF-File-Format#are-area) parsing
-- `Libraries/PyKotor/src/pykotor/resource/generics/are.py` - PyKotor [ARE](GFF-File-Format#are-area) implementation
+- `vendor/reone/src/libs/resource/parser/gff/are.cpp` - are parsing
+- `Libraries/PyKotor/src/pykotor/resource/generics/are.py` - PyKotor are implementation
 - `Tools/HolocronToolset/src/toolset/gui/widgets/renderer/[walkmesh](BWM-File-Format).py` - Minimap rendering
 
 ## Rooms & Audio Zones
@@ -378,7 +378,7 @@ When rendering the minimap [texture](TPC-File-Format) over the [walkmesh](BWM-Fi
 
 ### Area Loading Sequence
 
-1. **Parse [ARE](GFF-File-Format#are-area)**: Load static properties from [GFF](GFF-File-Format)
+1. **Parse are**: Load static properties from [GFF](GFF-File-Format)
 2. **Apply Lighting**: Set sun/ambient colors
 3. **Setup Fog**: Configure fog parameters
 4. **Load Grass**: Initialize grass rendering if configured
@@ -391,7 +391,7 @@ When rendering the minimap [texture](TPC-File-Format) over the [walkmesh](BWM-Fi
 
 **Precision Requirements:**
 
-- Map coordinates (`MapPt1X/Y`, `MapPt2X/Y`) [ARE](GFF-File-Format#are-area) normalized (0.0-1.0) and require **at least 6 decimal places** of precision
+- Map coordinates (`MapPt1X/Y`, `MapPt2X/Y`) are normalized (0.0-1.0) and require **at least 6 decimal places** of precision
 - Using insufficient precision (e.g., 2 decimals) causes coordinate drift during roundtrip operations
 - Example: `0.6669999957084656` rounded to 2 decimals becomes `0.67`, causing misalignment
 
@@ -423,7 +423,7 @@ When rendering the minimap [texture](TPC-File-Format) over the [walkmesh](BWM-Fi
 **Audio Zones:**
 
 - Rooms define audio transitions
-- EnvAudio from [ARE](GFF-File-Format#are-area) and Rooms determines soundscape
+- EnvAudio from are and Rooms determines soundscape
 - Smooth fade between zones
 
 **Common Area Configurations:**
@@ -458,7 +458,7 @@ When rendering the minimap [texture](TPC-File-Format) over the [walkmesh](BWM-Fi
 
 **World Space [texture](TPC-File-Format) Rendering:**
 
-When rendering the minimap [texture](TPC-File-Format) over the [walkmesh](BWM-File-Format) in editors, the following steps [ARE](GFF-File-Format#are-area) required:
+When rendering the minimap [texture](TPC-File-Format) over the [walkmesh](BWM-File-Format) in editors, the following steps are required:
 
 1. **Calculate World scale Factors:**
 
@@ -496,7 +496,7 @@ When rendering the minimap [texture](TPC-File-Format) over the [walkmesh](BWM-Fi
 
 6. **Render [texture](TPC-File-Format):**
    - Draw [texture](TPC-File-Format) in world space rectangle from `(min(originX, endX), min(originY, endY))` to `(max(originX, endX), max(originY, endY))`
-   - Apply mirroring if scales [ARE](GFF-File-Format#are-area) negative
+   - Apply mirroring if scales are negative
 
 **Mathematical Derivation:**
 
@@ -561,12 +561,12 @@ The blue walkable area rendered in editors comes from the walkmesh ([BWM file](B
 **Testing & Validation:**
 
 1. **Roundtrip Validation:**
-   - Load [ARE](GFF-File-Format#are-area) file → Save without changes → Load saved file
+   - Load are file → Save without changes → Load saved file
    - Verify all map coordinates (`MapPt1X/Y`, `MapPt2X/Y`, `WorldPt1X/Y`, `WorldPt2X/Y`) preserve exactly (tolerance: 0.0001)
    - Verify NorthAxis, MapZoom, MapResX preserve exactly
 
 2. **Visual Alignment Check:**
-   - Open [ARE](GFF-File-Format#are-area) in editor with [walkmesh](BWM-File-Format) loaded
+   - Open are in editor with [walkmesh](BWM-File-Format) loaded
    - Verify blue walkable area aligns with minimap [texture](TPC-File-Format)
    - Check alignment for all NorthAxis values (0, 1, 2, 3)
    - Verify [texture](TPC-File-Format) isn't flipped or rotated incorrectly
@@ -574,13 +574,13 @@ The blue walkable area rendered in editors comes from the walkmesh ([BWM file](B
 3. **coordinate [transformation](BWM-File-Format#walkable-adjacencies) Test:**
    - Pick known world coordinates from [walkmesh](BWM-File-Format)
    - Convert to map coordinates using forward [transformation](BWM-File-Format#walkable-adjacencies)
-   - Verify map coordinates [ARE](GFF-File-Format#are-area) within valid range (0.0-1.0)
+   - Verify map coordinates are within valid range (0.0-1.0)
    - Convert back to world coordinates using inverse [transformation](BWM-File-Format#walkable-adjacencies)
    - Verify roundtrip accuracy (tolerance: 0.01 world units)
 
 **Reference Code Locations:**
 
 - **Reone Forward [transformation](BWM-File-Format#walkable-adjacencies)**: `vendor/reone/src/libs/game/gui/map.cpp:174-199` - `getMapPosition()`
-- **Reone [ARE](GFF-File-Format#are-area) Parsing**: `vendor/reone/src/libs/resource/parser/gff/are.cpp:284-297` - Map struct parsing
-- **PyKotor [ARE](GFF-File-Format#are-area) Class**: `Libraries/PyKotor/src/pykotor/resource/generics/are.py:250-260` - Map coordinate storage
+- **Reone are Parsing**: `vendor/reone/src/libs/resource/parser/gff/are.cpp:284-297` - Map struct parsing
+- **PyKotor are Class**: `Libraries/PyKotor/src/pykotor/resource/generics/are.py:250-260` - Map coordinate storage
 - **PyKotor Minimap Rendering**: `Tools/HolocronToolset/src/toolset/gui/widgets/renderer/[walkmesh](BWM-File-Format).py:555-603` - [texture](TPC-File-Format) rendering implementation

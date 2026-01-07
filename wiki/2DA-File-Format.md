@@ -6,9 +6,9 @@ This document provides a detailed description of the 2DA (Two-Dimensional array)
 
 **For mod developers:** To modify 2DA files in your mods, see the [TSLPatcher 2DAList Syntax Guide](TSLPatcher-2DAList-Syntax). For general modding information, see [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.).
 
-**Related formats:** 2DA files [ARE](GFF-File-Format#are-area) often referenced by [GFF files](GFF-File-Format) (such as [UTC (Creature)](GFF-File-Format#utc-creature), [UTI (Item)](GFF-File-Format#uti-item), [UTP (Placeable)](GFF-File-Format#utp-placeable) templates) and may contain references to [TLK files](TLK-File-Format) for text strings.
+**Related formats:** 2DA files are often referenced by [GFF files](GFF-File-Format) (such as [UTC (Creature)](GFF-File-Format#utc-creature), [UTI (Item)](GFF-File-Format#uti-item), [UTP (Placeable)](GFF-File-Format#utp-placeable) templates) and may contain references to [TLK files](TLK-File-Format) for text strings.
 
-**Important**: While the 2DA file format structure is shared across BioWare's Aurora engine games (including Neverwinter Nights, Dragon Age, and Jade Empire), this documentation focuses exclusively on KotOR and KotOR 2. All 2DA file examples, column structures, and engine usage descriptions [ARE](GFF-File-Format#are-area) specific to these games. References to vendor implementations [ARE](GFF-File-Format#are-area) marked as either KotOR-specific or generic Aurora engine code (shared format).
+**Important**: While the 2DA file format structure is shared across BioWare's Aurora engine games (including Neverwinter Nights, Dragon Age, and Jade Empire), this documentation focuses exclusively on KotOR and KotOR 2. All 2DA file examples, column structures, and engine usage descriptions are specific to these games. References to vendor implementations are marked as either KotOR-specific or generic Aurora engine code (shared format).
 
 ## Table of Contents
 
@@ -214,7 +214,7 @@ The file header is 9 bytes in size:
 | file Version | [char](GFF-File-Format#gff-data-types) | 4 (0x04) | 4    | Always `"V2.b"`              |
 | Line Break   | [uint8](GFF-File-Format#gff-data-types)   | 8 (0x08) | 1    | Newline character (`\n`, value `0x0A`)        |
 
-The file type can be either `"2DA "` (space-padded) or `"2DA\t"` (tab-padded). Both [ARE](GFF-File-Format#are-area) valid and accepted by the game engine.
+The file type can be either `"2DA "` (space-padded) or `"2DA\t"` (tab-padded). Both are valid and accepted by the game engine.
 
 **References**:
 
@@ -231,7 +231,7 @@ Column headers immediately follow the header, terminated by a [null byte](https:
 | Column headers  | [char](GFF-File-Format#gff-data-types)[]  | [Tab-separated](https://en.wikipedia.org/wiki/Tab-separated_values) column names (e.g., `"label\tname\tdescription"`) |
 | [null terminator](https://en.cppreference.com/w/c/string/byte) | [uint8](GFF-File-Format#gff-data-types)   | Single [null byte](https://en.cppreference.com/w/c/string/byte) (`\0`) marking end of headers                   |
 
-Each column name is terminated by a tab character (`0x09`). The entire header list is terminated by a [null byte](https://en.cppreference.com/w/c/string/byte) (`0x00`). Column names [ARE](GFF-File-Format#are-area) case-sensitive and typically lowercase in KotOR files.
+Each column name is terminated by a tab character (`0x09`). The entire header list is terminated by a [null byte](https://en.cppreference.com/w/c/string/byte) (`0x00`). Column names are case-sensitive and typically lowercase in KotOR files.
 
 **References**:
 
@@ -262,9 +262,9 @@ Row labels immediately follow the row count:
 | ---------- | ------- | ---------------------------------------------------------------- |
 | Row Labels | [char](GFF-File-Format#gff-data-types)[]  | [Tab-separated](https://en.wikipedia.org/wiki/Tab-separated_values) row labels (one per row, typically numeric)       |
 
-Each row label is read as a [tab-terminated](2DA-File-Format#column-headers) string (tab character `0x09`). Row labels [ARE](GFF-File-Format#are-area) usually numeric ("0", "1", "2"...) but can be arbitrary strings.
+Each row label is read as a [tab-terminated](2DA-File-Format#column-headers) string (tab character `0x09`). Row labels are usually numeric ("0", "1", "2"...) but can be arbitrary strings.
 
-**Important**: The row label list is **not** terminated by a [null byte](https://en.cppreference.com/w/c/string/byte) (`0x00`). The reader must consume exactly `row_count` labels based on the count field. This differs from the column headers which do have a [null terminator](https://en.cppreference.com/w/c/string/byte). The row labels [ARE](GFF-File-Format#are-area) primarily for human readability and editing tools - the actual row indexing in the game engine is based on position, not label value.
+**Important**: The row label list is **not** terminated by a [null byte](https://en.cppreference.com/w/c/string/byte) (`0x00`). The reader must consume exactly `row_count` labels based on the count field. This differs from the column headers which do have a [null terminator](https://en.cppreference.com/w/c/string/byte). The row labels are primarily for human readability and editing tools - the actual row indexing in the game engine is based on position, not label value.
 
 **References**:
 
@@ -275,16 +275,16 @@ Each row label is read as a [tab-terminated](2DA-File-Format#column-headers) str
 
 ### Cell data offsets
 
-After row labels, cell data offsets [ARE](GFF-File-Format#are-area) stored:
+After row labels, cell data offsets are stored:
 
 | Name            | type     | size | Description                                                      |
 | --------------- | -------- | ---- | ---------------------------------------------------------------- |
 | Cell offsets    | [uint16](GFF-File-Format#gff-data-types)[] | 2×N  | [Array](https://en.wikipedia.org/wiki/Array_data_structure) of offsets into cell data string table (N = [row_count](2DA-File-Format#row-labels) × [column_count](2DA-File-Format#column-headers), [little-endian](https://en.wikipedia.org/wiki/Endianness)) |
 | Cell data size  | [uint16](GFF-File-Format#gff-data-types)   | 2    | Total size of cell data string table in bytes ([little-endian](https://en.wikipedia.org/wiki/Endianness))   |
 
-Each cell has a 16-bit unsigned integer offset ([little-endian](https://en.wikipedia.org/wiki/Endianness)) pointing to its string value in the cell data string table. Offsets [ARE](GFF-File-Format#are-area) stored in [row-major order](https://en.wikipedia.org/wiki/Row-_and_column-major_order) (all cells of row 0, then all cells of row 1, etc.). The cell data size field immediately follows the offset array and precedes the actual cell data.
+Each cell has a 16-bit unsigned integer offset ([little-endian](https://en.wikipedia.org/wiki/Endianness)) pointing to its string value in the cell data string table. Offsets are stored in [row-major order](https://en.wikipedia.org/wiki/Row-_and_column-major_order) (all cells of row 0, then all cells of row 1, etc.). The cell data size field immediately follows the offset array and precedes the actual cell data.
 
-**Important**: The offsets [ARE](GFF-File-Format#are-area) relative to the start of the cell data string table (which begins immediately after the `cell_data_size` field). Multiple cells can share the same offset value if they contain identical strings, enabling data [deduplication](https://en.wikipedia.org/wiki/Data_deduplication).
+**Important**: The offsets are relative to the start of the cell data string table (which begins immediately after the `cell_data_size` field). Multiple cells can share the same offset value if they contain identical strings, enabling data [deduplication](https://en.wikipedia.org/wiki/Data_deduplication).
 
 **References**:
 
@@ -302,7 +302,7 @@ The cell data string table contains all cell values as [null-terminated](https:/
 | ------------ | ------ | ---------------------------------------------------------------- |
 | Cell strings | [char](GFF-File-Format#gff-data-types)[] | [Null-terminated](https://en.cppreference.com/w/c/string/byte) strings, [deduplicated](https://en.wikipedia.org/wiki/Data_deduplication) (same value shares offset) |
 
-The cell data string table begins immediately after the `cell_data_size` field. Each string is [null-terminated](https://en.cppreference.com/w/c/string/byte) (`0x00`). Blank or empty cells [ARE](GFF-File-Format#are-area) typically stored as empty strings (immediately [null-terminated](https://en.cppreference.com/w/c/string/byte)) or the string `"****"`. The string table is [deduplicated](https://en.wikipedia.org/wiki/Data_deduplication) - multiple cells with the same value share the same offset, reducing file size.
+The cell data string table begins immediately after the `cell_data_size` field. Each string is [null-terminated](https://en.cppreference.com/w/c/string/byte) (`0x00`). Blank or empty cells are typically stored as empty strings (immediately [null-terminated](https://en.cppreference.com/w/c/string/byte)) or the string `"****"`. The string table is [deduplicated](https://en.wikipedia.org/wiki/Data_deduplication) - multiple cells with the same value share the same offset, reducing file size.
 
 **Reading Process**: For each cell, the reader:
 
@@ -357,7 +357,7 @@ The `TwoDARow` class provides a convenient interface for accessing row data:
 
 ## Cell value types
 
-All cell values [ARE](GFF-File-Format#are-area) stored as strings in the 2DA file, but [ARE](GFF-File-Format#are-area) interpreted as different types by the game engine:
+All cell values are stored as strings in the 2DA file, but are interpreted as different types by the game engine:
 
 - **Integers**: Numeric strings parsed as [`int32`](https://en.wikipedia.org/wiki/Integer_(computer_science)) - used for numeric identifiers, counts, and enumerated values
 - **Floats**: Decimal strings parsed as [`float`](https://en.wikipedia.org/wiki/Single-precision_floating-point_format) - used for calculations like damage multipliers, timers, and percentages
@@ -697,7 +697,7 @@ The `appearance.2da` file contains a comprehensive set of columns for character 
 
 **Column Details** (from reone implementation):
 
-The following columns [ARE](GFF-File-Format#are-area) accessed by the reone engine:
+The following columns are accessed by the reone engine:
 
 - `maxattackrange`: Maximum attack range for ranged weapons
 - `crithitmult`: Critical hit multiplier
@@ -778,7 +778,7 @@ The following columns [ARE](GFF-File-Format#are-area) accessed by the reone engi
 
 **Column Details** (from reone implementation):
 
-The following columns [ARE](GFF-File-Format#are-area) accessed by the reone engine:
+The following columns are accessed by the reone engine:
 
 - `name`: string reference for class name
 - `description`: string reference for class description
@@ -861,7 +861,7 @@ The following columns [ARE](GFF-File-Format#are-area) accessed by the reone engi
 
 **Column Details** (from reone implementation):
 
-The following columns [ARE](GFF-File-Format#are-area) accessed by the reone engine:
+The following columns are accessed by the reone engine:
 
 - `name`: string reference for feat name
 - `description`: string reference for feat description
@@ -928,7 +928,7 @@ The following columns [ARE](GFF-File-Format#are-area) accessed by the reone engi
 
 **Column Details** (from reone implementation):
 
-The following columns [ARE](GFF-File-Format#are-area) accessed by the reone engine:
+The following columns are accessed by the reone engine:
 
 - `name`: string reference for skill name
 - `description`: string reference for skill description
@@ -1018,7 +1018,7 @@ The following columns [ARE](GFF-File-Format#are-area) accessed by the reone engi
 
 **Column Details** (from reone implementation):
 
-The following columns [ARE](GFF-File-Format#are-area) accessed by the reone engine:
+The following columns are accessed by the reone engine:
 
 - `name`: string reference for spell name
 - `spelldesc`: string reference for spell description (note: column name is `spelldesc`, not `description`)
@@ -1039,7 +1039,7 @@ The following columns [ARE](GFF-File-Format#are-area) accessed by the reone engi
 - `impactscript`: Impact script [ResRef](GFF-File-Format#gff-data-types)
 - `casthandvisual`: Cast hand visual effect
 
-**Note**: The `spells.2da` file contains many optional columns for projectile [models](MDL-MDX-File-Format), icons, and immunity types (numbered 1-50). These [ARE](GFF-File-Format#are-area) used for spell variations and visual effects.
+**Note**: The `spells.2da` file contains many optional columns for projectile [models](MDL-MDX-File-Format), icons, and immunity types (numbered 1-50). These are used for spell variations and visual effects.
 
 **References**:
 
@@ -1499,7 +1499,7 @@ The complete column structure is defined in reone's heads parser:
 
 ### classpowergain.2da
 
-**Engine Usage**: Defines Force power progression by class and level. The engine uses this file to determine which Force powers [ARE](GFF-File-Format#are-area) available to each class at each level.
+**Engine Usage**: Defines Force power progression by class and level. The engine uses this file to determine which Force powers are available to each class at each level.
 
 **Row index**: Level (integer, typically 1-20)
 
@@ -1637,15 +1637,15 @@ Similar name generation files exist for other species:
 
 - [`Libraries/PyKotor/src/pykotor/extract/twoda.py:497`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L497) - TwoDARegistry.CAMERAS constant definition
 - [`Libraries/PyKotor/src/pykotor/extract/twoda.py:550`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/extract/twoda.py#L550) - [GFF](GFF-File-Format) field mapping: "CameraStyle" -> camerastyle.2da
-- [`Libraries/PyKotor/src/pykotor/resource/generics/are.py:37`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/are.py#L37) - [ARE](GFF-File-Format#are-area) camera_style field documentation
+- [`Libraries/PyKotor/src/pykotor/resource/generics/are.py:37`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/are.py#L37) - are camera_style field documentation
 - [`Libraries/PyKotor/src/pykotor/resource/generics/are.py:123`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/are.py#L123) - Camera style index comment
-- [`Libraries/PyKotor/src/pykotor/resource/generics/are.py:442`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/are.py#L442) - CameraStyle field parsing from [ARE](GFF-File-Format#are-area) [GFF](GFF-File-Format)
-- [`Libraries/PyKotor/src/pykotor/resource/generics/are.py:579`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/are.py#L579) - CameraStyle field writing to [ARE](GFF-File-Format#are-area) [GFF](GFF-File-Format)
+- [`Libraries/PyKotor/src/pykotor/resource/generics/are.py:442`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/are.py#L442) - CameraStyle field parsing from are [GFF](GFF-File-Format)
+- [`Libraries/PyKotor/src/pykotor/resource/generics/are.py:579`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Libraries/PyKotor/src/pykotor/resource/generics/are.py#L579) - CameraStyle field writing to are [GFF](GFF-File-Format)
 
 **HolocronToolset:**
 
 - [`Tools/HolocronToolset/src/toolset/data/installation.py:96`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/data/installation.py#L96) - HTInstallation.TwoDA_CAMERAS constant
-- [`Tools/HolocronToolset/src/toolset/gui/editors/are.py:102`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/gui/editors/are.py#L102) - camerastyle.2da loading in [ARE](GFF-File-Format#are-area) editor
+- [`Tools/HolocronToolset/src/toolset/gui/editors/are.py:102`](https://github.com/OldRepublicDevs/PyKotor/blob/master/Tools/HolocronToolset/src/toolset/gui/editors/are.py#L102) - camerastyle.2da loading in are editor
 
 **Vendor Implementations:**
 
@@ -1690,7 +1690,7 @@ Similar name generation files exist for other species:
 
 ### prioritygroups.2da
 
-**Engine Usage**: Defines priority groups for sound effects, determining which sounds take precedence when multiple sounds [ARE](GFF-File-Format#are-area) playing. The engine uses this file to calculate sound priority values.
+**Engine Usage**: Defines priority groups for sound effects, determining which sounds take precedence when multiple sounds are playing. The engine uses this file to calculate sound priority values.
 
 **Row index**: Priority Group ID (integer)
 
@@ -1709,7 +1709,7 @@ Similar name generation files exist for other species:
 
 ### repute.2da
 
-**Engine Usage**: Defines reputation values between different factions. The engine uses this file to determine whether creatures [ARE](GFF-File-Format#are-area) enemies, friends, or neutral to each other based on their faction relationships.
+**Engine Usage**: Defines reputation values between different factions. The engine uses this file to determine whether creatures are enemies, friends, or neutral to each other based on their faction relationships.
 
 **Row index**: Faction ID (integer)
 
@@ -1720,7 +1720,7 @@ Similar name generation files exist for other species:
 | `label` | string | Faction label |
 | Additional columns | Integer | Reputation values for each faction (column names match faction labels) |
 
-**Note**: The `repute.2da` file is a square [matrix](BWM-File-Format#walkable-adjacencies) where each row represents a faction, and each column (after `label`) represents the reputation value toward another faction. Reputation values typically range from 0-100, where values below 50 [ARE](GFF-File-Format#are-area) enemies, above 50 [ARE](GFF-File-Format#are-area) friends, and 50 is neutral.
+**Note**: The `repute.2da` file is a square [matrix](BWM-File-Format#walkable-adjacencies) where each row represents a faction, and each column (after `label`) represents the reputation value toward another faction. Reputation values typically range from 0-100, where values below 50 are enemies, above 50 are friends, and 50 is neutral.
 
 **References**:
 
@@ -2183,7 +2183,7 @@ Similar name generation files exist for other species:
 
 ### globalcat.2da
 
-**Engine Usage**: Defines global variables and their types for the game engine. The engine uses this file to initialize global variables at game start, determining which variables [ARE](GFF-File-Format#are-area) integers, floats, or strings.
+**Engine Usage**: Defines global variables and their types for the game engine. The engine uses this file to initialize global variables at game start, determining which variables are integers, floats, or strings.
 
 **Row index**: Global Variable Index (integer)
 
@@ -2432,7 +2432,7 @@ Similar name generation files exist for other species:
 
 ## Item Property Parameter & Cost Tables 2DA files
 
-The following 2DA files [ARE](GFF-File-Format#are-area) used for item property parameter and cost calculations:
+The following 2DA files are used for item property parameter and cost calculations:
 
 ### iprp_paramtable.2da
 
@@ -2819,7 +2819,7 @@ The following 2DA files [ARE](GFF-File-Format#are-area) used for item property p
 
 ### featgain.2da
 
-**Engine Usage**: Defines feat gain progression by class and level. The engine uses this file to determine which feats [ARE](GFF-File-Format#are-area) available to each class at each level.
+**Engine Usage**: Defines feat gain progression by class and level. The engine uses this file to determine which feats are available to each class at each level.
 
 **Row index**: Feat Gain Entry ID (integer)
 
@@ -2859,7 +2859,7 @@ The following 2DA files [ARE](GFF-File-Format#are-area) used for item property p
 
 ### pazaakdecks.2da
 
-**Engine Usage**: Defines Pazaak card decks for the Pazaak mini-game. The engine uses this file to determine which cards [ARE](GFF-File-Format#are-area) available in opponent decks and player decks.
+**Engine Usage**: Defines Pazaak card decks for the Pazaak mini-game. The engine uses this file to determine which cards are available in opponent decks and player decks.
 
 **Row index**: Pazaak Deck ID (integer)
 
@@ -3243,7 +3243,7 @@ The following 2DA files [ARE](GFF-File-Format#are-area) used for item property p
 
 **xoreos** (C++):
 
-- Reading: [`vendor/xoreos/src/aurora/2dafile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/2dafile.cpp) - Generic Aurora engine 2DA format parser (shared across KotOR, Neverwinter Nights, and other Aurora engine games). The format structure is the same, but specific 2DA files and their columns [ARE](GFF-File-Format#are-area) KotOR-specific.
+- Reading: [`vendor/xoreos/src/aurora/2dafile.cpp`](https://github.com/th3w1zard1/xoreos/blob/master/src/aurora/2dafile.cpp) - Generic Aurora engine 2DA format parser (shared across KotOR, Neverwinter Nights, and other Aurora engine games). The format structure is the same, but specific 2DA files and their columns are KotOR-specific.
 
 **KotOR-Unity** (C#):
 

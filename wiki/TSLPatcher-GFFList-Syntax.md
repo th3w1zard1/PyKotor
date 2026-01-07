@@ -4,7 +4,7 @@ This guide explains how to modify [GFF files](GFF-File-Format) using TSLPatcher 
 
 ## Overview
 
-The `[GFFList]` section in TSLPatcher's `changes.ini` lets you edit or add data inside GFF (Generic file format) files used across KotOR. You will use this to change items (.UTI), creatures (.[UTC](GFF-File-Format#utc-creature)), dialogs (.DLG), placeables (.UTP), triggers (.UTT), waypoints (.UTW), modules (.MOD), areas (.[ARE](GFF-File-Format#are-area)), journal entries (.JRL), paths (.PTH), module info (.IFO), and scripts data (.[GIT](GFF-File-Format#git-game-instance-template)).
+The `[GFFList]` section in TSLPatcher's `changes.ini` lets you edit or add data inside GFF (Generic file format) files used across KotOR. You will use this to change items (.UTI), creatures (.[UTC](GFF-File-Format#utc-creature)), dialogs (.DLG), placeables (.UTP), triggers (.UTT), waypoints (.UTW), modules (.MOD), areas (.are), journal entries (.JRL), paths (.PTH), module info (.IFO), and scripts data (.[GIT](GFF-File-Format#git-game-instance-template)).
 
 If you can fill out a form, you can use `[GFFList]`.
 
@@ -230,7 +230,7 @@ Value=123
 
 ### Understanding Struct vs field Addition
 
-There [ARE](GFF-File-Format#are-area) two distinct scenarios when using AddField:
+There are two distinct scenarios when using AddField:
 
 1. **Adding a STRUCT to a LIST**: When you want to add a new element to an existing LIST field
    - `FieldType=Struct` is required
@@ -556,7 +556,7 @@ AddField1=second_entry
 ```
 
 - Contains `AddFieldN` entries for each element
-- Elements [ARE](GFF-File-Format#are-area) typically STRUCTs without labels
+- Elements are typically STRUCTs without labels
 
 #### Binary (HoloPatcher Only)
 
@@ -962,14 +962,14 @@ GFFList does not support [2DA](2DA-File-Format)-style ExclusiveColumn.
 
 ### field and Path Issues
 
-- **Case sensitivity**: field names [ARE](GFF-File-Format#are-area) case-sensitive. `Comments` ≠ `comments`. Use a [GFF](GFF-File-Format) viewer to copy labels exactly.
+- **Case sensitivity**: field names are case-sensitive. `Comments` ≠ `comments`. Use a [GFF](GFF-File-Format) viewer to copy labels exactly.
 - **List indices**: Lists start at 0. The first element is `\0\`, second is `\1\`, etc.
-- **Blank labels**: `Label=` blank is **only** valid when `FieldType=Struct` and adding that struct **to a LIST**. All other field types require a label, including fields added **inside** structs that [ARE](GFF-File-Format#are-area) themselves in lists.
+- **Blank labels**: `Label=` blank is **only** valid when `FieldType=Struct` and adding that struct **to a LIST**. All other field types require a label, including fields added **inside** structs that are themselves in lists.
 - **Adding to list vs adding to struct**: Confusing these two operations is a common mistake:
   - Adding STRUCT to LIST: `Label=` blank, `Path=` points to list name
   - Adding field to STRUCT: `Label=` required, `Path=` can be empty (inherits)
 - **Path inheritance confusion**: Remember that when adding a struct to a list, child fields with empty `Path=` inherit the resolved path including the list index. You don't need to (and shouldn't) manually specify the index.
-- **Container fields**: Don't assign `Value=` to `Struct` or `List` fields—they [ARE](GFF-File-Format#are-area) containers. Set values in their child fields instead.
+- **Container fields**: Don't assign `Value=` to `Struct` or `List` fields—they are containers. Set values in their child fields instead.
 - **List index resolution**: The index where a struct is added is automatically determined at runtime. You cannot manually set or predict the exact index ahead of time if other mods might add structs to the same list.
 
 ### Localized string Syntax
@@ -982,7 +982,7 @@ GFFList does not support [2DA](2DA-File-Format)-style ExclusiveColumn.
 
 - **Token initialization**: Tokens must be set before use. Using `2DAMEMORY5` before assignment results in an error.
 - **Execution order**: Within GFFList, AddField sections run before field modifications. Store `!FieldPath` when creating fields, then use the token to modify them.
-- **Token scope**: `[StrRef](TLK-File-Format#string-references-strref)#` tokens [ARE](GFF-File-Format#are-area) created in TLKList and available to GFFList. `2DAMEMORY#` tokens [ARE](GFF-File-Format#are-area) file-scoped unless explicitly copied.
+- **Token scope**: `[StrRef](TLK-File-Format#string-references-strref)#` tokens are created in TLKList and available to GFFList. `2DAMEMORY#` tokens are file-scoped unless explicitly copied.
 
 ### Path and Source Configuration
 
@@ -1026,16 +1026,16 @@ Understanding execution order is crucial when your edits depend on earlier token
 
 **Within GFFList Section:**
 
-Modifications within a single [GFF file](GFF-File-Format) [ARE](GFF-File-Format#are-area) processed in order:
+Modifications within a single [GFF file](GFF-File-Format) are processed in order:
 
-1. **AddField sections** [ARE](GFF-File-Format#are-area) processed first (fields [ARE](GFF-File-Format#are-area) created)
-2. **Memory assignments** (`2DAMEMORY#=!FieldPath`, `2DAMEMORY#=ListIndex`) [ARE](GFF-File-Format#are-area) evaluated as fields [ARE](GFF-File-Format#are-area) added
-3. **field modifications** [ARE](GFF-File-Format#are-area) processed last (can reference stored paths via `2DAMEMORY#` tokens)
+1. **AddField sections** are processed first (fields are created)
+2. **Memory assignments** (`2DAMEMORY#=!FieldPath`, `2DAMEMORY#=ListIndex`) are evaluated as fields are added
+3. **field modifications** are processed last (can reference stored paths via `2DAMEMORY#` tokens)
 
 **Best Practices:**
 
 - **Add before modify**: Use AddField to create structures, store their paths with `2DAMEMORY#=!FieldPath`, then modify them using those tokens
-- **Token dependencies**: Ensure tokens [ARE](GFF-File-Format#are-area) set before use. `2DAMEMORY#` tokens from 2DAList [ARE](GFF-File-Format#are-area) available to GFFList
+- **Token dependencies**: Ensure tokens are set before use. `2DAMEMORY#` tokens from 2DAList are available to GFFList
 - **Archive handling**: If patching files into [ERF](ERF-File-Format)/RIM archives, the archive must exist (created by InstallList) or be built automatically by the patcher
 
 **Important Notes:**
@@ -1434,7 +1434,7 @@ field type compatibility:
 
 Common [GFF](GFF-File-Format)-based file types you can modify:
 
-- **.[ARE](GFF-File-Format#are-area)** - [area files](GFF-File-Format#are-area)
+- **.are** - [area files](GFF-File-Format#are-area)
 - **.DLG** - Dialogs
 - **.GIT** - Module instance files
 - **.[IFO](GFF-File-Format#ifo-module-info)** - [module info](GFF-File-Format#ifo-module-info)

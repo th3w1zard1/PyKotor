@@ -40,7 +40,7 @@ At runtime, the game:
 
 ### Palette Groups
 
-There [ARE](GFF-File-Format#are-area) ten palette groups, each corresponding to a different [material](MDL-MDX-File-Format#trimesh-header) type on character [models](MDL-MDX-File-Format):
+There are ten palette groups, each corresponding to a different [material](MDL-MDX-File-Format#trimesh-header) type on character [models](MDL-MDX-File-Format):
 
 | Group index | Name      | Description                                    | Palette file Example |
 | ----------- | --------- | ---------------------------------------------- | -------------------- |
@@ -98,7 +98,7 @@ The PLT file header is 24 bytes:
 
 ### Pixel data
 
-Following the header, pixel data is stored as an array of 2-[byte](GFF-File-Format#gff-data-types) structures. There [ARE](GFF-File-Format#are-area) `width × height` pixel entries.
+Following the header, pixel data is stored as an array of 2-[byte](GFF-File-Format#gff-data-types) structures. There are `width × height` pixel entries.
 
 Each pixel entry is 2 bytes:
 
@@ -107,7 +107,7 @@ Each pixel entry is 2 bytes:
 | color index       | [uint8](GFF-File-Format#gff-data-types)  | 0 (0x0000) | 1    | color index (0-255) within the selected palette |
 | Palette Group index | [uint8](GFF-File-Format#gff-data-types) | 1 (0x0001) | 1    | Palette group index (0-9)                      |
 
-**Pixel data Layout**: Pixels [ARE](GFF-File-Format#are-area) stored row by row, left to right, top to bottom. The total pixel data size is `width × height × 2` bytes.
+**Pixel data Layout**: Pixels are stored row by row, left to right, top to bottom. The total pixel data size is `width × height × 2` bytes.
 
 **Reference**: [`vendor/xoreos-docs/specs/torlack/plt.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/plt.html) - Pixel data structure
 
@@ -117,9 +117,9 @@ Each pixel entry is 2 bytes:
 
 **KotOR vs Neverwinter Nights**:
 
-- **Neverwinter Nights**: PLT files [ARE](GFF-File-Format#are-area) actively used for character customization. The xoreos engine includes a complete PLT implementation (`vendor/xoreos/src/graphics/aurora/pltfile.cpp`) that is used in NWN's creature system (`vendor/xoreos/src/engines/nwn/creature.cpp`).
+- **Neverwinter Nights**: PLT files are actively used for character customization. The xoreos engine includes a complete PLT implementation (`vendor/xoreos/src/graphics/aurora/pltfile.cpp`) that is used in NWN's creature system (`vendor/xoreos/src/engines/nwn/creature.cpp`).
 
-- **KotOR**: While the PLT resource type (0x0006) is defined in KotOR's resource type system, **PLT files [ARE](GFF-File-Format#are-area) not actually used in KotOR games**. KotOR uses standard [TPC](TPC-File-Format) [textures](TPC-File-Format) for all [textures](TPC-File-Format), including character [models](MDL-MDX-File-Format). No KotOR-specific implementations load or parse PLT files.
+- **KotOR**: While the PLT resource type (0x0006) is defined in KotOR's resource type system, **PLT files are not actually used in KotOR games**. KotOR uses standard [TPC](TPC-File-Format) [textures](TPC-File-Format) for all [textures](TPC-File-Format), including character [models](MDL-MDX-File-Format). No KotOR-specific implementations load or parse PLT files.
 
 **Why Document PLT for KotOR?**: The format is documented here because:
 

@@ -1,11 +1,11 @@
 # Using HoloPatcher: Installation and Reversion
 
-_This page explains how to install mods with HoloPatcher. If you [ARE](GFF-File-Format#are-area) a mod developer, you may be looking for [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.)_
+_This page explains how to install mods with HoloPatcher. If you are a mod developer, you may be looking for [HoloPatcher README for Mod Developers](HoloPatcher-README-for-mod-developers.)_
 
 HoloPatcher aims to offer a user experience identical to TSLPatcher. Follow these steps for a smooth mod installation:
 
 **Select Mod Folder:** Direct HoloPatcher to the mod folder containing the 'tslpatchdata' folder.
-**Select Game Directory:** Point HoloPatcher to your KotOR game directory. These paths [ARE](GFF-File-Format#are-area) often pre-populated in dropdown menus for convenience.
+**Select Game Directory:** Point HoloPatcher to your KotOR game directory. These paths are often pre-populated in dropdown menus for convenience.
 **Choose Installation Option:** If the mod provides multiple installation options (indicated by a namespaces.ini file), select your preferred option from the first dropdown menu.
 After configuring, click 'install' to initiate the patching process.
 
@@ -26,7 +26,7 @@ The second execution then removes the remaining modifications, fully reverting y
 
 ## Installing Mods on iOS Devices
 
-For iOS installations, it's critical to ensure that all KotOR file names [ARE](GFF-File-Format#are-area) in lowercase. If file names retain uppercase characters, the game will crash immediately after tapping the 'play' button on the main menu.
+For iOS installations, it's critical to ensure that all KotOR file names are in lowercase. If file names retain uppercase characters, the game will crash immediately after tapping the 'play' button on the main menu.
 
 To prevent this issue, HoloPatcher includes a specific utility designed to address iOS's case sensitivity:
 

@@ -5,7 +5,7 @@ The standalone KotorDiff tool now ships inside PyKotor CLI and follows the same 
 ## Behavior
 
 - Supplying any diff paths keeps execution headless; omitting paths or passing `--gui` launches the Tkinter UI (`Libraries/PyKotor/src/pykotor/diff_tool/__main__.py` L20-L120).
-- CLI arguments [ARE](GFF-File-Format#are-area) shared between the dedicated scripts (`kotordiff`, `kotor-diff`, `diff-installation`) and the `pykotorcli diff-installation` subcommand (`Libraries/PyKotor/src/pykotor/diff_tool/cli.py` L26-L147).
+- CLI arguments are shared between the dedicated scripts (`kotordiff`, `kotor-diff`, `diff-installation`) and the `pykotorcli diff-installation` subcommand (`Libraries/PyKotor/src/pykotor/diff_tool/cli.py` L26-L147).
 - Headless execution builds a `KotorDiffConfig` and routes to the n-way differ (`Libraries/PyKotor/src/pykotor/diff_tool/cli.py` L168-L238).
 
 ## CLI Usage
@@ -33,6 +33,6 @@ pykotorcli diff-installation --gui
 
 ## Implementation Notes
 
-- Diff orchestration, filtering, and incremental TSLPatcher generation live in `Libraries/PyKotor/src/pykotor/diff_tool/app.py` L40-L530. Incremental writer creation and [StrRef](TLK-File-Format#string-references-strref) analysis [ARE](GFF-File-Format#are-area) handled in `handle_diff` and `generate_tslpatcher_data` (L295-L529).
-- CLI argument wiring and headless execution [ARE](GFF-File-Format#are-area) defined in `Libraries/PyKotor/src/pykotor/diff_tool/cli.py` L26-L238.
-- [GUI](GFF-File-Format#gui-graphical-user-interface) fallback is implemented in `Libraries/PyKotor/src/pykotor/diff_tool/gui.py` (headless when arguments [ARE](GFF-File-Format#are-area) present, UI when omitted).
+- Diff orchestration, filtering, and incremental TSLPatcher generation live in `Libraries/PyKotor/src/pykotor/diff_tool/app.py` L40-L530. Incremental writer creation and [StrRef](TLK-File-Format#string-references-strref) analysis are handled in `handle_diff` and `generate_tslpatcher_data` (L295-L529).
+- CLI argument wiring and headless execution are defined in `Libraries/PyKotor/src/pykotor/diff_tool/cli.py` L26-L238.
+- [GUI](GFF-File-Format#gui-graphical-user-interface) fallback is implemented in `Libraries/PyKotor/src/pykotor/diff_tool/gui.py` (headless when arguments are present, UI when omitted).

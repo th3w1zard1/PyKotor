@@ -1,6 +1,6 @@
 # KotOR TXI file format Documentation
 
-TXI ([texture](TPC-File-Format) Info) files [ARE](GFF-File-Format#are-area) compact ASCII descriptors that attach metadata to [TPC](TPC-File-Format) [textures](TPC-File-Format). They control mipmap usage, filtering, [flipbook animation](#animation-and-flipbooks), environment mapping, font atlases, and platform-specific downsampling. Every TXI file is parsed at runtime to configure how a [TPC](TPC-File-Format) image is rendered.
+TXI ([texture](TPC-File-Format) Info) files are compact ASCII descriptors that attach metadata to [TPC](TPC-File-Format) [textures](TPC-File-Format). They control mipmap usage, filtering, [flipbook animation](#animation-and-flipbooks), environment mapping, font atlases, and platform-specific downsampling. Every TXI file is parsed at runtime to configure how a [TPC](TPC-File-Format) image is rendered.
 
 ## Table of Contents
 
@@ -24,8 +24,8 @@ TXI ([texture](TPC-File-Format) Info) files [ARE](GFF-File-Format#are-area) comp
 
 ## format Overview
 
-- TXI files [ARE](GFF-File-Format#are-area) plain-text [KEY](KEY-File-Format)/value lists; each command modifies a field in the [TPC](TPC-File-Format) runtime metadata.  
-- Commands [ARE](GFF-File-Format#are-area) case-insensitive but conventionally lowercase. values can be integers, floats, booleans (`0`/`1`), [ResRefs](GFF-File-Format#gff-data-types), or multi-line coordinate tables.  
+- TXI files are plain-text [KEY](KEY-File-Format)/value lists; each command modifies a field in the [TPC](TPC-File-Format) runtime metadata.  
+- Commands are case-insensitive but conventionally lowercase. values can be integers, floats, booleans (`0`/`1`), [ResRefs](GFF-File-Format#gff-data-types), or multi-line coordinate tables.  
 - A single TXI can be appended to the end of a `.tpc` file (as Bioware does) or shipped as a sibling `.txi` file; the parser treats both identically.  
 
 **Implementation:** [`Libraries/PyKotor/src/pykotor/resource/formats/txi/`](https://github.com/OldRepublicDevs/PyKotor/tree/master/Libraries/PyKotor/src/pykotor/resource/formats/txi)
@@ -56,7 +56,7 @@ TXI ([texture](TPC-File-Format) Info) files [ARE](GFF-File-Format#are-area) comp
 - Whitespace between command and value is ignored beyond the first separator.  
 - Boolean toggles use `0` or `1`.  
 - Multiple values (e.g., `channelscale 1.0 0.5 0.5`) are space-separated.  
-- Comments [ARE](GFF-File-Format#are-area) not supported; unknown commands [ARE](GFF-File-Format#are-area) skipped.  
+- Comments are not supported; unknown commands are skipped.  
 
 ### coordinate Blocks
 
@@ -120,7 +120,7 @@ KotOR’s bitmap fonts use TXI commands to describe glyph boxes:
 | Command | Description |
 | ------- | ----------- |
 | `baselineheight`, `fontheight`, `fontwidth`, `caretindent`, `spacingB`, `spacingR` | Control glyph metrics for UI fonts. |
-| `rows`, `cols`, `numchars`, `numcharspersheet` | Describe how many glyphs [ARE](GFF-File-Format#are-area) stored per sheet. |
+| `rows`, `cols`, `numchars`, `numcharspersheet` | Describe how many glyphs are stored per sheet. |
 | `upperleftcoords`, `lowerrightcoords` | arrays of UV coordinates for each glyph corner. |
 | `codepage`, `isdoublebyte`, `dbmapping` | Support multi-[byte](GFF-File-Format#gff-data-types) font atlases (Asian locales). |
 
@@ -141,11 +141,11 @@ KotOR.js exposes identical structures in [`src/resource/TXI.ts`](https://github.
 
 - A TXI modifies the rendering pipeline for its paired [TPC](TPC-File-Format): mipmap [flags](GFF-File-Format#gff-data-types) alter sampler state, [animation](MDL-MDX-File-Format#animation-header) directives convert a single [texture](TPC-File-Format) into multiple layers, and [material](MDL-MDX-File-Format#trimesh-header) directives attach bump/shine maps.  
 - When embedded inside a `.tpc` file, the TXI text starts immediately after the binary payload; PyKotor reads it by seeking past the [texture](TPC-File-Format) data and consuming the remaining bytes as ASCII (`io_tpc.py:158-188`).  
-- Exported `.txi` files [ARE](GFF-File-Format#are-area) plain UTF-8 text and can be edited with any text editor; tools like `tga2tpc` and KotORBlender reserialize them alongside [TPC](TPC-File-Format) assets.
+- Exported `.txi` files are plain UTF-8 text and can be edited with any text editor; tools like `tga2tpc` and KotORBlender reserialize them alongside [TPC](TPC-File-Format) assets.
 
 ### Empty TXI files
 
-Many TXI files in the game installation [ARE](GFF-File-Format#are-area) **empty** (0 bytes). These empty TXI files serve as placeholders and indicate that the [texture](TPC-File-Format) should use default rendering settings. When a TXI file is empty or missing, the engine falls back to default [texture](TPC-File-Format) parameters.
+Many TXI files in the game installation are **empty** (0 bytes). These empty TXI files serve as placeholders and indicate that the [texture](TPC-File-Format) should use default rendering settings. When a TXI file is empty or missing, the engine falls back to default [texture](TPC-File-Format) parameters.
 
 **Examples of [textures](TPC-File-Format) with empty TXI files:**
 
