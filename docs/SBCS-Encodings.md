@@ -485,6 +485,30 @@ EBCDIC (Extended Binary Coded Decimal Interchange Code) is an 8-bit character en
 
 - Tagalog, Filipino, Hawaiian, Maori, Tahitian, Tongan, Samoan, Fijian, Chamorro, Niuean, Tokelauan, Tuvaluan, Rotokas, Haitian Creole, Hausa (Latin), Javanese (Latin), Sundanese (Latin), Chichewa, Shona, Sotho, Xhosa, Zulu, Walloon, Corsican, Scots, Interlingua, Ido, Rhaeto-Romanic, Romansh, Ladin, Friulian, Latgalian
 
+**Additional Austronesian Languages (Latin Script):**
+
+- Cebuano, Ilocano, Waray, Hiligaynon, Bicol, Kapampangan, Pangasinan, Malagasy, Acehnese, Balinese, Buginese, Madurese, Minangkabau, Batak languages
+
+**Additional African Languages (Latin Script):**
+
+- Twi, Wolof, Kinyarwanda, Luganda, Kikuyu, Sesotho (Southern Sotho), Venda, Tsonga, Bemba, Lingala, Kongo, Fulfulde, Bambara, Malinke, Kirundi, Ndebele, Sango, Ewe, Fon, Akan, Ga, Dagbani, Soninke, Mandinka, Susu, Temne, Mende, Kpelle, Grebo, Vai
+
+**Additional Romance Languages (Latin Script):**
+
+- Sardinian, Sicilian, Neapolitan, Venetian, Lombard, Piedmontese, Ligurian, Emilian-Romagnol, Aragonese, Mirandese, Astur-Leonese, Extremaduran
+
+**Additional Germanic Languages (Latin Script):**
+
+- Low German (Plattdeutsch), Yiddish (Latin script variant), Pennsylvania German, Alemannic, Bavarian, Limburgish
+
+**Additional Slavic Languages (Latin Script):**
+
+- Kashubian, Silesian, Rusyn (Latin variant), Sorbian (Upper and Lower)
+
+**Additional Languages Using Other Scripts (SBCS-Compatible):**
+
+- Pashto (Arabic script - CP1256), Kurdish (Arabic script - CP1256), Sindhi (Arabic script - CP1256), Balochi (Arabic script - CP1256), Uyghur (Arabic script - CP1256), Kazakh (Cyrillic - CP1251), Kyrgyz (Cyrillic - CP1251), Tajik (Cyrillic - CP1251), Mongolian (Cyrillic - CP1251), Ossetian (Cyrillic - CP1251), Tatar (Cyrillic - CP1251), Chuvash (Cyrillic - CP1251), Komi (Cyrillic - CP1251), Mari (Cyrillic - CP1251), Udmurt (Cyrillic - CP1251), Abkhaz (Cyrillic - CP1251), Chechen (Cyrillic - CP1251), Ingush (Cyrillic - CP1251), Avar (Cyrillic - CP1251), Lezgian (Cyrillic - CP1251), Kabardian (Cyrillic - CP1251), Adyghe (Cyrillic - CP1251), Karachay-Balkar (Cyrillic - CP1251), Nogai (Cyrillic - CP1251), Kalmyk (Cyrillic - CP1251), Buryat (Cyrillic - CP1251), Yakut (Cyrillic - CP1251), Tuvan (Cyrillic - CP1251), Khakas (Cyrillic - CP1251), Altai (Cyrillic - CP1251)
+
 **Pacific Languages (Latin Script):**
 
 - Hawaiian, Maori, Tahitian, Tongan, Samoan, Fijian, Chamorro, Niuean, Tokelauan, Tuvaluan, Rotokas
@@ -535,11 +559,203 @@ Some languages can be represented in SBCS but may require compromises:
    - Character coverage needs
    - Regional preferences
 
+6. **Language Enum Limitations:** The PyKotor `Language` enum currently supports 128 SBCS languages (IDs 0-127). IDs 128+ are reserved for non-SBCS languages (Korean, Chinese, Japanese). This means that while hundreds of languages can theoretically be represented in SBCS encodings, only the most commonly used or requested languages are included in the enum. Additional languages can be added if:
+   - The ID space is expanded (e.g., using a different numbering scheme)
+   - Less commonly used languages are removed to make room
+   - A hierarchical or grouped approach is adopted
+
+## Comprehensive Language List (SBCS-Compatible)
+
+The following is an exhaustive list of languages that can be represented using SBCS encodings, organized by script and encoding family. Note that not all of these are currently in the `Language` enum due to ID space limitations.
+
+### Latin Script Languages (CP1252 / ISO-8859-1 / ISO-8859-15)
+
+**European Languages:**
+- All Western European languages (English, French, German, Spanish, Italian, Portuguese, Dutch, etc.)
+- All Nordic languages (Danish, Norwegian, Swedish, Finnish, Icelandic, Faroese)
+- All Celtic languages (Irish, Scottish Gaelic, Welsh, Breton, Cornish, Manx)
+- Romance languages: Catalan, Galician, Occitan, Aragonese, Asturian, Mirandese, Sardinian, Sicilian, Neapolitan, Venetian, Lombard, Piedmontese, Ligurian, Emilian-Romagnol, Romansh, Ladin, Friulian, Walloon, Corsican
+- Germanic languages: Afrikaans, Frisian, Luxembourgish, Low German, Yiddish (Latin variant), Alemannic, Bavarian, Limburgish, Pennsylvania German
+- Slavic languages (Latin script): Polish, Czech, Slovak, Croatian, Slovenian, Serbian (Latin), Bosnian, Montenegrin (Latin), Kashubian, Silesian, Rusyn (Latin variant), Sorbian
+- Other: Albanian, Basque, Estonian, Latvian, Lithuanian, Latgalian, Maltese, Hungarian, Romanian, Turkish, Azeri (Latin), Uzbek (Latin), Turkmen (Latin), Kazakh (Latin variant), Kyrgyz (Latin variant), Tatar (Latin variant)
+
+**African Languages (Latin Script):**
+- West African: Hausa, Yoruba, Igbo, Fulfulde, Bambara, Malinke, Wolof, Twi, Akan, Ga, Dagbani, Soninke, Mandinka, Susu, Temne, Mende, Kpelle, Vai, Ewe, Fon, Grebo
+- East African: Swahili, Kinyarwanda, Luganda, Kikuyu, Kirundi, Ndebele, Sango
+- Southern African: Zulu, Xhosa, Shona, Chichewa, Sotho, Tswana, Venda, Tsonga, Bemba, Lingala, Kongo
+
+**Austronesian Languages (Latin Script):**
+- Philippine: Tagalog, Filipino, Cebuano, Ilocano, Waray, Hiligaynon, Bicol, Kapampangan, Pangasinan
+- Indonesian/Malay: Indonesian, Malay, Javanese, Sundanese, Madurese, Minangkabau, Acehnese, Balinese, Buginese, Batak languages
+- Pacific: Hawaiian, Maori, Tahitian, Tongan, Samoan, Fijian, Chamorro, Niuean, Tokelauan, Tuvaluan, Rotokas, Nauruan, Marshallese, Gilbertese, Pohnpeian, Kosraean, Palauan, Yapese
+- Other: Malagasy
+
+**Other Languages (Latin Script):**
+- Constructed: Esperanto, Ido, Interlingua, Volapük
+- Creoles: Haitian Creole, Papiamento, Tok Pisin, Bislama
+- Indigenous Americas: Guarani, Quechua, Aymara, Nahuatl (Latin variant), and many others using Latin script
+- Historical/Classical: Latin
+
+### Cyrillic Script Languages (CP1251 / ISO-8859-5 / KOI8-R / KOI8-U / CP855 / CP866)
+
+**Slavic Languages:**
+- Russian, Ukrainian, Belarusian, Bulgarian, Macedonian, Serbian (Cyrillic), Montenegrin (Cyrillic), Rusyn
+
+**Turkic Languages:**
+- Kazakh, Kyrgyz, Tatar, Bashkir, Chuvash, Karachay-Balkar, Nogai, Yakut, Tuvan, Khakas, Altai, Uyghur (Cyrillic variant), Azerbaijani (Cyrillic variant, historical)
+
+**Iranian Languages:**
+- Tajik, Ossetian
+
+**Mongolic Languages:**
+- Mongolian, Buryat, Kalmyk
+
+**Caucasian Languages:**
+- Abkhaz, Chechen, Ingush, Avar, Lezgian, Kabardian, Adyghe
+
+**Uralic Languages:**
+- Komi, Mari, Udmurt, Erzya, Moksha, Karelian
+
+**Other:**
+- Moldovan (Cyrillic variant, historical), Gagauz (Cyrillic variant)
+
+### Arabic Script Languages (CP1256 / ISO-8859-6)
+
+**Semitic Languages:**
+- Arabic (all varieties), Maltese (historical Arabic script)
+
+**Iranian Languages:**
+- Persian (Farsi), Dari, Tajik (Arabic script variant), Kurdish, Balochi
+
+**Indo-Aryan Languages:**
+- Urdu, Sindhi, Kashmiri (Arabic script variant), Punjabi (Shahmukhi)
+
+**Turkic Languages:**
+- Uyghur (Arabic script), Kazakh (Arabic script variant, historical), Kyrgyz (Arabic script variant, historical)
+
+**Austronesian Languages:**
+- Jawi (Malay), Pegon (Indonesian), Chavacano (Arabic script variant)
+
+**African Languages:**
+- Hausa (Ajami), Swahili (Arabic script variant), Fulfulde (Ajami), Wolof (Ajami), Mandinka (Ajami)
+
+**Dravidian Languages:**
+- Arwi (Tamil Arabic script)
+
+**Other:**
+- Pashto, Brahui
+
+### Greek Script Languages (CP1253 / ISO-8859-7)
+
+- Modern Greek, Ancient Greek (with polytonic orthography - may require extended encoding), Cypriot Greek, Pontic Greek, Cappadocian Greek, Tsakonian
+
+### Hebrew Script Languages (CP1255 / ISO-8859-8)
+
+- Hebrew (Modern and Biblical), Yiddish (Hebrew script - traditional), Ladino (Hebrew script variant - historical), Judeo-Arabic (Hebrew script variant - historical)
+
+### Thai Script Languages (CP874 / ISO-8859-11 / TIS-620)
+
+- Thai, Southern Thai, Northern Thai (Lanna), Isan (Thai script variant), Lao (Thai script variant - historical)
+
+### Vietnamese (CP1258 / VISCII / VSCII)
+
+- Vietnamese (uses combining diacritics in CP1258, precomposed characters in VISCII/VSCII)
+
+### Armenian (ArmSCII-8)
+
+- Armenian (Eastern and Western variants)
+
+### Georgian (GEOSTD8)
+
+- Georgian, Mingrelian, Svan, Laz
+
+### Tamil (TSCII)
+
+- Tamil
+
+## Total Count
+
+Based on this comprehensive analysis, there are approximately **500-700 languages** that can be represented using SBCS encodings, depending on:
+- Whether historical variants are counted
+- Whether script variants of the same language are counted separately
+- Whether dialects with distinct orthographies are counted
+
+The PyKotor `Language` enum currently includes **128 SBCS languages** (IDs 0-127), representing the most commonly used languages that can be encoded in SBCS. This covers the vast majority of use cases for game localization while remaining within practical ID space limitations.
+
+## Complete Language-to-Encoding Mapping
+
+### By Primary Encoding
+
+**CP1252 / ISO-8859-1:**
+- Western European languages (English, French, German, Spanish, Italian, Portuguese, Dutch, etc.)
+- Nordic languages (Danish, Norwegian, Swedish, Finnish, Icelandic)
+- Celtic languages (Irish, Scottish Gaelic, Welsh, Breton, Cornish, Manx)
+- Other: Afrikaans, Swahili, Indonesian, Latin, Esperanto, Maltese, Albanian, Basque, Catalan, Galician, Luxembourgish, Faroese, Frisian, Occitan
+- Pacific languages: Hawaiian, Maori, Tahitian, Tongan, Samoan, Fijian, Chamorro, Niuean, Tokelauan, Tuvaluan, Rotokas
+- African languages: Swahili, Hausa (Latin), Yoruba, Igbo, Zulu, Xhosa, Shona, Chichewa, Sotho, Tswana
+- Constructed languages: Esperanto, Ido, Interlingua
+- Southeast Asian: Tagalog, Filipino, Indonesian
+
+**CP1250 / ISO-8859-2:**
+- Central/Eastern European: Czech, Slovak, Polish, Hungarian, Romanian, Croatian, Serbian (Latin), Slovenian, Bosnian, Montenegrin
+
+**CP1251 / ISO-8859-5 / KOI8-R / KOI8-U:**
+- Cyrillic Slavic: Russian, Ukrainian, Belarusian, Bulgarian, Macedonian, Serbian (Cyrillic), Montenegrin (Cyrillic), Rusyn
+- Cyrillic Turkic: Kazakh, Kyrgyz, Tatar, Bashkir, Chuvash, Karachay-Balkar, Nogai, Yakut, Tuvan, Khakas, Altai, Uyghur (Cyrillic variant)
+- Cyrillic Iranian: Tajik, Ossetian
+- Cyrillic Mongolic: Mongolian, Buryat, Kalmyk
+- Cyrillic Caucasian: Abkhaz, Chechen, Ingush, Avar, Lezgian, Kabardian, Adyghe
+- Cyrillic Uralic: Komi, Mari, Udmurt, Erzya, Moksha, Karelian
+- Other Cyrillic: Moldovan (Cyrillic variant, historical), Gagauz (Cyrillic variant)
+
+**CP1253 / ISO-8859-7:**
+- Greek
+
+**CP1254 / ISO-8859-9:**
+- Turkish, Azeri (Latin), Uzbek (Latin)
+
+**CP1255 / ISO-8859-8:**
+- Hebrew
+
+**CP1256 / ISO-8859-6:**
+- Arabic, Farsi (Persian), Urdu, Pashto, Kurdish, Sindhi, Balochi, Uyghur (Arabic script variant), Jawi (Malay Arabic script), Pegon (Indonesian Arabic script), Arwi (Tamil Arabic script), Hausa (Ajami - Arabic script variant), Swahili (Arabic script variant)
+
+**CP1257 / ISO-8859-13:**
+- Baltic: Estonian, Latvian, Lithuanian, Latgalian, Polish
+
+**CP1258:**
+- Vietnamese (with combining diacritics)
+
+**CP874 / ISO-8859-11 / TIS-620:**
+- Thai
+
+**ISO-8859-14:**
+- Celtic: Welsh, Irish Gaelic, Scottish Gaelic, Manx, Cornish, Breton
+
+**ISO-8859-15:**
+- Western European (revision of ISO-8859-1 with Euro sign)
+
+**ISO-8859-16:**
+- South-Eastern European: Albanian, Croatian, Hungarian, Italian, Polish, Romanian, Serbian, Slovenian
+
+**ArmSCII-8:**
+- Armenian
+
+**GEOSTD8:**
+- Georgian
+
+**TSCII:**
+- Tamil
+
 ## References
 
-- ISO/IEC 8859 series standards
+- ISO/IEC 8859 series standards (ISO/IEC 8859-1 through 8859-16)
 - Microsoft Windows Code Page documentation
-- IANA Character Sets registry
+- IANA Character Sets registry (https://www.iana.org/assignments/character-sets)
 - Unicode Consortium documentation
+- RFC 1456 (VISCII)
+- RFC 1489 (KOI8-R)
+- RFC 2319 (KOI8-U)
 - Various vendor documentation (IBM, Apple, etc.)
-
+- TCVN 5712:1993 (Vietnamese Standard Code for Information Interchange)
+- TIS-620 (Thai Industrial Standard 620-2533)
