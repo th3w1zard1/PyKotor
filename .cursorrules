@@ -58,7 +58,7 @@ Always:
 
 - Use `--no-pager` on ALL git commands that may page
 - PowerShell is default (Windows target)
-- Always use `uv run` instead of `python -m`. e.g. `uv --directory="Tools/KotorCLI/src" run --module kotorcli --help`
+- Always use `uv run` instead of `python -m`. e.g. `uv --directory="Libraries/PyKotor/src" run --module pykotor.cli --help` or use `pykotorcli --help`
 - NEVER run tests without timeout: 120s individual, 300s suite
 
 ### Git safety for AI agents (local work preservation)
@@ -106,16 +106,16 @@ YOU MUST:
 - Use `ruff` only for linting
 - NEVER edit generated files → fix source and regenerate
 
-## 7. KotorCLI Priority
+## 7. PyKotor CLI Priority
 
 ALWAYS prefer CLI over raw Python:
 
-- `uv --directory="Tools/KotorCLI/src" run --module kotorcli ...`
-- `python -m Tools.KotorCLI.src.kotorcli gff2xml "path/to/some/gff.fac" --output "gff_fac_example.xml"`
+- `pykotorcli ...` or `python -m pykotor.cli ...`
+- `uv --directory="Libraries/PyKotor/src" run --module pykotor.cli ...`
 - Use `list`, `extract`, `search-archive --content`, `diff`, `validate`, etc.
 
 ```bash
-usage: kotorcli [--version] [-h] [--yes] [--no] [--default] [--verbose] [--debug] [--quiet] [--no-color]
+usage: pykotorcli [--version] [-h] [--yes] [--no] [--default] [--verbose] [--debug] [--quiet] [--no-color]
                 {config,init,list,unpack,convert,compile,pack,install,launch,serve,play,test,extract,list-archive,ls-archive,create-archive,pack-archive,gff2xml,xml2gff,gff2json,json2gff,tlk2xml,xml2tlk,tlk2json,ssf2xml,xml2ssf,2da2csv,csv22da,decompile,disassemble,assemble,texture-convert,sound-convert,model-convert,diff-installation,diff-paths,kotordiff,diff-kotor,diff,grep,stats,validate,merge,search-archive,grep-archive,cat,key-pack,create-key,check-txi,check-2da,validate-installation,investigate-module,check-missing-resources,module-resources,kit-generate,kit,gui-convert,gui,indoor-build,indoormap-build,indoor-extract,indoormap-extract,batch-patch,patch-file,patch-folder,patch-installation} ...
 
 A build tool for KOTOR projects (cli-compatible syntax)
@@ -124,8 +124,8 @@ positional arguments:
   {config,init,list,unpack,convert,compile,pack,install,launch,serve,play,test,extract,list-archive,ls-archive,create-archive,pack-archive,gff2xml,xml2gff,gff2json,json2gff,tlk2xml,xml2tlk,tlk2json,ssf2xml,xml2ssf,2da2csv,csv22da,decompile,disassemble,assemble,texture-convert,sound-convert,model-convert,diff-installation,diff-paths,kotordiff,diff-kotor,diff,grep,stats,validate,merge,search-archive,grep-archive,cat,key-pack,create-key,check-txi,check-2da,validate-installation,investigate-module,check-missing-resources,module-resources,kit-generate,kit,gui-convert,gui,indoor-build,indoormap-build,indoor-extract,indoormap-extract,batch-patch,patch-file,patch-folder,patch-installation}
                         Command to execute
     config              Get, set, or unset user-defined configuration options
-    init                Create a new kotorcli package
-    list                List all targets defined in kotorcli.cfg
+    init                Create a new package
+    list                List all targets defined in configuration
     unpack              Unpack a file into the project source tree
     convert             Convert all JSON sources to their GFF counterparts
     compile             Compile all nss sources for target

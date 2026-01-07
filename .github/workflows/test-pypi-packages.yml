@@ -147,7 +147,6 @@ jobs:
           - pykotor
           - holopatcher
           - kotor-diff
-          - kotorcli
     steps:
       - uses: actions/checkout@v4
 
@@ -182,16 +181,13 @@ jobs:
         run: |
           case "${{ matrix.tool }}" in
             pykotor)
-              pykotor --help || python -m pykotor --help || pykotorcli --help || echo "Help flag test"
+              pykotor --help || python -m pykotor --help || pykotorcli --help || python -m pykotorcli --help || echo "Help flag test"
               ;;
             holopatcher)
               python -m holopatcher --help || echo "Help flag test"
               ;;
             kotor-diff)
               python -m kotordiff --help || echo "Help flag test"
-              ;;
-            kotorcli)
-              kotorcli --help || python -m kotorcli --help || echo "Help flag test"
               ;;
           esac
           echo "✓ CLI entry point works"

@@ -1,5 +1,0 @@
-# KotorCLI is now a compatibility shim that depends on pykotor
-# All CLI functionality has been moved to pykotor
-# This file is kept for backwards compatibility but is no longer used
-
-pykotor>=2.1.0

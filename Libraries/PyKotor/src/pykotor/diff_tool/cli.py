@@ -16,7 +16,9 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from argparse import Namespace
 
-CURRENT_VERSION = "1.0.0"
+from pykotor.cli.version import VERSION
+
+CURRENT_VERSION = VERSION
 
 
 def add_kotordiff_arguments(parser: ArgumentParser) -> None:

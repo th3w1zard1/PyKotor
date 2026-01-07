@@ -35,6 +35,7 @@ if not getattr(sys, "frozen", False):
         update_sys_path(pathlib.Path(__file__).parents[1])
 
 
+from pykotor.cli.version import VERSION as pykotor_version  # noqa: E402
 from pykotor.diff_tool.app import KotorDiffConfig, run_application  # noqa: E402
 from pykotor.extract.installation import Installation  # noqa: E402
 from pykotor.tools.path import find_kotor_paths_from_default  # noqa: E402
@@ -45,7 +46,7 @@ if TYPE_CHECKING:
 
     from pykotor.tslpatcher.logger import PatchLog
 
-CURRENT_VERSION = "1.0.0"
+CURRENT_VERSION = pykotor_version
 
 
 class KotorDiffApp(ThemedApp):
