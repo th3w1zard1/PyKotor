@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from enum import IntEnum
-from typing import TYPE_CHECKING, Any, Generator, overload
+from typing import TYPE_CHECKING, Any, Generator, cast, overload
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -26,7 +26,6 @@ class Language(IntEnum):
     """
 
     # UNSET = 0x7FFFFFFF  # noqa: ERA001
-    UNKNOWN = 0x7FFFFFFE
 
     # The following languages have official releases
     # cp-1252
@@ -124,7 +123,6 @@ class Language(IntEnum):
     # cp-1258
     VIETNAMESE = 88
     # cp-874
-    THAI = 89
     # The following languages aren't fully encodeable to 8-bit without loss of information:
     # cp-1252
     AYMARA = 90
@@ -155,12 +153,10 @@ class Language(IntEnum):
 
     def is_8bit_encoding(self) -> bool:
         return self not in {
-            Language.UNKNOWN,
             Language.KOREAN,
             Language.JAPANESE,
             Language.CHINESE_SIMPLIFIED,
             Language.CHINESE_TRADITIONAL,
-            Language.THAI,
         }
 
     def get_encoding(self) -> str | None:
@@ -283,8 +279,6 @@ class Language(IntEnum):
             return "cp1257"
         if self == Language.VIETNAMESE:
             return "cp1258"
-        if self == Language.THAI:
-            return "cp874"
         if self in {
             Language.MALAY_LATIN,
             Language.SAMOAN,
@@ -311,8 +305,6 @@ class Language(IntEnum):
             return "cp936"
         if self == Language.JAPANESE:
             return "cp932"
-        if self == Language.UNKNOWN:
-            return None
         msg = f"No encoding defined for language: {self.name}"
         raise ValueError(msg)
 
@@ -400,7 +392,6 @@ class Language(IntEnum):
             Language.LATVIAN: "lv",
             Language.LITHUANIAN: "lt",
             Language.VIETNAMESE: "vi",
-            Language.THAI: "th",
             Language.AYMARA: "ay",
             Language.KINYARWANDA: "rw",
             Language.KURDISH_LATIN: "ku",  # ku-Latn
@@ -448,7 +439,11 @@ class LocalizedString:
         stringref: An index into the 'dialog.tlk' file. If this value is -1 the game will use the stored substrings.
     """
 
-    def __init__(self, stringref: int, substrings: dict[int, str] | None = None):
+    def __init__(
+        self,
+        stringref: int,
+        substrings: dict[int, str] | None = None,
+    ):
         self.stringref: int = stringref
         self._substrings_internal: IntKeyDict = IntKeyDict() if substrings is None else IntKeyDict(substrings)
 
@@ -488,7 +483,6 @@ class LocalizedString:
         """
         if self.stringref >= 0:
             return str(self.stringref)
-        # TODO: There's no reason we should default to english here, perhaps remove the __str__ overload and ensure relevant references call .get() with language information.
         if self.exists(Language.ENGLISH, Gender.MALE):
             return str(self.get(Language.ENGLISH, Gender.MALE))
         # language either unset or not english.
@@ -505,16 +499,16 @@ class LocalizedString:
             return False
         return other._substrings == self._substrings
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "stringref": self.stringref,
             "substrings": self._substrings
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> Self:
-        localized_string = cls(data["stringref"])
-        localized_string._substrings = data.get("substrings", {})
+    def from_dict(cls, data: dict[str, Any]) -> Self:
+        localized_string = cls(stringref=data.get("stringref", -1))
+        localized_string._substrings = cast("dict[int, str]", data.get("substrings", {}))
         return localized_string
 
     @classmethod
@@ -540,11 +534,9 @@ class LocalizedString:
     @overload
     @staticmethod
     def substring_id(language: Language, gender: Gender) -> int: ...
-
     @overload
     @staticmethod
     def substring_id(language: int, gender: int) -> int: ...
-
     @staticmethod
     def substring_id(language: Language | int, gender: Gender | int) -> int:
         """Returns the ID for the language gender pair.
@@ -598,21 +590,9 @@ class LocalizedString:
         return language, gender
 
     @overload
-    def set_data(
-        self,
-        language: Language,
-        gender: Gender,
-        string: str,
-    ) -> None: ...
-
+    def set_data(self, language: Language, gender: Gender, string: str) -> None: ...
     @overload
-    def set_data(
-        self,
-        language: int,
-        gender: int,
-        string: str,
-    ) -> None: ...
-
+    def set_data(self, language: int, gender: int, string: str) -> None: ...
     def set_data(
         self,
         language: Language | int,
@@ -702,19 +682,9 @@ class LocalizedString:
         return self._substrings.get(substring_id, next(iter(self._substrings.values()), None) if use_fallback else None)
 
     @overload
-    def remove(
-        self,
-        language: Language,
-        gender: Gender,
-    ) -> None: ...
-
+    def remove(self, language: Language, gender: Gender) -> None: ...
     @overload
-    def remove(
-        self,
-        language: int,
-        gender: int,
-    ) -> None: ...
-
+    def remove(self, language: int, gender: int) -> None: ...
     def remove(
         self,
         language: Language | int,
@@ -749,19 +719,9 @@ class LocalizedString:
         self._substrings.pop(substring_id)
 
     @overload
-    def exists(
-        self,
-        language: Language,
-        gender: Gender,
-    ) -> bool: ...
-
+    def exists(self, language: Language, gender: Gender) -> bool: ...
     @overload
-    def exists(
-        self,
-        language: int,
-        gender: int,
-    ) -> bool: ...
-
+    def exists(self, language: int, gender: int) -> bool: ...
     def exists(
         self,
         language: Language | int,
