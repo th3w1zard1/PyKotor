@@ -600,6 +600,7 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Center Status": "Center Status",
         "Right Status": "Right Status",
         "00:00 / 00:00": "00:00 / 00:00",
+        "Please check the log for more details.": "Please check the log for more details.",
     },
     ToolsetLanguage.FRENCH: {
         # Main Window
@@ -1136,6 +1137,7 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Center Status": "Statut centre",
         "Right Status": "Statut droite",
         "00:00 / 00:00": "00:00 / 00:00",
+        "Please check the log for more details.": "Veuillez vérifier le journal pour plus de détails.",
     },
     ToolsetLanguage.GERMAN: {
         # Main Window
@@ -1672,6 +1674,7 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Center Status": "Mittlerer Status",
         "Right Status": "Rechter Status",
         "00:00 / 00:00": "00:00 / 00:00",
+        "Please check the log for more details.": "Bitte überprüfen Sie das Protokoll für weitere Details.",
     },
     ToolsetLanguage.ITALIAN: {
         # Main Window
@@ -2208,6 +2211,7 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Center Status": "Stato centrale",
         "Right Status": "Stato destro",
         "00:00 / 00:00": "00:00 / 00:00",
+        "Please check the log for more details.": "Controlla il log per ulteriori dettagli.",
     },
     ToolsetLanguage.SPANISH: {
         # Main Window
@@ -2744,6 +2748,7 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Center Status": "Estado central",
         "Right Status": "Estado derecho",
         "00:00 / 00:00": "00:00 / 00:00",
+        "Please check the log for more details.": "Por favor, verifica el registro para más detalles.",
     },
     ToolsetLanguage.POLISH: {
         # Main Window
@@ -3280,6 +3285,7 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Center Status": "Status środkowy",
         "Right Status": "Status prawy",
         "00:00 / 00:00": "00:00 / 00:00",
+        "Please check the log for more details.": "Sprawdź dziennik, aby uzyskać więcej szczegółów.",
     },
     ToolsetLanguage.RUSSIAN: {
         # Main Window
@@ -3817,6 +3823,7 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         "Center Status": "Центральный статус",
         "Right Status": "Правый статус",
         "00:00 / 00:00": "00:00 / 00:00",
+        "Please check the log for more details.": "Пожалуйста, проверьте журнал для получения дополнительной информации.",
     },
 }
 

@@ -1035,7 +1035,7 @@ class LYTEditorWidget(QWidget):
         self,
         message: str,
     ):
-        self.error_dialog.showMessage(f"An error occurred: {message}\n\nPlease check the log for more details.")
+        self.error_dialog.showMessage(trf("An error occurred: {error}", error=message) + "\n\n" + tr("Please check the log for more details."))
         self.error_dialog.show()
         RobustLogger().error(f"Error: {message}")
 
