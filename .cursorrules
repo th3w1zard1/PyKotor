@@ -243,6 +243,76 @@ options:
 - **NEVER use `git commit --no-verify` or any flag that bypasses pre-commit hooks**
 - Agents must fix type errors, not suppress them
 
+## 10. Core Game Implementation – Dual-Game Analysis MANDATORY
+
+**WHEN WRITING CORE GAME IMPLEMENTATION, YOU MUST USE REVA MCP FOR BOTH GAMES.**
+
+**This rule applies to ANY code that implements game engine functionality, file format parsing,**
+**or any behavior that must match the original game engines.**
+
+### Requirements
+
+1. **Always analyze BOTH games** when implementing core functionality:
+   - **KotOR I (swkotor.exe)**: Primary reference
+   - **KotOR II / TSL (swkotor2.exe)**: Secondary reference for verification and parity
+
+2. **Canonical Documentation Pattern**:
+   When documenting engine references, use this format:
+   ```
+   Reference Implementations:
+   -------------------------
+   KotOR I (swkotor.exe):
+       - 0xADDRESS - FunctionName (size, line count)
+       - 0xADDRESS - HelperFunction (size, line count)
+   
+   KotOR II / TSL (swkotor2.exe):
+       - 0xADDRESS - FunctionName (size, line count)
+       - 0xADDRESS - HelperFunction (size, line count)
+   ```
+
+3. **Inline Comments Pattern**:
+   For inline code comments referencing engine behavior:
+   ```
+   # Reference: K1 swkotor.exe:0xADDRESS (line/description), TSL swkotor2.exe:0xADDRESS (equivalent)
+   ```
+
+4. **Verification Process**:
+   - Use `mcp_reva_open-project` to open Ghidra project with both executables
+   - Use `mcp_reva_get-functions-by-similarity` to find equivalent functions in both games
+   - Use `mcp_reva_get-decompilation` to compare implementations
+   - Document differences if any exist
+   - Ensure implementation works for both games
+
+5. **When Both Games Must Match**:
+   - File format parsers/writers
+   - Game mechanics implementations
+   - Resource loading/saving
+   - Any code that processes game data files
+   - Any code that must produce identical output to the engines
+
+6. **Exceptions** (only when explicitly justified):
+   - Game-specific features (e.g., TSL-only functions)
+   - Features that only exist in one game
+   - Must be clearly documented with "K1-only" or "TSL-only" labels
+
+### Example
+
+When implementing ASCII walkmesh parsing:
+- Analyze `CSWRoomSurfaceMesh::LoadMeshText` in swkotor.exe (0x00582d70)
+- Analyze equivalent function in swkotor2.exe (0x00577860)
+- Compare both implementations
+- Document both in code comments and docstrings
+- Ensure implementation matches both
+
+### Tools Required
+
+- `mcp_reva_open-project` - Open Ghidra project
+- `mcp_reva_get-functions-by-similarity` - Find functions in both games
+- `mcp_reva_get-decompilation` - Get decompiled code
+- `mcp_reva_find-cross-references` - Find callers/callees
+- `mcp_reva_get-strings-by-similarity` - Find string literals
+- Other reva MCP tools as needed for comprehensive analysis
+
 ## Final Rule
 
 Follow these rules exactly.
