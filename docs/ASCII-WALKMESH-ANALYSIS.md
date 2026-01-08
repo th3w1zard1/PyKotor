@@ -6,11 +6,9 @@ This document describes the ASCII walkmesh format used by both KotOR I and KotOR
 
 ASCII walkmesh files (typically with `.wok` extension) contain collision geometry for game areas. The format uses a hierarchical block structure similar to ASCII model files, with a single "node aabb" block containing all walkmesh data.
 
-The format is parsed by the game engine's `LoadMeshText` function:
-- **KotOR I**: `CSWRoomSurfaceMesh::LoadMeshText` at `0x00582d70` in `swkotor.exe`
-- **KotOR II**: `FUN_00577860` at `0x00577860` in `swkotor2.exe`
-
-Both implementations are functionally identical, parsing the same format structure and applying the same logic.
+The format is parsed by the game engine's `CSWRoomSurfaceMesh::LoadMeshText` function:
+- **KotOR I**: `0x00582d70` in `swkotor.exe`
+- **KotOR II**: `0x00577860` in `swkotor2.exe`
 
 ## Format Structure
 
@@ -71,9 +69,9 @@ endnode
 
 ## Parsing Process
 
-The engine parses ASCII walkmesh files line-by-line using a helper function `LoadMeshString`:
-- **KotOR I**: `CSWCollisionMesh::LoadMeshString` at `0x005968a0`
-- **KotOR II**: `FUN_005573e0` at `0x005573e0`
+The engine parses ASCII walkmesh files line-by-line using a helper function `CSWCollisionMesh::LoadMeshString`:
+- **KotOR I**: `0x005968a0` in `swkotor.exe`
+- **KotOR II**: `0x005573e0` in `swkotor2.exe`
 
 Both implementations read up to 256 bytes per line, stopping at newline characters (0x0A) and null-terminating the result.
 
@@ -254,8 +252,6 @@ The engine determines walkability by looking up the material in the `surfacemat.
 
 ```c
 // Both K1 and TSL: lines 255-327
-// K1 uses: C2DA::GetINTEntry at 0x0041d630
-// TSL uses: FUN_0041d630 at 0x0041d630 (same function, different name)
 int walkable_count = 0;
 int unwalkable_count = 0;
 uint32_t* walkable_indices = malloc(face_count * 4);
@@ -263,11 +259,7 @@ uint32_t* unwalkable_indices = malloc(face_count * 4);
 
 for (int i = 0; i < face_count; i++) {
     int walk_value;
-    #ifdef KOTOR_1
-        C2DA::GetINTEntry(surfacemat_2da, material_ids[i], "Walk", &walk_value);
-    #else  // TSL
-        FUN_0041d630(surfacemat_2da, material_ids[i], "Walk", &walk_value);
-    #endif
+    C2DA::GetINTEntry(surfacemat_2da, material_ids[i], "Walk", &walk_value);
     
     if (walk_value == 0) {
         // Material is NOT walkable
@@ -465,9 +457,9 @@ The engine handles errors by:
 
 ### KotOR II / TSL (swkotor2.exe)
 
-- `0x00577860` - `FUN_00577860` (main ASCII parser, equivalent to LoadMeshText, 3882 bytes)
-- `0x005573e0` - `FUN_005573e0` (line reader, equivalent to LoadMeshString, 95 bytes)
-- `0x0041d630` - `FUN_0041d630` (material lookup, equivalent to C2DA::GetINTEntry)
+- `0x00577860` - `CSWRoomSurfaceMesh::LoadMeshText` (3882 bytes)
+- `0x005573e0` - `CSWCollisionMesh::LoadMeshString` (95 bytes)
+- `0x0041d630` - `C2DA::GetINTEntry`
 
 ## Notes
 

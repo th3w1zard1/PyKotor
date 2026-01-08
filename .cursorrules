@@ -258,9 +258,10 @@ options:
 
 2. **Unified Documentation Pattern**:
    - Document both games together, not in separate sections
-   - Show conditional logic (`#ifdef KOTOR_1` / `#else`) where implementations differ
+   - Use human-readable function names from K1 for both games (only addresses differ)
+   - Show conditional logic (`#ifdef KOTOR_1` / `#else`) only where implementations differ
    - Use unified code examples that work for both games
-   - Only highlight differences inline where they occur
+   - **Only document differences** - do not state what's the same
 
 3. **Inline Comments Pattern**:
    ```
@@ -292,14 +293,13 @@ When implementing ASCII walkmesh parsing:
 - Analyze `CSWRoomSurfaceMesh::LoadMeshText` in swkotor.exe (0x00582d70)
 - Analyze equivalent function in swkotor2.exe (0x00577860)
 - Compare both implementations
-- Document in unified format with conditional logic where they differ:
-  ```c
-  #ifdef KOTOR_1
-      C2DA::GetINTEntry(surfacemat_2da, material_id, "Walk", &result);
-  #else  // TSL
-      FUN_0041d630(surfacemat_2da, material_id, "Walk", &result);
-  #endif
+- Document using K1 function name with both addresses:
   ```
+  CSWRoomSurfaceMesh::LoadMeshText
+  - K1: 0x00582d70 in swkotor.exe
+  - TSL: 0x00577860 in swkotor2.exe
+  ```
+- Only show conditional logic if implementations actually differ
 
 ### Tools Required
 
