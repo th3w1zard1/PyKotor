@@ -257,11 +257,13 @@ options:
    - **KotOR II / TSL (swkotor2.exe)**: Secondary reference for verification and parity
 
 2. **Unified Documentation Pattern**:
-   - Document both games together, not in separate sections
+   - **NEVER create separate sections for K1 and TSL** - always document together
    - Use human-readable function names from K1 for both games (only addresses differ)
+   - Format: `FunctionName - K1: 0xADDRESS in swkotor.exe, TSL: 0xADDRESS in swkotor2.exe`
    - Show conditional logic (`#ifdef KOTOR_1` / `#else`) only where implementations differ
    - Use unified code examples that work for both games
-   - **Only document differences** - do not state what's the same
+   - **Only mention TSL when there's a difference** - if addresses are the same, just list once
+   - **Never state what's the same** - only document differences
 
 3. **Inline Comments Pattern**:
    ```
@@ -293,11 +295,9 @@ When implementing ASCII walkmesh parsing:
 - Analyze `CSWRoomSurfaceMesh::LoadMeshText` in swkotor.exe (0x00582d70)
 - Analyze equivalent function in swkotor2.exe (0x00577860)
 - Compare both implementations
-- Document using K1 function name with both addresses:
+- Document in unified format:
   ```
-  CSWRoomSurfaceMesh::LoadMeshText
-  - K1: 0x00582d70 in swkotor.exe
-  - TSL: 0x00577860 in swkotor2.exe
+  CSWRoomSurfaceMesh::LoadMeshText (K1: 0x00582d70 in swkotor.exe, TSL: 0x00577860 in swkotor2.exe)
   ```
 - Only show conditional logic if implementations actually differ
 

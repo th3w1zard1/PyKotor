@@ -6,9 +6,7 @@ This document describes the ASCII walkmesh format used by both KotOR I and KotOR
 
 ASCII walkmesh files (typically with `.wok` extension) contain collision geometry for game areas. The format uses a hierarchical block structure similar to ASCII model files, with a single "node aabb" block containing all walkmesh data.
 
-The format is parsed by the game engine's `CSWRoomSurfaceMesh::LoadMeshText` function:
-- **KotOR I**: `0x00582d70` in `swkotor.exe`
-- **KotOR II**: `0x00577860` in `swkotor2.exe`
+The format is parsed by the game engine's `CSWRoomSurfaceMesh::LoadMeshText` function (K1: `0x00582d70` in `swkotor.exe`, TSL: `0x00577860` in `swkotor2.exe`).
 
 ## Format Structure
 
@@ -69,9 +67,7 @@ endnode
 
 ## Parsing Process
 
-The engine parses ASCII walkmesh files line-by-line using a helper function `CSWCollisionMesh::LoadMeshString`:
-- **KotOR I**: `0x005968a0` in `swkotor.exe`
-- **KotOR II**: `0x005573e0` in `swkotor2.exe`
+The engine parses ASCII walkmesh files line-by-line using a helper function `CSWCollisionMesh::LoadMeshString` (K1: `0x005968a0` in `swkotor.exe`, TSL: `0x005573e0` in `swkotor2.exe`).
 
 Both implementations read up to 256 bytes per line, stopping at newline characters (0x0A) and null-terminating the result.
 
@@ -448,18 +444,10 @@ The engine handles errors by:
 
 ## Engine References
 
-### KotOR I (swkotor.exe)
-
-- `0x00582d70` - `CSWRoomSurfaceMesh::LoadMeshText` (main ASCII parser, 3882 bytes)
-- `0x005968a0` - `CSWCollisionMesh::LoadMeshString` (line reader, 95 bytes)
-- `0x00596670` - `CSWCollisionMesh::LoadMesh` (entry point, detects ASCII vs binary)
-- `0x0041d630` - `C2DA::GetINTEntry` (material lookup)
-
-### KotOR II / TSL (swkotor2.exe)
-
-- `0x00577860` - `CSWRoomSurfaceMesh::LoadMeshText` (3882 bytes)
-- `0x005573e0` - `CSWCollisionMesh::LoadMeshString` (95 bytes)
-- `0x0041d630` - `C2DA::GetINTEntry`
+- `CSWRoomSurfaceMesh::LoadMeshText` - K1: `0x00582d70` in `swkotor.exe`, TSL: `0x00577860` in `swkotor2.exe` (3882 bytes)
+- `CSWCollisionMesh::LoadMeshString` - K1: `0x005968a0` in `swkotor.exe`, TSL: `0x005573e0` in `swkotor2.exe` (95 bytes)
+- `CSWCollisionMesh::LoadMesh` - K1: `0x00596670` in `swkotor.exe` (entry point, detects ASCII vs binary)
+- `C2DA::GetINTEntry` - `0x0041d630` in both games (material lookup)
 
 ## Notes
 
