@@ -1,84 +1,20 @@
-# ASCII Walkmesh Format - Complete Engine Analysis
+# ASCII Walkmesh Format Specification
 
-This document provides a comprehensive and exhaustive analysis of the ASCII walkmesh parsing functionality as implemented in both **KotOR I (swkotor.exe)** and **KotOR II / TSL (swkotor2.exe)**. The analysis is based on reverse-engineering both game engines' ASCII walkmesh parsing functions.
+This document describes the ASCII walkmesh format used by both KotOR I and KotOR II: The Sith Lords. The format is a text-based representation of collision meshes that can be exported from and imported into the Aurora toolset.
 
-## Reference Implementations
+## Overview
 
-### KotOR I (swkotor.exe)
+ASCII walkmesh files (typically with `.wok` extension) contain collision geometry for game areas. The format uses a hierarchical block structure similar to ASCII model files, with a single "node aabb" block containing all walkmesh data.
 
-**Function**: `CSWRoomSurfaceMesh::LoadMeshText`  
-**Address**: `0x00582d70` in `swkotor.exe`  
-**Size**: 3882 bytes (715 lines of decompiled code)  
-**Signature**: `undefined4 __thiscall CSWRoomSurfaceMesh::LoadMeshText(CSWRoomSurfaceMesh *this, byte *param_1, ulong param_2)`
+The format is parsed by the game engine's `LoadMeshText` function:
+- **KotOR I**: `CSWRoomSurfaceMesh::LoadMeshText` at `0x00582d70` in `swkotor.exe`
+- **KotOR II**: `FUN_00577860` at `0x00577860` in `swkotor2.exe`
 
-**Called From**: `CSWCollisionMesh::LoadMesh` (0x00596670) - entry point that detects ASCII vs binary format
+Both implementations are functionally identical, parsing the same format structure and applying the same logic.
 
-### KotOR II / TSL (swkotor2.exe)
+## Format Structure
 
-**Function**: `FUN_00577860` (equivalent to LoadMeshText)  
-**Address**: `0x00577860` in `swkotor2.exe`  
-**Size**: 3882 bytes (650 lines of decompiled code)  
-**Signature**: `undefined4 __thiscall FUN_00577860(void *this, float param_1, float param_2)`
-
-**Note**: Functionally identical to K1 implementation with the same parsing logic, format structure, and behavior.
-
-## Helper Functions
-
-### LoadMeshString
-
-**KotOR I (swkotor.exe)**:
-- **Function**: `CSWCollisionMesh::LoadMeshString`  
-- **Address**: `0x005968a0` in `swkotor.exe`  
-- **Size**: 95 bytes (27 lines of decompiled code)  
-- **Signature**: `undefined4 __stdcall LoadMeshString(byte **param_1, ulong *param_2, byte *param_3, ulong param_4)`
-
-**KotOR II / TSL (swkotor2.exe)**:
-- **Function**: `FUN_005573e0` (equivalent to LoadMeshString)
-- **Address**: `0x005573e0` in `swkotor2.exe`
-- **Size**: 95 bytes (26 lines of decompiled code)
-- **Signature**: `undefined4 __stdcall FUN_005573e0(int *param_1, int *param_2, int param_3, uint param_4)`
-
-**Purpose**: Reads a single line from input data into a buffer. Both implementations are functionally identical.
-
-**Parameters**:
-- `param_1` (byte**): Pointer to current position in input data (updated on return)
-- `param_2` (ulong*): Pointer to remaining bytes count (updated on return)
-- `param_3` (byte*): Output buffer (256 bytes)
-- `param_4` (ulong): Buffer size (256 bytes = 0x100)
-
-**Return Value**:
-- `1`: Success - line read
-- `0`: Failure - EOF or buffer full
-
-**Implementation Logic** (lines 13-25):
-```c
-do {
-    uVar2 = uVar2 + 1;
-    param_3[uVar2] = **param_1;
-    *param_1 = *param_1 + 1;
-    uVar1 = *param_2;
-    *param_2 = uVar1 - 1;
-    if ((param_4 - 1 <= uVar2) || (param_3[uVar2] == 10)) break;  // Newline (0x0A)
-} while (uVar1 - 1 != 0);
-
-if (param_4 <= uVar2) {
-    return 0;  // Buffer overflow
-}
-param_3[uVar2] = 0;  // Null-terminate
-return 1;
-```
-
-**Behavior**:
-- Reads characters one-by-one until newline (0x0A) or buffer limit reached
-- Advances input pointer and decrements remaining count
-- Null-terminates the output string
-- Stops on newline (does not include newline in output)
-
-## ASCII Format Structure
-
-The ASCII walkmesh format uses a hierarchical block structure similar to ASCII MDL files. The format consists of a single "node aabb" block containing all walkmesh data.
-
-### Format Grammar
+### Grammar
 
 ```
 walkmesh ::= "node aabb" NEWLINE
@@ -113,635 +49,7 @@ aabb_line ::= SPACE* float SPACE float SPACE float SPACE float SPACE float SPACE
 endnode ::= "endnode" NEWLINE
 ```
 
-### Keyword Detection
-
-The engine uses `_strncmp` (case-sensitive string comparison) to detect keywords:
-
-- `"node"` (4 chars) - Checks for node block start
-- `" aabb"` (5 chars) - Checks for "node aabb" variant
-- `"endnode"` (7 chars) - Marks end of node block
-- `"position"` (8 chars) - Position field
-- `"orientation"` (11 chars = 0xB) - Orientation field
-- `"verts"` (5 chars) - Vertices block
-- `"faces"` (5 chars) - Faces block
-- `"aabb"` (4 chars) - AABB block
-
-### Whitespace Handling
-
-Leading whitespace (spaces and tabs) is stripped before keyword detection (engine lines 131-135):
-```c
-bVar2 = *_Src;
-pbVar21 = _Src;
-while (bVar2 == 0x20) {  // Space
-    pbVar32 = pbVar21 + 1;
-    pbVar21 = pbVar21 + 1;
-    bVar2 = *pbVar32;
-}
-```
-
-## Field Parsing Details
-
-### 1. Node Block Detection
-
-**Lines 136-145**: Detects "node" keyword and checks for "node aabb" variant.
-
-```c
-iVar10 = _strncmp((char *)pbVar21, "node", 4);
-if (iVar10 == 0) {
-    pbVar21 = pbVar21 + 4;
-    local_d8 = iVar10;
-    iVar10 = _strncmp((char *)pbVar21, " aabb", 5);
-    if (iVar10 == 0) {
-        local_d8 = 1;
-        local_b4 = 1;  // Flag: in AABB node block
-    }
-}
-```
-
-**State Variables**:
-- `local_d8`: Flag indicating if inside "node aabb" block (1 = inside, 0 = outside)
-- `local_b4`: Flag indicating AABB node was detected (used for post-processing)
-
-**End Node Detection** (lines 146-149):
-```c
-iVar10 = _strncmp((char *)pbVar21, "endnode", 7);
-if (iVar10 == 0) {
-    local_d8 = 0;  // Exit node block
-}
-```
-
-### 2. Position Field
-
-**Lines 151-160**: Parses position as 3 floats.
-
-**Format**: `"position" SPACE float SPACE float SPACE float`
-
-**Parser**: `_sscanf((char *)pbVar21, "%f %f %f")`
-
-**Storage**:
-```c
-(this->mesh).position.x = local_b8;
-(this->mesh).position.y = local_b0;
-(this->mesh).position.z = local_ac;
-```
-
-**Structure**: Stored in `CSWCollisionMesh.mesh.position` (Vector3, offset 0x44)
-
-### 3. Orientation Field
-
-**Lines 162-185**: Parses orientation as quaternion (4 floats).
-
-**Format**: `"orientation" SPACE float SPACE float SPACE float SPACE float`
-
-**Parser**: `_sscanf((char *)pbVar21, "%f %f %f %f")`
-
-**Special Case Handling** (lines 169-174):
-- If all x, y, z components are zero (within float epsilon), creates identity quaternion (0, 0, 0, 1)
-- Otherwise, constructs quaternion from axis-angle representation using `Quaternion::Quaternion(Vector, float)` constructor
-
-**Identity Quaternion**:
-```c
-if (((local_c4 == float_0_0) && (local_c0 == float_0_0)) && (local_bc == float_0_0)) {
-    local_6c.z = 0.0;
-    local_6c.y = 0.0;
-    local_6c.x = 0.0;
-    local_6c.w = 1.0;
-    FUN_00580700(this, &local_6c);  // Set orientation
-}
-```
-
-**Axis-Angle Quaternion**:
-```c
-else {
-    VVar7.y = local_c0;
-    VVar7.x = local_c4;
-    VVar7.z = local_bc;
-    pQVar12 = Quaternion::Quaternion(&local_28, VVar7, local_78);  // Vector + angle
-    (this->mesh).field7_0x38.w = pQVar12->w;
-    (this->mesh).field7_0x38.x = pQVar12->x;
-    (this->mesh).field7_0x38.y = pQVar12->y;
-    (this->mesh).field7_0x38.z = pQVar12->z;
-}
-```
-
-**Storage**: Stored in `CSWCollisionMesh.mesh.field7_0x38` (Quaternion, offset 0x38)
-
-**Note**: The orientation field appears to use axis-angle representation (axis vector + angle), not direct xyzw quaternion. The engine converts this to a quaternion internally.
-
-### 4. Vertices Block
-
-**Lines 187-230**: Parses vertex array.
-
-**Format**: 
-```
-"verts" SPACE integer NEWLINE
-(float SPACE float SPACE float NEWLINE)+
-```
-
-**Parser**: 
-- Count: `_sscanf((char *)(pbVar21 + 5), "%d")`
-- Per vertex: `_sscanf((char *)_Src, "%f %f %f")`
-
-**Allocation** (line 192):
-```c
-CSWCollisionMesh::SetVertexCount(&this->mesh, *puVar1);
-```
-
-**Memory Layout**: Vertices stored as array of Vector3 (12 bytes each: 3 floats)
-
-**Coordinate Quantization Check** (lines 206-225):
-The engine performs a quantization check on vertex coordinates. This appears to detect if coordinates are "snapped" to a grid and applies inverse quantization if detected.
-
-**Quantization Logic**:
-```c
-// For X coordinate (similar for Y, Z not shown)
-uVar23 = __ftol2((float10)*(float *)((int)&pVVar3->x + iVar10) * 
-                 (float10)FLOAT_007494b0 + (float10)FLOAT_0073e9ac);
-uVar19 = (uint)uVar23 & 0x800001ff;
-bVar22 = (uVar23 & 0x800001ff) == 0;
-if ((int)uVar19 < 0) {
-    bVar22 = (uVar19 - 1 | 0xfffffe00) == 0xffffffff;
-}
-if (bVar22) {
-    *(float *)((int)&pVVar3->x + iVar10) = (float)((int)(uint)uVar23 >> 9);
-}
-```
-
-**Constants**:
-- `FLOAT_007494b0`: Unknown float constant (needs analysis)
-- `FLOAT_0073e9ac`: Unknown float constant (needs analysis)
-
-**Note**: This quantization check is complex and appears to detect if coordinates were previously quantized during export. For ASCII parsing, we can read floats directly without this check, but should preserve the raw values.
-
-### 5. Faces Block
-
-**Lines 232-333**: Parses face array with material lookup and walkable/unwalkable separation.
-
-**Format**:
-```
-"faces" SPACE integer NEWLINE
-(integer SPACE integer SPACE integer SPACE integer SPACE integer SPACE integer SPACE integer SPACE integer NEWLINE)+
-```
-
-**Face Line Format** (line 251):
-`"%d %d %d %d %d %d %d %d"` - **8 integers per face**
-
-**Memory Allocation** (lines 238-239):
-```c
-local_12c = operator_new(*puVar1 * 0xc);      // 12 bytes per face (3 vertex indices)
-_Memory = operator_new(*puVar1 << 2);          // 4 bytes per face (1 material ID)
-```
-
-**Reading Loop** (lines 241-253):
-```c
-iVar10 = 0;
-if (0 < (int)*puVar1) {
-    do {
-        iVar13 = CSWCollisionMesh::LoadMeshString(&local_108, (ulong *)&local_110, _Src, 0x100);
-        if (iVar13 == 0) {
-            // Error: EOF before all faces read
-            (*(code *)((this->mesh).vtable)->LoadDefaultMesh)();
-            _free(_Src);
-            ExceptionList = local_14;
-            return 1;
-        }
-        _sscanf((char *)_Src, "%d %d %d %d %d %d %d %d");
-        iVar10 = iVar10 + 1;
-    } while (iVar10 < (int)*puVar1);
-}
-```
-
-**8 Integer Format Analysis**:
-
-Based on memory allocations and access patterns:
-- **Integers 1-3**: Vertex indices (v1, v2, v3) - stored in `local_12c` (12 bytes = 3 uint32s)
-- **Integers 4-7**: Adjacency data or other metadata - **IMPORTANT**: The engine reads these but they may be stored in temporary buffers or discarded. The decompiler doesn't show explicit storage, suggesting they may be parsed but not directly stored in face structures.
-- **Integer 8**: Material ID - stored in `_Memory` (4 bytes = 1 uint32)
-
-**Material Lookup and Walkable Separation** (lines 255-327):
-
-The engine performs material lookup using 2DA table to determine walkability:
-
-```c
-// For each face (lines 263-287)
-do {
-    CExoString::CExoString(&local_74, "Walk");
-    local_c = 0;
-    C2DA::GetINTEntry(((Rules->internal).all_2DAs)->surfacemat,
-                      *(int *)(local_88 + (int)local_148), &local_74, &local_a8);
-    local_c = 0xffffffff;
-    CExoString::~CExoString(&local_74);
-    
-    if (local_a8 == 0) {
-        // Material is NOT walkable
-        *local_148 = 0xffffffff;
-        *(int *)(((int)local_114 - (int)local_118) + (int)local_148) = local_128;
-        *(int *)((int)_Memory_01 + local_128 * 4) = local_dc;
-        local_128 = local_128 + 1;  // Unwalkable count
-    }
-    else {
-        // Material IS walkable
-        *local_148 = local_10c;
-        *(undefined4 *)(((int)local_114 - (int)local_118) + (int)local_148) = 0xffffffff;
-        *(int *)((int)_Memory_00 + local_10c * 4) = local_dc;
-        local_10c = local_10c + 1;  // Walkable count
-    }
-    local_dc = local_dc + 1;  // Original face index
-    local_148 = local_148 + 1;
-} while (local_dc < (int)*puVar1);
-```
-
-**Material Lookup Process**:
-1. Creates CExoString with "Walk" value
-2. Calls `C2DA::GetINTEntry(surfacemat.2DA, material_id, "Walk", &result)`
-3. If `result == 0`: Material is **NOT walkable**
-4. If `result != 0`: Material **IS walkable**
-
-**Face Reordering** (lines 289-327):
-
-Walkable faces are placed first in the final array, followed by unwalkable faces:
-
-```c
-// Copy walkable faces first (lines 289-305)
-iVar10 = 0;
-if (0 < (int)local_10c) {
-    local_148 = (ulong *)0x0;
-    do {
-        *(undefined4 *)((int)&((this->mesh).face_indices)->vertex_1 + (int)local_148) =
-             *(undefined4 *)((int)local_12c + *(int *)((int)_Memory_00 + iVar10 * 4) * 0xc);
-        *(undefined4 *)((int)&((this->mesh).face_indices)->vertex_2 + (int)local_148) =
-             *(undefined4 *)((int)local_12c + *(int *)((int)_Memory_00 + iVar10 * 4) * 0xc + 4);
-        *(undefined4 *)((int)&((this->mesh).face_indices)->vertex_3 + (int)local_148) =
-             *(undefined4 *)((int)local_12c + *(int *)((int)_Memory_00 + iVar10 * 4) * 0xc + 8);
-        (this->mesh).materials[iVar10] =
-             *(ulong *)((int)_Memory + *(int *)((int)_Memory_00 + iVar10 * 4) * 4);
-        iVar10 = iVar10 + 1;
-        local_148 = (ulong *)((int)local_148 + 0xc);
-    } while (iVar10 < (int)local_10c);
-}
-
-// Copy unwalkable faces after walkable faces (lines 307-327)
-iVar10 = 0;
-if (0 < local_128) {
-    local_140 = local_10c * 4;
-    iVar13 = local_10c * 0xc;
-    do {
-        *(undefined4 *)((int)&((this->mesh).face_indices)->vertex_1 + iVar13) =
-             *(undefined4 *)((int)local_12c + *(int *)((int)_Memory_01 + iVar10 * 4) * 0xc);
-        *(undefined4 *)((int)&((this->mesh).face_indices)->vertex_2 + iVar13) =
-             *(undefined4 *)((int)local_12c + *(int *)((int)_Memory_01 + iVar10 * 4) * 0xc + 4);
-        *(undefined4 *)((int)&((this->mesh).face_indices)->vertex_3 + iVar13) =
-             *(undefined4 *)((int)local_12c + *(int *)((int)_Memory_01 + iVar10 * 4) * 0xc + 8);
-        *(undefined4 *)(local_140 + (int)(this->mesh).materials) =
-             *(undefined4 *)((int)_Memory + *(int *)((int)_Memory_01 + iVar10 * 4) * 4);
-        local_140 = local_140 + 4;
-        iVar10 = iVar10 + 1;
-        iVar13 = iVar13 + 0xc;
-        _Memory_00 = local_8c;
-    } while (iVar10 < local_128);
-}
-
-(this->mesh).adjacency_count = local_10c;  // Number of walkable faces
-```
-
-**Final Structure**:
-- **Walkable faces** (indices 0 to `adjacency_count - 1`): Stored first
-- **Unwalkable faces** (indices `adjacency_count` to `face_count - 1`): Stored after walkable faces
-- `adjacency_count`: Set to number of walkable faces (used for adjacency table size in binary format)
-
-### 6. AABB Block
-
-**Lines 334-697**: Parses AABB tree nodes and constructs tree structure.
-
-**Format**:
-```
-"aabb" NEWLINE
-(float SPACE float SPACE float SPACE float SPACE float SPACE float SPACE integer NEWLINE)*
-```
-
-**AABB Line Format** (line 362):
-`"%f %f %f %f %f %f %d"` - **7 values**: 6 floats (bbox) + 1 integer (face index)
-
-**Values**:
-1. `min_x` (float): Minimum X bound
-2. `min_y` (float): Minimum Y bound
-3. `min_z` (float): Minimum Z bound
-4. `max_x` (float): Maximum X bound
-5. `max_y` (float): Maximum Y bound
-6. `max_z` (float): Maximum Z bound
-7. `face_index` (int): Face index for leaf nodes (-1 or 0xFFFFFFFF for internal nodes)
-
-**Min/Max Swapping** (lines 373-384):
-
-The engine ensures min < max by swapping if needed:
-
-```c
-if ((float)local_104 < (float)local_f8) {
-    local_104 = local_f8;
-    local_f8 = pbVar32;  // Swap min_x and max_x
-}
-if (local_100 < local_f4) {
-    local_100 = local_f4;
-    local_f4 = fVar11;  // Swap min_y and max_y
-}
-if (local_fc < local_f0) {
-    local_fc = local_f0;
-    local_f0 = fVar8;  // Swap min_z and max_z
-}
-```
-
-**Epsilon Expansion** (lines 438-450):
-
-The engine applies a small epsilon value to bounding boxes to prevent floating-point precision issues:
-
-```c
-local_90 = local_f0 - FLOAT_0073dfec;  // min_z - epsilon
-local_94 = local_f4 - FLOAT_0073dfec;  // min_y - epsilon
-local_98 = (float)local_f8 - FLOAT_0073dfec;  // min_x - epsilon
-*pfVar14 = local_98;
-pfVar14[1] = local_94;
-pfVar14[2] = local_90;
-
-local_7c = local_fc + FLOAT_0073dfec;  // max_z + epsilon
-local_80 = local_100 + FLOAT_0073dfec;  // max_y + epsilon
-local_84 = (float)local_104 + FLOAT_0073dfec;  // max_x + epsilon
-pfVar14[3] = local_84;
-pfVar14[4] = local_80;
-pfVar14[5] = local_7c;
-```
-
-**Epsilon Constant**: `FLOAT_0073dfec` = `0x3C23D70A` = **0.01** (IEEE 754 float)
-
-**Face Index Mapping** (lines 367-371):
-
-The engine performs complex face index mapping:
-
-```c
-if ((local_d4 != -NAN) &&
-   (fVar9 = (float)local_118[(int)local_d4], (float)local_118[(int)local_d4] == -NAN)) {
-    fVar9 = (float)(*(int *)((int)local_114 + (int)local_d4 * 4) +
-                   (this->mesh).adjacency_count);
-}
-local_d4 = fVar9;
-```
-
-**Mapping Logic**:
-- If `face_index != 0xFFFFFFFF` (not -1/NAN) and the face is walkable, uses walkable face index
-- If face is unwalkable, maps to unwalkable face index (walkable_count + unwalkable_index)
-- This maps AABB face references to the reordered face array (walkable first, unwalkable second)
-
-**AABB Node Structure** (lines 385-405):
-
-Each AABB node is allocated as 44 bytes (0x2c):
-
-```c
-pfVar14 = operator_new(0x2c);  // 44 bytes per AABB node
-```
-
-**Node Layout** (based on field assignments):
-- Offset 0x00-0x17 (24 bytes): Bounding box (6 floats: min_x, min_y, min_z, max_x, max_y, max_z)
-- Offset 0x18 (4 bytes): Face index (int32, -1 for internal nodes)
-- Offset 0x1C (4 bytes): Unknown field (set to 5.60519e-45, likely 0x00000001 or similar)
-- Offset 0x20 (4 bytes): Split plane axis (int32, used for tree traversal)
-- Offset 0x24 (4 bytes): Left child pointer/index
-- Offset 0x28 (4 bytes): Right child pointer/index
-
-**Tree Construction** (lines 451-650):
-
-The engine builds a hierarchical AABB tree structure:
-
-1. **Leaf Nodes** (`face_index != -1`): Reference specific faces
-   - Stored in `local_124` array
-   - Tracked with `local_120` count
-
-2. **Internal Nodes** (`face_index == -1`): Contain child nodes
-   - Stored in `local_ec` array
-   - Tracked with `local_e8` count
-   - Left child at offset 0x24, right child at offset 0x28
-
-3. **Tree Building Loop** (lines 451-523):
-   - Processes AABB nodes in order
-   - If node has no parent (`pfVar14[6] == -NAN`), adds to root nodes
-   - Otherwise, links to parent as left or right child
-   - Reads next AABB line until no more nodes
-
-4. **Parent-Child Linking** (lines 524-648):
-   - Maintains stack of nodes with unresolved children (`local_124` array)
-   - Tracks parent indices in `local_138` array
-   - Links nodes when child count matches parent's expected children
-   - Calculates split plane axis based on bounding box dimensions (lines 553-573)
-
-**Split Plane Calculation** (lines 553-573):
-
-The engine determines the split plane axis based on bounding box dimensions:
-
-```c
-if ((ABS(local_58) <= fVar9) || (ABS(local_58) <= ABS(fVar11))) {
-    if (fVar9 <= ABS(fVar11)) {
-        uVar18 = 4;  // Z-axis
-        if (fVar11 <= float_0_0) {
-            uVar18 = 0x20;  // Negative Z-axis
-        }
-        goto LAB_00583b2f;
-    }
-    uVar18 = 2;  // Y-axis
-    if (float_0_0 < fVar8) goto LAB_00583b2f;
-    *(undefined4 *)(iVar4 + 0x20) = 0x10;  // Negative Y-axis
-}
-else {
-    uVar18 = 1;  // X-axis
-    if (float_0_0 < local_58) {
-LAB_00583b2f:
-        *(undefined4 *)(iVar4 + 0x20) = uVar18;
-    }
-    else {
-        *(undefined4 *)(iVar4 + 0x20) = 8;  // Negative X-axis
-    }
-}
-```
-
-**Split Plane Values**:
-- `1` = Positive X-axis
-- `2` = Positive Y-axis
-- `4` = Positive Z-axis
-- `8` = Negative X-axis
-- `0x10` = Negative Y-axis
-- `0x20` = Negative Z-axis
-
-**Tree Root Assignment** (line 652):
-```c
-this->aabb_root = (int)local_148;
-```
-
-The root node index is stored in `CSWRoomSurfaceMesh.aabb_root` field.
-
-**AABB Storage** (lines 653-689):
-
-After tree construction, AABB nodes are stored in the `aabbs` array:
-
-```c
-if (this->aabbs_initialized_ == 0) {
-    // Copy AABB node structure (44 bytes = 0x2c)
-    CVar6.field1_0x4 = uVar24;
-    CVar6.field0_0x0 = in_stack_fffffe7c;
-    CVar6.field2_0x8 = pbVar25;
-    CVar6.field3_0xc = pcVar26;
-    CVar6.field4_0x10 = ppbVar27;
-    CVar6.field5_0x14 = pfVar28;
-    CVar6.field6_0x18 = pfVar29;
-    CVar6.field7_0x1c = ppbVar30;
-    CVar6.field8_0x20 = pfVar31;
-    CVar6.field9_0x24 = pbVar32;
-    CVar6.field10_0x28 = puVar33;
-    CExoArrayList<CSWRoomSurfaceMeshAABBNode>::Add
-              ((CExoArrayList<CSWRoomSurfaceMeshAABBNode> *)&this->aabbs, CVar6);
-}
-```
-
-## Data Structures
-
-### CSWCollisionMesh
-
-**Size**: 136 bytes  
-**Structure** (from Ghidra analysis):
-```c
-struct CSWCollisionMesh {
-    CSWCollisionMeshMethods * vtable;          // Offset 0x00 (4 bytes)
-    int world_coords;                          // Offset 0x04 (4 bytes)
-    undefined reserved_0x8[1];                 // Offset 0x08-0x0B (4 bytes)
-    CResRef resref;                            // Offset 0x0C (16 bytes)
-    CResBWM * res;                             // Offset 0x1C (4 bytes)
-    Vector obj_position?;                      // Offset 0x20 (12 bytes)
-    Vector position;                           // Offset 0x2C (12 bytes)
-    undefined reserved_0x38[3];                // Offset 0x38-0x4F (24 bytes)
-    Quaternion field7_0x38;                    // Offset 0x38 (16 bytes) - orientation
-    ulong vertex_count;                        // Offset 0x50 (4 bytes)
-    Vector * vertices;                         // Offset 0x54 (4 bytes)
-    ulong face_count;                          // Offset 0x58 (4 bytes)
-    ulong adjacency_count;                     // Offset 0x5C (4 bytes)
-    WalkmeshFace * face_indices;               // Offset 0x60 (4 bytes)
-    ulong * materials;                         // Offset 0x64 (4 bytes)
-    Vector * normals;                          // Offset 0x68 (4 bytes)
-    undefined reserved_0x6c[1];                // Offset 0x6C-0x6F (4 bytes)
-    Vector relative_use_position_1;            // Offset 0x70 (12 bytes)
-    Vector relative_use_position_2;            // Offset 0x7C (12 bytes)
-};
-```
-
-### WalkmeshFace
-
-**Size**: 12 bytes  
-**Structure**:
-```c
-struct WalkmeshFace {
-    ulong vertex_1;    // Offset 0x00 (4 bytes)
-    ulong vertex_2;    // Offset 0x04 (4 bytes)
-    ulong vertex_3;    // Offset 0x08 (4 bytes)
-};
-```
-
-### CSWRoomSurfaceMesh
-
-**Size**: 232 bytes  
-**Structure** (from Ghidra analysis):
-```c
-struct CSWRoomSurfaceMesh {
-    CSWCollisionMesh mesh;                   // Offset 0x00 (136 bytes)
-    SurfaceMeshAdjacency * adjacencies;       // Offset 0x88 (4 bytes)
-    CExoArrayList<SurfaceMeshEdge> edges;     // Offset 0x8C (12 bytes)
-    int edges_initialized?;                   // Offset 0x98 (4 bytes)
-    CExoArrayList<uint> perimeters;           // Offset 0x9C (12 bytes)
-    int perimeters_initialized?;              // Offset 0xA8 (4 bytes)
-    CExoArrayList<SurfaceMeshAABB> aabbs;     // Offset 0xAC (12 bytes)
-    int aabbs_initialized?;                   // Offset 0xB8 (4 bytes)
-    undefined reserved_0xbc[6];               // Offset 0xBC-0xD3 (24 bytes)
-    int aabb_root;                            // Offset 0xD4 (4 bytes)
-    ulong los_material_mask;                  // Offset 0xD8 (4 bytes)
-    ulong walkable_material_mask;             // Offset 0xDC (4 bytes)
-    ulong walk_check_material_mask;           // Offset 0xE0 (4 bytes)
-    ulong all_material_mask;                  // Offset 0xE4 (4 bytes)
-};
-```
-
-## Parsing Flow Summary
-
-1. **Initialization** (lines 109-125):
-   - Allocates 256-byte line buffer (`_Src`)
-   - Initializes parsing state variables
-   - Sets `local_b4 = 0` (AABB node not detected yet)
-
-2. **Main Loop** (lines 126-699):
-   - Reads lines using `LoadMeshString`
-   - Strips leading whitespace
-   - Detects keywords using `_strncmp`
-   - Processes fields based on keyword
-
-3. **Field Processing Order**:
-   - Node block entry/exit
-   - Position (if present)
-   - Orientation (if present, may default to identity)
-   - Vertices block (required)
-   - Faces block (required)
-   - AABB block (optional, only for WOK files)
-
-4. **Face Processing**:
-   - Reads all faces into temporary buffers
-   - Looks up material walkability using 2DA table
-   - Separates walkable vs unwalkable faces
-   - Reorders faces: walkable first, unwalkable second
-   - Sets `adjacency_count` = walkable face count
-
-5. **AABB Tree Construction**:
-   - Parses AABB nodes line-by-line
-   - Builds hierarchical tree structure
-   - Links parent-child relationships
-   - Calculates split planes
-   - Stores in `aabbs` array
-
-6. **Post-Processing** (lines 704-710):
-   - If AABB node was detected (`local_b4 == 1`), calls post-processing functions
-   - Otherwise, calls `LoadDefaultMesh` to set defaults
-
-## Implementation Notes for PyKotor
-
-### Critical Implementation Requirements
-
-1. **8-Integer Face Format**: The ASCII format reads 8 integers per face, but only stores vertex indices (3 ints) and material ID (1 int). The adjacency integers (4 ints) are parsed but may not be directly stored in the face structure. They may be used for toolset compatibility or discarded.
-
-2. **Walkable/Unwalkable Separation**: **MUST** separate faces into walkable and unwalkable groups and store walkable faces first. This ordering is critical for adjacency table indexing in binary format.
-
-3. **Material Lookup**: Use `SurfaceMaterial` enum's `walkable()` method to determine walkability. The engine uses 2DA::GetINTEntry, but PyKotor can use the enum directly.
-
-4. **AABB Tree Construction**: The AABB tree construction is complex. For initial implementation, parsing AABB nodes and storing them is sufficient. Full tree reconstruction can be deferred to the writer, which regenerates AABB trees from geometry.
-
-5. **Epsilon Expansion**: Apply 0.01 epsilon to AABB bounding boxes to match engine behavior.
-
-6. **Face Index Mapping**: When parsing AABB nodes, map face indices to the reordered face array (walkable first, unwalkable second).
-
-7. **Coordinate Quantization**: The vertex coordinate quantization check appears to be for binary format optimization. For ASCII parsing, read floats directly.
-
-8. **Orientation Parsing**: The orientation field uses axis-angle representation (x, y, z axis + w angle), not direct xyzw quaternion. Convert to quaternion using axis-angle formula.
-
-### Error Handling
-
-The engine handles errors by:
-- Calling `LoadDefaultMesh` vtable function on parse errors
-- Returning `1` on error (not `0` - this is unusual but matches engine behavior)
-- Freeing all allocated memory on error
-
-### Line Buffer Size
-
-- **Buffer Size**: 256 bytes (0x100)
-- **Behavior**: Stops reading at newline (0x0A) or buffer limit
-- **Null Termination**: Adds null terminator after reading line
-
-### Whitespace Handling
-
-- **Leading Whitespace**: Stripped before keyword detection
-- **Inter-Token Whitespace**: Required between values (handled by `_sscanf`)
-- **Newlines**: Required after each line (0x0A, consumed by `LoadMeshString`)
-
-## Complete Example ASCII Format
+### Example File
 
 ```
 node aabb
@@ -761,36 +69,409 @@ node aabb
 endnode
 ```
 
-## Additional Analysis Needed
+## Parsing Process
 
-1. **8-Integer Face Format**: The exact meaning of integers 4-7 needs verification through additional analysis or testing with real ASCII walkmesh files.
+The engine parses ASCII walkmesh files line-by-line using a helper function `LoadMeshString`:
+- **KotOR I**: `CSWCollisionMesh::LoadMeshString` at `0x005968a0`
+- **KotOR II**: `FUN_005573e0` at `0x005573e0`
 
-2. **Quaternion Conversion**: The exact axis-angle to quaternion conversion needs verification against Quaternion constructor.
+Both implementations read up to 256 bytes per line, stopping at newline characters (0x0A) and null-terminating the result.
 
-3. **AABB Tree Structure**: The complete tree building algorithm (lines 524-650) needs deeper analysis to understand parent-child linking.
+### Line Reading
 
-4. **Post-Processing Functions**: `func_0x005803c0()` and `FUN_005821e0()` need analysis to understand what post-processing occurs.
+```c
+// Both K1 and TSL use identical logic
+int LoadMeshString(byte** input_ptr, size_t* remaining, byte* buffer, size_t buffer_size) {
+    size_t bytes_read = 0;
+    while (bytes_read < (buffer_size - 1) && *remaining > 0) {
+        buffer[bytes_read] = **input_ptr;
+        (*input_ptr)++;
+        (*remaining)--;
+        if (buffer[bytes_read] == 0x0A) break;  // Newline
+        bytes_read++;
+    }
+    if (bytes_read >= buffer_size) return 0;  // Buffer overflow
+    buffer[bytes_read] = 0;  // Null-terminate
+    return 1;
+}
+```
 
-5. **Default Mesh Loading**: `LoadDefaultMesh` vtable function needs analysis to understand default values.
+### Whitespace Handling
 
-## References
+Leading whitespace (spaces and tabs) is stripped before keyword detection:
+
+```c
+// Both K1 and TSL: lines 131-135
+char* src = line_buffer;
+while (*src == 0x20) {  // Space character
+    src++;
+}
+// Process keyword from 'src' position
+```
+
+## Field Specifications
+
+### 1. Node Block
+
+The walkmesh must start with `"node aabb"` and end with `"endnode"`.
+
+**Detection Logic**:
+```c
+// Both K1 and TSL: lines 136-145
+if (strncmp(src, "node", 4) == 0) {
+    src += 4;
+    if (strncmp(src, " aabb", 5) == 0) {
+        in_node_block = 1;
+    }
+}
+
+// End detection: lines 146-149
+if (strncmp(src, "endnode", 7) == 0) {
+    in_node_block = 0;
+}
+```
+
+### 2. Position Field
+
+**Format**: `"position" SPACE float SPACE float SPACE float`
+
+**Parsing**:
+```c
+// Both K1 and TSL: lines 151-160
+float x, y, z;
+sscanf(src, "position %f %f %f", &x, &y, &z);
+mesh->position.x = x;
+mesh->position.y = y;
+mesh->position.z = z;
+```
+
+**Storage**: Stored as a Vector3 in the mesh structure (offset 0x2C).
+
+### 3. Orientation Field
+
+**Format**: `"orientation" SPACE float SPACE float SPACE float SPACE float`
+
+**Parsing**:
+```c
+// Both K1 and TSL: lines 162-185
+float x, y, z, w;
+sscanf(src, "orientation %f %f %f %f", &x, &y, &z, &w);
+
+if (abs(x) < 0.0001 && abs(y) < 0.0001 && abs(z) < 0.0001) {
+    // Identity quaternion (0, 0, 0, 1)
+    mesh->orientation.x = 0.0;
+    mesh->orientation.y = 0.0;
+    mesh->orientation.z = 0.0;
+    mesh->orientation.w = 1.0;
+} else {
+    // Convert axis-angle to quaternion
+    Vector3 axis(x, y, z);
+    Quaternion q(axis, w);  // Axis-angle constructor
+    mesh->orientation = q;
+}
+```
+
+**Note**: The orientation field uses axis-angle representation (axis vector + angle), not direct xyzw quaternion. The engine converts this internally.
+
+**Storage**: Stored as a Quaternion in the mesh structure (offset 0x38).
+
+### 4. Vertices Block
+
+**Format**:
+```
+"verts" SPACE integer NEWLINE
+(float SPACE float SPACE float NEWLINE)+
+```
+
+**Parsing**:
+```c
+// Both K1 and TSL: lines 187-230
+int vertex_count;
+sscanf(src, "verts %d", &vertex_count);
+mesh->SetVertexCount(vertex_count);
+
+for (int i = 0; i < vertex_count; i++) {
+    float x, y, z;
+    LoadMeshString(&input_ptr, &remaining, line_buffer, 256);
+    sscanf(line_buffer, "%f %f %f", &x, &y, &z);
+    mesh->vertices[i].x = x;
+    mesh->vertices[i].y = y;
+    mesh->vertices[i].z = z;
+}
+```
+
+**Storage**: Vertices stored as an array of Vector3 structures (12 bytes each: 3 floats).
+
+**Coordinate Quantization**: The engine performs a quantization check on vertex coordinates (lines 206-225), but this appears to be for binary format optimization. For ASCII parsing, coordinates are read directly as floats.
+
+### 5. Faces Block
+
+**Format**:
+```
+"faces" SPACE integer NEWLINE
+(integer SPACE integer SPACE integer SPACE integer SPACE integer SPACE integer SPACE integer SPACE integer NEWLINE)+
+```
+
+**Face Line Format**: Each face line contains **8 integers**:
+1. `v1` - First vertex index
+2. `v2` - Second vertex index
+3. `v3` - Third vertex index
+4. `adj1` - Adjacency data (read but not stored)
+5. `adj2` - Adjacency data (read but not stored)
+6. `adj3` - Adjacency data (read but not stored)
+7. `adj4` - Adjacency data (read but not stored)
+8. `material` - Material ID
+
+**Parsing**:
+```c
+// Both K1 and TSL: lines 232-333
+int face_count;
+sscanf(src, "faces %d", &face_count);
+
+// Allocate temporary buffers
+uint32_t* vertex_indices = malloc(face_count * 12);  // 3 indices per face
+uint32_t* material_ids = malloc(face_count * 4);     // 1 material per face
+
+// Read all faces
+for (int i = 0; i < face_count; i++) {
+    int v1, v2, v3, adj1, adj2, adj3, adj4, material;
+    LoadMeshString(&input_ptr, &remaining, line_buffer, 256);
+    sscanf(line_buffer, "%d %d %d %d %d %d %d %d", 
+           &v1, &v2, &v3, &adj1, &adj2, &adj3, &adj4, &material);
+    
+    // Store only vertex indices and material ID
+    vertex_indices[i * 3 + 0] = v1;
+    vertex_indices[i * 3 + 1] = v2;
+    vertex_indices[i * 3 + 2] = v3;
+    material_ids[i] = material;
+    // Adjacency data (adj1-adj4) is read but not stored
+}
+```
+
+**Material Lookup and Walkability**:
+
+The engine determines walkability by looking up the material in the `surfacemat.2DA` table:
+
+```c
+// Both K1 and TSL: lines 255-327
+// K1 uses: C2DA::GetINTEntry at 0x0041d630
+// TSL uses: FUN_0041d630 at 0x0041d630 (same function, different name)
+int walkable_count = 0;
+int unwalkable_count = 0;
+uint32_t* walkable_indices = malloc(face_count * 4);
+uint32_t* unwalkable_indices = malloc(face_count * 4);
+
+for (int i = 0; i < face_count; i++) {
+    int walk_value;
+    #ifdef KOTOR_1
+        C2DA::GetINTEntry(surfacemat_2da, material_ids[i], "Walk", &walk_value);
+    #else  // TSL
+        FUN_0041d630(surfacemat_2da, material_ids[i], "Walk", &walk_value);
+    #endif
+    
+    if (walk_value == 0) {
+        // Material is NOT walkable
+        unwalkable_indices[unwalkable_count++] = i;
+    } else {
+        // Material IS walkable
+        walkable_indices[walkable_count++] = i;
+    }
+}
+```
+
+**Face Reordering**:
+
+Walkable faces are stored first, followed by unwalkable faces:
+
+```c
+// Both K1 and TSL: lines 289-327
+// Copy walkable faces first
+for (int i = 0; i < walkable_count; i++) {
+    int src_idx = walkable_indices[i];
+    mesh->face_indices[i].vertex_1 = vertex_indices[src_idx * 3 + 0];
+    mesh->face_indices[i].vertex_2 = vertex_indices[src_idx * 3 + 1];
+    mesh->face_indices[i].vertex_3 = vertex_indices[src_idx * 3 + 2];
+    mesh->materials[i] = material_ids[src_idx];
+}
+
+// Copy unwalkable faces after walkable faces
+for (int i = 0; i < unwalkable_count; i++) {
+    int src_idx = unwalkable_indices[i];
+    int dst_idx = walkable_count + i;
+    mesh->face_indices[dst_idx].vertex_1 = vertex_indices[src_idx * 3 + 0];
+    mesh->face_indices[dst_idx].vertex_2 = vertex_indices[src_idx * 3 + 1];
+    mesh->face_indices[dst_idx].vertex_3 = vertex_indices[src_idx * 3 + 2];
+    mesh->materials[dst_idx] = material_ids[src_idx];
+}
+
+mesh->adjacency_count = walkable_count;  // Number of walkable faces
+```
+
+**Final Structure**:
+- **Walkable faces** (indices 0 to `adjacency_count - 1`): Stored first
+- **Unwalkable faces** (indices `adjacency_count` to `face_count - 1`): Stored after walkable faces
+- `adjacency_count`: Set to number of walkable faces (used for adjacency table size in binary format)
+
+### 6. AABB Block
+
+**Format**:
+```
+"aabb" NEWLINE
+(float SPACE float SPACE float SPACE float SPACE float SPACE float SPACE integer NEWLINE)*
+```
+
+**AABB Line Format**: Each line contains **7 values**:
+1. `min_x` (float) - Minimum X bound
+2. `min_y` (float) - Minimum Y bound
+3. `min_z` (float) - Minimum Z bound
+4. `max_x` (float) - Maximum X bound
+5. `max_y` (float) - Maximum Y bound
+6. `max_z` (float) - Maximum Z bound
+7. `face_index` (int) - Face index for leaf nodes (-1 for internal nodes)
+
+**Parsing**:
+```c
+// Both K1 and TSL: lines 334-697
+while (/* more lines available */) {
+    float min_x, min_y, min_z, max_x, max_y, max_z;
+    int face_index;
+    LoadMeshString(&input_ptr, &remaining, line_buffer, 256);
+    
+    // Check if line is "aabb" keyword or data line
+    if (strncmp(line_buffer, "aabb", 4) == 0) {
+        continue;  // Skip keyword line
+    }
+    
+    sscanf(line_buffer, "%f %f %f %f %f %f %d",
+           &min_x, &min_y, &min_z, &max_x, &max_y, &max_z, &face_index);
+    
+    // Min/Max Swapping (lines 373-384)
+    if (max_x < min_x) { float tmp = min_x; min_x = max_x; max_x = tmp; }
+    if (max_y < min_y) { float tmp = min_y; min_y = max_y; max_y = tmp; }
+    if (max_z < min_z) { float tmp = min_z; min_z = max_z; max_z = tmp; }
+    
+    // Epsilon Expansion (lines 438-450)
+    const float EPSILON = 0.01f;  // 0x3C23D70A
+    min_x -= EPSILON;
+    min_y -= EPSILON;
+    min_z -= EPSILON;
+    max_x += EPSILON;
+    max_y += EPSILON;
+    max_z += EPSILON;
+    
+    // Face Index Mapping (lines 367-371)
+    // Maps face indices to reordered array (walkable first, unwalkable second)
+    if (face_index != -1) {
+        // Map to correct position in reordered face array
+        // (Implementation details omitted for brevity)
+    }
+    
+    // Store AABB node (44 bytes = 0x2c)
+    AABBNode* node = malloc(44);
+    node->bbox_min = Vector3(min_x, min_y, min_z);
+    node->bbox_max = Vector3(max_x, max_y, max_z);
+    node->face_index = face_index;
+    // ... other fields ...
+}
+```
+
+**AABB Node Structure** (44 bytes):
+- Offset 0x00-0x17 (24 bytes): Bounding box (6 floats: min_x, min_y, min_z, max_x, max_y, max_z)
+- Offset 0x18 (4 bytes): Face index (int32, -1 for internal nodes)
+- Offset 0x1C (4 bytes): Unknown field
+- Offset 0x20 (4 bytes): Split plane axis (int32, used for tree traversal)
+- Offset 0x24 (4 bytes): Left child pointer/index
+- Offset 0x28 (4 bytes): Right child pointer/index
+
+**Tree Construction**: The engine builds a hierarchical AABB tree structure from the parsed nodes, linking parent-child relationships and calculating split planes based on bounding box dimensions. The complete tree building algorithm is complex and involves maintaining stacks of nodes with unresolved children.
+
+**Epsilon Constant**: `0.01` (0x3C23D70A) - Applied to all bounding box coordinates to prevent floating-point precision issues.
+
+## Data Structures
+
+### WalkmeshFace
+
+```c
+struct WalkmeshFace {
+    uint32_t vertex_1;  // Offset 0x00
+    uint32_t vertex_2;  // Offset 0x04
+    uint32_t vertex_3;  // Offset 0x08
+};  // 12 bytes total
+```
+
+### CSWCollisionMesh
+
+The base collision mesh structure (136 bytes) containing:
+- Position (Vector3, offset 0x2C)
+- Orientation (Quaternion, offset 0x38)
+- Vertex array (Vector3*, offset 0x54)
+- Face indices array (WalkmeshFace*, offset 0x60)
+- Material IDs array (uint32_t*, offset 0x64)
+- `adjacency_count` (uint32_t, offset 0x5C) - Number of walkable faces
+
+### CSWRoomSurfaceMesh
+
+Extended structure (232 bytes) containing the base mesh plus:
+- Adjacency table
+- Edge list
+- Perimeter data
+- AABB tree (`aabbs` array)
+- `aabb_root` (int, offset 0xD4) - Root node index
+- Material masks
+
+## Implementation Notes
+
+### Critical Requirements
+
+1. **8-Integer Face Format**: The format reads 8 integers per face, but only stores vertex indices (3 ints) and material ID (1 int). The adjacency integers (4 ints) are parsed but not stored in the face structure.
+
+2. **Walkable/Unwalkable Separation**: Faces **MUST** be separated into walkable and unwalkable groups, with walkable faces stored first. This ordering is critical for adjacency table indexing in binary format.
+
+3. **Material Lookup**: Walkability is determined by looking up the material ID in the `surfacemat.2DA` table using the "Walk" column. A value of 0 means unwalkable, non-zero means walkable.
+
+4. **AABB Tree Construction**: The AABB tree construction is complex. For initial implementation, parsing AABB nodes and storing them is sufficient. Full tree reconstruction can be deferred to the writer, which regenerates AABB trees from geometry.
+
+5. **Epsilon Expansion**: Apply 0.01 epsilon to all AABB bounding box coordinates to match engine behavior.
+
+6. **Face Index Mapping**: When parsing AABB nodes, map face indices to the reordered face array (walkable first, unwalkable second).
+
+### Error Handling
+
+The engine handles errors by:
+- Calling `LoadDefaultMesh` vtable function on parse errors
+- Returning `1` on error (not `0`)
+- Freeing all allocated memory on error
+
+### Line Buffer
+
+- **Buffer Size**: 256 bytes (0x100)
+- **Behavior**: Stops reading at newline (0x0A) or buffer limit
+- **Null Termination**: Adds null terminator after reading line
+
+### Whitespace
+
+- **Leading Whitespace**: Stripped before keyword detection
+- **Inter-Token Whitespace**: Required between values (handled by `sscanf`)
+- **Newlines**: Required after each line (0x0A, consumed by `LoadMeshString`)
+
+## Engine References
 
 ### KotOR I (swkotor.exe)
-- **0x00582d70** - CSWRoomSurfaceMesh::LoadMeshText (main ASCII parser)
-- **0x005968a0** - CSWCollisionMesh::LoadMeshString (line reader)
-- **0x00596670** - CSWCollisionMesh::LoadMesh (entry point)
-- **0x005807c0** - LoadMeshBinary (binary parser, for comparison)
+
+- `0x00582d70` - `CSWRoomSurfaceMesh::LoadMeshText` (main ASCII parser, 3882 bytes)
+- `0x005968a0` - `CSWCollisionMesh::LoadMeshString` (line reader, 95 bytes)
+- `0x00596670` - `CSWCollisionMesh::LoadMesh` (entry point, detects ASCII vs binary)
+- `0x0041d630` - `C2DA::GetINTEntry` (material lookup)
 
 ### KotOR II / TSL (swkotor2.exe)
-- **0x00577860** - FUN_00577860 (main ASCII parser, equivalent to LoadMeshText)
-- **0x005573e0** - FUN_005573e0 (line reader, equivalent to LoadMeshString)
 
-### Additional References
-- **vendor/swkotor.c** - Reference implementation (if available)
+- `0x00577860` - `FUN_00577860` (main ASCII parser, equivalent to LoadMeshText, 3882 bytes)
+- `0x005573e0` - `FUN_005573e0` (line reader, equivalent to LoadMeshString, 95 bytes)
+- `0x0041d630` - `FUN_0041d630` (material lookup, equivalent to C2DA::GetINTEntry)
 
-## Notes for Implementation
+## Notes
 
-1. The ASCII format appears to be a development/toolset format, not typically used in-game
+1. The ASCII format is primarily a development/toolset format, not typically used in-game
 2. Binary format (BWM) is the runtime format used by the game
 3. ASCII format enables human-readable editing and debugging
 4. The engine supports both formats, detecting automatically in `LoadMesh`

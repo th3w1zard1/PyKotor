@@ -256,31 +256,22 @@ options:
    - **KotOR I (swkotor.exe)**: Primary reference
    - **KotOR II / TSL (swkotor2.exe)**: Secondary reference for verification and parity
 
-2. **Canonical Documentation Pattern**:
-   When documenting engine references, use this format:
-   ```
-   Reference Implementations:
-   -------------------------
-   KotOR I (swkotor.exe):
-       - 0xADDRESS - FunctionName (size, line count)
-       - 0xADDRESS - HelperFunction (size, line count)
-   
-   KotOR II / TSL (swkotor2.exe):
-       - 0xADDRESS - FunctionName (size, line count)
-       - 0xADDRESS - HelperFunction (size, line count)
-   ```
+2. **Unified Documentation Pattern**:
+   - Document both games together, not in separate sections
+   - Show conditional logic (`#ifdef KOTOR_1` / `#else`) where implementations differ
+   - Use unified code examples that work for both games
+   - Only highlight differences inline where they occur
 
 3. **Inline Comments Pattern**:
-   For inline code comments referencing engine behavior:
    ```
-   # Reference: K1 swkotor.exe:0xADDRESS (line/description), TSL swkotor2.exe:0xADDRESS (equivalent)
+   # Reference: K1 swkotor.exe:0xADDRESS, TSL swkotor2.exe:0xADDRESS
    ```
 
 4. **Verification Process**:
    - Use `mcp_reva_open-project` to open Ghidra project with both executables
-   - Use `mcp_reva_get-functions-by-similarity` to find equivalent functions in both games
+   - Use `mcp_reva_get-functions-by-similarity` to find equivalent functions
    - Use `mcp_reva_get-decompilation` to compare implementations
-   - Document differences if any exist
+   - Document differences inline with conditional code examples
    - Ensure implementation works for both games
 
 5. **When Both Games Must Match**:
@@ -301,8 +292,14 @@ When implementing ASCII walkmesh parsing:
 - Analyze `CSWRoomSurfaceMesh::LoadMeshText` in swkotor.exe (0x00582d70)
 - Analyze equivalent function in swkotor2.exe (0x00577860)
 - Compare both implementations
-- Document both in code comments and docstrings
-- Ensure implementation matches both
+- Document in unified format with conditional logic where they differ:
+  ```c
+  #ifdef KOTOR_1
+      C2DA::GetINTEntry(surfacemat_2da, material_id, "Walk", &result);
+  #else  // TSL
+      FUN_0041d630(surfacemat_2da, material_id, "Walk", &result);
+  #endif
+  ```
 
 ### Tools Required
 
@@ -311,7 +308,6 @@ When implementing ASCII walkmesh parsing:
 - `mcp_reva_get-decompilation` - Get decompiled code
 - `mcp_reva_find-cross-references` - Find callers/callees
 - `mcp_reva_get-strings-by-similarity` - Find string literals
-- Other reva MCP tools as needed for comprehensive analysis
 
 ## Final Rule
 
