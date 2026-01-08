@@ -97,6 +97,10 @@ class ERFResource(ArchiveResource):
         # Resource data referenced via Resource Entry (offset + size)
         super().__init__(resref=resref, restype=restype, data=data)
 
+    def __repr__(self) -> str:
+        """Return a string representation suitable for diff output."""
+        return f"ERFResource(resref={self.resref!r}, restype={self.restype.name}, size={self.size})"
+
 
 
 class ERFType(Enum):
