@@ -49,8 +49,13 @@ from pykotor.cli.commands.utility_commands import (
     _detect_path_type,
     cmd_diff,
 )
+from pykotor.common.misc import ResRef
+from pykotor.resource.formats.bif.bif_auto import write_bif
+from pykotor.resource.formats.bif.bif_data import BIF
 from pykotor.resource.formats.key.key_auto import write_key
+
 from pykotor.resource.formats.key.key_data import KEY
+from pykotor.resource.type import ResourceType
 
 if TYPE_CHECKING:
     pass
@@ -122,28 +127,62 @@ class DiffTestDataHelper:
     def create_installation(
         install_path: Path,
         with_override: bool = True,
+        bif_resources: dict[str, dict[str, bytes]] | None = None,
         override_resources: dict[str, bytes] | None = None,
         modules_resources: dict[str, bytes] | None = None,
+        voice_resources: dict[str, bytes] | None = None,
+        music_resources: dict[str, bytes] | None = None,
+        sound_resources: dict[str, bytes] | None = None,
+        lips_resources: dict[str, bytes] | None = None,
+        texture_tpa_resources: dict[str, bytes] | None = None,
+        texture_tpb_resources: dict[str, bytes] | None = None,
+        texture_tpc_resources: dict[str, bytes] | None = None,
+        texture_gui_resources: dict[str, bytes] | None = None,
+        dialog_tlk_data: bytes | None = None,
     ) -> Path:
-        """Create a comprehensive mock KOTOR installation with valid KEY file.
+        """Create a fully comprehensive mock KOTOR installation with valid KEY and BIF files.
 
-        This creates a complete installation structure suitable for testing:
-        - Creates proper chitin.key file (valid but minimal, no BIFs)
-        - Populates Override folder with resources (respects priority order)
+        This creates a complete installation structure suitable for exhaustive testing:
+        - Creates proper chitin.key file with BIF references
+        - Creates actual BIF files with resources in Data folder
+        - Populates Override folder with resources (highest priority in resolution order)
         - Populates Modules folder with resources
-        - Sets up standard directory structure (Data, StreamMusic, StreamSounds, etc.)
+        - Populates all standard resource directories (Voice, Music, Sound, Lips, Textures)
+        - Sets up complete directory structure matching real KOTOR installations
+        - Creates dialog.tlk file if provided
 
-        The installation uses the proper PyKotor KEY serialization, making it
-        compatible with Installation class for real testing scenarios.
+        The installation uses proper PyKotor serialization for KEY and BIF files,
+        making it fully compatible with Installation class for real testing scenarios.
 
         Args:
             install_path: Path to create installation at
             with_override: Whether to create Override folder
+            bif_resources: Dict mapping BIF filenames to {resname: data} dicts
+                          Example: {"data.bif": {"c_bantha.utc": b"UTC_DATA", "model.mdl": b"MDL_DATA"}}
+                          Resources in BIFs have lowest priority (after Override and Modules)
             override_resources: Dict of resource names to data for Override folder
                                Example: {"p_bastila.utc": b"UTC_DATA"}
                                Resources here have highest priority (first in resolution order)
             modules_resources: Dict of resource names to data for Modules folder
-                              Resources here have lower priority (after Override)
+                              Example: {"m01aa.are": b"ARE_DATA"}
+                              Resources here have medium priority (after Override, before BIF)
+            voice_resources: Dict of resource names to data for Voice folder
+                            Example: {"NM03ABCITI06004_.wav": b"WAV_DATA"}
+            music_resources: Dict of resource names to data for StreamMusic folder
+                           Example: {"mus_theme_carth.wav": b"WAV_DATA"}
+            sound_resources: Dict of resource names to data for StreamSounds folder
+                           Example: {"P_hk47_POIS.wav": b"WAV_DATA"}
+            lips_resources: Dict of resource names to data for Lips folder
+                          Example: {"n_gendro_coms1.lip": b"LIP_DATA"}
+            texture_tpa_resources: Dict of resource names to data for TexturePacks/TPA folder
+                                  Example: {"blood.tpc": b"TPC_DATA"}
+            texture_tpb_resources: Dict of resource names to data for TexturePacks/TPB folder
+                                  Example: {"blood.tpc": b"TPC_DATA"}
+            texture_tpc_resources: Dict of resource names to data for TexturePacks/TPC folder
+                                  Example: {"blood.tpc": b"TPC_DATA"}
+            texture_gui_resources: Dict of resource names to data for TexturePacks/GUI folder
+                                  Example: {"PO_PCarth.tpc": b"TPC_DATA"}
+            dialog_tlk_data: Binary data for dialog.tlk file (optional)
 
         Returns:
             Path to the installation directory
@@ -152,29 +191,98 @@ class DiffTestDataHelper:
             >>> install_dir = tmp_path / "my_install"
             >>> DiffTestDataHelper.create_installation(
             ...     install_dir,
-            ...     override_resources={"bastila.utc": b"override_version"},
-            ...     modules_resources={"bastila.utc": b"module_version"}
+            ...     bif_resources={
+            ...         "data.bif": {
+            ...             "c_bantha.utc": b"BIF_UTC_DATA",
+            ...             "model.mdl": b"BIF_MDL_DATA"
+            ...         }
+            ...     },
+            ...     override_resources={"p_bastila.utc": b"OVERRIDE_UTC_DATA"},
+            ...     modules_resources={"m01aa.are": b"ARE_DATA"},
+            ...     voice_resources={"NM03ABCITI06004_.wav": b"WAV_DATA"},
+            ...     music_resources={"mus_theme_carth.wav": b"MUSIC_DATA"}
             ... )
-            >>> # Now install_dir has a valid installation structure with resources
-            >>> # Resolution order: Override/bastila.utc will be used over Modules/bastila.utc
+            >>> # Now install_dir has a fully functional installation structure
+            >>> # Resolution order: Override > Modules > BIF
         """
         install_path.mkdir(parents=True, exist_ok=True)
 
-        # Create standard directory structure
+        # Create complete standard directory structure
         (install_path / "Data").mkdir(exist_ok=True)
         (install_path / "Modules").mkdir(exist_ok=True)
         (install_path / "StreamMusic").mkdir(exist_ok=True)
         (install_path / "StreamSounds").mkdir(exist_ok=True)
         (install_path / "TexturePacks").mkdir(exist_ok=True)
         (install_path / "Lips").mkdir(exist_ok=True)
+        (install_path / "Voice").mkdir(exist_ok=True)
+
+        # Create texture pack subdirectories
+        (install_path / "TexturePacks" / "TPA").mkdir(parents=True, exist_ok=True)
+        (install_path / "TexturePacks" / "TPB").mkdir(parents=True, exist_ok=True)
+        (install_path / "TexturePacks" / "TPC").mkdir(parents=True, exist_ok=True)
+        (install_path / "TexturePacks" / "GUI").mkdir(parents=True, exist_ok=True)
 
         if with_override:
             (install_path / "Override").mkdir(exist_ok=True)
 
-        # Create a valid but minimal KEY file (empty, no BIF references)
-        # This is sufficient to mark the directory as an installation
-        # and allows Installation class to recognize it
+        # Create BIF files and build KEY file entries
         key = KEY()
+        bif_entries: list[tuple[str, int, dict[str, bytes]]] = []  # (bif_filename, bif_index, resources)
+
+        if bif_resources:
+            for bif_index, (bif_filename, resources) in enumerate(bif_resources.items()):
+                # Create BIF file
+                bif = BIF()
+
+                # Add all resources to BIF
+                for res_index, (res_name, res_data) in enumerate(resources.items()):
+                    # Parse resource name to get ResRef and type
+                    if "." in res_name:
+                        res_ref_str, ext = res_name.rsplit(".", 1)
+                    else:
+                        res_ref_str = res_name
+                        ext = "utc"  # Default to UTC if no extension
+
+                    # Get ResourceType from extension
+                    try:
+                        res_type = ResourceType[ext.upper()]
+                    except KeyError:
+                        res_type = ResourceType.UTC  # Default fallback
+
+                    # Add resource to BIF
+                    resref = ResRef(res_ref_str)
+                    bif.set_data(resref, res_type, res_data, res_id=res_index)
+
+                # Write BIF file to Data folder
+                bif_path = install_path / "Data" / bif_filename
+                write_bif(bif, bif_path)
+
+                # Track BIF entry for KEY file
+                bif_entries.append((bif_filename, bif_index, resources))
+
+                # Add BIF entry to KEY file
+                key.add_bif(f"data/{bif_filename}", filesize=bif_path.stat().st_size if bif_path.exists() else 0)
+
+        # Add KEY entries for all BIF resources
+        for bif_index, (bif_filename, _, resources) in enumerate(bif_entries):
+            for res_index, (res_name, _) in enumerate(resources.items()):
+                # Parse resource name
+                if "." in res_name:
+                    res_ref_str, ext = res_name.rsplit(".", 1)
+                else:
+                    res_ref_str = res_name
+                    ext = "utc"
+
+                # Get ResourceType
+                try:
+                    res_type = ResourceType[ext.upper()]
+                except KeyError:
+                    res_type = ResourceType.UTC
+
+                # Add KEY entry linking ResRef to BIF location
+                key.add_key_entry(ResRef(res_ref_str), res_type, bif_index, res_index)
+
+        # Write KEY file
         key_path = install_path / "chitin.key"
         write_key(key, key_path)
 
@@ -186,13 +294,82 @@ class DiffTestDataHelper:
                 res_path.parent.mkdir(parents=True, exist_ok=True)
                 res_path.write_bytes(res_data)
 
-        # Add Modules resources (lower priority, after Override in resolution order)
+        # Add Modules resources (medium priority, after Override)
         if modules_resources:
             modules_dir = install_path / "Modules"
             for res_name, res_data in modules_resources.items():
                 res_path = modules_dir / res_name
                 res_path.parent.mkdir(parents=True, exist_ok=True)
                 res_path.write_bytes(res_data)
+
+        # Add Voice resources
+        if voice_resources:
+            voice_dir = install_path / "Voice"
+            for res_name, res_data in voice_resources.items():
+                res_path = voice_dir / res_name
+                res_path.parent.mkdir(parents=True, exist_ok=True)
+                res_path.write_bytes(res_data)
+
+        # Add Music resources
+        if music_resources:
+            music_dir = install_path / "StreamMusic"
+            for res_name, res_data in music_resources.items():
+                res_path = music_dir / res_name
+                res_path.parent.mkdir(parents=True, exist_ok=True)
+                res_path.write_bytes(res_data)
+
+        # Add Sound resources
+        if sound_resources:
+            sound_dir = install_path / "StreamSounds"
+            for res_name, res_data in sound_resources.items():
+                res_path = sound_dir / res_name
+                res_path.parent.mkdir(parents=True, exist_ok=True)
+                res_path.write_bytes(res_data)
+
+        # Add Lips resources
+        if lips_resources:
+            lips_dir = install_path / "Lips"
+            for res_name, res_data in lips_resources.items():
+                res_path = lips_dir / res_name
+                res_path.parent.mkdir(parents=True, exist_ok=True)
+                res_path.write_bytes(res_data)
+
+        # Add Texture TPA resources
+        if texture_tpa_resources:
+            tpa_dir = install_path / "TexturePacks" / "TPA"
+            for res_name, res_data in texture_tpa_resources.items():
+                res_path = tpa_dir / res_name
+                res_path.parent.mkdir(parents=True, exist_ok=True)
+                res_path.write_bytes(res_data)
+
+        # Add Texture TPB resources
+        if texture_tpb_resources:
+            tpb_dir = install_path / "TexturePacks" / "TPB"
+            for res_name, res_data in texture_tpb_resources.items():
+                res_path = tpb_dir / res_name
+                res_path.parent.mkdir(parents=True, exist_ok=True)
+                res_path.write_bytes(res_data)
+
+        # Add Texture TPC resources
+        if texture_tpc_resources:
+            tpc_dir = install_path / "TexturePacks" / "TPC"
+            for res_name, res_data in texture_tpc_resources.items():
+                res_path = tpc_dir / res_name
+                res_path.parent.mkdir(parents=True, exist_ok=True)
+                res_path.write_bytes(res_data)
+
+        # Add Texture GUI resources
+        if texture_gui_resources:
+            gui_dir = install_path / "TexturePacks" / "GUI"
+            for res_name, res_data in texture_gui_resources.items():
+                res_path = gui_dir / res_name
+                res_path.parent.mkdir(parents=True, exist_ok=True)
+                res_path.write_bytes(res_data)
+
+        # Add dialog.tlk if provided
+        if dialog_tlk_data:
+            tlk_path = install_path / "dialog.tlk"
+            tlk_path.write_bytes(dialog_tlk_data)
 
         return install_path
 
