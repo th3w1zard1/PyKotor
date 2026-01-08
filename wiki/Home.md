@@ -14,7 +14,7 @@
 - [HoloPatcher Feature Coverage Overview](Explanations-on-HoloPatcher-Internal-Logic)
 - **[TSLPatcher InstallList Syntax Guide](TSLPatcher-InstallList-Syntax)** ← Complete reference for file installation
 - **[TSLPatcher TLKList Syntax Guide](TSLPatcher-TLKList-Syntax)** ← Complete reference for TLK ([TalkTable](TLK-File-Format)) modifications
-- **[TSLPatcher 2DAList Syntax Guide](TSLPatcher-2DAList-Syntax)** ← Complete reference for 2DA (Two-Dimensional array) patches
+- **[TSLPatcher 2DAList Syntax Guide](TSLPatcher-2DAList-Syntax)** ← Complete reference for [2DA (Two-Dimensional array)](2DA-File-Format) patches
 - **[TSLPatcher GFFList Syntax Guide](TSLPatcher-GFFList-Syntax)** ← Complete reference for [GFF](GFF-File-Format) modifications
 - **[TSLPatcher SSFList Syntax Guide](TSLPatcher-SSFList-Syntax)** ← Complete reference for SSF ([sound set files](SSF-File-Format)) modifications
 - [Mod Creation Best Practices](Mod-Creation-Best-Practices)
@@ -69,46 +69,45 @@ The following information describes the resource system used by **KotOR and TSL*
 
 #### Resource Types
 
-KotOR uses hexadecimal resource type identifiers inherited from the Aurora engine. The following table lists resource types **used in KotOR** (some types may be legacy from earlier BioWare games or shared with Neverwinter Nights):
+KotOR uses hexadecimal resource type identifiers inherited from the Aurora engine. The following table lists resource types which are the same in all four Bioware engines. Note that some are not used in KotOR.
 
 | Resource Name | type ID | Description                                    |
 | ------------- | ------- | ---------------------------------------------- |
 | RES           | 0x0000  | Used for .res within the saves                     |
-| BMP           | 0x0001  | Bitmap image                          |
-| MVE           | 0x0002  | Movie/video file                          |
-| TGA           | 0x0003  | Targa image format                          |
-| [WAV](WAV-File-Format)           | 0x0004  | Wave audio file (see [WAV File Format](WAV-File-Format))                          |
-| [PLT](PLT-File-Format)           | 0x0006  | [texture](TPC-File-Format) palette (**Neverwinter Nights only**, NOT used in KotOR - see [PLT File Format](PLT-File-Format)) |
-| INI           | 0x0007  | Configuration file (e.g., `kotor.ini`)                          |
-| BMU           | 0x0008  | Unknown                                |
-| MPG           | 0x0009  | MPEG video                            |
-| TXT           | 0x000A  | Text file                                  |
-| PLH           | 0x07D0  | Placeable header                      |
-| TEX           | 0x07D1  | Texture (legacy, replaced by [TPC](TPC-File-Format))                      |
+| BMP           | 0x0001  | Bitmap image                         |
+| MVE           | 0x0002  | Movie/video file       Not used in KotOR                   |
+| TGA           | 0x0003  | TarGA image format                          |
+| [WAV](WAV-File-Format)           | 0x0004  | Wave audio file (see [WAV File Format](WAV-File-Format))
+| INI           | 0x0007  | Configuration file (e.g., `swkotor.ini`, `swkotor2.ini`)                          |
+| BMU           | 0x0008  | Unknown  Not used in KotOR                                |
+| MPG           | 0x0009  | MPEG video  Not used in KotOR                            |
+| TXT           | 0x000A  | Text file  Not used in KotOR                                  |
+| PLH           | 0x07D0  | Placeable header  Not used in KotOR                      |
+| TEX           | 0x07D1  | Texture (legacy, replaced by [TPC](TPC-File-Format))  Not used in KotOR                      |
 | [MDL](MDL-MDX-File-Format)           | 0x07D2  | 3D [model](MDL-MDX-File-Format) file (see [MDL/MDX File Format](MDL-MDX-File-Format))                                   |
-| THG           | 0x07D3  | Unknown                                |
-| FNT           | 0x07D5  | Font file                                  |
-| LUA           | 0x07D7  | Lua script                            |
-| SLT           | 0x07D8  | Unknown                                |
+| THG           | 0x07D3  | Unknown  Not used in KotOR                                |
+| FNT           | 0x07D5  | Font file  Not used in KotOR                                  |
+| Lua           | 0x07D7  | Lua script  Not used in KotOR                             |
+| SLT           | 0x07D8  | Unknown  Not used in KotOR                               |
 | [NSS](NSS-File-Format)           | 0x07D9  | NWScript source code (see [NSS File Format](NSS-File-Format))                            |
 | [NCS](NCS-File-Format)           | 0x07DA  | Compiled NWScript bytecode (see [NCS File Format](NCS-File-Format))                     |
-| MOD           | 0x07DB  | Module archive ([ERF](ERF-File-Format) variant, see [ERF File Format](ERF-File-Format))                          |
-| are           | 0x07DC  | Area definition (see [GFF-ARE](GFF-ARE))                                 |
-| SET           | 0x07DD  | Unknown                                |
+| [MOD](ERF-File-Format)           | 0x07DB  | Module archive ([ERF](ERF-File-Format) variant, see [ERF File Format](ERF-File-Format))                          |
+| [ARE](GFF-File-Format#are-area)           | 0x07DC  | Area definition (see [GFF-ARE](GFF-ARE))                                 |
+| SET           | 0x07DD  | Unknown  Not used in KotOR                               |
 | [IFO](GFF-File-Format#ifo-module-info)           | 0x07DE  | Module information (see [GFF-IFO](GFF-IFO))                              |
-| BIC           | 0x07DF  | Character template                    |
+| BIC           | 0x07DF  | Character template   Not used in KotOR                  |
 | [WOK](BWM-File-Format)           | 0x07E0  | Walkmesh (see [BWM File Format](BWM-File-Format))                                |
 | [2DA](2DA-File-Format)           | 0x07E1  | Two-dimensional array data (see [2DA File Format](2DA-File-Format))                      |
 | [TLK](TLK-File-Format)           | 0x07E2  | Talk table (localized strings, see [TLK File Format](TLK-File-Format))                 |
 | [TXI](TXI-File-Format)           | 0x07E6  | [texture](TPC-File-Format) information (see [TXI File Format](TXI-File-Format))                             |
 | [GIT](GFF-File-Format#git-game-instance-template)           | 0x07E7  | [game instance template](GFF-File-Format#git-game-instance-template) (see [GFF-GIT](GFF-GIT))                          |
-| BTI           | 0x07E8  | Blueprint trigger                     |
+| BTI           | 0x07E8  | Blueprint trigger    Not used in KotOR                 |
 | [UTI](GFF-File-Format#uti-item)           | 0x07E9  | [item templates](GFF-File-Format#uti-item) (see [GFF-UTI](GFF-UTI))                                   |
-| BTC           | 0x07EA  | Blueprint creature                    |
+| BTC           | 0x07EA  | Blueprint creature    Not used in KotOR                |
 | [UTC](GFF-File-Format#utc-creature)           | 0x07EB  | [creature templates](GFF-File-Format#utc-creature) (see [GFF-UTC](GFF-UTC))                               |
 | [DLG](GFF-File-Format#dlg-dialogue)           | 0x07ED  | Dialogue/conversation (see [GFF-DLG](GFF-DLG))                           |
-| ITP           | 0x07EE  | ITP format (legacy name for [GFF](GFF-File-Format), see [GFF File Format](GFF-File-Format))                          |
-| BTT           | 0x07EF  | Blueprint trigger                     |
+| ITP           | 0x07EE  | ITP format (legacy name for [GFF](GFF-File-Format), see [GFF File Format](GFF-File-Format))  Not used in KotOR                         |
+| BTT           | 0x07EF  | Blueprint trigger    Not used in KotOR                 |
 | [UTT](GFF-File-Format#utt-trigger)           | 0x07F0  | Trigger template (see [GFF-UTT](GFF-UTT))                                |
 | DDS           | 0x07F1  | DirectDraw Surface texture (see [DDS File Format](DDS-File-Format))                                |
 | [UTS](GFF-File-Format#uts-sound)           | 0x07F3  | Sound template (see [GFF-UTS](GFF-UTS))                                |
@@ -117,38 +116,40 @@ KotOR uses hexadecimal resource type identifiers inherited from the Aurora engin
 | FAC           | 0x07F6  | Faction                               |
 | BTE           | 0x07F7  | Blueprint encounter                   |
 | [UTE](GFF-File-Format#ute-encounter)           | 0x07F8  | [encounter template](GFF-File-Format#ute-encounter) (see [GFF-UTE](GFF-UTE))                              |
-| BTD           | 0x07F9  | Blueprint door                        |
+| BTD           | 0x07F9  | Blueprint door    Not used in KotOR     |
 | [UTD](GFF-File-Format#utd-door)           | 0x07FA  | [door templates](GFF-File-Format#utd-door) (see [GFF-UTD](GFF-UTD))                                   |
-| BTP           | 0x07FB  | Blueprint placeable                   |
+| BTP           | 0x07FB  | Blueprint placeable   Not used in KotOR  |
 | [UTP](GFF-File-Format#utp-placeable)           | 0x07FC  | [placeable templates](GFF-File-Format#utp-placeable) (see [GFF-UTP](GFF-UTP))                              |
-| DTF           | 0x07FD  | Unknown                                |
-| GIC           | 0x07FE  | Unknown                                |
+| DTF           | 0x07FD  | Unknown  Not used in KotOR                                |
+| GIC           | 0x07FE  | Unknown  Not used in KotOR                                |
 | [GUI](GFF-File-Format#gui-graphical-user-interface)           | 0x07FF  | User interface definition (see [GFF-GUI](GFF-GUI))                       |
-| CSS           | 0x0800  | Unknown                                |
-| CCS           | 0x0801  | Unknown                                |
-| BTM           | 0x0802  | Blueprint merchant                    |
+| CSS           | 0x0800  | Unknown  Not used in KotOR                                |
+| CCS           | 0x0801  | Unknown  Not used in KotOR                                |
+| BTM           | 0x0802  | Blueprint merchant    Not used in KotOR                |
 | [UTM](GFF-File-Format#utm-merchant)           | 0x0803  | Merchant/store template (see [GFF-UTM](GFF-UTM))                         |
 | [DWK](BWM-File-Format)           | 0x0804  | Door walkmesh (see [BWM File Format](BWM-File-Format))                                |
 | [PWK](BWM-File-Format)           | 0x0805  | Placeable walkmesh (see [BWM File Format](BWM-File-Format))                                |
-| BTG           | 0x0806  | Blueprint trigger                     |
-| UTG           | 0x0807  | Unknown                                |
+| BTG           | 0x0806  | Blueprint trigger  Not used in KotOR       |
+| UTG           | 0x0807  | Unknown            Not used in KotOR   |
 | [JRL](GFF-File-Format#jrl-journal)           | 0x0808  | Journal/quest log (see [GFF-JRL](GFF-JRL))                               |
 | SAV           | 0x0809  | [save game archives](ERF-File-Format) (see [ERF File Format](ERF-File-Format))                               |
 | [UTW](GFF-File-Format#utw-waypoint)           | 0x080A  | [waypoint template](GFF-File-Format#utw-waypoint) (see [GFF-UTW](GFF-UTW))                               |
-| 4PC           | 0x080B  | Unknown                                |
-| [SSF](SSF-File-Format)           | 0x080C  | [sound set files](SSF-File-Format) (see [SSF File Format](SSF-File-Format))                                  |
+| 4PC           | 0x080B  | Unknown  Not used in KotOR          |
+| [SSF](SSF-File-Format)           | 0x080C  | [Sound Set Files](SSF-File-Format) (see [SSF File Format](SSF-File-Format))                                  |
 | HAK           | 0x080D  | Hak pak archive ([ERF](ERF-File-Format) variant)                                 |
 | NWM           | 0x080E  | Neverwinter Nights module ([ERF](ERF-File-Format) variant, not used in KotOR)                                 |
 | BIK           | 0x080F  | Bink video format                                |
-| PTM           | 0x0811  | Unknown                                |
-| PTT           | 0x0812  | Unknown                                |
+| PTM           | 0x0811  | Unknown       Not used in KotOR         |
+| PTT           | 0x0812  | Unknown       Not used in KotOR         |
 | [ERF](ERF-File-Format)           | 0x270D  | Encapsulated Resource File (see [ERF File Format](ERF-File-Format))                      |
 | [BIF](BIF-File-Format)           | 0x270E  | Bioware Index File (archive, see [BIF File Format](BIF-File-Format))                    |
 | [KEY](KEY-File-Format)           | 0x270F  | [KEY](KEY-File-Format) table ([BIF](BIF-File-Format) index, see [KEY File Format](KEY-File-Format))                          |
 
 #### Language IDs
 
-Localized strings use language identifiers:
+This language ID usually is represented as an enum. It is equivalent within all engines and all games, with some newer games specifying more formats but always staying backwards compatible with the others.
+
+**KotOR** (odyssey) specifically can only support 
 
 **Reference**: [`vendor/xoreos-docs/specs/torlack/basics.html`](https://github.com/th3w1zard1/xoreos-docs/blob/master/specs/torlack/basics.html) - Language ID definitions (NWN-focused but applicable to KotOR)
 

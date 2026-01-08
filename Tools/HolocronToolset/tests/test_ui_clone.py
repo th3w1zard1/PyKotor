@@ -65,7 +65,7 @@ def test_clone_module_dialog_all_widgets_interactions(qtbot: QtBot, installation
                 assert dialog.ui.moduleRootEdit.text() == current_data.root
 
     # Test filenameEdit - QLineEdit with prefix generation
-    # Note: filenameEdit has maxLength=16, so filenames longer than 16 chars will be truncated
+    # NOTE: filenameEdit has maxLength=16, so filenames longer than 16 chars will be truncated
     test_filenames = [
         ("new_module", "NEW"),
         ("a_module", "A_M"),
@@ -85,7 +85,7 @@ def test_clone_module_dialog_all_widgets_interactions(qtbot: QtBot, installation
         assert dialog.ui.prefixEdit.text() == expected_prefix
 
     # Test prefixEdit - QLineEdit (can be manually edited)
-    # Note: prefixEdit has maxLength=3, so prefixes longer than 3 chars will be truncated
+    # NOTE: prefixEdit has maxLength=3, so prefixes longer than 3 chars will be truncated
     dialog.ui.prefixEdit.setText("CUS")  # 3 chars (maxLength limit)
     assert dialog.ui.prefixEdit.text() == "CUS"
 

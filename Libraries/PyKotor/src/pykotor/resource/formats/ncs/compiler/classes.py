@@ -1152,7 +1152,7 @@ class IntExpression(Expression):
 
     def compile(self, ncs: NCS, root: CodeRoot, block: CodeBlock) -> DynamicDataType:  # noqa: A003
         ncs.instructions.append(NCSInstruction(NCSInstructionType.CONSTI, [self.value]))
-        # Note: Caller is responsible for updating temp_stack
+        # NOTE: Caller is responsible for updating temp_stack
         return DynamicDataType.INT
 
 
@@ -2359,7 +2359,7 @@ class ExpressionStatement(Statement):
         expression_type = self.expression.compile(ncs, root, block)
         temp_stack_after = block.temp_stack
         # Expression compiled, remove its result from stack and temp_stack tracking
-        # Note: Some expressions (like Assignment) already remove their result from the stack,
+        # NOTE: Some expressions (like Assignment) already remove their result from the stack,
         # so we only need to remove it from temp_stack if it's still on the stack.
         # We check temp_stack to see if the result is still tracked.
         # For void expressions, we still need to check if temp_stack increased (e.g., from nested function calls)

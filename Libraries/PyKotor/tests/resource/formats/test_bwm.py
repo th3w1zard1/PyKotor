@@ -2320,7 +2320,7 @@ class TestBWMPointInFace:
         
         # Point on edge (v1->v2)
         point = Vector3(5.0, 0.0, 0.0)
-        # Note: sign-based method may or may not include edges depending on implementation
+        # NOTE: sign-based method may or may not include edges depending on implementation
         # This test verifies the method works, not necessarily edge inclusion
         result = bwm.point_in_face_2d(point, face)
         assert isinstance(result, bool), "Should return boolean"
@@ -2559,7 +2559,7 @@ class TestBWMFaceFinding:
             centre = face.centre()
             
             found_face = wok.find_face_at(centre.x, centre.y)
-            # Note: May not find face if centroid is outside due to floating point precision
+            # NOTE: May not find face if centroid is outside due to floating point precision
             # This test verifies the method works, not necessarily that it finds every face
             if found_face is not None:
                 assert found_face.material.walkable(), "Found face should be walkable"

@@ -109,7 +109,7 @@ def test_metadata_preservation(sample_dlg: DLG, tmp_path: Path):
 
 def test_passage_metadata(sample_dlg: DLG, tmp_path: Path):
     """Test that passage metadata (position, size) is preserved."""
-    # Note: The comment field on DLGEntry is for story-level Twine metadata,
+    # NOTE: The comment field on DLGEntry is for story-level Twine metadata,
     # not passage-level position/size. Passage position/size defaults to (0,0) and (100,100).
     # This test verifies that default metadata is present.
     

@@ -1239,12 +1239,12 @@ class App(BaseApp):
                 assert self.progress_bar is not None, "Progress bar is None"
                 self.progress_bar["maximum"] = len(
                 [
-                    *installer.config().install_list,  # Note: TSLPatcher executes [InstallList] after [TLKList]
+                    *installer.config().install_list,  # NOTE: TSLPatcher executes [InstallList] after [TLKList]
                     *installer.get_tlk_patches(installer.config()),
                     *installer.config().patches_2da,
                     *installer.config().patches_gff,
                     *installer.config().patches_nss,
-                    *installer.config().patches_ncs,  # Note: TSLPatcher executes [CompileList] after [HACKList]
+                    *installer.config().patches_ncs,  # NOTE: TSLPatcher executes [CompileList] after [HACKList]
                     *installer.config().patches_ssf,
                 ]
             )

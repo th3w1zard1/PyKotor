@@ -168,7 +168,7 @@ class Restarter:
         launch_escaped = str(launch_app).replace("'", "''")
         
         # PowerShell 2.0 compatible script
-        # Note: Using older syntax for PS 2.0 compatibility:
+        # NOTE: Using older syntax for PS 2.0 compatibility:
         # - No -NoNewWindow (use -WindowStyle Hidden)
         # - No advanced parameter attributes
         # - Using Write-Host instead of Write-Output for immediate display

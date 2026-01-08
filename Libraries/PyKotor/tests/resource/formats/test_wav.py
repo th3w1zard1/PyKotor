@@ -579,7 +579,7 @@ class TestWAVObfuscation(unittest.TestCase):
         obfuscated = obfuscate_audio(clean_data, "VO")
         
         # Should add 20-byte header (to satisfy deobfuscation check at offset 16)
-        # Note: VO header magic number (1179011410) is "RIFF" in ASCII, so obfuscated data starts with "RIFF"
+        # NOTE: VO header magic number (1179011410) is "RIFF" in ASCII, so obfuscated data starts with "RIFF"
         self.assertEqual(len(obfuscated), len(clean_data) + 20)
         # Header starts with "RIFF" (magic number 1179011410)
         self.assertEqual(obfuscated[:4], b"RIFF")

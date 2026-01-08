@@ -2341,7 +2341,7 @@ class MDLBinaryReader:
                     bbox_min: Vector3 = reader.read_vector3()
                     bbox_max: Vector3 = reader.read_vector3()
                     # Read 4 int32s: left child offset, right child offset, face index, unknown
-                    # Note: Child offsets in the file are stored as (absolute_offset - 12), but since
+                    # NOTE: Child offsets in the file are stored as (absolute_offset - 12), but since
                     # BinaryReader has set_offset(+12) applied, these can be used directly.
                     left_child: int = reader.read_int32()
                     right_child: int = reader.read_int32()
@@ -2488,7 +2488,7 @@ class MDLBinaryReader:
                 node.emitter.render_order = int(bin_node.emitter.render_order)
                 node.emitter.frame_blender = int(bin_node.emitter.frame_blending)
                 node.emitter.depth_texture = bin_node.emitter.depth_texture
-                # Note: bin_node.emitter.unknown1 (index 18) is read but not used in MDLEmitter
+                # NOTE: bin_node.emitter.unknown1 (index 18) is read but not used in MDLEmitter
                 # MDLOps stores it as m_bUnknown1 but doesn't expose it (line 1980)
                 node.emitter.flags = bin_node.emitter.flags
                 # MDLOps parses flags into individual booleans (lines 1983-1996), but we store as flags enum
@@ -3565,7 +3565,7 @@ class MDLBinaryWriter:
         # We just need to preserve the flag from the original binary
         if mdl_node.mesh.tangent_space:
             bin_node.trimesh.mdx_data_bitmap |= _MDXDataFlags.TANGENT_SPACE
-            # Note: mdx_tangent_offset is not used when only the flag is set (tangent data is calculated, not stored)
+            # NOTE: mdx_tangent_offset is not used when only the flag is set (tangent data is calculated, not stored)
 
         # Skin nodes store per-vertex bone indices + weights (4 floats each) in MDX.
         if mdl_node.skin is not None and bin_node.skin is not None:

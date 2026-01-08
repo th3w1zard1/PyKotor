@@ -148,7 +148,7 @@ class TestConfigWidget(QWidget):
         }
         
         # Parse mock values - create proper mock functions
-        # Note: Lambdas need to capture values, so we use default args to avoid closure issues
+        # NOTE: Lambdas need to capture values, so we use default args to avoid closure issues
         try:
             attacker_val = int(self.last_attacker_edit.text() or "0")
             config["mocks"]["GetLastAttacker"] = lambda o=1, val=attacker_val: val

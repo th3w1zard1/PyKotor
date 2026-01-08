@@ -253,7 +253,7 @@ class TestPyFileSystemModel:
         
         mb = QApplication.instance().style().standardIcon(QStyle.StandardPixmap.SP_MessageBoxCritical).pixmap(50, 50)
         home_icon = my_model.fileIcon(my_model.index(QDir.homePath(), 0)).pixmap(50, 50)
-        # Note: Icon comparison may need adjustment based on Qt version
+        # NOTE: Icon comparison may need adjustment based on Qt version
         # For now, just verify it's not null
         assert not home_icon.isNull()
     

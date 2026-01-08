@@ -341,7 +341,7 @@ class ApplicationSettings(Settings):
             "AA_ShareOpenGLContexts": Qt.ApplicationAttribute.AA_ShareOpenGLContexts,
         }
 
-    # Note: if you see hasattr, means it is only available on certain apis (i.e. pyqt5 vs pyqt6 vs pyside6 vs pyside2)
+    # NOTE: if you see hasattr, means it is only available on certain apis (i.e. pyqt5 vs pyqt6 vs pyside6 vs pyside2)
     AA_ImmediateWidgetCreation: SettingsProperty[bool] = Settings.addSetting(
         "AA_ImmediateWidgetCreation",
         (

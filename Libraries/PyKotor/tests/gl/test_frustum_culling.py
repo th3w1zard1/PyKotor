@@ -436,7 +436,7 @@ class TestFrustumIntegration(unittest.TestCase):
         
         for center, radius, expected_visible, description in test_objects:
             result = self.frustum.sphere_in_frustum(center, radius)
-            # Note: Due to camera orientation complexity, we just verify the function runs
+            # NOTE: Due to camera orientation complexity, we just verify the function runs
             # and returns a boolean. Exact culling depends on matrix calculations.
             self.assertIsInstance(
                 result, bool,

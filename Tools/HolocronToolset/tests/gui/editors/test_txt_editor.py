@@ -96,7 +96,7 @@ def test_txt_editor_multiline_text(qtbot, installation: HTInstallation):
     # Build and verify
     data, _ = editor.build()
     decoded = decode_bytes_with_fallbacks(data)
-    # Note: line endings may be normalized, so we check content
+    # NOTE: line endings may be normalized, so we check content
     assert "Line 1" in decoded
     assert "Line 2" in decoded
     assert "Line 3" in decoded
@@ -246,7 +246,7 @@ def test_txt_editor_windows1252_fallback(qtbot, installation: HTInstallation):
     editor.new()
     
     # Text that might need fallback encoding
-    # Note: The encoding logic tries utf-8 first, then windows-1252, then latin-1
+    # NOTE: The encoding logic tries utf-8 first, then windows-1252, then latin-1
     text = "Test with some special chars: éñ"
     editor.ui.textEdit.setPlainText(text)
     
@@ -277,7 +277,7 @@ def test_txt_editor_save_load_roundtrip_identity(qtbot, installation: HTInstalla
     editor.load(Path("test.txt"), "test", ResourceType.TXT, data1)
     
     # Verify content matches
-    # Note: build() normalizes line endings to os.linesep, so we need to normalize for comparison
+    # NOTE: build() normalizes line endings to os.linesep, so we need to normalize for comparison
     loaded_text = editor.ui.textEdit.toPlainText()
     decoded_data = decode_bytes_with_fallbacks(data1)
     # Normalize line endings for comparison (build() converts \n to os.linesep)
@@ -354,7 +354,7 @@ def test_txt_editor_line_ending_normalization(qtbot, installation: HTInstallatio
     editor.new()
     
     # Set text with mixed line endings
-    # Note: QPlainTextEdit uses \n internally
+    # NOTE: QPlainTextEdit uses \n internally
     text = "Line 1\nLine 2\r\nLine 3\rLine 4"
     editor.ui.textEdit.setPlainText(text)
     
@@ -498,7 +498,7 @@ def test_txt_editor_control_characters(qtbot, installation: HTInstallation):
     editor.new()
     
     # Set text with control characters (ASCII 0-31, except common ones)
-    # Note: Some control chars may not be editable in QPlainTextEdit
+    # NOTE: Some control chars may not be editable in QPlainTextEdit
     text = "Normal text"
     editor.ui.textEdit.setPlainText(text)
     

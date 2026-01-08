@@ -127,7 +127,7 @@ class SceneBase:
             SearchLocation.OVERRIDE,
             SearchLocation.TEXTURES_GUI,
             SearchLocation.TEXTURES_TPA,
-# Note: only include tpa, don't include tpb/tpc, same as tpa but worse quality.
+# NOTE: only include tpa, don't include tpb/tpc, same as tpa but worse quality.
 # DO NOT uncomment these.
 #            SearchLocation.TEXTURES_TPB,
 #            SearchLocation.TEXTURES_TPC,
@@ -327,7 +327,7 @@ class SceneBase:
             RobustLogger().debug("Scene cleanup: shutdown async loader")
         except Exception as e:  # noqa: BLE001, S110
             # Log but don't raise exceptions in __del__
-            # Note: With strict type checking, async_loader should always exist after __init__
+            # NOTE: With strict type checking, async_loader should always exist after __init__
             RobustLogger().warning(f"Exception during scene cleanup: {e}", exc_info=True)
 
     def set_lyt(self, lyt: LYT):

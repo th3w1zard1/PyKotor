@@ -147,7 +147,7 @@ def _extract_from_nested_capsules(
 
             # Determine capsule type and read resource list
             # ERF-based formats: ERF, MOD, SAV, HAK (all use similar structure)
-            # Note: SAV uses "MOD " signature, HAK may use "ERF " or "HAK "
+            # NOTE: SAV uses "MOD " signature, HAK may use "ERF " or "HAK "
             erf_signatures = set(member.value for member in ERFType)
             erf_signatures.update({"SAV ", "HAK "})  # Add explicit signatures that might be used
             
@@ -558,7 +558,7 @@ class FileResource:
                 return file.read(self._size)
 
         # We have a nested capsule path - extract through the nesting levels
-        # Note: We don't use self._offset/self._size here because the extraction
+        # NOTE: We don't use self._offset/self._size here because the extraction
         # function re-parses the capsule headers and gets fresh offset/size values.
         # The stored offset/size would be redundant (same values from the same source).
         return _extract_from_nested_capsules(real_path, nested_parts)

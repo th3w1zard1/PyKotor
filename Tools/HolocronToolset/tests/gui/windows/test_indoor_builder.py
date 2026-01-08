@@ -1878,7 +1878,7 @@ class TestKeyboardInteractions:
         QApplication.processEvents()
 
         # Room should be deleted (via undo command)
-        # Note: actual deletion depends on key binding implementation
+        # NOTE: actual deletion depends on key binding implementation
 
         builder.close()
 
@@ -6947,7 +6947,7 @@ class TestIndoorMapIOValidation:
         assert abs(loaded_map.lighting.g - 0.8) < 0.001, "Lighting G should match"
         assert abs(loaded_map.lighting.b - 0.9) < 0.001, "Lighting B should match"
         assert loaded_map.skybox == "skybox_tatooine", "Skybox should match"
-        # Note: warp_point is not saved in indoor format, only used during .mod build
+        # NOTE: warp_point is not saved in indoor format, only used during .mod build
 
         # Verify rooms
         assert len(loaded_map.rooms) == 3, "Should have 3 rooms"
@@ -8858,7 +8858,7 @@ class TestModuleKitMouseDragAndConnect:
             outside_screen_y = max(10, min(outside_screen_y, renderer.height() - 10))
 
             # Move cursor to outside position
-            # Note: mouseMove will update cursor_point to world coords of mouse position
+            # NOTE: mouseMove will update cursor_point to world coords of mouse position
             qtbot.mouseMove(renderer, pos=QPoint(outside_screen_x, outside_screen_y))
             qtbot.wait(50)
             QApplication.processEvents()
@@ -8905,7 +8905,7 @@ class TestModuleKitMouseDragAndConnect:
             within_screen_y = max(10, min(within_screen_y, renderer.height() - 10))
 
             # Move cursor to within-threshold position
-            # Note: mouseMove will update cursor_point, and snap logic will run
+            # NOTE: mouseMove will update cursor_point, and snap logic will run
             qtbot.mouseMove(renderer, pos=QPoint(within_screen_x, within_screen_y))
             qtbot.wait(50)
             QApplication.processEvents()
@@ -9371,7 +9371,7 @@ class TestModuleKitMouseDragAndConnect:
         world_max_y = room_center_world.y + bwm_max_y
         
         # Transform to screen coordinates
-        top_left_screen = renderer.to_render_coords(world_min_x, world_max_y)  # Note: Y is flipped
+        top_left_screen = renderer.to_render_coords(world_min_x, world_max_y)  # NOTE: Y is flipped
         bottom_right_screen = renderer.to_render_coords(world_max_x, world_min_y)
         
         # Ensure coordinates are within image bounds and properly ordered
@@ -9501,7 +9501,7 @@ class TestModuleKitMouseDragAndConnect:
         QApplication.processEvents()
 
         # Verify snap indicator is set (snap should occur within threshold)
-        # Note: This may or may not snap depending on implementation, but should not crash
+        # NOTE: This may or may not snap depending on implementation, but should not crash
         assert renderer.snap_to_hooks is True, "Snap to hooks should be enabled"
 
         builder.close()

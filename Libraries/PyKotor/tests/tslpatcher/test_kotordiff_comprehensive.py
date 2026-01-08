@@ -462,7 +462,7 @@ class TestKotorDiffFullExecution(unittest.TestCase):
                 self.fail("Vanilla path not initialized")
 
             # Run KotorDiff for verification
-            # Note: We're diffing test_install_path (which has mod installed) to path1_vanilla
+            # NOTE: We're diffing test_install_path (which has mod installed) to path1_vanilla
             # If installation worked correctly, this diff should show the same changes as the original diff
             print("[TEST] Running KotorDiff to diff installed test installation to path1 (vanilla)...")
             verify_result = run_application(

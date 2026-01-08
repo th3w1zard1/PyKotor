@@ -86,7 +86,7 @@ class DeleteRoomsCommand(QUndoCommand):
         self.indoor_map.rebuild_room_connections()
         if self._invalidate_cb:
             self._invalidate_cb(self.rooms)
-        # Note: Selected hook validation should be handled by the renderer
+        # NOTE: Selected hook validation should be handled by the renderer
 
 
 class MoveRoomsCommand(QUndoCommand):

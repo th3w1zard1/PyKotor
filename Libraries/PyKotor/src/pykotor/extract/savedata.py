@@ -328,7 +328,7 @@ class SaveInfo:
         self.portrait2: ResRef = ResRef.from_blank()  # PORTRAIT2 (ResRef) - Third portrait
                                                       # Second companion (if player is leader)
                                                       # Example: "po_mission", "po_hk47"
-                                                      # Note: If NPC is leader, order rotates
+                                                      # NOTE: If NPC is leader, order rotates
 
         # Xbox Live content (Xbox version only)
         # Vendor ref: KotOR.js handles these for Xbox compatibility
@@ -633,7 +633,7 @@ class PartyTable:
         
         # Party composition
         self.pt_members: list[PartyMemberEntry] = []  # PT_MEMBERS - Current party members
-        # Note: pt_num_members is now a property that returns len(self.pt_members)
+        # NOTE: pt_num_members is now a property that returns len(self.pt_members)
         self.pt_avail_npcs: list[AvailableNPCEntry] = []  # PT_AVAIL_NPCS - Available NPCs list
         self.pt_controlled_npc: int = -1  # PT_CONTROLLED_NPC - Currently controlled NPC index
         self.pt_aistate: int = 0  # PT_AISTATE - AI state
@@ -1194,13 +1194,13 @@ class GlobalVars:
                     
                     # Skip 6 padding floats (24 bytes) - Floats 6-11
                     # Vendor ref: KSE/Functions/Globals.pm line 159: pack('f7', 0, 0, 0, 0, 0, 0, 0)
-                    # Note: KSE packs 7 zeros (ori_z + 6 padding), we've already read ori_z
+                    # NOTE: KSE packs 7 zeros (ori_z + 6 padding), we've already read ori_z
                     reader.skip(24)
                     
                     name = category.get_string("Name")
                     
                     # Store as Vector4 (x, y, z, ori_x)
-                    # Note: ori_y and ori_z are not stored in Vector4 (which only has x,y,z,w)
+                    # NOTE: ori_y and ori_z are not stored in Vector4 (which only has x,y,z,w)
                     # The engine stores orientation as cos/sin pair (ori_x, ori_y) for 2D yaw
                     # We preserve ori_x in the w component; ori_y/ori_z are reconstructed on save
                     # This matches the engine's 2D ground-level orientation system
@@ -2118,7 +2118,7 @@ class SaveNestedCapsule:
                 # Add new version
                 cached_module_erf.set_data(new_resource.resname(), new_resource.restype(), new_resource.data() or b"")
         
-        # Note: Module IFO and dynamic resources are intentionally NOT updated
+        # NOTE: Module IFO and dynamic resources are intentionally NOT updated
         # to preserve save state (creature positions, inventory states, etc.)
 
 class SaveFolderEntry:
@@ -2406,7 +2406,7 @@ class SaveFolderEntry:
         
         # Write PARTYTABLE.res to disk
         # Vendor ref: KSE/Functions/Saves.pm SaveSave() line ~480
-        # Note: PT_NUM_MEMBERS is now a property that automatically returns len(pt_members)
+        # NOTE: PT_NUM_MEMBERS is now a property that automatically returns len(pt_members)
         self.partytable.save()
         logger.debug(f"  ✓ Written to: {self.partytable.party_table_path}")
         

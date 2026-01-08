@@ -395,7 +395,7 @@ class PyFileInfoGatherer(QThread):
                 if listener.canConvert(QObject):
                     driveListener = listener.value(QObject)
                     if driveListener:
-                        # Note: Old-style signals not available in PyQt6, would need workaround
+                        # NOTE: Old-style signals not available in PyQt6, would need workaround
                         # driveListener.driveAdded.connect(self.driveAdded)
                         # driveListener.driveRemoved.connect(self.driveRemoved)
                         pass

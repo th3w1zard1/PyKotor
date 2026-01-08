@@ -721,7 +721,7 @@ def construct_utc(
     # vendor/reone/src/libs/resource/parser/gff/utc.cpp:151-153 (only parses SkillList items, doesn't limit count)
     # Discrepancy: Some KotOR 1 UTC files contain more than 8 skill entries (up to 20)
     # PyKotor preserves extra skills in _extra_unimplemented_skills for round-trip compatibility
-    # Note: reone and Kotor.NET only parse the first 8 skills, ignoring extras
+    # NOTE: reone and Kotor.NET only parse the first 8 skills, ignoring extras
     if len(skill_list_acquired._structs) > 8:
         utc._extra_unimplemented_skills = [skill_struct.acquire("Rank", 0) for skill_struct in skill_list_acquired._structs[8:]]
 

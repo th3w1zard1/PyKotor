@@ -170,7 +170,7 @@ def parse_constant_from_tokens(tokens: list, start_idx: int, lines: list[str]) -
         value_token = tokens[start_idx + 3]
 
         # Extract value based on type
-        # Note: lexer converts tokens to expression objects (StringExpression, IntExpression, FloatExpression)
+        # NOTE: lexer converts tokens to expression objects (StringExpression, IntExpression, FloatExpression)
         if datatype == "string":
             if value_token.type == "STRING_VALUE":
                 # StringExpression.value is the string without quotes

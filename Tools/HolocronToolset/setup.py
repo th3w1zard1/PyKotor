@@ -59,7 +59,7 @@ class SDistWithWiki(sdist):
             print(f"Copied wiki directory from {wiki_src} to {wiki_dest} for sdist")
 
         # Run standard sdist (processes MANIFEST.in, which will now find src/toolset/wiki)
-        # Note: make_release_tree() is NOT overridden because wiki is already included
+        # NOTE: make_release_tree() is NOT overridden because wiki is already included
         # via MANIFEST.in from src/toolset/wiki. Overriding it would cause duplication
         # (wiki would appear both in src/toolset/wiki/ and wiki/ in the distribution).
         super().run()

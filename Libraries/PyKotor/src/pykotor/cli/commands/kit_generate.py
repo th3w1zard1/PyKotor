@@ -22,11 +22,49 @@ LEVEL_MAP = {
 
 
 def cmd_kit_generate(args: Namespace, logger: RobustLogger) -> int:
-    """Run kit extraction in headless mode.
+    """Run kit extraction in headless mode or launch GUI.
 
-    Delegates to :func:`kotorcli.kit_generator.generate_kit` which wraps
+    Delegates to :func:`pykotor.cli.kit_generator.generate_kit` which wraps
     ``pykotor.tools.kit.extract_kit`` (see `Libraries/PyKotor/src/pykotor/tools/kit.py`).
+
+    If required arguments are missing or --gui is specified, launches the GUI from Tools/KitGenerator.
     """
+    # Check if we should launch GUI
+    has_required_args = bool(args.installation and args.module and args.output)
+    should_launch_gui = getattr(args, "gui", False) or not has_required_args
+
+    if should_launch_gui:
+        try:
+            # Import from Tools/KitGenerator
+            import sys
+            from pathlib import Path
+
+            # Add Tools/KitGenerator/src to path
+            cli_file = Path(__file__).resolve()
+            # Go up: commands -> cli -> pykotor -> src -> PyKotor -> Libraries -> repo root
+            repo_root = cli_file.parents[6]
+            kitgenerator_src = repo_root / "Tools" / "KitGenerator" / "src"
+            pykotor_src = repo_root / "Libraries" / "PyKotor" / "src"
+            
+            # Add both paths for imports
+            if str(kitgenerator_src) not in sys.path:
+                sys.path.insert(0, str(kitgenerator_src))
+            if str(pykotor_src) not in sys.path:
+                sys.path.insert(0, str(pykotor_src))
+
+            from kitgenerator.gui import KitGeneratorApp  # noqa: PLC0415
+
+            app = KitGeneratorApp()
+            app.root.mainloop()
+            return 0
+        except Exception as exc:
+            logger.warning("GUI not available: %s", exc)
+            if not has_required_args:
+                logger.error("GUI unavailable and required arguments missing. Use --installation, --module, and --output for headless mode.")
+                return 1
+            # Fall through to headless mode if GUI fails but we have args
+
+    # Headless mode
     if args.log_level:
         logger.setLevel(LEVEL_MAP.get(args.log_level, logging.INFO))
 

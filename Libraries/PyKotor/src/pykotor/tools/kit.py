@@ -165,7 +165,7 @@ def _get_component_name_mapping(kit_id: str | None, model_names: list[str]) -> d
     if kit_id == "sithbase":
         # Map tar_m09aa model names to expected component IDs
         # Based on test expectations: armory_1, barracks_1, control_1, control_2, hall_1, hall_2
-        # Note: The actual mapping may need adjustment based on the module's room structure
+        # NOTE: The actual mapping may need adjustment based on the module's room structure
         # For now, we map the first few models to the expected names
         # The test expects these specific components to exist, so we prioritize them
         sithbase_mapping = {

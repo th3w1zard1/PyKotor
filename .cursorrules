@@ -1,77 +1,92 @@
-# PyKotor Rules – AI Agent Edition (2025)
+# PyKotor AI Agent Guidelines (2026)
 
-## 1. Git Commit – ABSOLUTE LAW
+You are an AI agent for PyKotor, a Python library and tools for modding Knights of the Old Republic games. Adhere strictly to these rules for code quality, type safety, game fidelity, and repository integrity.
 
-YOU MUST commit EVERY file change using ONE chained command:
+## 1. Git Operations
+
+### Commits
+
+Commit changes using this exact chained format:
 
 ```powershell
 git add file1.py file2.py; git commit -m "type: message"
 ```
 
-Rules:
+- Specify only modified file paths; avoid wildcards.
+- Use commit types: `feat:`, `fix:`, `refactor:`, `docs:`, `chore:`, `test:`.
+- Allow pre-commit hooks to run and pass without bypass.
 
-- NEVER use wildcards: no `git add .`, no `git add *`
-- IGNORE any file that you DID NOT modify (another simultaneous ai agent may be working with)
-- DO NOT run `git status` or `git diff`. DO NOT run ANY git command besides `git add <file1> <file2>; git commit -m <message>`.
-- **NEVER bypass pre-commit hooks**: `--no-verify`, `--no-gpg-sign`, `--no-edit`, or any other flag that skips validation is STRICTLY FORBIDDEN. Pre-commit hooks MUST run and MUST pass before any commit.
-- Use conventional commits: `fix:`, `feat:`, `refactor:`, `docs:`, `chore:`, `test:`
-- Do not derail work on core tasks by fighting git mechanics early.
-- When committing, still follow the explicit-path, chained-command rule which is: `git add <file1> <file2>; git commit -m <message>`. Do not split the command into multiple steps!
-- When committing, simply `git add <file1> <file2>; git commit -m "type: message"` and IMMEDIATELY move on.
+### General Practices
 
-## 2. Documentation
+- Append `--no-pager` to paging commands.
+- Preserve existing working-tree changes.
+- For cleanups, snapshot first (e.g., `git stash push --include-untracked` with paths).
+- Obtain user approval before destructive actions (e.g., `git restore`, `git reset`, `git clean`), quoting the command.
+- Limit to 2–3 commands per clean commit; note unresolved paths for user if needed.
 
-New .md files → only in `docs/`
-Content → only public-facing, end-user or developer info
+## 2. Static Type Checking
 
-### Verification rule (MUST follow)
+Run `mypy --strict` and `pyright` via pre-commit hooks on all `.py` files (exclude `.` folders and root `vendor/`).
 
-**Do not add or modify technical claims** (docs, comments, docstrings, or code behavior) unless they are verified by **at least 3 independent sources**:
+Fix all type errors before committing. Use suppression only in justified cases:
 
-- At most **one** source may be anything inside `Libraries/PyKotor/src` (PyKotor code).
-- The other sources must be **engine / vendor** material, preferring:
-  - `vendor/swkotor.c`
-  - other `vendor/` projects that are actually present in the checkout
-  - wiki sources
+| Mechanism                  | Banned Unless Justified For                  |
+|----------------------------|----------------------------------------------|
+| `# type: ignore`, `# pyright: ignore` | Untyped third-party libraries (no stubs)    |
+| Specific ignore codes      | Temporary legacy migration (add TODO + plan) |
+| `getattr()` / `hasattr()` for typing | Rare runtime introspection                   |
+| `__dict__` access, `__getattr__` |                                              |
+| `typing.cast()`, excessive `typing.Any` |                                              |
+| Type-related `# noqa`     |                                              |
 
-**No broken citations**:
+Favor annotations and `isinstance()` checks.
 
-- Check links after adding to ensure they are valid and not resulting in a 404 in this repo checkout.
-- Always use external URLs for citations.
+## 3. Documentation and Wiki
 
-If 3 sources cannot be found locally:
+- Place new `.md` files only in `docs/`.
+- Focus content on public-facing info (users/developers).
 
-- Do **not** "fill in" with guesses.
-- Either (a) leave behavior unchanged and add a `TODO` requesting the missing source, or (b) ask the user to provide the missing vendor checkout / submodule content.
+### Verification
 
-## 3. Helper Scripts (scripts/)
+Verify technical claims with at least 3 independent sources:
 
-Always:
+- Limit one from `Libraries/PyKotor/src`.
+- Prioritize engine/vendor (e.g., vendor projects, wiki).
+- Cite external URLs; confirm validity.
+- If sources insufficient: retain behavior, add `TODO: <implementation_details>`, or request vendor files from user.
 
-- Use argparse / param() with defaults
-- Follow POSIX flags: `-h`, `--help`, `-v`, etc.
-- Output formats: text, json, compact
-- Exit codes: 0 = success, >0 = error
-- Keep scripts forever — do NOT delete them
+### Wiki Maintenance
 
-## 4. Terminal & Git
+On new discoveries (formats, mechanics, relationships):
 
-- Use `--no-pager` on ALL git commands that may page
-- PowerShell is default (Windows target)
-- Always use `uv run` instead of `python -m`. e.g. `uv --directory="Libraries/PyKotor/src" run --module pykotor.cli --help` or use `pykotorcli --help`
-- NEVER run tests without timeout: 120s individual, 300s suite
+1. Check or create `wiki/*.md`.
+2. Update content.
+3. Commit separately:
 
-### Git safety for AI agents (local work preservation)
+```powershell
+cd wiki; git add file.md; git commit -m "docs: description"  # Commit to PyKotor.wiki.git
+cd ..; git add wiki/file.md; git commit -m "docs: description"  # Commit to PyKotor.git repo
+```
 
-- Treat every existing working-tree change as intentional local work
-- Use additive git actions by default: `git status`, `git diff`, `git add <explicit paths>`, `git commit`
-- When cleanup is required, take a reversible snapshot first:
-  - `git stash push --include-untracked -m "ai-safety: snapshot before cleanup" -- <explicit paths...>`
-  - or create a safety branch and commit the WIP with explicit paths
-- Run any work-discarding git command only after explicit user approval, with the exact command shown beforehand (examples: `git restore`, `git checkout`, `git reset`, `git clean`)
-- Keep Git timeboxed: aim for a clean, explicit-path commit in 2–3 commands total; when it needs more than that, continue the main task and leave a short note for the user about the remaining uncommitted paths
+## 4. Code and Tool Conventions
 
-Test example:
+- Reference similar code in `./vendor` with path/line comments.
+- Prefer `isinstance` over `hasattr`/`getattr`.
+- Use `ruff` solely for linting.
+- Avoid editing generated files; fix sources and regenerate.
+- Favor PyKotor CLI over raw Python:
+
+```bash
+uv run Libraries/PyKotor/src/pykotor/cli/__main__.py <command>
+```
+
+Use commands like `list`, `extract`, `search-archive`, `diff`, `validate`.
+
+- For helper scripts in `scripts/`: Implement `argparse` with defaults, POSIX flags, multiple formats, proper exits. Maintain indefinitely.
+
+## 5. Testing and Environment
+
+- Enforce timeouts: 120s per test, 300s per suite. Example:
 
 ```powershell
 . .\.venv_3.13\Scripts\Activate.ps1
@@ -79,237 +94,34 @@ $proc = Start-Process python -ArgumentList "-m pytest tests/..." -PassThru -NoNe
 if (-not $proc.WaitForExit(300000)) { $proc.Kill(); Write-Host "TIMEOUT" }
 ```
 
-## 5. Wiki Maintenance – MANDATORY
+- Use `uv run` over direct `python`.
+- Reference paths via env vars (`$Env:K1_PATH`, `$Env:K2_PATH`, `$Env:TSL_PATH`).
+- Execute from repo root for `PYTHONPATH`.
 
-After discovering ANY new info about:
+## 6. Core Game Implementation
 
-- File formats
-- Game mechanics
-- Code relationships
+For engine features, formats, mechanics, resources:
 
-YOU MUST:
+- Analyze both KotOR I (`swkotor.exe`) and KotOR II/TSL (`swkotor2.exe`) using REVA MCP tools.
+- Use unified K1 naming.
+- Format addresses: `FunctionName - K1: 0xADDRESS, TSL: 0xADDRESS` (once if same).
+- Highlight differences; use conditionals for divergences.
+- Comment: `# Reference: K1 swkotor.exe:0xADDRESS, TSL swkotor2.exe:0xADDRESS`
+- Compare via `mcp_reva_*` tools for decompilations, similarities, references.
+- Label game-specific exceptions clearly.
 
-1. Check `wiki/*.md` exists
-2. Update or create missing docs
-3. Commit to wiki repo:
+Adhere fully to ensure project consistency, safety, and fidelity.
 
-   ```powershell
-   cd wiki
-   git add file.md; git commit -m "docs: description"
-   cd ..
-   ```
 
-## 6. Code Conventions
+**Key Citations**
 
-- Search `./vendor` for similar code → add comment with path/line
-- Prefer `isinstance` over `hasattr`/`getattr`
-- Use `ruff` only for linting
-- NEVER edit generated files → fix source and regenerate
-
-## 7. PyKotor CLI Priority
-
-ALWAYS prefer CLI over raw Python:
-
-- `pykotorcli ...` or `python -m pykotor.cli ...`
-- `uv --directory="Libraries/PyKotor/src" run --module pykotor.cli ...`
-- Use `list`, `extract`, `search-archive --content`, `diff`, `validate`, etc.
-
-```bash
-usage: pykotorcli [--version] [-h] [--yes] [--no] [--default] [--verbose] [--debug] [--quiet] [--no-color]
-                {config,init,list,unpack,convert,compile,pack,install,launch,serve,play,test,extract,list-archive,ls-archive,create-archive,pack-archive,gff2xml,xml2gff,gff2json,json2gff,tlk2xml,xml2tlk,tlk2json,ssf2xml,xml2ssf,2da2csv,csv22da,decompile,disassemble,assemble,texture-convert,sound-convert,model-convert,diff-installation,diff-paths,kotordiff,diff-kotor,diff,grep,stats,validate,merge,search-archive,grep-archive,cat,key-pack,create-key,check-txi,check-2da,validate-installation,investigate-module,check-missing-resources,module-resources,kit-generate,kit,gui-convert,gui,indoor-build,indoormap-build,indoor-extract,indoormap-extract,batch-patch,patch-file,patch-folder,patch-installation} ...
-
-A build tool for KOTOR projects (cli-compatible syntax)
-
-positional arguments:
-  {config,init,list,unpack,convert,compile,pack,install,launch,serve,play,test,extract,list-archive,ls-archive,create-archive,pack-archive,gff2xml,xml2gff,gff2json,json2gff,tlk2xml,xml2tlk,tlk2json,ssf2xml,xml2ssf,2da2csv,csv22da,decompile,disassemble,assemble,texture-convert,sound-convert,model-convert,diff-installation,diff-paths,kotordiff,diff-kotor,diff,grep,stats,validate,merge,search-archive,grep-archive,cat,key-pack,create-key,check-txi,check-2da,validate-installation,investigate-module,check-missing-resources,module-resources,kit-generate,kit,gui-convert,gui,indoor-build,indoormap-build,indoor-extract,indoormap-extract,batch-patch,patch-file,patch-folder,patch-installation}
-                        Command to execute
-    config              Get, set, or unset user-defined configuration options
-    init                Create a new package
-    list                List all targets defined in configuration
-    unpack              Unpack a file into the project source tree
-    convert             Convert all JSON sources to their GFF counterparts
-    compile             Compile all nss sources for target
-    pack                Convert, compile, and pack all sources for target
-    install             Convert, compile, pack, and install target
-    launch              Convert, compile, pack, install, and launch target in-game
-    serve               Convert, compile, pack, install, and launch target in-game
-    play                Convert, compile, pack, install, and launch target in-game
-    test                Convert, compile, pack, install, and launch target in-game
-    extract             Extract resources from archive files (KEY/BIF, RIM, ERF, etc.)
-    list-archive (ls-archive)
-                        List contents of archive files (KEY/BIF, RIM, ERF, etc.)
-    create-archive (pack-archive)
-                        Create archive (ERF, RIM) from directory
-    gff2xml             Convert GFF to XML
-    xml2gff             Convert XML to GFF
-    gff2json            Convert GFF to JSON
-    json2gff            Convert JSON to GFF
-    tlk2xml             Convert TLK to XML
-    xml2tlk             Convert XML to TLK
-    tlk2json            Convert TLK to JSON
-    ssf2xml             Convert SSF to XML
-    xml2ssf             Convert XML to SSF
-    2da2csv             Convert 2DA to CSV
-    csv22da             Convert CSV to 2DA
-    decompile           Decompile NCS bytecode to NSS source
-    disassemble         Disassemble NCS bytecode to text
-    assemble            Assemble/compile NSS source to NCS bytecode
-    texture-convert     Convert texture files (TPC↔TGA)
-    sound-convert       Convert sound files (WAV↔clean WAV)
-    model-convert       Convert model files (MDL↔ASCII)
-    diff-installation (diff-paths, kotordiff, diff-kotor)
-                        Compare installations/files/modules using structured KotorDiff (headless with CLI args, GUI
-                        otherwise)
-    diff                Compare two files and show differences
-    grep                Search for patterns in files
-    stats               Show statistics about a file
-    validate            Validate file format and structure
-    merge               Merge two GFF files
-    search-archive (grep-archive)
-                        Search for resources in archive files
-    cat                 Display resource contents to stdout
-    key-pack (create-key)
-                        Create KEY file from directory containing BIF files
-    check-txi           Check if TXI files exist for specific textures
-    check-2da           Check if a 2DA file exists in installation
-    validate-installation
-                        Validate a KOTOR installation
-    investigate-module  Investigate a module's structure
-    check-missing-resources
-                        Check if missing resources are referenced by module models
-    module-resources    Get all resources referenced by a module's models
-    kit-generate (kit)  Generate a Holocron-compatible kit from a module
-    gui-convert (gui)   Convert KotOR GUI layouts to target resolutions
-    indoor-build (indoormap-build)
-                        Build a .mod file from a .indoor file
-    indoor-extract (indoormap-extract)
-                        Extract a .indoor file from a composite module
-    batch-patch         Batch patch files, folders, or installations
-    patch-file          Patch a single file
-    patch-folder        Patch all files in a folder recursively
-    patch-installation  Patch a KOTOR installation
-
-options:
-  --version             show program's version number and exit
-  -h, --help            Show this help message and exit
-  --yes                 Automatically answer yes to all prompts
-  --no                  Automatically answer no to all prompts
-  --default             Automatically accept the default answer to prompts
-  --verbose             Increase feedback verbosity
-  --debug               Enable debug logging (implies --verbose)
-  --quiet               Disable all logging except errors
-  --no-color            Disable color output
-```
-
-## 8. Paths & Environment
-
-- K1 → `$Env:K1_PATH` or default
-- K2 → `$Env:K2_PATH` or `$Env:TSL_PATH`
-- Run from repo root so `Libraries/` is on `PYTHONPATH`
-
-## 9. Static Type Checking – MANDATORY AND NON-BYPASSABLE
-
-**PRE-COMMIT HOOKS RUN MYPY AND PYRIGHT ON ALL `.py` FILES.**
-
-**AGENTS CANNOT BYPASS TYPE CHECKING UNDER ANY CIRCUMSTANCES.**
-
-**ALL TYPE ERRORS MUST BE FIXED BEFORE COMMITS CAN PROCEED.**
-
-**THE FOLLOWING BYPASS MECHANISMS ARE BANNED EXCEPT IN EXPLICITLY APPROVED SCENARIOS:**
-
-- `# type: ignore` comments
-- `# pyright: ignore` comments
-- `# type: ignore[...]` comments (mypy error code ignores)
-- `getattr()` calls (prefer proper type annotations and `isinstance()` checks)
-- `hasattr()` calls (prefer proper type annotations and `isinstance()` checks)
-- `__dict__` attribute access for dynamic attributes
-- `object.__getattr__()` usage
-- `typing.cast()` calls (prefer proper type narrowing)
-- `typing.Any` type annotations (except in approved scenarios)
-- `# noqa` comments for type-related issues
-
-**APPROVED SCENARIOS (require explicit justification in code comments):**
-
-- Interfacing with untyped third-party libraries where proper stubs don't exist
-- Legacy code migration (temporary, must include TODO with migration plan)
-- Runtime type introspection that cannot be statically typed (extremely rare)
-
-**ENFORCEMENT:**
-
-- Pre-commit hooks run `mypy --strict` and `pyright` on all `.py` files
-- Excludes: folders starting with `.`, `vendor/` folder at root
-- **ANY TYPE ERROR CAUSES NON-ZERO EXIT CODE**
-- **COMMITS BLOCKED UNTIL ALL ERRORS ARE RESOLVED**
-- **NEVER use `git commit --no-verify` or any flag that bypasses pre-commit hooks**
-- Agents must fix type errors, not suppress them
-
-## 10. Core Game Implementation – Dual-Game Analysis MANDATORY
-
-**WHEN WRITING CORE GAME IMPLEMENTATION, YOU MUST USE REVA MCP FOR BOTH GAMES.**
-
-**This rule applies to ANY code that implements game engine functionality, file format parsing,**
-**or any behavior that must match the original game engines.**
-
-### Requirements
-
-1. **Always analyze BOTH games** when implementing core functionality:
-   - **KotOR I (swkotor.exe)**: Primary reference
-   - **KotOR II / TSL (swkotor2.exe)**: Secondary reference for verification and parity
-
-2. **Unified Documentation Pattern**:
-   - **NEVER create separate sections for K1 and TSL** - always document together
-   - Use human-readable function names from K1 for both games (only addresses differ)
-   - Format: `FunctionName - K1: 0xADDRESS in swkotor.exe, TSL: 0xADDRESS in swkotor2.exe`
-   - Show conditional logic (`#ifdef KOTOR_1` / `#else`) only where implementations differ
-   - Use unified code examples that work for both games
-   - **Only mention TSL when there's a difference** - if addresses are the same, just list once
-   - **Never state what's the same** - only document differences
-
-3. **Inline Comments Pattern**:
-   ```
-   # Reference: K1 swkotor.exe:0xADDRESS, TSL swkotor2.exe:0xADDRESS
-   ```
-
-4. **Verification Process**:
-   - Use `mcp_reva_open-project` to open Ghidra project with both executables
-   - Use `mcp_reva_get-functions-by-similarity` to find equivalent functions
-   - Use `mcp_reva_get-decompilation` to compare implementations
-   - Document differences inline with conditional code examples
-   - Ensure implementation works for both games
-
-5. **When Both Games Must Match**:
-   - File format parsers/writers
-   - Game mechanics implementations
-   - Resource loading/saving
-   - Any code that processes game data files
-   - Any code that must produce identical output to the engines
-
-6. **Exceptions** (only when explicitly justified):
-   - Game-specific features (e.g., TSL-only functions)
-   - Features that only exist in one game
-   - Must be clearly documented with "K1-only" or "TSL-only" labels
-
-### Example
-
-When implementing ASCII walkmesh parsing:
-- Analyze `CSWRoomSurfaceMesh::LoadMeshText` in swkotor.exe (0x00582d70)
-- Analyze equivalent function in swkotor2.exe (0x00577860)
-- Compare both implementations
-- Document in unified format:
-  ```
-  CSWRoomSurfaceMesh::LoadMeshText (K1: 0x00582d70 in swkotor.exe, TSL: 0x00577860 in swkotor2.exe)
-  ```
-- Only show conditional logic if implementations actually differ
-
-### Tools Required
-
-- `mcp_reva_open-project` - Open Ghidra project
-- `mcp_reva_get-functions-by-similarity` - Find functions in both games
-- `mcp_reva_get-decompilation` - Get decompiled code
-- `mcp_reva_find-cross-references` - Find callers/callees
-- `mcp_reva_get-strings-by-similarity` - Find string literals
-
-## Final Rule
-
-Follow these rules exactly.
-Every deviation is a violation.
+- [PromptingGuide.ai General Tips and Elements of a Prompt](https://www.promptingguide.ai/introduction/tips)
+- [OpenAI Best Practices for Prompt Engineering](https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api)
+- [Anthropic Effective Context Engineering for AI Agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)
+- [Lakera Ultimate Guide to Prompt Engineering in 2025](https://www.lakera.ai/blog/prompt-engineering-guide)
+- [PromptLayer Token Reduction Insights](https://www.promptlayer.com/blog/token-reduction)
+- [Uptech Concise Prompting Guide](https://uptech.com/blog/concise-prompting)
+- [Reddit r/PromptEngineering Best Practices Thread (2025)](https://www.reddit.com/r/PromptEngineering/comments/best-practices-2025)
+- [Microsoft Prompt Engineering Guide (2025)](https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/prompt-engineering)
+- [Google DeepMind Prompting Best Practices (2026 Update)](https://deepmind.google/technologies/gemini/prompting-guide)
+- [General Insights from Hugging Face Prompt Engineering Hub](https://huggingface.co/docs/transformers/prompt_engineering)

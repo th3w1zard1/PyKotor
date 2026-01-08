@@ -388,7 +388,7 @@ def test_are_editor_manipulate_map_image_points(qtbot: QtBot, installation: HTIn
     editor.load(are_file, "tat001", ResourceType.ARE, original_data)
     
     # Test various point combinations (normalized coordinates 0.0-1.0)
-    # Note: Avoid (0.0, 0.0) as it matches the default and get_original_or_current preserves original values
+    # NOTE: Avoid (0.0, 0.0) as it matches the default and get_original_or_current preserves original values
     test_points = [
         (Vector2(0.1, 0.1), Vector2(0.9, 0.9)),
         (Vector2(0.1, 0.2), Vector2(0.8, 0.9)),

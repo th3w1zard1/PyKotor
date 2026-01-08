@@ -491,7 +491,7 @@ class LanguageServerClient:
             params: dict[str, Any] = {}
             if is_tsl is not None:
                 params['is_tsl'] = is_tsl
-            # Note: We don't send functions/constants/library because they're large
+            # NOTE: We don't send functions/constants/library because they're large
             # and the server should reload them based on is_tsl
             
             if params:

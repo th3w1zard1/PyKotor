@@ -1,0 +1,98 @@
+[build-system]
+requires = [
+    "setuptools>=42,<70",
+    "wheel",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kit-generator"
+version = "1.0.0"
+description = "Kit Generator GUI for PyKotor CLI - generates Holocron-compatible kits from KOTOR modules (shim package, functionality now in pykotor.cli.commands.kit_generate)"
+authors = [{name = "NickHugi"}]
+maintainers = [{name = "th3w1zard1", email = "halomastar@gmail.com"}]
+readme = {file = "README.md", content-type = "text/markdown"}
+license = {text = "LGPL-3.0-or-later"}
+keywords = [
+    "kotor", "kotor1", "kotor2", "tsl",
+    "kit", "generator", "extract",
+    "modding", "pykotor", "holocron",
+]
+requires-python = ">=3.8"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 or later (LGPLv3+)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Games/Entertainment",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Environment :: Console",
+    "Environment :: X11 Applications",
+    "Environment :: Win32 (MS Windows)",
+]
+dependencies = [
+    "pykotor>=2.0.2",
+]
+
+[project.scripts]
+kit-generator = "kitgenerator.__main__:main"
+kitgenerator = "kitgenerator.__main__:main"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "ruff>=0.5.3",
+]
+
+[project.urls]
+Homepage = "https://github.com/OldRepublicDevs/PyKotor"
+Documentation = "https://github.com/OldRepublicDevs/PyKotor/wiki"
+Repository = "https://github.com/OldRepublicDevs/PyKotor.git"
+Issues = "https://github.com/OldRepublicDevs/PyKotor/issues"
+Changelog = "https://github.com/OldRepublicDevs/PyKotor/releases"
+
+# Poetry configuration
+[tool.poetry]
+name = "kit-generator"
+version = "1.0.0"
+description = "Kit Generator GUI for PyKotor CLI"
+authors = ["NickHugi", "Benjamin Auquite <halomastar@gmail.com>"]
+maintainers = ["Benjamin Auquite <halomastar@gmail.com>"]
+readme = "README.md"
+license = "LGPL-3.0-or-later"
+packages = [{ include = "kitgenerator", from = "src" }]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+pykotor = "^2.0.2"
+
+[tool.poetry.scripts]
+kit-generator = "kitgenerator.__main__:main"
+kitgenerator = "kitgenerator.__main__:main"
+
+[tool.poetry.urls]
+Homepage = "https://github.com/OldRepublicDevs/PyKotor"
+Repository = "https://github.com/OldRepublicDevs/PyKotor.git"
+Issues = "https://github.com/OldRepublicDevs/PyKotor/issues"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pyright]
+include = ["src"]
+extraPaths = [
+    "../../Libraries/PyKotor/src"
+]
+pythonVersion = "3.8"
+typeCheckingMode = "basic"
+reportMissingImports = "warning"
+reportMissingTypeStubs = false

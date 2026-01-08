@@ -372,7 +372,7 @@ def test_dlg_editor_all_widgets_exist(qtbot, installation: HTInstallation):
     
     # Node editor widgets (right dock)
     assert hasattr(editor.ui, 'speakerEdit')
-    # Note: textEdit doesn't exist - text is edited via dialog, not a direct widget
+    # NOTE: textEdit doesn't exist - text is edited via dialog, not a direct widget
     assert hasattr(editor.ui, 'script1ResrefEdit')
     assert hasattr(editor.ui, 'script2ResrefEdit')
     assert hasattr(editor.ui, 'listenerEdit')
@@ -1711,7 +1711,7 @@ def test_dlg_editor_load_real_file(qtbot, installation: HTInstallation, test_fil
             editor.ui.dialogTree.setCurrentIndex(first_item.index())
             # Widgets should have values
             assert editor.ui.speakerEdit.text() or True  # May be empty
-            # Note: textEdit doesn't exist - text is edited via dialog, not a direct widget
+            # NOTE: textEdit doesn't exist - text is edited via dialog, not a direct widget
             # The node text is stored in item.link.node.text (a LocalizedString)
 
 
@@ -1789,7 +1789,7 @@ def test_dlg_editor_gff_roundtrip_no_modification(qtbot, installation: HTInstall
     saved_gff = read_gff(saved_data)
     
     # Root should have same number of fields (allowing for minor differences)
-    # Note: Some fields may differ due to defaults being added
+    # NOTE: Some fields may differ due to defaults being added
     assert original_gff.root is not None
     assert saved_gff.root is not None
 

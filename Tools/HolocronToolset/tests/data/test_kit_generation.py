@@ -374,7 +374,7 @@ class TestKitGeneration(unittest.TestCase):
                 mdl_in_root = (kit_path / f"{model_name}.mdl").exists()
                 mdl_in_skyboxes = (kit_path / "skyboxes" / f"{model_name}.mdl").exists() if (kit_path / "skyboxes").exists() else False
                 mdl_in_models = (kit_path / "models" / f"{model_name}.mdl").exists() if (kit_path / "models").exists() else False
-                # Note: PWK may not have corresponding MDL in kit if it's for a placeable that's not extracted
+                # NOTE: PWK may not have corresponding MDL in kit if it's for a placeable that's not extracted
                 # So we just verify the PWK file exists and is valid
         
         # Check texture files

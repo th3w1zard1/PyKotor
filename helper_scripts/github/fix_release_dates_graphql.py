@@ -107,7 +107,7 @@ def main():
 
     print(f"\nFound {len(date_fixes)} releases with incorrect dates.")
 
-    # Note: GitHub GraphQL API also doesn't support setting published_at
+    # NOTE: GitHub GraphQL API also doesn't support setting published_at
     # The mutation updateRelease doesn't have a publishedAt parameter
     print("\n" + "=" * 70)
     print("LIMITATION CONFIRMED")

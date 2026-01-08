@@ -258,7 +258,7 @@ def find_vendor_references(
         # -i: case insensitive (functions/constants might be referenced in different cases)
         # -w: word boundary (match whole words only)
         # -F: fixed string (treat pattern as literal, not regex - avoids escaping issues)
-        # Note: ripgrep respects .gitignore by default, so we don't need --no-ignore
+        # NOTE: ripgrep respects .gitignore by default, so we don't need --no-ignore
         # It will automatically respect each vendor submodule's .gitignore file
         cmd: list[str] = ["rg", "-n", "-i", "-w", "-F", name, str(vendor_dir)]
         if verbose:

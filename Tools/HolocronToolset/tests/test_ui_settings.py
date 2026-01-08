@@ -87,7 +87,7 @@ def test_settings_reset(qtbot: QtBot, monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setattr(QMessageBox, "information", lambda *args: None)
     
     # Set a dummy setting in GlobalSettings to verify it gets reset/cleared
-    # Note: GlobalSettings is a singleton accessing QSettings. 
+    # NOTE: GlobalSettings is a singleton accessing QSettings. 
     # Clearing it clears the persistent storage.
     settings = GlobalSettings()
     settings.extractPath = "some/custom/path"

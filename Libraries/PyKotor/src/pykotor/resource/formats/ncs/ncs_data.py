@@ -704,7 +704,7 @@ class NCSInstruction(ComparableMixin):
     def __eq__(self, other):
         if not isinstance(other, NCSInstruction):
             return NotImplemented
-        # Note: We compare jump by identity since it's a circular reference
+        # NOTE: We compare jump by identity since it's a circular reference
         return (
             self.ins_type == other.ins_type
             and self.args == other.args
@@ -712,7 +712,7 @@ class NCSInstruction(ComparableMixin):
         )
 
     def __hash__(self):
-        # Note: We use id() for jump since it's a circular reference
+        # NOTE: We use id() for jump since it's a circular reference
         return hash((self.ins_type, tuple(self.args), id(self.jump) if self.jump else None))
 
     def is_jump_instruction(self) -> bool:

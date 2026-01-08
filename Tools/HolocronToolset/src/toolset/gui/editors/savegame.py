@@ -1285,7 +1285,7 @@ class SaveGameEditor(Editor):
         self._current_character.max_hp = self.ui.spinBoxCharMaxHP.value()
         self._current_character.fp = self.ui.spinBoxCharFP.value()
         self._current_character.max_fp = self.ui.spinBoxCharMaxFP.value()
-        # Note: XP is stored per class, not as a single value
+        # NOTE: XP is stored per class, not as a single value
         
         # Update skills (individual attributes)
         skill_attrs = ['computer_use', 'demolitions', 'stealth', 'awareness', 'persuade', 'repair', 'security', 'treat_injury']

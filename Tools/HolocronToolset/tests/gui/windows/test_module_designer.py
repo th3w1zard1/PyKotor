@@ -27,7 +27,7 @@ import pytest
 from qtpy.QtCore import Qt
 from qtpy.QtWidgets import QApplication, QMessageBox
 
-# Note: This file's tests will have QT_QPA_PLATFORM unset by conftest.py's pytest_runtest_setup hook
+# NOTE: This file's tests will have QT_QPA_PLATFORM unset by conftest.py's pytest_runtest_setup hook
 # The hook detects module designer tests and allows real display for them
 # No need to check here - the conftest handles it
 
@@ -765,7 +765,7 @@ def test_module_designer_resource_tree_selection(qtbot, module_designer: ModuleD
     # Check that the instance list has a selected item (not the 3D selection)
     instance_list = module_designer.ui.instanceList
     selected_items = instance_list.selectedItems()
-    # Note: This may not always select an item if the resource doesn't have a corresponding instance
+    # NOTE: This may not always select an item if the resource doesn't have a corresponding instance
     # The test verifies the mechanism works, not that every resource has an instance
     assert tree.currentItem() is first_item, "Resource tree selection should be maintained"
 
@@ -1260,7 +1260,7 @@ def test_blender_property_multiple_updates(qtbot, module_designer: ModuleDesigne
     # Test undo (should undo both)
     module_designer.undo_stack.undo()
     QApplication.processEvents()
-    # Note: Each property creates its own command, so we need to undo twice
+    # NOTE: Each property creates its own command, so we need to undo twice
     module_designer.undo_stack.undo()
     QApplication.processEvents()
     assert str(instance.resref) == original_resref

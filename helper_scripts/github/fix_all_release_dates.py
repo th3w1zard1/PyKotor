@@ -70,7 +70,7 @@ def update_release_with_date(target_repo: str, release_id: int, release_data: di
         "body": release_data.get("body", ""),
         "draft": release_data.get("draft", False),
         "prerelease": release_data.get("prerelease", False),
-        # Note: published_at is not a valid field in PATCH /repos/{owner}/{repo}/releases/{release_id}
+        # NOTE: published_at is not a valid field in PATCH /repos/{owner}/{repo}/releases/{release_id}
     }
 
     endpoint = f"repos/{target_repo}/releases/{release_id}"

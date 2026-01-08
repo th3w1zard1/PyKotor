@@ -121,7 +121,7 @@ class PatcherModifications(ABC):
     ):
         """All optional TSLPatcher vars that can be parsed for a given patch list."""
         ####
-        # Note: The second argument passed to the 'pop' function is the default.
+        # NOTE: The second argument passed to the 'pop' function is the default.
         ####
 
         self.sourcefile = file_section_dict.pop("!SourceFile", self.sourcefile)

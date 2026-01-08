@@ -806,7 +806,7 @@ class TLKDiffAnalyzer(DiffAnalyzer):
                 strref_mappings[idx] = token_id
                 token_id += 1
 
-        # Note: strref_mappings are NOT stored on ModificationsTLK
+        # NOTE: strref_mappings are NOT stored on ModificationsTLK
         # They will be returned as a tuple with the modifications object
         # This keeps ModificationsTLK clean for reader/patcher code
 

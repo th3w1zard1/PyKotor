@@ -5011,7 +5011,7 @@ def test_compile_all_tsl_scripts_batch(k2_path: str):
         "a_galaxymap.nss",
         "tr_leave_ehawk.nss",
     ]
-    # Note: k_sup_galaxymap.nss requires include, so test separately
+    # NOTE: k_sup_galaxymap.nss requires include, so test separately
 
     results = {}
     for script_name in scripts:

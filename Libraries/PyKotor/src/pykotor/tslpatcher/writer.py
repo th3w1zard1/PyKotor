@@ -606,7 +606,7 @@ class TSLPatcherINISerializer:
                     # 2DAMEMORY#=!FieldPath
                     path_str = str(gff_modifier.path).replace("/", "\\")
                     lines.append(f"2DAMEMORY{gff_modifier.dest_token_id}=!FieldPath")
-                    # Note: The path is stored but not written in the main section
+                    # NOTE: The path is stored but not written in the main section
                     # It's inferred from the field being modified
                 else:
                     # 2DAMEMORY#=2DAMEMORY#
@@ -1763,7 +1763,7 @@ class IncrementalTSLPatchDataWriter:
                     token_id = self._allocate_2da_token()
 
                     # Store in AddColumn: 2DAMEMORY#=I{row_idx}
-                    # Note: store_2da for AddColumn uses string values, not RowValue objects
+                    # NOTE: store_2da for AddColumn uses string values, not RowValue objects
                     add_column_modifier.store_2da[token_id] = store_key
 
                     self.log_func(f"  [AddColumn Token] Created 2DAMEMORY{token_id}={store_key} for value '{field_value_str}'")
@@ -1851,7 +1851,7 @@ class IncrementalTSLPatchDataWriter:
                         # This is more complex - we'd need to read the 2DA file to get the cell value
                         # For now, skip RowCell matching as it requires runtime evaluation
                         continue
-                    # Note: We handle RowIndex (for ChangeRow2DA only), RowLabel, and Constant values for matching.
+                    # NOTE: We handle RowIndex (for ChangeRow2DA only), RowLabel, and Constant values for matching.
 
                     if (
                         stored_value is not None

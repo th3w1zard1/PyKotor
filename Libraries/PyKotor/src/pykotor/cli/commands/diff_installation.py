@@ -26,9 +26,6 @@ def cmd_diff_installation(args: Namespace, logger: Logger) -> int:
         # Use pykotor.diff_tool
         from pykotor.diff_tool.__main__ import main as kotordiff_main
 
-        # Convert argparse Namespace to list of strings for kotordiff
-        import sys
-
         # Reconstruct argv from args namespace
         argv: list[str] = []
         if hasattr(args, "path1") and args.path1:

@@ -1571,7 +1571,7 @@ def test_nss_editor_navigate_to_symbol_function(qtbot, installation: HTInstallat
         raise
     
     # The main fix is verified: TypeError is gone.
-    # Note: The exact cursor position may vary depending on _goto_line implementation,
+    # NOTE: The exact cursor position may vary depending on _goto_line implementation,
     # but the critical bug (TypeError) is fixed.
 
 
@@ -1600,7 +1600,7 @@ def test_nss_editor_breadcrumb_click_navigates_to_function(qtbot, installation: 
         raise
     
     # The main fix is verified: TypeError is gone when clicking breadcrumbs.
-    # Note: The exact cursor position may vary depending on _goto_line implementation,
+    # NOTE: The exact cursor position may vary depending on _goto_line implementation,
     # but the critical bug (TypeError) is fixed.
 
 

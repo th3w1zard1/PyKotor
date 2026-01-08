@@ -74,7 +74,7 @@ def test_menu_actions_state(qtbot: QtBot, installation: HTInstallation):
     window.show()
 
     # Initially no installation, most "New" actions should be disabled
-    # Note: Some might be enabled if they don't require an installation (like TLK?)
+    # NOTE: Some might be enabled if they don't require an installation (like TLK?)
     # Let's check a specific one we know requires installation, e.g. New DLG
     assert not window.ui.actionNewDLG.isEnabled()
 

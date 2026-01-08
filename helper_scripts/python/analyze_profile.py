@@ -188,7 +188,7 @@ def add_callers(stats: pstats.Stats) -> None:
                 # Create a new tuple with an empty callers dict
                 new_stats = (ncalls, prim_calls, tottime, cumtime, {})
                 stats_dict[func_key] = new_stats
-    # Note: Full caller relationship building would require access to pstats' internal
+    # NOTE: Full caller relationship building would require access to pstats' internal
     # call graph, which is not directly exposed. The callers_dict is populated by
     # pstats when it processes the profile data, so this function ensures the structure
     # is consistent for functions that may have incomplete data.
@@ -248,13 +248,13 @@ def filter_stats(stats: pstats.Stats, pattern: str | None) -> pstats.Stats:
         func_name = f"{func_key[0]}:{func_key[1]}({func_key[2]})"
         if pattern_lower in func_name.lower():
             filtered_dict[func_key] = func_stats
-            # Note: total_calls, prim_calls, and total_tt are computed properties in pstats.Stats
+            # NOTE: total_calls, prim_calls, and total_tt are computed properties in pstats.Stats
             # They are automatically calculated from the stats dict when accessed
 
     # Set the stats dictionary on the filtered stats object
     # We use object.__setattr__ to bypass the property if it exists
     object.__setattr__(filtered_stats, "stats", filtered_dict)
-    # Note: total_calls, prim_calls, total_tt are computed properties in pstats.Stats
+    # NOTE: total_calls, prim_calls, total_tt are computed properties in pstats.Stats
     # They are automatically calculated from the stats dict when accessed
 
     return filtered_stats

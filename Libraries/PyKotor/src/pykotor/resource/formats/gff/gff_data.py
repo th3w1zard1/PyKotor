@@ -436,6 +436,10 @@ class GFF(ComparableMixin):
             format_type=format_type,
         )
 
+    def __str__(self) -> str:
+        """Return a human-readable string representation of the GFF."""
+        return str(self.root)
+
 
 class _GFFField:
     """Read-only data structure for items stored in GFFStruct."""

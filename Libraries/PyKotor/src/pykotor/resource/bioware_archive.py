@@ -33,14 +33,15 @@ class HashAlgo(Enum):
 
 class ArchiveResource:
     """Represents a resource stored within a BioWare archive (ERF, RIM, BIF).
-    
+
     Contains resource reference, type, and data. Used as the base resource type
     for archive-based resource storage.
-    
+
     References:
     ----------
         BioWare archive format specification
     """
+
     def __init__(
         self,
         resref: ResRef,
@@ -71,17 +72,132 @@ class ArchiveResource:
     def identifier(self) -> ResourceIdentifier:
         return ResourceIdentifier(str(self.resref), self.restype)
 
+    def __repr__(self) -> str:
+        """Return a concise string representation suitable for diff output."""
+        return f"Resource(resref={self.resref!r}, restype={self.restype.name}, size={self.size})"
+
+    def __str__(self) -> str:
+        """Return a human-readable string representation of the resource."""
+        try:
+            return self._str_for_resource_type()
+        except Exception:
+            # Fallback to basic representation if conversion fails
+            return f"Resource '{self.resref}' ({self.restype.name}, {self.size} bytes)"
+
+    def _str_for_resource_type(self) -> str:
+        """Convert resource data to human-readable format based on type."""
+        from pykotor.resource.type import ResourceType
+
+        # Handle text-based resources
+        if self.restype in (ResourceType.NSS, ResourceType.NCS):
+            try:
+                text = self.data.decode("utf-8", errors="replace")
+                if self.restype == ResourceType.NSS:
+                    return f"NSS Script '{self.resref}':\n{text}"
+                else:
+                    return f"NCS Script '{self.resref}' (compiled, {self.size} bytes)"
+            except UnicodeDecodeError:
+                return f"Script '{self.resref}' ({self.restype.name}, {self.size} bytes, binary)"
+
+        # Handle GFF-based resources
+        elif self.restype.is_gff():
+            try:
+                from pykotor.resource.formats.gff import read_gff
+
+                gff = read_gff(self.data)
+                gff_str = str(gff)
+                if gff_str.startswith("<"):  # If str() returns repr-like output, try repr
+                    gff_str = repr(gff)
+                if len(gff_str) > 1000:  # Limit output for large GFFs
+                    gff_str = gff_str[:997] + "..."
+                return f"GFF {self.restype.name} '{self.resref}':\n{gff_str}"
+            except Exception as e:
+                return f"GFF {self.restype.name} '{self.resref}' ({self.size} bytes, parse error: {e})"
+
+        # Handle TLK resources
+        elif self.restype == ResourceType.TLK:
+            try:
+                from pykotor.resource.formats.tlk import read_tlk
+
+                tlk = read_tlk(self.data)
+                entry_count = len(tlk)
+                return f"TLK '{self.resref}' ({entry_count} entries, {self.size} bytes)"
+            except Exception:
+                return f"TLK '{self.resref}' ({self.size} bytes, parse error)"
+
+        # Handle TPC resources
+        elif self.restype == ResourceType.TPC:
+            try:
+                from pykotor.resource.formats.tpc import read_tpc
+
+                tpc = read_tpc(self.data)
+                if tpc.layers and tpc.layers[0].mipmaps:
+                    width = tpc.layers[0].mipmaps[0].width
+                    height = tpc.layers[0].mipmaps[0].height
+                    return f"TPC Texture '{self.resref}' ({width}x{height}, {self.size} bytes)"
+                else:
+                    return f"TPC Texture '{self.resref}' ({self.size} bytes)"
+            except Exception:
+                return f"TPC Texture '{self.resref}' ({self.size} bytes, parse error)"
+
+        # Handle 2DA resources
+        elif self.restype == ResourceType.TwoDA:
+            try:
+                from pykotor.resource.formats.twoda import read_2da
+
+                twoda = read_2da(self.data)
+                return f"2DA '{self.resref}' ({len(twoda)} rows, {len(twoda._headers)} columns)"
+            except Exception:
+                return f"2DA '{self.resref}' ({self.size} bytes, parse error)"
+
+        # Handle image resources
+        elif self.restype in (ResourceType.TGA, ResourceType.TXI):
+            if self.restype == ResourceType.TGA:
+                return f"TGA Image '{self.resref}' ({self.size} bytes)"
+            else:
+                try:
+                    text = self.data.decode("utf-8", errors="replace")
+                    return f"TXI Info '{self.resref}':\n{text}"
+                except UnicodeDecodeError:
+                    return f"TXI Info '{self.resref}' ({self.size} bytes, binary)"
+
+        # Handle sound resources
+        elif self.restype in (ResourceType.WAV, ResourceType.BMU, ResourceType.WMA, ResourceType.WMV):
+            return f"Audio '{self.resref}' ({self.restype.name}, {self.size} bytes)"
+
+        # Handle model resources
+        elif self.restype in (ResourceType.MDL, ResourceType.MDX):
+            return f"Model '{self.resref}' ({self.restype.name}, {self.size} bytes)"
+
+        # Handle dialog resources
+        elif self.restype == ResourceType.DLG:
+            try:
+                from pykotor.resource.formats.gff import read_gff
+
+                gff = read_gff(self.data)
+                gff_str = str(gff)
+                if len(gff_str) > 1000:  # Limit output for large GFFs
+                    gff_str = gff_str[:997] + "..."
+                return f"Dialog '{self.resref}':\n{gff_str}"
+            except Exception as e:
+                return f"Dialog '{self.resref}' ({self.size} bytes, parse error: {e})"
+
+        # Default fallback
+        else:
+            return f"Resource '{self.resref}' ({self.restype.name}, {self.size} bytes)"
+
 
 class BiowareArchive(ComparableMixin, ABC):
     """Abstract base class for BioWare archive formats (ERF, RIM, BIF).
-    
+
     Provides common interface for archive operations including resource storage,
     retrieval, and comparison. Subclasses implement format-specific reading/writing.
-    
+
     References:
     ----------
         BioWare archive format specification
     """
+
     BINARY_TYPE: ClassVar[ResourceType]
     ARCHIVE_TYPE: type[ArchiveResource] = ArchiveResource
     COMPARABLE_SET_FIELDS: ClassVar[tuple[str, ...]] = ("_resources",)
@@ -164,8 +280,7 @@ class BiowareArchive(ComparableMixin, ABC):
         if not isinstance(other, BiowareArchive):
             return NotImplemented
         return (
-            set(self._resources) == set(other._resources)
-            and super().__eq__(other)  # ComparableMixin.__eq__
+            set(self._resources) == set(other._resources) and super().__eq__(other)  # ComparableMixin.__eq__
         )
 
     def set_resource(
@@ -183,10 +298,7 @@ class BiowareArchive(ComparableMixin, ABC):
         data: bytes,
     ) -> None:
         resource: ArchiveResource | None = next(
-            (
-                resource for resource in cast(list[ArchiveResource], self._resources)
-                if resource.resref == resname and resource.restype == restype
-            ),
+            (resource for resource in cast(list[ArchiveResource], self._resources) if resource.resref == resname and resource.restype == restype),
             None,
         )
         if resource is None:
@@ -234,11 +346,7 @@ class BiowareArchive(ComparableMixin, ABC):
         h: int,
     ) -> int | None:
         return next(
-            (
-                i
-                for i, resource in enumerate(self._resources)
-                if hash(resource) == h
-            ),
+            (i for i, resource in enumerate(self._resources) if hash(resource) == h),
             None,
         )
 

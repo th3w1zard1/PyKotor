@@ -183,31 +183,56 @@ class KotorDiffer:
         try:
             capsule1 = Capsule(file1)
             capsule2 = Capsule(file2)
-            
+
             # Get resources from both capsules
             resources1 = {res.resname(): res for res in capsule1}
             resources2 = {res.resname(): res for res in capsule2}
-            
-            # Check if contents are different
-            if set(resources1.keys()) != set(resources2.keys()):
+
+            # Find added, removed, and common resources
+            added_resources = set(resources2.keys()) - set(resources1.keys())
+            removed_resources = set(resources1.keys()) - set(resources2.keys())
+            common_resources = set(resources1.keys()) & set(resources2.keys())
+
+            # If there are structural differences (added/removed resources), report as modified
+            if added_resources or removed_resources:
+                # For now, just report the capsule as modified
+                # TODO: Could be enhanced to list added/removed resources
                 return FileChange(relative_path, "modified", "capsule")
-            
-            # Compare individual resources
-            for resname in resources1:
-                if resname in resources2:
-                    res1 = resources1[resname]
-                    res2 = resources2[resname]
-                    if not self._compare_resource_data(res1, res2):
-                        return FileChange(relative_path, "modified", "capsule")
-            
+
+            # Compare individual resources that exist in both
+            modified_resources = []
+            for resname in common_resources:
+                res1 = resources1[resname]
+                res2 = resources2[resname]
+                if not self._compare_resource_data(res1, res2):
+                    modified_resources.append((res1, res2, resname))
+
+            if modified_resources:
+                # Generate a combined diff showing all modified resources
+                diff_lines = []
+                for res1, res2, resname in modified_resources:
+                    resource_path = f"{relative_path}/{resname}.{res1.restype().extension}"
+                    resource_change = self._diff_resource_content(res1, res2, resource_path)
+                    if resource_change and resource_change.diff_lines:
+                        diff_lines.extend(resource_change.diff_lines)
+                        diff_lines.append("")  # Add blank line between resources
+
+                if diff_lines:
+                    return FileChange(relative_path, "modified", "capsule", None, None, diff_lines)
+
             return None  # No changes
         except Exception:
             # Fall back to hash comparison
             return self._diff_by_hash(file1, file2, relative_path)
     
-    def _diff_regular_files(self, file1: Path, file2: Path, relative_path: str) -> FileChange | None:
+    def _diff_regular_files(
+        self,
+        file1: Path,
+        file2: Path,
+        relative_path: str,
+    ) -> FileChange | None:
         """Compare regular files based on their type."""
-        ext = file1.suffix.lower().lstrip('.')
+        ext = file1.suffix.lower().lstrip(".")
         
         if ext in self.gff_types:
             return self._diff_gff_files(file1, file2, relative_path)
@@ -370,6 +395,169 @@ class KotorDiffer:
     def _calculate_data_hash(self, data: bytes) -> str:
         """Calculate SHA256 hash of data."""
         return hashlib.sha256(data).hexdigest()
+
+    def _diff_resource_content(self, res1: FileResource, res2: FileResource, resource_path: str) -> FileChange | None:
+        """Compare the content of two resources and generate unified diff."""
+        try:
+            restype = res1.restype()
+
+            # Handle different resource types
+            if restype in self.gff_types:
+                return self._diff_gff_resources(res1, res2, resource_path)
+            elif restype == twoda.TwoDA.BINARY_TYPE:
+                return self._diff_2da_resources(res1, res2, resource_path)
+            elif restype == tlk.TLK.BINARY_TYPE:
+                return self._diff_tlk_resources(res1, res2, resource_path)
+            elif restype == ssf.SSF.BINARY_TYPE:
+                return self._diff_ssf_resources(res1, res2, resource_path)
+            elif restype == lip.LIP.BINARY_TYPE:
+                return self._diff_lip_resources(res1, res2, resource_path)
+            else:
+                # For unsupported types, fall back to hash comparison
+                if res1.data() != res2.data():
+                    return FileChange(resource_path, "modified", restype.name)
+
+            return None
+        except Exception:
+            # Fall back to data comparison
+            if res1.data() != res2.data():
+                return FileChange(resource_path, "modified", res1.restype().name)
+            return None
+
+    def _diff_gff_resources(self, res1: FileResource, res2: FileResource, resource_path: str) -> FileChange | None:
+        """Compare GFF resources."""
+        try:
+            gff1 = gff.read_gff(res1.data())
+            gff2 = gff.read_gff(res2.data())
+
+            # Convert to text representation
+            text1 = self._gff_to_text(gff1)
+            text2 = self._gff_to_text(gff2)
+
+            if text1 != text2:
+                diff_lines = list(difflib.unified_diff(
+                    text1.splitlines(keepends=True),
+                    text2.splitlines(keepends=True),
+                    fromfile=f"original/{resource_path}",
+                    tofile=f"modified/{resource_path}",
+                    lineterm=""
+                ))
+                return FileChange(resource_path, "modified", "gff", text1, text2, diff_lines)
+
+            return None
+        except Exception:
+            # Fall back to data comparison
+            if res1.data() != res2.data():
+                return FileChange(resource_path, "modified", "gff")
+            return None
+
+    def _diff_2da_resources(self, res1: FileResource, res2: FileResource, resource_path: str) -> FileChange | None:
+        """Compare 2DA resources."""
+        try:
+            twoda1 = twoda.read_2da(res1.data())
+            twoda2 = twoda.read_2da(res2.data())
+
+            # Convert to text representation
+            text1 = self._2da_to_text(twoda1)
+            text2 = self._2da_to_text(twoda2)
+
+            if text1 != text2:
+                diff_lines = list(difflib.unified_diff(
+                    text1.splitlines(keepends=True),
+                    text2.splitlines(keepends=True),
+                    fromfile=f"original/{resource_path}",
+                    tofile=f"modified/{resource_path}",
+                    lineterm=""
+                ))
+                return FileChange(resource_path, "modified", "2da", text1, text2, diff_lines)
+
+            return None
+        except Exception:
+            # Fall back to data comparison
+            if res1.data() != res2.data():
+                return FileChange(resource_path, "modified", "2da")
+            return None
+
+    def _diff_tlk_resources(self, res1: FileResource, res2: FileResource, resource_path: str) -> FileChange | None:
+        """Compare TLK resources."""
+        try:
+            tlk1 = tlk.read_tlk(res1.data())
+            tlk2 = tlk.read_tlk(res2.data())
+
+            # Convert to text representation
+            text1 = self._tlk_to_text(tlk1)
+            text2 = self._tlk_to_text(tlk2)
+
+            if text1 != text2:
+                diff_lines = list(difflib.unified_diff(
+                    text1.splitlines(keepends=True),
+                    text2.splitlines(keepends=True),
+                    fromfile=f"original/{resource_path}",
+                    tofile=f"modified/{resource_path}",
+                    lineterm=""
+                ))
+                return FileChange(resource_path, "modified", "tlk", text1, text2, diff_lines)
+
+            return None
+        except Exception:
+            # Fall back to data comparison
+            if res1.data() != res2.data():
+                return FileChange(resource_path, "modified", "tlk")
+            return None
+
+    def _diff_ssf_resources(self, res1: FileResource, res2: FileResource, resource_path: str) -> FileChange | None:
+        """Compare SSF resources."""
+        try:
+            ssf1 = ssf.read_ssf(res1.data())
+            ssf2 = ssf.read_ssf(res2.data())
+
+            # Convert to text representation
+            text1 = self._ssf_to_text(ssf1)
+            text2 = self._ssf_to_text(ssf2)
+
+            if text1 != text2:
+                diff_lines = list(difflib.unified_diff(
+                    text1.splitlines(keepends=True),
+                    text2.splitlines(keepends=True),
+                    fromfile=f"original/{resource_path}",
+                    tofile=f"modified/{resource_path}",
+                    lineterm=""
+                ))
+                return FileChange(resource_path, "modified", "ssf", text1, text2, diff_lines)
+
+            return None
+        except Exception:
+            # Fall back to data comparison
+            if res1.data() != res2.data():
+                return FileChange(resource_path, "modified", "ssf")
+            return None
+
+    def _diff_lip_resources(self, res1: FileResource, res2: FileResource, resource_path: str) -> FileChange | None:
+        """Compare LIP resources."""
+        try:
+            lip1 = lip.read_lip(res1.data())
+            lip2 = lip.read_lip(res2.data())
+
+            # Convert to text representation
+            text1 = self._lip_to_text(lip1)
+            text2 = self._lip_to_text(lip2)
+
+            if text1 != text2:
+                diff_lines = list(difflib.unified_diff(
+                    text1.splitlines(keepends=True),
+                    text2.splitlines(keepends=True),
+                    fromfile=f"original/{resource_path}",
+                    tofile=f"modified/{resource_path}",
+                    lineterm=""
+                ))
+                return FileChange(resource_path, "modified", "lip", text1, text2, diff_lines)
+
+            return None
+        except Exception:
+            # Fall back to data comparison
+            if res1.data() != res2.data():
+                return FileChange(resource_path, "modified", "lip")
+            return None
     
     def _get_resource_type(self, file_path: Path | str) -> str:
         """Get the resource type from a file path."""

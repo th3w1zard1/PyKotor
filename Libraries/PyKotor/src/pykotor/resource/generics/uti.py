@@ -309,7 +309,7 @@ def construct_uti(gff: GFF) -> UTI:
 
         # vendor/reone/src/libs/resource/parser/gff/uti.cpp:37 (UpgradeType field as uint8, optional)
         # Discrepancy: PyKotor treats UpgradeType as optional (checks exists()), reone always reads it
-        # Note: Kotor.NET also treats UpgradeType as optional (byte UpgradeType { get; set; })
+        # NOTE: Kotor.NET also treats UpgradeType as optional (byte UpgradeType { get; set; })
         if property_struct.exists("UpgradeType"):
             prop.upgrade_type = property_struct.acquire("UpgradeType", 0)
 

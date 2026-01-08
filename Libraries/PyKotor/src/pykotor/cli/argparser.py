@@ -545,9 +545,9 @@ Compare two paths and show differences. Supports any combination of:
     module_resources_parser.add_argument("--verbose", "-v", action="store_true", help="Show detailed information")
 
     kit_generate_parser = subparsers.add_parser("kit-generate", aliases=["kit"], help="Generate a Holocron-compatible kit from a module")
-    kit_generate_parser.add_argument("--installation", "-i", required=True, help="Path to KOTOR installation")
-    kit_generate_parser.add_argument("--module", "-m", required=True, help="Module name (e.g., danm13)")
-    kit_generate_parser.add_argument("--output", "-o", required=True, help="Output directory for generated kit")
+    kit_generate_parser.add_argument("--installation", "-i", help="Path to KOTOR installation")
+    kit_generate_parser.add_argument("--module", "-m", help="Module name (e.g., danm13)")
+    kit_generate_parser.add_argument("--output", "-o", help="Output directory for generated kit")
     kit_generate_parser.add_argument("--kit-id", help="Optional kit id (defaults to module name)")
     kit_generate_parser.add_argument("--log-level", choices=["debug", "info", "warning", "error", "critical"], default="info", help="Logging level for kit generation")
 

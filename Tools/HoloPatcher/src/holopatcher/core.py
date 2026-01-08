@@ -331,12 +331,12 @@ def calculate_total_patches(installer: ModInstaller) -> int:
         int: Total number of patches
     """
     return len([
-        *installer.config().install_list,  # Note: TSLPatcher executes [InstallList] after [TLKList]
+        *installer.config().install_list,  # NOTE: TSLPatcher executes [InstallList] after [TLKList]
         *installer.get_tlk_patches(installer.config()),
         *installer.config().patches_2da,
         *installer.config().patches_gff,
         *installer.config().patches_nss,
-        *installer.config().patches_ncs,  # Note: TSLPatcher executes [CompileList] after [HACKList]
+        *installer.config().patches_ncs,  # NOTE: TSLPatcher executes [CompileList] after [HACKList]
         *installer.config().patches_ssf,
     ])
 

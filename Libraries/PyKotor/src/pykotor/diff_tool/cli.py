@@ -331,7 +331,7 @@ def execute_cli(cmdline_args: Namespace):
         log_level=getattr(cmdline_args, "log_level", "info"),
         output_mode=getattr(cmdline_args, "output_mode", "full"),
         use_colors=not getattr(cmdline_args, "no_color", False),
-        compare_hashes=not bool(cmdline_args.compare_hashes),  # Note: inverted logic from original
+        compare_hashes=not bool(cmdline_args.compare_hashes),  # NOTE: inverted logic from original
         use_profiler=bool(cmdline_args.use_profiler),
         filters=getattr(cmdline_args, "filter", None),
         logging_enabled=bool(cmdline_args.logging is None or cmdline_args.logging),

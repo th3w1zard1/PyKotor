@@ -435,7 +435,7 @@ class BWM(ComparableMixin):
                 else:
                     # Multiple faces with same center - create a single leaf with first face
                     # This is a fallback for truly degenerate cases
-                    # Note: This may not match original file structure, but allows roundtrip
+                    # NOTE: This may not match original file structure, but allows roundtrip
                     leaf = BWMNodeAABB(bbmin, bbmax, faces[0], 0, None, None)
                     aabbs.append(leaf)
                     return leaf

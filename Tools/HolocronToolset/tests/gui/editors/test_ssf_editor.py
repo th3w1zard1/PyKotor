@@ -634,7 +634,7 @@ def test_ssf_editor_maximum_values(qtbot, installation: HTInstallation):
     # Save and verify
     data, _ = editor.build()
     modified_ssf = read_ssf(data)
-    # Note: SSF might use smaller type, so value might be clamped
+    # NOTE: SSF might use smaller type, so value might be clamped
     # Just verify build works
     assert modified_ssf is not None
 

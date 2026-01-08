@@ -360,7 +360,7 @@ class TestMDLBinaryIO(unittest.TestCase):
         mdl_bytes = bytes_mdl(mdl1, ResourceType.MDL)
 
         # Read back from bytes
-        # Note: MDX data needs to be handled separately
+        # NOTE: MDX data needs to be handled separately
         # For now, just verify we can write and get valid bytes
         self.assertIsInstance(mdl_bytes, bytes)
         self.assertGreater(len(mdl_bytes), 12, "Should have at least header")

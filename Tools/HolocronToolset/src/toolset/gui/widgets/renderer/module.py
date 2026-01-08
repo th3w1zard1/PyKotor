@@ -215,7 +215,7 @@ class ModuleRenderer(QOpenGLWidget):
             raise RuntimeError("Failed to initialize OpenGL context. Ensure that the widget is visible and properly integrated into the application's window.")
 
         # Ensure OpenGL context is current before creating Scene
-        # Note: makeCurrent() returns None in PyQt5, so we can't check its return value
+        # NOTE: makeCurrent() returns None in PyQt5, so we can't check its return value
         self.makeCurrent()
 
         self._installation = installation

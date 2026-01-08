@@ -65,7 +65,7 @@ class TerminalWidget(QWidget):
         self.setLayout(layout)
 
         # Apply terminal color scheme (VSCode dark theme style)
-        # Note: Must be done after creating both widgets.
+        # NOTE: Must be done after creating both widgets.
         self._apply_terminal_theme()
 
         self._write_output("Holocron Toolset Terminal\n\n")

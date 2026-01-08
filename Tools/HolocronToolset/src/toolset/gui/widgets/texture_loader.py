@@ -49,7 +49,7 @@ class TextureLoaderProcess(multiprocessing.Process):
     def __init__(
         self,
         installation_path: str,
-        is_tsl: bool,  # Note: is_tsl is stored but not used - Installation auto-detects game version
+        is_tsl: bool,  # NOTE: is_tsl is stored but not used - Installation auto-detects game version
         request_queue: "Queue[tuple[str, ResourceType, Any, int] | None]",
         result_queue: "Queue[tuple[Any, bytes | None, str | None]]",
     ):
@@ -73,7 +73,7 @@ class TextureLoaderProcess(multiprocessing.Process):
         try:
             # Initialize installation inside the process
             # (Can't pickle Installation objects across processes)
-            # Note: Installation auto-detects K1 vs K2 based on game files
+            # NOTE: Installation auto-detects K1 vs K2 based on game files
             installation = Installation(Path(self._installation_path))
             RobustLogger().info(f"TextureLoaderProcess started for: {self._installation_path}")
 

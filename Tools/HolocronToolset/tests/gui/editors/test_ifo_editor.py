@@ -1096,7 +1096,7 @@ def test_ifo_editor_gff_roundtrip_with_real_file(qtbot, installation: HTInstalla
     def log_func(*args):
         log_messages.append("\t".join(str(a) for a in args))
     
-    # Note: We expect some differences due to how GFF is written, but structure should be valid
+    # NOTE: We expect some differences due to how GFF is written, but structure should be valid
     assert new_gff is not None
     assert original_gff is not None
 

@@ -1154,7 +1154,7 @@ def _diff_installations_with_resolution_impl(  # noqa: PLR0913, PLR0915, C901
                     )
 
                     # Check the most recently added modification(s)
-                    # Note: TLK is excluded because it's append-only and goes to game root
+                    # NOTE: TLK is excluded because it's append-only and goes to game root
                     for mod_list in [
                         modifications_by_type.gff,
                         modifications_by_type.twoda,

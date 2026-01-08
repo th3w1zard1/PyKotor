@@ -223,7 +223,7 @@ def test_pth_editor_save_load_roundtrip(qtbot, installation: HTInstallation):
     assert len(data) > 0
     
     # Load it back
-    # Note: PTH loading requires LYT file, so we skip loading for now
+    # NOTE: PTH loading requires LYT file, so we skip loading for now
     # Just verify build works
     loaded_pth = read_pth(data)
     assert loaded_pth is not None

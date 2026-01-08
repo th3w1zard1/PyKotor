@@ -1116,7 +1116,7 @@ class QFileDialogPrivate:
                 listview_sel_model.select(index, QItemSelectionModel.SelectionFlag.Select)
             else:
                 RobustLogger().warning(f"{self.__class__.__name__}._navigateToHistoryItem: Failed to create valid QModelIndex from persistent index.")
-        # Note: _updateNavigationButtons() is already called in _q_pathChanged, but we ensure it's called here too
+        # NOTE: _updateNavigationButtons() is already called in _q_pathChanged, but we ensure it's called here too
         # after all state is restored, in case the directory change didn't trigger it properly
         QApplication.processEvents()
         self._updateNavigationButtons()

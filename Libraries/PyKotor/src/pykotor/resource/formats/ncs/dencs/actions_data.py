@@ -86,7 +86,7 @@ class ActionsData:
                     print("read actions.  There were " + str(len(self._actions)))
                     return
             # EOF reached without finding "// 0", exit (prevents infinite loop)
-            # Note: Java code has 'continue' here but would loop forever at EOF
+            # NOTE: Java code has 'continue' here but would loop forever at EOF
             # We break instead since StringIO doesn't reset on EOF
             break
 

@@ -398,7 +398,7 @@ def _generate_code(context: DecompilationContext):
     context.file_data.subdata(context.subroutine_data)  # type: ignore
 
     # Process global variables if present
-    # Note: Global variable processing is handled during the main pass
+    # NOTE: Global variable processing is handled during the main pass
     # and cleanup pass, so no additional processing needed here
 
     # Clean up parse trees

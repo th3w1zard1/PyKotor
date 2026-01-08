@@ -26,12 +26,12 @@ Binary Format:
         0x24   | 4    | uint32 | Build Day (days since Jan 1)
         0x28   | 4    | uint32 | Description StrRef (TLK reference)
         0x2C   | 116  | byte[] | Reserved (padding, usually zeros)
-    
+
     Localized String Entry (variable length per language):
         - 4 bytes: Language ID (see Language enum)
         - 4 bytes: String Size (length in bytes)
         - N bytes: String Data (UTF-8 encoded text)
-    
+
     Key Entry (24 bytes each):
         Offset | Size | Type   | Description
         -------|------|--------|-------------
@@ -39,16 +39,16 @@ Binary Format:
         0x10   | 4    | uint32 | Resource ID (index into resource list)
         0x14   | 2    | uint16 | Resource Type
         0x16   | 2    | uint16 | Unused (padding)
-    
+
     Resource Entry (8 bytes each):
         Offset | Size | Type   | Description
         -------|------|--------|-------------
         0x00   | 4    | uint32 | Offset to Resource Data
         0x04   | 4    | uint32 | Resource Size
-    
+
     Resource Data:
         Raw binary data for each resource at specified offsets
-        
+
     Reference: reone/erfreader.cpp:24-106, Kotor.NET:25-46, KotOR_IO:43-96, KotOR.js:69-119
 """
 
@@ -70,10 +70,10 @@ if TYPE_CHECKING:
 
 class ERFResource(ArchiveResource):
     """A single resource stored in an ERF/MOD/SAV file.
-    
+
     Unlike BIF resources, ERF resources include their ResRef (filename) directly in the
     archive. Each resource is identified by a unique ResRef and ResourceType combination.
-    
+
     References:
     ----------
         vendor/reone/include/reone/resource/format/erfreader.h:31-38 - KeyEntry and ResourceEntry structs
@@ -81,13 +81,13 @@ class ERFResource(ArchiveResource):
         vendor/KotOR_IO/KotOR_IO/File Formats/ERF.cs:183-228 - Key and Resource classes
         vendor/KotOR.js/src/interface/resource/IERFKeyEntry.ts - Key entry interface
         vendor/KotOR.js/src/interface/resource/IERFResource.ts - Resource entry interface
-    
+
     Attributes:
     ----------
         All attributes inherited from ArchiveResource (resref, restype, data, size)
         ERF resources have no additional attributes beyond the base ArchiveResource
     """
-    
+
     def __init__(self, resref: ResRef, restype: ResourceType, data: bytes):
         # vendor/Kotor.NET/Kotor.NET/Formats/KotorERF/ERFBinaryStructure.cs:119-120
         # vendor/KotOR_IO/KotOR_IO/File Formats/ERF.cs:197-198
@@ -97,21 +97,16 @@ class ERFResource(ArchiveResource):
         # Resource data referenced via Resource Entry (offset + size)
         super().__init__(resref=resref, restype=restype, data=data)
 
-    def __repr__(self) -> str:
-        """Return a string representation suitable for diff output."""
-        return f"ERFResource(resref={self.resref!r}, restype={self.restype.name}, size={self.size})"
-
-
 
 class ERFType(Enum):
     """The type of ERF file based on file header signature.
-    
+
     ERF files can have different type signatures depending on their purpose:
     - ERF: Generic encapsulated resource file (texture packs, etc.)
     - MOD: Module file (game areas/levels)
     - SAV: Save game file
     - HAK: Hak pak file (custom content, unused in KotOR)
-    
+
     References:
     ----------
         vendor/reone/src/libs/resource/format/erfreader.cpp:32-39 - File type validation
@@ -129,7 +124,7 @@ class ERFType(Enum):
             return cls.ERF
         if is_mod_file(ext_or_filepath):
             return cls.MOD
-        if is_sav_file(ext_or_filepath):
+        if is_sav_file(ext_or_filepath):  # .SAV files still use the 'MOD ' signature in its first 4 bytes of the file header
             return cls.MOD
         msg = f"Invalid ERF extension in filepath '{ext_or_filepath}'."
         raise ValueError(msg)
@@ -137,11 +132,11 @@ class ERFType(Enum):
 
 class ERF(BiowareArchive):
     """Represents an ERF/MOD/SAV file.
-    
+
     ERF (Encapsulated Resource File) is a self-contained archive format used for game modules,
     save games, and resource packs. Unlike BIF+KEY pairs, ERF files contain both resource names
     and data in a single file, making them ideal for distributable content like mods.
-    
+
     References:
     ----------
         vendor/reone/include/reone/resource/format/erfreader.h:29-65 - ErfReader class
@@ -149,7 +144,7 @@ class ERF(BiowareArchive):
         vendor/KotOR_IO/KotOR_IO/File Formats/ERF.cs:19-308 - Complete ERF implementation
         vendor/KotOR.js/src/resource/ERFObject.ts:24-353 - ERFObject class
         vendor/xoreos/src/aurora/erffile.h:40-107 - ERFFile class
-        
+
     Attributes:
     ----------
         erf_type: File type signature (ERF, MOD, SAV, HAK)
@@ -159,7 +154,7 @@ class ERF(BiowareArchive):
             Reference: KotOR.js/ERFObject.ts:45 (fileType default)
             Determines intended use of the archive
             ERF = texture packs, MOD = game modules, SAV = save games
-            
+
         is_save: Flag indicating if this is a save game ERF
             Reference: KotOR_IO/ERF.cs:15-16 (save game comment)
             Save games use MOD signature but have different structure
@@ -186,7 +181,7 @@ class ERF(BiowareArchive):
         # vendor/KotOR.js/src/resource/ERFObject.ts:45
         # File type signature (ERF, MOD, SAV, HAK)
         self.erf_type: ERFType = erf_type
-        
+
         # PyKotor-specific flag for save game handling
         # Save games use MOD signature but have different behavior
         self.is_save: bool = is_save

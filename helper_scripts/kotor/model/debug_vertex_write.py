@@ -49,7 +49,7 @@ def main():
     mdl_stream = BytesIO()
     mdx_stream = BytesIO()
     
-    # Note: MDLBinaryWriter populates nodes in write(), not __init__
+    # NOTE: MDLBinaryWriter populates nodes in write(), not __init__
     # So we need to call write() first, then inspect
     
     # Create a custom writer class to inspect state during write

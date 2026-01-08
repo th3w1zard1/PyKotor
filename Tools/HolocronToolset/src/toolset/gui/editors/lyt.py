@@ -147,7 +147,7 @@ class LYTEditor(Editor):
         path: list[LYTRoom] | None = self.find_path(start_room, end_room)
 
         if path:
-            # Note: LYTTrack doesn't have start_room, end_room, or track_type attributes
+            # NOTE: LYTTrack doesn't have start_room, end_room, or track_type attributes
             # These would need to be added to the LYTTrack class if needed
             # For now, just add the track
             self._lyt.tracks.append(track)

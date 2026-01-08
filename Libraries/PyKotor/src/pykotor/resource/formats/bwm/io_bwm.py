@@ -294,7 +294,7 @@ class BWMBinaryWriter(ResourceWriter):
 
         edge_offset = adjacency_offset + len(adjacency_data)
         # Get perimeter edges from the walkmesh
-        # Note: edges() returns perimeter edges based on walkable face indices
+        # NOTE: edges() returns perimeter edges based on walkable face indices
         # We need to map these to the reordered face list (walkable + unwalkable)
         # Reference: vendor/kotorblender/io_scene_kotor/format/bwm/writer.py:275-307
         perimeter_edges: list[BWMEdge] = self._wok.edges()

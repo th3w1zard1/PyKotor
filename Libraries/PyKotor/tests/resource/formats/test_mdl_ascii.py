@@ -1220,7 +1220,7 @@ donemodel test
         # Create skin data
         skin = MDLSkin()
         skin.bonemap = [0, 1]
-        # Note: bone_indices is a fixed 16-element tuple, set via qbones/tbones length
+        # NOTE: bone_indices is a fixed 16-element tuple, set via qbones/tbones length
         skin.qbones = [Vector4(0, 0, 0, 1), Vector4(0, 0, 0, 1)]
         skin.tbones = [Vector3(0, 0, 0), Vector3(0, 0, 0)]
 
@@ -1281,7 +1281,7 @@ donemodel test
 
         skin_node = mdl.get("skin_node")
         self.assertIsNotNone(skin_node)
-        # Note: Skin detection might require node type check
+        # NOTE: Skin detection might require node type check
 
     def test_write_dangly_mesh(self):
         """Test writing dangly mesh with constraints."""
@@ -1290,7 +1290,7 @@ donemodel test
 
         # Create dangly data
         dangly = MDLDangly()
-        # Note: displacement, tightness, and period are not direct attributes of MDLDangly
+        # NOTE: displacement, tightness, and period are not direct attributes of MDLDangly
         # They may be stored as controller data or node-level properties
         # For now, we'll just test constraints which are the main dangly feature
 

@@ -561,7 +561,7 @@ class Test2DAMemoryComprehensive(unittest.TestCase):
         ini_content = TestDataHelper.run_diff(self.vanilla_dir, self.modded_dir, self.tslpatchdata_dir)
 
         # Check if High() is detected and used
-        # Note: The diff engine would need logic to detect this pattern
+        # NOTE: The diff engine would need logic to detect this pattern
         print("\n=== test_2damemory_high_function ===")
         print(ini_content)
 

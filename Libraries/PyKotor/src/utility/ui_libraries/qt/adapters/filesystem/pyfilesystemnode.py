@@ -69,7 +69,7 @@ class PyFileSystemNode:
         # Matches C++ line 191: QExtendedInformation *info = nullptr;
         self.info: PyQExtendedInformation | None = None
         # Matches C++ line 189: QHash<QFileSystemModelNodePathKey, QFileSystemNode *> children;
-        # Note: In Python, we use dict[str, PyFileSystemNode] instead of QHash
+        # NOTE: In Python, we use dict[str, PyFileSystemNode] instead of QHash
         self.children: dict[str, PyFileSystemNode] = {}
         # Matches C++ line 190: QList<QString> visibleChildren;
         self.visibleChildren: list[str] = []
@@ -91,7 +91,7 @@ class PyFileSystemNode:
         """
         # qDeleteAll(children) - Python's garbage collector will handle dict cleanup
         # delete info - Python will handle None assignment
-        # Note: In Python, we can't explicitly delete like C++, but we clear references
+        # NOTE: In Python, we can't explicitly delete like C++, but we clear references
         self.children.clear()
         self.info = None
 

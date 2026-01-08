@@ -1,7 +1,6 @@
-"""PyKotor CLI GUI entrypoint (Kit Generator).
+"""Kit Generator GUI for PyKotor CLI.
 
-When command-line arguments are provided, the CLI remains headless. Launching
-without arguments starts this tkinter GUI for kit generation.
+This GUI is launched from Tools/KitGenerator and acts as a shim to pykotor.cli.commands.kit_generate.
 """
 
 from __future__ import annotations
@@ -16,7 +15,16 @@ from threading import Event
 from tkinter import filedialog, messagebox, ttk
 from typing import TYPE_CHECKING, cast
 
-# sys.path modifications removed - pykotor is now a proper package
+# Add PyKotor source to path for imports
+script_dir = Path(__file__).resolve().parent  # kitgenerator
+src_dir = script_dir.parent  # src
+kitgenerator_dir = src_dir.parent  # KitGenerator
+tools_dir = kitgenerator_dir.parent  # Tools
+pykotor_dir = tools_dir.parent  # PyKotor root
+pykotor_src = pykotor_dir / "Libraries" / "PyKotor" / "src"
+if str(pykotor_src) not in sys.path:
+    sys.path.insert(0, str(pykotor_src))
+
 from loggerplus import RobustLogger  # noqa: E402
 from pykotor.cli.kit_generator import generate_kit  # noqa: E402
 from pykotor.cli.version import VERSION as pykotor_version  # noqa: E402
@@ -31,7 +39,7 @@ if TYPE_CHECKING:
 VERSION_LABEL = pykotor_version
 
 
-class App(BaseApp):
+class KitGeneratorApp(BaseApp):
     """Kit generator GUI for PyKotor CLI."""
 
     def __init__(self):
@@ -155,7 +163,7 @@ class App(BaseApp):
 
                 def _move_cursor_to_end_installation_paths():
                     assert self.installation_paths is not None, (
-                        "kitgenerator_app.py:App:browse_installation::_move_cursor_to_end_installation_paths: Installation paths is None"
+                        "kitgenerator/gui.py:KitGeneratorApp:browse_installation::_move_cursor_to_end_installation_paths: Installation paths is None"
                     )
                     self.move_cursor_to_end(self.installation_paths)
 
@@ -448,7 +456,7 @@ class App(BaseApp):
 {"=" * 80}
 Extract kit resources from KOTOR module files (RIM/ERF)
 
-To run headless, use: python -m kotorcli kit-generate --installation <path> --module <module> --output <dir>
+To run headless, use: python Libraries/PyKotor/src/pykotor/cli/__main__.py kit-generate --installation <path> --module <module> --output <dir>
 """
         assert self.main_text is not None, "Main text is None"
         self.main_text.config(state=tk.NORMAL)

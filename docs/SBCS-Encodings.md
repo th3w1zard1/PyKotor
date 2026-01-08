@@ -571,6 +571,7 @@ The following is an exhaustive list of languages that can be represented using S
 ### Latin Script Languages (CP1252 / ISO-8859-1 / ISO-8859-15)
 
 **European Languages:**
+
 - All Western European languages (English, French, German, Spanish, Italian, Portuguese, Dutch, etc.)
 - All Nordic languages (Danish, Norwegian, Swedish, Finnish, Icelandic, Faroese)
 - All Celtic languages (Irish, Scottish Gaelic, Welsh, Breton, Cornish, Manx)
@@ -580,17 +581,20 @@ The following is an exhaustive list of languages that can be represented using S
 - Other: Albanian, Basque, Estonian, Latvian, Lithuanian, Latgalian, Maltese, Hungarian, Romanian, Turkish, Azeri (Latin), Uzbek (Latin), Turkmen (Latin), Kazakh (Latin variant), Kyrgyz (Latin variant), Tatar (Latin variant)
 
 **African Languages (Latin Script):**
+
 - West African: Hausa, Yoruba, Igbo, Fulfulde, Bambara, Malinke, Wolof, Twi, Akan, Ga, Dagbani, Soninke, Mandinka, Susu, Temne, Mende, Kpelle, Vai, Ewe, Fon, Grebo
 - East African: Swahili, Kinyarwanda, Luganda, Kikuyu, Kirundi, Ndebele, Sango
 - Southern African: Zulu, Xhosa, Shona, Chichewa, Sotho, Tswana, Venda, Tsonga, Bemba, Lingala, Kongo
 
 **Austronesian Languages (Latin Script):**
+
 - Philippine: Tagalog, Filipino, Cebuano, Ilocano, Waray, Hiligaynon, Bicol, Kapampangan, Pangasinan
 - Indonesian/Malay: Indonesian, Malay, Javanese, Sundanese, Madurese, Minangkabau, Acehnese, Balinese, Buginese, Batak languages
 - Pacific: Hawaiian, Maori, Tahitian, Tongan, Samoan, Fijian, Chamorro, Niuean, Tokelauan, Tuvaluan, Rotokas, Nauruan, Marshallese, Gilbertese, Pohnpeian, Kosraean, Palauan, Yapese
 - Other: Malagasy
 
 **Other Languages (Latin Script):**
+
 - Constructed: Esperanto, Ido, Interlingua, Volapük
 - Creoles: Haitian Creole, Papiamento, Tok Pisin, Bislama
 - Indigenous Americas: Guarani, Quechua, Aymara, Nahuatl (Latin variant), and many others using Latin script
@@ -599,50 +603,65 @@ The following is an exhaustive list of languages that can be represented using S
 ### Cyrillic Script Languages (CP1251 / ISO-8859-5 / KOI8-R / KOI8-U / CP855 / CP866)
 
 **Slavic Languages:**
+
 - Russian, Ukrainian, Belarusian, Bulgarian, Macedonian, Serbian (Cyrillic), Montenegrin (Cyrillic), Rusyn
 
 **Turkic Languages:**
+
 - Kazakh, Kyrgyz, Tatar, Bashkir, Chuvash, Karachay-Balkar, Nogai, Yakut, Tuvan, Khakas, Altai, Uyghur (Cyrillic variant), Azerbaijani (Cyrillic variant, historical)
 
 **Iranian Languages:**
+
 - Tajik, Ossetian
 
 **Mongolic Languages:**
+
 - Mongolian, Buryat, Kalmyk
 
 **Caucasian Languages:**
+
 - Abkhaz, Chechen, Ingush, Avar, Lezgian, Kabardian, Adyghe
 
 **Uralic Languages:**
+
 - Komi, Mari, Udmurt, Erzya, Moksha, Karelian
 
 **Other:**
+
 - Moldovan (Cyrillic variant, historical), Gagauz (Cyrillic variant)
 
 ### Arabic Script Languages (CP1256 / ISO-8859-6)
 
 **Semitic Languages:**
+
 - Arabic (all varieties), Maltese (historical Arabic script)
 
 **Iranian Languages:**
+
 - Persian (Farsi), Dari, Tajik (Arabic script variant), Kurdish, Balochi
 
 **Indo-Aryan Languages:**
+
 - Urdu, Sindhi, Kashmiri (Arabic script variant), Punjabi (Shahmukhi)
 
 **Turkic Languages:**
+
 - Uyghur (Arabic script), Kazakh (Arabic script variant, historical), Kyrgyz (Arabic script variant, historical)
 
 **Austronesian Languages:**
+
 - Jawi (Malay), Pegon (Indonesian), Chavacano (Arabic script variant)
 
 **African Languages:**
+
 - Hausa (Ajami), Swahili (Arabic script variant), Fulfulde (Ajami), Wolof (Ajami), Mandinka (Ajami)
 
 **Dravidian Languages:**
+
 - Arwi (Tamil Arabic script)
 
 **Other:**
+
 - Pashto, Brahui
 
 ### Greek Script Languages (CP1253 / ISO-8859-7)
@@ -676,6 +695,7 @@ The following is an exhaustive list of languages that can be represented using S
 ## Total Count
 
 Based on this comprehensive analysis, there are approximately **500-700 languages** that can be represented using SBCS encodings, depending on:
+
 - Whether historical variants are counted
 - Whether script variants of the same language are counted separately
 - Whether dialects with distinct orthographies are counted
@@ -687,6 +707,7 @@ The PyKotor `Language` enum currently includes **128 SBCS languages** (IDs 0-127
 ### By Primary Encoding
 
 **CP1252 / ISO-8859-1:**
+
 - Western European languages (English, French, German, Spanish, Italian, Portuguese, Dutch, etc.)
 - Nordic languages (Danish, Norwegian, Swedish, Finnish, Icelandic)
 - Celtic languages (Irish, Scottish Gaelic, Welsh, Breton, Cornish, Manx)
@@ -697,9 +718,11 @@ The PyKotor `Language` enum currently includes **128 SBCS languages** (IDs 0-127
 - Southeast Asian: Tagalog, Filipino, Indonesian
 
 **CP1250 / ISO-8859-2:**
+
 - Central/Eastern European: Czech, Slovak, Polish, Hungarian, Romanian, Croatian, Serbian (Latin), Slovenian, Bosnian, Montenegrin
 
 **CP1251 / ISO-8859-5 / KOI8-R / KOI8-U:**
+
 - Cyrillic Slavic: Russian, Ukrainian, Belarusian, Bulgarian, Macedonian, Serbian (Cyrillic), Montenegrin (Cyrillic), Rusyn
 - Cyrillic Turkic: Kazakh, Kyrgyz, Tatar, Bashkir, Chuvash, Karachay-Balkar, Nogai, Yakut, Tuvan, Khakas, Altai, Uyghur (Cyrillic variant)
 - Cyrillic Iranian: Tajik, Ossetian
@@ -709,42 +732,55 @@ The PyKotor `Language` enum currently includes **128 SBCS languages** (IDs 0-127
 - Other Cyrillic: Moldovan (Cyrillic variant, historical), Gagauz (Cyrillic variant)
 
 **CP1253 / ISO-8859-7:**
+
 - Greek
 
 **CP1254 / ISO-8859-9:**
+
 - Turkish, Azeri (Latin), Uzbek (Latin)
 
 **CP1255 / ISO-8859-8:**
+
 - Hebrew
 
 **CP1256 / ISO-8859-6:**
+
 - Arabic, Farsi (Persian), Urdu, Pashto, Kurdish, Sindhi, Balochi, Uyghur (Arabic script variant), Jawi (Malay Arabic script), Pegon (Indonesian Arabic script), Arwi (Tamil Arabic script), Hausa (Ajami - Arabic script variant), Swahili (Arabic script variant)
 
 **CP1257 / ISO-8859-13:**
+
 - Baltic: Estonian, Latvian, Lithuanian, Latgalian, Polish
 
 **CP1258:**
+
 - Vietnamese (with combining diacritics)
 
 **CP874 / ISO-8859-11 / TIS-620:**
+
 - Thai
 
 **ISO-8859-14:**
+
 - Celtic: Welsh, Irish Gaelic, Scottish Gaelic, Manx, Cornish, Breton
 
 **ISO-8859-15:**
+
 - Western European (revision of ISO-8859-1 with Euro sign)
 
 **ISO-8859-16:**
+
 - South-Eastern European: Albanian, Croatian, Hungarian, Italian, Polish, Romanian, Serbian, Slovenian
 
 **ArmSCII-8:**
+
 - Armenian
 
 **GEOSTD8:**
+
 - Georgian
 
 **TSCII:**
+
 - Tamil
 
 ## References

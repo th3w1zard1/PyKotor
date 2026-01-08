@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from pykotor.cli.dispatch import cli_main
 from pykotor.common.module import Module
 from pykotor.extract.installation import Installation
@@ -16,7 +18,10 @@ def _parse_indoor(raw: bytes) -> dict:
     return json.loads(raw.decode("utf-8"))
 
 
-def _expected_room_count_from_layout(installation: Installation, module_root: str) -> int | None:
+def _expected_room_count_from_layout(
+    installation: Installation,
+    module_root: str,
+) -> int | None:
     """Determine expected extracted room count from the module's LYT (fast mode, no texture crawling)."""
     module = Module(module_root, installation, use_dot_mod=True, load_textures=False)
     lyt_res = module.layout()
@@ -42,6 +47,7 @@ def _installation_for(
     raise AssertionError(msg)
 
 
+@pytest.mark.slow
 def test_indoor_extract_each_module_matches_modulekit_loadability(
     module_case: tuple[str, str],
     tmp_path: Path,
@@ -58,7 +64,7 @@ def test_indoor_extract_each_module_matches_modulekit_loadability(
     installation = _installation_for(game_key, k1_installation, k2_installation)
     game_arg = "k1" if game_key == "k1" else "k2"
 
-    expected_room_count = _expected_room_count_from_layout(installation, module_root)
+    expected_room_count: int | None = _expected_room_count_from_layout(installation, module_root)
 
     out = tmp_path / f"{game_key}_{module_root}.indoor"
     rc = _run_cli(

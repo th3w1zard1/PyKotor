@@ -405,11 +405,11 @@ class ModInstaller:
         memory = PatcherMemory()
         config: PatcherConfig = self.config()
         patches_list: list[PatcherModifications] = [
-            *config.install_list,  # Note: TSLPatcher executes [InstallList] after [TLKList]
+            *config.install_list,  # NOTE: TSLPatcher executes [InstallList] after [TLKList]
             *self.get_tlk_patches(config),
             *config.patches_2da,
             *config.patches_gff,
-            # Note: TSLPatcher runs [CompileList] *after* [HACKList], which is objectively bad, so HoloPatcher here will do the inverse.
+            # NOTE: TSLPatcher runs [CompileList] *after* [HACKList], which is objectively bad, so HoloPatcher here will do the inverse.
             *config.patches_nss,
             *config.patches_ncs,
             *config.patches_ssf,

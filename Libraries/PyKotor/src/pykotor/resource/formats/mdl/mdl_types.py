@@ -223,7 +223,7 @@ class MDLControllerType(IntEnum):
     Radius = RADIUS
     Multiplier = MULTIPLIER
 
-    # Note: Some controller IDs that were previously defined have been removed or
+    # NOTE: Some controller IDs that were previously defined have been removed or
     # corrected based on vendor analysis. See fx_flame01.mdl analysis in mdlops:352-355
 
 
