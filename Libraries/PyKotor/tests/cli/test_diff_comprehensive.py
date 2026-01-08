@@ -61,6 +61,8 @@ from pykotor.resource.formats.rim.rim_auto import write_rim
 from pykotor.resource.formats.rim.rim_data import RIM
 from pykotor.resource.formats.tlk.tlk_auto import write_tlk
 from pykotor.resource.formats.tlk.tlk_data import TLK
+from pykotor.resource.formats.tpc.tpc_auto import bytes_tpc
+from pykotor.resource.formats.tpc.tpc_data import TPC
 from pykotor.resource.type import ResourceType
 
 if TYPE_CHECKING:
@@ -128,6 +130,12 @@ class DiffTestDataHelper:
         file_path = path / filename
         file_path.write_bytes(data)
         return file_path
+
+    @staticmethod
+    def _create_valid_tpc_bytes() -> bytes:
+        """Create minimal valid TPC file bytes."""
+        tpc = TPC.from_blank()
+        return bytes_tpc(tpc, ResourceType.TPC)
 
     @staticmethod
     def create_installation(
@@ -257,6 +265,11 @@ class DiffTestDataHelper:
                         res_type = ResourceType[ext.upper()]
                     except KeyError:
                         res_type = ResourceType.UTC  # Default fallback
+
+                    # For TPC resources, ensure we have valid TPC data
+                    if res_type == ResourceType.TPC and not res_data.startswith(b"TPC V1.1"):
+                        # Create valid TPC if dummy data provided
+                        res_data = DiffTestDataHelper._create_valid_tpc_bytes()
 
                     # Add resource to BIF
                     resref = ResRef(res_ref_str)
@@ -405,6 +418,9 @@ class DiffTestDataHelper:
                     res_type = ResourceType[ext.upper()]
                 except KeyError:
                     res_type = ResourceType.TPC
+                # Ensure valid TPC data
+                if res_type == ResourceType.TPC and not res_data.startswith(b"TPC V1.1"):
+                    res_data = DiffTestDataHelper._create_valid_tpc_bytes()
                 tpa_erf.set_data(res_ref_str, res_type, res_data)
             tpa_erf_path = install_path / "TexturePacks" / "swpc_tex_tpa.erf"
             write_erf(tpa_erf, tpa_erf_path)
@@ -422,6 +438,9 @@ class DiffTestDataHelper:
                     res_type = ResourceType[ext.upper()]
                 except KeyError:
                     res_type = ResourceType.TPC
+                # Ensure valid TPC data
+                if res_type == ResourceType.TPC and not res_data.startswith(b"TPC V1.1"):
+                    res_data = DiffTestDataHelper._create_valid_tpc_bytes()
                 tpb_erf.set_data(res_ref_str, res_type, res_data)
             tpb_erf_path = install_path / "TexturePacks" / "swpc_tex_tpb.erf"
             write_erf(tpb_erf, tpb_erf_path)
@@ -439,6 +458,9 @@ class DiffTestDataHelper:
                     res_type = ResourceType[ext.upper()]
                 except KeyError:
                     res_type = ResourceType.TPC
+                # Ensure valid TPC data
+                if res_type == ResourceType.TPC and not res_data.startswith(b"TPC V1.1"):
+                    res_data = DiffTestDataHelper._create_valid_tpc_bytes()
                 tpc_erf.set_data(res_ref_str, res_type, res_data)
             tpc_erf_path = install_path / "TexturePacks" / "swpc_tex_tpc.erf"
             write_erf(tpc_erf, tpc_erf_path)
@@ -456,6 +478,9 @@ class DiffTestDataHelper:
                     res_type = ResourceType[ext.upper()]
                 except KeyError:
                     res_type = ResourceType.TPC
+                # Ensure valid TPC data
+                if res_type == ResourceType.TPC and not res_data.startswith(b"TPC V1.1"):
+                    res_data = DiffTestDataHelper._create_valid_tpc_bytes()
                 gui_erf.set_data(res_ref_str, res_type, res_data)
             gui_erf_path = install_path / "TexturePacks" / "swpc_tex_gui.erf"
             write_erf(gui_erf, gui_erf_path)
@@ -469,13 +494,18 @@ class DiffTestDataHelper:
             dialogf_path = install_path / "dialogf.tlk"
             dialogf_path.write_bytes(dialog_tlk_data)
         else:
-            # Create minimal valid TLK files (empty but valid structure)
+            # Create minimal valid TLK files with enough entries for common tests
+            # Add at least 3 entries (0, 1, 2) to support common stringref tests
             dialog_tlk = TLK(language=Language.ENGLISH)
             dialogf_tlk = TLK(language=Language.ENGLISH)
             
-            # Add at least one entry to make it valid (StrRef 0 is often used)
-            dialog_tlk.add("", "")
-            dialogf_tlk.add("", "")
+            # Add entries for common stringrefs used in tests
+            dialog_tlk.add("", "")  # StrRef 0
+            dialog_tlk.add("", "")  # StrRef 1
+            dialog_tlk.add("ERROR: FATAL COMPILER ERROR", "")  # StrRef 2 (common test case)
+            dialogf_tlk.add("", "")  # StrRef 0
+            dialogf_tlk.add("", "")  # StrRef 1
+            dialogf_tlk.add("ERROR: FATAL COMPILER ERROR", "")  # StrRef 2
             
             tlk_path = install_path / "dialog.tlk"
             dialogf_path = install_path / "dialogf.tlk"
