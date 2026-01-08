@@ -441,6 +441,37 @@ class TestInstallationWithCreateInstallation(TestCase):
         # String ref 2 should return "ERROR: FATAL COMPILER ERROR" from TLK
         assert results[locstring3] == "ERROR: FATAL COMPILER ERROR"
 
+    def test_pickle_unpickle(self):
+        """Test that an Installation object can be pickled and unpickled."""
+        import pickle
+
+        installation: Installation = self.installation  # type: ignore[attr-defined]
+        pickled_data = pickle.dumps(installation)
+        unpickled_installation = pickle.loads(pickled_data)
+        self.assertEqual(installation._path, unpickled_installation._path)
+
+    def test_pickle_to_file(self):
+        """Test pickling to and unpickling from a file."""
+        import pickle
+        from io import BytesIO
+
+        installation: Installation = self.installation  # type: ignore[attr-defined]
+        with BytesIO() as file:
+            pickle.dump(installation, file)
+            file.seek(0)
+            unpickled_installation = pickle.load(file)
+            self.assertEqual(installation._path, unpickled_installation._path)
+
+    def test_multiple_unpickle(self):
+        """Test that multiple unpickling operations yield consistent results."""
+        import pickle
+
+        installation: Installation = self.installation  # type: ignore[attr-defined]
+        pickled_data = pickle.dumps(installation)
+        for _ in range(3):
+            unpickled_installation = pickle.loads(pickled_data)
+            self.assertEqual(installation._path, unpickled_installation._path)
+
 
 if __name__ == "__main__":
     try:
