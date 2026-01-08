@@ -31,19 +31,81 @@ from pykotor.extract.installation import Installation, SearchLocation
 from pykotor.resource.type import ResourceType
 from pykotor.tools.path import CaseAwarePath
 
-K1_PATH: str | None = os.environ.get("K1_PATH", "C:\\Program Files (x86)\\Steam\\steamapps\\common\\swkotor")
+# Import create_installation from test_diff_comprehensive
+sys.path.insert(0, str(THIS_SCRIPT_PATH.parents[1] / "cli"))
+from test_diff_comprehensive import DiffTestDataHelper
+
+import tempfile
+from pathlib import Path
 
 
-@unittest.skipIf(
-    not K1_PATH or not CaseAwarePath(K1_PATH).joinpath("chitin.key").is_file(),
-    "K1_PATH environment variable is not set or not found on disk.",
-)
 class TestInstallation(TestCase):
     @classmethod
     def setUpClass(cls):
-        assert K1_PATH
-        cls.installation = Installation(K1_PATH)  # type: ignore[attr-defined]
-        # cls.installation.reload_all()
+        # Create temporary directory for installation
+        cls.temp_dir = Path(tempfile.mkdtemp())
+        cls.install_path = cls.temp_dir / "test_install"
+
+        # Create installation with all resources needed for tests
+        DiffTestDataHelper.create_installation(
+            cls.install_path,
+            with_override=True,
+            # BIF resources (CHITIN)
+            bif_resources={
+                "data.bif": {
+                    "c_bantha.utc": b"BIF_UTC_DATA",
+                    "m03ae_03a_lm4.tpc": b"BIF_TPC_DATA",
+                    "as_an_dantext_01.wav": b"BIF_WAV_DATA",
+                }
+            },
+            # Modules resources (in RIM files)
+            modules_resources={
+                "m01aa.rim": {"m01aa.are": b"ARE_DATA"},
+                "danm13.rim": {"m13aa.are": b"ARE_DATA_M13"},
+            },
+            # Voice resources
+            voice_resources={
+                "NM03ABCITI06004_.wav": b"VOICE_WAV_DATA",
+                "NM17AE04NI04008_.wav": b"VOICE_WAV_DATA2",
+                "n_gengamm_scrm.wav": b"VOICE_WAV_DATA3",
+            },
+            # Music resources
+            music_resources={
+                "mus_theme_carth.wav": b"MUSIC_WAV_DATA",
+                "al_en_cityext.wav": b"MUSIC_WAV_DATA2",
+            },
+            # Sound resources
+            sound_resources={
+                "P_hk47_POIS.wav": b"SOUND_WAV_DATA",
+                "P_ZAALBAR_POIS.wav": b"SOUND_WAV_DATA2",
+                "al_an_flybuzz_01.wav": b"SOUND_WAV_DATA3",
+            },
+            # Lips resources (in MOD files)
+            lips_resources={
+                "n_gendro_coms1.mod": {"n_gendro_coms1.lip": b"LIP_DATA"},
+            },
+            # Texture pack resources
+            texture_tpa_resources={
+                "blood.tpc": b"TPA_TPC_DATA",
+                "LEH_FLOOR01.tpc": b"TPA_TPC_DATA2",
+            },
+            texture_tpb_resources={
+                "blood.tpc": b"TPB_TPC_DATA",
+                "LEH_Floor01.tpc": b"TPB_TPC_DATA2",
+            },
+            texture_tpc_resources={
+                "blood.tpc": b"TPC_TPC_DATA",
+                "leh_floor01.tpc": b"TPC_TPC_DATA2",
+            },
+            texture_gui_resources={
+                "PO_PCarth.tpc": b"GUI_TPC_DATA",
+                "bluearrow.tpc": b"GUI_TPC_DATA2",
+                "1024x768back.tpc": b"GUI_TPC_DATA3",
+            },
+        )
+
+        # Create Installation instance
+        cls.installation = Installation(cls.install_path)  # type: ignore[attr-defined]
 
     def test_resource(self):
         installation: Installation = self.installation  # type: ignore[attr-defined]
