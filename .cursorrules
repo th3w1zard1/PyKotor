@@ -103,7 +103,8 @@ if (-not $proc.WaitForExit(300000)) { $proc.Kill(); Write-Host "TIMEOUT" }
 For engine features, formats, mechanics, resources:
 
 - Analyze both KotOR I (`swkotor.exe`) and KotOR II/TSL (`swkotor2.exe`) using REVA MCP tools.
-- Use unified K1 naming.
+- open-project <path to .gpr>. Usually this is %USERPROFILE%\test.gpr but remember to RESOLVE %userprofile% manually! e.g. C:\Users\boden\test.gpr
+- Use unified K1/TSL naming.
 - Format addresses: `FunctionName - K1: 0xADDRESS, TSL: 0xADDRESS` (once if same).
 - Highlight differences; use conditionals for divergences.
 - Comment: `# Reference: K1 swkotor.exe:0xADDRESS, TSL swkotor2.exe:0xADDRESS`
