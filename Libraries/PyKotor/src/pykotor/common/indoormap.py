@@ -375,7 +375,7 @@ class IndoorMap(ComparableMixin):
         # Module WOKs are effectively consumed in world coordinates, so we must bake the room transform
         # into the exported WOK vertices here.
         #
-        # Reference: `vendor/swkotor.c`:
+        # Reference: `
         # - `CSWCollisionMesh__LoadMeshBinary` sets `field9_0x4c = 1`
         # - `CSWCollisionMesh__TransformToWorld` only runs when `field9_0x4c == 0`
         # - `CSWSRoom__TransformToWorld` calls `TransformToWorld` (but it is a no-op for binary meshes)
@@ -465,9 +465,9 @@ class IndoorMap(ComparableMixin):
         # - `DynAmbientColor` is read from ARE and used to set scene ambient.
         #
         # Sources:
-        # - `vendor/swkotor.c` reads these fields from the ARE GFF into `sw_area.*_color`
+        # - ` reads these fields from the ARE GFF into `sw_area.*_color`
         #   and later uses them when loading the area scene (incl. `CAurScene__SetAmbient`).
-        # - `vendor/swkotor.h` defines `sun_ambient_color`, `sun_diffuse_color`, `dynamic_ambient_color`
+        # - ` defines `sun_ambient_color`, `sun_diffuse_color`, `dynamic_ambient_color`
         #   on the area struct.
         self.are.sun_ambient = self.lighting
         self.are.sun_diffuse = self.lighting

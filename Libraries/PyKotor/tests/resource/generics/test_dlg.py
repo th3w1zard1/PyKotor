@@ -725,7 +725,7 @@ class TestDLG(TestCase):
     def setUp(self):
         self.log_messages: list[str] = [os.linesep]
 
-    def log_func(self, *args):
+    def log_func(self, *args, **kwargs):
         self.log_messages.extend(args)
 
     def test_k1_reconstruct(self):

@@ -148,10 +148,14 @@ class Installation:
     
     References:
     ----------
-        vendor/KOTOR_Registry_Install_Path_Editor/ (Windows registry path detection)
-        vendor/reone/src/libs/resource/provider/ (Resource provider architecture)
-        vendor/KotOR.js/src/loaders/ (Resource loading patterns)
-        vendor/xoreos-tools/src/ (Resource extraction tools)
+        Based on swkotor.exe GFF structure:
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/loaders/ (Resource loading patterns)
+
+
     
     Note: Installation path detection may differ between platforms (Windows registry vs manual path)
     """  # noqa: E501

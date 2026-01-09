@@ -37,19 +37,20 @@ class ResRef(str):
     
     References:
     ----------
-        vendor/reone/include/reone/resource/resref.h:26-66 (ResRef class definition)
-        vendor/reone/include/reone/resource/resref.h:26 (kMaxResRefLength constant = 16)
-        vendor/reone/include/reone/resource/resref.h:32-38 (ResRef constructor with truncation and lowercasing)
-        vendor/Kotor.NET/Kotor.NET/Common/Data/ResRef.cs:9-72 (ResRef class, max length 16)
-        vendor/HoloPatcher.NET/src/TSLPatcher.Core/Common/ResRef.cs:12-132 (ResRef class with validation)
-        vendor/HoloPatcher.NET/src/TSLPatcher.Core/Common/ResRef.cs:15 (MaxLength constant = 16)
-        vendor/HoloPatcher.NET/src/TSLPatcher.Core/Common/ResRef.cs:15 (InvalidCharacters constant)
-        vendor/KotOR_IO/KotOR_IO/File Formats/GFF FieldTypes/B_ResRef.cs (ResRef GFF field type)
-        vendor/xoreos-tools/src/common/util.cpp (ResRef handling utilities)
-        vendor/KotOR.js/src/resource/ResourceTypes.ts (Resource type definitions)
-        vendor/KotOR-dotNET/AuroraFile.cs (ResRef in C#)
-        vendor/kotor/kotor/resref.py (ResRef handling in Python)
+        Based on swkotor.exe GFF structure:
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
+        Original BioWare engine binaries
         Original BioWare Odyssey Engine (ResRef format specification)
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Common/Data/ResRef.cs:9-72 (ResRef class, max length 16)
+        https://github.com/th3w1zard1/HoloPatcher.NET/tree/master/src/TSLPatcher.Core/Common/ResRef.cs:12-132 (ResRef class with validation)
+        https://github.com/th3w1zard1/HoloPatcher.NET/tree/master/src/TSLPatcher.Core/Common/ResRef.cs:15 (MaxLength constant = 16)
+        https://github.com/th3w1zard1/HoloPatcher.NET/tree/master/src/TSLPatcher.Core/Common/ResRef.cs:15 (InvalidCharacters constant)
+        https://github.com/th3w1zard1/KotOR_IO/tree/master/KotOR_IO/File (ResRef GFF field type)
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/ResourceTypes.ts (Resource type definitions)
+        https://github.com/th3w1zard1/KotOR-dotNET/tree/master/AuroraFile.cs (ResRef in C#)
+
         Note: ResRef case-insensitivity is critical for cross-platform compatibility
 
     Restrictions:
@@ -75,16 +76,12 @@ class ResRef(str):
     MAX_LENGTH: ClassVar[int] = 16
     """Maximum length of a ResRef in characters.
     
-    Reference: reone/resref.h:26 (kMaxResRefLength = 16)
-    Reference: HoloPatcher.NET/ResRef.cs:14 (MaxLength = 16)
-    Reference: Kotor.NET/ResRef.cs:30 (Length check > 16)
     This is a hard limit enforced by the BioWare Odyssey Engine.
     """
 
     INVALID_CHARACTERS: ClassVar[str] = '<>:"/\\|?*'
     """Characters that are invalid in ResRefs (Windows filename restrictions).
     
-    Reference: HoloPatcher.NET/ResRef.cs:15 (InvalidCharacters constant)
     These characters cannot appear in Windows filenames and are therefore
     invalid for ResRefs which are used as filenames.
     """

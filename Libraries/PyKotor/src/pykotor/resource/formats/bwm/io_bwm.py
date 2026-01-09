@@ -52,7 +52,10 @@ class BWMBinaryReader(ResourceReader):
     
     References:
     ----------
-        vendor/reone/src/libs/graphics/format/bwmreader.cpp (BWM reading)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
     """
     def __init__(
         self,
@@ -271,7 +274,7 @@ class BWMBinaryWriter(ResourceWriter):
             # Find AABB indices by object identity
             # CRITICAL FIX: Use 0-based indices (not 1-based) for AABB children
             # The game engine (swkotor.exe/swkotor2.exe) reads these as direct array indices.
-            # Reference: vendor/reone/src/libs/graphics/format/bwmreader.cpp:164-167
+            #
             # Reference: wiki/BWM-File-Format.md - AABB Tree section - Vendor Discrepancy
             left_idx = 0xFFFFFFFF if aabb.left is None else next(i for i, a in enumerate(aabbs) if a is aabb.left)
             right_idx = 0xFFFFFFFF if aabb.right is None else next(i for i, a in enumerate(aabbs) if a is aabb.right)
@@ -296,7 +299,7 @@ class BWMBinaryWriter(ResourceWriter):
         # Get perimeter edges from the walkmesh
         # NOTE: edges() returns perimeter edges based on walkable face indices
         # We need to map these to the reordered face list (walkable + unwalkable)
-        # Reference: vendor/kotorblender/io_scene_kotor/format/bwm/writer.py:275-307
+        # Reference: https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/bwm/writer.py:275-307
         perimeter_edges: list[BWMEdge] = self._wok.edges()
 
         # Convert perimeter edges to use reordered face indices

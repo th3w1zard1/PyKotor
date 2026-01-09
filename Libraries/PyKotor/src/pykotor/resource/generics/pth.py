@@ -22,12 +22,22 @@ class PTH:
     
     References:
     ----------
-        vendor/reone/src/libs/resource/parser/gff/pth.cpp (PTH parsing from GFF)
-        vendor/reone/include/reone/resource/parser/gff/pth.h (PTH structure definitions)
-        vendor/reone/src/libs/game/pathfinder.cpp (Pathfinding algorithm using PTH data)
-        vendor/xoreos-tools/src/xml/pthdumper.cpp (PTH to XML conversion)
-        vendor/xoreos-tools/src/xml/pthcreator.cpp (XML to PTH conversion)
-        Note: PTH files are GFF format files with specific structure definitions
+        KotOR I (swkotor.exe):
+            - 0x00508400 - CSWSArea::LoadPathPoints (704 bytes, 109 lines)
+                - Main PTH GFF parser entry point
+                - Loads path points and connections from GFF structure
+                - Function signature: LoadPathPoints(CSWSArea* this, CResStruct* param_1)
+                - Called from LoadArea (0x0050e190)
+            - Reads Path_Points list:
+                - X (FLOAT) - X coordinate
+                - Y (FLOAT) - Y coordinate
+                - Conections (DWORD) - connection count
+                - First_Conection (DWORD) - first connection index
+            - Reads Path_Conections list:
+                - Destination (DWORD) - destination point index
+        KotOR II / TSL (swkotor2.exe):
+            - Functionally identical to K1 implementation
+            - Same GFF structure and parsing logic
     """
 
     BINARY_TYPE = ResourceType.PTH

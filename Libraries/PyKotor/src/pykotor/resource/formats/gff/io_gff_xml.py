@@ -36,9 +36,17 @@ class GFFXMLReader(ResourceReader):
     
     References:
     ----------
-        vendor/xoreos-tools/src/xml/gffdumper.cpp (GFF to XML conversion)
-        vendor/xoreos-tools/src/xml/gffcreator.cpp (XML to GFF conversion)
-        vendor/xoreos-docs/specs/aurora/gff.xml (GFF XML format specification)
+        Based on swkotor.exe GFF structure:
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates new GFF file with file_type and version
+        - CResGFF::WriteGFFFile @ 0x00413030 - Writes GFF data to file
+        - CResGFF::WriteGFFData @ 0x004113d0 - Writes GFF header and data sections
+        - GFFVersion string "V3.2" @ 0x0073e2c8 - Hardcoded GFF version identifier
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        
+        Note: XML format is PyKotor-specific conversion format, not a standard game format.
+        The engine uses binary GFF format exclusively. XML conversion allows easier editing
+        and integration with external tools like xoreos-tools.
+
     """
     def __init__(
         self,

@@ -5,9 +5,15 @@ Handles sound set entry modifications and memory token resolution.
 
 References:
 ----------
-    vendor/TSLPatcher/TSLPatcher.pl - Original Perl SSF modification logic
-    vendor/HoloPatcher.NET/src/TSLPatcher.Core/Mods/SSF/ - C# SSF modification implementation
-    vendor/Kotor.NET/Kotor.NET.Patcher/ - Incomplete C# patcher
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/TSLPatcher/tree/master/TSLPatcher.pl
+        https://github.com/th3w1zard1/HoloPatcher.NET/tree/master/src/TSLPatcher.Core/Mods/SSF/
+        https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET.Patcher/
+
+
 """
 
 from __future__ import annotations

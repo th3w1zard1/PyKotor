@@ -34,9 +34,12 @@ class Chitin:
 
     References:
     ----------
-        vendor/reone/src/libs/resource/format/keyreader.cpp:26-65 (KEY reading)
-        vendor/reone/src/libs/resource/format/bifreader.cpp:26-63 (BIF reading)
-        vendor/xoreos-tools/src/unkeybif.cpp (KEY/BIF extraction tool)
+        Based on swkotor.exe ERF structure:
+        - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file
+        - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds ERF/MOD/SAV contents to key table
+        Original BioWare engine binaries
+
+
     """
 
     KEY_ELEMENT_SIZE = 8
@@ -83,7 +86,7 @@ class Chitin:
         keys: dict[int, str],
         bif_filename: str,
     ):
-        # vendor/reone/src/libs/resource/format/bifreader.cpp:26-63
+        
         with BinaryReader.from_file(bif_path) as reader:
             _bif_file_type: str = reader.read_string(4)  # 0x0
             _bif_file_version: str = reader.read_string(4)  # 0x4
@@ -91,7 +94,7 @@ class Chitin:
             _fixed_resource_count: int = reader.read_uint32()  # unimplemented/padding (always 0x00000000?)
             resource_offset: int = reader.read_uint32()  # 0x10 always the value hex 0x14 (dec 20)
             reader.seek(resource_offset)  # Skip to 0x14
-            # vendor/reone/src/libs/resource/format/bifreader.cpp:50-63
+            
             for _ in range(resource_count):
                 # Initialize the FileResource and add to this chitin object's collections.
                 resource = FileResource(
@@ -105,7 +108,7 @@ class Chitin:
                 self._resource_dict[bif_filename].append(resource)
 
     def _get_chitin_data(self) -> tuple[dict[int, str], list[str]]:
-        # vendor/reone/src/libs/resource/format/keyreader.cpp:26-65
+        
         with BinaryReader.from_file(self._key_path) as reader:
             # _key_file_type = reader.read_string(4)  # noqa: ERA001
             # _key_file_version = reader.read_string(4)  # noqa: ERA001
@@ -115,7 +118,7 @@ class Chitin:
             file_table_offset: int = reader.read_uint32()
             reader.skip(4)  # key table offset uint32
 
-            # vendor/reone/src/libs/resource/format/keyreader.cpp:38-59
+            
             files: list[tuple[int, int]] = []
             reader.seek(file_table_offset)
             for _ in range(bif_count):
@@ -131,7 +134,7 @@ class Chitin:
                 bif: str = reader.read_string(file_length)
                 bifs.append(bif)
 
-            # vendor/reone/src/libs/resource/format/keyreader.cpp:61-68
+            
             keys: dict[int, str] = {}
             for _ in range(key_count):
                 resref: str = reader.read_string(16)

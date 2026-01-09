@@ -286,11 +286,17 @@ def extract_kit(
 
     References:
     ----------
-        vendor/reone/src/libs/game/object/door.cpp:80-94 - DWK extraction (modelname0/1/2.dwk)
-        vendor/reone/src/libs/game/object/placeable.cpp:73 - PWK extraction (modelname.pwk)
-        vendor/KotOR.js/src/module/ModuleRoom.ts:331-342 - WOK loading for rooms
-        vendor/KotOR.js/src/module/ModuleDoor.ts:992 - DWK loading
-        vendor/KotOR.js/src/module/ModulePlaceable.ts:684 - PWK loading
+        Based on swkotor.exe ERF structure:
+        - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file
+        - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds ERF/MOD/SAV contents to key table
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/module/ModuleRoom.ts:331-342
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/module/ModuleDoor.ts:992
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/module/ModulePlaceable.ts:684
+
+
 
     Raises:
     ------
@@ -507,8 +513,8 @@ def extract_kit(
         logger.info(f"Using .rim format for Module class (module_name: {module_name_clean})")
 
     # Get LYT to find all room models (which have WOK files)
-    # Reference: vendor/reone/src/libs/game/object/area.cpp (room loading)
-    # Reference: vendor/KotOR.js/src/module/ModuleRoom.ts:331-342 (loadWalkmesh)
+    #
+    # Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/src/module/ModuleRoom.ts:331-342 (loadWalkmesh)
     lyt_resource = module.layout()
     lyt_room_models: set[str] = set()  # Store lowercase room model names
     lyt_room_model_names: list[str] = []  # Store original room model names (for resource lookup)
@@ -1052,7 +1058,7 @@ def extract_kit(
             (lightmaps_dir / f"{lightmap_name}.txi").write_bytes(b"")
 
     # Extract door walkmeshes (DWK files)
-    # Reference: vendor/reone/src/libs/game/object/door.cpp:80-94
+    #
     # Doors have 3 walkmesh states: closed (0), open1 (1), open2 (2)
     # Format: <modelname>0.dwk, <modelname>1.dwk, <modelname>2.dwk
     # Batch DWK lookups to avoid repeated installation.locations() calls (performance optimization)
@@ -1138,7 +1144,7 @@ def extract_kit(
             continue
 
     # Extract placeable walkmeshes (PWK files)
-    # Reference: vendor/reone/src/libs/game/object/placeable.cpp:73
+    #
     # Format: <modelname>.pwk
     from pykotor.tools import placeable as placeable_tools
     

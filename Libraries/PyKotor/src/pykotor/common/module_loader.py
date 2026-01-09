@@ -5,10 +5,14 @@ and extracting game object data. The actual rendering/display is handled by back
 
 References:
 ----------
-    vendor/reone/src/libs/scene/di/module.cpp - Module loading
-    vendor/KotOR.js/src/Game.ts - Module rendering
-    Libraries/PyKotor/src/pykotor/resource/formats/lyt - LYT format
-    Libraries/PyKotor/src/pykotor/resource/generics/git - GIT format
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/Game.ts
+        Libraries/PyKotor/src/pykotor/resource/formats/lyt - LYT format
+        Libraries/PyKotor/src/pykotor/resource/generics/git - GIT format
+
 """
 
 from __future__ import annotations
@@ -38,8 +42,11 @@ class ModuleDataLoader:
     
     References:
     ----------
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
         Libraries/PyKotorGL/src/pykotor/gl/scene/scene_base.py:207-223 - 2DA loading
         Libraries/PyKotorGL/src/pykotor/gl/scene/scene_base.py:224-315 - Creature loading
+
     """
     
     def __init__(self, installation: Installation):

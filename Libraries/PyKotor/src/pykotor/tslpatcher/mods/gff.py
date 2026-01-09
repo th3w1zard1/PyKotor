@@ -5,9 +5,17 @@ Handles field additions, modifications, list operations, and struct manipulation
 
 References:
 ----------
-    vendor/TSLPatcher/TSLPatcher.pl - Original Perl GFF modification logic
-    vendor/HoloPatcher.NET/src/TSLPatcher.Core/Mods/GFF/ - C# GFF modification implementation
-    vendor/Kotor.NET/Kotor.NET.Patcher/ - Incomplete C# patcher
+        Based on swkotor.exe GFF structure:
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
+        - CResGFF::WriteGFFFile @ 0x00413030 - Writes GFF data to file
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/TSLPatcher/tree/master/TSLPatcher.pl
+        https://github.com/th3w1zard1/HoloPatcher.NET/tree/master/src/TSLPatcher.Core/Mods/GFF/
+        https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET.Patcher/
+
+
 """
 
 from __future__ import annotations

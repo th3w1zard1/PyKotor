@@ -6,11 +6,14 @@ and can be used by any application that needs format conversions.
 
 References:
 ----------
-    vendor/xoreos-tools/src/xml/gffdumper.cpp - GFF to XML
-    vendor/xoreos-tools/src/xml/gffcreator.cpp - XML to GFF
-    vendor/xoreos-tools/src/tlk2xml.cpp - TLK to XML
-    vendor/xoreos-tools/src/xml2tlk.cpp - XML to TLK
-    vendor/xoreos-tools/src/convert2da.cpp - 2DA to CSV
+        Based on swkotor.exe GFF/TLK/SSF/2DA structure:
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
+        - CTlkTable::AddFile @ 0x0041d920 - Adds TLK file to table
+        - CResSSF::CResSSF @ 0x006db650 - Constructor for SSF resource
+        - C2DA::Load2DArray @ 0x004143b0 - Loads 2DA file from resource
+        Original BioWare engine binaries
+
+
 """
 from __future__ import annotations
 
@@ -37,7 +40,14 @@ def convert_gff_to_xml(input_path: Path, output_path: Path) -> None:
 
     References:
     ----------
-        vendor/xoreos-tools/src/xml/gffdumper.cpp
+        Based on swkotor.exe GFF/TLK/SSF/2DA structure:
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
+        - CTlkTable::AddFile @ 0x0041d920 - Adds TLK file to table
+        - CResSSF::CResSSF @ 0x006db650 - Constructor for SSF resource
+        - C2DA::Load2DArray @ 0x004143b0 - Loads 2DA file from resource
+        Original BioWare engine binaries
+
+
     """
     gff = read_gff(input_path)
     write_gff(gff, output_path, file_format=ResourceType.GFF_XML)
@@ -54,7 +64,14 @@ def convert_xml_to_gff(input_path: Path, output_path: Path, *, gff_content_type:
 
     References:
     ----------
-        vendor/xoreos-tools/src/xml/gffcreator.cpp
+        Based on swkotor.exe GFF/TLK/SSF/2DA structure:
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
+        - CTlkTable::AddFile @ 0x0041d920 - Adds TLK file to table
+        - CResSSF::CResSSF @ 0x006db650 - Constructor for SSF resource
+        - C2DA::Load2DArray @ 0x004143b0 - Loads 2DA file from resource
+        Original BioWare engine binaries
+
+
     """
     gff = read_gff(input_path, file_format=ResourceType.GFF_XML)
     write_gff(gff, output_path, file_format=ResourceType.GFF)
@@ -70,7 +87,14 @@ def convert_tlk_to_xml(input_path: Path, output_path: Path) -> None:
 
     References:
     ----------
-        vendor/xoreos-tools/src/tlk2xml.cpp
+        Based on swkotor.exe GFF/TLK/SSF/2DA structure:
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
+        - CTlkTable::AddFile @ 0x0041d920 - Adds TLK file to table
+        - CResSSF::CResSSF @ 0x006db650 - Constructor for SSF resource
+        - C2DA::Load2DArray @ 0x004143b0 - Loads 2DA file from resource
+        Original BioWare engine binaries
+
+
     """
     tlk = read_tlk(input_path)
     write_tlk(tlk, output_path, file_format=ResourceType.TLK_XML)
@@ -87,7 +111,14 @@ def convert_xml_to_tlk(input_path: Path, output_path: Path, *, language: Languag
 
     References:
     ----------
-        vendor/xoreos-tools/src/xml2tlk.cpp
+        Based on swkotor.exe GFF/TLK/SSF/2DA structure:
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
+        - CTlkTable::AddFile @ 0x0041d920 - Adds TLK file to table
+        - CResSSF::CResSSF @ 0x006db650 - Constructor for SSF resource
+        - C2DA::Load2DArray @ 0x004143b0 - Loads 2DA file from resource
+        Original BioWare engine binaries
+
+
     """
     tlk = read_tlk(input_path, file_format=ResourceType.TLK_XML, language=language)
     write_tlk(tlk, output_path, file_format=ResourceType.TLK)
@@ -128,7 +159,14 @@ def convert_2da_to_csv(input_path: Path, output_path: Path, *, delimiter: str = 
 
     References:
     ----------
-        vendor/xoreos-tools/src/convert2da.cpp
+        Based on swkotor.exe GFF/TLK/SSF/2DA structure:
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
+        - CTlkTable::AddFile @ 0x0041d920 - Adds TLK file to table
+        - CResSSF::CResSSF @ 0x006db650 - Constructor for SSF resource
+        - C2DA::Load2DArray @ 0x004143b0 - Loads 2DA file from resource
+        Original BioWare engine binaries
+
+
     """
     twoda = read_2da(input_path)
     write_2da(twoda, output_path, file_format=ResourceType.TwoDA_CSV)
@@ -145,7 +183,14 @@ def convert_csv_to_2da(input_path: Path, output_path: Path, *, delimiter: str = 
 
     References:
     ----------
-        vendor/xoreos-tools/src/convert2da.cpp
+        Based on swkotor.exe GFF/TLK/SSF/2DA structure:
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
+        - CTlkTable::AddFile @ 0x0041d920 - Adds TLK file to table
+        - CResSSF::CResSSF @ 0x006db650 - Constructor for SSF resource
+        - C2DA::Load2DArray @ 0x004143b0 - Loads 2DA file from resource
+        Original BioWare engine binaries
+
+
     """
     twoda = read_2da(input_path, file_format=ResourceType.TwoDA_CSV)
     write_2da(twoda, output_path, file_format=ResourceType.TwoDA)

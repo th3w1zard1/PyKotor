@@ -1303,13 +1303,14 @@ class MDL(ComparableMixin):
 
     References:
     ----------
-        vendor/reone/src/libs/graphics/model.cpp - Model structure and rendering
-        vendor/reone/include/reone/graphics/model.h - Model header definitions
-        vendor/mdlops - MDL/MDX manipulation tool
-        vendor/kotorblender/io_scene_kotor/format/mdl/ - Blender MDL loader/exporter
-        vendor/KotOR.js/src/odyssey/OdysseyModel.ts - TypeScript model structure
-        vendor/kotor/kotor/model/nodes.py - Python model node parsing
-        vendor/xoreos-tools/src/resource/mdlmdx.cpp - MDL/MDX format parser
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/OdysseyModel.ts
+
+
         Note: MDL/MDX are binary formats with separate geometry (.mdx) and structure (.mdl) files
     """
 
@@ -1677,21 +1678,23 @@ class MDL(ComparableMixin):
 
         References:
         ----------
-            vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:703-723 - prepareSkinMeshes()
-            Called after model loading to initialize skin mesh bone mappings
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Called after model loading to initialize skin mesh bone mappings
+
 
         Notes:
         -----
             This is essential for multi-part character models where body parts
             reference bones in the full skeleton hierarchy (reone:704-722).
         """
-        # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:704-722
+        
         nodes = self.all_nodes()
         for node in nodes:
-            # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:705-707
+            
             # Only process skin mesh nodes
             if node.mesh and isinstance(node.mesh, MDLSkin):
-                # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:708-721
+                
                 # Prepare bone lookups for this skin mesh
                 node.mesh.prepare_bone_lookups(nodes)
 
@@ -1709,26 +1712,25 @@ class MDLAnimation(ComparableMixin):
 
     References:
     ----------
-        vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:736-779 (animation reading)
-        vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:653-699 (animation loading)
-        vendor/mdlops/MDLOpsM.pm:4052-4090 (animation reading from ASCII)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:653-699 (animation loading)
+        https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:4052-4090 (animation reading from ASCII)
+
+
 
     Attributes:
     ----------
         name: Animation name (e.g. "c_imp_walk01", "g_dance01")
-            Reference: reone:742, kotorblender:660
         root_model: Name of model this animation applies to
-            Reference: reone:752, mdlops:4069
             Empty string means animation applies to same model
         anim_length: Duration of animation in seconds
-            Reference: reone:751, kotorblender:662, mdlops:4065
         transition_length: Blend time when transitioning to this animation
-            Reference: reone:752, kotorblender:663, mdlops:4069
         events: Animation events that trigger at specific times
-            Reference: reone:760-769, kotorblender:684-698, mdlops:4078-4081
             Used for footstep sounds, attack hit timing, etc.
         root: Root node of animation node hierarchy
-            Reference: reone:757, kotorblender:700-767
             Contains controller keyframe data for all animated nodes
     """
 
@@ -1736,28 +1738,28 @@ class MDLAnimation(ComparableMixin):
     COMPARABLE_SEQUENCE_FIELDS = ("events",)
 
     def __init__(self):
-        # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:742
-        # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:660
+        
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:660
         self.name: str = ""
 
-        # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:752
-        # vendor/mdlops/MDLOpsM.pm:4069 - animroot
+        
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:4069 - animroot
         self.root_model: str = ""
 
-        # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:751
-        # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:662
+        
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:662
         self.anim_length: float = 0.0
 
-        # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:752
-        # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:663
+        
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:663
         self.transition_length: float = 0.0
 
-        # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:760-769
-        # vendor/mdlops/MDLOpsM.pm:4078-4081
+        
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:4078-4081
         # Animation events (footsteps, attack hits, sounds, etc.)
         self.events: list[MDLEvent] = []
 
-        # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:757
+        
         # Animation node hierarchy with controller keyframes
         self.root: MDLNode = MDLNode()
 
@@ -1838,16 +1840,19 @@ class MDLEvent(ComparableMixin):
 
     References:
     ----------
-        vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:764-768 (event reading)
-        vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:686-698 (event loading)
-        vendor/mdlops/MDLOpsM.pm:4078-4081 (event parsing from ASCII)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:686-698 (event loading)
+        https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:4078-4081 (event parsing from ASCII)
+
+
 
     Attributes:
     ----------
         activation_time: Time in seconds when event triggers (0.0 to anim_length)
-            Reference: reone:765, kotorblender:694
         name: Event name/identifier (e.g. "snd_footstep", "snd_hit", "detonate")
-            Reference: reone:766, kotorblender:695
             Game code uses event names to trigger appropriate actions
 
     Examples:
@@ -1860,13 +1865,13 @@ class MDLEvent(ComparableMixin):
     COMPARABLE_FIELDS = ("activation_time", "name")
 
     def __init__(self):
-        # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:765
-        # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:694
+        
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:694
         # Time in seconds when event fires (0.0 to animation length)
         self.activation_time: float = 0.0
 
-        # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:766
-        # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:695
+        
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:695
         # Event name used by game code to trigger actions
         self.name: str = ""
 
@@ -1891,87 +1896,73 @@ class MDLNode(ComparableMixin):
 
     References:
     ----------
-        vendor/reone/include/reone/graphics/modelnode.h:31-287 - ModelNode class definition
-        vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:182-290 - Node loading from MDL
-        vendor/xoreos/src/graphics/aurora/modelnode.h:67-252 - ModelNode class
-        vendor/xoreos/src/graphics/aurora/model_kotor.cpp:277-533 - KotOR node parsing
-        vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:406-582 - Node reading
-        vendor/kotorblender/io_scene_kotor/scene/model.py:103-297 - Node hierarchy building
-        vendor/KotOR.js/src/odyssey/OdysseyModelNode.ts:31-464 - TypeScript node implementation
-        vendor/mdlops (ASCII MDL node format specifications)
-        vendor/kotor/kotor/model/nodes.py:7-51 - Python node parsing
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:406-582
+        https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/model.py:103-297
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/OdysseyModelNode.ts:31-464
+
+
 
     Attributes:
     ----------
         children: List of child nodes in hierarchy
-            Reference: reone:modelnode.h:219, xoreos:modelnode.h:241, KotOR.js:37
             Child nodes inherit parent transforms and can be enumerated for rendering
 
         controllers: Animation controller keyframe data
-            Reference: reone:modelnode.h:34, xoreos:modelnode.h:178-196, kotorblender:reader.py:498-526
             Controllers animate position, orientation, scale, color, alpha, and other properties
             See MDLControllerType enum for complete list of controllable properties
 
         name: Node name (ASCII string, max 32 chars)
-            Reference: reone:mdlmdxreader.cpp:212, xoreos:model_kotor.cpp:311, kotorblender:reader.py:416
             Used to reference nodes by name for attachment points, bone lookups, and parenting
 
         node_id: Unique node number within model for quick lookups
-            Reference: reone:mdlmdxreader.cpp:202-203, xoreos:model_kotor.cpp:305, kotorblender:reader.py:413
             Stored as uint16 in binary format, used for parent/child relationships and bone references
 
         position: Local position relative to parent (x, y, z)
-            Reference: reone:modelnode.h:243, xoreos:modelnode.h:89, KotOR.js:42, kotorblender:reader.py:427
             Combined with parent transforms to compute world-space position
             Can be animated via position controller (type 8)
 
         orientation: Local rotation as quaternion (x, y, z, w)
-            Reference: reone:modelnode.h:244, xoreos:modelnode.h:92-93, KotOR.js:43, kotorblender:reader.py:428
             Quaternion format ensures smooth interpolation for animation
             Can be animated via orientation controller (type 20)
             Compressed in animation keyframes using 32-bit packed format (KotOR.js:14-20)
 
         light: Light source data (color, radius, flare properties)
-            Reference: reone:modelnode.h:116-127, xoreos:modelnode.h:204-211, kotorblender/light.py:33-124
             Present when node type includes LIGHT flag (0x02)
             See MDLLight class for detailed light properties
 
         emitter: Particle emitter data (spawn rate, velocity, textures)
-            Reference: reone:modelnode.h:129-153, xoreos:modelnode.h:213-221, kotorblender/emitter.py:39-286
             Present when node type includes EMITTER flag (0x04)
             See MDLEmitter class for particle system properties
 
         reference: Reference node (links to external model)
-            Reference: reone:modelnode.h:155-158, xoreos:modelnode.h:223-224
             Present when node type includes REFERENCE flag (0x10)
             Used for equippable items, attached weapons, etc.
 
         mesh: Triangle mesh geometry data (vertices, faces, materials)
-            Reference: reone:modelnode.h:70-91, xoreos:modelnode.h:197-202, kotorblender/trimesh.py:44-242
             Present when node type includes MESH flag (0x20)
             Contains vertex data in companion MDX file
             See MDLMesh class for geometry details
 
         skin: Skinned mesh with bone weighting for character animation
-            Reference: reone:modelnode.h:36-41, xoreos:modelnode.h:226-232, kotorblender/skinmesh.py:33-189
             Present when node type includes SKIN flag (0x40)
             Vertices deform based on bone transforms using weight maps
             See MDLSkin class for bone binding details
 
         dangly: Cloth/hair physics mesh with constraint simulation
-            Reference: reone:modelnode.h:47-53, xoreos:modelnode.h:234-237, kotorblender:reader.py:451-466
             Present when node type includes DANGLY flag (0x100)
             Vertices constrained by displacement, tightness, period values
             See MDLDangly class for physics properties
 
         aabb: Axis-aligned bounding box tree for walkmesh collision
-            Reference: reone:modelnode.h:55-68, xoreos:modelnode.h:239-240, kotorblender/reader.py:469-487
             Present when node type includes AABB flag (0x200)
             Used for pathfinding and collision detection
             See MDLWalkmesh class for collision geometry
 
         saber: Lightsaber blade mesh with special rendering
-            Reference: reone:modelnode.h:99, xoreos:modelnode.h:202, kotorblender:reader.py:446-448
             Present when node type includes SABER flag (0x800)
             Single plane geometry rendered with additive blending
             See MDLSaber class for blade properties
@@ -1987,71 +1978,71 @@ class MDLNode(ComparableMixin):
         ----
             self: The MDLNode object being initialized
         """
-        # vendor/reone/include/reone/graphics/modelnode.h:219
-        # vendor/xoreos/src/graphics/aurora/modelnode.h:241
-        # vendor/KotOR.js/src/odyssey/OdysseyModelNode.ts:37
+        
+        
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/OdysseyModelNode.ts:37
         # Child nodes inherit transforms and participate in rendering hierarchy
         self.children: list[MDLNode] = []
 
-        # vendor/reone/include/reone/graphics/modelnode.h:34
-        # vendor/xoreos/src/graphics/aurora/modelnode.h:178-196
-        # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:498-526
+        
+        
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:498-526
         # Animation keyframe data for position, orientation, scale, color, etc.
         self.controllers: list[MDLController] = []
 
-        # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:212
-        # vendor/xoreos/src/graphics/aurora/model_kotor.cpp:311
-        # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:416
+        
+        
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:416
         # ASCII string identifier (max 32 chars in binary format)
         self.name: str = ""
 
-        # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:202-203
-        # vendor/xoreos/src/graphics/aurora/model_kotor.cpp:305
-        # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:413
+        
+        
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:413
         # Unique node number (uint16) for quick lookups and bone references
         self.node_id: int = -1
 
-        # vendor/reone/include/reone/graphics/modelnode.h:243
-        # vendor/xoreos/src/graphics/aurora/modelnode.h:89
-        # vendor/KotOR.js/src/odyssey/OdysseyModelNode.ts:42
+        
+        
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/OdysseyModelNode.ts:42
         # Local position (x,y,z) relative to parent node
         self.position: Vector3 = Vector3.from_null()
 
-        # vendor/reone/include/reone/graphics/modelnode.h:244
-        # vendor/xoreos/src/graphics/aurora/modelnode.h:92-93
-        # vendor/KotOR.js/src/odyssey/OdysseyModelNode.ts:43
+        
+        
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/OdysseyModelNode.ts:43
         # Local rotation as quaternion (x,y,z,w) for smooth animation interpolation
         self.orientation: Vector4 = Vector4(0, 0, 0, 1)
 
-        # vendor/reone/include/reone/graphics/modelnode.h:116-127
+        
         # Light source with flares, shadows, dynamic properties (node type & 0x02)
         self.light: MDLLight | None = None
 
-        # vendor/reone/include/reone/graphics/modelnode.h:129-153
+        
         # Particle emitter for effects like smoke, sparks, fire (node type & 0x04)
         self.emitter: MDLEmitter | None = None
 
-        # vendor/reone/include/reone/graphics/modelnode.h:155-158
+        
         # Reference to external model for equipment/attachments (node type & 0x10)
         self.reference: MDLReference | None = None
 
-        # vendor/reone/include/reone/graphics/modelnode.h:70-91
+        
         # Triangle mesh geometry with materials (node type & 0x20)
         self.mesh: MDLMesh | None = None
 
-        # vendor/reone/include/reone/graphics/modelnode.h:36-41
+        
         # Skinned mesh with bone weights for character animation (node type & 0x40)
         self.skin: MDLSkin | None = None
 
-        # vendor/reone/include/reone/graphics/modelnode.h:47-53
+        
         # Cloth/hair physics mesh with constraints (node type & 0x100)
         self.dangly: MDLDangly | None = None
 
-        # vendor/reone/include/reone/graphics/modelnode.h:55-68
+        
         # Walkmesh AABB tree for collision/pathfinding (node type & 0x200)
         self.aabb: MDLWalkmesh | None = None
 
-        # vendor/reone/include/reone/graphics/modelnode.h:99
+        
         # Lightsaber blade mesh with special rendering (node type & 0x800)
         self.saber: MDLSaber | None = None
 
@@ -2149,116 +2140,118 @@ class MDLLight(ComparableMixin):
 
     References:
     ----------
-        vendor/reone/src/libs/scene/node/light.cpp:43-86 (light scene node implementation)
-        vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:33-124 (light properties)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/light.py:33-124 (light properties)
+
+
 
     Attributes:
     ----------
         flare_radius: Radius around light source where lens flares are visible
-            Reference: kotorblender:48,80,107
+            Reference: https://github.com/th3w1zard1/kotorblender
             Default 1.0, typically 0.0 to disable
         light_priority: Priority level for dynamic light rendering (0-5)
-            Reference: kotorblender:41,76,103
+            Reference: https://github.com/th3w1zard1/kotorblender
             Higher priority lights are rendered when dynamic light limit is reached
         ambient_only: 1 = only affects ambient lighting, 0 = affects both diffuse & ambient
-            Reference: kotorblender:43,74,101
+            Reference: https://github.com/th3w1zard1/kotorblender
             Used for fill lights and area mood lighting
         dynamic_type: Type of dynamic behavior
-            Reference: kotorblender:44,78,105
+            Reference: https://github.com/th3w1zard1/kotorblender
             0 = static (baked), 1 = dynamic (real-time), 2 = animated
         shadow: 1 = casts shadows, 0 = no shadows
-            Reference: kotorblender:38,63-66,75,102
+            Reference: https://github.com/th3w1zard1/kotorblender
             Shadows use contact shadow technique with radius as distance
         flare: 1 = has lens flares enabled, 0 = no lens flares
-            Reference: kotorblender:47,83-84,110
+            Reference: https://github.com/th3w1zard1/kotorblender
             Requires flare_radius > 0 or flare_list populated
         fading_light: 1 = light fades in/out when toggled, 0 = instant on/off
-            Reference: kotorblender:46,77,104, reone:52-66
+            Reference: https://github.com/th3w1zard1/kotorblender
             Fade speed is 2.0 units per second (reone:40)
         flare_sizes: List of flare element sizes (0.0-1.0 scale)
-            Reference: kotorblender:28,90
+            Reference: https://github.com/th3w1zard1/kotorblender
         flare_positions: List of flare element positions along view ray (-1.0 to 1.0)
-            Reference: kotorblender:29,91
+            Reference: https://github.com/th3w1zard1/kotorblender
             0.0 = at light source, negative = between camera and light, positive = beyond
         flare_color_shifts: List of color shift values for each flare element
-            Reference: kotorblender:30,89
+            Reference: https://github.com/th3w1zard1/kotorblender
         flare_textures: List of texture names for each flare element
-            Reference: kotorblender:27,88
+            Reference: https://github.com/th3w1zard1/kotorblender
             Common: "flaretex01" through "flaretex16"
 
     Controller Properties (animated via keyframes):
     -----------------------------------------------
         color: RGB color (Vector3) - controller type 76
-            Reference: reone:44
         radius: Light falloff radius in meters - controller type 88
-            Reference: reone:45, kotorblender:39,73,100
             For directional lights, radius >= 100.0 (reone:41,83-85)
             Energy = multiplier * radius^2 (kotorblender:123)
         multiplier: Intensity multiplier - controller type 140
-            Reference: reone:46, kotorblender:40,72,99
             Combined with radius to calculate light power
 
     Notes:
     -----
         Negative color values indicate a "negative light" that subtracts illumination
-        Reference: kotorblender:60,62,81,98,108,120-121
+        Reference: https://github.com/th3w1zard1/kotorblender
     """
 
     COMPARABLE_FIELDS = ("flare_radius", "light_priority", "ambient_only", "dynamic_type", "shadow", "flare", "fading_light", "multiplier")
     COMPARABLE_SEQUENCE_FIELDS = ("flare_sizes", "flare_positions", "flare_color_shifts", "flare_textures")
 
     def __init__(self):
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:48,80,107
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/light.py:48,80,107
         # Radius for lens flare visibility (0.0 = disabled, typical range 0.0-10.0)
         self.flare_radius: float = 0.0
 
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:41,76,103
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/light.py:41,76,103
         # Light priority for dynamic light culling (0-5, higher = more important)
         self.light_priority: int = 0
 
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:43,74,101
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/light.py:43,74,101
         # 1 = ambient-only (no diffuse), 0 = full lighting
         self.ambient_only: bool = False
 
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:44,78,105
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/light.py:44,78,105
         # Dynamic behavior: 0=static, 1=dynamic, 2=animated
         self.dynamic_type: MDLDynamicType = MDLDynamicType.STATIC
 
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:38,63-66,75,102
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/light.py:38,63-66,75,102
         # 1 = casts shadows, 0 = no shadows
         self.shadow: bool = False
 
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:47,83-84,110
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/light.py:47,83-84,110
         # 1 = lens flares enabled, 0 = disabled
         self.flare: bool = False
 
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:46,77,104
-        # vendor/reone/src/libs/scene/node/light.cpp:40,52-66
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/light.py:46,77,104
+        
         # 1 = fades in/out at 2.0 units/sec, 0 = instant toggle
         self.fading_light: bool = False
 
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:28,90
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/light.py:28,90
         # Lens flare element sizes (one per flare texture)
         self.flare_sizes: list[float] = []
 
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:29,91
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/light.py:29,91
         # Flare positions along view ray: 0.0=light, negative=toward camera, positive=away
         self.flare_positions: list[float] = []
 
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:30,89
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/light.py:30,89
         # Color shift values for each flare element
         self.flare_color_shifts: list[tuple[float, float, float]] = []
 
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:27,88
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/light.py:27,88
         # Texture names for lens flare elements (e.g. "flaretex01")
         self.flare_textures: list[str] = []
 
         # RGB color stored as Vector3 (controller type 76)
-        # Reference: reone:44, docstring line 2098
+        #
         self._color: Vector3 = Vector3(1.0, 1.0, 1.0)
 
-        # vendor/reone/src/libs/scene/node/light.cpp:46
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/light.py:40,72,99
+        
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/light.py:40,72,99
         # Intensity multiplier (controller type 140)
         self.multiplier: float = 1.0
 
@@ -2311,19 +2304,18 @@ class MDLEmitter(ComparableMixin):
 
     References:
     ----------
-        vendor/reone/src/libs/scene/node/emitter.cpp:44-319 (emitter scene node)
-        vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:27-305 (emitter properties)
-
-    Update Modes (update field):
-    ---------------------------
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/emitter.py:27-305 (emitter properties)
+        Update Modes (update field):
+        ---------------------------
         "Fountain" - Continuous particle stream at birthrate
-            Reference: reone:132-140, kotorblender:236
         "Single" - Single particle, respawns if loop=True
-            Reference: reone:141-146, kotorblender:236
         "Explosion" - Burst of particles then stop
-            Reference: kotorblender:236
+            Reference: https://github.com/th3w1zard1/kotorblender
         "Lightning" - Lightning bolt effects with branching
-            Reference: reone:147-151, kotorblender:236
 
     Render Modes (render field):
     ----------------------------
@@ -2334,61 +2326,61 @@ class MDLEmitter(ComparableMixin):
         "Aligned_to_World_Z" - Particles aligned to world Z
         "Aligned_to_Particle_Dir" - Particles face movement direction
         "Motion_Blur" - Particles with motion blur trails
-            Reference: kotorblender:244-259, reone:41
+            Reference: https://github.com/th3w1zard1/kotorblender
 
     Spawn Types (spawn_type field):
     -------------------------------
         0 = "Normal" - Spawn at emitter position
         1 = "Trail" - Spawn along particle path
-            Reference: kotorblender:229-233
+            Reference: https://github.com/th3w1zard1/kotorblender
 
     Blend Modes (blend field):
     --------------------------
         "Normal" - Standard alpha blending
         "Punch-Through" - Binary alpha (0 or 1)
         "Lighten" - Additive blending (common for fire/energy)
-            Reference: kotorblender:260-267
+            Reference: https://github.com/th3w1zard1/kotorblender
 
     Attributes:
     ----------
         dead_space: Inner radius where no particles spawn (meters)
-            Reference: kotorblender:113
+            Reference: https://github.com/th3w1zard1/kotorblender
         blast_radius: Outer radius for explosion/blast effects (meters)
-            Reference: kotorblender:114
+            Reference: https://github.com/th3w1zard1/kotorblender
         blast_length: Length of blast wave propagation (meters)
-            Reference: kotorblender:115
+            Reference: https://github.com/th3w1zard1/kotorblender
         branch_count: Number of lightning branches
-            Reference: kotorblender:116
+            Reference: https://github.com/th3w1zard1/kotorblender
         control_point_smoothing: Smoothing factor for control point paths (0.0-1.0)
-            Reference: kotorblender:117
+            Reference: https://github.com/th3w1zard1/kotorblender
         x_grid: Texture atlas grid width (for animated textures)
-            Reference: kotorblender:118
+            Reference: https://github.com/th3w1zard1/kotorblender
         y_grid: Texture atlas grid height (for animated textures)
-            Reference: kotorblender:119
+            Reference: https://github.com/th3w1zard1/kotorblender
         spawn_type: Spawn location mode (0=Normal, 1=Trail)
-            Reference: kotorblender:120,229-233
+            Reference: https://github.com/th3w1zard1/kotorblender
         update: Update mode string ("Fountain", "Single", "Explosion", "Lightning")
-            Reference: kotorblender:121,234-242, reone:131-151
+            Reference: https://github.com/th3w1zard1/kotorblender
         render: Render mode string (see Render Modes above)
-            Reference: kotorblender:122,244-259
+            Reference: https://github.com/th3w1zard1/kotorblender
         blend: Blend mode string ("Normal", "Punch-Through", "Lighten")
-            Reference: kotorblender:123,260-267
+            Reference: https://github.com/th3w1zard1/kotorblender
         texture: Main particle texture name
-            Reference: kotorblender:124
+            Reference: https://github.com/th3w1zard1/kotorblender
         chunk_name: Chunk model name for mesh-based particles
-            Reference: kotorblender:125
+            Reference: https://github.com/th3w1zard1/kotorblender
         two_sided_texture: 1 = render both sides, 0 = single-sided
-            Reference: kotorblender:126
+            Reference: https://github.com/th3w1zard1/kotorblender
         loop: 1 = loop/repeat emission, 0 = emit once
-            Reference: kotorblender:127, reone:142
+            Reference: https://github.com/th3w1zard1/kotorblender
         render_order: Rendering priority/sorting order
-            Reference: kotorblender:128
+            Reference: https://github.com/th3w1zard1/kotorblender
         frame_blender: 1 = blend between animation frames, 0 = snap
-            Reference: kotorblender:129
+            Reference: https://github.com/th3w1zard1/kotorblender
         depth_texture: Depth texture name for soft particles
-            Reference: kotorblender:130,146
+            Reference: https://github.com/th3w1zard1/kotorblender
         flags: Emitter behavior flags (see MDLEmitterFlags)
-            Reference: kotorblender:131-143
+            Reference: https://github.com/th3w1zard1/kotorblender
             Flags include: p2p, p2p_sel, affected_by_wind, tinted, bounce,
                           random, inherit, inheritvel, inherit_local, splat,
                           inherit_part, depth_texture
@@ -2396,39 +2388,24 @@ class MDLEmitter(ComparableMixin):
     Controller Properties (animated via keyframes):
     -----------------------------------------------
         birthrate: Particles spawned per second
-            Reference: reone:45,134,138, kotorblender:148
         lifeExp: Particle lifetime in seconds (-1 = infinite)
-            Reference: reone:46,110, kotorblender:157
         xSize/ySize: Emitter spawn area dimensions (meters)
-            Reference: reone:48-49, kotorblender:172-173
         frameStart/frameEnd: Texture atlas animation range
-            Reference: reone:50-56, kotorblender:154-155
         fps: Texture atlas animation speed (frames/second)
-            Reference: reone:58, kotorblender:153
         spread: Particle spawn cone angle (degrees)
-            Reference: reone:59, kotorblender:169
         velocity: Initial particle velocity (meters/second)
-            Reference: reone:60, kotorblender:171
         randVel: Random velocity variation (meters/second)
-            Reference: reone:61, kotorblender:162
         mass: Particle mass (affects gravity)
-            Reference: reone:62, kotorblender:158
         grav: Gravity acceleration (meters/second^2)
-            Reference: reone:63, kotorblender:156
         sizeStart/sizeMid/sizeEnd: Particle size over lifetime
-            Reference: reone:73-75, kotorblender:163-165
         colorStart/colorMid/colorEnd: Particle RGB color over lifetime
-            Reference: reone:76-78, kotorblender:189-191
         alphaStart/alphaMid/alphaEnd: Particle opacity over lifetime (0.0-1.0)
-            Reference: reone:79-81, kotorblender:145-147
         lightningDelay/Radius/Scale/SubDiv: Lightning effect parameters
-            Reference: reone:64-71, kotorblender:174-178
 
     Notes:
     -----
         Particles transition through three lifecycle stages: Start -> Mid -> End
         The "Mid" stage occurs at 50% of particle lifetime
-        Reference: reone:73-81, kotorblender:163-165
     """
 
     COMPARABLE_FIELDS = (
@@ -2454,81 +2431,81 @@ class MDLEmitter(ComparableMixin):
     )
 
     def __init__(self):
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:113
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/emitter.py:113
         # Inner dead zone radius where no particles spawn
         self.dead_space: float = 0.0
 
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:114
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/emitter.py:114
         # Outer blast/explosion radius
         self.blast_radius: float = 0.0
 
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:115
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/emitter.py:115
         # Blast wave propagation length
         self.blast_length: float = 0.0
 
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:116
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/emitter.py:116
         # Number of lightning branches
         self.branch_count: int = 0
 
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:117
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/emitter.py:117
         # Control point path smoothing factor
         self.control_point_smoothing: float = 0.0
 
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:118
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/emitter.py:118
         # Texture atlas grid width
         self.x_grid: int = 0
 
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:119
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/emitter.py:119
         # Texture atlas grid height
         self.y_grid: int = 0
 
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:120,229-233
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/emitter.py:120,229-233
         # Spawn location: 0=Normal (at emitter), 1=Trail (along path)
         self.spawn_type: int = 0
 
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:121,234-242
-        # vendor/reone/src/libs/scene/node/emitter.cpp:131-151
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/emitter.py:121,234-242
+        
         # Update mode: "Fountain", "Single", "Explosion", "Lightning"
         self.update: str = ""
 
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:122,244-259
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/emitter.py:122,244-259
         # Render mode: "Normal", "Linked", "Billboard_to_Local_Z", etc.
         self.render: str = ""
 
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:123,260-267
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/emitter.py:123,260-267
         # Blend mode: "Normal", "Punch-Through", "Lighten"
         self.blend: str = ""
 
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:124
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/emitter.py:124
         # Main particle texture name
         self.texture: str = ""
 
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:125
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/emitter.py:125
         # Chunk model name for mesh-based particles
         self.chunk_name: str = ""
 
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:126
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/emitter.py:126
         # 1 = two-sided rendering, 0 = single-sided
         self.two_sided_texture: int = 0
 
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:127
-        # vendor/reone/src/libs/scene/node/emitter.cpp:142
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/emitter.py:127
+        
         # 1 = loop emission, 0 = emit once
         self.loop: int = 0
 
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:128
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/emitter.py:128
         # Rendering priority/sorting order
         self.render_order: int = 0
 
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:129
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/emitter.py:129
         # 1 = blend animation frames, 0 = snap between frames
         self.frame_blender: int = 0
 
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:130,146
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/emitter.py:130,146
         # Depth texture for soft particle effects
         self.depth_texture: str = ""
 
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/emitter.py:131-143
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/emitter.py:131-143
         # Behavior flags (see MDLEmitterFlags)
         self.flags: int = 0
 
@@ -2557,17 +2534,22 @@ class MDLReference(ComparableMixin):
 
     References:
     ----------
-        vendor/kotorblender/io_scene_kotor/scene/modelnode/reference.py:25-57
-        vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:545-561 (reference reading)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/reference.py:25-57
+
+
 
     Attributes:
     ----------
         model: Name of the external model resource to attach (without file extension)
-            Reference: kotorblender:30, reone:552
+            Reference: https://github.com/th3w1zard1/kotorblender
             Example: "w_lghtsbr_001" for a lightsaber model
             The model is loaded from the game's model resources at runtime
         reattachable: Whether the reference can be dynamically replaced
-            Reference: kotorblender:31, reone:553
+            Reference: https://github.com/th3w1zard1/kotorblender
             True = can swap models (e.g. changing equipped weapons)
             False = permanent attachment
 
@@ -2590,13 +2572,13 @@ class MDLReference(ComparableMixin):
     COMPARABLE_FIELDS = ("model", "reattachable")
 
     def __init__(self):
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/reference.py:30
-        # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:552
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/reference.py:30
+        
         # External model resource name to attach at this node
         self.model: str = ""
 
-        # vendor/kotorblender/io_scene_kotor/scene/modelnode/reference.py:31
-        # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:553
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/reference.py:31
+        
         # True = can swap models dynamically, False = permanent attachment
         self.reattachable: bool = False
 
@@ -2621,16 +2603,19 @@ class MDLMesh(ComparableMixin):
 
     References:
     ----------
-        vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:148-487 (mesh reading)
-        vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:415-466 (trimesh loading)
-        vendor/mdlops/MDLOpsM.pm:1600-1750 (mesh processing)
-
-    Key Features:
-    ------------
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:415-466 (trimesh loading)
+        https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1600-1750 (mesh processing)
+        Key Features:
+        ------------
         - UV Animation: Texture scrolling for water, lava, holograms
         - Bump/Normal Mapping: Advanced lighting with tangent space
         - Lightmaps: Pre-baked lighting for static geometry
         - Transparency: Alpha blending and transparency hints
+
     """
 
     COMPARABLE_FIELDS = (
@@ -2667,18 +2652,18 @@ class MDLMesh(ComparableMixin):
 
     def __init__(self):
         # Basic geometry
-        # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:386-416
-        # vendor/mdlops/MDLOpsM.pm:1650-1700
+        
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1650-1700
         self.faces: list[MDLFace] = []
 
         # Material properties
-        # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:435-438
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:435-438
         self.diffuse: Color = Color.WHITE
         self.ambient: Color = Color.WHITE
         self.transparency_hint: int = 0
 
         # Textures
-        # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:461-467
+        
         # texture_1 is diffuse map, texture_2 is lightmap
         self.texture_1: str = ""
         self.texture_2: str = ""
@@ -2687,13 +2672,13 @@ class MDLMesh(ComparableMixin):
         self.saber_unknowns: tuple[int, int, int, int, int, int, int, int] = (3, 0, 0, 0, 0, 0, 0, 0)
 
         # UV Animation for scrolling textures (water, lava, holograms, forcefields)
-        # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:457-460
-        # vendor/mdlops/MDLOpsM.pm:3204-3210
+        
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:3204-3210
         # When animate_uv is true, texture coordinates scroll in uv_direction at runtime
         self.animate_uv: bool = False
 
         # Bounding geometry for culling and collision
-        # vendor/mdlops/MDLOpsM.pm:1685-1695
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1685-1695
         self.radius: float = 0.0
         self.bb_min: Vector3 = Vector3.from_null()
         self.bb_max: Vector3 = Vector3.from_null()
@@ -2701,7 +2686,7 @@ class MDLMesh(ComparableMixin):
         self.area: float = 0.0
 
         # UV Animation direction and jitter parameters
-        # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:459
+        
         # Direction vector for texture scrolling (units per second)
         # Used for animated water, lava flows, hologram scan lines, etc.
         self.uv_direction_x: float = 0.0
@@ -2713,8 +2698,8 @@ class MDLMesh(ComparableMixin):
         self.uv_jitter_speed: float = 0.0
 
         # Rendering flags
-        # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:475-478
-        # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:439-444
+        
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:439-444
         self.has_lightmap: bool = False  # Has pre-baked lighting (texture_2)
         self.rotate_texture: bool = False  # Rotate texture 90 degrees
         self.background_geometry: bool = False  # Render in background pass
@@ -2723,17 +2708,17 @@ class MDLMesh(ComparableMixin):
         self.render: bool = True  # Should be rendered
         
         # Tangent space for bump/normal mapping
-        # vendor/mdlops/MDLOpsM.pm:256 (MDX_TANGENT_SPACE = 0x00000080)
-        # vendor/mdlops/MDLOpsM.pm:3204-3205 (tangentspace property)
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:256 (MDX_TANGENT_SPACE = 0x00000080)
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:3204-3205 (tangentspace property)
         # When True, the mesh uses tangent space calculations for bump mapping
         self.tangent_space: bool = False
 
         # Vertex data arrays
-        # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:381-384
+        
         # All vertex arrays must have same length (1:1 correspondence)
         self.vertex_positions: list[Vector3] = []
 
-        # vendor/mdlops/MDLOpsM.pm:5603-5791 (vertex normal calculation)
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:5603-5791 (vertex normal calculation)
         # Normals can be area/angle weighted for smooth shading
         self.vertex_normals: list[Vector3] = []
 
@@ -2747,14 +2732,14 @@ class MDLMesh(ComparableMixin):
         self.vertex_uvs: list[Vector2] = [] if self.vertex_uv1 is None else self.vertex_uv1
 
         # NOTE: Tangent space data (for bump/normal mapping) is stored separately in MDX
-        # vendor/mdlops/MDLOpsM.pm:5379-5597 (tangent space calculation)
-        # vendor/mdlops/MDLOpsM.pm:256 (MDX_TANGENT_SPACE = 0x00000080)
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:5379-5597 (tangent space calculation)
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:256 (MDX_TANGENT_SPACE = 0x00000080)
         # Each vertex with tangent space has: bitangent (3 floats) + tangent (3 floats)
         # Total 6 additional floats per vertex for bump mapping support
         # Tangent space enables advanced lighting (normal maps, parallax, etc.)
 
         # KotOR 2 Only - Enhanced effects
-        # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:445-448
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:445-448
         self.dirt_enabled: bool = False  # Dirt/weathering overlay texture (K2)
         self.dirt_texture: int = 1  # Dirt texture index (K2, int16, default 1)
         self.dirt_worldspace: int = 1  # Dirt worldspace flag (K2, int16, default 1)
@@ -2763,7 +2748,7 @@ class MDLMesh(ComparableMixin):
         self.hide_in_hologram: bool = False  # Don't render in hologram effect (legacy alias)
 
         # Inverted mesh sequence counter (array3) - used by MDLOps for inv_count
-        # vendor/mdlops/MDLOpsM.pm:2238-2243, 4187-4188
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:2238-2243, 4187-4188
         # Preserved for roundtrip compatibility with MDLOps
         self.inverted_counters: list[int] = []
         
@@ -2807,24 +2792,27 @@ class MDLSkin(MDLMesh):
 
     References:
     ----------
-        vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:703-723 (prepareSkinMeshes)
-        vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:468-485 (skin loading)
-        vendor/mdlops/MDLOpsM.pm:1755-1820 (skin node processing)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:468-485 (skin loading)
+        https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1755-1820 (skin node processing)
+
+
 
     Attributes:
     ----------
         bone_indices: Fixed array of 16 bone indices that this skin references
-            Reference: mdlops:1760 - bone index array
+            Reference: https://github.com/th3w1zard1/mdlops
         qbones: Quaternion rotations for each bone's bind pose
-            Reference: mdlops:1765 - bone orientations
+            Reference: https://github.com/th3w1zard1/mdlops
         tbones: Translation vectors for each bone's bind pose
-            Reference: mdlops:1768 - bone positions
+            Reference: https://github.com/th3w1zard1/mdlops
         bonemap: Maps local bone indices to global skeleton bone numbers
-            Reference: reone:709-720 - bone mapping preparation
             This is critical for multi-part character models where each part
             references bones in the full skeleton
         vertex_bones: Per-vertex bone weights and indices for skinning
-            Reference: reone:261-268, kotorblender:478-485
             Each vertex can be influenced by up to 4 bones with normalized weights
     """
 
@@ -2847,26 +2835,26 @@ class MDLSkin(MDLMesh):
         # Reuse MDLMesh initialization so ambient/diffuse/textures/verts/faces exist.
         super().__init__()
 
-        # vendor/mdlops/MDLOpsM.pm:1760 - Fixed 16-bone index array
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1760 - Fixed 16-bone index array
         self.bone_indices: tuple[int, ...] = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 
-        # vendor/mdlops/MDLOpsM.pm:1765 - Bone quaternion orientations (bind pose)
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1765 - Bone quaternion orientations (bind pose)
         self.qbones: list[Vector4] = []
 
-        # vendor/mdlops/MDLOpsM.pm:1768 - Bone translation positions (bind pose)
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1768 - Bone translation positions (bind pose)
         self.tbones: list[Vector3] = []
 
-        # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:709-720
+        
         # Maps local bone index to global skeleton bone number
         # Critical for multi-part models where each part references the full skeleton
         self.bonemap: list[int] = []
 
-        # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:261-268
-        # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:478-485
+        
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:478-485
         # Per-vertex skinning data: up to 4 bone influences per vertex
         self.vertex_bones: list[MDLBoneVertex] = []
 
-        # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:712-713
+        
         # Prepared lookup tables for bone serial numbers and node numbers
         # These are computed from bonemap during skin mesh preparation
         self.bone_serial: list[int] = []  # Maps bone index to serial number in model
@@ -2885,7 +2873,10 @@ class MDLSkin(MDLMesh):
 
         References:
         ----------
-            vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:703-723 - prepareSkinMeshes()
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
             Algorithm: For each bone in bonemap, store its serial position and node number
 
         Notes:
@@ -2894,7 +2885,7 @@ class MDLSkin(MDLMesh):
             The bonemap contains local-to-global bone index mappings (reone:709-710).
             Invalid bone indices (0xFFFF) are skipped (reone:715-717).
         """
-        # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:708-721
+        
         # Build a lookup of node_id -> serial index to correctly map global bone IDs.
         node_index_by_id: dict[int, int] = {}
         for serial_index, node in enumerate(nodes):
@@ -2969,20 +2960,23 @@ class MDLDangly(MDLMesh):
 
     References:
     ----------
-        vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:276-291 (dangly reading)
-        vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:487-497 (dangly loading)
-        vendor/mdlops/MDLOpsM.pm:1823-1870 (dangly node processing)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:487-497 (dangly loading)
+        https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1823-1870 (dangly node processing)
+
+
 
     Attributes:
     ----------
         constraints: List of constraint data defining how vertices can move
-            Reference: reone:276-291, mdlops:1835-1850
             Constraints limit vertex movement to create realistic cloth behavior
         verts: Current vertex positions (updated by physics)
-            Reference: reone:283, kotorblender:491-493
             These positions change during animation as cloth physics are simulated
         verts_original: Original bind pose vertex positions
-            Reference: mdlops:1860
+            Reference: https://github.com/th3w1zard1/mdlops
             Used as reference for resetting or calculating displacement
     """
 
@@ -2999,22 +2993,22 @@ class MDLDangly(MDLMesh):
         # Reuse MDLMesh initialization so ambient/diffuse/textures/verts/faces exist.
         super().__init__()
 
-        # vendor/mdlops/MDLOpsM.pm:2094-2097 - Dangly physics parameters
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:2094-2097 - Dangly physics parameters
         self.displacement: float = 0.0
         self.tightness: float = 0.0
         self.period: float = 0.0
 
-        # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:276-291
-        # vendor/mdlops/MDLOpsM.pm:1835-1850
+        
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1835-1850
         # Constraints define how vertices can move (springs, limits, etc.)
         self.constraints: list[MDLConstraint] = []
 
-        # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:283
-        # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:491-493
+        
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:491-493
         # Current positions updated by physics simulation
         self.verts: list[Vector3] = []
 
-        # vendor/mdlops/MDLOpsM.pm:1860 - Original bind pose positions
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1860 - Original bind pose positions
         self.verts_original: list[Vector3] = []
 
     def __repr__(self):
@@ -3030,9 +3024,15 @@ class MDLAABBNode:
 
     References:
     ----------
-        vendor/mdlops/MDLOpsM.pm:233 (template: "ffffffllll" = 40 bytes)
-        vendor/mdlops/MDLOpsM.pm:1440-1466 (readaabb recursive reading)
-        vendor/mdlops/MDLOpsM.pm:1471-1513 (writeaabb recursive writing)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:233 (template: "ffffffllll" = 40 bytes)
+        https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1440-1466 (readaabb recursive reading)
+        https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1471-1513 (writeaabb recursive writing)
+
+
 
     Attributes:
     ----------
@@ -3065,14 +3065,18 @@ class MDLWalkmesh(ComparableMixin):
 
     References:
     ----------
-        vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:489-509 (AABB tree reading)
-        vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:499-520 (AABB loading)
-        vendor/mdlops/MDLOpsM.pm:1873-1935 (walkmesh/AABB processing)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:499-520 (AABB loading)
+        https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1873-1935 (walkmesh/AABB processing)
+
+
 
     Attributes:
     ----------
         aabbs: List of AABB tree nodes forming the collision hierarchy
-            Reference: reone:489-509 - AABB tree structure
             Each node contains:
             - Bounding box (min/max points)
             - Face index (for leaf nodes, -1 for branch nodes)
@@ -3083,14 +3087,13 @@ class MDLWalkmesh(ComparableMixin):
     -----
         The AABB tree enables O(log n) collision detection instead of O(n).
         Reone implements efficient tree traversal with early rejection.
-        Reference: reone:490-496 for bounding box format
     """
 
     COMPARABLE_SEQUENCE_FIELDS = ("aabbs",)
 
     def __init__(self):
-        # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:489-509
-        # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:499-520
+        
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:499-520
         # Hierarchical AABB tree for efficient collision detection
         # Each node contains bounding box and either face index (leaf) or child pointers (branch)
         self.aabbs: list[MDLAABBNode] = []
@@ -3116,24 +3119,29 @@ class MDLSaber(ComparableMixin):
 
     References:
     ----------
-        vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:308-378 (saber generation)
-        vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:522-540 (saber loading)
-        vendor/mdlops/MDLOpsM.pm:1937-2010 (saber node processing)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:522-540 (saber loading)
+        https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1937-2010 (saber node processing)
+
+
 
     Attributes:
     ----------
         saber_type: Type of lightsaber (single, double-bladed, etc.)
-            Reference: mdlops:1945
+            Reference: https://github.com/th3w1zard1/mdlops
         saber_color: Blade color (red, blue, green, etc.)
-            Reference: mdlops:1947, reone:319-320
+            Reference: https://github.com/th3w1zard1/mdlops
         saber_length: Length of the blade in meters
-            Reference: mdlops:1948, reone:312-314
+            Reference: https://github.com/th3w1zard1/mdlops
         saber_width: Width/thickness of the blade
-            Reference: mdlops:1949
+            Reference: https://github.com/th3w1zard1/mdlops
         saber_flare_color: Color of the blade's lens flare effect
-            Reference: mdlops:1950
+            Reference: https://github.com/th3w1zard1/mdlops
         saber_flare_radius: Radius of the lens flare effect
-            Reference: mdlops:1951
+            Reference: https://github.com/th3w1zard1/mdlops
 
     Notes:
     -----
@@ -3141,7 +3149,6 @@ class MDLSaber(ComparableMixin):
         - 88 vertices for each side of the blade (176 total)
         - Each segment uses 8 vertices (kNumSaberPieceVertices = 8)
         - Faces are generated from predefined indices
-        Reference: reone:32-33, reone:327-449 for generation algorithm
     """
 
     COMPARABLE_FIELDS = (
@@ -3154,24 +3161,24 @@ class MDLSaber(ComparableMixin):
     )
 
     def __init__(self):
-        # vendor/mdlops/MDLOpsM.pm:1945 - Saber type (single/double-bladed)
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1945 - Saber type (single/double-bladed)
         self.saber_type: int = 0
 
-        # vendor/mdlops/MDLOpsM.pm:1947 - Blade color
-        # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:319-320
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1947 - Blade color
+        
         self.saber_color: int = 0
 
-        # vendor/mdlops/MDLOpsM.pm:1948 - Blade length in meters
-        # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:312-314
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1948 - Blade length in meters
+        
         self.saber_length: float = 0.0
 
-        # vendor/mdlops/MDLOpsM.pm:1949 - Blade width/thickness
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1949 - Blade width/thickness
         self.saber_width: float = 0.0
 
-        # vendor/mdlops/MDLOpsM.pm:1950 - Lens flare color
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1950 - Lens flare color
         self.saber_flare_color: int = 0
 
-        # vendor/mdlops/MDLOpsM.pm:1951 - Lens flare radius
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1951 - Lens flare radius
         self.saber_flare_radius: float = 0.0
 
     def __eq__(self, other):
@@ -3200,18 +3207,21 @@ class MDLBoneVertex(ComparableMixin):
 
     References:
     ----------
-        vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:261-268 (vertex bone reading)
-        vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:478-485 (bone weight loading)
-        vendor/mdlops/MDLOpsM.pm:1785-1800 (vertex skinning data)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:478-485 (bone weight loading)
+        https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1785-1800 (vertex skinning data)
+
+
 
     Attributes:
     ----------
         vertex_weights: Normalized weights for up to 4 bone influences (w0, w1, w2, w3)
-            Reference: reone:264-266, kotorblender:481-483
             Weights should sum to 1.0 for proper blending
             Unused weights are set to 0.0
         vertex_indices: Bone indices for up to 4 bone influences (bone0, bone1, bone2, bone3)
-            Reference: reone:261-263, kotorblender:478-480
             Indices reference bones in the skin's bonemap array
             Unused indices are set to -1.0 (yes, stored as float in MDX)
 
@@ -3225,13 +3235,13 @@ class MDLBoneVertex(ComparableMixin):
     COMPARABLE_FIELDS = ("vertex_weights", "vertex_indices")
 
     def __init__(self):
-        # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:264-266
-        # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:481-483
+        
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:481-483
         # Normalized blend weights (must sum to 1.0)
         self.vertex_weights: tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0)
 
-        # vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:261-263
-        # vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:478-480
+        
+        # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:478-480
         # Bone indices into skin's bonemap (-1.0 = unused)
         self.vertex_indices: tuple[float, float, float, float] = (-1.0, -1.0, -1.0, -1.0)
 
@@ -3271,9 +3281,9 @@ class MDLFace(ComparableMixin):
         # Face material is a packed 32-bit value in binary MDL files.
         # Low 5 bits (0-31) store walkmesh surface material for BWM/KotOR (surfacemat.2da).
         # Upper bits encode smoothgroup ID, lightmap info, and other vendor-specific data.
-        # MDLOps reuses this field for smoothgroups when exporting ASCII (vendor/mdlops/MDLOpsM.pm:1292-1298).
-        # KotOR.js and reone both treat it as opaque 32-bit integer (vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:395-408,
-        # vendor/KotOR.js/src/odyssey/OdysseyModel.ts:face.material).
+        # MDLOps reuses this field for smoothgroups when exporting ASCII (https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1292-1298).
+        # KotOR.js and reone both treat it as opaque 32-bit integer (
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/OdysseyModel.ts:face.material).
         # We therefore store it as an integer to avoid lossy enum conversion.
         self.material: int = 0
         # MDLOps ASCII exports a per-face smoothing group mask (often powers of two like 16/32).
@@ -3341,7 +3351,7 @@ def _mdl_recompute_mesh_face_payload(mesh: "MDLMesh") -> None:
         except Exception:
             continue
 
-    # Tolerant position keying inspired by MDLOps (vendor/MDLOps/MDLOpsM.pm adjacency routine):
+    # Tolerant position keying inspired by MDLOps ( adjacency routine):
     # it groups vertices by formatted position so overlapping geometry still links.
     verts_by_pos: dict[str, list[int]] = {}
     pos_key_of_vert: list[str] = [""] * nverts
@@ -3440,17 +3450,22 @@ class MDLController(ComparableMixin):
 
     References:
     ----------
-        vendor/mdlops/MDLOpsM.pm:1649-1778 - Controller data structure and bezier flag detection
-        vendor/mdlops/MDLOpsM.pm:1704-1710 - Bezier flag extraction from column count (bit 4)
-        vendor/mdlops/MDLOpsM.pm:3764-3802 - ASCII controller reading with bezier support
-        vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:664-690 - Binary controller reading
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1649-1778
+        https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1704-1710 (bit 4)
+        https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:3764-3802
+
+
 
     Attributes:
     ----------
         controller_type: The type of controller (position, orientation, color, etc.)
         rows: List of keyframe data rows (time + values)
         is_bezier: True if using bezier interpolation, False for linear interpolation
-            Reference: mdlops:1704-1710 - Detected from column_count & 16 flag
+            Reference: https://github.com/th3w1zard1/mdlops
 
     Notes:
     -----
@@ -3458,7 +3473,7 @@ class MDLController(ComparableMixin):
         - Value at keyframe
         - In-tangent (control point before keyframe)
         - Out-tangent (control point after keyframe)
-        Reference: mdlops:1721-1723, 1749-1756
+        Reference: https://github.com/th3w1zard1/mdlops
     """
 
     COMPARABLE_FIELDS = ("controller_type", "is_bezier")
@@ -3470,12 +3485,12 @@ class MDLController(ComparableMixin):
         rows: list[MDLControllerRow],
         is_bezier: bool = False,
     ):
-        # vendor/mdlops/MDLOpsM.pm:1666-1673 - Controller type and data rows
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1666-1673 - Controller type and data rows
         self.controller_type: MDLControllerType = controller_type
         self.rows: list[MDLControllerRow] = rows
 
-        # vendor/mdlops/MDLOpsM.pm:1704-1710 - Bezier flag from column count bit 4
-        # vendor/mdlops/MDLOpsM.pm:3764-3770 - Bezier detection in ASCII reading
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1704-1710 - Bezier flag from column count bit 4
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:3764-3770 - Bezier detection in ASCII reading
         # Some parsers historically passed None here; normalize to strict bool.
         self.is_bezier: bool = bool(is_bezier)
 

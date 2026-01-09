@@ -1,6 +1,6 @@
 """Port of SetPositions.java from DeNCS.
 
-See vendor/DeNCS/procyon/com/knights2end/nwscript/decomp/utils/SetPositions.java
+See 
 """
 from __future__ import annotations
 

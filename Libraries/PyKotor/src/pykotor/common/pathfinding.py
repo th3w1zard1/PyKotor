@@ -6,10 +6,13 @@ to find navigation paths between points.
 
 References:
 ----------
-    vendor/reone/src/libs/game/pathfinder.cpp (A* pathfinding implementation)
-    vendor/reone/include/reone/game/pathfinder.h (Pathfinder interface)
-    vendor/reone/include/reone/resource/path.h (Path data structure)
-    vendor/KotOR.js/src/pathfinding/Pathfinder.ts (TypeScript pathfinding)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/pathfinding/Pathfinder.ts (TypeScript pathfinding)
+
+
     Note: Pathfinding uses A* algorithm with PTH waypoint data
 """
 
@@ -58,8 +61,10 @@ class Pathfinder:
 
     References:
     ----------
-        vendor/reone/src/libs/game/pathfinder.cpp (lines 26-154)
-        vendor/reone/include/reone/game/pathfinder.h (lines 29-56)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
     """
 
     def __init__(self) -> None:

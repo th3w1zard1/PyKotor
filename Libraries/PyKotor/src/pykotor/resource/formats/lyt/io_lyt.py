@@ -22,7 +22,22 @@ class LYTAsciiReader(ResourceReader):
     
     References:
     ----------
-        vendor/reone/src/libs/resource/format/lytreader.cpp (LYT reading)
+        Based on swkotor.exe LYT structure:
+        - LoadLayout @ 0x005de900 - Main LYT loader (2024 bytes, 12 callees)
+          * Loads ASCII layout file from resource
+          * Parses roomcount, trackcount, obstaclecount, doorhookcount
+          * Reads room models, positions, tracks, obstacles, door hooks
+        - LoadLayout @ 0x005df140 - Alternative LYT loader (109 bytes, 4 callees)
+        - UnloadLayout @ 0x005de450 - Unloads layout (27 bytes, 1 callee)
+        - "roomcount" string @ 0x00741588 - Room count keyword
+        - "trackcount" string @ 0x0074157c - Track count keyword
+        - ".lyt" extension string @ 0x007415a0 - LYT file extension
+        - "lyt" resource type string @ 0x0074dc9c - LYT resource type identifier
+        - "beginlayout" string @ 0x0074d384 - Layout loading start marker
+        - "donelayout" string @ 0x0074d370 - Layout loading completion marker
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+
+
     """
     ROOM_COUNT_KEY: str = "roomcount"
     TRACK_COUNT_KEY: str = "trackcount"

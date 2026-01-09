@@ -4,11 +4,13 @@ This module provides minimal game engine infrastructure for testing purposes.
 
 References:
 ----------
-    vendor/reone/src/libs/scene/graph.cpp - Scene graph implementation
-    vendor/reone/include/reone/game/game.h - Game engine interface
-    vendor/KotOR.js/src/engine/Engine.ts - TypeScript engine architecture
-    vendor/KotOR-Unity/Assets/Scripts/GameManager.cs - Unity game manager
-    vendor/Engines (WIP Panda3D engine in PyKotor)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/engine/Engine.ts
+
+
     Note: This is a minimal stub; full engine is in ./Engines directory
 """
 

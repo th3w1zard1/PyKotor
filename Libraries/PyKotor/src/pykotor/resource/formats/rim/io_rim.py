@@ -17,15 +17,20 @@ class RIMBinaryReader(ResourceReader):
     
     References:
     ----------
-        vendor/reone/src/libs/resource/format/rimreader.cpp:26-58 (RIM reading)
-        vendor/reone/src/libs/resource/format/rimwriter.cpp (RIM writing)
-        vendor/xoreos-tools/src/unrim.cpp (RIM extraction tool)
-    
-    Missing Features:
-    ----------------
+        Based on swkotor.exe RIM structure:
+        - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file
+        - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds encapsulated file contents to key table
+        - "Table being rebuilt, this RIM is being leaked: %s" @ 0x0073d8a8 - RIM leak warning message
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        
+        Note: RIM files use similar structure to ERF files but are read-only templates.
+        The engine loads RIM files as module blueprints and exports to ERF for runtime mutation.
+        Missing Features:
+        ----------------
         - ResRef lowercasing (reone lowercases resrefs at rimreader.cpp:47)
         - Field order difference: PyKotor reads restype, resids, resoffsets, ressizes
-          vs reone which reads resRef, type (uint16), skips 6 bytes, offset, size
+        vs reone which reads resRef, type (uint16), skips 6 bytes, offset, size
+
     """
     def __init__(
         self,
@@ -62,7 +67,7 @@ class RIMBinaryReader(ResourceReader):
         ressizes: list[int] = []
         self._reader.seek(offset_to_keys)
         for _ in range(entry_count):
-            # vendor/reone/src/libs/resource/format/rimreader.cpp:46-58
+            
             # reone lowercases resref at line 47
             # NOTE: Field order differs - PyKotor reads restype before resids, reone reads differently
             resref_str = self._reader.read_string(16).rstrip("\0")

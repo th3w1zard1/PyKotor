@@ -32,10 +32,15 @@ Usage:
 
 References:
 ----------
-    vendor/HoloLSP/server/src/server.ts (TypeScript NSS language server)
-    vendor/HoloLSP/server/src/diagnostic-provider.ts (Diagnostic generation)
-    vendor/HoloLSP/server/src/semantic-analyzer.ts (Semantic analysis)
-    Language Server Protocol specification
+        Based on swkotor.exe NWScript structure:
+        - NCS (NWScript Compiled Script) bytecode format
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        - Language Server Protocol specification
+        
+        Note: This is a language server for NSS (NWScript Source) files, providing
+        diagnostics, completions, and hover information. NSS compiles to NCS bytecode
+        which is executed by the game engine.
+
 """
 from __future__ import annotations
 

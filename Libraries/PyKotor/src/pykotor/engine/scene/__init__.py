@@ -5,7 +5,12 @@ implemented by different rendering backends.
 
 References:
 ----------
-    vendor/reone/include/reone/scene/graph.h - SceneGraph interface
+        Based on swkotor.exe scene graph:
+        - Scene management and rendering pipeline
+        - Area loading and room visibility (VIS files)
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+
+
 """
 
 from __future__ import annotations

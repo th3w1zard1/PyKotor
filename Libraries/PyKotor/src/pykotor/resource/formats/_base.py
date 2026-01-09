@@ -62,13 +62,14 @@ class ComparableMixin:
 
         Returns True when considered equal; logs differences via log_func.
         """
+        import logging
+        logger = logging.getLogger(__name__)
+
         if path is not None:
             prefix = f"{path} "
             log_func = self._prefixed_logger(log_func, prefix)
 
         if not isinstance(other, self.__class__):
-            import logging
-            logger = logging.getLogger(__name__)
             logger.info(f"Type mismatch: '{self.__class__.__name__}' vs '{other.__class__.__name__ if isinstance(other, object) else type(other)}'")
             return False
 

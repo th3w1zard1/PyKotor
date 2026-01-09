@@ -610,9 +610,14 @@ class CaseAwarePath(InternalWindowsPath if os.name == "nt" else InternalPosixPat
     
     References:
     ----------
-        vendor/HoloPatcher.NET/src/TSLPatcher.Core/Common/CaseAwarePath.cs (C# implementation)
-        vendor/TSLPatcher/lib/site/TSLPatcher/Functions.pm (Perl path handling)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/HoloPatcher.NET/tree/master/src/TSLPatcher.Core/Common/CaseAwarePath.cs (C# implementation)
+        https://github.com/th3w1zard1/TSLPatcher/tree/master/lib/site/TSLPatcher/Functions.pm (Perl path handling)
         Standard FUSE (Filesystem in Userspace) for POSIX case-insensitive mounting
+
     """
 
     __slots__: tuple[str] = ("_tail_cached",)

@@ -24,8 +24,15 @@ def determine_game(
 
     References:
     ----------
-        vendor/KOTOR_Registry_Install_Path_Editor (Registry path detection)
-        vendor/HoloPatcher.NET/src/HoloPatcher/Utils (Game detection logic)
+        Based on swkotor.exe ERF structure:
+        - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file
+        - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds ERF/MOD/SAV contents to key table
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/HoloPatcher.NET/tree/master/src/HoloPatcher/Utils (Game detection logic)
+
+
         Note: File and folder heuristics vary between Steam, GOG, and disc releases
 
     Processing Logic:

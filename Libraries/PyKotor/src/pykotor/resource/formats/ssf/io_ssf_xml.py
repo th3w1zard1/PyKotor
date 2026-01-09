@@ -30,9 +30,15 @@ class SSFXMLReader(ResourceReader):
     
     References:
     ----------
-        vendor/xoreos-tools/src/xml/ssfdumper.cpp (SSF to XML conversion)
-        vendor/xoreos-tools/src/xml/ssfcreator.cpp (XML to SSF conversion)
-        Note: XML format structure may vary between tools
+        Based on swkotor.exe SSF structure:
+        - CResSSF::CResSSF @ 0x006db650 - Constructor for SSF resource
+        - CResSSF::~CResSSF @ 0x006db670, @ 0x006db6b0 - Destructors for SSF resource
+        - SSF file format: "SSF " type, "V1.1" version
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        
+        Note: XML format is PyKotor-specific conversion format, not a standard game format.
+        The engine uses binary SSF format exclusively. XML conversion allows easier editing
+        and integration with external tools.
     """
     def __init__(
         self,

@@ -5,8 +5,10 @@ implemented by any rendering backend (OpenGL, Qt5, Panda3D, etc.).
 
 References:
 ----------
-    vendor/reone/include/reone/scene/graph.h:66-135 - ISceneGraph interface
-    vendor/reone/include/reone/scene/fogproperties.h - FogProperties
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
 """
 
 from __future__ import annotations
@@ -24,7 +26,10 @@ class FogProperties:
     
     References:
     ----------
-        vendor/reone/include/reone/scene/fogproperties.h - FogProperties struct
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
     
     Attributes:
     ----------
@@ -47,8 +52,10 @@ class ISceneGraph(ABC):
     
     References:
     ----------
-        vendor/reone/include/reone/scene/graph.h:66-135 - ISceneGraph interface
-        vendor/xoreos/src/graphics/graphics.h - Graphics manager interface
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
     
     Attributes:
     ----------
@@ -72,7 +79,10 @@ class ISceneGraph(ABC):
         
         References:
         ----------
-            vendor/reone/include/reone/scene/graph.h:73 - clear()
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
         """
         ...
     
@@ -86,7 +96,10 @@ class ISceneGraph(ABC):
         
         References:
         ----------
-            vendor/reone/include/reone/scene/graph.h:70 - update()
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
         """
         ...
     
@@ -100,7 +113,10 @@ class ISceneGraph(ABC):
         
         References:
         ----------
-            vendor/reone/include/reone/scene/graph.h:105 - addRoot(ModelSceneNode)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
         """
         ...
     
@@ -114,7 +130,10 @@ class ISceneGraph(ABC):
         
         References:
         ----------
-            vendor/reone/include/reone/scene/graph.h:111 - removeRoot(ModelSceneNode)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
         """
         ...
     
@@ -128,7 +147,10 @@ class ISceneGraph(ABC):
         
         References:
         ----------
-            vendor/reone/include/reone/scene/graph.h:85 - setAmbientLightColor()
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
         """
         ...
     
@@ -153,7 +175,10 @@ class ISceneGraph(ABC):
         
         References:
         ----------
-            vendor/reone/src/libs/scene/node/light.cpp:90-120 - Directional light
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
         """
         ...
     
@@ -180,7 +205,10 @@ class ISceneGraph(ABC):
         
         References:
         ----------
-            vendor/reone/src/libs/scene/node/light.cpp:122-155 - Point light
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
         """
         ...
     
@@ -203,7 +231,10 @@ class ISceneGraph(ABC):
         
         References:
         ----------
-            vendor/reone/include/reone/scene/graph.h:90 - setFog()
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
         """
         ...
     
@@ -217,7 +248,10 @@ class ISceneGraph(ABC):
         
         References:
         ----------
-            vendor/reone/include/reone/scene/graph.h:89 - isFogEnabled()
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
         """
         ...
 

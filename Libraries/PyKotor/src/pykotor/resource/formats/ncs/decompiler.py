@@ -5,9 +5,10 @@ handling all instruction types, control flow, expressions, and data structures.
 
 References:
 ----------
-    vendor/xoreos-tools/src/nwscript/decompiler.cpp (NCS decompilation algorithm)
-    vendor/xoreos-docs/specs/torlack/ncs.html (NCS format specification)
-    DeNCS - Original NCS decompiler implementation
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        DeNCS - Original NCS decompiler implementation
+
 """
 
 from __future__ import annotations
@@ -176,9 +177,10 @@ class NCSDecompiler:
 
     References:
     ----------
-        vendor/xoreos-tools/src/nwscript/decompiler.cpp (NCS decompilation algorithm)
-        vendor/xoreos-docs/specs/torlack/ncs.html (NCS format specification)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
         DeNCS - Original NCS decompiler implementation
+
     """
 
     def __init__(self, ncs: NCS, game: Game, functions: list[ScriptFunction] | None = None, constants: list[ScriptConstant] | None = None):

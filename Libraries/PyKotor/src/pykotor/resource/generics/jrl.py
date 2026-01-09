@@ -21,9 +21,22 @@ class JRL:
     
     References:
     ----------
-        vendor/reone/src/libs/resource/format/gffreader.cpp (GFF reading, JRL is GFF-based)
-        vendor/xoreos-tools/src/xml/jrldumper.cpp (JRL to XML conversion, if exists)
-        Note: JRL files are GFF format files with specific structure definitions
+        KotOR I (swkotor.exe):
+            - 0x004f17d0 - CSWSCreature::LoadJournal (514 bytes, 77 lines)
+                - Main JRL GFF parser entry point
+                - Loads journal entries from GFF structure
+                - Function signature: LoadJournal(CResGFF* param_1, CResStruct* param_2)
+                - Called from LoadCharacterFromIFO (0x00561e30)
+            - Reads JNL_SortOrder (INT) - journal sort order
+            - Reads JNL_Entries list:
+                - JNL_PlotID (CExoString) - plot identifier string
+                - JNL_State (INT) - journal entry state
+                - JNL_Date (DWORD) - journal entry date
+                - JNL_Time (DWORD) - journal entry time
+            - Calls CSWSJournal::SetState, SetDate, SetTime for each entry
+        KotOR II / TSL (swkotor2.exe):
+            - Functionally identical to K1 implementation
+            - Same GFF structure and parsing logic
     """
 
     BINARY_TYPE = ResourceType.JRL

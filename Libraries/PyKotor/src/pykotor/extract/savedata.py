@@ -1,34 +1,34 @@
 """Comprehensive KOTOR Save Game Handler.
 
 This module provides an exhaustive implementation for reading and writing KOTOR 1 & 2 save games.
-It has been enhanced with knowledge from multiple vendor implementations including:
+It has been enhanced with knowledge from multiple implementations including:
 
 VENDOR IMPLEMENTATIONS ANALYZED:
 ================================
-1. KotOR-Save-Editor (Perl) - vendor/KotOR-Save-Editor/
+1. KotOR-Save-Editor (Perl) - https://github.com/th3w1zard1/KotOR-Save-Editor/tree/master/
    - site/lib/KSE/Functions/Saves.pm - Main save handling
    - site/lib/KSE/Functions/Globals.pm - Global variables with bit packing
    - site/lib/KSE/Functions/Journal.pm - Journal entry management
    - site/lib/KSE/Functions/Inventory.pm - Inventory handling
    - site/lib/KSE/Functions/NPC.pm - Character data management
 
-2. kotor-savegame-editor (Perl) - vendor/kotor-savegame-editor/
+2. kotor-savegame-editor (Perl) - https://github.com/th3w1zard1/kotor-savegame-editor/tree/master/
    - lib/Bioware/ERF.pm - Low-level ERF binary handling
    - lib/Bioware/GFF.pm - Low-level GFF binary handling
 
-3. KotOR_IO (C#) - vendor/KotOR_IO/
+3. KotOR_IO (C#) - https://github.com/th3w1zard1/KotOR_IO/tree/master/
    - File Formats/ERF.cs - Object-oriented ERF implementation
    - File Formats/GFF.cs - Object-oriented GFF implementation
 
-4. KotOR.js (TypeScript) - vendor/KotOR.js/
+4. KotOR.js (TypeScript) - https://github.com/th3w1zard1/KotOR.js/tree/master/
    - src/SaveGame.ts - Modern async save game handling
    - Handles FILETIME timestamps, galaxy map, PIFO.ifo (K2)
 
-5. xoreos-tools (C++) - vendor/xoreos-tools/
+5. xoreos-tools (C++) - (Engine-related, removed vendor reference)
    - Cross-platform binary data handling
    - Resource type definitions
 
-6. reone (C++) - vendor/reone/
+6. reone (C++) - 
    - Game engine perspective on save handling
    - Resource management and performance optimizations
 

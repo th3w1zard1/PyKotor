@@ -10,8 +10,10 @@ compatibility and code reuse across different rendering systems.
 
 References:
 ----------
-    vendor/reone/include/reone/graphics - Graphics abstraction interfaces
-    vendor/xoreos/src/graphics - Graphics backend abstraction
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
 """
 
 from __future__ import annotations

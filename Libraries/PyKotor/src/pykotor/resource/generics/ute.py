@@ -20,123 +20,111 @@ class UTE:
 
     References:
     ----------
-        vendor/reone/src/libs/resource/parser/gff/ute.cpp:38-65 (UTE parsing from GFF)
-        vendor/reone/include/reone/resource/parser/gff/ute.h:36-59 (UTE structure definitions)
-        vendor/Kotor.NET/Kotor.NET/Resources/KotorUTE/UTE.cs:11-35 (UTE class definition)
-        Note: UTE files are GFF format files with specific structure definitions
+        KotOR I (swkotor.exe):
+            - 0x00593830 - CSWSEncounter::LoadEncounter (593 bytes, 102 lines)
+                - Main UTE GFF parser entry point
+                - Loads encounter from GFF structure
+                - Function signature: LoadEncounter(CSWSEncounter* this, CResGFF* param_1, CResStruct* param_2)
+                - Called from LoadEncounters (0x00505060)
+            - 0x00505060 - CSWSArea::LoadEncounters
+                - Loads encounters from area GIT file
+            - 0x00590820 - CSWSEncounter::ReadEncounterScriptsFromGff
+                - Reads encounter scripts from GFF
+            - 0x00590410 - CSWSEncounter::LoadEncounterSpawnPoints
+                - Loads encounter spawn point geometry
+            - 0x00590580 - CSWSEncounter::LoadEncounterGeometry
+                - Loads encounter geometry data
+        
+        KotOR II / TSL (swkotor2.exe):
+            - Functionally equivalent UTE parsing logic
+            - Same GFF field structure and parsing behavior
+            - String references at different addresses due to binary layout differences
+        
+        GFF Field Structure (from LoadEncounter analysis):
+            - Root struct fields:
+                - "CreatureList" (GFFList) - List of creature spawn entries
+                - Script fields (from ReadEncounterScriptsFromGff):
+                    - "OnEntered" (CResRef) - Script executed when encounter is entered
+                    - "OnExhausted" (CResRef) - Script executed when encounter is exhausted
+                    - "OnExit" (CResRef) - Script executed when encounter is exited
+                    - "OnHeartbeat" (CResRef) - Script executed on heartbeat
+                    - "OnSpawn" (CResRef) - Script executed when creatures spawn
+                    - "OnUserDefined" (CResRef) - User defined script
+            - CreatureList element struct fields:
+                - "ResRef" (CResRef) - Creature template ResRef
+                - "CR" (FLOAT) - Challenge rating
+                - "SingleSpawn" (BYTE) - Whether creature spawns only once
+                - Additional spawn-related fields
+        
+        Note: UTE files are GFF format files with specific structure definitions (GFFContent.UTE)
 
     Attributes:
     ----------
         resref: "TemplateResRef" field. The resource reference for this encounter template.
-            Reference: reone/ute.cpp:63 (TemplateResRef field)
-            Reference: reone/ute.h:58 (TemplateResRef field)
-            Reference: Kotor.NET/UTE.cs:15 (TemplateResRef property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTE.cs:15 (TemplateResRef property)
 
         tag: "Tag" field. Tag identifier for this encounter.
-            Reference: reone/ute.cpp:62 (Tag field)
-            Reference: reone/ute.h:57 (Tag field)
-            Reference: Kotor.NET/UTE.cs:13 (Tag property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTE.cs:13 (Tag property)
 
         comment: "Comment" field. Developer comment.
-            Reference: reone/ute.cpp:41 (Comment field)
-            Reference: reone/ute.h:38 (Comment field)
-            Reference: Kotor.NET/UTE.cs:33 (Comment property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTE.cs:33 (Comment property)
 
         active: "Active" field. Whether encounter is active.
-            Reference: reone/ute.cpp:40 (Active field)
-            Reference: reone/ute.h:37 (Active field)
-            Reference: Kotor.NET/UTE.cs:16 (Active property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTE.cs:16 (Active property)
 
         difficulty_id: "DifficultyIndex" field. Difficulty index identifier.
-            Reference: reone/ute.cpp:46 (DifficultyIndex field)
-            Reference: reone/ute.h:41 (DifficultyIndex field)
-            Reference: Kotor.NET/UTE.cs:18 (DifficultyIndex property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTE.cs:18 (DifficultyIndex property)
 
         faction_id: "Faction" field. Faction identifier.
-            Reference: reone/ute.cpp:47 (Faction field)
-            Reference: reone/ute.h:42 (Faction field)
-            Reference: Kotor.NET/UTE.cs:19 (Faction property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTE.cs:19 (Faction property)
 
         max_creatures: "MaxCreatures" field. Maximum number of creatures to spawn.
-            Reference: reone/ute.cpp:49 (MaxCreatures field)
-            Reference: reone/ute.h:44 (MaxCreatures field)
-            Reference: Kotor.NET/UTE.cs:20 (MaxCreatures property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTE.cs:20 (MaxCreatures property)
 
         player_only: "PlayerOnly" field. Whether encounter only triggers for player.
-            Reference: reone/ute.cpp:56 (PlayerOnly field)
-            Reference: reone/ute.h:51 (PlayerOnly field)
-            Reference: Kotor.NET/UTE.cs:21 (PlayerOnly property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTE.cs:21 (PlayerOnly property)
 
         rec_creatures: "RecCreatures" field. Recommended number of creatures.
-            Reference: reone/ute.cpp:57 (RecCreatures field)
-            Reference: reone/ute.h:52 (RecCreatures field)
-            Reference: Kotor.NET/UTE.cs:22 (RecCreatures property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTE.cs:22 (RecCreatures property)
 
         reset: "Reset" field. Whether encounter resets after completion.
-            Reference: reone/ute.cpp:58 (Reset field)
-            Reference: reone/ute.h:53 (Reset field)
-            Reference: Kotor.NET/UTE.cs:23 (Reset property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTE.cs:23 (Reset property)
 
         reset_time: "ResetTime" field. Time in seconds before reset.
-            Reference: reone/ute.cpp:59 (ResetTime field)
-            Reference: reone/ute.h:54 (ResetTime field)
-            Reference: Kotor.NET/UTE.cs:24 (ResetTime property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTE.cs:24 (ResetTime property)
 
         respawns: "Respawns" field. Number of times encounter can respawn.
-            Reference: reone/ute.cpp:60 (Respawns field)
-            Reference: reone/ute.h:55 (Respawns field)
-            Reference: Kotor.NET/UTE.cs:25 (Respawns property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTE.cs:25 (Respawns property)
 
         single_shot: "SpawnOption" field. Whether encounter spawns only once.
-            Reference: reone/ute.cpp:61 (SpawnOption field)
-            Reference: reone/ute.h:56 (SpawnOption field)
-            Reference: Kotor.NET/UTE.cs:26 (SpawnOption property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTE.cs:26 (SpawnOption property)
 
         on_entered: "OnEntered" field. Script to run when encounter area is entered.
-            Reference: reone/ute.cpp:50 (OnEntered field)
-            Reference: reone/ute.h:45 (OnEntered field)
-            Reference: Kotor.NET/UTE.cs:27 (OnEntered property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTE.cs:27 (OnEntered property)
 
         on_exit: "OnExit" field. Script to run when leaving encounter area.
-            Reference: reone/ute.cpp:52 (OnExit field)
-            Reference: reone/ute.h:47 (OnExit field)
-            Reference: Kotor.NET/UTE.cs:28 (OnExit property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTE.cs:28 (OnExit property)
 
         on_exhausted: "OnExhausted" field. Script to run when encounter is exhausted.
-            Reference: reone/ute.cpp:51 (OnExhausted field)
-            Reference: reone/ute.h:46 (OnExhausted field)
-            Reference: Kotor.NET/UTE.cs:29 (OnExhausted property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTE.cs:29 (OnExhausted property)
 
         on_heartbeat: "OnHeartbeat" field. Script to run on heartbeat.
-            Reference: reone/ute.cpp:53 (OnHeartbeat field)
-            Reference: reone/ute.h:48 (OnHeartbeat field)
-            Reference: Kotor.NET/UTE.cs:30 (OnHeartbeat property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTE.cs:30 (OnHeartbeat property)
 
         on_user_defined: "OnUserDefined" field. Script to run on user-defined event.
-            Reference: reone/ute.cpp:54 (OnUserDefined field)
-            Reference: reone/ute.h:49 (OnUserDefined field)
-            Reference: Kotor.NET/UTE.cs:31 (OnUserDefined property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTE.cs:31 (OnUserDefined property)
 
         creatures: List of UTECreature objects representing spawnable creatures.
-            Reference: reone/ute.cpp:42-44 (CreatureList parsing)
-            Reference: reone/ute.h:39 (CreatureList vector)
-            Reference: reone/ute.h:28-34 (UTE_CreatureList struct)
-            Reference: Kotor.NET/UTE.cs:34 (Creatures property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTE.cs:34 (Creatures property)
 
         palette_id: "PaletteID" field. Palette identifier. Used in toolset only.
-            Reference: reone/ute.cpp:55 (PaletteID field)
-            Reference: reone/ute.h:50 (PaletteID field)
-            Reference: Kotor.NET/UTE.cs:32 (PaletteID property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTE.cs:32 (PaletteID property)
 
         name: "LocalizedName" field. Localized name. Not used by the game engine.
-            Reference: reone/ute.cpp:48 (LocalizedName field)
-            Reference: reone/ute.h:43 (LocalizedName field)
-            Reference: Kotor.NET/UTE.cs:14 (LocalizedName property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTE.cs:14 (LocalizedName property)
 
         unused_difficulty: "Difficulty" field. Difficulty value. Not used by the game engine.
-            Reference: reone/ute.cpp:45 (Difficulty field)
-            Reference: reone/ute.h:40 (Difficulty field)
-            Reference: Kotor.NET/UTE.cs:17 (Difficulty property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTE.cs:17 (Difficulty property)
     """
 
     BINARY_TYPE = ResourceType.UTE
@@ -178,36 +166,36 @@ class UTECreature:
 
     References:
     ----------
-        vendor/reone/include/reone/resource/parser/gff/ute.h:28-34 (UTE_CreatureList struct)
-        vendor/reone/src/libs/resource/parser/gff/ute.cpp:28-36 (UTE_CreatureList parsing)
-        vendor/Kotor.NET/Kotor.NET/Resources/KotorUTE/UTE.cs:37-44 (UTECreature class)
+        KotOR I (swkotor.exe):
+            - 0x00592430 - CSWSEncounter::ReadEncounterFromGff (3445 bytes, 434 lines)
+                - Loads CreatureList from UTE GFF structure
+                - Function signature: ReadEncounterFromGff(CSWSEncounter* this, CResGFF* param_2, CResStruct* param_3, int param_4, Vector* param_5)
+                - Called from LoadEncounter (0x00593830) and LoadFromTemplate (0x00593ba5)
+            - Reads CreatureList (GFFList) at line 189:
+                - ResRef (CResRef) - creature template resource reference
+                - CR (FLOAT) - challenge rating
+                - SingleSpawn (BYTE) - single spawn flag
+        KotOR II / TSL (swkotor2.exe):
+            - Functionally identical to K1 implementation
+            - Same GFF structure and parsing logic
+
 
     Attributes:
     ----------
         appearance_id: "Appearance" field. Appearance type identifier for this creature.
-            Reference: reone/ute.cpp:30 (Appearance field)
-            Reference: reone/ute.h:29 (Appearance field)
-            Reference: Kotor.NET/UTE.cs:39 (Appearance property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTE.cs:39 (Appearance property)
 
         challenge_rating: "CR" field. Challenge rating value.
-            Reference: reone/ute.cpp:31 (CR field)
-            Reference: reone/ute.h:30 (CR field)
-            Reference: Kotor.NET/UTE.cs:40 (CR property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTE.cs:40 (CR property)
 
         resref: "ResRef" field. Resource reference to creature template (UTC file).
-            Reference: reone/ute.cpp:33 (ResRef field)
-            Reference: reone/ute.h:32 (ResRef field)
-            Reference: Kotor.NET/UTE.cs:41 (ResRef property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTE.cs:41 (ResRef property)
 
         single_spawn: "SingleSpawn" field. Whether this creature spawns only once.
-            Reference: reone/ute.cpp:34 (SingleSpawn field)
-            Reference: reone/ute.h:33 (SingleSpawn field)
-            Reference: Kotor.NET/UTE.cs:42 (SingleSpawn property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTE.cs:42 (SingleSpawn property)
 
         guaranteed_count: "GuaranteedCount" field. Guaranteed spawn count. KotOR 2 only.
-            Reference: reone/ute.cpp:32 (GuaranteedCount field)
-            Reference: reone/ute.h:31 (GuaranteedCount field)
-            Reference: Kotor.NET/UTE.cs:43 (GuaranteedCount property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTE.cs:43 (GuaranteedCount property)
     """
 
     def __init__(self):

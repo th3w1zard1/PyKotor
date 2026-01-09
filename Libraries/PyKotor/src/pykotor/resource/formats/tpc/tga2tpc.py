@@ -16,7 +16,11 @@ The implementation is intentionally self-contained and converts through the
 
 References:
 ----------
-    TPC format specification
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        TPC format specification
+
+
 """
 
 from __future__ import annotations

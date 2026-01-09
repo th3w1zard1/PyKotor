@@ -19,9 +19,17 @@ The converter handles all NCS instruction types comprehensively:
 
 References:
 ----------
-    vendor/reone/src/libs/script/format/ncsreader.cpp - NCS instruction reading
-    vendor/xoreos/src/aurora/nwscript/ncsfile.cpp - NCS instruction execution
-    DeNCS - Original NCS decompiler implementation
+        Based on swkotor.exe NCS structure:
+        - CResNCS::CResNCS @ 0x005d4c30 - Constructor for NCS resource
+        - CResNCS::~CResNCS @ 0x005d4c50, @ 0x005d4c90 - Destructors for NCS resource
+        - HandleBNCSMessage @ 0x005d5180 - Handles NCS bytecode messages
+        - "ncs" resource type @ 0x0074dd68 - NCS file extension identifier
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        - DeNCS - Original NCS decompiler implementation
+        
+        Note: NCS is compiled NWScript bytecode. This converter translates NCS instructions
+        directly to AST format for decompilation, bypassing the traditional decoder chain.
+
 """
 
 from __future__ import annotations

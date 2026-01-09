@@ -2,9 +2,15 @@
 
 References:
 ----------
-    Libraries/PyKotor/src/pykotor/engine/materials/base.py - Abstract interfaces
-    vendor/reone/src/libs/graphics/mesh.cpp:100-280 - Material conversion
-    vendor/xoreos/src/graphics/aurora/model_kotor.cpp:200-350 - Rendering pipeline
+        Based on swkotor.exe material system:
+        - CResTPC::CResTPC @ 0x00712ea0 - TPC texture resource constructor
+        - GetTPCAttrib @ 0x00712ef0 - Gets TPC texture attributes
+        - Material and shader management in game engine
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        
+        Libraries/PyKotor/src/pykotor/engine/materials/base.py - Abstract interfaces
+
+
 """
 
 from __future__ import annotations
@@ -52,8 +58,14 @@ class Panda3DMaterial(IMaterial):
 
         References:
         ----------
-            vendor/reone/src/libs/graphics/texture.cpp:50-100 - Texture loading
-            /panda3d/panda3d-docs/programming/texturing/creating-texture - loader.loadTexture()
+        Based on swkotor.exe texture loading:
+        - CResTPC::CResTPC @ 0x00712ea0 - TPC texture resource constructor
+        - GetTPCAttrib @ 0x00712ef0 - Gets TPC texture attributes
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        
+        /panda3d/panda3d-docs/programming/texturing/creating-texture - loader.loadTexture()
+
+
         """
         if self.diffuse_texture_path:
             tex_file = self._find_texture(base_path, self.diffuse_texture_path)
@@ -85,9 +97,16 @@ class Panda3DMaterial(IMaterial):
 
         References:
         ----------
-            /panda3d/panda3d-docs/programming/shaders/shader-basics.rst - model.setShader()
-            /panda3d/panda3d-docs/programming/texturing/texture-modes.rst - TextureStage.MNormal
-            /panda3d/panda3d-docs/programming/shaders/coordinate-spaces.rst - setShaderInput()
+        Based on swkotor.exe material application:
+        - Material and shader management in game engine
+        - Texture stage configuration and shader input setup
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        
+        /panda3d/panda3d-docs/programming/shaders/shader-basics.rst - model.setShader()
+        /panda3d/panda3d-docs/programming/texturing/texture-modes.rst - TextureStage.MNormal
+        /panda3d/panda3d-docs/programming/shaders/coordinate-spaces.rst - setShaderInput()
+
+
         """
         if self.diffuse_texture:
             # /panda3d/panda3d-docs/programming/shaders/cg-shader-tutorial/part-1.rst

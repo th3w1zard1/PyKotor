@@ -21,8 +21,24 @@ class TwoDACSVReader(ResourceReader):
     
     References:
     ----------
-        vendor/xoreos-tools/src/xml/2dadumper.cpp (2DA to text formats)
-        Note: CSV format is PyKotor-specific, not a standard game format
+        Based on swkotor.exe 2DA structure:
+        - C2DA::Load2DArray @ 0x004143b0 - Loads 2DA file from resource
+          * Parses "2DA V2.0" header
+          * Handles "DEFAULT:" line for default cell values
+          * Reads column headers (tab-separated)
+          * Reads row labels and cell data
+        - C2DA::Unload2DArray @ 0x004139e0 - Unloads 2DA data
+        - " 2DA file" string @ 0x0074b328 - 2DA file identifier
+        - Error messages for missing 2DA files:
+          * "CSWClass::LoadFeatGain: can't load featgain.2da" @ 0x0074b370
+          * "CSWClass::LoadFeatTable: Can't load feat.2da" @ 0x0074b3c8
+          * "CSWClass::LoadSkillsTable: Can't load skills.2da" @ 0x0074b454
+          * "CSWClass::LoadSpellsTable: Can't load spells.2da" @ 0x0074b5c0
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        
+        Note: CSV format is PyKotor-specific, not a standard game format.
+        The engine uses binary 2DA format exclusively. CSV conversion allows easier editing
+        in spreadsheet applications.
     """
     def __init__(
         self,

@@ -7,10 +7,25 @@ This module handles reading and writing WAV files from KotOR, including:
 
 References:
 ----------
-    vendor/reone/src/libs/audio/format/wavreader.cpp - WAV reading & format detection
-    vendor/KotOR.js/src/audio/AudioFile.ts - Audio format handling
-    vendor/xoreos/src/sound/decoders/wave.cpp - Standard WAV parsing
-    vendor/SithCodec/src/codec.cpp - Audio codec implementation
+        Based on swkotor.exe WAV structure:
+        - Audio loading functions handle WAV file formats
+        - ".wav" extension string @ 0x0074d308 - WAV file extension
+        - "wav" resource type string @ 0x0074d32c - WAV resource type identifier
+        - "wave" string @ 0x0073f064 - Wave format identifier
+        - "RIFF" string @ 0x0074d324 - RIFF format identifier
+        - "STREAMWAVES" string @ 0x0074df34 - Stream waves directory identifier
+        - "HD0:STREAMWAVES\\%s" @ 0x0074a7f4 - Stream waves path format
+        - "HD0:STREAMMUSIC\\%s" @ 0x0074c304 - Stream music path format
+        - ".\\streamwaves" @ 0x0074df40, "d:\\streamwaves" @ 0x0074df50 - Stream waves paths
+        - SFX format: 470-byte obfuscation header starting with 0xFF 0xF3 0x60 0xC4
+        - MP3-in-WAV: RIFF header with size == 50, 58-byte header before MP3 data
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/audio/AudioFile.ts
+
+
 """
 from __future__ import annotations
 
@@ -54,9 +69,24 @@ class WAVBinaryReader(ResourceReader):
     
     References:
     ----------
-        vendor/reone/src/libs/audio/format/wavreader.cpp:30-56
-        vendor/KotOR.js/src/audio/AudioFile.ts:111-162
-        vendor/xoreos/src/sound/decoders/wave.cpp:38-106
+        Based on swkotor.exe WAV structure:
+        - Audio loading functions handle WAV file formats
+        - ".wav" extension string @ 0x0074d308 - WAV file extension
+        - "wav" resource type string @ 0x0074d32c - WAV resource type identifier
+        - "wave" string @ 0x0073f064 - Wave format identifier
+        - "RIFF" string @ 0x0074d324 - RIFF format identifier
+        - "STREAMWAVES" string @ 0x0074df34 - Stream waves directory identifier
+        - "HD0:STREAMWAVES\\%s" @ 0x0074a7f4 - Stream waves path format
+        - "HD0:STREAMMUSIC\\%s" @ 0x0074c304 - Stream music path format
+        - SFX format: 470-byte obfuscation header starting with 0xFF 0xF3 0x60 0xC4
+        - MP3-in-WAV: RIFF header with size == 50, 58-byte header before MP3 data
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/audio/AudioFile.ts:111-162
+
+
     """
     def __init__(
         self,
@@ -94,7 +124,7 @@ class WAVBinaryReader(ResourceReader):
             wav_type = WAVType.VO
         
         # If MP3-in-WAV format detected, return MP3 data directly
-        # Reference: vendor/KotOR.js/src/audio/AudioFile.ts:134-140
+        # Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/src/audio/AudioFile.ts:134-140
         if format_type == DeobfuscationResult.MP3_IN_WAV:
             return WAV(
                 wav_type=wav_type,
@@ -120,13 +150,13 @@ class WAVBinaryReader(ResourceReader):
             Parsed WAV object
             
         References:
-            vendor/xoreos/src/sound/decoders/wave.cpp:38-106
-            vendor/KotOR.js/src/audio/AudioFile.ts:250-262
+            
+            https://github.com/th3w1zard1/KotOR.js/tree/master/src/audio/AudioFile.ts:250-262
         """
         reader = BinaryReader(BytesIO(data))
         
         # Read RIFF header
-        # Reference: vendor/xoreos/src/sound/decoders/wave.cpp:39-41
+        #
         riff_tag = reader.read_bytes(4)
         if riff_tag != b"RIFF":
             msg = f"Not a valid RIFF file, got: {riff_tag!r}"
@@ -135,7 +165,7 @@ class WAVBinaryReader(ResourceReader):
         file_size = reader.read_uint32()
         wave_tag = reader.read_bytes(4)
         
-        # Reference: vendor/xoreos/src/sound/decoders/wave.cpp:45-47
+        #
         if wave_tag != b"WAVE":
             msg = f"Not a valid WAVE file, got: {wave_tag!r}"
             raise ValueError(msg)
@@ -151,15 +181,15 @@ class WAVBinaryReader(ResourceReader):
         found_data_chunk = False
 
         # Parse chunks until we find 'data'
-        # Reference: vendor/xoreos/src/sound/decoders/wave.cpp:49-77
+        #
         while reader.remaining() >= 8:
             chunk_id = reader.read_bytes(4)
             chunk_size = reader.read_uint32()
 
             if chunk_id == b"fmt ":
                 # Parse format chunk
-                # Reference: vendor/xoreos/src/sound/decoders/wave.cpp:57-66
-                # Reference: vendor/KotOR.js/src/audio/AudioFile.ts:214-228
+                #
+                # Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/src/audio/AudioFile.ts:214-228
                 encoding_value = reader.read_uint16()
                 try:
                     encoding = WaveEncoding(encoding_value)
@@ -174,13 +204,13 @@ class WAVBinaryReader(ResourceReader):
                 bits_per_sample = reader.read_uint16()
 
                 # Skip any extra format bytes
-                # Reference: vendor/xoreos/src/sound/decoders/wave.cpp:66
+                #
                 if chunk_size > 16:
                     reader.skip(chunk_size - 16)
 
             elif chunk_id == b"data":
                 # Read audio data (even if empty - empty data chunks are valid)
-                # Reference: vendor/xoreos/src/sound/decoders/wave.cpp:79-80
+                #
                 actual_size = min(chunk_size, reader.remaining())
                 audio_data = reader.read_bytes(actual_size)
                 found_data_chunk = True
@@ -188,7 +218,7 @@ class WAVBinaryReader(ResourceReader):
 
             elif chunk_id == b"fact":
                 # Skip fact chunk (contains sample count for compressed formats)
-                # Reference: vendor/KotOR.js/src/audio/AudioFile.ts:230-234
+                # Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/src/audio/AudioFile.ts:230-234
                 reader.skip(chunk_size)
                 
             else:

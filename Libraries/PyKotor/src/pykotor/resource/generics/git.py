@@ -50,23 +50,29 @@ class GIT:
     
     References:
     ----------
-        vendor/reone/include/reone/resource/parser/gff/git.h:162-175 - GIT struct definition
-        vendor/reone/src/libs/resource/parser/gff/git.cpp:194-229 - parseGIT() function
-        vendor/reone/src/libs/resource/parser/gff/git.cpp:180-192 - GIT_AreaProperties parsing
-        vendor/Kotor.NET/Kotor.NET/Resources/KotorGIT/GIT.cs:12-25 - GIT class
-        vendor/Kotor.NET/Kotor.NET/Resources/KotorGIT/GIT.cs:27-38 - AreaProperties class
-        vendor/KotOR_IO/KotOR_IO/File Formats/GFF FileTypes/GIT.cs:10-115 - GIT class
-        vendor/KotOR-Bioware-Libs/GFF.pm - GFF format (GIT is GFF-based)
-        Original BioWare Odyssey Engine (GIT format specification)
+        Based on swkotor.exe GIT structure:
+        - CSWSArea::LoadGIT @ 0x0050dd80 - Loads GIT file from GFF structure
+          * Creates CResGFF with "GIT " type and resource ref
+          * Reads top-level struct
+          * Loads: LoadCreatures, LoadItems, LoadDoors, LoadTriggers, LoadEncounters, LoadWaypoints, LoadSounds, LoadPlaceables, LoadStores, LoadAreaEffects, LoadProperties, LoadMaps, LoadPlaceableCameras
+          * Reads UseTemplates, CurrentWeather, WeatherStarted fields
+        - CSWSArea::SaveGIT @ 0x0050ba00 - Saves GIT file to GFF structure
+          * Calls CResGFF::CreateGFFFile with "GIT " type and "V2.0" version
+          * Writes area properties, creatures, doors, placeables, triggers, waypoints, stores, encounters, sounds, cameras
+        - "GIT " resource type @ 0x00747b70 - GIT format identifier
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorGIT/GIT.cs (GIT class and AreaProperties class)
+        https://github.com/th3w1zard1/KotOR_IO/tree/master/KotOR_IO/File Formats/GFF FileTypes/GIT.cs (GIT class)
+
     """
     BINARY_TYPE = ResourceType.GIT
 
     def __init__(self):
-        # vendor/reone/src/libs/resource/parser/gff/git.cpp:182-190
-        # vendor/Kotor.NET/Kotor.NET/Resources/KotorGIT/GIT.cs:29-37
+        
+        # https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorGIT/GIT.cs:29-37
         # Area audio properties (ambient sounds, music, environment audio)
         # NOTE: PyKotor uses separate fields instead of nested AreaProperties struct
-        # Discrepancy: reone/Kotor.NET use AreaProperties struct, PyKotor flattens to top-level
+        # Discrepancy: https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorGIT/GIT.cs uses AreaProperties struct, PyKotor flattens to top-level
         self.ambient_sound_id: int = 0  # AmbientSndDay (day ambient sound ID)
         self.ambient_volume: int = 0  # AmbientSndDayVol (day ambient volume)
         self.env_audio: int = 0  # EnvAudio (environment audio index)
@@ -74,12 +80,12 @@ class GIT:
         self.music_battle_id: int = 0  # MusicBattle (battle music ID)
         self.music_delay: int = 0  # MusicDelay (music delay in seconds)
 
-        # vendor/reone/src/libs/resource/parser/gff/git.cpp:200-227
-        # vendor/Kotor.NET/Kotor.NET/Resources/KotorGIT/GIT.cs:16-24
-        # vendor/KotOR_IO/KotOR_IO/File Formats/GFF FileTypes/GIT.cs:29-39
+        
+        # https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorGIT/GIT.cs:16-24
+        # https://github.com/th3w1zard1/KotOR_IO/tree/master/KotOR_IO/File Formats/GFF FileTypes/GIT.cs:29-39
         # Instance lists (creatures, doors, placeables, triggers, waypoints, stores, encounters, sounds, cameras)
         # NOTE: List names in GFF use spaces: "Creature List", "Door List", "Placeable List", "Encounter List"
-        # Reference: reone/git.cpp:203-227 (list parsing with space-separated names)
+        #
         self.cameras: list[GITCamera] = []  # CameraList (area cameras)
         self.creatures: list[GITCreature] = []  # "Creature List" (spawned creatures)
         self.doors: list[GITDoor] = []  # "Door List" (area doors)
@@ -384,9 +390,13 @@ class GITCamera(GITInstance):
     
     References:
     ----------
-        vendor/reone/include/reone/resource/parser/gff/git.h:140-148 - GIT_CameraList struct
-        vendor/reone/src/libs/resource/parser/gff/git.cpp:168-178 - parseGIT_CameraList function
-        vendor/Kotor.NET/Kotor.NET/Resources/KotorGIT/GIT.cs:40-49 - CameraInfo class
+        Based on swkotor.exe GIT structure:
+        - CSWSArea::LoadGIT @ 0x0050dd80 - Loads GIT file for area instances
+        - CSWSArea::SaveGIT @ 0x0050ba00 - Saves GIT file for area instances
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorGIT/GIT.cs (CameraInfo class)
+
     """
     GFF_STRUCT_ID = 14
 
@@ -401,33 +411,33 @@ class GITCamera(GITInstance):
         camera_id: int = 0,
     ):
         super().__init__(x, y, z)
-        # vendor/reone/src/libs/resource/parser/gff/git.cpp:170
-        # vendor/Kotor.NET/Kotor.NET/Resources/KotorGIT/GIT.cs:42
+        
+        # https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorGIT/GIT.cs:42
         # Unique camera identifier (CameraID field)
         self.camera_id: int = camera_id
         
-        # vendor/reone/src/libs/resource/parser/gff/git.cpp:171
-        # vendor/Kotor.NET/Kotor.NET/Resources/KotorGIT/GIT.cs:48
+        
+        # https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorGIT/GIT.cs:48
         # Field of view angle in degrees (FieldOfView field)
         self.fov: float = 45
         
-        # vendor/reone/src/libs/resource/parser/gff/git.cpp:172
-        # vendor/Kotor.NET/Kotor.NET/Resources/KotorGIT/GIT.cs:47
+        
+        # https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorGIT/GIT.cs:47
         # Camera height offset (Height field)
         self.height: float = 0.0
         
-        # vendor/reone/src/libs/resource/parser/gff/git.cpp:173
-        # vendor/Kotor.NET/Kotor.NET/Resources/KotorGIT/GIT.cs:45
+        
+        # https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorGIT/GIT.cs:45
         # Microphone range for audio occlusion (MicRange field)
         self.mic_range: float = 0.0
         
-        # vendor/reone/src/libs/resource/parser/gff/git.cpp:175
-        # vendor/Kotor.NET/Kotor.NET/Resources/KotorGIT/GIT.cs:46
+        
+        # https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorGIT/GIT.cs:46
         # Camera pitch angle in radians (Pitch field)
         self.pitch: float = 0.0
         
-        # vendor/reone/src/libs/resource/parser/gff/git.cpp:174
-        # vendor/Kotor.NET/Kotor.NET/Resources/KotorGIT/GIT.cs:46
+        
+        # https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorGIT/GIT.cs:46
         # Camera orientation quaternion (Orientation field, glm::quat)
         # NOTE: PyKotor converts from Euler angles, reone stores as quaternion directly
         # Discrepancy: PyKotor uses Vector4 quaternion, reone uses glm::quat
@@ -494,9 +504,13 @@ class GITCreature(GITInstance):
     
     References:
     ----------
-        vendor/reone/include/reone/resource/parser/gff/git.h:131-138 - GIT_Creature_List struct
-        vendor/reone/src/libs/resource/parser/gff/git.cpp:157-166 - parseGIT_Creature_List function
-        vendor/Kotor.NET/Kotor.NET/Resources/KotorGIT/GIT.cs:51-59 - CreatureInfo class
+        Based on swkotor.exe GIT structure:
+        - CSWSArea::LoadGIT @ 0x0050dd80 - Loads GIT file for area instances
+        - CSWSArea::SaveGIT @ 0x0050ba00 - Saves GIT file for area instances
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorGIT/GIT.cs (CreatureInfo class)
+
     """
     GFF_STRUCT_ID = 4
 
@@ -507,13 +521,13 @@ class GITCreature(GITInstance):
         z: float = 0.0,
     ):
         super().__init__(x, y, z)
-        # vendor/reone/src/libs/resource/parser/gff/git.cpp:159
-        # vendor/Kotor.NET/Kotor.NET/Resources/KotorGIT/GIT.cs:58
+        
+        # https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorGIT/GIT.cs:58
         # ResRef of UTC template file (TemplateResRef field)
         self.resref: ResRef = ResRef.from_blank()
         
-        # vendor/reone/src/libs/resource/parser/gff/git.cpp:160-164
-        # vendor/Kotor.NET/Kotor.NET/Resources/KotorGIT/GIT.cs:53-57
+        
+        # https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorGIT/GIT.cs:53-57
         # Creature bearing/rotation angle (computed from XOrientation/YOrientation)
         # NOTE: PyKotor computes bearing from XOrientation/YOrientation using Vector2.angle()
         # Reference: git.py:977 (bearing = Vector2(rot_x, rot_y).angle() - math.pi / 2)
@@ -574,9 +588,13 @@ class GITDoor(GITInstance):
     
     References:
     ----------
-        vendor/reone/include/reone/resource/parser/gff/git.h:116-129 - GIT_Door_List struct
-        vendor/reone/src/libs/resource/parser/gff/git.cpp:140-155 - parseGIT_Door_List function
-        vendor/Kotor.NET/Kotor.NET/Resources/KotorGIT/GIT.cs:61-75 - DoorInfo class
+        Based on swkotor.exe GIT structure:
+        - CSWSArea::LoadGIT @ 0x0050dd80 - Loads GIT file for area instances
+        - CSWSArea::SaveGIT @ 0x0050ba00 - Saves GIT file for area instances
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorGIT/GIT.cs (DoorInfo class)
+
     """
     GFF_STRUCT_ID = 8
 
@@ -587,44 +605,44 @@ class GITDoor(GITInstance):
         z: float = 0.0,
     ):
         super().__init__(x, y, z)
-        # vendor/reone/src/libs/resource/parser/gff/git.cpp:147
-        # vendor/Kotor.NET/Kotor.NET/Resources/KotorGIT/GIT.cs:63
+        
+        # https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorGIT/GIT.cs:63
         # ResRef of UTD template file (TemplateResRef field)
         self.resref: ResRef = ResRef.from_blank()
         
-        # vendor/reone/src/libs/resource/parser/gff/git.cpp:142
-        # vendor/Kotor.NET/Kotor.NET/Resources/KotorGIT/GIT.cs:72
+        
+        # https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorGIT/GIT.cs:72
         # Door bearing/rotation angle (Bearing field)
         self.bearing: float = 0.0
         
-        # vendor/reone/src/libs/resource/parser/gff/git.cpp:149-150
-        # vendor/Kotor.NET/Kotor.NET/Resources/KotorGIT/GIT.cs:73-74
+        
+        # https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorGIT/GIT.cs:73-74
         # Color tweak for door appearance (TweakColor/UseTweakColor fields)
         # NOTE: TODO comment indicates tweak color needs fixing in dismantle/construct
         self.tweak_color: Color | None = None  # TODO: fix tweak color in dismantle/construct
         
-        # vendor/reone/src/libs/resource/parser/gff/git.cpp:143
-        # vendor/Kotor.NET/Kotor.NET/Resources/KotorGIT/GIT.cs:66
+        
+        # https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorGIT/GIT.cs:66
         # Tag of linked door/waypoint (LinkedTo field)
         self.linked_to: str = ""
         
-        # vendor/reone/src/libs/resource/parser/gff/git.cpp:144
-        # vendor/Kotor.NET/Kotor.NET/Resources/KotorGIT/GIT.cs:67
+        
+        # https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorGIT/GIT.cs:67
         # Link type flags (LinkedToFlags field: 0=NoLink, 1=ToDoor, 2=ToWaypoint)
         self.linked_to_flags: GITModuleLink = GITModuleLink.NoLink
         
-        # vendor/reone/src/libs/resource/parser/gff/git.cpp:145
-        # vendor/Kotor.NET/Kotor.NET/Resources/KotorGIT/GIT.cs:65
+        
+        # https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorGIT/GIT.cs:65
         # ResRef of linked module (LinkedToModule field)
         self.linked_to_module: ResRef = ResRef.from_blank()
         
-        # vendor/reone/src/libs/resource/parser/gff/git.cpp:148
-        # vendor/Kotor.NET/Kotor.NET/Resources/KotorGIT/GIT.cs:68
+        
+        # https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorGIT/GIT.cs:68
         # Localized transition destination name (TransitionDestin field)
         self.transition_destination: LocalizedString = LocalizedString.from_invalid()
         
-        # vendor/reone/src/libs/resource/parser/gff/git.cpp:146
-        # vendor/Kotor.NET/Kotor.NET/Resources/KotorGIT/GIT.cs:64
+        
+        # https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorGIT/GIT.cs:64
         # Door tag identifier (Tag field)
         self.tag: str = ""
 

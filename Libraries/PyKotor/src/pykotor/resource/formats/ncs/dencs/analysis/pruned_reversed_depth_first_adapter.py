@@ -1,6 +1,6 @@
 """Port of PrunedReversedDepthFirstAdapter.java from DeNCS.
 
-See vendor/DeNCS/procyon/com/knights2end/nwscript/decomp/analysis/PrunedReversedDepthFirstAdapter.java
+See 
 """
 from __future__ import annotations
 

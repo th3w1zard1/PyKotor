@@ -2,8 +2,8 @@
 
 This supports both the standard DirectDraw DDS container and BioWare's
 NWN/KotOR-era DDS variant. The implementation mirrors the behaviour of:
-- vendor/xoreos/src/graphics/images/dds.cpp:L55-L239 (standard + BioWare reader)
-- vendor/xoreos-tools/src/images/dds.cpp:L55-L248 (reader + detection)
+-  (standard + BioWare reader)
+-  (reader + detection)
 Differences are documented inline where PyKotor maps DDS surfaces onto TPC
 structures.
 """
@@ -111,7 +111,7 @@ class TPCDDSReader(ResourceReader):
     def _detect_format(self, fmt: _DDSPixelFormat) -> tuple[TPCTextureFormat, _DDSDataLayout]:
         """Map DDS pixel format to TPCTextureFormat and data layout.
 
-        Mirrors vendor/xoreos/src/graphics/images/dds.cpp:L241-L327.
+        Mirrors 
         """
         data_layout = _DDSDataLayout.DIRECT
 
@@ -367,7 +367,7 @@ class TPCDDSWriter(ResourceWriter):
 
     def _pixel_format_fields(self, fmt: TPCTextureFormat) -> tuple[int, int, int, int, int, int, int]:
         """Return (ddpf_flags, fourcc, bitcount, rmask, gmask, bmask, amask)."""
-        # Aligns with vendor/xoreos/src/graphics/images/dds.cpp:L241-L327 mappings.
+        # Aligns with  mappings.
         if fmt == TPCTextureFormat.DXT1:
             return self.DDPF_FOURCC, 0x44585431, 0, 0, 0, 0, 0
         if fmt == TPCTextureFormat.DXT3:

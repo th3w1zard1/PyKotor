@@ -5,8 +5,12 @@ attempting to parse and reconstruct valid data structures.
 
 References:
 ----------
-    vendor/reone/src/libs/resource/gff.cpp (GFF parsing error handling)
-    vendor/xoreos-tools/src/resource/gff.cpp (GFF recovery logic)
+        Based on swkotor.exe GFF structure:
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
+        - CResGFF::WriteGFFFile @ 0x00413030 - Writes GFF data to file
+        Original BioWare engine binaries
+
+
     Note: Salvage operations try to recover data when primary parsing fails
 """
 

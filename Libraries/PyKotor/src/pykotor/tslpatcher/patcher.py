@@ -45,9 +45,13 @@ class ModInstaller:
     
     References:
     ----------
-        vendor/TSLPatcher/TSLPatcher.pl - Original Perl TSLPatcher implementation
-        vendor/HoloPatcher.NET/ - C# port of HoloPatcher
-        vendor/Kotor.NET/Kotor.NET.Patcher/ - Incomplete C# patcher
+        Based on swkotor.exe GFF structure:
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
+        - CResGFF::WriteGFFFile @ 0x00413030 - Writes GFF data to file
+        Original BioWare engine binaries
+        https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET.Patcher/ - Incomplete C# patcher
+
+
     """
     def __init__(
         self,

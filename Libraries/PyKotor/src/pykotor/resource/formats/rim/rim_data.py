@@ -7,11 +7,18 @@ RIM files store all resources inline with metadata, making them self-contained a
 
 References:
 ----------
-    RIM file format specification
-
-Binary Format:
--------------
-    Header (20 bytes):
+        Based on swkotor.exe RIM structure:
+        - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file
+        - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds encapsulated file contents to key table
+        - "Table being rebuilt, this RIM is being leaked: %s" @ 0x0073d8a8 - RIM leak warning message
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        
+        Note: RIM files use similar structure to ERF files but are read-only templates.
+        The engine loads RIM files as module blueprints and exports to ERF for runtime mutation.
+        RIM file format specification
+        Binary Format:
+        -------------
+        Header (20 bytes):
         Offset | Size | Type   | Description
         -------|------|--------|-------------
         0x00   | 4    | char[] | File Type ("RIM ")
@@ -19,8 +26,7 @@ Binary Format:
         0x08   | 4    | uint32 | Unknown (typically 0x00000000)
         0x0C   | 4    | uint32 | Resource Count
         0x10   | 4    | uint32 | Offset to Resource Table
-    
-    Resource Entry (32 bytes each):
+        Resource Entry (32 bytes each):
         Offset | Size | Type   | Description
         -------|------|--------|-------------
         0x00   | 16   | char[] | ResRef (filename, null-padded, max 16 chars)
@@ -28,15 +34,11 @@ Binary Format:
         0x14   | 4    | uint32 | Resource ID (index, usually sequential)
         0x18   | 4    | uint32 | Offset to Resource Data
         0x1C   | 4    | uint32 | Resource Size
-    
-    Resource Data:
+        Resource Data:
         Raw binary data for each resource at specified offsets
-        
-    Extended Header (104 bytes total after standard 20-byte header):
+        Extended Header (104 bytes total after standard 20-byte header):
         Contains IsExtension flag (byte 0x14) and 99 reserved bytes
         Extension RIMs have filenames ending in 'x' (e.g., module001x.rim)
-        
-    Reference: reone/rimreader.cpp:24-100, Kotor.NET:23-38, KotOR_IO:42-85
 """
 
 from __future__ import annotations
@@ -60,9 +62,16 @@ class RIMResource(ArchiveResource):
     
     References:
     ----------
-        vendor/reone/include/reone/resource/format/rimreader.h:31-35 - ResourceEntry struct
-        vendor/Kotor.NET/Kotor.NET/Formats/KotorRIM/RIMBinaryStructure.cs:88-119 - ResourceEntry
-        vendor/KotOR_IO/KotOR_IO/File Formats/RIM.cs:147-185 - rFile class
+        Based on swkotor.exe RIM structure:
+        - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file
+        - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds encapsulated file contents to key table
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Formats/KotorRIM/RIMBinaryStructure.cs:88-119
+        https://github.com/th3w1zard1/KotOR_IO/tree/master/KotOR_IO/File
+
+
         
     Attributes:
     ----------
@@ -71,8 +80,8 @@ class RIMResource(ArchiveResource):
     """
 
     def __init__(self, resref: ResRef, restype: ResourceType, data: bytes):
-        # vendor/Kotor.NET/Kotor.NET/Formats/KotorRIM/RIMBinaryStructure.cs:104-108
-        # vendor/KotOR_IO/KotOR_IO/File Formats/RIM.cs:63-64
+        # https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Formats/KotorRIM/RIMBinaryStructure.cs:104-108
+        # https://github.com/th3w1zard1/KotOR_IO/tree/master/KotOR_IO/File Formats/RIM.cs:63-64
         # ResRef stored in Resource Entry (16 bytes, null-padded)
         # ResourceType stored in Resource Entry (4 bytes, uint32)
         # Resource data referenced via offset and size fields
@@ -89,10 +98,16 @@ class RIM(BiowareArchive):
     
     References:
     ----------
-        vendor/reone/include/reone/resource/format/rimreader.h:29-57 - RimReader class
-        vendor/Kotor.NET/Kotor.NET/Formats/KotorRIM/RIMBinaryStructure.cs:13-53 - FileRoot
-        vendor/KotOR_IO/KotOR_IO/File Formats/RIM.cs:20-260 - Complete RIM implementation
-        vendor/xoreos/src/aurora/rimfile.h:40-100 - RIMFile class
+        Based on swkotor.exe RIM structure:
+        - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file
+        - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds encapsulated file contents to key table
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Formats/KotorRIM/RIMBinaryStructure.cs:13-53
+        https://github.com/th3w1zard1/KotOR_IO/tree/master/KotOR_IO/File
+
+
         
     Attributes:
     ----------

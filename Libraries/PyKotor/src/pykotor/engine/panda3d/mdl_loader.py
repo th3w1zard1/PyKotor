@@ -5,10 +5,15 @@ with full support for vertex data, tangent space, and face topology.
 
 References:
 ----------
-    Libraries/PyKotor/src/pykotor/resource/formats/mdl - MDL data structures
-    vendor/reone/src/libs/graphics/mesh.cpp - Mesh conversion
-    vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts - Model conversion
-    /panda3d/panda3d-docs/programming/internal-structures/procedural-generation - Geom creation
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Libraries/PyKotor/src/pykotor/resource/formats/mdl - MDL data structures
+        /panda3d/panda3d-docs/programming/internal-structures/procedural-generation - Geom creation
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/three/odyssey/OdysseyModel3D.ts
+
+
 """
 
 from __future__ import annotations
@@ -53,9 +58,14 @@ class MDLLoader:
     
     References:
     ----------
-        vendor/reone/src/libs/graphics/mesh.cpp:100-350 - Mesh conversion
-        vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:150-400 - Geometry creation
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
         /panda3d/panda3d-docs - GeomVertexData and Geom creation
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/three/odyssey/OdysseyModel3D.ts:150-400
+
+
     """
     
     def __init__(
@@ -86,8 +96,10 @@ class MDLLoader:
         
         References:
         ----------
-            vendor/reone/src/libs/resource/provider/models.cpp:50-100 - Model loading
-            Libraries/PyKotor/src/pykotor/resource/formats/mdl/io_mdl.py - MDL reader
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Libraries/PyKotor/src/pykotor/resource/formats/mdl/io_mdl.py - MDL reader
+
         """
         # Auto-detect MDX path
         if mdx_path is None:
@@ -124,12 +136,17 @@ class MDLLoader:
         
         References:
         ----------
-            vendor/reone/src/libs/scene/node/model.cpp:59-97 - buildNodeTree()
-            vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:938-1134 - NodeParser()
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/three/odyssey/OdysseyModel3D.ts:938-1134
+
+
         """
         # Convert this node based on type
-        # Reference: vendor/reone/src/libs/scene/node/model.cpp:62-69
-        # Reference: vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:987-1004
+        #
+        # Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/src/three/odyssey/OdysseyModel3D.ts:987-1004
         node_np: NodePath | None = None
         
         # Determine node type using abstract converter
@@ -137,7 +154,7 @@ class MDLLoader:
         converter_type = get_node_converter_type(mdl_node)
         
         # Convert based on type
-        # Reference: vendor/reone/src/libs/scene/node/model.cpp:62-69
+        #
         if converter_type == "aabb":
             node_np = self._convert_aabb_node(mdl_node)
         elif converter_type == "saber":
@@ -159,7 +176,7 @@ class MDLLoader:
             node_np = NodePath(mdl_node.name)
         
         # Set local transform
-        # Reference: vendor/reone/src/libs/scene/node/model.cpp:78
+        #
         # Reference: /panda3d/panda3d-docs - NodePath.setPos(), setHpr()
         node_np.setPos(
             mdl_node.position.x,
@@ -168,7 +185,7 @@ class MDLLoader:
         )
         
         # Convert quaternion to HPR
-        # Reference: vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:970-971
+        # Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/src/three/odyssey/OdysseyModel3D.ts:970-971
         from panda3d.core import Quat
         quat = Quat(
             mdl_node.orientation.w,
@@ -181,7 +198,7 @@ class MDLLoader:
         
         # Handle skin mesh reparenting (reone:72-76)
         # Skin meshes need special transform handling to prevent double animation
-        # Reference: vendor/reone/src/libs/scene/node/model.cpp:72-76
+        #
         # Skin meshes are reparented directly to model root to prevent animation
         # being applied twice (once to bone, once to mesh)
         if converter_type == "skin" and mdl_node.skin:
@@ -190,17 +207,17 @@ class MDLLoader:
             node_np.setPythonTag("is_skin_mesh", True)
         
         # Attach to parent
-        # Reference: vendor/reone/src/libs/scene/node/model.cpp:79
+        #
         node_np.reparentTo(parent_np)
         
         # Handle reference nodes (load child models)
-        # Reference: vendor/reone/src/libs/scene/node/model.cpp:84-94
-        # Reference: vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:1006-1027
+        #
+        # Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/src/three/odyssey/OdysseyModel3D.ts:1006-1027
         if mdl_node.reference and self._resource_loader:
             self._load_reference_model(mdl_node.reference, node_np)
         
         # Recursively convert children
-        # Reference: vendor/reone/src/libs/scene/node/model.cpp:95-97
+        #
         for child in mdl_node.children:
             self._convert_node_hierarchy(child, node_np)
     
@@ -217,15 +234,20 @@ class MDLLoader:
         
         References:
         ----------
-            vendor/reone/src/libs/graphics/mesh.cpp:100-350 - Mesh conversion
-            vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:1136-1372 - NodeMeshBuilder()
-            /panda3d/panda3d-docs - Geom creation
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        /panda3d/panda3d-docs - Geom creation
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/three/odyssey/OdysseyModel3D.ts:1136-1372
+
+
         """
         mesh = mdl_node.mesh
         if not mesh:
             return NodePath(mdl_node.name)
         
-        # Reference: vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:1146
+        # Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/src/three/odyssey/OdysseyModel3D.ts:1146
         # Only create geometry if mesh has faces
         if not mesh.faces:
             return NodePath(mdl_node.name)
@@ -271,8 +293,13 @@ class MDLLoader:
         
         References:
         ----------
-            vendor/reone/src/libs/scene/node/mesh.cpp:100-200 - Skinned mesh conversion
-            vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:1259-1263 - Skinned mesh
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/three/odyssey/OdysseyModel3D.ts:1259-1263
+
+
         """
         # Skin nodes have both mesh (geometry) and skin (bone weights)
         # Reference: Libraries/PyKotor/src/pykotor/resource/formats/mdl/mdl_data.py:1228
@@ -305,7 +332,7 @@ class MDLLoader:
         node = NodePath(geom_node)
 
         # Store skin/bone data for skeletal animation
-        # Reference: vendor/reone/src/libs/scene/node/mesh.cpp:100-200
+        #
         # Reference: Libraries/PyKotor/src/pykotor/resource/formats/mdl/mdl_data.py:1228-1342
         node.setPythonTag("skin_type", "skinned")
         node.setPythonTag("skin_data", skin)
@@ -343,8 +370,13 @@ class MDLLoader:
         
         References:
         ----------
-            vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:450-500 - Dangly reading
-            vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:1202-1205 - Dangly attributes
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/three/odyssey/OdysseyModel3D.ts:1202-1205
+
+
         """
         # Dangly nodes have both mesh (geometry) and dangly (physics constraints)
         # Reference: Libraries/PyKotor/src/pykotor/resource/formats/mdl/mdl_data.py:1356
@@ -377,8 +409,8 @@ class MDLLoader:
         node = NodePath(geom_node)
         
         # Store dangly properties for physics simulation and shader uniforms
-        # Reference: vendor/reone/src/libs/scene/render/pass/retro.cpp:159-193
-        # Reference: vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:1491-1497
+        #
+        # Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/src/three/odyssey/OdysseyModel3D.ts:1491-1497
         # Reference: Libraries/PyKotor/src/pykotor/resource/formats/mdl/mdl_data.py:1356-1399
         node.setPythonTag("dangly_type", "cloth")
         node.setPythonTag("dangly_data", dangly)
@@ -409,9 +441,13 @@ class MDLLoader:
         
         References:
         ----------
-            vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:308-378 - Saber generation
-            vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:1476-1479 - Saber material
-            Libraries/PyKotor/src/pykotor/resource/formats/mdl/mdl_data.py:1447-1505 - MDLSaber structure
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/three/odyssey/OdysseyModel3D.ts:1476-1479
+        Libraries/PyKotor/src/pykotor/resource/formats/mdl/mdl_data.py:1447-1505 - MDLSaber structure
+
         """
         # Saber meshes have mesh data
         # Reference: Libraries/PyKotor/src/pykotor/resource/formats/mdl/mdl_data.py:1447
@@ -424,7 +460,7 @@ class MDLLoader:
         node_np = self._convert_mesh_node(mdl_node)
         
         # Store saber properties for special rendering
-        # Reference: vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:308-378
+        #
         # Reference: Libraries/PyKotor/src/pykotor/resource/formats/mdl/mdl_data.py:1447-1505
         node_np.setPythonTag("saber_type", "blade")
         node_np.setPythonTag("saber_data", saber)
@@ -436,7 +472,7 @@ class MDLLoader:
         node_np.setPythonTag("saber_flare_radius", saber.saber_flare_radius)
         
         # Saber meshes need special material flags
-        # Reference: vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:1476-1479
+        # Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/src/three/odyssey/OdysseyModel3D.ts:1476-1479
         # Material should have SABER and IGNORE_LIGHTING flags
         # This is handled in material manager
         
@@ -455,11 +491,16 @@ class MDLLoader:
         
         References:
         ----------
-            vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:550-600 - AABB reading
-            vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:1212-1243 - AABB geometry
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/three/odyssey/OdysseyModel3D.ts:1212-1243
+
+
         """
         # AABB nodes are typically not rendered, used for collision
-        # Reference: vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:1212-1243
+        # Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/src/three/odyssey/OdysseyModel3D.ts:1212-1243
         if not mdl_node.walkmesh:
             return NodePath(mdl_node.name)
         
@@ -470,14 +511,14 @@ class MDLLoader:
         aabb_np = NodePath(mdl_node.name)
         
         # Store walkmesh/AABB data for collision detection
-        # Reference: vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:489-509
+        #
         aabb_np.setPythonTag("aabb_type", "collision")
         aabb_np.setPythonTag("walkmesh_data", walkmesh)
         aabb_np.setPythonTag("aabb_tree", walkmesh.aabbs)
         
         # AABB meshes are typically invisible (no rendering)
         # They're used for collision detection and pathfinding
-        # Reference: vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:489-509
+        #
         return node_np
     
     def _convert_light_node(self, mdl_node: MDLNode) -> NodePath:
@@ -493,9 +534,14 @@ class MDLLoader:
         
         References:
         ----------
-            vendor/reone/src/libs/scene/node/light.cpp:43-85 - Light initialization
-            vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:1544-1639 - NodeLightBuilder()
-            /panda3d/panda3d-docs - PointLight, DirectionalLight, SpotLight
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        /panda3d/panda3d-docs - PointLight, DirectionalLight, SpotLight
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/three/odyssey/OdysseyModel3D.ts:1544-1639
+
+
         """
         from panda3d.core import PointLight, DirectionalLight, Vec3, Vec4
         
@@ -505,23 +551,23 @@ class MDLLoader:
         light_data = mdl_node.light
         
         # Determine light type based on radius
-        # Reference: vendor/reone/src/libs/scene/node/light.cpp:83-85
+        #
         # Large radius (>100) = directional, otherwise point light
         is_directional = light_data.radius >= 100.0
         
         if is_directional:
             # Directional light (sun)
-            # Reference: vendor/reone/src/libs/scene/node/light.cpp:83-85
+            #
             light = DirectionalLight(mdl_node.name)
         else:
             # Point light
-            # Reference: vendor/reone/src/libs/scene/node/light.cpp:43-47
+            #
             light = PointLight(mdl_node.name)
             light.setAttenuation(Vec3(1, 0, 1.0 / light_data.radius))
             light.setMaxDistance(light_data.radius)
         
         # Set light color
-        # Reference: vendor/reone/src/libs/scene/node/light.cpp:44
+        #
         # MDL light color is RGB (0-1 range)
         color = Vec4(
             light_data.color[0] if len(light_data.color) > 0 else 1.0,
@@ -535,7 +581,7 @@ class MDLLoader:
         light_np = NodePath(light)
         
         # Store light data for animation controllers
-        # Reference: vendor/reone/src/libs/scene/node/light.cpp:49-66
+        #
         light_np.setPythonTag("light_data", light_data)
         light_np.setPythonTag("light_active", light_data.active)
         
@@ -554,9 +600,13 @@ class MDLLoader:
         
         References:
         ----------
-            vendor/reone/src/libs/scene/node/emitter.cpp:50-150 - Emitter conversion
-            vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:998-1004 - Emitter creation
-            Libraries/PyKotor/src/pykotor/resource/formats/mdl/mdl_data.py:842-1051 - MDLEmitter structure
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/three/odyssey/OdysseyModel3D.ts:998-1004
+        Libraries/PyKotor/src/pykotor/resource/formats/mdl/mdl_data.py:842-1051 - MDLEmitter structure
+
         """
         if not mdl_node.emitter:
             return NodePath(mdl_node.name)
@@ -565,7 +615,7 @@ class MDLLoader:
         
         # Create a placeholder node for the emitter
         # The actual particle system will be implemented later
-        # Reference: vendor/reone/src/libs/scene/node/emitter.cpp:50-150
+        #
         emitter_np = NodePath(mdl_node.name)
         
         # Store emitter properties in NodePath tags for particle system integration
@@ -610,11 +660,16 @@ class MDLLoader:
         
         References:
         ----------
-            vendor/reone/src/libs/scene/node/model.cpp:84-94 - Reference loading
-            vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:1006-1027 - Reference loading
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/three/odyssey/OdysseyModel3D.ts:1006-1027
+
+
         """
         # Reference nodes create a placeholder - actual model loaded in _load_reference_model
-        # Reference: vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:1006-1027
+        # Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/src/three/odyssey/OdysseyModel3D.ts:1006-1027
         return NodePath(mdl_node.name)
     
     def _load_reference_model(self, reference: MDLReference, parent_np: NodePath) -> None:
@@ -627,16 +682,21 @@ class MDLLoader:
         
         References:
         ----------
-            vendor/reone/src/libs/scene/node/model.cpp:84-94 - Reference model loading
-            vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:1012-1026 - Child model loading
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/three/odyssey/OdysseyModel3D.ts:1012-1026
+
+
         """
-        # Reference: vendor/reone/src/libs/scene/node/model.cpp:86-93
-        # Reference: vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:1012-1026
+        #
+        # Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/src/three/odyssey/OdysseyModel3D.ts:1012-1026
         if not self._resource_loader or not reference.model_name:
             return
         
         # Load the referenced model using Installation resource resolution
-        # Reference: vendor/reone/src/libs/scene/node/model.cpp:87-92
+        #
         # The model name is stored in reference.model_name (without extension)
         model_name = reference.model_name
         
@@ -674,7 +734,7 @@ class MDLLoader:
             mdx_path = model_name + ".mdx"
         
         # Create a new MDLLoader instance to load the referenced model
-        # Reference: vendor/reone/src/libs/scene/node/model.cpp:88-92
+        #
         # Use the same material manager and resource loader
         child_loader = MDLLoader(
             material_manager=self._material_manager,
@@ -686,7 +746,7 @@ class MDLLoader:
         child_np = child_loader.load(mdl_path, mdx_path)
         
         # Attach to parent at the reference node's position
-        # Reference: vendor/reone/src/libs/scene/node/model.cpp:92-93
+        #
         if child_np:
             child_np.reparentTo(parent_np)
     
@@ -703,9 +763,11 @@ class MDLLoader:
         
         References:
         ----------
-            vendor/reone/src/libs/graphics/mesh.cpp:120-150 - Vertex layout
-            Libraries/PyKotorGL/src/pykotor/gl/models/mdl_converter.py - Format requirements
-            /panda3d/panda3d-docs - GeomVertexArrayFormat.addColumn()
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Libraries/PyKotorGL/src/pykotor/gl/models/mdl_converter.py - Format requirements
+        /panda3d/panda3d-docs - GeomVertexArrayFormat.addColumn()
+
         """
         # Determine format requirements using abstract utility
         # Reference: Libraries/PyKotorGL/src/pykotor/gl/models/mdl_converter.py
@@ -723,7 +785,7 @@ class MDLLoader:
         array.addColumn(InternalName.getTexcoord(), 2, Geom.NTFloat32, Geom.CTexcoord)
         
         # Tangent space for normal mapping
-        # Reference: vendor/mdlops/MDLOpsM.pm:5470-5596 - Tangent space
+        # Reference: https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:5470-5596 - Tangent space
         if reqs.has_tangent_space:
             array.addColumn(InternalName.getTangent(), 3, Geom.NTFloat32, Geom.CVector)
             array.addColumn(InternalName.getBinormal(), 3, Geom.NTFloat32, Geom.CVector)
@@ -733,7 +795,7 @@ class MDLLoader:
             array.addColumn(InternalName.getTexcoord().getIndex(1), 2, Geom.NTFloat32, Geom.CTexcoord)
         
         # Bone weights for skinning
-        # Reference: vendor/reone/src/libs/graphics/mesh.cpp:140-150
+        #
         if reqs.has_skinning:
             array.addColumn(InternalName.make("bone_indices"), 4, Geom.NTUint16, Geom.CIndex)
             array.addColumn(InternalName.make("bone_weights"), 4, Geom.NTFloat32, Geom.CVector)
@@ -754,8 +816,11 @@ class MDLLoader:
         
         References:
         ----------
-            vendor/reone/src/libs/graphics/mesh.cpp:200-280 - Vertex data writing
-            /panda3d/panda3d-docs - GeomVertexWriter
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        /panda3d/panda3d-docs - GeomVertexWriter
+
+
         """
         # Determine format requirements first to ensure writer creation matches column existence
         # Reference: Libraries/PyKotorGL/src/pykotor/gl/models/mdl_converter.py
@@ -770,7 +835,7 @@ class MDLLoader:
         
         # Optional writers - must match conditions used in _create_vertex_format
         # Tangent/binormal writers only if has_tangent_space (normals AND faces AND UVs)
-        # Reference: vendor/mdlops/MDLOpsM.pm:5470-5596 - Tangent space
+        # Reference: https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:5470-5596 - Tangent space
         tangent_writer = None
         binormal_writer = None
         if reqs.has_tangent_space:
@@ -861,8 +926,11 @@ class MDLLoader:
         
         References:
         ----------
-            vendor/reone/src/libs/graphics/mesh.cpp:300-350 - Primitive creation
-            /panda3d/panda3d-docs - GeomTriangles
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        /panda3d/panda3d-docs - GeomTriangles
+
+
         """
         # Create triangle primitive
         prim = GeomTriangles(Geom.UHStatic)
@@ -874,7 +942,7 @@ class MDLLoader:
         
         for face in mesh.faces:
             # KotOR uses clockwise winding, Panda3D uses counter-clockwise
-            # Reference: vendor/xoreos/src/graphics/mesh.cpp:300
+            #
             if reverse_winding:
                 # Reverse winding order: v1, v2, v3 -> v1, v3, v2
                 prim.addVertices(face.v1, face.v3, face.v2)

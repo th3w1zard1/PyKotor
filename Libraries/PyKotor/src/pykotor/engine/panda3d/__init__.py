@@ -5,8 +5,11 @@ defined in pykotor.engine.
 
 References:
 ----------
-    Libraries/PyKotor/src/pykotor/engine - Abstract interfaces
-    vendor/reone - C++ engine architecture
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Libraries/PyKotor/src/pykotor/engine - Abstract interfaces
+
+
 """
 
 from __future__ import annotations

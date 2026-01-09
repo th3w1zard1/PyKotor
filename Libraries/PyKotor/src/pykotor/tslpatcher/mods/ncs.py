@@ -5,9 +5,15 @@ Handles byte-level modifications for memory tokens (StrRef, 2DAMemory) in compil
 
 References:
 ----------
-    vendor/TSLPatcher/TSLPatcher.pl - Original Perl NCS modification logic (HACKList)
-    vendor/HoloPatcher.NET/src/TSLPatcher.Core/Mods/NCS/ - C# NCS modification implementation
-    vendor/Kotor.NET/Kotor.NET.Patcher/ - Incomplete C# patcher
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/TSLPatcher/tree/master/TSLPatcher.pl (HACKList)
+        https://github.com/th3w1zard1/HoloPatcher.NET/tree/master/src/TSLPatcher.Core/Mods/NCS/
+        https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET.Patcher/
+
+
 """
 
 from __future__ import annotations

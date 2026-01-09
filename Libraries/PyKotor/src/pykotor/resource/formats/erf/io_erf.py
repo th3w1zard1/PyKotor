@@ -17,14 +17,22 @@ class ERFBinaryReader(ResourceReader):
     
     References:
     ----------
-        vendor/reone/src/libs/resource/format/erfreader.cpp:26-72 (ERF reading)
-        vendor/reone/src/libs/resource/format/erfwriter.cpp (ERF writing)
-        vendor/xoreos-tools/src/unerf.cpp:108-145 (password/decryption support)
-    
-    Missing Features:
-    ----------------
+        Based on swkotor.exe ERF structure:
+        - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file
+        - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds ERF/MOD/SAV contents to key table
+          * Tries resource types in order: NWM, MOD, SAV, ERF
+          * Opens file with "rb" mode
+          * Reads header and resource entries
+        - "MOD V1.0" string @ 0x0074539c - MOD file version identifier
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        
+        Note: ERF files are container formats that store multiple game resources. Used for MOD files,
+        save games, and other resource collections.
+        Missing Features:
+        ----------------
         - ResRef lowercasing (reone lowercases at erfreader.cpp:63)
         - ERF password/decryption support (xoreos-tools supports at unerf.cpp:108-145)
+
     """
     def __init__(
         self,
@@ -87,7 +95,7 @@ class ERFBinaryReader(ResourceReader):
         restypes: list[int] = []
         self._reader.seek(offset_to_keys)
         for _ in range(entry_count):
-            # vendor/reone/src/libs/resource/format/erfreader.cpp:62-72
+            
             # reone lowercases resrefs at line 63
             resref_str = self._reader.read_string(16).rstrip("\0")
             resrefs.append(resref_str.lower())

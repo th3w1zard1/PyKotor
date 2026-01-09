@@ -37,13 +37,15 @@ class BZFFile:
     
     References:
     ----------
-        vendor/reone/src/libs/resource/format/bifreader.cpp (BIF/BZF reading)
-        vendor/xoreos-tools/src/unkeybif.cpp (BIF/BZF extraction)
-        vendor/KotOR-Bioware-Libs/BIF.pm (Perl BIF/BZF implementation)
-    
-    Missing Features:
-    ----------------
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR-Bioware-Libs/tree/master/BIF.pm (Perl BIF/BZF implementation)
+        Missing Features:
+        ----------------
         - Fixed resources not yet supported (see line 67)
+
     """
     def __init__(self, bzf: BinaryIO):
         self._bzf: BinaryIO = bzf

@@ -10,11 +10,13 @@ KotOR Audio Format Reference:
     
 References:
 ----------
-    vendor/reone/src/libs/audio/format/wavreader.cpp:30-56 - WAV header detection
-    vendor/KotOR.js/src/audio/AudioFile.ts:9-162 - Audio format detection & deobfuscation
-    vendor/xoreos/src/sound/decoders/wave.cpp - Standard WAV parsing
-    vendor/SithCodec - Audio codec for KotOR WAV handling
-    vendor/SWKotOR-Audio-Encoder - Audio encoding tools
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/audio/AudioFile.ts:9-162
+
+
 """
 
 from __future__ import annotations
@@ -29,8 +31,13 @@ class WaveEncoding(IntEnum):
     
     References:
     ----------
-        vendor/KotOR.js/src/enums/audio/AudioFileWaveEncoding.ts
-        vendor/xoreos/src/sound/decoders/wave_types.h
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/enums/audio/AudioFileWaveEncoding.ts
+
+
     """
     PCM = 0x01           # Linear PCM (uncompressed)
     MS_ADPCM = 0x02      # Microsoft ADPCM

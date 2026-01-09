@@ -4,8 +4,15 @@ This module provides TPC texture loading functionality for the Panda3D engine.
 
 References:
 ----------
-    Libraries/PyKotor/src/pykotor/resource/formats/tpc - TPC format
-    vendor/reone/src/libs/graphics/texture.cpp - Texture loading
+        Based on swkotor.exe TPC structure:
+        - CResTPC::CResTPC @ 0x00712ea0 - TPC resource constructor
+        - GetTPCAttrib @ 0x00712ef0 - Gets TPC texture attributes
+        - TPC texture loading and format conversion functions
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        
+        Libraries/PyKotor/src/pykotor/resource/formats/tpc - TPC format
+
+
 """
 
 from __future__ import annotations
@@ -33,8 +40,14 @@ def load_tpc(tpc: TPC) -> Texture:
     
     References:
     ----------
-        vendor/reone/src/libs/graphics/texture.cpp:50-150 - Texture loading
+        Based on swkotor.exe TPC structure:
+        - CResTPC::CResTPC @ 0x00712ea0 - TPC resource constructor
+        - GetTPCAttrib @ 0x00712ef0 - Gets TPC texture attributes
+        - TPC texture loading and format conversion functions
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        
         Libraries/PyKotor/src/pykotor/resource/formats/tpc - TPC format
+
     """
     mipmap = tpc.get(0, 0)
     tpc_format = tpc.format()

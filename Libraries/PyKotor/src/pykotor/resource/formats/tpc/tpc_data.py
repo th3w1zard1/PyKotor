@@ -4,7 +4,17 @@ TPC is KotOR's proprietary texture format supporting various compression and col
 
 References:
 ----------
-    Note: TPC supports DXT1, DXT3, DXT5, and uncompressed RGB/RGBA formats
+        Based on swkotor.exe TPC structure:
+        - CResTPC::CResTPC @ 0x00712ea0 - Constructor for TPC resource
+          * Initializes texture resource with vtable
+          * Sets field13_0x24 = 1 (resource flag)
+        - CResTPC::~CResTPC @ 0x00712ee0 - Destructor for TPC resource
+        - GetTPCAttrib @ 0x00712ef0 - Gets TPC texture attributes
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        
+        Note: TPC supports DXT1, DXT3, DXT5, and uncompressed RGB/RGBA formats.
+        TPC is KotOR's proprietary texture format used for all game textures.
+
 """
 
 from __future__ import annotations

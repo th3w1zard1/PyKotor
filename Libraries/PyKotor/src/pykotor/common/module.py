@@ -83,7 +83,10 @@ class KModuleType(Enum):
     
     References:
     ----------
-        Original BioWare Odyssey Engine (module archive structure)
+        Original BioWare Odyssey Engine (module archive structure from swkotor.exe, swkotor2.exe)
+        Note: Module file organization varies between KotOR 1 and KotOR 2
+
+
         Note: Module file organization varies between KotOR 1 and KotOR 2
     
     File Organization:
@@ -372,8 +375,30 @@ class Module:  # noqa: PLR0904
     
     References:
     ----------
-        Original BioWare Odyssey Engine (module resource management)
-    
+        Based on swkotor.exe module system:
+        - CServerExoAppInternal::LoadModule @ 0x004b95b0 - Main module loader (4088 bytes, 36 callees)
+          * Loads module from IFO file
+          * Handles module initialization and resource loading
+          * Calls LoadModuleStart, LoadModuleInProgress, LoadModuleFinish
+        - CSWSModule::LoadModuleStart @ 0x004c9050 - Module start loader (5666 bytes, 68 callees)
+          * Initializes module resources
+          * Loads IFO, ARE, GIT files
+          * Sets up module area and objects
+        - LoadModuleInProgress @ 0x004c5720 - Module loading progress handler (347 bytes, 7 callees)
+        - LoadModuleFinish @ 0x004c5880 - Module loading completion handler (245 bytes, 9 callees)
+        - UnloadModule @ 0x004b9240 - Unloads module (850 bytes, 32 callees)
+        - FUN_004094a0 - Module archive loader (loads .rim, _s.rim, _adx.rim files)
+          * Handles module archive file discovery
+          * Loads main .rim, data _s.rim, and extended _adx.rim archives
+        - "MODULES:" string @ 0x0073d90c - Module list identifier
+        - "Module" string @ 0x007442a8 - Module identifier
+        - "CSWSSCRIPTEVENT_EVENTTYPE_ON_MODULE_LOAD" @ 0x007446e4 - Module load event
+        - "CSWSSCRIPTEVENT_EVENTTYPE_ON_MODULE_START" @ 0x00744710 - Module start event
+        - "ModuleList" @ 0x00745044, "GetModuleList" @ 0x00745050 - Module list functions
+        - "ModuleRunning" @ 0x00745060, "ModuleLoaded" @ 0x00745078 - Module state strings
+        - "modulesave" @ 0x00745128, "ModuleName" @ 0x00745134 - Module save/name strings
+        - Original BioWare Odyssey Engine (swkotor.exe, swkotor2.exe)
+
     Attributes:
     ----------
         resources: Dictionary mapping ResourceIdentifier to ModuleResource.
@@ -1685,7 +1710,14 @@ class Module:  # noqa: PLR0904
 
         References:
         ----------
-            wiki/2DA-loadscreens.md - loadscreens.2da structure and bmpresref column
+        Based on swkotor.exe GFF/ARE structure:
+        - CSWSArea::LoadAreaHeader @ 0x00508c50 - Loads area header from GFF
+        - C2DA::Load2DArray @ 0x004143b0 - Loads 2DA file from resource
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
+        Original BioWare engine binaries
+        wiki/2DA-loadscreens.md - loadscreens.2da structure and bmpresref column
+
+
 
         Returns:
         -------
@@ -1781,7 +1813,9 @@ class ModuleResource(Generic[T]):
     
     References:
     ----------
-        Original BioWare Odyssey Engine (resource search order: Override > Module > Chitin)
+        Original BioWare Odyssey Engine (resource search order: Override > Module > Chitin from swkotor.exe, swkotor2.exe)
+
+
     
     Attributes:
     ----------

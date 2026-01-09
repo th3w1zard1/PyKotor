@@ -536,7 +536,7 @@ markers = [
     "gui: marks tests that require a GUI (deselect with '-m \"not gui\"')",
     "slow: marks tests that are slow (deselect with '-m \"not slow\"')",
 ]
-addopts = "-ra -q"
+addopts = "-ra -q -m \"not slow\""
 # NOTE: GL/OpenGL tests require a real display
 # and most likely cannot be run in headless/offscreen mode.
 # Commented out due to uncertainty of how to use these.

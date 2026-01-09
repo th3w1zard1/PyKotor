@@ -4,8 +4,11 @@ This module implements the abstract ISceneGraph interface using Panda3D's NodePa
 
 References:
 ----------
-    Libraries/PyKotor/src/pykotor/engine/scene/base.py - Abstract interface
-    vendor/reone/src/libs/scene/graph.cpp - Reference implementation
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Libraries/PyKotor/src/pykotor/engine/scene/base.py - Abstract interface
+
+
 """
 
 from __future__ import annotations
@@ -36,8 +39,11 @@ class Panda3DSceneGraph(ISceneGraph):
     
     References:
     ----------
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
         Libraries/PyKotor/src/pykotor/engine/scene/base.py:52-181 - ISceneGraph interface
-        vendor/reone/src/libs/scene/graph.cpp:30-800 - Reference implementation
+
+
     """
     
     def __init__(self, name: str, root: NodePath):

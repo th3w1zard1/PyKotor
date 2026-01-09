@@ -540,7 +540,13 @@ class TwoDARegistry:
     
     References:
     ----------
+        Based on swkotor.exe 2DA structure:
+        - C2DA::Load2DArray @ 0x004143b0 - Loads 2DA file from resource
+        - C2DA::Unload2DArray @ 0x004139e0 - Unloads 2DA data
+        Original BioWare engine binaries
+
         Note: This registry is PyKotor-specific for tooling and modding purposes.
+
         Game engine analysis performed via Ghidra reverse engineering (Reva MCP server).
     """
 
@@ -716,7 +722,13 @@ class TwoDAManager:
     
     References:
     ----------
+        Based on swkotor.exe 2DA structure:
+        - C2DA::Load2DArray @ 0x004143b0 - Loads 2DA file from resource
+        - C2DA::Unload2DArray @ 0x004139e0 - Unloads 2DA data
+        Original BioWare engine binaries
+
         Note: This manager is PyKotor-specific for tooling and modding purposes.
+
     """
     def __init__(self, installation: Installation):
         TwoDARegistry.init_metadata()

@@ -4,9 +4,14 @@ This module implements the abstract animation interfaces using Panda3D-specific 
 
 References:
 ----------
-    Libraries/PyKotor/src/pykotor/engine/animation/base.py - Abstract interfaces
-    vendor/KotOR.js/src/odyssey/controllers - Controller implementations
-    vendor/reone/src/libs/scene/animation - Animation system
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Libraries/PyKotor/src/pykotor/engine/animation/base.py - Abstract interfaces
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/controllers
+
+
 """
 
 from __future__ import annotations
@@ -30,9 +35,15 @@ class Panda3DAnimationController(IAnimationController):
     
     References:
     ----------
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
         Libraries/PyKotor/src/pykotor/engine/animation/base.py:23-53 - IAnimationController
-        vendor/KotOR.js/src/odyssey/controllers/OdysseyController.ts:18-47 - Base controller
         /panda3d/panda3d-docs/programming/scene-graph/common-state-changes - NodePath transforms
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/controllers/OdysseyController.ts:18-47
+
+
     """
     
     def __init__(self, mdl_controller: MDLController):
@@ -98,8 +109,14 @@ class Panda3DPositionController(Panda3DAnimationController):
     
     References:
     ----------
-        vendor/KotOR.js/src/odyssey/controllers/PositionController.ts:17-122
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
         /panda3d/panda3d-docs - NodePath.setPos()
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/controllers/PositionController.ts:17-122
+
+
     """
     
     def _convert_row_data(self, row: MDLControllerRow) -> Vec3:
@@ -113,7 +130,11 @@ class Panda3DPositionController(Panda3DAnimationController):
         
         References:
         ----------
-            /panda3d/panda3d-docs - myNodePath.setPos(X, Y, Z)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        /panda3d/panda3d-docs - myNodePath.setPos(X, Y, Z)
+
+
         """
         node.setPos(value)
     
@@ -122,7 +143,13 @@ class Panda3DPositionController(Panda3DAnimationController):
         
         References:
         ----------
-            vendor/KotOR.js/src/odyssey/controllers/PositionController.ts:106-117
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/controllers/PositionController.ts:106-117
+
+
         """
         return Vec3(
             last_value.x + (next_value.x - last_value.x) * factor,
@@ -136,8 +163,14 @@ class Panda3DOrientationController(Panda3DAnimationController):
     
     References:
     ----------
-        vendor/KotOR.js/src/odyssey/controllers/OrientationController.ts:17-97
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
         /panda3d/panda3d-docs - Quaternion and SLERP
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/controllers/OrientationController.ts:17-97
+
+
     """
     
     def _convert_row_data(self, row: MDLControllerRow) -> Quat:
@@ -145,7 +178,11 @@ class Panda3DOrientationController(Panda3DAnimationController):
         
         References:
         ----------
-            /panda3d/panda3d-docs/programming/physics/ode/worlds-bodies-masses - setQuaternion()
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        /panda3d/panda3d-docs/programming/physics/ode/worlds-bodies-masses - setQuaternion()
+
+
             
         Notes:
         -----
@@ -162,7 +199,11 @@ class Panda3DOrientationController(Panda3DAnimationController):
         
         References:
         ----------
-            /panda3d/panda3d-docs - LerpQuatInterval accepts Quat
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        /panda3d/panda3d-docs - LerpQuatInterval accepts Quat
+
+
             
         Notes:
         -----
@@ -177,8 +218,13 @@ class Panda3DOrientationController(Panda3DAnimationController):
         
         References:
         ----------
-            vendor/KotOR.js/src/odyssey/controllers/OrientationController.ts:86-87
-            vendor/reone/src/libs/scene/animation/orientationchannel.cpp:80-90
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/controllers/OrientationController.ts:86-87
+
+
             
         Notes:
         -----
@@ -233,8 +279,14 @@ class Panda3DScaleController(Panda3DAnimationController):
     
     References:
     ----------
-        vendor/KotOR.js/src/odyssey/controllers/ScaleController.ts:17-120
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
         /panda3d/panda3d-docs - NodePath.setScale()
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/controllers/ScaleController.ts:17-120
+
+
     """
     
     def _convert_row_data(self, row: MDLControllerRow) -> float:
@@ -248,7 +300,11 @@ class Panda3DScaleController(Panda3DAnimationController):
         
         References:
         ----------
-            /panda3d/panda3d-docs - myNodePath.setScale(S)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        /panda3d/panda3d-docs - myNodePath.setScale(S)
+
+
         """
         node.setScale(value, value, value)
     
@@ -262,8 +318,14 @@ class Panda3DColorController(Panda3DAnimationController):
     
     References:
     ----------
-        vendor/KotOR.js/src/odyssey/controllers/ColorController.ts:17-110
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
         /panda3d/panda3d-docs - NodePath.setColor()
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/controllers/ColorController.ts:17-110
+
+
     """
     
     def _convert_row_data(self, row: MDLControllerRow) -> Vec3:
@@ -277,7 +339,11 @@ class Panda3DColorController(Panda3DAnimationController):
         
         References:
         ----------
-            /panda3d/panda3d-docs - nodePath.setColor(r, g, b, a)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        /panda3d/panda3d-docs - nodePath.setColor(r, g, b, a)
+
+
         """
         node.setColor(value.x, value.y, value.z, 1.0)
     
@@ -295,8 +361,14 @@ class Panda3DAlphaController(Panda3DAnimationController):
     
     References:
     ----------
-        vendor/KotOR.js/src/odyssey/controllers/AlphaController.ts:17-100
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
         /panda3d/panda3d-docs - NodePath.setAlphaScale()
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/controllers/AlphaController.ts:17-100
+
+
     """
     
     def _convert_row_data(self, row: MDLControllerRow) -> float:
@@ -310,7 +382,11 @@ class Panda3DAlphaController(Panda3DAnimationController):
         
         References:
         ----------
-            /panda3d/panda3d-docs - myNodePath.setAlphaScale(SA)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        /panda3d/panda3d-docs - myNodePath.setAlphaScale(SA)
+
+
         """
         node.setAlphaScale(value)
     
@@ -332,8 +408,13 @@ def create_panda3d_controller(mdl_controller: MDLController) -> Panda3DAnimation
     
     References:
     ----------
-        vendor/KotOR.js/src/odyssey/controllers/OdysseyControllerFactory.ts:36-150
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/controllers/OdysseyControllerFactory.ts:36-150
         Libraries/PyKotor/src/pykotor/resource/formats/mdl/mdl_types.py:148-206
+
     """
     from pykotor.resource.formats.mdl.mdl_types import MDLControllerType
     
@@ -358,8 +439,14 @@ class Panda3DAnimationState(IAnimationState):
     
     References:
     ----------
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
         Libraries/PyKotor/src/pykotor/engine/animation/base.py:56-92 - IAnimationState
-        vendor/KotOR.js/src/odyssey/OdysseyModelAnimation.ts:25-100
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/OdysseyModelAnimation.ts:25-100
+
+
     """
     
     def __init__(self, animation: MDLAnimation, loop: bool = True, speed: float = 1.0):
@@ -407,8 +494,14 @@ class Panda3DAnimationManager(IAnimationManager):
     
     References:
     ----------
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
         Libraries/PyKotor/src/pykotor/engine/animation/base.py:95-181 - IAnimationManager
-        vendor/KotOR.js/src/odyssey/OdysseyModelAnimationManager.ts:18-250
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/OdysseyModelAnimationManager.ts:18-250
+
+
     """
     
     def __init__(self, mdl: MDL, root_node: NodePath):

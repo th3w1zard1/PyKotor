@@ -29,7 +29,6 @@ from pykotor.extract.capsule import Capsule
 from pykotor.extract.file import ResourceIdentifier
 from pykotor.extract.installation import Installation, SearchLocation
 from pykotor.resource.type import ResourceType
-from pykotor.tools.path import CaseAwarePath
 
 # Import create_installation from test_diff_comprehensive
 sys.path.insert(0, str(THIS_SCRIPT_PATH.parents[1] / "cli"))
@@ -43,8 +42,8 @@ class TestInstallation(TestCase):
     @classmethod
     def setUpClass(cls):
         # Create temporary directory for installation
-        cls.temp_dir = Path(tempfile.mkdtemp())
-        cls.install_path = cls.temp_dir / "test_install"
+        cls.temp_dir: Path = Path(tempfile.mkdtemp())
+        cls.install_path: Path = cls.temp_dir / "test_install"
 
         # Create installation with all resources needed for tests
         DiffTestDataHelper.create_installation(

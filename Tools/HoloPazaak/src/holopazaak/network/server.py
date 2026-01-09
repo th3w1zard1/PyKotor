@@ -401,9 +401,65 @@ class PazaakServer:
             await asyncio.Future()  # Run forever
 
 
+def _get_invocation_command() -> str:
+    """Get the actual command used to invoke the CLI."""
+    import os
+    import sys
+    from pathlib import Path
+    
+    if not sys.argv:
+        return "holopazaak-server"
+    
+    # Try to detect if we're being run via "uv run" by checking parent process
+    is_uv_run = False
+    try:
+        import psutil  # type: ignore[import-untyped]
+        current_process = psutil.Process()
+        parent = current_process.parent()
+        if parent and "uv" in parent.name().lower():
+            is_uv_run = True
+    except (ImportError, Exception):  # noqa: BLE001
+        # psutil not available or can't access parent process
+        # Try alternative detection: check if UV_* env vars exist
+        if any("UV" in k.upper() for k in os.environ.keys()):
+            is_uv_run = True
+    
+    script_path = Path(sys.argv[0]).resolve()
+    cwd = Path.cwd().resolve()
+    
+    # Try to make path relative to current directory
+    try:
+        rel_script = script_path.relative_to(cwd)
+        rel_script_str = str(rel_script).replace("\\", "/")  # Use forward slashes for consistency
+    except ValueError:
+        rel_script_str = str(script_path)
+    
+    # If detected as uv run, prefix with "uv run"
+    if is_uv_run:
+        return f"uv run {rel_script_str}"
+    
+    # Check for "python -m" pattern
+    if len(sys.argv) >= 3 and sys.argv[1] == "-m":
+        # python -m holopazaak.network.server
+        return f"python -m {sys.argv[2]}"
+    
+    # Check if we're being run via python (not as a module)
+    python_exe = Path(sys.executable).name.lower()
+    if python_exe in ("python", "python3", "python.exe", "python3.exe", "py", "py.exe"):
+        # python script.py
+        return f"python {rel_script_str}"
+    
+    # For direct execution, return the relative path
+    return rel_script_str
+
+
 def main():
     """Main entry point for the server."""
-    parser = argparse.ArgumentParser(description="Pazaak Multiplayer Server")
+    import sys
+    from pathlib import Path
+    
+    prog = _get_invocation_command()
+    parser = argparse.ArgumentParser(prog=prog, description="Pazaak Multiplayer Server")
     parser.add_argument("--host", default="0.0.0.0", help="Host to bind to")
     parser.add_argument("--port", type=int, default=8765, help="Port to listen on")
     args = parser.parse_args()

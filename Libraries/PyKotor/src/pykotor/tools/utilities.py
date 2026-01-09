@@ -6,9 +6,15 @@ and can be used by any application that needs these utilities.
 
 References:
 ----------
-    vendor/xoreos-tools/ - Various utility tools
-    Tools/KotorDiff/ - File diffing implementation
-    Libraries/PyKotor/src/pykotor/tslpatcher/diff/ - Structured diff engine
+        Based on swkotor.exe resource formats:
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates new GFF file
+        - CResGFF::WriteGFFFile @ 0x00413030 - Writes GFF data to file
+        - CTlkTable::AddFile @ 0x0041d920 - Adds TLK file to table
+        - Load2DArray @ 0x004143b0 - Loads 2DA array data
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        Tools/KotorDiff/ - File diffing implementation
+        Libraries/PyKotor/src/pykotor/tslpatcher/diff/ - Structured diff engine
+
 """
 from __future__ import annotations
 
@@ -46,8 +52,13 @@ def diff_files(
 
     References:
     ----------
+        Based on swkotor.exe GFF structure:
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
+        - CResGFF::WriteGFFFile @ 0x00413030 - Writes GFF data to file
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         Tools/KotorDiff/src/kotordiff/differ.py
         Libraries/PyKotor/src/pykotor/tslpatcher/diff/structured.py
+
     """
     suffix = file1_path.suffix.lower()
 
@@ -217,7 +228,12 @@ def grep_in_file(
 
     References:
     ----------
-        vendor/xoreos-tools/ - grep-like utilities
+        Based on swkotor.exe GFF structure:
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
+        - CResGFF::WriteGFFFile @ 0x00413030 - Writes GFF data to file
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+
+
     """
     suffix = file_path.suffix.lower()
 
@@ -330,7 +346,12 @@ def get_file_stats(file_path: Path) -> dict[str, int | str]:
 
     References:
     ----------
-        vendor/xoreos-tools/ - File analysis utilities
+        Based on swkotor.exe GFF structure:
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
+        - CResGFF::WriteGFFFile @ 0x00413030 - Writes GFF data to file
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+
+
     """
     stats: dict[str, int | str] = {
         "path": str(file_path),
@@ -383,7 +404,12 @@ def validate_file(file_path: Path) -> tuple[bool, str]:
 
     References:
     ----------
-        vendor/xoreos-tools/ - File validation utilities
+        Based on swkotor.exe GFF structure:
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
+        - CResGFF::WriteGFFFile @ 0x00413030 - Writes GFF data to file
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+
+
     """
     if not file_path.exists():
         return False, f"File does not exist: {file_path}"

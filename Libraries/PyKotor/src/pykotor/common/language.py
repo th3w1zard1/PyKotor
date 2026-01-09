@@ -17,12 +17,18 @@ class Language(IntEnum):
 
     References:
     ----------
-        vendor/reone/include/reone/resource/types.h (Language enum)
-        vendor/xoreos-tools/src/common/types.h (Language ID definitions)
-        vendor/KotOR.js/src/resource/ResourceTypes.ts (Language enum)
-        vendor/KotOR-dotNET/AuroraFile.cs (Language enum)
+        Based on swkotor.exe TLK structure:
+        - CTlkTable::AddFile @ 0x0041d920 - Adds TLK file to table
+        - CTlkFile::CTlkFile @ 0x0041d810 - Constructor for TLK file reader
+        Original BioWare engine binaries (Language ID definitions from swkotor.exe, swkotor2.exe)
+
         Note: Official releases support English, French, German, Italian, Spanish, Polish
               Custom language support added for localization beyond official releases
+
+    Derivations and Other Implementations:
+    ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/ResourceTypes.ts (Language enum)
+        https://github.com/th3w1zard1/KotOR-dotNET/tree/master/AuroraFile.cs (Language enum)
     """
 
     # UNSET = 0x7FFFFFFF  # noqa: ERA001

@@ -27,10 +27,13 @@ class NssLexer:
     
     References:
     ----------
-        vendor/HoloLSP/server/src/nwscript-lexer.ts (TypeScript NSS lexer)
-        vendor/KotOR.js/src/nwscript/NWScriptCompiler.ts (Token handling)
-        vendor/xoreos-tools/src/nwscript/ (NSS lexer implementation)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/nwscript/NWScriptCompiler.ts (Token handling)
         PLY (Python Lex-Yacc) library for lexer generation
+
     """
     def __init__(
         self,

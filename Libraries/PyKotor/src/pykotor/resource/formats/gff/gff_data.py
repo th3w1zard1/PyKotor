@@ -5,7 +5,29 @@ game data, including character templates, areas, dialogs, and more.
 
 References:
 ----------
-    Note: GFF is used for all structured game data; critical to understand for modding
+        Based on swkotor.exe GFF implementation:
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates new GFF file with file_type and version
+          * Sets file_type from 4-character string (e.g., "UTI ", "DLG ", "ARE ")
+          * Sets file_version from GFFVersion string "V3.2" @ 0x0073e2c8
+          * Creates root struct with AddStruct(this, 0xffffffff)
+        - CResGFF::WriteGFFFile @ 0x00413030 - Writes GFF data to file
+          * Opens file with "wb" mode
+          * Calls Pack() to prepare data
+          * Calls WriteGFFData() to write binary format
+        - CResGFF::WriteGFFData @ 0x004113d0 - Writes GFF header and data sections
+          * Writes 0x38 byte header
+          * Writes structs (12 bytes each)
+          * Writes fields (12 bytes each)
+          * Writes labels (16 bytes each)
+          * Writes field_data, field_indices, list_indices
+        - GFFVersion string "V3.2" @ 0x0073e2c8 - Hardcoded GFF version identifier
+        - "gff" string @ 0x0074dd00 - GFF format identifier
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        
+        Note: GFF is used for all structured game data; critical to understand for modding.
+        All game resources (UTM, GUI, UTI, UTP, UTC, UTD, UTW, UTT, UTS, UTE, PTH, JRL, IFO, ARE, FAC, DLG)
+        are stored as GFF files with different 4-character type identifiers.
+
 """
 
 from __future__ import annotations
@@ -503,17 +525,23 @@ class GFFStruct(ComparableMixin, dict):
 
     References:
     ----------
+        Based on swkotor.exe GFF structure:
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates new GFF file with file_type and version
+        - CResGFF::WriteGFFFile @ 0x00413030 - Writes GFF data to file
+        - CResGFF::WriteGFFData @ 0x004113d0 - Writes GFF header and data sections
+        - GFFVersion string "V3.2" @ 0x0073e2c8 - Hardcoded GFF version identifier
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         GFF struct format specification
+
+
 
     Attributes:
     ----------
         struct_id: User-defined struct type ID (uint32 in binary format)
-            Reference: TSLPatcher/GFF.pm:90 (ID field), Kotor.NET/GFFBinaryStructure.cs:150-151
             Used to differentiate struct types (e.g., creature vs door stats)
             Typical values: 0 for most structs, specific IDs for template types
 
         _fields: Dictionary mapping field labels to _GFFField instances
-            Reference: TSLPatcher/GFF.pm:94 (Main struct), Kotor.NET/GFF.cs:75 (Fields list)
             Labels are ASCII strings (max 16 chars) that identify fields
             Field order matters for binary compatibility (maintains insertion order in Python 3.7+)
             Empty structs are valid (field count = 0)
@@ -525,7 +553,7 @@ class GFFStruct(ComparableMixin, dict):
             - 4 bytes: DataOrDataOffset (int32) - field index or field indices array offset
             - 4 bytes: FieldCount (uint32) - number of fields in struct
 
-        Reference: Kotor.NET/GFFBinaryStructure.cs:159-164, KotOR_IO/GFF.cs:114-152
+        Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/GFFBinaryStructure.cs:159-164, KotOR_IO/GFF.cs:114-152
 
         Field count optimization (Kotor.NET/GFFBinaryWriter.cs:59-72):
             - If FieldCount == 0: DataOrDataOffset = -1 (empty struct)

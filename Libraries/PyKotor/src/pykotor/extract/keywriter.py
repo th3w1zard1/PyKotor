@@ -49,11 +49,14 @@ class KEYWriter:
     
     References:
     ----------
-        vendor/reone/src/libs/resource/format/keyreader.cpp (KEY reading structure)
-        vendor/reone/include/reone/resource/format/keyreader.h (KEY structure)
-        vendor/xoreos-tools/src/xml/keydumper.cpp (KEY to XML conversion)
-        vendor/Kotor.NET/Kotor.NET/Formats/KotorKEY/KEY.cs (KEY structure)
-        vendor/KotOR.js/src/resource/KEYObject.ts (KEY loading)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Formats/KotorKEY/KEY.cs (KEY structure)
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/KEYObject.ts (KEY loading)
+
+
         Note: KEY writing is uncommon in vendor implementations; most tools only read KEY files.
         PyKotor's KEYWriter is primarily for modding and tooling purposes.
     
@@ -92,12 +95,16 @@ class KEYWriter:
         
         References:
         ----------
-            vendor/reone/src/libs/resource/format/keyreader.cpp:26-40 (KEY header structure)
-            vendor/Kotor.NET/Kotor.NET/Formats/KotorKEY/KEYReader.cs (KEY reading)
-            KEY file format: 8-byte signature, BIF count, resource count, offsets, timestamps
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Formats/KotorKEY/KEYReader.cs (KEY reading)
+        KEY file format: 8-byte signature, BIF count, resource count, offsets, timestamps
+
         """
         # Write header
-        # vendor/reone/src/libs/resource/format/keyreader.cpp:26-28 (signature reading)
+        
         write_stream.write(struct.pack(">4s4s", b"KEY ", b"V1  "))
 
         # Number of BIF/BZF files

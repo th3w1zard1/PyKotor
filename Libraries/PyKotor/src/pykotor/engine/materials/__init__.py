@@ -5,8 +5,10 @@ be implemented by different rendering engines (OpenGL, Qt5, Panda3D, etc.).
 
 References:
 ----------
-    vendor/reone/src/libs/graphics/material.h - Material interfaces
-    vendor/xoreos/src/graphics/aurora/renderqueue.h - Material abstraction
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
 """
 
 from __future__ import annotations

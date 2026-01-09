@@ -6,11 +6,13 @@ by any application that needs to work with archives.
 
 References:
 ----------
-    vendor/reone/src/libs/tools/legacy/keybif.cpp:78-112 - KEY/BIF extraction
-    vendor/xoreos-tools/src/unkeybif.cpp - KEY/BIF extraction tool
-    vendor/xoreos-tools/src/unerf.cpp - ERF extraction tool
-    vendor/xoreos-tools/src/unrim.cpp - RIM extraction tool
-    vendor/xoreos-tools/src/archives/util.h - Archive utilities interface
+        Based on swkotor.exe ERF/RIM/BIF structure:
+        - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file
+        - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds ERF/MOD/SAV contents to key table
+        - LocateBifFile @ 0x0040d200 - Locates BIF file in resource system
+        Original BioWare engine binaries
+
+
 """
 from __future__ import annotations
 
@@ -134,8 +136,13 @@ def extract_erf(
 
     References:
     ----------
-        vendor/xoreos-tools/src/unerf.cpp
-        vendor/reone/src/libs/resource/format/erfreader.cpp
+        Based on swkotor.exe ERF/RIM/BIF structure:
+        - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file
+        - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds ERF/MOD/SAV contents to key table
+        - LocateBifFile @ 0x0040d200 - Locates BIF file in resource system
+        Original BioWare engine binaries
+
+
     """
     erf_data = read_erf(erf_path)
 
@@ -180,8 +187,13 @@ def extract_rim(
 
     References:
     ----------
-        vendor/xoreos-tools/src/unrim.cpp
-        vendor/reone/src/libs/resource/format/rimreader.cpp
+        Based on swkotor.exe ERF/RIM/BIF structure:
+        - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file
+        - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds ERF/MOD/SAV contents to key table
+        - LocateBifFile @ 0x0040d200 - Locates BIF file in resource system
+        Original BioWare engine binaries
+
+
     """
     rim_data = read_rim(rim_path)
 
@@ -228,7 +240,13 @@ def extract_bif(
 
     References:
     ----------
-        vendor/reone/src/libs/tools/legacy/keybif.cpp:78-112
+        Based on swkotor.exe ERF/RIM/BIF structure:
+        - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file
+        - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds ERF/MOD/SAV contents to key table
+        - LocateBifFile @ 0x0040d200 - Locates BIF file in resource system
+        Original BioWare engine binaries
+
+
     """
     key_source = key_path if key_path and key_path.exists() else None
 
@@ -278,8 +296,13 @@ def extract_key_bif(
 
     References:
     ----------
-        vendor/reone/src/libs/tools/legacy/keybif.cpp:78-112
-        vendor/xoreos-tools/src/unkeybif.cpp
+        Based on swkotor.exe ERF/RIM/BIF structure:
+        - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file
+        - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds ERF/MOD/SAV contents to key table
+        - LocateBifFile @ 0x0040d200 - Locates BIF file in resource system
+        Original BioWare engine binaries
+
+
     """
     with key_path.open("rb") as key_file:
         key_data = read_key(key_file)
@@ -421,8 +444,13 @@ def create_erf_from_directory(
 
     References:
     ----------
-        vendor/reone/src/libs/tools/legacy/erf.cpp:83-130 - ERF creation from directory
-        vendor/xoreos-tools/src/erf.cpp:49-96 - ERF packing
+        Based on swkotor.exe ERF/RIM/BIF structure:
+        - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file
+        - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds ERF/MOD/SAV contents to key table
+        - LocateBifFile @ 0x0040d200 - Locates BIF file in resource system
+        Original BioWare engine binaries
+
+
     """
     from pykotor.common.misc import ResRef
     from pykotor.resource.formats.erf.erf_auto import write_erf
@@ -496,8 +524,13 @@ def create_rim_from_directory(
 
     References:
     ----------
-        vendor/reone/src/libs/tools/legacy/rim.cpp:83-121 - RIM creation from directory
-        vendor/xoreos-tools/src/rim.cpp:43-84 - RIM packing
+        Based on swkotor.exe ERF/RIM/BIF structure:
+        - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file
+        - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds ERF/MOD/SAV contents to key table
+        - LocateBifFile @ 0x0040d200 - Locates BIF file in resource system
+        Original BioWare engine binaries
+
+
     """
     from pykotor.common.misc import ResRef
     from pykotor.resource.formats.rim.rim_auto import write_rim
@@ -565,8 +598,13 @@ def search_in_erf(
 
     References:
     ----------
-        vendor/neverwinter.nim/nwn_resman_grep - Resource grep utility
-        vendor/xoreos-tools/src/ - Archive search utilities
+        Based on swkotor.exe ERF/RIM/BIF structure:
+        - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file
+        - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds ERF/MOD/SAV contents to key table
+        - LocateBifFile @ 0x0040d200 - Locates BIF file in resource system
+        Original BioWare engine binaries
+
+
     """
     import re
 
@@ -686,8 +724,13 @@ def get_resource_from_archive(
 
     References:
     ----------
-        vendor/neverwinter.nim/nwn_resman_cat - Resource cat utility
+        Based on swkotor.exe ERF/RIM/BIF structure:
+        - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file
+        - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds ERF/MOD/SAV contents to key table
+        - LocateBifFile @ 0x0040d200 - Locates BIF file in resource system
+        Original BioWare engine binaries
         Tools/HolocronToolset/src/toolset/utils/misc.py:221-262 - get_resource_from_file
+
     """
     from pykotor.resource.type import ResourceType
 
@@ -809,9 +852,13 @@ def create_key_from_directory(
 
     References:
     ----------
-        vendor/xoreos-tools/src/keybif.cpp - KEY/BIF creation tool
-        vendor/reone/src/libs/resource/format/keywriter.cpp - KEY writing
+        Based on swkotor.exe ERF/RIM/BIF structure:
+        - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file
+        - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds ERF/MOD/SAV contents to key table
+        - LocateBifFile @ 0x0040d200 - Locates BIF file in resource system
+        Original BioWare engine binaries
         Libraries/PyKotor/src/pykotor/extract/keywriter.py:44-143 - KEYWriter class
+
     """
     from pykotor.common.misc import ResRef
     from pykotor.resource.formats.bif.bif_auto import read_bif

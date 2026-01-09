@@ -30,9 +30,17 @@ class TLKXMLReader(ResourceReader):
     
     References:
     ----------
-        vendor/xoreos-tools/src/xml/tlkdumper.cpp (TLK to XML conversion)
-        vendor/xoreos-tools/src/xml/tlkcreator.cpp (XML to TLK conversion)
-        Note: XML format structure may vary between tools
+        Based on swkotor.exe TLK structure:
+        - CTlkTable::CTlkTable @ 0x0041d8d0 - Constructor for talk table manager
+        - CTlkTable::AddFile @ 0x0041d920 - Adds TLK file to table (loads .tlk and .tlkf files)
+        - CTlkFile::CTlkFile @ 0x0041d810 - Constructor for TLK file reader
+        - TLK resource type "TLK " @ 0x0073ecb0 - Resource type identifier
+        - "tlk" extension string @ 0x0074dd40 - File extension identifier
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        
+        Note: XML format is PyKotor-specific conversion format, not a standard game format.
+        The engine uses binary TLK format exclusively. XML conversion allows easier editing
+        and integration with external tools.
     """
     def __init__(
         self,

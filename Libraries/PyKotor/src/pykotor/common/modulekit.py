@@ -141,7 +141,7 @@ class ModuleKit(Kit):
         #
         # Game module WOKs are stored in **world space** (coordinates already include the LYT position).
         # The engine consumes binary WOKs without applying LYT transforms at runtime.
-        # (Reference: vendor/swkotor.c - CSWCollisionMesh__LoadMeshBinary sets field9_0x4c=1,
+        # (Reference:  - CSWCollisionMesh__LoadMeshBinary sets field9_0x4c=1,
         #  and CSWCollisionMesh__TransformToWorld is a no-op when field9_0x4c=1.)
         #
         # When we build a module, IndoorMap.process_bwm() adds room.position to the BWM.

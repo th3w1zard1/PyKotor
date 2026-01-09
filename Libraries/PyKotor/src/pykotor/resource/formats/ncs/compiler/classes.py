@@ -32,9 +32,13 @@ class CompileError(Exception):
 
     References:
     ----------
-        vendor/HoloLSP/server/src/nwscript-parser.ts (NSS parser error handling)
-        vendor/xoreos-tools/src/nwscript/compiler.cpp (NSS compiler error handling)
-        vendor/KotOR.js/src/nwscript/NWScriptCompiler.ts (TypeScript compiler errors)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/nwscript/NWScriptCompiler.ts (TypeScript compiler errors)
+
+
     """
 
     def __init__(self, message: str, line_num: int | None = None, context: str | None = None):
@@ -343,11 +347,13 @@ class CodeRoot:
 
     References:
     ----------
-        vendor/KotOR.js/src/nwscript/NWScriptCompiler.ts (TypeScript compiler architecture)
-        vendor/xoreos-tools/src/nwscript/decompiler.cpp (NCS decompiler, reverse reference for compilation)
-        vendor/HoloLSP/server/src/nwscript-parser.ts (NSS parser and AST generation)
-        vendor/HoloLSP/server/src/nwscript-lexer.ts (NSS lexer/tokenizer)
-        vendor/DeNCS/ (NCS decompiler, reverse reference for compilation)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/nwscript/NWScriptCompiler.ts (TypeScript compiler architecture)
+
+
     """
     def __init__(
         self,
@@ -933,8 +939,13 @@ class Expression(ABC):
 
     References:
     ----------
-        vendor/KotOR.js/src/nwscript/NWScriptCompiler.ts (Expression compilation)
-        vendor/HoloLSP/server/src/nwscript-ast.ts (Expression AST nodes)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/nwscript/NWScriptCompiler.ts (Expression compilation)
+
+
     """
     @abstractmethod
     def compile(
@@ -953,8 +964,13 @@ class Statement(ABC):
 
     References:
     ----------
-        vendor/KotOR.js/src/nwscript/NWScriptCompiler.ts (Statement compilation)
-        vendor/HoloLSP/server/src/nwscript-ast.ts (Statement AST nodes)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/nwscript/NWScriptCompiler.ts (Statement compilation)
+
+
     """
     def __init__(self):
         self.line_num: None = None

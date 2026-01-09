@@ -22,78 +22,118 @@ class UTP:
 
     References:
     ----------
-        vendor/reone/src/libs/resource/parser/gff/utp.cpp:36-103 (UTP parsing from GFF)
-        vendor/reone/include/reone/resource/parser/gff/utp.h:34-97 (UTP structure definitions)
-        vendor/Kotor.NET/Kotor.NET/Resources/KotorUTP/UTP.cs:12-75 (UTP class definition)
-        vendor/NorthernLights/Generated/AuroraUTP.cs:67-69 (KotOR 2 specific fields)
-        Note: UTP files are GFF format files with specific structure definitions
+        KotOR I (swkotor.exe):
+            - 0x00585670 - CSWSPlaceable::LoadPlaceable (3624 bytes, 421 lines)
+                - Main UTP GFF parser entry point
+                - Loads all placeable fields from GFF structure
+                - Function signature: LoadPlaceable(CSWSPlaceable* this, CResGFF* param_1, CResStruct* param_2, int param_3)
+                - Called from LoadPlaceables (0x0050a7b0) and LoadFromTemplate (0x00587a70)
+            - 0x00586a70 - CSWSPlaceable::SavePlaceable
+                - UTP GFF writer function
+                - Writes all placeable fields to GFF structure
+            - 0x00746efc - "Appearance" string reference
+            - 0x007496e0 - "HasInventory" string reference
+            - 0x007496f8 - "Lockable" string reference
+            - 0x0074979c - "KeyName" string reference
+            - 0x007497a4 - "OpenLockDC" string reference
+            - 0x007496c8 - "CloseLockDC" string reference
+        
+        KotOR II / TSL (swkotor2.exe):
+            - Functionally equivalent UTP parsing logic
+            - Same GFF field structure and parsing behavior
+            - String references at different addresses due to binary layout differences
+        
+        GFF Field Structure (from LoadPlaceable analysis):
+            - Root struct fields:
+                - "Tag" (CExoString) - Placeable tag identifier
+                - "TemplateResRef" (CResRef) - Template resource reference
+                - "LocName" (CExoLocString) - Localized placeable name
+                - "AutoRemoveKey" (BYTE) - Whether key is auto-removed after use
+                - "Faction" (DWORD) - Faction identifier
+                - "Invulnerable" (BYTE) - Whether placeable is invulnerable
+                - "Plot" (BYTE) - Whether placeable is plot-critical
+                - "Min1HP" (BYTE) - Whether placeable has minimum 1 HP
+                - "PartyInteract" (BYTE) - Whether party can interact
+                - "OpenLockDC" (BYTE) - Open lock difficulty class
+                - "KeyName" (CExoString) - Key name/ResRef
+                - "TrapDisarmable" (BYTE) - Whether trap is disarmable
+                - "TrapDetectable" (BYTE) - Whether trap is detectable
+                - "DisarmDC" (BYTE) - Disarm difficulty class
+                - "TrapDetectDC" (BYTE) - Trap detection difficulty class
+                - "TrapFlag" (BYTE) - Trap flag
+                - "TrapOneShot" (BYTE) - Whether trap is one-shot
+                - "TrapType" (BYTE) - Trap type identifier
+                - "Useable" (BYTE) - Whether placeable is usable
+                - "Static" (BYTE) - Whether placeable is static
+                - "Appearance" (DWORD) - Appearance type identifier
+                - "HP" (SHORT) - Hit points
+                - "CurrentHP" (SHORT) - Current hit points
+                - "Hardness" (BYTE) - Hardness value
+                - "Fort" (BYTE) - Fortitude save
+                - "Will" (BYTE) - Will save
+                - "Ref" (BYTE) - Reflex save
+                - "Lockable" (BYTE) - Whether placeable is lockable
+                - "Locked" (BYTE) - Whether placeable is locked
+                - "HasInventory" (BYTE) - Whether placeable has inventory
+                - "KeyRequired" (BYTE) - Whether key is required
+                - "CloseLockDC" (BYTE) - Close lock difficulty class
+                - "PortraitId" (WORD) - Portrait ID (0xffff = use Portrait ResRef)
+                - "Portrait" (CResRef) - Portrait resource reference (if PortraitId == 0xffff)
+                - "Conversation" (CResRef) - Conversation dialog ResRef
+                - "BodyBag" (BYTE) - Body bag type
+                - "DieWhenEmpty" (BYTE) - Whether placeable dies when inventory empty
+                - "GroundPile" (BYTE) - Ground pile flag
+                - "LightState" (BYTE) - Light state (on/off)
+                - "Description" (CExoLocString) - Placeable description
+                - "ItemList" (GFFList) - List of inventory items (if HasInventory)
+        
+        Note: UTP files are GFF format files with specific structure definitions (GFFContent.UTP)
+
+    Derivations and Other Implementations:
+    ----------
+        https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorUTP/UTP.cs:12-75 (UTP class definition)
 
     Attributes:
     ----------
         resref: "TemplateResRef" field. The resource reference for this placeable template.
-            Reference: reone/utp.cpp:92 (TemplateResRef field)
-            Reference: reone/utp.h:87 (TemplateResRef field)
-            Reference: Kotor.NET/UTP.cs:64 (TemplateResRef property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTP.cs:64 (TemplateResRef property)
 
         tag: "Tag" field. Tag identifier for this placeable.
-            Reference: reone/utp.cpp:91 (Tag field)
-            Reference: reone/utp.h:86 (Tag field)
-            Reference: Kotor.NET/UTP.cs:63 (Tag property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTP.cs:63 (Tag property)
 
         name: "LocName" field. Localized name of the placeable.
-            Reference: reone/utp.cpp:60 (LocName field)
-            Reference: reone/utp.h:55 (LocName field)
-            Reference: Kotor.NET/UTP.cs:35 (LocName property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTP.cs:35 (LocName property)
 
         appearance_id: "Appearance" field. Placeable appearance type identifier.
-            Reference: reone/utp.cpp:39 (Appearance field)
-            Reference: reone/utp.h:36 (Appearance field)
-            Reference: Kotor.NET/UTP.cs:15 (Appearance property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTP.cs:15 (Appearance property)
 
         has_inventory: "HasInventory" field. Whether placeable has an inventory.
-            Reference: reone/utp.cpp:52 (HasInventory field)
-            Reference: reone/utp.h:49 (HasInventory field)
-            Reference: Kotor.NET/UTP.cs:27 (HasInventory property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTP.cs:27 (HasInventory property)
 
         inventory: List of InventoryItem objects in this placeable's inventory.
-            Reference: reone/utp.cpp:55-57 (ItemList parsing)
-            Reference: reone/utp.h:52 (ItemList vector)
-            Reference: reone/utp.h:28-32 (UTP_ItemList struct)
-            Reference: Kotor.NET/UTP.cs:74 (Inventory property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTP.cs:74 (Inventory property)
 
         not_blastable: "NotBlastable" field. Whether placeable cannot be blasted. KotOR 2 Only.
-            Reference: reone/utp.cpp:64 (NotBlastable field)
-            Reference: reone/utp.h:59 (NotBlastable field)
-            Reference: Kotor.NET/UTP.cs:37 (NotBlastable property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTP.cs:37 (NotBlastable property)
             Reference: NorthernLights/AuroraUTP.cs:67 (NotBlastable field)
 
         unlock_diff: "OpenLockDiff" field. Unlock difficulty modifier. KotOR 2 Only.
-            Reference: reone/utp.cpp:82 (OpenLockDiff field)
-            Reference: reone/utp.h:77 (OpenLockDiff field)
-            Reference: Kotor.NET/UTP.cs:55 (OpenLockDiff property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTP.cs:55 (OpenLockDiff property)
             Reference: NorthernLights/AuroraUTP.cs:68 (OpenLockDiff field)
 
         unlock_diff_mod: "OpenLockDiffMod" field. Additional unlock difficulty modifier. KotOR 2 Only.
-            Reference: reone/utp.cpp:83 (OpenLockDiffMod field as int)
-            Reference: reone/utp.h:78 (OpenLockDiffMod field as char)
-            Reference: Kotor.NET/UTP.cs:56 (OpenLockDiffMod property as sbyte)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTP.cs:56 (OpenLockDiffMod property as sbyte)
             Reference: NorthernLights/AuroraUTP.cs:69 (OpenLockDiffMod field as Char)
             Note: Type discrepancy - reone uses char/int, Kotor.NET uses sbyte, PyKotor uses int
 
         on_open_failed: "OnFailToOpen" field. Script to run when placeable fails to open. KotOR 2 Only.
-            Reference: reone/utp.cpp:70 (OnFailToOpen field)
-            Reference: reone/utp.h:65 (OnFailToOpen field)
-            Reference: Kotor.NET/UTP.cs:43 (OnFailToOpen property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTP.cs:43 (OnFailToOpen property)
 
         lock_dc: "CloseLockDC" field. Difficulty class to lock placeable. KotOR 2 Only.
-            Reference: reone/utp.cpp:42 (CloseLockDC field)
-            Reference: reone/utp.h:39 (CloseLockDC field)
-            Reference: Kotor.NET/UTP.cs:18 (CloseLockDC property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTP.cs:18 (CloseLockDC property)
 
         palette_id: "PaletteID" field. Palette identifier. Used in toolset only.
-            Reference: reone/utp.cpp:84 (PaletteID field)
-            Reference: reone/utp.h:79 (PaletteID field)
-            Reference: Kotor.NET/UTP.cs:57 (PaletteID property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTP.cs:57 (PaletteID property)
 
         Note: UTP shares many fields with UTD (door). See UTD documentation for common fields
         like auto_remove_key, conversation, faction_id, plot, min1_hp, key_required, lockable,

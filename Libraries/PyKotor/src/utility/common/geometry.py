@@ -921,7 +921,15 @@ class Vector4:
 
         References:
         ----------
-            vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:850-868
+        Based on swkotor.exe GFF structure:
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
+        - Vector3/Vector4 structures used in GFF fields
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:850-868
+
+
             Formula: X uses bits 0-10 (11 bits), Y uses bits 11-21 (11 bits),
                      Z uses bits 22-31 (10 bits), W computed from magnitude
         """
@@ -992,8 +1000,15 @@ class Vector4:
 
         References:
         ----------
-            vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:850-868 (decompression)
-            Inverse operation derived from decompression algorithm
+        Based on swkotor.exe GFF structure:
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
+        - Vector3/Vector4 structures used in GFF fields
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:850-868 (decompression)
+        Inverse operation derived from decompression algorithm
+
 
         Notes:
         -----

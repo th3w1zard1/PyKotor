@@ -121,7 +121,7 @@ class Test(TestCase):
     def setUp(self):
         self.log_messages: list[str] = [os.linesep]
 
-    def log_func(self, *msgs):
+    def log_func(self, *msgs, **kwargs):
         self.log_messages.append("\t".join(msgs))
 
     def test_gff_reconstruct(self):

@@ -15,10 +15,22 @@ Architecture:
     - mdl_auto.py: Format detection and dispatch
 
 References:
-    vendor/mdlops/MDLOpsM.pm - Comprehensive MDL/MDX format constants and type definitions
-    vendor/reone/src/libs/graphics/format/ - C++ MDL/MDX parsing and rendering
-    vendor/kotorblender/io_scene_kotor/format/mdl/types.py - Blender MDL type definitions
-    vendor/xoreos-docs/specs/kotor_mdl.html - KotOR MDL format specification
+    Based on swkotor.exe MDL/MDX structure:
+    - LoadModel @ 0x00464200 - Loads MDL model via IODispatcher::ReadSync
+      * Reads MDL/MDX file pair
+      * Converts MaxTree to Model via MaxTree::AsModel
+      * Checks modelsList for duplicates by name
+    - LoadModel @ 0x0061b380 - Alternative model loading function
+    - ".mdl" extension @ 0x00740ca8 - MDL file extension
+    - ".mdx" extension @ 0x00743944 - MDX file extension
+    - "mdl" resource type @ 0x0074dd7c - MDL resource identifier
+    - "mdx" resource type @ 0x0074dc6c - MDX resource identifier
+    - "MDL" string @ 0x0075fb48 - MDL format identifier
+    - "MDX" string @ 0x0075fb44 - MDX format identifier
+    - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+    https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm - Comprehensive MDL/MDX format constants and type definitions (tool)
+    https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/types.py - Blender MDL type definitions (tool)
+     - KotOR MDL format specification (documentation)
 """
 
 from __future__ import annotations
@@ -73,14 +85,24 @@ class MDLNodeFlags(IntFlag):
     - saber mesh = HEADER + MESH + SABER = 0x821 = 2081
 
     References:
-    - vendor/mdlops/MDLOpsM.pm:301-311 (Node type quick reference)
-    - vendor/mdlops/MDLOpsM.pm:313-323 (Node Type constants)
-    - vendor/kotorblender/io_scene_kotor/format/mdl/types.py:93-101 (Node flags)
-    - vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:153 (Flag validation)
+    - Based on swkotor.exe MDL node structure:
+      * MdlNode::AsMdlNodeTriMesh @ 0x0043e400 - Casts node to tri-mesh (checks flags 0x21 = HEADER + MESH)
+      * MdlNode::AsMdlNodeSkin @ 0x0043e3f0 - Casts node to skin mesh
+      * MdlNode::AsMdlNodeDanglyMesh @ 0x0043e380 - Casts node to dangly mesh
+      * MdlNode::AsMdlNodeLightsaber @ 0x0043e3a0 - Casts node to lightsaber mesh
+      * MdlNode::AsMdlNodeAABB @ 0x0043e340 - Casts node to AABB mesh
+      * MdlNode::AsMdlNodeEmitter @ 0x0043e3c0 - Casts node to emitter
+      * MdlNode::AsMdlNodeLight @ 0x0043e3d0 - Casts node to light
+      * MdlNode::AsMdlNodeReference @ 0x0043e3e0 - Casts node to reference
+      * PartTriMesh::PartTriMesh @ 0x00445840 - Creates tri-mesh part from MDL node
+      * LoadModel @ 0x00464200, @ 0x0061b380 - Loads MDL model files
+    - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+    - https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:301-311 (Node type quick reference - tool)
+    - https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/types.py:93-101 (Node flags - tool)
     """
 
     # Base node flags
-    # Reference: vendor/mdlops/MDLOpsM.pm:302-311, vendor/kotorblender:93
+    # Reference: https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:302-311, 
     HEADER = 0x0001  # NODE_HAS_HEADER - Base node data (mdlops:302)
     LIGHT = 0x0002  # NODE_HAS_LIGHT - Light data (mdlops:303, kotorblender:94)
     EMITTER = 0x0004  # NODE_HAS_EMITTER - Particle emitter data (mdlops:304, kotorblender:95)
@@ -119,25 +141,33 @@ class MDLControllerType(IntEnum):
     Controllers can be indexed by node type since some IDs are reused for different node types.
 
     References:
-    - vendor/mdlops/MDLOpsM.pm:325-405 (Comprehensive controller mapping)
-    - vendor/kotorblender/io_scene_kotor/format/mdl/types.py:140-197 (Controller constants)
-    - vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:663-701 (Controller reading)
+    - Based on swkotor.exe MDL controller structure:
+      * Controller types are used to animate node properties (position, orientation, scale, alpha)
+      * "scale" string @ 0x00741f44 - Scale controller identifier
+      * "scalekey" string @ 0x00741f38 - Scale keyframe identifier
+      * "scalebezierkey" string @ 0x00741f28 - Scale bezier keyframe identifier
+      * "ALPHA" string @ 0x0073dfc0 - Alpha controller identifier
+      * "channelscale" string @ 0x00741d1c - Channel scale identifier
+      * LoadModel @ 0x00464200, @ 0x0061b380 - Loads MDL models with controllers
+    - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+    - https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:325-405 (Comprehensive controller mapping - tool)
+    - https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/types.py:140-197 (Controller constants - tool)
 
     Note: Controller indexing by node type is necessary because at least one controller ID (100)
-    is used for different purposes in different node types (per vendor/mdlops/MDLOpsM.pm:325)
+    is used for different purposes in different node types (per https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:325)
     """
 
     INVALID = -1
 
     # Base node controllers (NODE_HAS_HEADER)
-    # Reference: vendor/mdlops/MDLOpsM.pm:329-335
+    # Reference: https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:329-335
     POSITION = 8  # position - All nodes (mdlops:329)
     ORIENTATION = 20  # orientation - All nodes (mdlops:330)
     SCALE = 36  # scale - All nodes (mdlops:331)
     ALPHA = 132  # alpha - All nodes (mdlops:332, was 128)
 
     # Light controllers (NODE_HAS_LIGHT)
-    # Reference: vendor/mdlops/MDLOpsM.pm:342-346, vendor/kotorblender:145-149
+    # Reference: https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:342-346, 
     COLOR = 76  # color - Light nodes (mdlops:342)
     RADIUS = 88  # radius - Light nodes (mdlops:343)
     SHADOWRADIUS = 96  # shadowradius - Light nodes (mdlops:344)
@@ -145,7 +175,7 @@ class MDLControllerType(IntEnum):
     MULTIPLIER = 140  # multiplier - Light nodes (mdlops:346)
 
     # Emitter controllers (NODE_HAS_EMITTER)
-    # Reference: vendor/mdlops/MDLOpsM.pm:357-405, vendor/kotorblender:150-196
+    # Reference: https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:357-405, 
     # These mappings were updated based on fx_flame01.mdl analysis (mdlops:352-355)
     ALPHAEND = 80  # alphaEnd - Emitter (mdlops:357)
     ALPHASTART = 84  # alphaStart - Emitter (mdlops:358)
@@ -197,7 +227,7 @@ class MDLControllerType(IntEnum):
     DETONATE = 502  # detonate - Emitter, was 228 (mdlops:404)
 
     # Mesh controllers (NODE_HAS_MESH)
-    # Reference: vendor/mdlops/MDLOpsM.pm:406, vendor/kotorblender:143
+    # Reference: https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:406, 
     SELFILLUMCOLOR = 100  # selfillumcolor - Mesh (mdlops:406, same as DRAG and VERTICALDISPLACEMENT)
 
     # Legacy aliases for backward compatibility
@@ -281,7 +311,15 @@ class MDLUpdateType(IntEnum):
 
 
 class MDLTrimeshFlags(IntFlag):
-    """Additional trimesh flags from xoreos KotOR implementation."""
+    """Additional trimesh flags from KotOR implementation.
+    
+    References:
+    - Based on swkotor.exe MDL trimesh structure:
+      * PartTriMesh::PartTriMesh @ 0x00445840 - Creates tri-mesh part from MDL node
+      * MdlNode::AsMdlNodeTriMesh @ 0x0043e400 - Casts node to tri-mesh (checks flags 0x21)
+      * LoadModel @ 0x00464200, @ 0x0061b380 - Loads MDL models with trimesh flags
+    - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+    """
 
     TILEFADE = 0x0001  # Has tile fade
     HEAD = 0x0002  # Is a head mesh
@@ -294,7 +332,14 @@ class MDLTrimeshFlags(IntFlag):
 
 
 class MDLLightFlags(IntFlag):
-    """Light flags from xoreos KotOR implementation."""
+    """Light flags from KotOR implementation.
+    
+    References:
+    - Based on swkotor.exe MDL light structure:
+      * MdlNode::AsMdlNodeLight @ 0x0043e3d0 - Casts node to light
+      * LoadModel @ 0x00464200, @ 0x0061b380 - Loads MDL models with light flags
+    - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+    """
 
     ENABLED = 0x0001  # Light is enabled
     SHADOW = 0x0002  # Light casts shadows
@@ -310,12 +355,15 @@ class MDLEmitterFlags(IntFlag):
     inheritance, and rendering properties.
 
     References:
-    - vendor/kotorblender/io_scene_kotor/format/mdl/types.py:115-127 (Comprehensive list)
-    - vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:35-49 (EmitterFlags struct)
-    - vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:295-306 (Flag parsing)
+    - Based on swkotor.exe MDL emitter structure:
+      * MdlNode::AsMdlNodeEmitter @ 0x0043e3c0 - Casts node to emitter
+      * LoadModel @ 0x00464200, @ 0x0061b380 - Loads MDL models with emitter flags
+    - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+    - https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/types.py:115-127 (Comprehensive list - tool)
+    - https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:295-306 (Flag parsing - tool)
     """
 
-    # Reference: vendor/kotorblender:115-127, vendor/reone:35-49
+    #
     P2P = 0x0001  # EMITTER_FLAG_P2P - Point-to-point emitter (kotorblender:115, reone:36)
     P2P_SEL = 0x0002  # EMITTER_FLAG_P2P_SEL - P2P selection (kotorblender:116)
     P2P_BEZIER = 0x0002  # P2P with Bezier curves (reone:37, same as P2P_SEL)

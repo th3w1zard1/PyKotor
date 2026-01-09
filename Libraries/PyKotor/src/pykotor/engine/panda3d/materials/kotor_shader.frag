@@ -2,7 +2,10 @@
 
 // Panda3D fragment shader for KotOR materials.
 // References:
-//   vendor/reone/shaders/model_frag.glsl - Lighting model
+//   Based on swkotor.exe shader system:
+//   - Fragment shader implementation in game engine's rendering pipeline
+//   - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+//   Original BioWare engine binaries (Fragment shader from swkotor.exe, swkotor2.exe)
 //   /panda3d/panda3d-docs/programming/shaders/list-of-glsl-inputs.rst
 
 uniform sampler2D p3d_Texture0;

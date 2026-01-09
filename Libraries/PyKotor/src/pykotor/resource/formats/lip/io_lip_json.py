@@ -29,7 +29,11 @@ class LIPJSONReader(ResourceReader):
     
     References:
     ----------
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
         Note: JSON format is PyKotor-specific, not a standard game format
+
     """
     def __init__(
         self,

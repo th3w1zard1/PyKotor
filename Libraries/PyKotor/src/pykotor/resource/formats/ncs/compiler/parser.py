@@ -83,10 +83,13 @@ class NssParser:
     
     References:
     ----------
-        vendor/HoloLSP/server/src/nwscript-parser.ts (TypeScript NSS parser)
-        vendor/KotOR.js/src/nwscript/NWScriptCompiler.ts (Parser integration)
-        vendor/xoreos-tools/src/nwscript/ (NSS parser implementation)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/nwscript/NWScriptCompiler.ts (Parser integration)
         PLY (Python Lex-Yacc) library for parser generation
+
     """
     def __init__(
         self,

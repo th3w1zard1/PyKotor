@@ -22,72 +22,87 @@ class UTM:
 
     References:
     ----------
-        vendor/reone/include/reone/resource/parser/gff/utm.h:35-46 (UTM struct definition)
-        vendor/reone/src/libs/resource/parser/gff/utm.cpp:37-52 (UTM parsing from GFF)
-        vendor/Kotor.NET/Kotor.NET/Resources/KotorUTM/UTM.cs (UTM structure)
-        vendor/Kotor.NET/Kotor.NET/Resources/KotorUTM/UTMDecompiler.cs (UTM parsing)
-        vendor/NorthernLights/Generated/AuroraUTM.cs (UTM structure)
-        vendor/KotOR-Bioware-Libs/GFF.pm (GFF format implementation)
-        Original BioWare Odyssey Engine (UTM GFF structure)
+        KotOR I (swkotor.exe):
+            - 0x005c7180 - CSWSStore::LoadStore (1116 bytes, 189 lines)
+                - Main UTM GFF parser entry point
+                - Reads Tag, LocName, MarkDown, MarkUp, OnOpenStore, BuySellFlag, ItemList fields
+                - Function signature: LoadStore(CSWSStore* this, CResGFF* param_1, CResStruct* param_2, int param_3)
+                - Called from LoadFromTemplate (0x005c7760) and LoadStores (0x005057a0)
+            - 0x005c6cd0 - CSWSStore::SaveStore
+                - UTM GFF writer function
+                - Writes all UTM fields to GFF structure
+            - 0x0074bea4 - "BuySellFlag" string reference
+            - 0x0074beb0 - "OnOpenStore" string reference
+            - 0x0074bebc - "MarkUp" string reference
+            - 0x0074bec4 - "MarkDown" string reference
+            - 0x00747210 - "ItemList" string reference
+            - 0x0074dcc8 - "utm" extension string (used in resource extension table)
+        
+        KotOR II / TSL (swkotor2.exe):
+            - Functionally equivalent UTM parsing logic
+            - Same GFF field structure and parsing behavior
+            - String references at different addresses due to binary layout differences
+        
+        GFF Field Structure (from LoadStore analysis):
+            - Root struct fields:
+                - "Tag" (CExoString) - Merchant tag identifier
+                - "LocName" (CExoLocString) - Localized merchant name
+                - "MarkDown" (INT32) - Markdown percentage for buying from player
+                - "MarkUp" (INT32) - Markup percentage for selling to player
+                - "OnOpenStore" (CResRef) - Script ResRef executed when store opens
+                - "BuySellFlag" (BYTE) - Bit flags: bit 0 = can buy, bit 1 = can sell
+                - "ItemList" (GFFList) - List of inventory items
+            - ItemList element struct fields:
+                - "ObjectId" (DWORD) - Object ID for existing items (0x7f000000 if not set)
+                - "InventoryRes" (CResRef) - Item template ResRef (used when loading from template)
+                - "Infinite" (BYTE) - Flag indicating infinite stock (bit 2 of item bit_flags)
+                - "Dropable" (BYTE) - Flag indicating item can be dropped (not directly in LoadStore, inferred from SaveStore)
+        
+        Note: UTM files are GFF format files with specific structure definitions (GFFContent.UTM)
+
+    Derivations and Other Implementations:
+    ----------
+        https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorUTM/UTM.cs (UTM structure)
+        https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorUTM/UTMDecompiler.cs (UTM parsing)
+        https://github.com/th3w1zard1/KotOR-Bioware-Libs/tree/master/GFF.pm (GFF format implementation)
+
 
     Attributes:
     ----------
         resref: "ResRef" field. Merchant template ResRef.
-            Reference: reone/utm.h:44 (ResRef field)
-            Reference: reone/utm.cpp:49 (ResRef parsing)
             Unique identifier for this merchant template.
         
         name: "LocName" field. Localized merchant name.
-            Reference: reone/utm.h:40 (LocName field as pair<int, string>)
-            Reference: reone/utm.cpp:45 (LocName parsing)
             Display name shown in merchant interface.
         
         tag: "Tag" field. Merchant tag identifier.
-            Reference: reone/utm.h:45 (Tag field)
-            Reference: reone/utm.cpp:50 (Tag parsing)
             Used for script references and identification.
         
         mark_up: "MarkUp" field. Markup percentage for selling to player.
-            Reference: reone/utm.h:42 (MarkUp field)
-            Reference: reone/utm.cpp:47 (MarkUp parsing)
             Percentage added to base item price when player buys.
             Reference: merchants.2da for predefined markup values.
         
         mark_down: "MarkDown" field. Markdown percentage for buying from player.
-            Reference: reone/utm.h:41 (MarkDown field)
-            Reference: reone/utm.cpp:46 (MarkDown parsing)
             Percentage subtracted from base item price when player sells.
             Reference: merchants.2da for predefined markdown values.
         
         on_open: "OnOpenStore" field. Script executed when store opens.
-            Reference: reone/utm.h:43 (OnOpenStore field)
-            Reference: reone/utm.cpp:48 (OnOpenStore parsing)
             Script ResRef called when merchant interface is opened.
         
         comment: "Comment" field. Developer comment string.
-            Reference: reone/utm.h:37 (Comment field)
-            Reference: reone/utm.cpp:40 (Comment parsing)
             Not used by game engine.
         
         can_buy: Derived from "BuySellFlag" bit 0. Whether merchant can buy items.
-            Reference: reone/utm.h:36 (BuySellFlag field)
-            Reference: reone/utm.cpp:39 (BuySellFlag parsing)
             Bit 0: 1 = can buy, 0 = cannot buy.
         
         can_sell: Derived from "BuySellFlag" bit 1. Whether merchant can sell items.
-            Reference: reone/utm.h:36 (BuySellFlag field)
-            Reference: reone/utm.cpp:39 (BuySellFlag parsing)
             Bit 1: 1 = can sell, 0 = cannot sell.
         
         inventory: "ItemList" field. List of items in merchant inventory.
-            Reference: reone/utm.h:28-33 (UTM_ItemList struct)
-            Reference: reone/utm.cpp:28-35,42-44 (ItemList parsing)
             Items available for purchase from this merchant.
             Each item has InventoryRes (ResRef), Infinite flag, and position.
 
         id: "ID" field. Not used by the game engine.
-            Reference: reone/utm.h:38 (ID field, deprecated)
-            Reference: reone/utm.cpp:41 (ID parsing)
     """
 
     BINARY_TYPE = ResourceType.UTM

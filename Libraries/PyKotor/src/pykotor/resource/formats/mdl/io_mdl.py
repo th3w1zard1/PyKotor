@@ -511,7 +511,7 @@ class _Node:
 
         # AABB nodes have an extra 4-byte field (aabbloc) after the trimesh header
         # This extends the header from 332/340 bytes to 336/344 bytes
-        # Reference: vendor/MDLOps/MDLOpsM.pm:7279-7313 (AABB writing)
+        #
         # The AABB tree is written IMMEDIATELY after the aabbloc field, not after all node data
         if (
             self.header.type_id & MDLNodeFlags.AABB
@@ -519,7 +519,7 @@ class _Node:
         ):
             # Write aabbloc field: the offset to AABB tree (position + 4 = right after this field)
             # MDLOps writes: pack("L", ((tell(BMDLOUT) - 12) + 4))
-            # Reference: vendor/MDLOps/MDLOpsM.pm:7282
+            #
             # This matches MDLOps exactly: (current_position - 12) + 4
             aabb_tree_pos = (writer.position() - 12) + 4
             writer.write_int32(aabb_tree_pos)
@@ -586,8 +586,6 @@ class _Node:
         writer: BinaryWriter,
     ):
         """Write trimesh data in MDLOps order.
-
-        Reference: vendor/MDLOps/MDLOpsM.pm:7903-7940
         MDLOps writes mesh data in this order:
         1. faces (7903-7907)
         2. indices_counts / pntr_to_vert_num (7909-7914)
@@ -638,8 +636,6 @@ class _Node:
         writer: BinaryWriter,
     ) -> None:
         """Write AABB tree recursively, matching MDLOps depth-first traversal.
-
-        Reference: vendor/MDLOps/MDLOpsM.pm:1471-1513 (writeaabb)
         Format: Each node is 40 bytes: 6 floats (bbox) + 4 int32s (child offsets + face_index + unknown)
         """
         if self._aabb_nodes is None:
@@ -677,7 +673,7 @@ class _Node:
 
             if node.face_index != -1:
                 # Leaf node: write (0, 0, face_index, 0)
-                # Reference: vendor/MDLOps/MDLOpsM.pm:1490 - always writes 0 for unknown
+                #
                 writer.write_int32(0)
                 writer.write_int32(0)
                 writer.write_int32(node.face_index)
@@ -694,7 +690,7 @@ class _Node:
 
                 # Seek back to write child pointers (at offset 24 from start_pos)
                 # Format: (left_offset - 12, right_offset - 12, -1, 0)
-                # Reference: vendor/MDLOps/MDLOpsM.pm:1507 - always writes 0 for unknown
+                #
                 writer.seek(start_pos + 24)
                 writer.write_int32(left_child_pos - 12)
                 writer.write_int32(right_child_pos - 12)
@@ -768,7 +764,7 @@ class _Node:
         if self.emitter:
             # MDLOps emitter_header template is 224 bytes:
             #   f[3]L[5]Z[32]*4 Z[16] L[2] S C Z[32] C L
-            # See: `vendor/MDLOps/MDLOpsM.pm` `$structs{'subhead'}{'5k1'}` / `'5k2'`.
+            # See: ` `$structs{'subhead'}{'5k1'}` / `'5k2'`.
             size += 224
         if self.reference:
             # Reference header size: 32-byte string + 1 uint32 = 36 bytes
@@ -792,7 +788,7 @@ class _Node:
         game: Game,
     ) -> int:
         # MDLOps layout: pntr_to_vert_num (indices_counts) comes right after faces
-        # Reference: vendor/MDLOps/MDLOpsM.pm:7909-7914
+        #
         offset = self.faces_offset(game)
         if self.trimesh:
             offset += self.trimesh.faces_size()
@@ -803,7 +799,7 @@ class _Node:
         game: Game,
     ) -> int:
         # MDLOps layout: vertcoords comes after indices_counts array
-        # Reference: vendor/MDLOps/MDLOpsM.pm:7917-7921
+        #
         offset = self.indices_counts_offset(game)
         if self.trimesh:
             offset += len(self.trimesh.indices_counts) * 4
@@ -814,7 +810,7 @@ class _Node:
         game: Game,
     ) -> int:
         # MDLOps layout: pntr_to_vert_loc (indices_offsets) comes after vertices
-        # Reference: vendor/MDLOps/MDLOpsM.pm:7923-7928
+        #
         offset = self.vertices_offset(game)
         if self.trimesh:
             offset += self.trimesh.vertices_size()
@@ -825,7 +821,7 @@ class _Node:
         game: Game,
     ) -> int:
         # MDLOps layout: array3 (counters) comes after indices_offsets
-        # Reference: vendor/MDLOps/MDLOpsM.pm:7930-7934
+        #
         offset = self.indices_offsets_offset(game)
         if self.trimesh:
             offset += len(self.trimesh.indices_offsets) * 4
@@ -836,7 +832,7 @@ class _Node:
         game: Game,
     ) -> int:
         # MDLOps layout: vertindexes comes after counters
-        # Reference: vendor/MDLOps/MDLOpsM.pm:7936-7940
+        #
         offset = self.inverted_counters_offset(game)
         if self.trimesh:
             offset += len(self.trimesh.inverted_counters) * 4
@@ -847,7 +843,7 @@ class _Node:
         game: Game,
     ) -> int:
         # MDLOps layout: child node indexes comes after vertindexes
-        # Reference: vendor/MDLOps/MDLOpsM.pm:7945-7951
+        #
         offset = self.vertex_indices_offset(game)
         if self.trimesh:
             offset += self.trimesh.vertex_indices_size()
@@ -866,7 +862,7 @@ class _Node:
         game: Game,
     ) -> int:
         # MDLOps layout: controllers comes after children_offsets
-        # Reference: vendor/MDLOps/MDLOpsM.pm:7967-7971
+        #
         return self.children_offsets_offset(game) + self.children_offsets_size()
 
     def controllers_size(self) -> int:
@@ -939,7 +935,7 @@ class _NodeHeader:
         # The 4 uint16 fields are ordered such that the 3rd short is the node index/id used as the primary key.
         # MDLOps does NOT store the node's name index here (it writes 0 for the 4th short) and derives names
         # from the model "partnames" array indexed by `node_id`.
-        # See `vendor/MDLOps/MDLOpsM.pm`:
+        # See `
         #   - read: `node = unpack("x[ss]s", $buffer)` (3rd short)
         #   - write: `pack("SSSS", nodetype, supernode, $i, 0)` (4th short constant 0)
         self.type_id = reader.read_uint16()
@@ -1020,7 +1016,7 @@ class _NodeHeader:
 
 class _MDXDataFlags:
     # NOTE: These constants mirror MDLOps' MDX_* bitfield definitions.
-    # See `vendor/MDLOps/MDLOpsM.pm`.
+    # See `
     VERTEX: Literal[0x00000001] = 0x00000001
     TEX0: Literal[0x00000002] = 0x00000002
     TEX1: Literal[0x00000004] = 0x00000004
@@ -1033,7 +1029,7 @@ class _MDXDataFlags:
 
 class _TrimeshHeader:
     # MDLOps defines these as 332 (K1) and 340 (K2).
-    # See `vendor/MDLOps/MDLOpsM.pm` `$structs{'subhead'}{'33k1'}` and `'33k2'`.
+    # See ` `$structs{'subhead'}{'33k1'}` and `'33k2'`.
     K1_SIZE: Literal[0x14C] = 332
     K2_SIZE: Literal[0x154] = 340
 
@@ -1222,7 +1218,7 @@ class _TrimeshHeader:
         self.render = reader.read_uint8()
         if game == Game.K2:
             # K2 dirt fields replace tail_short (2 bytes) with CCssL (10 bytes)
-            # Reference: vendor/MDLOps/MDLOpsM.pm:2076-2086 (reading)
+            #
             self.dirt_enabled = reader.read_uint8() != 0
             _padding = reader.read_uint8()  # padding byte
             self.dirt_texture = reader.read_int16()
@@ -1388,7 +1384,7 @@ class _TrimeshHeader:
         writer.write_uint8(self.render)
         if game == Game.K2:
             # K2 dirt fields replace tail_short (2 bytes) with CCssL (10 bytes) + 2 uint32s (8 bytes)
-            # Reference: vendor/MDLOps/MDLOpsM.pm:7065-7068
+            #
             writer.write_uint8(1 if self.dirt_enabled else 0)
             writer.write_uint8(0)  # padding byte
             writer.write_int16(self.dirt_texture if self.dirt_texture else 1)
@@ -1421,8 +1417,6 @@ class _TrimeshHeader:
 
     def vertex_indices_size(self) -> int:
         """Size of vertex indices array (3 int16s per face = 6 bytes per face).
-
-        Reference: vendor/MDLOps/MDLOpsM.pm:7936-7940 (vertindexes writing)
         """
         return len(self.faces) * 6  # 3 shorts per face
 
@@ -1725,7 +1719,7 @@ class _EmitterHeader:
     def __init__(self):
         # MDLOps emitter_header template (size 224):
         #   f[3]L[5]Z[32]Z[32]Z[32]Z[32]Z[16]L[2]SCZ[32]CL
-        # See: `vendor/MDLOps/MDLOpsM.pm` lines ~176-190 and ~6889+.
+        # See: ` lines ~176-190 and ~6889+.
         self.dead_space: float = 0.0
         self.blast_radius: float = 0.0
         self.blast_length: float = 0.0
@@ -1876,7 +1870,7 @@ class _Face:
 
 
 # Geometry calculation utilities
-# Reference: vendor/mdlops/MDLOpsM.pm:463-520
+# Reference: https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:463-520
 
 
 def _calculate_face_area(v1: Vector3, v2: Vector3, v3: Vector3) -> float:
@@ -1894,7 +1888,15 @@ def _calculate_face_area(v1: Vector3, v2: Vector3, v3: Vector3) -> float:
 
     References:
     ----------
-        vendor/mdlops/MDLOpsM.pm:465-488 - facearea() function
+        Based on swkotor.exe geometry calculations:
+        - Triangle area calculation uses standard Heron's formula
+        - Used in mesh processing and collision detection
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:465-488
+
         Formula: Uses Heron's formula with semi-perimeter
     """
     # Calculate edge lengths (mdlops:471-482)
@@ -1931,7 +1933,24 @@ def _decompress_quaternion(compressed: int) -> Vector4:
 
     References:
     ----------
-        vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:850-868
+        Based on swkotor.exe quaternion compression:
+        - CompressQuaternionKey @ 0x00464b50 - Compresses quaternion to 32-bit integer (742 bytes, 4 callees)
+          * Packs X, Y, Z components into 11, 11, and 10 bits respectively
+          * Maps quaternion components from [-1, 1] to integer ranges
+          * W component is computed from constraint |q| = 1
+        - Quaternion::Quaternion @ 0x004ac960 - Quaternion constructor (146 bytes, 1 callee)
+          * Creates quaternion from axis-angle representation
+          * Used for orientation parsing in MDL controllers
+        - GetQuaternionValue @ 0x004831b0 - Gets quaternion value (382 bytes, 3 callees)
+        - GetQuaternionFromIndexLocation @ 0x00483050 - Gets quaternion from index (347 bytes)
+        - quaternionScalarMult @ 0x004a9b80 - Quaternion scalar multiplication (47 bytes)
+        - quaternionDotProduct @ 0x004a9d30 - Quaternion dot product (37 bytes)
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:850-868
+
         Formula: X uses bits 0-10 (11 bits), Y uses bits 11-21 (11 bits),
                  Z uses bits 22-31 (10 bits), W computed from magnitude
 
@@ -1982,8 +2001,13 @@ def _compress_quaternion(quat: Vector4) -> int:
 
     References:
     ----------
-        vendor/kotorblender/io_scene_kotor/format/mdl/reader.py:850-868 (decompression)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:850-868 (decompression)
         Inverse operation derived from decompression algorithm
+
 
     Notes:
     -----
@@ -2125,12 +2149,35 @@ class MDLBinaryReader:
 
     References:
     ----------
-        vendor/mdlops/MDLOpsM.pm:1649-1778 (Controller structure and bezier detection)
-        vendor/mdlops/MDLOpsM.pm:5470-5596 (Tangent space calculation)
-        vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:187-721 (Controller reading)
-        vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:703-723 (Skin bone preparation)
-        vendor/kotorblender/format/mdl/reader.py:850-868 (Quaternion decompression)
-        vendor/KotOR.js/src/loaders/MDLLoader.ts (Model loading architecture)
+        Based on swkotor.exe MDL structure:
+        - LoadModel @ 0x00464200 - High-level model loader (172 bytes, 42 lines)
+          * Loads MDL/MDX through IODispatcher::ReadSync
+          * Manages model cache (modelsList) to avoid duplicate loads
+          * Returns Model* pointer or nullptr on failure
+        - CSWCCreature::LoadModel @ 0x0061b380 - Creature model loader (842 bytes, 167 lines)
+          * Loads creature models with animation base setup
+          * Handles different model types: base, head, wield, head+wield, two-weapon
+          * Sets up CSWCAnimBase, CSWCAnimBaseHead, CSWCAnimBaseWield, etc.
+          * Registers callbacks and sets model properties
+        - CSWCPlaceable::LoadModel @ 0x006823f0 - Placeable model loader (504 bytes, 105 lines)
+          * Loads placeable models with animation base
+          * Handles head hit detection ("_head_hit" node lookup)
+          * Sets up CSWCAnimBasePlaceable
+        - CSWCCreature::UnloadModel @ 0x0060c8e0 - Unloads creature models (42 bytes, 19 lines)
+          * Releases animation base resources
+          * Clears anim_base pointer
+        - UnloadModel @ 0x00646650, @ 0x006825f0 - Additional unload functions
+        - MdlNode::AsMdlNodeTriMesh @ 0x0043e400 - Converts node to trimesh type
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1649-1778 (Controller structure and bezier detection)
+        https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:5470-5596 (Tangent space calculation)
+        https://github.com/th3w1zard1/kotorblender/tree/master/format/mdl/reader.py:850-868 (Quaternion decompression)
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/loaders/MDLLoader.ts (Model loading architecture)
+
+
     """
 
     def __init__(
@@ -2209,7 +2256,7 @@ class MDLBinaryReader:
         self._mdl.root = self._load_node(model_header.geometry.root_node_offset, None)
 
         # Detect headlink: if offset_to_super_root differs from root_node_offset and neck_g exists,
-        # this is a head model. Reference: vendor/MDLOps/MDLOpsM.pm:863-866
+        # this is a head model.
         if model_header.offset_to_super_root != model_header.geometry.root_node_offset:
             # Check if neck_g node exists in the model
             for node in self._mdl.all_nodes():
@@ -2323,7 +2370,7 @@ class MDLBinaryReader:
             # Read AABB tree if offset is valid
             if bin_node.trimesh and bin_node.trimesh.offset_to_aabb > 0:
                 # Read AABB tree recursively (depth-first, matching MDLOps)
-                # Reference: vendor/MDLOps/MDLOpsM.pm:1440-1466 (readaabb)
+                #
                 def _read_aabb_recursive(
                     reader: BinaryReader,
                     offset: int,
@@ -2393,7 +2440,7 @@ class MDLBinaryReader:
                 node.light.flare_radius = bin_node.light.flare_radius
 
                 # Read flare data (sizes, positions, colors, textures)
-                # Reference: vendor/MDLOps/MDLOpsM.pm:1875-1954 (flare data reading)
+                #
                 light_header = bin_node.light
 
                 # Flare textures: array of string pointers, each pointing to a 12-byte null-terminated string
@@ -2462,7 +2509,7 @@ class MDLBinaryReader:
                         self._reader.seek(saved_pos)
 
         # Check for EMITTER flag - nodes with EMITTER flag should be marked as EMITTER type
-        # Reference: vendor/MDLOps/MDLOpsM.pm lines 1959-1998 (emitter parsing)
+        #
         if bin_node.header.type_id & MDLNodeFlags.EMITTER:
             node.node_type = MDLNodeType.EMITTER
             from pykotor.resource.formats.mdl.mdl_data import MDLEmitter
@@ -2684,7 +2731,7 @@ class MDLBinaryReader:
                 _mdl_recompute_mesh_face_payload(node.mesh)
 
             # Read danglymesh constraints if present
-            # Reference: vendor/MDLOps/MDLOpsM.pm lines 2094-2097 (dangly header), 2175-2184 (constraints+ array reading), 2396-2402 (constraints unpacking), 7261-7267 (constraints writing)
+            #
             if bin_node.dangly is not None and node.dangly is not None:
                 node.dangly.displacement = bin_node.dangly.displacement
                 node.dangly.tightness = bin_node.dangly.tightness
@@ -2828,8 +2875,8 @@ class MDLBinaryReader:
         self._reader.seek(data_pointer)
 
         # Detect bezier interpolation flag (bit 4 = 0x10) in column count
-        # vendor/mdlops/MDLOpsM.pm:1704-1710 - Bezier flag detection
-        # vendor/mdlops/MDLOpsM.pm:1749-1756 - Bezier data expansion (3 values per column)
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1704-1710 - Bezier flag detection
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1749-1756 - Bezier data expansion (3 values per column)
         bezier_flag: int = 0x10
         is_bezier: bool = bool(column_count & bezier_flag)
 
@@ -2838,10 +2885,10 @@ class MDLBinaryReader:
 
         # Orientation data stored in controllers is sometimes compressed into 4 bytes. We need to check for that and
         # uncompress the quaternion if that is the case.
-        # vendor/mdlops/MDLOpsM.pm:1714-1719 - Compressed quaternion detection
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1714-1719 - Compressed quaternion detection
         # Compressed quaternions use column_count=2 as a FLAG (not 2 values per row!)
         # Each compressed quaternion is stored as a single uint32, NOT uint32 + padding float
-        # vendor/mdlops/MDLOpsM.pm:1719 - "$template .= 'L' x $_->[2]" - just row_count uint32s
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1719 - "$template .= 'L' x $_->[2]" - just row_count uint32s
         if (
             bin_controller.type_id == MDLControllerType.ORIENTATION
             and bin_controller.column_count == 2
@@ -2856,7 +2903,7 @@ class MDLBinaryReader:
                 decompressed: Vector4 = _decompress_quaternion(compressed)
                 data.append([decompressed.x, decompressed.y, decompressed.z, decompressed.w])
         else:
-            # vendor/mdlops/MDLOpsM.pm:1721-1726 - Bezier data reading
+            # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1721-1726 - Bezier data reading
             # Bezier controllers store 3 floats per column: (value, in_tangent, out_tangent)
             # Non-bezier controllers store 1 float per column
             if is_bezier:
@@ -2885,7 +2932,7 @@ class MDLBinaryReader:
         # Validate controller type - function pointer values (4273776 for K1, 4285200 for K2) indicate
         # we're reading from the wrong location (geometry header data instead of controller data).
         # Valid controller types are small integers (< 1000), so detect invalid values.
-        # vendor/mdlops/MDLOpsM.pm:325-405 - Valid controller types are 8, 20, 36, 76, 80, 84, 88, etc.
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:325-405 - Valid controller types are 8, 20, 36, 76, 80, 84, 88, etc.
         if controller_type > 1000 or controller_type < 0:
             # Invalid controller type - likely reading from wrong offset, skip this controller
             # Return INVALID controller type to prevent crash
@@ -2903,7 +2950,7 @@ class MDLBinaryReader:
             MDLControllerRow(time_keys[i], data[i])
             for i in range(actual_row_count)
         ]
-        # vendor/mdlops/MDLOpsM.pm:1709 - Store bezier flag with controller
+        # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1709 - Store bezier flag with controller
         controller = MDLController(
             controller_type_enum,
             rows,
@@ -2919,9 +2966,27 @@ class MDLBinaryWriter:
 
     References:
     ----------
-        vendor/mdlops/MDLOpsM.pm (Binary MDL writing paths)
-        vendor/reone/src/libs/graphics/format/mdlmdxwriter.cpp (MDL/MDX writing)
-        vendor/kotorblender/format/mdl/writer.py (MDL writing reference)
+        Based on swkotor.exe MDL structure:
+        - LoadModel @ 0x00464200 - High-level model loader (172 bytes, 42 lines)
+          * Loads MDL/MDX through IODispatcher::ReadSync
+          * Manages model cache (modelsList) to avoid duplicate loads
+        - CSWCCreature::LoadModel @ 0x0061b380 - Creature model loader (842 bytes, 167 lines)
+          * Loads creature models with animation base setup
+          * Handles different model types: base, head, wield, head+wield, two-weapon
+        - CSWCPlaceable::LoadModel @ 0x006823f0 - Placeable model loader (504 bytes, 105 lines)
+          * Loads placeable models with animation base
+          * Handles head hit detection ("_head_hit" node lookup)
+        - CSWCCreature::UnloadModel @ 0x0060c8e0 - Unloads creature models (42 bytes, 19 lines)
+        - UnloadModel @ 0x00646650, @ 0x006825f0 - Additional unload functions
+        - MdlNode::AsMdlNodeTriMesh @ 0x0043e400 - Converts node to trimesh type
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm (Binary MDL writing paths)
+        https://github.com/th3w1zard1/kotorblender/tree/master/format/mdl/writer.py (MDL writing reference)
+
+
     """
 
     def __init__(
@@ -3310,8 +3375,8 @@ class MDLBinaryWriter:
         #   [time keys (row_count floats)] + [row data (row_count * data_floats_per_row floats)]
         #
         # References:
-        #   - vendor/mdlops/MDLOpsM.pm:1649-1778
-        #   - vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:664-690
+        #   - https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1649-1778
+        #   - 
         cur_float_offset = 0
         for mdl_controller in mdl_node.controllers:
             bin_controller = _Controller()
@@ -3757,7 +3822,7 @@ class MDLBinaryWriter:
             # MDLOps writes 0 for controller offsets when both controller_count and
             # controller_data_length are 0 (no controllers at all)
             # MDLOps stores offsets as (absolute_offset - 12) in the file format
-            # Reference: vendor/MDLOps/MDLOpsM.pm:7596, 7653 - writes (location - 12)
+            #
             if bin_node.header.controller_count == 0 and bin_node.header.controller_data_length == 0:
                 bin_node.header.offset_to_controllers = 0
                 bin_node.header.offset_to_controller_data = 0
@@ -3770,7 +3835,7 @@ class MDLBinaryWriter:
 
             # MDLOps: when children_count == 0, offset_to_children equals offset_to_controllers
             # MDLOps stores offsets as (absolute_offset - 12) in the file format
-            # Reference: vendor/MDLOps/MDLOpsM.pm:7596 - writes (childarraylocation - 12)
+            #
             if actual_children_count == 0:
                 bin_node.header.offset_to_children = bin_node.header.offset_to_controllers
             else:
@@ -3780,7 +3845,7 @@ class MDLBinaryWriter:
             bin_node.header.offset_to_root = 0
             parent_idx: int | None = parent_by_idx.get(i)
             # MDLOps stores offsets as (absolute_offset - 12) in the file format
-            # Reference: vendor/MDLOps/MDLOpsM.pm:7663 - writes (header start - 12)
+            #
             if parent_idx is not None:
                 absolute_parent_offset: int = bin_offsets[parent_idx]
                 # Store as (absolute_offset - 12) to match MDLOps format
@@ -3821,7 +3886,6 @@ class MDLBinaryWriter:
         """Calculate AABB tree offset.
 
         AABB tree is written after all other node data (faces, vertices, etc.).
-        Reference: vendor/MDLOps/MDLOpsM.pm:7279-7312 (AABB tree writing)
         """
         assert bin_node.trimesh is not None, "Trimesh node is required"
         # _aabb_nodes is always initialized when AABB flag is set (empty list if no aabbs)
@@ -3836,7 +3900,7 @@ class MDLBinaryWriter:
             return
 
         # AABB tree is written immediately after all headers and the aabbloc field.
-        # Reference: vendor/MDLOps/MDLOpsM.pm layout - AABB comes before faces.
+        #
         # The layout is: headers -> aabbloc field (4 bytes) -> AABB tree -> faces
         # So the AABB tree position is: node_offset + all_headers_size + 4 (for aabbloc field)
         aabb_tree_offset: int = node_offset + bin_node.all_headers_size(self.game) + 4
@@ -3979,7 +4043,7 @@ class MDLBinaryWriter:
         self._file_header.geometry.geometry_type = 2
 
         # Handle headlink: for head models, offset_to_super_root points to neck_g node
-        # Reference: vendor/MDLOps/MDLOpsM.pm:6285-6296 (headfix/headlink logic)
+        #
         if (self._mdl.headlink or "").strip():
             neck_g_node_offset: int | None = None
             for i, mdl_node in enumerate(self._mdl_nodes):
@@ -3997,10 +4061,10 @@ class MDLBinaryWriter:
         self._file_header.mdx_size = self._writer_ext.size()
         self._file_header.mdx_offset = 0
 
-        # Write model header fields exactly as mdlops does (vendor/MDLOps/MDLOpsM.pm:6138-6160)
+        # Write model header fields exactly as mdlops does ()
         # Classification mapping: mdlops uses hash %classification (Effect=>0x01, Tile=>0x02, Character=>0x04,
         # Door=>0x08, Lightsaber=>0x10, Placeable=>0x20, Flyer=>0x40, Other=>0x00)
-        # Reference: vendor/MDLOps/MDLOpsM.pm:238-240, 6138
+        #
         classification_map = {
             MDLClassification.EFFECT: 0x01,
             MDLClassification.TILE: 0x02,

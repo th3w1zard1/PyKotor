@@ -67,9 +67,39 @@ class FAC:
 
     References:
     ----------
-        vendor/xoreos-docs/specs/bioware/Faction_Format.pdf - Official BioWare Faction Format
-        vendor/PyKotor/wiki/Bioware-Aurora-Faction.md - Faction format documentation
-        Note: FAC files are GFF format files with specific structure definitions
+        KotOR I (swkotor.exe):
+            - 0x004c3960 - CSWSModule::SaveModuleFAC (378 bytes, 69 lines)
+                - Main FAC GFF writer entry point
+                - Saves faction data to GFF structure
+                - Function signature: SaveModuleFAC(void)
+                - Called from SaveModuleStart (0x004c8960)
+            - 0x0052b5c0 - CFactionManager::LoadFactionsFromSaveGame (455 bytes, 86 lines)
+                - Main FAC GFF parser entry point for FactionList
+                - Loads factions from GFF structure
+                - Function signature: LoadFactionsFromSaveGame(CFactionManager* this, CResGFF* param_1, CResList* param_2)
+                - Called from LoadModuleStart (0x004c9050)
+            - 0x0052bbe0 - CFactionManager::LoadReputationsFromSaveGame (253 bytes, 44 lines)
+                - Main FAC GFF parser entry point for RepList
+                - Loads reputation relationships from GFF structure
+                - Function signature: LoadReputationsFromSaveGame(CFactionManager* this, CResGFF* param_1, CResList* param_2)
+                - Called from LoadModuleStart (0x004c9050)
+            - 0x0052b790 - CFactionManager::SaveFactions (146 bytes, 29 lines)
+                - Saves FactionList to GFF structure
+                - Writes FactionName (CExoString), FactionParentID (DWORD), FactionGlobal (WORD)
+            - 0x0052b830 - CFactionManager::SaveReputations (169 bytes, 39 lines)
+                - Saves RepList to GFF structure
+                - Writes FactionID1 (DWORD), FactionID2 (DWORD), FactionRep (DWORD)
+            - Reads FactionList (GFFList):
+                - FactionName (CExoString) - faction name
+                - FactionParentID (DWORD) - parent faction index (0xFFFFFFFF for standard factions)
+                - FactionGlobal (WORD) - global effect flag (1 = global, 0 = individual)
+            - Reads RepList (GFFList):
+                - FactionID1 (DWORD) - first faction index
+                - FactionID2 (DWORD) - second faction index
+                - FactionRep (DWORD) - reputation value (0-100, clamped)
+        KotOR II / TSL (swkotor2.exe):
+            - Functionally identical to K1 implementation
+            - Same GFF structure and parsing logic
 
     Attributes:
     ----------

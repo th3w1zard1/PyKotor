@@ -98,7 +98,7 @@ class TestDecodeBytes(unittest.TestCase):
         byte_content = b"Bonjour le monde!"
         errors = "strict"
         encoding = None
-        lang = Language.UNKNOWN
+        lang = None
         only_8bit_encodings = False
         expected_result = "Bonjour le monde!"
 

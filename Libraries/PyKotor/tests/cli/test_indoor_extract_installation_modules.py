@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+
 from pathlib import Path
 
 import pytest
@@ -97,9 +98,7 @@ def test_indoor_extract_each_module_matches_modulekit_loadability(
             assert str(room["kit"]).lower() == module_root.lower(), f"Room kit mismatch: {room['kit']} != {module_root}"
             assert "component" in room, f"Room missing component: {room}"
             assert "module_root" in room, f"Room missing module_root: {room}"
-            assert (
-                str(room["module_root"]).lower() == module_root.lower()
-            ), f"Room module_root mismatch: {room['module_root']} != {module_root}"
+            assert str(room["module_root"]).lower() == module_root.lower(), f"Room module_root mismatch: {room['module_root']} != {module_root}"
             assert "position" in room, f"Room missing position: {room}"
             assert isinstance(room["position"], list), f"Room position is not a list: {room['position']}"
             assert len(room["position"]) == 3, f"Room position has wrong length: {len(room['position'])} != 3"

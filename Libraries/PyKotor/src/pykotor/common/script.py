@@ -2,11 +2,14 @@
 
 References:
 ----------
-    vendor/xoreos-tools/src/nwscript/ (NWScript definitions)
-    vendor/xoreos-docs/specs/ (NWScript documentation)
-    vendor/KotOR.js/src/nwscript/NWScriptDefK1.ts (K1 script definitions)
-    vendor/KotOR.js/src/nwscript/NWScriptDefK2.ts (K2 script definitions)
-    vendor/HoloLSP/server/src/nwscript/ (Language server NWScript definitions)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/nwscript/NWScriptDefK1.ts (K1 script definitions)
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/nwscript/NWScriptDefK2.ts (K2 script definitions)
+
+
     Note: Script constants and parameters define function signatures for NWScript functions
 """
 

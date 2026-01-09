@@ -41,7 +41,7 @@ class Frustum:
 
     Implementation based on:
     - Gribb/Hartmann method for frustum plane extraction
-    - Reference: reone/src/graphics/renderpipeline.cpp line ~150
+    - Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
     """
 
     __slots__ = ("planes", "_cached_vp_hash")

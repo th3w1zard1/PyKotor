@@ -39,7 +39,21 @@ class ArchiveResource:
 
     References:
     ----------
+        Based on swkotor.exe archive structure:
+        - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file (123 bytes)
+          * Initializes ERF/RIM archive structure
+          * Sets up resource table and file data storage
+          * Used for MOD, ERF, and RIM file formats
+        - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds encapsulated file contents to key table (1469 bytes, 287 lines)
+          * Registers resources from ERF/RIM archives in the key table
+          * Enables resource lookup by ResRef and type
+          * Used when loading module archives and override files
+          * Handles both NWM (Neverwinter Nights) and MOD (KotOR) formats
+        - CExoKeyTable::LocateBifFile @ 0x0040d200 - Locates BIF file for resource lookup
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         BioWare archive format specification
+
+
     """
 
     def __init__(
@@ -195,7 +209,21 @@ class BiowareArchive(ComparableMixin, ABC):
 
     References:
     ----------
+        Based on swkotor.exe archive structure:
+        - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file (123 bytes)
+          * Initializes ERF/RIM archive structure
+          * Sets up resource table and file data storage
+          * Used for MOD, ERF, and RIM file formats
+        - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds encapsulated file contents to key table (1469 bytes, 287 lines)
+          * Registers resources from ERF/RIM archives in the key table
+          * Enables resource lookup by ResRef and type
+          * Used when loading module archives and override files
+          * Handles both NWM (Neverwinter Nights) and MOD (KotOR) formats
+        - CExoKeyTable::LocateBifFile @ 0x0040d200 - Locates BIF file for resource lookup
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         BioWare archive format specification
+
+
     """
 
     BINARY_TYPE: ClassVar[ResourceType]

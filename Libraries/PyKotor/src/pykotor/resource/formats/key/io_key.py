@@ -20,13 +20,33 @@ class KEYBinaryReader(ResourceReader):
     
     References:
     ----------
-        vendor/reone/src/libs/resource/format/keyreader.cpp:26-65 (KEY reading)
-        vendor/xoreos-tools/src/unkeybif.cpp (KEY/BIF extraction tool)
-    
-    Missing Features:
-    ----------------
+        Based on swkotor.exe KEY structure:
+        - CExoKeyTable::CExoKeyTable @ 0x0040d030 - Key table constructor (157 bytes, 2 callees)
+          * Initializes key table structure
+          * Sets up BIF file list and resource entry table
+        - CExoKeyTable::AddKeyTable @ 0x00406e20 - Adds key table (478 bytes, 14 callees)
+          * Loads KEY file and adds to resource manager
+          * Parses KEY file header, BIF entries, and key entries
+        - CExoKeyTable::AddKeyTableContents @ 0x0040fb80 - Adds key table contents (1529 bytes, 24 callees)
+          * Loads BIF files referenced in KEY table
+          * Registers resources from BIF files in key table
+          * Handles BIF file location and validation
+        - CExoKeyTable::LocateBifFile @ 0x0040d200 - Locates BIF file (194 bytes)
+          * Searches for BIF file in resource directories
+          * Validates BIF file exists and is accessible
+        - CExoKeyTable::GetKeyEntryFromTable @ 0x004071a0 - Gets key entry from table (143 bytes, 3 callees)
+        - CExoKeyTable::DestroyTable @ 0x0040d2e0 - Destroys key table (418 bytes, 7 callees)
+        - "BIF" string @ 0x0073d8dc - BIF file type identifier
+        - "CExoKeyTable::DestroyTable: Resource %s still in demand during table deletion" @ 0x0073e0d8 - Error message
+        - "CExoKeyTable::AddKey: Duplicate Resource " @ 0x0073e184 - Duplicate resource error
+        - KEY file format: "KEY " type, "V1.0" version, BIF count, key count, file table offset, key table offset
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        
+        Missing Features:
+        ----------------
         - ResRef lowercasing (reone lowercases resrefs)
         - Resource ID decomposition (reone decomposes resource_id into bif_index/resource_index)
+
     """
     def __init__(
         self,
@@ -40,7 +60,7 @@ class KEYBinaryReader(ResourceReader):
     @autoclose
     def load(self, *, auto_close: bool = True) -> KEY:  # noqa: FBT001, FBT002, ARG002
         """Load KEY data from source."""
-        # vendor/reone/src/libs/resource/format/keyreader.cpp:26-65
+        
         # Read signature
         self.key.file_type = self._reader.read_string(4)
         self.key.file_version = self._reader.read_string(4)
@@ -89,12 +109,12 @@ class KEYBinaryReader(ResourceReader):
         self._reader.seek(key_table_offset)
         for _ in range(key_count):
             entry: KeyEntry = KeyEntry()
-            # vendor/reone/src/libs/resource/format/keyreader.cpp:45-50
+            
             # reone lowercases resref at line 46
             resref_str = self._reader.read_string(16).rstrip("\0").lower()
             entry.resref = ResRef(resref_str)
             entry.restype = ResourceType.from_id(self._reader.read_uint16())
-            # vendor/reone/src/libs/resource/format/keyreader.cpp:51-52
+            
             # NOTE: reone decomposes resource_id into bif_index/resource_index, PyKotor stores as-is
             entry.resource_id = self._reader.read_uint32()
             self.key.key_entries.append(entry)

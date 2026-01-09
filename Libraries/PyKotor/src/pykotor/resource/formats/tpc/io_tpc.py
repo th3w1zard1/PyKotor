@@ -90,7 +90,17 @@ class TPCBinaryReader(ResourceReader):
     
     References:
     ----------
-        TPC file format specification
+        Based on swkotor.exe TPC structure:
+        - CResTPC::CResTPC @ 0x00712ea0 - Constructor for TPC resource
+        - CResTPC::~CResTPC @ 0x00712ee0 - Destructor for TPC resource
+        - GetTPCAttrib @ 0x00712ef0 - Gets TPC texture attributes
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        - TPC file format specification
+        
+        Note: TPC (Texture Pack Container) files store texture data with mipmaps, compression,
+        and various texture formats (DXT1, DXT3, DXT5, RGB, RGBA) used throughout KotOR.
+
+
     """
     MAX_DIMENSIONS: Literal[0x8000] = 0x8000
     IMG_DATA_START_OFFSET: Literal[0x80] = 0x80
@@ -304,7 +314,14 @@ class TPCBinaryWriter(ResourceWriter):
     
     References:
     ----------
-        TPC file format specification
+        Based on swkotor.exe TPC structure:
+        - CResTPC::CResTPC @ 0x00712ea0 - Constructor for TPC resource
+        - CResTPC::~CResTPC @ 0x00712ee0 - Destructor for TPC resource
+        - GetTPCAttrib @ 0x00712ef0 - Gets TPC texture attributes
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        - TPC file format specification
+
+
     """
 
     MAX_DIMENSIONS: Literal[0x8000] = TPCBinaryReader.MAX_DIMENSIONS

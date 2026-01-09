@@ -23,9 +23,15 @@ if TYPE_CHECKING:
 
 References:
 ----------
-    vendor/KOTOR_Registry_Install_Path_Editor (Registry path detection tool)
-    vendor/HoloPatcher.NET/src/HoloPatcher/Util/RegistryHelper.cs (C# registry helper)
-    vendor/Kotor-Randomizer (Game path detection logic)
+        Based on swkotor.exe ERF structure:
+        - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file
+        - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds ERF/MOD/SAV contents to key table
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/HoloPatcher.NET/tree/master/src/HoloPatcher/Util/RegistryHelper.cs (C# registry helper)
+
+
     Note: Registry paths vary between Steam, GOG, and disc releases on different architectures
 """
 

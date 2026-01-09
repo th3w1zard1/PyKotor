@@ -4,12 +4,11 @@ Provides a graphical interface for playing Pazaak (the card game minigame from K
 
 References:
 ----------
-    vendor/pazaak-eggborne - Pazaak game implementation (JavaScript)
-    vendor/pazaak-iron-ginger - Pazaak game implementation (Python)
-    vendor/Java_Pazaak - Pazaak game implementation (Java)
-    vendor/PazaakApp - Pazaak web application
-    vendor/react-pazaak - React Pazaak component
-    vendor/vue-pazaak - Vue Pazaak component
+        Based on swkotor.exe GFF structure:
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
+        Original BioWare engine binaries
+
+
     Note: PyQt GUI is custom implementation; game logic from playpazaak module
 """
 

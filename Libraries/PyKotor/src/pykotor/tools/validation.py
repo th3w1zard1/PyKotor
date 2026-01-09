@@ -8,9 +8,13 @@ This module provides functions for:
 
 References:
 ----------
-    scripts/kotor/check_txi_files.py - TXI file checking
-    scripts/kotor/check_missing_resources.py - Missing resource checking
-    scripts/kotor/investigate_module_structure.py - Module investigation
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        scripts/kotor/check_txi_files.py - TXI file checking
+        scripts/kotor/check_missing_resources.py - Missing resource checking
+        scripts/kotor/investigate_module_structure.py - Module investigation
+
+
 """
 from __future__ import annotations
 

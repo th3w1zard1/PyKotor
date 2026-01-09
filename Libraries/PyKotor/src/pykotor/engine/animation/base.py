@@ -5,8 +5,13 @@ implemented by any rendering backend.
 
 References:
 ----------
-    vendor/reone/src/libs/scene/animation - Animation implementation
-    vendor/KotOR.js/src/odyssey/controllers/OdysseyController.ts - Controller base
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/controllers/OdysseyController.ts
+
+
 """
 
 from __future__ import annotations
@@ -22,8 +27,13 @@ class IAnimationController(ABC):
     
     References:
     ----------
-        vendor/KotOR.js/src/odyssey/controllers/OdysseyController.ts:18-47 - Base controller
-        vendor/reone/src/libs/scene/animation/channel.cpp:30-80 - Animation channel
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/controllers/OdysseyController.ts:18-47
+
+
     """
     
     @abstractmethod
@@ -40,7 +50,10 @@ class IAnimationController(ABC):
         
         References:
         ----------
-            vendor/reone/src/libs/scene/animation/channel.cpp:150-200 - getFrame()
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
         """
         ...
     
@@ -55,7 +68,13 @@ class IAnimationController(ABC):
         
         References:
         ----------
-            vendor/KotOR.js/src/odyssey/controllers/OdysseyController.ts:35-37 - setFrame()
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/controllers/OdysseyController.ts:35-37
+
+
         """
         ...
 
@@ -65,8 +84,13 @@ class IAnimationState(ABC):
     
     References:
     ----------
-        vendor/KotOR.js/src/odyssey/OdysseyModelAnimation.ts:25-100 - Animation state
-        vendor/reone/src/libs/scene/animation/animation.cpp:30-80 - Animation state
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/OdysseyModelAnimation.ts:25-100
+
+
     """
     
     @abstractmethod
@@ -83,7 +107,10 @@ class IAnimationState(ABC):
         
         References:
         ----------
-            vendor/reone/src/libs/scene/animation/animation.cpp:100-130 - update()
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
         """
         ...
     
@@ -108,8 +135,13 @@ class IAnimationManager(ABC):
     
     References:
     ----------
-        vendor/KotOR.js/src/odyssey/OdysseyModelAnimationManager.ts:18-250 - Animation manager
-        vendor/reone/src/libs/scene/animation/animator.cpp:30-200 - Animator class
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/OdysseyModelAnimationManager.ts:18-250
+
+
     """
     
     @abstractmethod
@@ -128,7 +160,10 @@ class IAnimationManager(ABC):
         
         References:
         ----------
-            vendor/reone/src/libs/scene/animation/animator.cpp:200-220 - playAnimation()
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
         """
         ...
     
@@ -152,7 +187,10 @@ class IAnimationManager(ABC):
         
         References:
         ----------
-            vendor/reone/src/libs/scene/animation/animator.cpp:230-280 - update()
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
         """
         ...
     

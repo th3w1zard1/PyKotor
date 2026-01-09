@@ -117,9 +117,13 @@ def extract_placeable_walkmesh(
     
     References:
     ----------
-        vendor/reone/src/libs/game/object/placeable.cpp:73 - PWK extraction (modelname.pwk)
-        vendor/reone/src/libs/game/object/placeable.cpp:59-60 - Placeable model lookup
-        vendor/KotOR.js/src/module/ModulePlaceable.ts:684 - PWK loading
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/module/ModulePlaceable.ts:684
+
+
     
     Args:
     ----

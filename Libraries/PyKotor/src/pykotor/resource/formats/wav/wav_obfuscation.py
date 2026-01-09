@@ -19,13 +19,16 @@ External code should use the public API in `wav_auto.py`.
 
 References:
 ----------
-    vendor/reone/src/libs/audio/format/wavreader.cpp:30-38
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
         - Shows magic "\xff\xf3\x60\xc4" detection and seek to 0x1DA
-    vendor/KotOR.js/src/audio/AudioFile.ts:9-162
         - fakeHeaderTest = [0xFF, 0xF3, 0x60, 0xC4] → skip 470 bytes
         - riffSize == 50 → skip 58 bytes → MP3
-    vendor/SithCodec/src/codec.cpp (Audio codec implementation)
-    vendor/SWKotOR-Audio-Encoder/ (Full audio encoder/decoder)
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/audio/AudioFile.ts:9-162
+
+
 """
 
 from __future__ import annotations
@@ -43,7 +46,7 @@ class DeobfuscationResult(IntEnum):
 
 
 # Magic numbers for detection
-# vendor/reone/src/libs/audio/format/wavreader.cpp:34
+
 # "\xff\xf3\x60\xc4" as bytes (0xFFF360C4 big-endian, 0xC460F3FF little-endian)
 SFX_MAGIC_BYTES = b"\xff\xf3\x60\xc4"
 SFX_MAGIC_LE = 0xC460F3FF  # Little-endian interpretation: 3294888959
@@ -73,8 +76,8 @@ def detect_audio_format(data: bytes) -> tuple[DeobfuscationResult, int]:
         Tuple of (format_type, header_size_to_skip)
         
     References:
-        vendor/reone/src/libs/audio/format/wavreader.cpp:30-38
-        vendor/KotOR.js/src/audio/AudioFile.ts:111-146
+        
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/audio/AudioFile.ts:111-146
     """
     if len(data) < 12:
         return DeobfuscationResult.STANDARD, 0
@@ -83,7 +86,7 @@ def detect_audio_format(data: bytes) -> tuple[DeobfuscationResult, int]:
     first_four = data[:4]
     
     # Check for SFX header: 0xFF 0xF3 0x60 0xC4
-    # Reference: vendor/reone/src/libs/audio/format/wavreader.cpp:34
+    #
     if first_four == SFX_MAGIC_BYTES:
         return DeobfuscationResult.SFX_HEADER, SFX_HEADER_SIZE
 
@@ -97,7 +100,7 @@ def detect_audio_format(data: bytes) -> tuple[DeobfuscationResult, int]:
         # Read the riffSize (bytes 4-8)
         riff_size = struct.unpack("<I", data[4:8])[0]
 
-        # Reference: vendor/KotOR.js/src/audio/AudioFile.ts:134
+        # Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/src/audio/AudioFile.ts:134
         # if(riffSize == 50) → MP3 wrapped in WAV
         if riff_size == MP3_IN_WAV_RIFF_SIZE:
             return DeobfuscationResult.MP3_IN_WAV, MP3_IN_WAV_HEADER_SIZE
@@ -127,8 +130,8 @@ def deobfuscate_audio(data: bytes) -> bytes:
         3. Otherwise return unchanged (standard WAV)
         
     References:
-        vendor/reone/src/libs/audio/format/wavreader.cpp:30-38
-        vendor/KotOR.js/src/audio/AudioFile.ts:111-162
+        
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/audio/AudioFile.ts:111-162
     """
     format_type, skip_size = detect_audio_format(data)
     
@@ -180,7 +183,7 @@ def obfuscate_audio(
     """
     if wav_type == "SFX":
         # Create 470-byte SFX header
-        # Reference: vendor/reone/src/libs/audio/format/wavreader.cpp:34
+        #
         # Header starts with 0xFF 0xF3 0x60 0xC4
         header = bytearray(SFX_HEADER_SIZE)
         header[0:4] = SFX_MAGIC_BYTES

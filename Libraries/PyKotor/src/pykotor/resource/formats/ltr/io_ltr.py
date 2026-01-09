@@ -20,11 +20,24 @@ class LTRBinaryReader(ResourceReader):
     
     References:
     ----------
-        vendor/reone/include/reone/resource/format/ltrreader.h:30-42 - LtrReader class
-        vendor/reone/src/libs/resource/format/ltrreader.cpp:27-74 - Complete LTR loading
-        vendor/KotOR.js/src/resource/LTRObject.ts:51-121 - readBuffer method
-        vendor/xoreos/src/aurora/ltrfile.cpp:135-168 - load method
-        vendor/KotOR_IO/KotOR_IO/File Formats/LTR.cs:133-193 - Write method
+        Based on swkotor.exe LTR structure:
+        - LTR files loaded as resources through CExoResMan
+        - "LTR V1.0" format identifier - LTR file version string
+        - ".ltr" extension string - LTR file extension
+        - "ltr" resource type string @ 0x0074dd04 - LTR resource type identifier
+        - LTR format: "LTR " type, "V1.0" version, letter count (28), probability arrays
+        - Single-letter probabilities: start[28], middle[28], end[28] arrays
+        - Double-letter probabilities: 28 blocks of start[28], middle[28], end[28] arrays
+        - Triple-letter probabilities: 28x28 blocks of start[28], middle[28], end[28] arrays
+        - Used for random name generation during character creation
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/LTRObject.ts:51-121
+        https://github.com/th3w1zard1/KotOR_IO/tree/master/KotOR_IO/File
+
+
     """
     def __init__(
         self,
@@ -33,7 +46,7 @@ class LTRBinaryReader(ResourceReader):
         size: int = 0,
     ):
         super().__init__(source, offset, size)
-        # vendor/reone/src/libs/resource/format/ltrreader.cpp:27 (load method returns unique_ptr<Ltr>)
+        
         # LTR instance to be populated during loading
         self._ltr: LTR | None = None
 
@@ -41,15 +54,15 @@ class LTRBinaryReader(ResourceReader):
         self,
         auto_close: bool = True,
     ) -> LTR:
-        # vendor/reone/src/libs/resource/format/ltrreader.cpp:27-28
-        # vendor/KotOR.js/src/resource/LTRObject.ts:51-57
-        # vendor/xoreos/src/aurora/ltrfile.cpp:135-143
+        
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/LTRObject.ts:51-57
+        
         # Initialize LTR instance
         self._ltr = LTR()
 
-        # vendor/reone/src/libs/resource/format/ltrreader.cpp:28
-        # vendor/KotOR.js/src/resource/LTRObject.ts:55-56
-        # vendor/xoreos/src/aurora/ltrfile.cpp:138-142
+        
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/LTRObject.ts:55-56
+        
         # Read header: file type ("LTR ") and version ("V1.0")
         file_type = self._reader.read_string(4)
         file_version = self._reader.read_string(4)
@@ -62,35 +75,35 @@ class LTRBinaryReader(ResourceReader):
             msg = "The LTR version that was loaded is not supported."
             raise TypeError(msg)
 
-        # vendor/reone/src/libs/resource/format/ltrreader.cpp:30-33
-        # vendor/KotOR.js/src/resource/LTRObject.ts:57
-        # vendor/xoreos/src/aurora/ltrfile.cpp:144-154
+        
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/LTRObject.ts:57
+        
         # Read letter count (must be 28 for KotOR, 26 or 28 for NWN)
         letter_count = self._reader.read_uint8()
         if letter_count != 28:
             msg = "LTR files that do not handle exactly 28 characters are not supported."
             raise TypeError(msg)
 
-        # vendor/reone/src/libs/resource/format/ltrreader.cpp:34-35,59-73
-        # vendor/KotOR.js/src/resource/LTRObject.ts:62-75
-        # vendor/xoreos/src/aurora/ltrfile.cpp:156,121-133
+        
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/LTRObject.ts:62-75
+        
         # Read single-letter probability block (start, middle, end arrays)
         self._ltr._singles._start = [self._reader.read_single() for _ in range(28)]
         self._ltr._singles._middle = [self._reader.read_single() for _ in range(28)]
         self._ltr._singles._end = [self._reader.read_single() for _ in range(28)]
 
-        # vendor/reone/src/libs/resource/format/ltrreader.cpp:37-41
-        # vendor/KotOR.js/src/resource/LTRObject.ts:78-95
-        # vendor/xoreos/src/aurora/ltrfile.cpp:158-160
+        
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/LTRObject.ts:78-95
+        
         # Read double-letter probability blocks (28 blocks, one per previous character)
         for i in range(28):
             self._ltr._doubles[i]._start = [self._reader.read_single() for _ in range(28)]
             self._ltr._doubles[i]._middle = [self._reader.read_single() for _ in range(28)]
             self._ltr._doubles[i]._end = [self._reader.read_single() for _ in range(28)]
 
-        # vendor/reone/src/libs/resource/format/ltrreader.cpp:43-50
-        # vendor/KotOR.js/src/resource/LTRObject.ts:98-117
-        # vendor/xoreos/src/aurora/ltrfile.cpp:162-167
+        
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/LTRObject.ts:98-117
+        
         # Read triple-letter probability blocks (28x28 blocks, indexed by previous two characters)
         for i in range(28):
             for j in range(28):

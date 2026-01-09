@@ -8,9 +8,10 @@ This module's writer produces clean RIFF/WAVE output regardless of input format.
 
 References:
 ----------
-    vendor/reone/src/libs/audio/format/wavreader.cpp - WAV reading
-    vendor/xoreos/src/sound/decoders/wave.cpp - WAV structure
-    Standard RIFF/WAVE format specification
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Standard RIFF/WAVE format specification
+
 """
 
 from __future__ import annotations

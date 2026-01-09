@@ -283,11 +283,61 @@ def parse_args() -> Namespace:
     -------
         Namespace: Parsed command line arguments
     """
+    import os
     from argparse import ArgumentParser
+    from pathlib import Path
 
     from utility.error_handling import universal_simplify_exception
 
-    parser = ArgumentParser(description="HoloPatcher CLI")
+    def _get_invocation_command() -> str:
+        """Get the actual command used to invoke the CLI."""
+        if not sys.argv:
+            return "holopatcher"
+        
+        # Try to detect if we're being run via "uv run" by checking parent process
+        is_uv_run = False
+        try:
+            import psutil  # type: ignore[import-untyped]
+            current_process = psutil.Process()
+            parent = current_process.parent()
+            if parent and "uv" in parent.name().lower():
+                is_uv_run = True
+        except (ImportError, Exception):  # noqa: BLE001
+            # psutil not available or can't access parent process
+            # Try alternative detection: check if UV_* env vars exist
+            if any("UV" in k.upper() for k in os.environ.keys()):
+                is_uv_run = True
+        
+        script_path = Path(sys.argv[0]).resolve()
+        cwd = Path.cwd().resolve()
+        
+        # Try to make path relative to current directory
+        try:
+            rel_script = script_path.relative_to(cwd)
+            rel_script_str = str(rel_script).replace("\\", "/")  # Use forward slashes for consistency
+        except ValueError:
+            rel_script_str = str(script_path)
+        
+        # If detected as uv run, prefix with "uv run"
+        if is_uv_run:
+            return f"uv run {rel_script_str}"
+        
+        # Check for "python -m" pattern
+        if len(sys.argv) >= 3 and sys.argv[1] == "-m":
+            # python -m holopatcher
+            return f"python -m {sys.argv[2]}"
+        
+        # Check if we're being run via python (not as a module)
+        python_exe = Path(sys.executable).name.lower()
+        if python_exe in ("python", "python3", "python.exe", "python3.exe", "py", "py.exe"):
+            # python script.py
+            return f"python {rel_script_str}"
+        
+        # For direct execution, return the relative path
+        return rel_script_str
+
+    prog = _get_invocation_command()
+    parser = ArgumentParser(prog=prog, description="HoloPatcher CLI")
 
     parser.add_argument("--game-dir", type=str, help="Path to game directory")
     parser.add_argument("--tslpatchdata", type=str, help="Path to tslpatchdata")

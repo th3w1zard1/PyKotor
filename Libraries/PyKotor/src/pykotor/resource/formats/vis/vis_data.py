@@ -7,16 +7,20 @@ files with a simple format: parent room names followed by indented child room na
 
 References:
 ----------
-    vendor/reone/include/reone/resource/format/visreader.h:28-39 - VisReader class
-    vendor/reone/src/libs/resource/format/visreader.cpp:27-51 - VIS loading implementation
-    vendor/KotOR.js/src/resource/VISObject.ts:33-276 - TypeScript VIS implementation
-    vendor/KotOR.js/src/interface/module/IVISRoom.ts - IVISRoom interface
-    vendor/xoreos/src/aurora/visfile.cpp:38-142 - VIS file handling
-
-ASCII Format:
-------------
-    Parent Room Line:
+        Based on swkotor.exe VIS structure:
+        - LoadVisibility @ 0x004568d0 - Loads VIS file for area visibility culling
+        - "%s/%s.VIS" format string @ 0x007415e8 - VIS file path format
+        - ".vis" extension @ 0x00741604 - VIS file extension identifier
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/VISObject.ts:33-276
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/interface/module/IVISRoom.ts
+        ASCII Format:
+        ------------
+        Parent Room Line:
         room_name number_of_child_rooms
+
         Example: "room001 3"
         
     Child Room Lines (indented with 2 spaces):
@@ -33,8 +37,6 @@ ASCII Format:
         - Room names are case-insensitive (stored lowercase)
         - Empty lines are ignored
         - Whitespace is trimmed from room names
-        
-    Reference: reone/visreader.cpp:41-51, KotOR.js/VISObject.ts:71-126
 """
 
 from __future__ import annotations
@@ -59,23 +61,31 @@ class VIS(ComparableMixin):
     
     References:
     ----------
-        vendor/reone/include/reone/resource/format/visreader.h:32 (visibility() method)
-        vendor/reone/src/libs/resource/format/visreader.cpp:35 (_visibility map)
-        vendor/KotOR.js/src/resource/VISObject.ts:34 (rooms Map)
-        vendor/xoreos/src/aurora/visfile.h:40-95 - VISFile class
+        Based on swkotor.exe VIS structure:
+        - Scene::LoadVisibility @ 0x004568d0 - Loads VIS file for area visibility culling
+          * Parses ASCII VIS file format
+          * Builds room visibility map for occlusion culling
+          * Stores parent-child room relationships
+        - "%s/%s.VIS" format string @ 0x007415e8 - VIS file path format
+        - ".vis" extension @ 0x00741604 - VIS file extension identifier
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/VISObject.ts:34 (rooms Map)
+
+
         
     Attributes:
     ----------
         _rooms: Set of all room names defined in this VIS file
-            Reference: reone/visreader.cpp:46-49 (room name processing)
-            Reference: KotOR.js/VISObject.ts:34,118 (rooms Map, room.name)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/VISObject.ts:34,118 (rooms Map, room.name)
             Room names are stored lowercase for case-insensitive comparison
             Each room name corresponds to a room model/area in the module
             Used to validate room existence before setting visibility
             
         _visibility: Dictionary mapping observer rooms to sets of visible rooms
-            Reference: reone/visreader.cpp:49 (_visibility.insert)
-            Reference: KotOR.js/VISObject.ts:99 (currentRoom.rooms array)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/VISObject.ts:99 (currentRoom.rooms array)
             Key: Observer room name (room player is currently in)
             Value: Set of room names visible from the observer room
             If room A is in _visibility[room B], then room A is visible from room B
@@ -87,13 +97,13 @@ class VIS(ComparableMixin):
     COMPARABLE_FIELDS = ("_visibility",)
 
     def __init__(self):
-        # vendor/reone/src/libs/resource/format/visreader.cpp:46-49
-        # vendor/KotOR.js/src/resource/VISObject.ts:34,118
+        
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/VISObject.ts:34,118
         # Set of all room names (stored lowercase for case-insensitive comparison)
         self._rooms: set[str] = set()
         
-        # vendor/reone/src/libs/resource/format/visreader.cpp:49
-        # vendor/KotOR.js/src/resource/VISObject.ts:99
+        
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/VISObject.ts:99
         # Dictionary: observer room -> set of visible rooms
         # Used for occlusion culling (only render visible rooms)
         self._visibility: dict[str, set[str]] = {}

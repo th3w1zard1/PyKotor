@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import asyncio
 import multiprocessing
+import os
 import pathlib
+import pytest
 import sys
 import unittest
 
@@ -24,7 +26,10 @@ if UTILITY_PATH.joinpath("utility").exists():
 
 from utility.system.app_process.consumer_manager import ConsumerManager
 
-@unittest.skip("Not implemented")
+@pytest.mark.skipif(
+    os.environ.get("PYKOTOR_RUN_CONSUMER_MANAGER_TESTS", "0") == "0",
+    reason="ConsumerManager tests require complex async/multiprocessing setup - set PYKOTOR_RUN_CONSUMER_MANAGER_TESTS=1 to run"
+)
 class TestConsumerManagerMainThreadAsync(unittest.TestCase):
 
     def test_singleton_behavior(self):

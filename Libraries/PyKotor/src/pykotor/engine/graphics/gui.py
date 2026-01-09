@@ -4,12 +4,18 @@ This module provides minimal GUI infrastructure for testing without full renderi
 
 References:
 ----------
-    vendor/reone/src/libs/gui/gui.cpp - GUI system implementation
-    vendor/reone/include/reone/gui/control.h - GUI control interface
-    vendor/KotOR.js/src/gui/ - GUI control implementations
-    vendor/KotOR-Unity/Assets/Scripts/UI/ - Unity GUI implementation
-    vendor/KotOR-dotNET - C# GUI handling
-    vendor/kotorblender - GUI mesh export
+        Based on swkotor.exe GUI structure:
+        - CSWGuiPanel::StartLoadFromLayout @ 0x0040a680 - Loads GUI panel from layout file
+        - CSWGuiControl::Load @ 0x00418800 - Loads GUI control from GFF structure
+        - CSWGuiExtent::Load @ 0x00409dc0 - Loads GUI extent (position/size) from GFF
+        - CSWGuiLabel::Load @ 0x0041b960 - Loads GUI label from GFF structure
+        - CSWGuiListBox::Load @ 0x0041d5b0 - Loads GUI listbox from GFF structure
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/gui/
+
+
     Note: This is a minimal stub for testing; full GUI implementation would use a rendering backend
 """
 

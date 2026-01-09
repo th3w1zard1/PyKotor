@@ -52,7 +52,7 @@ class ActionsData:
             raise RuntimeError("Invalid action call: action " + str(index))
 
     def read_actions(self):
-        # Reference: vendor/DeNCS/procyon/com/knights2end/nwscript/decomp/ActionsData.java lines 34-59
+        #
         # StringIO.readline() returns "" (empty string) at EOF, not None like Java BufferedReader
         p = re.compile(r"^\s*(\w+)\s+(\w+)\s*\((.*)\).*")
         self._actions = []

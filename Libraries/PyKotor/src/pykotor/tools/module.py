@@ -84,8 +84,16 @@ def clone_module(  # noqa: C901, PLR0915, PLR0912, PLR0913
 
     References:
     ----------
-        vendor/TSLPatcher/TSLPatcher.pl (Module installation/cloning logic)
-        vendor/HoloPatcher.NET/src/TSLPatcher.Core/Patcher/ModInstaller.cs (Module handling)
+        Based on swkotor.exe ERF structure:
+        - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file
+        - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds ERF/MOD/SAV contents to key table
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/TSLPatcher/tree/master/TSLPatcher.pl (Module installation/cloning logic)
+        https://github.com/th3w1zard1/HoloPatcher.NET/tree/master/src/TSLPatcher.Core/Patcher/ModInstaller.cs (Module handling)
+
+
         Note: Module cloning is PyKotor-specific functionality
     """
     old_module = Module(root, installation)

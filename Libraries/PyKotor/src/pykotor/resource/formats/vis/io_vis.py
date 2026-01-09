@@ -19,7 +19,17 @@ class VISAsciiReader(ResourceReader):
     
     References:
     ----------
-        vendor/reone/src/libs/resource/format/visreader.cpp (VIS reading)
+        Based on swkotor.exe VIS structure:
+        - LoadVisibility @ 0x004568d0 - Loads VIS file for area visibility culling
+        - "%s/%s.VIS" format string @ 0x007415e8 - VIS file path format
+        - ".vis" extension @ 0x00741604 - VIS file extension identifier
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        
+        Note: VIS files define which rooms are visible from other rooms, used for occlusion culling
+        and level-of-detail management in KotOR modules. VIS files are ASCII text files with a
+        simple format: parent room names followed by indented child room names.
+
+
     """
     def __init__(self, source: SOURCE_TYPES, offset: int = 0, size: int = 0):
         super().__init__(source, offset, size)

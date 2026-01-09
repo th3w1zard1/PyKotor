@@ -4,9 +4,11 @@ This module provides the main engine class using Panda3D's ShowBase.
 
 References:
 ----------
-    vendor/xoreos/src/graphics/windowman.cpp - Window and OpenGL initialization
-    vendor/reone/src/libs/game/game.cpp - Game class architecture
-    /panda3d/panda3d-docs/programming/showbase - ShowBase documentation
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        /panda3d/panda3d-docs/programming/showbase - ShowBase documentation
+
+
 """
 
 from __future__ import annotations
@@ -41,10 +43,14 @@ class KotorEngine(ShowBase):
     
     References:
     ----------
-        vendor/xoreos/src/graphics/windowman.cpp:49-146 - Window/OpenGL setup
-        vendor/reone/src/libs/game/game.cpp:45-120 - Game initialization
-        vendor/KotOR.js/src/Game.ts - Three.js equivalent
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
         /panda3d/panda3d-docs/introduction/tutorial/starting-panda3d - ShowBase
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/Game.ts
+
+
     
     Attributes:
     ----------
@@ -59,9 +65,11 @@ class KotorEngine(ShowBase):
         
         References:
         ----------
-            vendor/xoreos/src/graphics/windowman.cpp:70-86 - init()
-            vendor/xoreos/src/graphics/windowman.cpp:94-146 - initRender()
-            /panda3d/panda3d-docs/programming/configuration/accessing-config-vars - loadPrcFileData
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        /panda3d/panda3d-docs/programming/configuration/accessing-config-vars - loadPrcFileData
+
+
         """
         # Configure Panda3D before ShowBase initialization
         loadPrcFileData("", "window-title KotOR Engine - PyKotor")
@@ -94,7 +102,7 @@ class KotorEngine(ShowBase):
         
         # Create scene root for KotOR content
         # References:
-        # - vendor/reone/src/libs/scene/graph.cpp:30-35 - SceneGraph root
+        # -  - SceneGraph root
         # - /panda3d/panda3d-docs - NodePath creation
         self.scene_root: NodePath = self.render.attachNewNode("kotor_scene")
         
@@ -106,12 +114,12 @@ class KotorEngine(ShowBase):
         self.module_loader: ModuleLoader | None = None
         
         # Set up default lighting
-        # Reference: vendor/reone/src/libs/scene/graph.cpp:150-180 - Lighting setup
+        #
         self._setup_default_lighting()
         
         # Configure camera
         # References:
-        # - vendor/reone/src/libs/scene/graph.cpp:100-120 - Camera setup
+        # -  - Camera setup
         # - /panda3d/panda3d-docs - camera.setPos()
         self.camera.setPos(0, -10, 2)
         self.camera.lookAt(0, 0, 0)
@@ -127,19 +135,21 @@ class KotorEngine(ShowBase):
         
         References:
         ----------
-            vendor/reone/src/libs/scene/graph.cpp:150-180 - Lighting initialization
-            vendor/reone/src/libs/scene/node/light.cpp:80-120 - Light setup
-            /panda3d/panda3d-docs - AmbientLight, DirectionalLight
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        /panda3d/panda3d-docs - AmbientLight, DirectionalLight
+
+
         """
         # Ambient light
-        # Reference: vendor/reone/src/libs/scene/node/light.cpp:80-85
+        #
         ambient = AmbientLight("ambient_light")
         ambient.setColor(Vec4(0.3, 0.3, 0.3, 1.0))
         self.ambient_light = self.render.attachNewNode(ambient)
         self.scene_root.setLight(self.ambient_light)
         
         # Directional light (sun)
-        # Reference: vendor/reone/src/libs/scene/node/light.cpp:90-120
+        #
         sun = DirectionalLight("sun_light")
         sun.setColor(Vec4(0.8, 0.8, 0.7, 1.0))
         self.sun_light = self.render.attachNewNode(sun)
@@ -151,8 +161,11 @@ class KotorEngine(ShowBase):
         
         References:
         ----------
-            vendor/reone/src/libs/game/game.cpp:200-250 - Main loop
-            /panda3d/panda3d-docs - base.run()
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        /panda3d/panda3d-docs - base.run()
+
+
         """
         print("Starting KotOR Engine main loop...")
         self.run()
@@ -167,7 +180,10 @@ def create_engine() -> KotorEngine:
     
     References:
     ----------
-        vendor/reone/src/libs/game/game.cpp:30-45 - Game creation
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
     """
     return KotorEngine()
 

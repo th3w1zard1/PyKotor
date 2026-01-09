@@ -32,8 +32,13 @@ def get_model(
     
     References:
     ----------
-        vendor/reone/src/libs/game/object/door.cpp (Door model lookup)
-        vendor/KotOR.js/src/module/ModuleDoor.ts (Door appearance handling)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/module/ModuleDoor.ts (Door appearance handling)
+
+
         Note: Door model lookup uses genericdoors.2da
     
 
@@ -132,9 +137,13 @@ def extract_door_walkmeshes(
     
     References:
     ----------
-        vendor/reone/src/libs/game/object/door.cpp:80-94 - DWK extraction (modelname0/1/2.dwk)
-        vendor/reone/src/libs/game/object/door.cpp:66-67 - Door model lookup
-        vendor/KotOR.js/src/module/ModuleDoor.ts:992 - DWK loading
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/module/ModuleDoor.ts:992
+
+
     
     Args:
     ----
@@ -497,8 +506,10 @@ def get_door_dimensions(
     
     References:
     ----------
-        vendor/reone/src/libs/game/object/door.cpp:66-67 - Door model lookup
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
         Door dimension calculation logic from kit.py extract_kit()
+
     
     Args:
     ----

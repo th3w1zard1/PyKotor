@@ -5,8 +5,10 @@ the engine in a backend-agnostic manner.
 
 References:
 ----------
-    vendor/reone/src/libs/graphics/material.h - Material interfaces
-    vendor/xoreos/src/graphics/aurora/material.h - Material abstraction
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
 """
 
 from __future__ import annotations

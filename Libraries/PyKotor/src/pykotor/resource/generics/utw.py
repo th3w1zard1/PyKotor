@@ -20,68 +20,73 @@ class UTW:
 
     References:
     ----------
-        vendor/reone/src/libs/resource/parser/gff/utw.cpp:28-42 (UTW parsing from GFF)
-        vendor/reone/include/reone/resource/parser/gff/utw.h:28-40 (UTW structure definitions)
-        vendor/Kotor.NET/Kotor.NET/Resources/KotorUTW/UTW.cs:11-25 (UTW class definition)
-        vendor/KotOR.js/src/module/ModuleWaypoint.ts:15-80 (Waypoint module object)
-        Note: UTW files are GFF format files with specific structure definitions
+        KotOR I (swkotor.exe):
+            - 0x005c7f30 - CSWSWaypoint::LoadWaypoint (767 bytes, 106 lines)
+                - Main UTW GFF parser entry point
+                - Loads all waypoint fields from GFF structure
+                - Function signature: LoadWaypoint(CSWSWaypoint* this, CResGFF* param_2, CResStruct* param_3)
+                - Called from LoadWaypoints (0x00505360) and LoadFromTemplate (0x005c83b0)
+            - 0x00505360 - CSWSArea::LoadWaypoints
+                - Loads waypoints from area GIT file
+            - 0x005c83b0 - CSWSWaypoint::LoadFromTemplate
+                - Loads waypoint template from ResRef
+                - Calls LoadWaypoint after loading GFF
+        
+        KotOR II / TSL (swkotor2.exe):
+            - Functionally equivalent UTW parsing logic
+            - Same GFF field structure and parsing behavior
+            - String references at different addresses due to binary layout differences
+        
+        GFF Field Structure (from LoadWaypoint analysis):
+            - Root struct fields:
+                - "Tag" (CExoString) - Waypoint tag identifier
+                - "LocalizedName" (CExoLocString) - Localized waypoint name
+                - "XPosition" (FLOAT) - X coordinate position
+                - "YPosition" (FLOAT) - Y coordinate position
+                - "ZPosition" (FLOAT) - Z coordinate position
+                - "XOrientation" (FLOAT) - X orientation vector component
+                - "YOrientation" (FLOAT) - Y orientation vector component
+                - "ZOrientation" (FLOAT) - Z orientation vector component
+                - "HasMapNote" (BYTE) - Whether waypoint has a map note
+                - "MapNoteEnabled" (BYTE) - Whether map note is enabled (only read if HasMapNote is true)
+                - "MapNote" (CExoLocString) - Localized map note text (only read if HasMapNote is true)
+        
+        Note: UTW files are GFF format files with specific structure definitions (GFFContent.UTW)
 
     Attributes:
     ----------
         resref: "TemplateResRef" field. The resource reference for this waypoint template.
-            Reference: reone/utw.cpp:40 (TemplateResRef field)
-            Reference: reone/utw.h:39 (TemplateResRef field)
-            Reference: Kotor.NET/UTW.cs:15 (TemplateResRef property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTW.cs:15 (TemplateResRef property)
 
         tag: "Tag" field. Tag identifier for this waypoint.
-            Reference: reone/utw.cpp:39 (Tag field)
-            Reference: reone/utw.h:38 (Tag field)
-            Reference: Kotor.NET/UTW.cs:16 (Tag property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTW.cs:16 (Tag property)
 
         name: "LocalizedName" field. Localized name of the waypoint.
-            Reference: reone/utw.cpp:35 (LocalizedName field)
-            Reference: reone/utw.h:34 (LocalizedName field)
-            Reference: Kotor.NET/UTW.cs:17 (LocalizedName property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTW.cs:17 (LocalizedName property)
 
         has_map_note: "HasMapNote" field. Whether waypoint has a map note.
-            Reference: reone/utw.cpp:33 (HasMapNote field)
-            Reference: reone/utw.h:32 (HasMapNote field)
-            Reference: Kotor.NET/UTW.cs:19 (HasMapNote property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTW.cs:19 (HasMapNote property)
 
         map_note: "MapNote" field. Localized map note text.
-            Reference: reone/utw.cpp:36 (MapNote field)
-            Reference: reone/utw.h:35 (MapNote field)
-            Reference: Kotor.NET/UTW.cs:20 (MapNote property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTW.cs:20 (MapNote property)
 
         map_note_enabled: "MapNoteEnabled" field. Whether map note is enabled.
-            Reference: reone/utw.cpp:37 (MapNoteEnabled field)
-            Reference: reone/utw.h:36 (MapNoteEnabled field)
-            Reference: Kotor.NET/UTW.cs:21 (MapNoteEnabled property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTW.cs:21 (MapNoteEnabled property)
 
         appearance_id: "Appearance" field. Appearance type identifier. Used in toolset only.
-            Reference: reone/utw.cpp:30 (Appearance field)
-            Reference: reone/utw.h:29 (Appearance field)
-            Reference: Kotor.NET/UTW.cs:13 (Appearance property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTW.cs:13 (Appearance property)
 
         palette_id: "PaletteID" field. Palette identifier. Used in toolset only.
-            Reference: reone/utw.cpp:38 (PaletteID field)
-            Reference: reone/utw.h:37 (PaletteID field)
-            Reference: Kotor.NET/UTW.cs:22 (PaletteID property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTW.cs:22 (PaletteID property)
 
         comment: "Comment" field. Developer comment. Used in toolset only.
-            Reference: reone/utw.cpp:31 (Comment field)
-            Reference: reone/utw.h:30 (Comment field)
-            Reference: Kotor.NET/UTW.cs:23 (Comment property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTW.cs:23 (Comment property)
 
         linked_to: "LinkedTo" field. Linked waypoint tag. Not used by the game engine.
-            Reference: reone/utw.cpp:34 (LinkedTo field)
-            Reference: reone/utw.h:33 (LinkedTo field)
-            Reference: Kotor.NET/UTW.cs:14 (LinkedTo property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTW.cs:14 (LinkedTo property)
 
         description: "Description" field. Localized description. Not used by the game engine.
-            Reference: reone/utw.cpp:32 (Description field)
-            Reference: reone/utw.h:31 (Description field)
-            Reference: Kotor.NET/UTW.cs:18 (Description property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTW.cs:18 (Description property)
     """
 
     BINARY_TYPE = ResourceType.UTW

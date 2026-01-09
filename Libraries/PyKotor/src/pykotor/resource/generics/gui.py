@@ -25,14 +25,95 @@ controls, panels, buttons, labels, and layout information.
 
 References:
 ----------
-    vendor/reone/src/libs/resource/parser/gff/gui.cpp (GUI parsing from GFF)
-    vendor/reone/include/reone/resource/parser/gff/gui.h (GUI structure definitions)
-    vendor/reone/src/libs/gui/gui.cpp (GUI rendering and control handling)
-    vendor/KotOR.js/src/gui/GUIControl.ts (GUI control structure)
-    vendor/KotOR.js/src/gui/GUIProtoItem.ts (GUI proto item structure)
-    vendor/xoreos-tools/src/xml/guidumper.cpp (GUI to XML conversion)
-    vendor/xoreos-tools/src/xml/guicreator.cpp (XML to GUI conversion)
-    Note: GUI files are GFF format files with specific structure definitions
+        KotOR I (swkotor.exe):
+            - 0x0040a680 - CSWGuiPanel::StartLoadFromLayout (492 bytes)
+                - Main GUI loading entry point
+                - Loads GUI from GFF resource and initializes panel
+                - Function signature: StartLoadFromLayout(CSWGuiPanel* this, CResRef* gui_resref)
+            - 0x00418800 - CSWGuiControl::Load (64 bytes, 20 lines)
+                - Base GUI control loader
+                - Loads control from GFF struct using GetStructFromStruct
+                - Function signature: Load(CSWGuiControl* this, CSWGuiObject* param_1, CResGFF* param_2, CResStruct* param_3, CExoString* param_4)
+            - 0x00409dc0 - CSWGuiExtent::Load (146 bytes, 22 lines)
+                - Loads EXTENT struct with LEFT, TOP, WIDTH, HEIGHT fields
+                - Function signature: Load(CSWGuiExtent* this, CResGFF* param_1, CResStruct* param_2)
+                - Reads from "EXTENT" struct: LEFT (INT32), TOP (INT32), WIDTH (INT32), HEIGHT (INT32)
+            - 0x0041b960 - CSWGuiLabel::Load (182 bytes, 30 lines)
+                - Loads label control with TEXT and BORDER structs
+                - Function signature: Load(CSWGuiLabel* this, undefined param_1, undefined param_2)
+                - Reads "TEXT" struct and "BORDER" struct
+            - 0x0041d5b0 - CSWGuiListBox::Load (372 bytes, 52 lines)
+                - Loads list box control with scrollbar, proto item, and properties
+                - Function signature: Load(CSWGuiListBox* this, CResGFF* param_1, CResStruct* param_2)
+                - Reads: BORDER struct, SCROLLBAR struct, LEFTSCROLLBAR (BYTE), PADDING (INT32), COLOR (Vector3), LOOPING (BYTE)
+                - Calls LoadProtoItem to load proto item
+            - 0x0041d3e0 - CSWGuiListBox::LoadProtoItem (438 bytes, 84 lines)
+                - Loads proto item from PROTOITEM struct
+                - Function signature: LoadProtoItem(CSWGuiListBox* this, CResGFF* param_1, CResStruct* param_2)
+                - Reads "PROTOITEM" struct and "CONTROLTYPE" field (INT32)
+                - Creates control based on CONTROLTYPE: 4=ButtonToggle, 5=LabelHilight, 6=Button, 7=ButtonToggle, 8=Slider
+            - 0x0073ec58 - "CONTROLTYPE" string reference
+            - 0x0073df18 - "EXTENT" string reference
+            - 0x0073dfd4 - "BORDER" string reference
+            - 0x0073e3cc - "TEXT" string reference
+            - 0x0073e9c4 - "HILIGHT" string reference
+            - 0x0073eb7c - "MOVETO" string reference
+            - 0x0073ec3c - "HILIGHTSELECTED" string reference
+            - 0x0073ec64 - "PROTOITEM" string reference
+            - 0x0073ec80 - "LEFTSCROLLBAR" string reference
+            - 0x0073ec90 - "SCROLLBAR" string reference
+        
+        KotOR II / TSL (swkotor2.exe):
+            - 0x0041cde0 - FUN_0041cde0 (438 bytes, 81 lines, equivalent to LoadProtoItem)
+                - Functionally identical to K1 LoadProtoItem
+                - Same PROTOITEM and CONTROLTYPE parsing logic
+            - Functionally equivalent GUI parsing logic across all control types
+            - Same GFF field structure and parsing behavior
+            - String references at different addresses due to binary layout differences
+        
+        GFF Field Structure (from engine analysis):
+            - Root struct fields:
+                - "CONTROLTYPE" (INT32) - Control type enum (0=Control, 2=Panel, 4=ProtoItem, 5=Label, 6=Button, 7=CheckBox, 8=Slider, 9=ScrollBar, 10=Progress, 11=ListBox)
+                - "ID" (INT32) - Control ID
+                - "TAG" (CExoString) - Control tag identifier
+                - "Obj_Parent" (CExoString) - Parent control tag
+                - "Obj_ParentID" (INT32) - Parent control ID
+                - "Obj_Locked" (BYTE) - Locked flag
+                - "EXTENT" (GFFStruct) - Position and size:
+                    - "LEFT" (INT32) - X position
+                    - "TOP" (INT32) - Y position
+                    - "WIDTH" (INT32) - Width
+                    - "HEIGHT" (INT32) - Height
+                - "BORDER" (GFFStruct) - Border properties (corner, edge, fill, color, etc.)
+                - "TEXT" (GFFStruct) - Text properties (text, font, alignment, color, strref, pulsing)
+                - "HILIGHT" (GFFStruct) - Highlight border properties
+                - "MOVETO" (GFFStruct) - Navigation properties (UP, DOWN, LEFT, RIGHT)
+                - "COLOR" (Vector3) - Control color
+                - "ALPHA" (FLOAT) - Control alpha/transparency
+                - "CONTROLS" (GFFList) - Child controls list
+            - ListBox-specific fields:
+                - "SCROLLBAR" (GFFStruct) - Scrollbar control
+                - "PROTOITEM" (GFFStruct) - Proto item template
+                - "LEFTSCROLLBAR" (BYTE) - Scrollbar on left flag
+                - "PADDING" (INT32) - Padding value
+                - "LOOPING" (BYTE) - Looping flag
+            - CheckBox-specific fields:
+                - "SELECTED" (GFFStruct) - Selected state border
+                - "HILIGHTSELECTED" (GFFStruct) - Highlight selected state
+                - "ISSELECTED" (BYTE) - Is selected flag
+            - Progress/Slider-specific fields:
+                - "PROGRESS" (GFFStruct) - Progress bar properties
+                - "THUMB" (GFFStruct) - Slider thumb properties
+                - "MAXVALUE" (INT32) - Maximum value
+                - "CURVALUE" (INT32) - Current value
+                - "STARTFROMLEFT" (BYTE) - Start from left flag
+        
+        Note: GUI files are GFF format files with specific structure definitions (GFFContent.GUI)
+
+Derivations and Other Implementations:
+----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/gui/GUIControl.ts (GUI control structure)
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/gui/GUIProtoItem.ts (GUI proto item structure)
 """
 
 

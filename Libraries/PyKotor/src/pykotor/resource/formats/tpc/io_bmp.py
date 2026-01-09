@@ -21,8 +21,21 @@ class TPCBMPWriter(ResourceWriter):
     
     References:
     ----------
-        Standard BMP file format specification (Windows Bitmap)
-        Note: BMP is a standard format, no specific vendor implementation needed
+        Based on swkotor.exe TPC structure:
+        - CResTPC::CResTPC @ 0x00712ea0 - TPC resource constructor (51 bytes)
+          * Initializes TPC resource with vtable
+          * Sets texture format fields to 0
+        - CResTPC::GetTPCAttrib @ 0x00712ef0 - Gets TPC texture attributes (147 bytes)
+          * Returns width, height, format, mipmap count, etc.
+          * Reads from TPC header structure
+        - LoadTexturePack @ 0x0070cf30 - Loads texture pack (77 bytes, 3 callees)
+        - UnloadTexturePack @ 0x0070cf80 - Unloads texture pack (218 bytes, 6 callees)
+        - ReadTextureHeader @ 0x0070ece0, @ 0x00710430, @ 0x00710810 - Reads texture headers
+        - CreateProcessedTexture @ 0x00424dd0 - Creates processed texture (1131 bytes, 7 callees)
+        - Standard BMP file format specification (Windows Bitmap)
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        
+        Note: BMP is a standard format, but TPC conversion uses engine's texture loading functions
     
     Missing Features:
     ----------------

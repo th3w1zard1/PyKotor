@@ -45,7 +45,12 @@ def decode_bytes_with_fallbacks(  # noqa: C901
 
     References:
     ----------
-        vendor/KotOR.js (Character encoding handling in JavaScript)
+        Based on swkotor.exe ERF structure:
+        - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file
+        - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds ERF/MOD/SAV contents to key table
+        Original BioWare engine binaries
+
+
         Note: KotOR uses multiple character encodings including ASCII, UTF-8, and language-specific encodings
 
     Processing Logic:

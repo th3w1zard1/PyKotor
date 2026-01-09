@@ -23,8 +23,10 @@ class RemoveNopOptimizer(NCSOptimizer):
     
     References:
     ----------
-        vendor/xoreos-tools/src/nwscript/decompiler.cpp (NCS optimization patterns)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
         Standard compiler optimization techniques (dead code elimination)
+
         Note: NOP removal is a common bytecode optimization
     """  # noqa: D205
 

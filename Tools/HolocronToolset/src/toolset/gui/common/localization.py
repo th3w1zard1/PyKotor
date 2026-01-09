@@ -649,6 +649,12 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         # UI status messages
         "No screenshot available": "No screenshot available",
         "Missing 2DA": "Missing 2DA",
+        # LYT Editor strings
+        "Import Texture": "Import Texture",
+        "Import Model": "Import Model",
+        "Square Room": "Square Room",
+        "Circular Room": "Circular Room",
+        "L-Shaped Room": "L-Shaped Room",
         # File dialog filters
         "Module (*.mod)": "Module (*.mod)",
         "Encapsulated Resource File (*.erf)": "Encapsulated Resource File (*.erf)",
@@ -1238,6 +1244,12 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         # UI status messages
         "No screenshot available": "Aucune capture d'écran disponible",
         "Missing 2DA": "2DA manquant",
+        # LYT Editor strings
+        "Import Texture": "Importer texture",
+        "Import Model": "Importer modèle",
+        "Square Room": "Pièce carrée",
+        "Circular Room": "Pièce circulaire",
+        "L-Shaped Room": "Pièce en L",
         # File dialog filters
         "Module (*.mod)": "Module (*.mod)",
         "Encapsulated Resource File (*.erf)": "Fichier de ressource encapsulé (*.erf)",
@@ -1827,6 +1839,12 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         # UI status messages
         "No screenshot available": "Kein Screenshot verfügbar",
         "Missing 2DA": "Fehlende 2DA",
+        # LYT Editor strings
+        "Import Texture": "Textur importieren",
+        "Import Model": "Modell importieren",
+        "Square Room": "Quadratischer Raum",
+        "Circular Room": "Runder Raum",
+        "L-Shaped Room": "L-förmiger Raum",
         # File dialog filters
         "Module (*.mod)": "Modul (*.mod)",
         "Encapsulated Resource File (*.erf)": "Verkapselte Ressourcendatei (*.erf)",
@@ -2416,6 +2434,12 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         # UI status messages
         "No screenshot available": "Nessuna schermata disponibile",
         "Missing 2DA": "2DA mancante",
+        # LYT Editor strings
+        "Import Texture": "Importa texture",
+        "Import Model": "Importa modello",
+        "Square Room": "Stanza quadrata",
+        "Circular Room": "Stanza circolare",
+        "L-Shaped Room": "Stanza a L",
         # File dialog filters
         "Module (*.mod)": "Modulo (*.mod)",
         "Encapsulated Resource File (*.erf)": "File risorsa incapsulato (*.erf)",
@@ -3005,6 +3029,12 @@ _TRANSLATIONS: dict[ToolsetLanguage, dict[str, str]] = {
         # UI status messages
         "No screenshot available": "No hay captura de pantalla disponible",
         "Missing 2DA": "2DA faltante",
+        # LYT Editor strings
+        "Import Texture": "Importar textura",
+        "Import Model": "Importar modelo",
+        "Square Room": "Habitación cuadrada",
+        "Circular Room": "Habitación circular",
+        "L-Shaped Room": "Habitación en L",
         # File dialog filters
         "Module (*.mod)": "Módulo (*.mod)",
         "Encapsulated Resource File (*.erf)": "Archivo de recurso encapsulado (*.erf)",

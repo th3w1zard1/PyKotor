@@ -27,8 +27,10 @@ class LIPXMLReader(ResourceReader):
     
     References:
     ----------
-        vendor/xoreos-tools/src/xml/lipdumper.cpp (LIP to XML conversion)
-        vendor/xoreos-tools/src/xml/lipcreator.cpp (XML to LIP conversion)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
         Note: XML format structure may vary between tools
     """
     def __init__(

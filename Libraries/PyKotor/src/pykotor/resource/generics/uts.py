@@ -21,138 +21,122 @@ class UTS:
 
     References:
     ----------
-        vendor/reone/src/libs/resource/parser/gff/uts.cpp:34-64 (UTS parsing from GFF)
-        vendor/reone/include/reone/resource/parser/gff/uts.h:32-58 (UTS structure definitions)
-        vendor/Kotor.NET/Kotor.NET/Resources/KotorUTS/UTS.cs:11-38 (UTS class definition)
-        Note: UTS files are GFF format files with specific structure definitions
+        KotOR I (swkotor.exe):
+            - 0x00505560 - CSWSArea::LoadSounds (575 bytes, 93 lines)
+                - Loads sound objects from area GIT file
+                - Calls CSWSSoundObject::Load or CSWSSoundObject::LoadFromTemplate
+                - Function signature: LoadSounds(CSWSArea* this, CResGFF* param_1, CResStruct* param_2, int param_3, int param_4)
+            - 0x005c94e0 - CSWSSoundObject::LoadFromTemplate (likely)
+                - Loads sound template from ResRef
+                - Pattern consistent with other LoadFromTemplate functions
+            - CSWSSoundObject::Load (called from LoadSounds at line 51)
+                - Loads sound object from GFF struct
+                - Reads TemplateResRef, ObjectId, GeneratedType, position fields
+        
+        KotOR II / TSL (swkotor2.exe):
+            - Functionally equivalent UTS parsing logic
+            - Same GFF field structure and parsing behavior
+            - String references at different addresses due to binary layout differences
+        
+        GFF Field Structure (from LoadSounds and inferred patterns):
+            - Root struct fields:
+                - "TemplateResRef" (CResRef) - Template resource reference
+                - "ObjectId" (DWORD) - Object ID (default 0x7f000000)
+                - "GeneratedType" (DWORD) - Generated type identifier
+                - "XPosition" (FLOAT) - X coordinate position
+                - "YPosition" (FLOAT) - Y coordinate position
+                - "ZPosition" (FLOAT) - Z coordinate position
+                - "Tag" (CExoString) - Sound object tag identifier
+                - "Active" (BYTE) - Whether sound is active
+                - "Continuous" (BYTE) - Whether sound plays continuously
+                - "Looping" (BYTE) - Whether sound loops
+                - "Positional" (BYTE) - Whether sound is positional (3D)
+                - "RandomPosition" (BYTE) - Whether sound position is randomized
+                - "RandomRange" (FLOAT) - Random position range
+                - "Elevation" (FLOAT) - Sound elevation
+                - "Volume" (BYTE) - Sound volume (0-255)
+                - "PitchVariation" (FLOAT) - Pitch variation range
+                - "VolumeVariation" (FLOAT) - Volume variation range
+                - "Sound" (CResRef) - Sound resource reference
+        
+        Note: UTS files are GFF format files with specific structure definitions (GFFContent.UTS)
 
     Attributes:
     ----------
         resref: "TemplateResRef" field. The resource reference for this sound template.
-            Reference: reone/uts.cpp:59 (TemplateResRef field)
-            Reference: reone/uts.h:54 (TemplateResRef field)
-            Reference: Kotor.NET/UTS.cs:15 (TemplateResRef property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTS.cs:15 (TemplateResRef property)
 
         tag: "Tag" field. Tag identifier for this sound.
-            Reference: reone/uts.cpp:58 (Tag field)
-            Reference: reone/uts.h:53 (Tag field)
-            Reference: Kotor.NET/UTS.cs:13 (Tag property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTS.cs:13 (Tag property)
 
         active: "Active" field. Whether sound is active.
-            Reference: reone/uts.cpp:36 (Active field)
-            Reference: reone/uts.h:33 (Active field)
-            Reference: Kotor.NET/UTS.cs:16 (Active property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTS.cs:16 (Active property)
 
         continuous: "Continuous" field. Whether sound plays continuously.
-            Reference: reone/uts.cpp:38 (Continuous field)
-            Reference: reone/uts.h:35 (Continuous field)
-            Reference: Kotor.NET/UTS.cs:17 (Continuous property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTS.cs:17 (Continuous property)
 
         looping: "Looping" field. Whether sound loops.
-            Reference: reone/uts.cpp:44 (Looping field)
-            Reference: reone/uts.h:41 (Looping field)
-            Reference: Kotor.NET/UTS.cs:18 (Looping property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTS.cs:18 (Looping property)
 
         positional: "Positional" field. Whether sound is positional (3D).
-            Reference: reone/uts.cpp:49 (Positional field)
-            Reference: reone/uts.h:46 (Positional field)
-            Reference: Kotor.NET/UTS.cs:19 (Positional property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTS.cs:19 (Positional property)
 
         random_position: "RandomPosition" field. Whether sound position is randomized.
-            Reference: reone/uts.cpp:52 (RandomPosition field)
-            Reference: reone/uts.h:49 (RandomPosition field)
-            Reference: Kotor.NET/UTS.cs:20 (RandomPosition property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTS.cs:20 (RandomPosition property)
 
         random_pick: "Random" field. Whether sound is randomly selected from list.
-            Reference: reone/uts.cpp:51 (Random field)
-            Reference: reone/uts.h:48 (Random field)
-            Reference: Kotor.NET/UTS.cs:21 (Random property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTS.cs:21 (Random property)
 
         elevation: "Elevation" field. Elevation offset for positional sounds.
-            Reference: reone/uts.cpp:39 (Elevation field)
-            Reference: reone/uts.h:36 (Elevation field)
-            Reference: Kotor.NET/UTS.cs:22 (Elevation property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTS.cs:22 (Elevation property)
 
         max_distance: "MaxDistance" field. Maximum distance for positional sounds.
-            Reference: reone/uts.cpp:45 (MaxDistance field)
-            Reference: reone/uts.h:42 (MaxDistance field)
-            Reference: Kotor.NET/UTS.cs:23 (MaxDistance property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTS.cs:23 (MaxDistance property)
 
         min_distance: "MinDistance" field. Minimum distance for positional sounds.
-            Reference: reone/uts.cpp:46 (MinDistance field)
-            Reference: reone/uts.h:43 (MinDistance field)
-            Reference: Kotor.NET/UTS.cs:24 (MinDistance property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTS.cs:24 (MinDistance property)
 
         random_range_x: "RandomRangeX" field. X-axis range for random positioning.
-            Reference: reone/uts.cpp:53 (RandomRangeX field)
-            Reference: reone/uts.h:50 (RandomRangeX field)
-            Reference: Kotor.NET/UTS.cs:25 (RandomRangeX property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTS.cs:25 (RandomRangeX property)
 
         random_range_y: "RandomRangeY" field. Y-axis range for random positioning.
-            Reference: reone/uts.cpp:54 (RandomRangeY field)
-            Reference: reone/uts.h:51 (RandomRangeY field)
-            Reference: Kotor.NET/UTS.cs:26 (RandomRangeY property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTS.cs:26 (RandomRangeY property)
 
         interval: "Interval" field. Time interval between sound plays (in seconds).
-            Reference: reone/uts.cpp:41 (Interval field)
-            Reference: reone/uts.h:38 (Interval field)
-            Reference: Kotor.NET/UTS.cs:27 (Interval property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTS.cs:27 (Interval property)
 
         interval_variation: "IntervalVrtn" field. Variation in interval timing.
-            Reference: reone/uts.cpp:42 (IntervalVrtn field)
-            Reference: reone/uts.h:39 (IntervalVrtn field)
-            Reference: Kotor.NET/UTS.cs:28 (IntervalVrtn property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTS.cs:28 (IntervalVrtn property)
 
         pitch_variation: "PitchVariation" field. Pitch variation amount.
-            Reference: reone/uts.cpp:48 (PitchVariation field)
-            Reference: reone/uts.h:45 (PitchVariation field)
-            Reference: Kotor.NET/UTS.cs:29 (PitchVariation property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTS.cs:29 (PitchVariation property)
 
         priority: "Priority" field. Sound priority level.
-            Reference: reone/uts.cpp:50 (Priority field)
-            Reference: reone/uts.h:47 (Priority field)
-            Reference: Kotor.NET/UTS.cs:30 (Priority property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTS.cs:30 (Priority property)
 
         volume: "Volume" field. Volume level (0-255).
-            Reference: reone/uts.cpp:61 (Volume field)
-            Reference: reone/uts.h:56 (Volume field)
-            Reference: Kotor.NET/UTS.cs:33 (Volume property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTS.cs:33 (Volume property)
 
         volume_variation: "VolumeVrtn" field. Volume variation amount.
-            Reference: reone/uts.cpp:62 (VolumeVrtn field)
-            Reference: reone/uts.h:57 (VolumeVrtn field)
-            Reference: Kotor.NET/UTS.cs:34 (VolumeVrtn property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTS.cs:34 (VolumeVrtn property)
 
         sounds: List of ResRef objects representing sound files to play.
-            Reference: reone/uts.cpp:55-57 (Sounds list parsing)
-            Reference: reone/uts.h:52 (Sounds vector)
-            Reference: reone/uts.h:28-30 (UTS_Sounds struct)
-            Reference: Kotor.NET/UTS.cs:35 (Sounds property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTS.cs:35 (Sounds property)
 
         comment: "Comment" field. Developer comment.
-            Reference: reone/uts.cpp:37 (Comment field)
-            Reference: reone/uts.h:34 (Comment field)
-            Reference: Kotor.NET/UTS.cs:37 (Comment property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTS.cs:37 (Comment property)
 
         palette_id: "PaletteID" field. Palette identifier. Used in toolset only.
-            Reference: reone/uts.cpp:47 (PaletteID field)
-            Reference: reone/uts.h:44 (PaletteID field)
-            Reference: Kotor.NET/UTS.cs:36 (PaletteID property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTS.cs:36 (PaletteID property)
 
         name: "LocName" field. Localized name. Not used by the game engine.
-            Reference: reone/uts.cpp:43 (LocName field)
-            Reference: reone/uts.h:40 (LocName field)
-            Reference: Kotor.NET/UTS.cs:14 (LocName property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTS.cs:14 (LocName property)
 
         hours: "Hours" field. Hour restriction. Not used by the game engine.
-            Reference: reone/uts.cpp:40 (Hours field)
-            Reference: reone/uts.h:37 (Hours field)
-            Reference: Kotor.NET/UTS.cs:31 (Hours property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTS.cs:31 (Hours property)
 
         times: "Times" field. Time restriction. Not used by the game engine.
-            Reference: reone/uts.cpp:60 (Times field)
-            Reference: reone/uts.h:55 (Times field)
-            Reference: Kotor.NET/UTS.cs:32 (Times property)
+            Reference: https://github.com/th3w1zard1/Kotor.NET/tree/master/UTS.cs:32 (Times property)
             Note: PyKotor comment notes some files have this as uint8, others as uint32
     """
 

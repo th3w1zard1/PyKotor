@@ -28,66 +28,61 @@ class DLGLink(Generic[T_co]):
 
     References:
     ----------
-        vendor/reone/include/reone/resource/parser/gff/dlg.h:28-49 (DLG_EntryReplyList_EntriesRepliesList struct)
-        vendor/reone/src/libs/resource/parser/gff/dlg.cpp:28-51 (EntriesRepliesList parsing)
-        vendor/KotOR.js/src/resource/DLGLink.ts (DLG link structure)
-        vendor/Kotor.NET/Kotor.NET/Resources/KotorDLG/DLG.cs (DLG link structure)
-        Note: Links are GFF structs within EntriesList or RepliesList arrays
+        KotOR I (swkotor.exe):
+            - 0x0059ec10 - CSWSDialog::LoadDialogLinkedNode (115 bytes, 24 lines)
+                - Main DLG link GFF parser entry point
+                - Loads link entry from GFF structure
+                - Function signature: LoadDialogLinkedNode(CSWSDialog* this, CSWSDialogLinkEntry* param_1, CResGFF* param_2, CResStruct* param_3, int* param_4, ulong param_5)
+                - Called from LoadDialog (0x005a2ae0) for each link in RepliesList
+            - Reads link fields:
+                - Active (CResRef) - active script (conditional logic)
+                - Index (DWORD) - index to target entry/reply
+                - DisplayInactive (BYTE) - display inactive flag (read separately in LoadDialog)
+            - Links are stored in:
+                - RepliesList (GFFList) within EntryList entries
+                - StartingList (GFFList) at root level
+        KotOR II / TSL (swkotor2.exe):
+            - Functionally identical to K1 implementation
+            - Same GFF structure and parsing logic
+
+    Derivations and Other Implementations:
+    ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/DLGLink.ts (DLG link structure)
+        https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorDLG/DLG.cs (DLG link structure)
 
     Attributes:
     ----------
         node: Target DLGNode this link connects to.
-            Reference: reone/dlg.cpp:95-96,102-103 (list iteration creates nodes)
             The destination node in the dialog graph.
         
         list_index: "Index" field. Index of this link in its parent's link list.
-            Reference: reone/dlg.h:31 (Index field)
-            Reference: reone/dlg.cpp:32 (Index parsing)
             Used for GFF path resolution (e.g., "RepliesList\\0").
         
         active1: "Active" field. Primary conditional script ResRef.
-            Reference: reone/dlg.h:29 (Active field)
-            Reference: reone/dlg.cpp:30 (Active parsing)
             Script that must return true for this link to be available.
         
         active2: "Active2" field. Secondary conditional script (KotOR 2).
-            Reference: reone/dlg.h:30 (Active2 field)
-            Reference: reone/dlg.cpp:31 (Active2 parsing)
             Additional conditional script for KotOR 2.
         
         logic: "Logic" field. Logic operator for Active1 and Active2 (KotOR 2).
-            Reference: reone/dlg.h:34 (Logic field)
-            Reference: reone/dlg.cpp:35 (Logic parsing)
             Values: 0=AND, 1=OR (determines how Active1 and Active2 are combined).
         
         active1_not: "Not" field. Negate Active1 result (KotOR 2).
-            Reference: reone/dlg.h:35 (Not field)
-            Reference: reone/dlg.cpp:36 (Not parsing)
             If true, Active1 result is negated.
         
         active2_not: "Not2" field. Negate Active2 result (KotOR 2).
-            Reference: reone/dlg.h:36 (Not2 field)
-            Reference: reone/dlg.cpp:37 (Not2 parsing)
             If true, Active2 result is negated.
         
         active1_param1-6: "Param1-5" and "ParamStrA" fields. Parameters for Active1 script.
-            Reference: reone/dlg.h:37-48 (Param1-5, ParamStrA fields)
-            Reference: reone/dlg.cpp:38-49 (Param parsing)
             Parameters passed to the Active1 script.
         
         active2_param1-6: "Param1b-5b" and "ParamStrB" fields. Parameters for Active2 script.
-            Reference: reone/dlg.h:38-48 (Param1b-5b, ParamStrB fields)
-            Reference: reone/dlg.cpp:38-49 (Param parsing)
             Parameters passed to the Active2 script.
         
         is_child: "IsChild" field. Whether this is a child link (not in StartingList).
-            Reference: reone/dlg.h:32 (IsChild field)
-            Reference: reone/dlg.cpp:33 (IsChild parsing)
             Distinguishes links in nodes from links in StartingList.
         
         comment: "LinkComment" field. Comment string for this link.
-            Reference: reone/dlg.h:33 (LinkComment field)
-            Reference: reone/dlg.cpp:34 (LinkComment parsing)
             Developer comment, not used by game engine.
     """
 

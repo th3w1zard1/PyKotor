@@ -22,10 +22,22 @@ class NCSBinaryReader(ResourceReader):
     
     References:
     ----------
-        vendor/reone/src/libs/script/format/ncsreader.cpp:28-40 (NCS header reading)
-        vendor/reone/src/libs/script/format/ncsreader.cpp:42-195 (instruction reading)
-        vendor/xoreos-tools/src/nwscript/decompiler.cpp (NCS decompilation)
-        vendor/xoreos-docs/specs/torlack/ncs.html (NCS format specification)
+        Based on swkotor.exe NCS structure:
+        - CResNCS::CResNCS @ 0x005d4c30 - Constructor for NCS resource
+          * Initializes NCS resource with vtable
+          * Sets is_loaded = 0, size = 0, data = nullptr
+        - CResNCS::~CResNCS @ 0x005d4c50, @ 0x005d4c90 - Destructors for NCS resource
+        - ReadScriptFile @ 0x005d2260 - Reads NCS script file from resource
+        - ReadScriptsFromGff @ 0x004ebf20 - Reads script references from GFF structures
+        - LoadScripts @ 0x0066c420, @ 0x0066c740, @ 0x0066d180 - Loads scripts from various sources
+        - ExecuteCommandExecuteScript @ 0x00535b70 - Executes NCS scripts
+        - NCS file format: "NCS " type, "V1.0" version, magic byte 0x42
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        
+        Note: NCS files contain compiled NWScript bytecode. The engine loads NCS files
+        as resources and executes them through the NWScript virtual machine.
+
+
     """
     def __init__(
         self,
@@ -78,7 +90,7 @@ class NCSBinaryReader(ResourceReader):
         self._jumps = []
 
         # Read the header fields
-        # vendor/reone/src/libs/script/format/ncsreader.cpp:31-32
+        
         magic_byte = self._reader.read_uint8()  # Position 8
         total_size = self._reader.read_uint32(big=True)  # Positions 9-12: Total file size
 

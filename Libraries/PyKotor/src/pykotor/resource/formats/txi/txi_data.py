@@ -7,18 +7,36 @@ flipbook textures.
 
 References:
 ----------
-    vendor/reone/include/reone/graphics/format/txireader.h:28-48 - TxiReader class
-    vendor/reone/src/libs/graphics/format/txireader.cpp:28-139 - TXI parsing implementation
-    vendor/reone/include/reone/graphics/texture.h:75-108 - Texture::Features struct
-    vendor/KotOR.js/src/resource/TXI.ts:16-255 - TXI class and parsing
-    vendor/KotOR.js/src/enums/graphics/txi/TXIBlending.ts:11-15 - Blending enum
-    vendor/KotOR.js/src/enums/graphics/txi/TXIPROCEDURETYPE.ts:11-17 - ProcedureType enum
-    vendor/Kotor.NET/Kotor.NET/Formats/KotorTXI/TXI.cs:3-64 - TXI modifiers
-    https://nwn.wiki/display/NWN1/TXI - NWN TXI documentation (similar format)
-    
-ASCII Format:
-------------
-    TXI files are line-based ASCII text files with command-value pairs:
+        Based on swkotor.exe TXI structure:
+        - GetTXIInternal @ 0x0070e5e0 - Gets TXI data from resource (229 bytes, 6 callees)
+          * Loads TXI file as resource
+          * Returns TXI data pointer and size
+        - ReleaseTXIInternal @ 0x0070eaa0 - Releases TXI resource (71 bytes, 3 callees)
+        - CAuroraTXI::CAuroraTXI @ 0x0070fd10 - TXI parser constructor (131 bytes, 3 callees)
+          * Parses ASCII TXI file format
+          * Handles command-value pairs
+        - CResTXI::CResTXI @ 0x00710db0 - TXI resource constructor (36 bytes, 1 callee)
+        - SetTxiData @ 0x0041ecb0 - Sets TXI data (91 bytes, 2 callees)
+        - GetTxiData @ 0x0041ec90 - Gets TXI data (23 bytes)
+        - IsTxiLoaded @ 0x0041ec50 - Checks if TXI is loaded (26 bytes)
+        - GetTxiSize @ 0x0041ed20 - Gets TXI data size (23 bytes)
+        - GetProcessedTextureTXIPtr @ 0x0070f3e0 - Gets processed texture TXI pointer (33 bytes, 2 callees)
+        - GetProcessedTextureTXISize @ 0x0070f410 - Gets processed texture TXI size (33 bytes, 2 callees)
+        - ".txi" extension string @ 0x0073f09c - TXI file extension
+        - "txi" resource type string @ 0x0074dd94 - TXI resource type identifier
+        - "TXI" string @ 0x0075fb40 - TXI format identifier
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        https://nwn.wiki/display/NWN1/TXI - NWN TXI documentation (similar format)
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/TXI.ts:16-255
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/enums/graphics/txi/TXIBlending.ts:11-15
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/enums/graphics/txi/TXIPROCEDURETYPE.ts:11-17
+        https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Formats/KotorTXI/TXI.cs:3-64
+        ASCII Format:
+        ------------
+        TXI files are line-based ASCII text files with command-value pairs:
+
     
     Format: <command> <value>
     Example: "mipmap 0"
@@ -30,8 +48,6 @@ ASCII Format:
     
     Commands are case-insensitive. Values can be integers, floats, booleans (0/1),
     strings (texture names), or multi-line coordinate arrays.
-    
-    Reference: reone/txireader.cpp:28-39, KotOR.js/TXI.ts:98-252
     
 Note:
 ----
@@ -372,182 +388,151 @@ class TXIFeatures:
     
     References:
     ----------
-        vendor/reone/include/reone/graphics/texture.h:75-108 - Texture::Features struct
-        vendor/reone/src/libs/graphics/format/txireader.cpp:55-124 (feature parsing)
-        vendor/KotOR.js/src/resource/TXI.ts:16-46 (TXI class fields)
-        vendor/KotOR.js/src/resource/TXI.ts:98-252 (ParseInfo method)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/TXI.ts:16-46 (TXI class fields)
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/TXI.ts:98-252 (ParseInfo method)
+
+
         
     Attributes:
     ----------
         blending: Blending mode for texture rendering (0=None, 1=Additive, 2=PunchThrough)
-            Reference: reone/texture.h:76 (blending field, Blending enum)
-            Reference: reone/txireader.cpp:62-63 (blending parsing)
-            Reference: KotOR.js/TXI.ts:17,145-154 (blending field and parsing)
-            Reference: KotOR.js/TXIBlending.ts:11-15 (enum values)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXI.ts:17,145-154 (blending field and parsing)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXIBlending.ts:11-15 (enum values)
             Controls how texture blends with background (additive for glowing effects, punchthrough for transparency)
             
         mipmap: Enable mipmap generation (0=disabled, 1=enabled)
-            Reference: reone/texture.h:68 (minFilter/magFilter in Properties)
-            Reference: KotOR.js/TXI.ts:30,124-126 (mipMap field and parsing)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXI.ts:30,124-126 (mipMap field and parsing)
             Reference: PyKotor txi_data.py:396 (mipmap comment)
             NOTE: Engine has broken mip implementation - incorrectly mixes mip levels even on full-screen objects
             Setting to 0 tells engine to use highest resolution (mip 0)
             
         filter: Enable texture filtering (0=nearest, 1=linear)
-            Reference: KotOR.js/TXI.ts:33,142-144 (filter field and parsing)
-            Reference: reone/texture.h:38-45 (Filtering enum)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXI.ts:33,142-144 (filter field and parsing)
             Applies graphical "softening" on fonts (doesn't affect spacing)
             NOTE: Broken implementation in engine, avoid using
             
         decal: Enable decal rendering mode (0=disabled, 1=enabled)
-            Reference: reone/texture.h:79 (decal field, bool)
-            Reference: reone/txireader.cpp:96-97 (decal parsing)
-            Reference: KotOR.js/TXI.ts:31,133-135 (decal field and parsing)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXI.ts:31,133-135 (decal field and parsing)
             Decals are rendered on top of geometry without affecting depth buffer
             
         cube: Enable cube map texture (0=disabled, 1=enabled)
-            Reference: reone/texture.h:78 (cube field, bool)
-            Reference: reone/txireader.cpp:66-67 (cube parsing)
-            Reference: KotOR.js/TXI.ts:118-120 (cube parsing, sets textureType to ENVMAP)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXI.ts:118-120 (cube parsing, sets textureType to ENVMAP)
             Cube maps are used for environment mapping (skyboxes, reflections)
             
         bumpmaptexture: ResRef of bump map texture companion
-            Reference: reone/texture.h:85 (bumpmapTexture field, string)
-            Reference: reone/txireader.cpp:72-73 (bumpmaptexture parsing)
-            Reference: KotOR.js/TXI.ts:23,158-160 (bumpMapTexture field and parsing)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXI.ts:23,158-160 (bumpMapTexture field and parsing)
             Companion texture providing normal map data for bump mapping
             
         bumpyshinytexture: ResRef of bumpy shiny texture companion
-            Reference: reone/texture.h:84 (bumpyShinyTexture field, string)
-            Reference: reone/txireader.cpp:70-71 (bumpyshinytexture parsing)
-            Reference: KotOR.js/TXI.ts:24 (envMapTexture field, also used for bumpyshiny)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXI.ts:24 (envMapTexture field, also used for bumpyshiny)
             Companion texture combining bump and specular mapping
             
         envmaptexture: ResRef of environment map texture companion
-            Reference: reone/texture.h:83 (envmapTexture field, string)
-            Reference: reone/txireader.cpp:68-69 (envmaptexture parsing)
-            Reference: KotOR.js/TXI.ts:24,162-164 (envMapTexture field and parsing)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXI.ts:24,162-164 (envMapTexture field and parsing)
             Companion texture for environment mapping (reflections)
             
         bumpmapscaling: Scaling factor for bump map intensity
-            Reference: reone/texture.h:87 (bumpMapScaling field, float)
-            Reference: reone/txireader.cpp:74-75 (bumpmapscaling parsing)
-            Reference: KotOR.js/TXI.ts:21,155-157 (bumpMapScaling field and parsing)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXI.ts:21,155-157 (bumpMapScaling field and parsing)
             Controls how pronounced bump mapping effects are (default 1.0)
             
         wateralpha: Alpha transparency for water textures (0.0-1.0)
-            Reference: reone/texture.h:77 (waterAlpha field, float, -1.0 if not set)
-            Reference: reone/txireader.cpp:64-65 (wateralpha parsing)
-            Reference: KotOR.js/TXI.ts:25,165-167 (waterAlpha field and parsing)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXI.ts:25,165-167 (waterAlpha field and parsing)
             Used with proceduretype "water" for water surface rendering
             
         proceduretype: Animation procedure type ("cycle", "water", "arturo", etc.)
-            Reference: reone/texture.h:102 (procedureType field, ProcedureType enum)
-            Reference: reone/txireader.cpp:41-53,88-89 (parseProcedureType, proceduretype parsing)
-            Reference: KotOR.js/TXI.ts:19,170-187 (procedureType field and parsing)
-            Reference: KotOR.js/TXIPROCEDURETYPE.ts:11-17 (enum values)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXI.ts:19,170-187 (procedureType field and parsing)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXIPROCEDURETYPE.ts:11-17 (enum values)
             "cycle" = flipbook animation, "water" = water shader, "arturo" = unknown effect
             
         numx: Number of frames horizontally in flipbook animation
-            Reference: reone/texture.h:103 (numX field, int)
-            Reference: reone/txireader.cpp:90-91 (numx parsing)
-            Reference: KotOR.js/TXI.ts:43,188-190 (numx field and parsing)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXI.ts:43,188-190 (numx field and parsing)
             Used with proceduretype "cycle" for flipbook textures
             
         numy: Number of frames vertically in flipbook animation
-            Reference: reone/texture.h:104 (numY field, int)
-            Reference: reone/txireader.cpp:92-93 (numy parsing)
-            Reference: KotOR.js/TXI.ts:44,191-193 (numy field and parsing)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXI.ts:44,191-193 (numy field and parsing)
             Used with proceduretype "cycle" for flipbook textures
             
         fps: Frames per second for flipbook animation
-            Reference: reone/texture.h:105 (fps field, int)
-            Reference: reone/txireader.cpp:94-95 (fps parsing)
-            Reference: KotOR.js/TXI.ts:45,194-196 (fps field and parsing)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXI.ts:45,194-196 (fps field and parsing)
             Animation speed for flipbook textures (proceduretype "cycle")
             
         numchars: Number of characters in font texture
-            Reference: reone/texture.h:93 (numChars field, int)
-            Reference: reone/txireader.cpp:76-77 (numchars parsing)
-            Reference: KotOR.js/TXI.ts:32,199-201 (numchars field and parsing)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXI.ts:32,199-201 (numchars field and parsing)
             NOTE: Unsure if required - game may derive from upperleftcoords/lowerrightcoords sizes
             
         fontheight: Font height in normalized coordinates (0.0-1.0)
-            Reference: reone/texture.h:94 (fontHeight field, float)
-            Reference: reone/txireader.cpp:78-79 (fontheight parsing)
-            Reference: KotOR.js/TXI.ts:34,202-204 (fontheight field and parsing)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXI.ts:34,202-204 (fontheight field and parsing)
             Height of font characters in texture space (normalized 0-1)
             
         baselineheight: Baseline height for font rendering (0.0-1.0)
-            Reference: KotOR.js/TXI.ts:35,205-207 (baselineheight field and parsing)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXI.ts:35,205-207 (baselineheight field and parsing)
             Vertical position of text baseline in normalized coordinates
             Untested - may control accent positioning above characters
             
         texturewidth: Texture width scaling factor for fonts
-            Reference: KotOR.js/TXI.ts:36,208-210 (texturewidth field and parsing)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXI.ts:36,208-210 (texturewidth field and parsing)
             Actual displayed width of texture, allows stretching/compressing along X axis
             Tested - controls font width scaling
             
         spacingR: Horizontal spacing between characters (0.0-1.0)
-            Reference: KotOR.js/TXI.ts:37,211-213 (spacingr field and parsing)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXI.ts:37,211-213 (spacingr field and parsing)
             NOTE: Should NEVER exceed maximum of 0.002600 according to research
             Untested - controls character spacing horizontally
             
         spacingB: Vertical spacing between lines (0.0-1.0)
-            Reference: KotOR.js/TXI.ts:38,214-216 (spacingb field and parsing)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXI.ts:38,214-216 (spacingb field and parsing)
             Confirmed - spacing between each multiline string rendered in-game
             Float between 0 and 1
             
         caretindent: Indent for caret/accent marks above characters
-            Reference: KotOR.js/TXI.ts:39,217-219 (caretindent field and parsing)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXI.ts:39,217-219 (caretindent field and parsing)
             Probably determines accent information above character
             Probably negative since Y is inverted (default -0.010000)
             Untested
             
         upperleftcoords: List of upper-left UV coordinates for font character boxes
-            Reference: reone/texture.h:95 (upperLeftCoords vector, glm::vec3)
-            Reference: reone/txireader.cpp:80-83,101-111 (upperleftcoords parsing)
-            Reference: KotOR.js/TXI.ts:40,220-233 (upperleftcoords field and parsing)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXI.ts:40,220-233 (upperleftcoords field and parsing)
             Each tuple: (x, y, z) where x,y are normalized 0-1, z is always 0
             Confirmed - top-left coordinates for character boxes game draws
             
         lowerrightcoords: List of lower-right UV coordinates for font character boxes
-            Reference: reone/texture.h:96 (lowerRightCoords vector, glm::vec3)
-            Reference: reone/txireader.cpp:84-87,113-123 (lowerrightcoords parsing)
-            Reference: KotOR.js/TXI.ts:41,234-247 (lowerrightcoords field and parsing)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXI.ts:41,234-247 (lowerrightcoords field and parsing)
             Each tuple: (x, y, z) where x,y are normalized 0-1, z is always 0
             Confirmed - bottom-right coordinates for character boxes game draws
             
         isbumpmap: Flag indicating texture is a bump map (0=no, 1=yes)
-            Reference: KotOR.js/TXI.ts:22,112-114 (isbumpmap field and parsing)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXI.ts:22,112-114 (isbumpmap field and parsing)
             Marks texture as normal map for bump mapping
             
         islightmap: Flag indicating texture is a lightmap (0=no, 1=yes)
-            Reference: KotOR.js/TXI.ts:115-117 (islightmap parsing, sets textureType to LIGHTMAP)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXI.ts:115-117 (islightmap parsing, sets textureType to LIGHTMAP)
             Marks texture as pre-baked lighting data
             
         downsamplemin: Minimum downsample level
-            Reference: KotOR.js/TXI.ts:28,127-129 (downSampleMin field and parsing)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXI.ts:28,127-129 (downSampleMin field and parsing)
             Probably unsupported or broken related to mipmap issues
             
         downsamplemax: Maximum downsample level
-            Reference: KotOR.js/TXI.ts:29,130-132 (downSampleMax field and parsing)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXI.ts:29,130-132 (downSampleMax field and parsing)
             Probably unsupported or broken related to mipmap issues
             
         defaultwidth: Default texture width (pixels)
-            Reference: KotOR.js/TXI.ts:26,136-138 (defaultWidth field and parsing)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXI.ts:26,136-138 (defaultWidth field and parsing)
             Default width hint for texture loading
             
         defaultheight: Default texture height (pixels)
-            Reference: KotOR.js/TXI.ts:27,139-141 (defaultHeight field and parsing)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXI.ts:27,139-141 (defaultHeight field and parsing)
             Default height hint for texture loading
             
         compresstexture: Enable texture compression (0=no, 1=yes)
-            Reference: KotOR.js/TXI.ts:20,121-123 (isCompressed field and parsing)
+            Reference: https://github.com/th3w1zard1/KotOR.js/tree/master/TXI.ts:20,121-123 (isCompressed field and parsing)
             Controls whether texture should be compressed in memory
             
         clamp: Enable texture clamping (0=repeat, 1=clamp)
-            Reference: reone/texture.h:47-51 (Wrapping enum)
             Controls texture wrapping behavior at edges
             
         alphamean: Mean alpha value for alpha testing
@@ -568,132 +553,132 @@ class TXIFeatures:
     """
 
     def __init__(self):  # noqa: PLR0915
-        # vendor/reone/include/reone/graphics/texture.h:76
-        # vendor/reone/src/libs/graphics/format/txireader.cpp:62-63
-        # vendor/KotOR.js/src/resource/TXI.ts:17,145-154
+        
+        
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/TXI.ts:17,145-154
         # Blending mode (0=None, 1=Additive, 2=PunchThrough)
         self.blending: int | None = None
         
-        # vendor/reone/include/reone/graphics/texture.h:68
-        # vendor/KotOR.js/src/resource/TXI.ts:30,124-126
+        
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/TXI.ts:30,124-126
         # Enable mipmap generation (0=disabled, 1=enabled, NOTE: broken in engine)
         self.mipmap: bool | None = None
         
-        # vendor/KotOR.js/src/resource/TXI.ts:33,142-144
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/TXI.ts:33,142-144
         # Enable texture filtering (NOTE: broken implementation)
         self.filter: bool | None = None
         
-        # vendor/reone/include/reone/graphics/texture.h:79
-        # vendor/reone/src/libs/graphics/format/txireader.cpp:96-97
-        # vendor/KotOR.js/src/resource/TXI.ts:31,133-135
+        
+        
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/TXI.ts:31,133-135
         # Enable decal rendering mode
         self.decal: bool | None = None
         
-        # vendor/reone/include/reone/graphics/texture.h:78
-        # vendor/reone/src/libs/graphics/format/txireader.cpp:66-67
-        # vendor/KotOR.js/src/resource/TXI.ts:118-120
+        
+        
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/TXI.ts:118-120
         # Enable cube map texture
         self.cube: bool | None = None
         
-        # vendor/reone/include/reone/graphics/texture.h:85
-        # vendor/reone/src/libs/graphics/format/txireader.cpp:72-73
-        # vendor/KotOR.js/src/resource/TXI.ts:23,158-160
+        
+        
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/TXI.ts:23,158-160
         # ResRef of bump map texture companion
         self.bumpmaptexture: str | None = None
         
-        # vendor/reone/include/reone/graphics/texture.h:84
-        # vendor/reone/src/libs/graphics/format/txireader.cpp:70-71
-        # vendor/KotOR.js/src/resource/TXI.ts:24
+        
+        
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/TXI.ts:24
         # ResRef of bumpy shiny texture companion
         self.bumpyshinytexture: str | None = None
         
-        # vendor/reone/include/reone/graphics/texture.h:83
-        # vendor/reone/src/libs/graphics/format/txireader.cpp:68-69
-        # vendor/KotOR.js/src/resource/TXI.ts:24,162-164
+        
+        
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/TXI.ts:24,162-164
         # ResRef of environment map texture companion
         self.envmaptexture: str | None = None
         
-        # vendor/reone/include/reone/graphics/texture.h:87
-        # vendor/reone/src/libs/graphics/format/txireader.cpp:74-75
-        # vendor/KotOR.js/src/resource/TXI.ts:21,155-157
+        
+        
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/TXI.ts:21,155-157
         # Scaling factor for bump map intensity
         self.bumpmapscaling: float | None = None
         
-        # vendor/reone/include/reone/graphics/texture.h:77
-        # vendor/reone/src/libs/graphics/format/txireader.cpp:64-65
-        # vendor/KotOR.js/src/resource/TXI.ts:25,165-167
+        
+        
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/TXI.ts:25,165-167
         # Alpha transparency for water textures (0.0-1.0)
         self.wateralpha: float | None = None
         
-        # vendor/reone/include/reone/graphics/texture.h:102
-        # vendor/reone/src/libs/graphics/format/txireader.cpp:88-89
-        # vendor/KotOR.js/src/resource/TXI.ts:19,170-187
+        
+        
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/TXI.ts:19,170-187
         # Animation procedure type ("cycle", "water", "arturo", etc.)
         self.proceduretype: str | None = None
         
-        # vendor/reone/include/reone/graphics/texture.h:103
-        # vendor/reone/src/libs/graphics/format/txireader.cpp:90-91
-        # vendor/KotOR.js/src/resource/TXI.ts:43,188-190
+        
+        
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/TXI.ts:43,188-190
         # Number of frames horizontally in flipbook animation
         self.numx: int | None = None
         
-        # vendor/reone/include/reone/graphics/texture.h:104
-        # vendor/reone/src/libs/graphics/format/txireader.cpp:92-93
-        # vendor/KotOR.js/src/resource/TXI.ts:44,191-193
+        
+        
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/TXI.ts:44,191-193
         # Number of frames vertically in flipbook animation
         self.numy: int | None = None
         
-        # vendor/reone/include/reone/graphics/texture.h:105
-        # vendor/reone/src/libs/graphics/format/txireader.cpp:94-95
-        # vendor/KotOR.js/src/resource/TXI.ts:45,194-196
+        
+        
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/TXI.ts:45,194-196
         # Frames per second for flipbook animation
         self.fps: float | None = None
         
-        # vendor/reone/include/reone/graphics/texture.h:93
-        # vendor/reone/src/libs/graphics/format/txireader.cpp:76-77
-        # vendor/KotOR.js/src/resource/TXI.ts:32,199-201
+        
+        
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/TXI.ts:32,199-201
         # Number of characters in font texture (may be derived from coords)
         self.numchars: int | None = None
         
-        # vendor/reone/include/reone/graphics/texture.h:94
-        # vendor/reone/src/libs/graphics/format/txireader.cpp:78-79
-        # vendor/KotOR.js/src/resource/TXI.ts:34,202-204
+        
+        
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/TXI.ts:34,202-204
         # Font height in normalized coordinates (0.0-1.0)
         self.fontheight: float | None = None
         
-        # vendor/KotOR.js/src/resource/TXI.ts:224,225
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/TXI.ts:224,225
         # Font width in normalized coordinates (0.0-1.0)
         self.fontwidth: float | None = None
         
-        # vendor/KotOR.js/src/resource/TXI.ts:35,205-207
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/TXI.ts:35,205-207
         # Baseline height for font rendering (0.0-1.0)
         self.baselineheight: float | None = None
         
-        # vendor/KotOR.js/src/resource/TXI.ts:36,208-210
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/TXI.ts:36,208-210
         # Texture width scaling factor for fonts
         self.texturewidth: float | None = None
         
-        # vendor/KotOR.js/src/resource/TXI.ts:37,211-213
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/TXI.ts:37,211-213
         # Horizontal spacing between characters (0.0-1.0, max 0.002600)
         self.spacingR: float | None = None
         
-        # vendor/KotOR.js/src/resource/TXI.ts:38,214-216
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/TXI.ts:38,214-216
         # Vertical spacing between lines (0.0-1.0)
         self.spacingB: float | None = None
         
-        # vendor/KotOR.js/src/resource/TXI.ts:39,217-219
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/TXI.ts:39,217-219
         # Indent for caret/accent marks above characters (probably negative)
         self.caretindent: float | None = None
         
-        # vendor/reone/include/reone/graphics/texture.h:95
-        # vendor/reone/src/libs/graphics/format/txireader.cpp:80-83,101-111
-        # vendor/KotOR.js/src/resource/TXI.ts:40,220-233
+        
+        
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/TXI.ts:40,220-233
         # Upper-left UV coordinates for font character boxes (normalized 0-1, z always 0)
         self.upperleftcoords: list[tuple[float, float, int]] | None = None
         
-        # vendor/reone/include/reone/graphics/texture.h:96
-        # vendor/reone/src/libs/graphics/format/txireader.cpp:84-87,113-123
-        # vendor/KotOR.js/src/resource/TXI.ts:41,234-247
+        
+        
+        # https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/TXI.ts:41,234-247
         # Lower-right UV coordinates for font character boxes (normalized 0-1, z always 0)
         self.lowerrightcoords: list[tuple[float, float, int]] | None = None
         

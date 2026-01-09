@@ -6,10 +6,13 @@ and can be used by any application that needs resource conversions.
 
 References:
 ----------
-    vendor/reone/src/libs/tools/legacy/tpc.cpp - TPC to TGA conversion
-    vendor/tga2tpc/ - TGA to TPC conversion tool
-    vendor/reone/src/libs/tools/legacy/audio.cpp - Audio conversion
-    vendor/kotorblender/ - MDL model import/export
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/kotorblender/tree/master/
+
+
 """
 from __future__ import annotations
 
@@ -41,7 +44,10 @@ def convert_tpc_to_tga(
 
     References:
     ----------
-        vendor/reone/src/libs/tools/legacy/tpc.cpp:41-72
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
     """
     tpc = read_tpc(input_path)
     write_tpc(tpc, output_path, file_format=ResourceType.TGA)
@@ -69,7 +75,10 @@ def convert_tga_to_tpc(
 
     References:
     ----------
-        vendor/tga2tpc/ - TGA to TPC conversion tool
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
     """
     tpc = read_tpc(input_path, txi_source=txi_input_path)
 
@@ -95,7 +104,10 @@ def convert_wav_to_clean(
 
     References:
     ----------
-        vendor/reone/src/libs/tools/legacy/audio.cpp
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
     """
     wav = read_wav(input_path)
     write_wav(wav, output_path, file_format=ResourceType.WAV_DEOB)
@@ -119,7 +131,10 @@ def convert_clean_to_wav(
 
     References:
     ----------
-        vendor/reone/src/libs/tools/legacy/audio.cpp
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
     """
     from pykotor.resource.formats.wav.wav_data import WAVType
 
@@ -149,8 +164,14 @@ def convert_mdl_to_ascii(
 
     References:
     ----------
-        vendor/kotorblender/io_scene_kotor/format/mdl/
-        vendor/mdlops/mdlops.pl
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/
+        https://github.com/th3w1zard1/mdlops/tree/master/mdlops.pl
+
+
     """
     mdx_path = mdx_path or input_path.with_suffix(".mdx")
     if not mdx_path.exists():
@@ -176,8 +197,14 @@ def convert_ascii_to_mdl(
 
     References:
     ----------
-        vendor/kotorblender/io_scene_kotor/format/mdl/
-        vendor/mdlops/mdlops.pl
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/
+        https://github.com/th3w1zard1/mdlops/tree/master/mdlops.pl
+
+
     """
     mdl = read_mdl(input_path)
 
@@ -203,7 +230,10 @@ def convert_texture_format(
 
     References:
     ----------
-        vendor/tga2tpc/ - Texture format conversion
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
     """
     tpc = read_tpc(input_path)
 

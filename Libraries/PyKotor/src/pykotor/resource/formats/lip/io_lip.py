@@ -17,8 +17,20 @@ class LIPBinaryReader(ResourceReader):
     
     References:
     ----------
-        vendor/reone/src/libs/graphics/format/lipreader.cpp:26-50 (LIP reading)
-        vendor/reone/src/libs/graphics/format/lipwriter.cpp (LIP writing)
+        Based on swkotor.exe LIP structure:
+        - LoadLip @ 0x0070c590 - LIP file loader (221 bytes, 6 callees)
+          * Loads LIP file from resource
+          * Parses "LIP V1.0" header
+          * Reads length, entry count, and keyframe data (time + shape)
+        - "LIP V1.0" format identifier - LIP file version string
+        - ".lip" extension string - LIP file extension
+        - "lip" resource type string @ 0x0074dc80 - LIP resource type identifier
+        - "LIPS:" path prefix @ 0x00745898, @ 0x007458ac - LIP file path prefixes
+        - "FLIPSTYLE" string @ 0x0073e424 - Flip style identifier
+        - "FlipAxisX" @ 0x00752940, "FlipAxisY" @ 0x00752934 - Flip axis identifiers
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+
+
     """
     def __init__(
         self,
@@ -47,7 +59,7 @@ class LIPBinaryReader(ResourceReader):
         self._lip.length = self._reader.read_single()
         entry_count = self._reader.read_uint32()
 
-        # vendor/reone/src/libs/graphics/format/lipreader.cpp:35-45
+        
         for _ in range(entry_count):
             time = self._reader.read_single()
             shape = LIPShape(self._reader.read_uint8())

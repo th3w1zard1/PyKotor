@@ -6,9 +6,13 @@ utilities from Libraries/PyKotor.
 
 References:
 ----------
-    vendor/reone/src/libs/scene/di/module.cpp - Module loading
-    vendor/KotOR.js/src/Game.ts - Module rendering
-    Libraries/PyKotor/src/pykotor/common/module_loader.py - Backend-agnostic loading
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/Game.ts
+        Libraries/PyKotor/src/pykotor/common/module_loader.py - Backend-agnostic loading
+
 """
 
 from __future__ import annotations
@@ -37,9 +41,13 @@ class ModuleLoader:
     
     References:
     ----------
-        vendor/reone/src/libs/scene/di/module.cpp:50-200 - Module loading
-        vendor/KotOR.js/src/Game.ts:100-300 - Module rendering
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/Game.ts:100-300
         Libraries/PyKotor/src/pykotor/common/module_loader.py - Data extraction
+
     """
     
     def __init__(
@@ -71,7 +79,10 @@ class ModuleLoader:
         
         References:
         ----------
-            vendor/reone/src/libs/scene/di/module.cpp:100-150 - Module loading
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
         """
         # Get module resources using backend-agnostic loader
         git, layout = self._data_loader.get_module_resources(module)
@@ -101,7 +112,10 @@ class ModuleLoader:
         
         References:
         ----------
-            vendor/reone/src/libs/scene/di/module.cpp:150-180 - Room loading
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
         """
         for room in layout.rooms:
             room_node = self._load_model(room.model)
@@ -114,7 +128,10 @@ class ModuleLoader:
         
         References:
         ----------
-            vendor/reone/src/libs/scene/di/module.cpp:200-250 - Door loading
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
         """
         for door in git.doors:
             model_name = self._data_loader.get_door_model_name(door, module)
@@ -175,8 +192,10 @@ class ModuleLoader:
         
         References:
         ----------
-            vendor/reone/src/libs/scene/di/module.cpp:300-350 - Camera loading
-            Libraries/PyKotor/src/pykotor/resource/generics/git.py:345-450 - GITCamera structure
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Libraries/PyKotor/src/pykotor/resource/generics/git.py:345-450 - GITCamera structure
+
         """
         for i, camera in enumerate(git.cameras):
             camera_node = root.attachNewNode(f"camera_{i}")
@@ -226,7 +245,10 @@ class ModuleLoader:
         
         References:
         ----------
-            vendor/reone/src/libs/resource/provider/models.cpp:50-100
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
         """
         mdl = self.installation.resource(name, ResourceType.MDL, SEARCH_ORDER)
         mdx = self.installation.resource(name, ResourceType.MDX, SEARCH_ORDER)

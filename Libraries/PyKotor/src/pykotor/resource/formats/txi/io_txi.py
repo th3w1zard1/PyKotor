@@ -28,7 +28,10 @@ class TXIBinaryReader(ResourceReader):
 
     References:
     ----------
-        vendor/reone/src/libs/graphics/format/txireader.cpp (TXI reading)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
     """
 
     def __init__(self, source: SOURCE_TYPES, offset: int = 0, size: int = 0):

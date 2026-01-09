@@ -19,8 +19,13 @@ Usage:
     
 References:
 ----------
-    vendor/KotOR.js/src/audio/AudioFile.ts:164-205 - getPlayableByteStream()
-    vendor/reone/src/libs/audio/format/wavreader.cpp - Format detection
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/audio/AudioFile.ts:164-205
+
+
 """
 
 from __future__ import annotations
@@ -134,7 +139,7 @@ def get_playable_bytes(wav: WAV) -> bytes:
         Audio bytes playable by standard media players
         
     References:
-        vendor/KotOR.js/src/audio/AudioFile.ts:164-205 - getPlayableByteStream()
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/audio/AudioFile.ts:164-205 - getPlayableByteStream()
     """
     return bytes_wav(wav, ResourceType.WAV_DEOB)
 
@@ -151,7 +156,7 @@ def detect_audio_type(wav: WAV) -> str:
         "mp3" for MP3 format, "wav" for WAVE format
         
     References:
-        vendor/KotOR.js/src/audio/AudioFile.ts:348-354 - getExportExtension()
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/audio/AudioFile.ts:348-354 - getExportExtension()
     """
     if wav.audio_format == AudioFormat.MP3:
         return "mp3"

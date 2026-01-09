@@ -5,11 +5,14 @@ including texture/lightmap iteration, node renaming, and geometry offset calcula
 
 References:
 ----------
-    vendor/reone/src/libs/graphics/model.cpp - Model loading and parsing
-    vendor/reone/src/libs/resource/format/mdlmdxreader.cpp - MDL/MDX binary reading
-    vendor/mdlops (MDL/MDX manipulation tool)
-    vendor/kotorblender/io_scene_kotor/format/mdl/ - Blender MDL reader/writer
-    vendor/KotOR.js/src/odyssey/OdysseyModel.ts - TypeScript model handling
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/OdysseyModel.ts
+
+
     Note: Magic float values (_MESH_FP0_K1, etc.) are game-specific floating point offsets for binary patching
 """
 

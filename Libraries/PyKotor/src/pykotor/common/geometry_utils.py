@@ -6,9 +6,16 @@ backend implementation.
 
 References:
 ----------
-    Libraries/PyKotor/src/pykotor/resource/formats/mdl/io_mdl.py:1448-1577 - Tangent space calculation
-    vendor/mdlops/MDLOpsM.pm:5470-5596 - Tangent space calculation
-    vendor/reone/src/libs/graphics/mesh.cpp:200-280 - Vertex data processing
+        Based on swkotor.exe GFF structure:
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
+        - Vector3/Vector4 structures used in GFF fields
+        Original BioWare engine binaries
+        Libraries/PyKotor/src/pykotor/resource/formats/mdl/io_mdl.py:1448-1577 - Tangent space calculation
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:5470-5596
+
+
 """
 
 from __future__ import annotations
@@ -45,9 +52,16 @@ def compute_per_vertex_tangent_space(
     
     References:
     ----------
+        Based on swkotor.exe GFF structure:
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
+        - Vector3/Vector4 structures used in GFF fields
+        Original BioWare engine binaries
         Libraries/PyKotor/src/pykotor/resource/formats/mdl/io_mdl.py:1449-1578
-        vendor/mdlops/MDLOpsM.pm:5470-5596 - Tangent space calculation
-        vendor/reone/src/libs/graphics/mesh.cpp:200-280 - Vertex data processing
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:5470-5596
+
+
     """
     from pykotor.resource.formats.mdl.io_mdl import _calculate_face_normal, _calculate_tangent_space
     
@@ -130,8 +144,15 @@ def determine_vertex_format_requirements(mesh: MDLMesh) -> dict[str, bool]:
     
     References:
     ----------
-        vendor/reone/src/libs/graphics/mesh.cpp:120-150 - Vertex layout
-        vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:1169-1197 - Geometry attributes
+        Based on swkotor.exe GFF structure:
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
+        - Vector3/Vector4 structures used in GFF fields
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/three/odyssey/OdysseyModel3D.ts:1169-1197
+
+
     """
     return {
         "has_normals": len(mesh.vertex_normals) > 0 if mesh.vertex_normals is not None else False,

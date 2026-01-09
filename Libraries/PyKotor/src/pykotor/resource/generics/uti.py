@@ -25,93 +25,92 @@ class UTI:
 
     References:
     ----------
-        vendor/reone/src/libs/resource/parser/gff/uti.cpp (UTI parsing from GFF)
-        vendor/reone/include/reone/resource/parser/gff/uti.h:39-60 (UTI structure definitions)
-        vendor/Kotor.NET/Kotor.NET/Resources/KotorUTI/UTI.cs:11-33 (UTI class definition)
-        Note: UTI files are GFF format files with specific structure definitions
+        KotOR I (swkotor.exe):
+            - 0x0055fcd0 - CSWSItem::LoadDataFromGff (2927 bytes, 448 lines)
+                - Main UTI GFF parser entry point
+                - Loads all UTI template fields from GFF structure
+                - Function signature: LoadDataFromGff(CSWSItem* this, CResGFF* param_1, CResStruct* param_2)
+                - Called from LoadFromTemplate (0x005608b0) and LoadItem (0x00560970)
+            - 0x00560970 - CSWSItem::LoadItem (445 bytes, 48 lines)
+                - Loads item from GFF (used in containers/stores)
+                - Reads EquippedRes, InventoryRes, Dropable, Pickpocketable
+                - Calls LoadDataFromGff when no EquippedRes/InventoryRes present
+            - 0x005608b0 - CSWSItem::LoadFromTemplate
+                - Loads UTI template from ResRef
+                - Calls LoadDataFromGff after loading GFF
+            - 0x00747494 - "TemplateResRef" string reference
+            - 0x00749018 - "BaseItem" string reference
+            - 0x00748fec - "LocalizedName" string reference
+            - 0x00748ffc - "DescIdentified" string reference
+            - 0x00748f88 - "Charges" string reference
+            - 0x00748f7c - "MaxCharges" string reference
+            - 0x00748fe0 - "StackSize" string reference
+        
+        KotOR II / TSL (swkotor2.exe):
+            - Functionally equivalent UTI parsing logic
+            - Same GFF field structure and parsing behavior
+            - String references at different addresses due to binary layout differences
+        
+        GFF Field Structure (from LoadDataFromGff analysis):
+            - Root struct fields:
+                - "BaseItem" (INT32) - Base item type identifier
+                - "Tag" (CExoString) - Item tag identifier
+                - "Identified" (BYTE) - Whether item is identified (bit 0 of bit_flags)
+                - "Description" (CExoLocString) - Description when not identified
+                - "DescIdentified" (CExoLocString) - Description when identified
+                - "LocalizedName" (CExoLocString) - Localized item name
+                - "StackSize" (WORD) - Maximum stack size
+                - "Stolen" (BYTE) - Whether item is stolen (bit 5 of bit_flags)
+                - "Upgrades" (DWORD) - Upgrade level/bitfield
+                - "Dropable" (BYTE) - Whether item can be dropped (bit 3 of bit_flags)
+                - "Pickpocketable" (BYTE) - Whether item can be pickpocketed (bit 4 of bit_flags)
+                - "NonEquippable" (BYTE) - Whether item cannot be equipped (bit 6 of bit_flags)
+                - "ModelVariation" (BYTE) - Model variation index
+                - "ModelPart1" (BYTE) - Model part 1 index (fallback if ModelVariation is 0)
+                - "TextureVar" (BYTE) - Texture variation (for armor items)
+                - "Charges" (BYTE) - Current charges (default 0x32 = 50)
+                - "MaxCharges" (BYTE) - Maximum charges
+                - "NewItem" (BYTE) - New item flag (bit 7 of bit_flags)
+                - "DELETING" (BYTE) - Deletion flag (bit 8 of bit_flags)
+                - "AddCost" (DWORD) - Additional cost modifier
+                - "Plot" (BYTE) - Whether item is plot-critical
+                - "PropertiesList" (GFFList) - List of item properties
+            - PropertiesList element struct fields:
+                - "PropertyName" (WORD) - Property type identifier
+                - "Subtype" (WORD) - Property subtype
+                - "CostTable" (BYTE) - Cost table index
+                - "CostValue" (WORD) - Cost value
+                - "Param1" (BYTE) - Parameter 1
+                - "Param1Value" (BYTE) - Parameter 1 value
+                - "ChanceAppear" (BYTE) - Chance to appear (0-100)
+                - "Useable" (BYTE) - Whether property is usable (default 1)
+                - "UsesPerDay" (BYTE) - Uses per day limit (default 0xff = unlimited)
+                - "UpgradeType" (BYTE) - Upgrade type (default 0xff)
+        
+        Note: UTI files are GFF format files with specific structure definitions (GFFContent.UTI)
 
     Attributes:
     ----------
         resref: "TemplateResRef" field. The resource reference for this item template.
-            Reference: reone/uti.h:57 (TemplateResRef field)
-            Reference: Kotor.NET/UTI.cs:27 (TemplateResRef property)
-
         base_item: "BaseItem" field. Base item type identifier.
-            Reference: reone/uti.h:41 (BaseItem field)
-            Reference: Kotor.NET/UTI.cs:14 (BaseItem property)
-
         name: "LocalizedName" field. Localized name of the item.
-            Reference: reone/uti.h:49 (LocalizedName field)
-            Reference: Kotor.NET/UTI.cs:21 (LocalizedName property)
-
         description: "DescIdentified" field. Localized description when identified.
-            Reference: reone/uti.h:46 (DescIdentified field)
-            Reference: Kotor.NET/UTI.cs:19 (DescIdentified property)
-
         description2: "Description" field. Localized description.
-            Reference: reone/uti.h:47 (Description field)
-            Reference: Kotor.NET/UTI.cs:20 (Description property)
-
         tag: "Tag" field. Tag identifier for this item.
-            Reference: reone/uti.h:56 (Tag field)
-            Reference: Kotor.NET/UTI.cs:26 (Tag property)
-
         charges: "Charges" field. Number of charges remaining.
-            Reference: reone/uti.h:43 (Charges field)
-            Reference: Kotor.NET/UTI.cs:16 (Charges property)
-
         cost: "Cost" field. Base cost of the item.
-            Reference: reone/uti.h:45 (Cost field)
-            Reference: Kotor.NET/UTI.cs:18 (Cost property)
-
         stack_size: "StackSize" field. Maximum stack size.
-            Reference: reone/uti.h:54 (StackSize field)
-            Reference: Kotor.NET/UTI.cs:25 (StackSize property)
-
         plot: "Plot" field. Whether item is plot-critical.
-            Reference: reone/uti.h:52 (Plot field)
-            Reference: Kotor.NET/UTI.cs:24 (Plot property)
-
         add_cost: "AddCost" field. Additional cost modifier.
-            Reference: reone/uti.h:40 (AddCost field)
-            Reference: Kotor.NET/UTI.cs:13 (AddCost property)
-
         palette_id: "PaletteID" field. Palette identifier. Used in toolset only.
-            Reference: reone/uti.h:51 (PaletteID field)
-            Reference: Kotor.NET/UTI.cs:23 (PaletteID property)
-
         comment: "Comment" field. Developer comment.
-            Reference: reone/uti.h:44 (Comment field)
-            Reference: Kotor.NET/UTI.cs:17 (Comment property)
-
         upgrade_level: "UpgradeLevel" field. Upgrade level of the item.
-            Reference: reone/uti.h:59 (UpgradeLevel field)
-            Reference: Kotor.NET/UTI.cs:29 (UpgradeLevel property)
-
         properties: List of UTIProperty objects representing item properties.
-            Reference: reone/uti.h:53 (PropertiesList vector)
-            Reference: reone/uti.h:28-37 (UTI_PropertiesList struct)
-            Reference: Kotor.NET/UTI.cs:32 (Properties property)
-
         body_variation: "BodyVariation" field. Body variation index. Armor items only.
-            Reference: reone/uti.h:42 (BodyVariation field)
-            Reference: Kotor.NET/UTI.cs:15 (BodyVariation property)
-
         model_variation: "ModelVariation" field. Model variation index. Armor items only.
-            Reference: reone/uti.h:50 (ModelVariation field)
-            Reference: Kotor.NET/UTI.cs:22 (ModelVariation property)
-
         texture_variation: "TextureVar" field. Texture variation index. Armor items only.
-            Reference: reone/uti.h:58 (TextureVar field)
-            Reference: Kotor.NET/UTI.cs:28 (TextureVar property)
-
         stolen: "Stolen" field. Whether item is stolen. Deprecated.
-            Reference: reone/uti.h:55 (Stolen field)
-            Reference: Kotor.NET/UTI.cs:30 (Stolen property)
-
         identified: "Identified" field. Whether item is identified. Deprecated.
-            Reference: reone/uti.h:48 (Identified field)
-            Reference: Kotor.NET/UTI.cs:31 (Identified property)
     """
 
     BINARY_TYPE = ResourceType.UTI
@@ -153,42 +152,36 @@ class UTIProperty:
 
     References:
     ----------
-        vendor/reone/include/reone/resource/parser/gff/uti.h:28-37 (UTI_PropertiesList struct)
-        vendor/Kotor.NET/Kotor.NET/Resources/KotorUTI/UTI.cs:35-45 (UTIProperty class)
+        KotOR I (swkotor.exe):
+            - 0x0055fcd0 - CSWSItem::LoadDataFromGff (2927 bytes, 448 lines)
+                - Loads PropertiesList from UTI GFF structure
+                - Function signature: LoadDataFromGff(CSWSItem* this, CResGFF* param_1, CResStruct* param_2)
+                - Called from LoadFromTemplate (0x005608b0) and LoadItem (0x00560970)
+            - Reads PropertiesList (GFFList) at line 150:
+                - PropertyName (WORD) - property name identifier
+                - Subtype (WORD) - property subtype identifier
+                - CostTable (BYTE) - cost table identifier
+                - CostValue (WORD) - cost value
+                - Param1 (BYTE) - first parameter
+                - Param1Value (BYTE) - first parameter value
+                - ChanceAppear (BYTE) - chance this property appears (0-100)
+                - Useable (BYTE) - usable flag (default: 1)
+                - UsesPerDay (BYTE) - uses per day (default: 0xFF)
+                - UpgradeType (BYTE) - upgrade type identifier (default: 0xFF)
+        KotOR II / TSL (swkotor2.exe):
+            - Functionally identical to K1 implementation
+            - Same GFF structure and parsing logic
 
     Attributes:
     ----------
         cost_table: "CostTable" field. Cost table identifier.
-            Reference: reone/uti.h:30 (CostTable field)
-            Reference: Kotor.NET/UTI.cs:37 (CostTable property)
-
         cost_value: "CostValue" field. Cost value.
-            Reference: reone/uti.h:31 (CostValue field)
-            Reference: Kotor.NET/UTI.cs:38 (CostValue property)
-
         param1: "Param1" field. First parameter.
-            Reference: reone/uti.h:32 (Param1 field)
-            Reference: Kotor.NET/UTI.cs:39 (Param1 property)
-
         param1_value: "Param1Value" field. First parameter value.
-            Reference: reone/uti.h:33 (Param1Value field)
-            Reference: Kotor.NET/UTI.cs:40 (Param1Value property)
-
         property_name: "PropertyName" field. Property name identifier.
-            Reference: reone/uti.h:34 (PropertyName field)
-            Reference: Kotor.NET/UTI.cs:41 (PropertyName property)
-
         subtype: "Subtype" field. Property subtype identifier.
-            Reference: reone/uti.h:35 (Subtype field)
-            Reference: Kotor.NET/UTI.cs:42 (Subtype property)
-
         chance_appear: "ChanceAppear" field. Chance this property appears (0-100).
-            Reference: reone/uti.h:29 (ChanceAppear field)
-            Reference: Kotor.NET/UTI.cs:44 (ChanceAppear property)
-
         upgrade_type: "UpgradeType" field. Upgrade type identifier.
-            Reference: reone/uti.h:36 (UpgradeType field)
-            Reference: Kotor.NET/UTI.cs:43 (UpgradeType property)
     """
     def __init__(self):
         self.cost_table: int = 0
@@ -215,101 +208,47 @@ def construct_uti(gff: GFF) -> UTI:
     
     References:
     ----------
-        vendor/reone/src/libs/resource/parser/gff/uti.cpp:41-66 (parseUTI function)
-        vendor/reone/include/reone/resource/parser/gff/uti.h:39-60 (UTI struct definition)
-        vendor/Kotor.NET/Kotor.NET/Resources/KotorUTI/UTI.cs:11-33 (UTI class definition)
-        vendor/xoreos-tools/src/xml/utidumper.cpp (UTI to XML conversion)
-        Original BioWare Odyssey Engine (UTI GFF structure specification)
+        Based on swkotor.exe UTI structure:
+        - CSWSItem::LoadDataFromGff @ 0x0055fcd0 - Loads item data from GFF
+        - CSWSItem::LoadItem @ 0x00560970 - Loads item template
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates GFF file structure
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
     """
     uti = UTI()
 
     root = gff.root
-    # vendor/reone/src/libs/resource/parser/gff/uti.cpp:62 (TemplateResRef field)
-    # vendor/Kotor.NET/Kotor.NET/Resources/KotorUTI/UTI.cs:27 (TemplateResRef property)
     uti.resref = root.acquire("TemplateResRef", ResRef.from_blank())
-    # vendor/reone/src/libs/resource/parser/gff/uti.cpp:44 (BaseItem field as int)
-    # vendor/Kotor.NET/Kotor.NET/Resources/KotorUTI/UTI.cs:14 (BaseItem property)
     uti.base_item = root.acquire("BaseItem", 0)
-    # vendor/reone/src/libs/resource/parser/gff/uti.cpp:52 (LocalizedName field as pair<int, string>)
-    # vendor/Kotor.NET/Kotor.NET/Resources/KotorUTI/UTI.cs:21 (LocalizedName property)
     uti.name = root.acquire("LocalizedName", LocalizedString.from_invalid())
-    # vendor/reone/src/libs/resource/parser/gff/uti.cpp:49 (DescIdentified field as pair<int, string>)
-    # vendor/Kotor.NET/Kotor.NET/Resources/KotorUTI/UTI.cs:19 (DescIdentified property)
     uti.description = root.acquire("DescIdentified", LocalizedString.from_invalid())
-    # vendor/reone/src/libs/resource/parser/gff/uti.cpp:50 (Description field as pair<int, string>)
-    # vendor/Kotor.NET/Kotor.NET/Resources/KotorUTI/UTI.cs:20 (Description property)
     uti.description2 = root.acquire("Description", LocalizedString.from_invalid())
-    # vendor/reone/src/libs/resource/parser/gff/uti.cpp:61 (Tag field)
-    # vendor/Kotor.NET/Kotor.NET/Resources/KotorUTI/UTI.cs:26 (Tag property)
     uti.tag = root.acquire("Tag", "")
-    # vendor/reone/src/libs/resource/parser/gff/uti.cpp:46 (Charges field as uint8)
-    # vendor/Kotor.NET/Kotor.NET/Resources/KotorUTI/UTI.cs:16 (Charges property)
     uti.charges = root.acquire("Charges", 0)
-    # vendor/reone/src/libs/resource/parser/gff/uti.cpp:48 (Cost field as uint32)
-    # vendor/Kotor.NET/Kotor.NET/Resources/KotorUTI/UTI.cs:18 (Cost property)
     uti.cost = root.acquire("Cost", 0)
-    # vendor/reone/src/libs/resource/parser/gff/uti.cpp:59 (StackSize field as uint16)
-    # vendor/Kotor.NET/Kotor.NET/Resources/KotorUTI/UTI.cs:25 (StackSize property)
     uti.stack_size = root.acquire("StackSize", 0)
-    # vendor/reone/src/libs/resource/parser/gff/uti.cpp:55 (Plot field as uint8)
-    # vendor/Kotor.NET/Kotor.NET/Resources/KotorUTI/UTI.cs:24 (Plot property)
     uti.plot = root.acquire("Plot", 0)
-    # vendor/reone/src/libs/resource/parser/gff/uti.cpp:43 (AddCost field as uint32)
-    # vendor/Kotor.NET/Kotor.NET/Resources/KotorUTI/UTI.cs:13 (AddCost property)
     uti.add_cost = root.acquire("AddCost", 0)
-    # vendor/reone/src/libs/resource/parser/gff/uti.cpp:54 (PaletteID field as uint8, toolset-only)
-    # vendor/Kotor.NET/Kotor.NET/Resources/KotorUTI/UTI.cs:23 (PaletteID property)
     uti.palette_id = root.acquire("PaletteID", 0)
-    # vendor/reone/src/libs/resource/parser/gff/uti.cpp:47 (Comment field)
-    # vendor/Kotor.NET/Kotor.NET/Resources/KotorUTI/UTI.cs:17 (Comment property)
     uti.comment = root.acquire("Comment", "")
-    # vendor/reone/src/libs/resource/parser/gff/uti.cpp:53 (ModelVariation field as uint8, armor items only)
-    # vendor/Kotor.NET/Kotor.NET/Resources/KotorUTI/UTI.cs:22 (ModelVariation property)
     uti.model_variation = root.acquire("ModelVariation", 0)
-    # vendor/reone/src/libs/resource/parser/gff/uti.cpp:45 (BodyVariation field as uint8, armor items only)
-    # vendor/Kotor.NET/Kotor.NET/Resources/KotorUTI/UTI.cs:15 (BodyVariation property)
     uti.body_variation = root.acquire("BodyVariation", 0)
-    # vendor/reone/src/libs/resource/parser/gff/uti.cpp:63 (TextureVar field as uint8, armor items only)
-    # vendor/Kotor.NET/Kotor.NET/Resources/KotorUTI/UTI.cs:28 (TextureVar property)
     uti.texture_variation = root.acquire("TextureVar", 0)
-    # vendor/reone/src/libs/resource/parser/gff/uti.cpp:64 (UpgradeLevel field as uint8, KotOR 2 only)
-    # vendor/Kotor.NET/Kotor.NET/Resources/KotorUTI/UTI.cs:29 (UpgradeLevel property)
     uti.upgrade_level = root.acquire("UpgradeLevel", 0)
-    # vendor/reone/src/libs/resource/parser/gff/uti.cpp:60 (Stolen field as uint8, deprecated)
-    # vendor/Kotor.NET/Kotor.NET/Resources/KotorUTI/UTI.cs:30 (Stolen property)
     uti.stolen = root.acquire("Stolen", 0)
-    # vendor/reone/src/libs/resource/parser/gff/uti.cpp:51 (Identified field as uint8, deprecated)
-    # vendor/Kotor.NET/Kotor.NET/Resources/KotorUTI/UTI.cs:31 (Identified property)
     uti.identified = root.acquire("Identified", 0)
 
-    # vendor/reone/src/libs/resource/parser/gff/uti.cpp:56-58 (PropertiesList parsing)
-    # vendor/reone/include/reone/resource/parser/gff/uti.h:53 (PropertiesList vector)
-    # vendor/Kotor.NET/Kotor.NET/Resources/KotorUTI/UTI.cs:32 (Properties property)
     # PropertiesList contains item properties (enchantments, upgrades, etc.)
     for property_struct in root.acquire("PropertiesList", GFFList()):
         prop = UTIProperty()
         uti.properties.append(prop)
-        # vendor/reone/src/libs/resource/parser/gff/uti.cpp:28-38 (parseUTI_PropertiesList)
-        # vendor/reone/include/reone/resource/parser/gff/uti.h:28-37 (UTI_PropertiesList struct)
-        # vendor/Kotor.NET/Kotor.NET/Resources/KotorUTI/UTI.cs:35-45 (UTIProperty class)
-        # vendor/reone/src/libs/resource/parser/gff/uti.cpp:31 (CostTable field as uint8)
         prop.cost_table = property_struct.acquire("CostTable", 0)
-        # vendor/reone/src/libs/resource/parser/gff/uti.cpp:32 (CostValue field as uint16)
         prop.cost_value = property_struct.acquire("CostValue", 0)
-        # vendor/reone/src/libs/resource/parser/gff/uti.cpp:33 (Param1 field as uint8)
         prop.param1 = property_struct.acquire("Param1", 0)
-        # vendor/reone/src/libs/resource/parser/gff/uti.cpp:34 (Param1Value field as uint8)
         prop.param1_value = property_struct.acquire("Param1Value", 0)
-        # vendor/reone/src/libs/resource/parser/gff/uti.cpp:35 (PropertyName field as uint16)
         prop.property_name = property_struct.acquire("PropertyName", 0)
-        # vendor/reone/src/libs/resource/parser/gff/uti.cpp:36 (Subtype field as uint16)
         prop.subtype = property_struct.acquire("Subtype", 0)
-        # vendor/reone/src/libs/resource/parser/gff/uti.cpp:30 (ChanceAppear field as uint8, default 100)
         prop.chance_appear = property_struct.acquire("ChanceAppear", 100)
 
-        # vendor/reone/src/libs/resource/parser/gff/uti.cpp:37 (UpgradeType field as uint8, optional)
-        # Discrepancy: PyKotor treats UpgradeType as optional (checks exists()), reone always reads it
-        # NOTE: Kotor.NET also treats UpgradeType as optional (byte UpgradeType { get; set; })
         if property_struct.exists("UpgradeType"):
             prop.upgrade_type = property_struct.acquire("UpgradeType", 0)
 

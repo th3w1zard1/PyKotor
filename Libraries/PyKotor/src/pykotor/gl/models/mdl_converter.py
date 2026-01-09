@@ -9,9 +9,13 @@ should be handled in the respective backend modules.
 
 References:
 ----------
-    vendor/reone/src/libs/graphics/mesh.cpp:100-350 - Mesh conversion
-    vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:150-400 - Geometry creation
-    Libraries/PyKotor/src/pykotor/common/geometry_utils.py - Geometry utilities
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/three/odyssey/OdysseyModel3D.ts:150-400
+        Libraries/PyKotor/src/pykotor/common/geometry_utils.py - Geometry utilities
+
 """
 
 from __future__ import annotations
@@ -92,8 +96,13 @@ def get_node_type_priority(mdl_node: "MDLNode") -> int:
     
     References:
     ----------
-        vendor/reone/src/libs/scene/node/model.cpp:62-69 - Node type checking
-        vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:987-1004 - Node type priority
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/three/odyssey/OdysseyModel3D.ts:987-1004
+
+
     """
     # Priority order (higher = checked first):
     # AABB > Saber > Dangly > Skin > Mesh > Light > Emitter > Reference > Dummy
@@ -130,7 +139,10 @@ def get_node_converter_type(mdl_node: "MDLNode") -> str:
     
     References:
     ----------
-        vendor/reone/src/libs/scene/node/model.cpp:62-69 - Node type checking
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
     """
     # Check in priority order
     if mdl_node.aabb:
@@ -167,8 +179,13 @@ def should_reverse_winding_order(backend: str = "opengl") -> bool:
     
     References:
     ----------
-        vendor/xoreos/src/graphics/mesh.cpp:300 - Winding order reversal
-        vendor/KotOR.js/src/three/odyssey/OdysseyModel3D.ts:1169 - No reversal (Three.js handles it)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/three/odyssey/OdysseyModel3D.ts:1169 (Three.js handles it)
+
+
     """
     # Backend-specific winding order requirements
     # Most backends expect CCW, so we reverse from KotOR's CW

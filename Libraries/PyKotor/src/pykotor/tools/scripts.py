@@ -6,9 +6,10 @@ tool-agnostic and can be used by any application that needs to work with scripts
 
 References:
 ----------
-    vendor/xoreos-tools/src/ncsdecomp.cpp - NCS decompiler
-    vendor/xoreos-tools/src/ncsdis.cpp - NCS disassembler
-    vendor/xoreos-docs/specs/torlack/ncs.html - NCS format specification
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
 """
 from __future__ import annotations
 
@@ -47,7 +48,10 @@ def decompile_ncs_to_nss(
 
     References:
     ----------
-        vendor/xoreos-tools/src/ncsdecomp.cpp
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
     """
     ncs = read_ncs(ncs_path)
     source = decompile_ncs(ncs, game, functions, constants)
@@ -80,7 +84,10 @@ def disassemble_ncs(
 
     References:
     ----------
-        vendor/xoreos-tools/src/ncsdis.cpp
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+
+
     """
     ncs: NCS = read_ncs(ncs_path)
 

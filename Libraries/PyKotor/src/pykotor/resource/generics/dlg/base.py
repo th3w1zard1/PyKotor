@@ -43,108 +43,101 @@ class DLG:
     
     References:
     ----------
-        vendor/reone/include/reone/resource/parser/gff/dlg.h:115-141 (DLG struct definition)
-        vendor/reone/src/libs/resource/parser/gff/dlg.cpp:37-172 (DLG parsing from GFF)
-        vendor/reone/include/reone/resource/dialog.h (Dialog resource abstraction)
-        vendor/KotOR.js/src/resource/DLGObject.ts (DLG loading and dialog tree structure)
-        vendor/KotOR.js/src/resource/DLGNode.ts (DLG node structure)
-        vendor/xoreos-tools/src/xml/dlgdumper.cpp (DLG to XML conversion)
-        vendor/xoreos-tools/src/xml/dlgcreator.cpp (XML to DLG conversion)
-        vendor/Kotor.NET/Kotor.NET/Resources/KotorDLG/DLG.cs (DLG structure)
-        vendor/Kotor.NET/Kotor.NET/Resources/KotorDLG/DLGDecompiler.cs (DLG parsing)
-        Note: DLG files are GFF format files with specific structure definitions
+        KotOR I (swkotor.exe):
+            - 0x005a2ae0 - CSWSDialog::LoadDialog (2900 bytes, 400 lines)
+                - Main DLG GFF parser entry point
+                - Loads dialog from GFF structure
+                - Function signature: LoadDialog(CSWSDialog* this, CResGFF* param_1, int param_2)
+                - Called from StartDialog (0x004cf490) and RunDialogOneLiner (0x004cb220)
+            - 0x0059f5f0 - CSWSDialog::LoadDialogBase (1385 bytes, 204 lines)
+                - Loads base dialog node fields (entries/replies)
+                - Function signature: LoadDialogBase(CSWSDialog* this, CSWSDialogBase* param_1, CResGFF* param_2, CResStruct* param_3, ulong* param_4, int* param_5)
+                - Called from LoadDialog for each entry/reply
+            - 0x0059ec10 - CSWSDialog::LoadDialogLinkedNode (115 bytes, 24 lines)
+                - Loads dialog link entry fields
+                - Function signature: LoadDialogLinkedNode(CSWSDialog* this, CSWSDialogLinkEntry* param_1, CResGFF* param_2, CResStruct* param_3, int* param_4, ulong param_5)
+                - Called from LoadDialog for each link in RepliesList
+            - Reads top-level fields:
+                - CameraModel (CResRef), DelayEntry (DWORD), DelayReply (DWORD)
+                - EndConversation (CResRef), EndConverAbort (CResRef)
+                - Skippable (BYTE), ConversationType (INT), ComputerType (BYTE)
+                - AmbientTrack (CResRef), UnequipItems (BYTE), UnequipHItem (BYTE)
+                - AnimatedCut (BYTE), OldHitCheck (BYTE)
+            - Reads EntryList (GFFList) - dialog entries
+            - Reads ReplyList (GFFList) - dialog replies
+            - Reads StartingList (GFFList) - starting entries (Active, Index)
+            - Reads StuntList (GFFList) - stunt models
+            - Base node fields (via LoadDialogBase):
+                - Text (CExoLocString), Script (CResRef), Speaker (CExoString)
+                - WaitFlags (DWORD), Quest (CExoString), QuestEntry (DWORD)
+                - PlotIndex (INT), PlotXPPercentage (FLOAT), Delay (DWORD)
+                - FadeType (BYTE), FadeColor (Vector), FadeDelay (FLOAT), FadeLength (FLOAT)
+                - Sound (CResRef), VO_ResRef (CResRef), SoundExists (BYTE)
+                - AnimList (GFFList) - animations (Participant, Animation)
+            - Link fields (via LoadDialogLinkedNode):
+                - Active (CResRef), Index (DWORD), DisplayInactive (BYTE)
+        KotOR II / TSL (swkotor2.exe):
+            - Functionally identical to K1 implementation
+            - Same GFF structure and parsing logic
+
+    Derivations and Other Implementations:
+    ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/DLGObject.ts (DLG loading and dialog tree structure)
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/DLGNode.ts (DLG node structure)
+        https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorDLG/DLG.cs (DLG structure)
+        https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Resources/KotorDLG/DLGDecompiler.cs (DLG parsing)
 
     Attributes:
     ----------
         starters: "StartingList" field. List of initial dialog links.
-            Reference: reone/dlg.h:136 (StartingList vector)
-            Reference: reone/dlg.cpp:170-171 (StartingList parsing)
             The entry points into the dialog tree.
         
         stunts: "StuntList" field. List of stunt model references.
-            Reference: reone/dlg.h:56-59 (DLG_StuntList struct)
-            Reference: reone/dlg.cpp:60-65 (StuntList parsing)
             Used for special dialog animations.
         
         word_count: "NumWords" field. Word count for dialog.
-            Reference: reone/dlg.h:130 (NumWords field)
-            Reference: reone/dlg.cpp:168 (NumWords parsing)
         
         on_abort: "EndConverAbort" field. Script to run on conversation abort.
-            Reference: reone/dlg.h:126 (EndConverAbort field)
-            Reference: reone/dlg.cpp:166 (EndConverAbort parsing)
         
         on_end: "EndConversation" field. Script to run when conversation ends.
-            Reference: reone/dlg.h:127 (EndConversation field)
-            Reference: reone/dlg.cpp:167 (EndConversation parsing)
         
         skippable: "Skippable" field. Whether dialog can be skipped.
-            Reference: reone/dlg.h:135 (Skippable field)
-            Reference: reone/dlg.cpp:169 (Skippable parsing)
         
         ambient_track: "AmbientTrack" field. Background music track.
-            Reference: reone/dlg.h:117 (AmbientTrack field)
-            Reference: reone/dlg.cpp:164 (AmbientTrack parsing)
         
         animated_cut: "AnimatedCut" field. Animated cutscene flag.
-            Reference: reone/dlg.h:118 (AnimatedCut field)
-            Reference: reone/dlg.cpp:165 (AnimatedCut parsing)
         
         camera_model: "CameraModel" field. Camera model ResRef.
-            Reference: reone/dlg.h:119 (CameraModel field)
-            Reference: reone/dlg.cpp:163 (CameraModel parsing)
         
         computer_type: "ComputerType" field. Type of computer interface.
-            Reference: reone/dlg.h:120 (ComputerType field)
-            Reference: reone/dlg.cpp:162 (ComputerType parsing)
             Values: 0=Modern, 1=Ancient
         
         conversation_type: "ConversationType" field. Type of conversation.
-            Reference: reone/dlg.h:121 (ConversationType field)
-            Reference: reone/dlg.cpp:161 (ConversationType parsing)
             Values: 0=Human, 1=Computer, 2=Other
         
         old_hit_check: "OldHitCheck" field. Legacy hit check flag.
-            Reference: reone/dlg.h:131 (OldHitCheck field)
-            Reference: reone/dlg.cpp:160 (OldHitCheck parsing)
         
         unequip_hands: "UnequipHItem" field. Unequip hand items flag.
-            Reference: reone/dlg.h:138 (UnequipHItem field)
-            Reference: reone/dlg.cpp:159 (UnequipHItem parsing)
         
         unequip_items: "UnequipItems" field. Unequip all items flag.
-            Reference: reone/dlg.h:139 (UnequipItems field)
-            Reference: reone/dlg.cpp:158 (UnequipItems parsing)
         
         vo_id: "VO_ID" field. Voice-over identifier string.
-            Reference: reone/dlg.h:140 (VO_ID field)
-            Reference: reone/dlg.cpp:157 (VO_ID parsing)
 
         alien_race_owner: "AlienRaceOwner" field. KotOR 2 Only.
-            Reference: reone/dlg.h:116 (AlienRaceOwner field)
-            Reference: reone/dlg.cpp:155 (AlienRaceOwner parsing)
             Alien race for dialog processing.
         
         post_proc_owner: "PostProcOwner" field. KotOR 2 Only.
-            Reference: reone/dlg.h:132 (PostProcOwner field)
-            Reference: reone/dlg.cpp:156 (PostProcOwner parsing)
             Post-processing owner ID.
         
         record_no_vo: "RecordNoVO" field. KotOR 2 Only.
-            Reference: reone/dlg.h:133 (RecordNoVO field)
-            Reference: reone/dlg.cpp:154 (RecordNoVO parsing)
             Flag to record without voice-over.
         
         next_node_id: "NextNodeID" field. KotOR 2 Only.
-            Reference: reone/dlg.h:129 (NextNodeID field)
-            Reference: reone/dlg.cpp:153 (NextNodeID parsing)
             Next available node ID for new nodes.
 
         delay_entry: "DelayEntry" field. Not used by the game engine.
-            Reference: reone/dlg.h:122 (DelayEntry field, deprecated)
         
         delay_reply: "DelayReply" field. Not used by the game engine.
-            Reference: reone/dlg.h:123 (DelayReply field, deprecated)
     """
 
     BINARY_TYPE = ResourceType.DLG

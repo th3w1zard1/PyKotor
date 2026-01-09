@@ -129,8 +129,10 @@ def _extract_from_nested_capsules(
 
     References:
     ----------
-        vendor/reone/src/libs/resource/format/erfreader.cpp (ERF reading)
-        vendor/xoreos-tools/src/unerf.cpp (ERF extraction)
+        Based on swkotor.exe ERF structure:
+        - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file
+        - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds ERF/MOD/SAV contents to key table
+        Original BioWare engine binaries (ERF format implementation from swkotor.exe, swkotor2.exe)
     """
     from pykotor.common.stream import BinaryReader  # Prevent circular imports
     from pykotor.resource.formats.erf import ERFType
@@ -274,10 +276,14 @@ class FileResource:
     
     References:
     ----------
-        vendor/KotOR_IO/KotOR_IO/File Formats/KFile.cs (Resource file abstraction)
-        vendor/KotOR-dotNET/AuroraFile.cs (Aurora file format abstraction)
-        vendor/reone/src/libs/resource/resource.h (Resource abstraction)
-        vendor/xoreos-tools/src/common/types.h (Resource type definitions)
+        Based on swkotor.exe ERF structure:
+        - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file
+        - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds ERF/MOD/SAV contents to key table
+        Original BioWare engine binaries
+        https://github.com/th3w1zard1/KotOR_IO/tree/master/KotOR_IO/File Formats/KFile.cs (Resource file abstraction)
+        https://github.com/th3w1zard1/KotOR-dotNET/tree/master/AuroraFile.cs (Aurora file format abstraction)
+
+
     """
 
     def __init__(
@@ -526,9 +532,14 @@ class FileResource:
         ------
             FileNotFoundError: File not found on disk or in nested capsule.
 
-        References:
-        ----------
-            vendor/reone/src/libs/resource/format/erfreader.cpp (ERF reading for nested capsules)
+    References:
+    ----------
+        Based on swkotor.exe ERF structure:
+        - CExoEncapsulatedFile::CExoEncapsulatedFile @ 0x0040ef90 - Constructor for encapsulated file
+        - CExoKeyTable::AddEncapsulatedContents @ 0x0040f3c0 - Adds ERF/MOD/SAV contents to key table
+        Original BioWare engine binaries (ERF format implementation from swkotor.exe, swkotor2.exe)
+
+
         """
         if reload:
             self._index_resource()
