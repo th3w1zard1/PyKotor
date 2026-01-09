@@ -53,14 +53,17 @@ pip install pykotor
 
 **Install tools:**
 ```bash
-pip install holocrontoolset holopatcher kotorcli kotordiff
+pip install holocrontoolset holopatcher kotordiff
 ```
 
 **Or use pipx for isolated tool installation:**
 ```bash
 pipx install holocrontoolset
 pipx install holopatcher
+pipx install kotordiff
 ```
+
+**Note:** The PyKotor CLI is included with the `pykotor` package and accessible via `pykotor` or `pykotorcli` commands.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development installation.
 
@@ -95,14 +98,17 @@ uvx holopatcher --help
 
 **KotorCLI** - Command-line build tool:
 ```bash
-uvx kotorcli init mymod
+# Included with pykotor package
+pykotor init mymod
 cd mymod
-uvx kotorcli pack
+pykotor pack
 ```
 
 **KotorDiff** - Compare and generate patches:
 ```bash
 uvx kotordiff
+# or
+kotordiff  # if installed via pip/pipx
 ```
 
 See individual tool documentation for detailed usage.
