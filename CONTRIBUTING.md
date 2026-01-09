@@ -45,7 +45,6 @@ Install dependencies:
 uv pip install -e "Libraries/PyKotor[all,dev]"
 uv pip install -e "Tools/HolocronToolset"
 uv pip install -e "Tools/HoloPatcher"
-uv pip install -e "Tools/KotorCLI"
 uv pip install -e "Tools/KotorDiff"
 ```
 
@@ -65,7 +64,6 @@ source .venv/bin/activate
 pip install -e "Libraries/PyKotor[all,dev]"
 pip install -e "Tools/HolocronToolset"
 pip install -e "Tools/HoloPatcher"
-pip install -e "Tools/KotorCLI"
 pip install -e "Tools/KotorDiff"
 ```
 
@@ -80,13 +78,15 @@ poetry shell
 
 ```bash
 # Check library import
-python -c "import pykotor; print(pykotor.__version__)"
+python -c "import pykotor; print('PyKotor installed successfully')"
 
-# Check tools
+# Check tools (if installed via pip/pipx)
 holocrontoolset --version
 holopatcher --version
-kotorcli --version
 kotordiff --version
+
+# KotorCLI is part of pykotor package
+python -m pykotor.cli --version
 ```
 
 ## Development Workflow
