@@ -9,8 +9,13 @@ This module provides CLI commands for batch patching operations:
 
 References:
 ----------
-    Tools/BatchPatcher/src/batchpatcher/__main__.py - Original implementation
-    Libraries/PyKotor/src/pykotor/tools/patching.py - Core patching functions
+        KotOR I (swkotor.exe) / KotOR II (swkotor2.exe):
+            - GFF structures are loaded via CResGFF class throughout the engine
+            - See individual resource format files (uti.py, utc.py, utp.py, dlg/base.py, etc.) for specific GFF field references
+            - DLG unskippable flag: See dlg/base.py - Skippable (BYTE) field at 0x005a2ae0
+        Tools/BatchPatcher/src/batchpatcher/__main__.py - Original implementation
+        Libraries/PyKotor/src/pykotor/tools/patching.py - Core patching functions
+
 """
 
 from __future__ import annotations

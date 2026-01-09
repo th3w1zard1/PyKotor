@@ -253,8 +253,14 @@ def cmd_diff(
 
     References:
     ----------
+        KotOR I (swkotor.exe) / KotOR II (swkotor2.exe):
+            - GFF structures are loaded via CResGFF class throughout the engine
+            - See individual resource format files (uti.py, utc.py, utp.py, dlg/base.py, etc.) for specific GFF field references
+            - 2DA structures loaded via C2DA class (see 2da/io_2da.py for references)
+            - TLK structures loaded via CTlkTable class (see tlk/io_tlk.py for references)
         Libraries/PyKotor/src/pykotor/tslpatcher/diff/engine.py
         Libraries/PyKotor/src/pykotor/tslpatcher/diff/application.py
+
     """
     # Determine verbosity from args
     verbose = getattr(args, "verbose", False) or getattr(args, "debug", False)
@@ -471,7 +477,13 @@ def cmd_grep(
 
     References:
     ----------
-        vendor/xoreos-tools/ - grep-like utilities
+        KotOR I (swkotor.exe) / KotOR II (swkotor2.exe):
+            - GFF structures are loaded via CResGFF class throughout the engine
+            - See individual resource format files (uti.py, utc.py, utp.py, dlg/base.py, etc.) for specific GFF field references
+            - 2DA structures loaded via C2DA class (see 2da/io_2da.py for references)
+            - TLK structures loaded via CTlkTable class (see tlk/io_tlk.py for references)
+
+
     """
     file_path = pathlib.Path(args.file)
 
@@ -501,7 +513,13 @@ def cmd_stats(
 
     References:
     ----------
-        vendor/xoreos-tools/ - File analysis utilities
+        KotOR I (swkotor.exe) / KotOR II (swkotor2.exe):
+            - GFF structures are loaded via CResGFF class throughout the engine
+            - See individual resource format files (uti.py, utc.py, utp.py, dlg/base.py, etc.) for specific GFF field references
+            - 2DA structures loaded via C2DA class (see 2da/io_2da.py for references)
+            - TLK structures loaded via CTlkTable class (see tlk/io_tlk.py for references)
+
+
     """
     file_path = pathlib.Path(args.file)
 
@@ -560,7 +578,14 @@ def cmd_merge(
 
     References:
     ----------
+        KotOR I (swkotor.exe) / KotOR II (swkotor2.exe):
+            - GFF structures are loaded via CResGFF class throughout the engine
+            - See individual resource format files (uti.py, utc.py, utp.py, dlg/base.py, etc.) for specific GFF field references
+            - 2DA structures loaded via C2DA class (see 2da/io_2da.py for references)
+            - TLK structures loaded via CTlkTable class (see tlk/io_tlk.py for references)
         Libraries/PyKotor/src/pykotor/resource/formats/gff/gff_data.py - GFFStruct.merge()
+
+
     """
     target_path = pathlib.Path(args.target)
     source_path = pathlib.Path(args.source)

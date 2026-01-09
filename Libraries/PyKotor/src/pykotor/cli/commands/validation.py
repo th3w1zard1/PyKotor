@@ -8,10 +8,16 @@ This module provides CLI commands for:
 
 References:
 ----------
-    scripts/kotor/check_txi_files.py - TXI file checking
-    scripts/kotor/check_missing_resources.py - Missing resource checking
-    scripts/kotor/investigate_module_structure.py - Module investigation
-    Libraries/PyKotor/src/pykotor/tools/validation.py - Core validation functions
+        Based on swkotor.exe resource validation:
+        - CExoResMan::GetResRef - Resource reference lookup
+        - CResGFF, CRes2DA, CResTPC - Resource format validators
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        
+        scripts/kotor/check_txi_files.py - TXI file checking
+        scripts/kotor/check_missing_resources.py - Missing resource checking
+        scripts/kotor/investigate_module_structure.py - Module investigation
+        Libraries/PyKotor/src/pykotor/tools/validation.py - Core validation functions
+
 """
 
 from __future__ import annotations

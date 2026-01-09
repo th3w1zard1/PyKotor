@@ -16,8 +16,12 @@ def cmd_create_archive(args: Namespace, logger: Logger) -> int:
 
     References:
     ----------
-        vendor/reone/src/libs/tools/legacy/erf.cpp:83-130 - ERF creation from directory
-        vendor/xoreos-tools/src/erf.cpp:49-96 - ERF packing
+        KotOR I (swkotor.exe) / KotOR II (swkotor2.exe):
+            - ERF structures loaded via CResERF class
+            - See Libraries/PyKotor/src/pykotor/resource/formats/erf/ for ERF format references
+            - RIM structures are similar to ERF (see erf/io_erf.py for references)
+
+
     """
     input_dir = pathlib.Path(args.directory)
     output_path = pathlib.Path(args.output)

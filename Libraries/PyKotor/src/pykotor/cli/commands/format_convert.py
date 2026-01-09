@@ -29,7 +29,11 @@ def cmd_gff2xml(args: Namespace, logger: Logger) -> int:
 
     References:
     ----------
-        vendor/xoreos-tools/src/xml/gffdumper.cpp - GFF to XML
+        KotOR I (swkotor.exe) / KotOR II (swkotor2.exe):
+            - GFF structures are loaded via CResGFF class throughout the engine
+            - See individual resource format files (uti.py, utc.py, utp.py, dlg/base.py, etc.) for specific GFF field references
+
+
     """
     input_path = pathlib.Path(args.input)
     output_path = pathlib.Path(args.output) if args.output else input_path.with_suffix(".xml")
@@ -49,7 +53,11 @@ def cmd_xml2gff(args: Namespace, logger: Logger) -> int:
 
     References:
     ----------
-        vendor/xoreos-tools/src/xml/gffcreator.cpp - XML to GFF
+        KotOR I (swkotor.exe) / KotOR II (swkotor2.exe):
+            - GFF structures are loaded via CResGFF class throughout the engine
+            - See individual resource format files (uti.py, utc.py, utp.py, dlg/base.py, etc.) for specific GFF field references
+
+
     """
     input_path = pathlib.Path(args.input)
     output_path = pathlib.Path(args.output) if args.output else input_path.with_suffix(".gff")
@@ -69,7 +77,11 @@ def cmd_tlk2xml(args: Namespace, logger: Logger) -> int:
 
     References:
     ----------
-        vendor/xoreos-tools/src/tlk2xml.cpp - TLK to XML
+        KotOR I (swkotor.exe) / KotOR II (swkotor2.exe):
+            - GFF structures are loaded via CResGFF class throughout the engine
+            - See individual resource format files (uti.py, utc.py, utp.py, dlg/base.py, etc.) for specific GFF field references
+
+
     """
     input_path = pathlib.Path(args.input)
     output_path = pathlib.Path(args.output) if args.output else input_path.with_suffix(".xml")
@@ -89,7 +101,11 @@ def cmd_xml2tlk(args: Namespace, logger: Logger) -> int:
 
     References:
     ----------
-        vendor/xoreos-tools/src/xml2tlk.cpp - XML to TLK
+        KotOR I (swkotor.exe) / KotOR II (swkotor2.exe):
+            - GFF structures are loaded via CResGFF class throughout the engine
+            - See individual resource format files (uti.py, utc.py, utp.py, dlg/base.py, etc.) for specific GFF field references
+
+
     """
     input_path = pathlib.Path(args.input)
     output_path = pathlib.Path(args.output) if args.output else input_path.with_suffix(".tlk")
@@ -139,7 +155,11 @@ def cmd_2da2csv(args: Namespace, logger: Logger) -> int:
 
     References:
     ----------
-        vendor/xoreos-tools/src/convert2da.cpp - 2DA to CSV
+        KotOR I (swkotor.exe) / KotOR II (swkotor2.exe):
+            - 2DA structures loaded via C2DA class
+            - See individual resource format files (uti.py, utc.py, utp.py, dlg/base.py, etc.) for specific GFF field references
+
+
     """
     input_path = pathlib.Path(args.input)
     output_path = pathlib.Path(args.output) if args.output else input_path.with_suffix(".csv")

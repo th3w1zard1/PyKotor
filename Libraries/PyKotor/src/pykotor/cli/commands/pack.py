@@ -4,11 +4,16 @@ This module handles packing source files into KOTOR module/ERF/hak files.
 
 References:
 ----------
-    vendor/KotOR.js/src/resource/ERFObject.ts - TypeScript ERF packing
-    vendor/xoreos-tools/src/aurora/erffile.cpp - C++ ERF writer
-    vendor/Kotor.NET/Kotor.NET/ERF/ - C# ERF implementation
-    vendor/reone/src/libs/resource/format/erfreader.cpp - reone ERF reader (reference)
-    Libraries/PyKotor/src/pykotor/resource/formats/erf/ - PyKotor ERF implementation (used here)
+        KotOR I (swkotor.exe) / KotOR II (swkotor2.exe):
+            - GFF structures are loaded via CResGFF class throughout the engine
+            - See individual resource format files (uti.py, utc.py, utp.py, etc.) for specific GFF field references
+            - ERF structures loaded via CResERF class (see erf/io_erf.py for references)
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/ERFObject.ts
+        https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/ERF/
+        Libraries/PyKotor/src/pykotor/resource/formats/erf/ - PyKotor ERF implementation (used here)
+
 """
 from __future__ import annotations
 

@@ -158,25 +158,91 @@ def _add_kotordiff_arguments_fallback(parser: ArgumentParser) -> ArgumentParser:
     return parser
 
 
-def create_parser() -> ArgumentParser:  # noqa: PLR0915
-    """Create the main argument parser with custom formatting."""
+def _get_invocation_command() -> str:
+    """Get the actual command used to invoke the CLI."""
+    if not sys.argv:
+        return "pykotor"
+    
+    import os
+    from pathlib import Path
+    
+    # Try to detect if we're being run via "uv run" by checking parent process
+    is_uv_run = False
+    try:
+        import psutil  # type: ignore[import-untyped]
+        current_process = psutil.Process()
+        parent = current_process.parent()
+        if parent and "uv" in parent.name().lower():
+            is_uv_run = True
+    except ImportError:
+        # psutil not available, try alternative detection
+        # Check if UV_* env vars exist (uv sets these when running)
+        if any("UV" in k.upper() for k in os.environ.keys()):
+            # Might be uv run
+            is_uv_run = True
+    except (AttributeError, Exception):  # noqa: BLE001
+        # Can't access parent process (NoSuchProcess, AccessDenied, etc.)
+        # Try alternative detection
+        if any("UV" in k.upper() for k in os.environ.keys()):
+            is_uv_run = True
+    
+    script_path = Path(sys.argv[0]).resolve()
+    cwd = Path.cwd().resolve()
+    
+    # Try to make path relative to current directory
+    try:
+        rel_script = script_path.relative_to(cwd)
+        rel_script_str = str(rel_script).replace("\\", "/")  # Use forward slashes for consistency
+    except ValueError:
+        rel_script_str = str(script_path)
+    
+    # If detected as uv run, prefix with "uv run" (check this first)
+    if is_uv_run:
+        return f"uv run {rel_script_str}"
+    
+    # Check for "python -m" pattern
+    if len(sys.argv) >= 3 and sys.argv[1] == "-m":
+        # python -m pykotor.cli.__main__
+        return f"python -m {sys.argv[2]}"
+    
+    # Check if we're being run via python (not as a module)
+    # When python script.py is used, sys.executable contains "python"
+    # and sys.argv[0] is the script path
+    python_exe = Path(sys.executable).name.lower()
+    if python_exe in ("python", "python3", "python.exe", "python3.exe", "py", "py.exe"):
+        # python script.py
+        return f"python {rel_script_str}"
+    
+    # For direct execution, return the relative path
+    return rel_script_str
 
+
+def create_parser(prog: str | None = None) -> ArgumentParser:  # noqa: PLR0915
+    """Create the main argument parser with custom formatting.
+    
+    Args:
+        prog: Program name to use in help text. If None, auto-detects from sys.argv.
+    """
+    # Auto-detect the command if not provided
+    if prog is None:
+        prog = _get_invocation_command()
+    
     # Create enhanced description with usage examples
-    description = """
+    description = f"""
 \033[1;36mPyKotor CLI\033[0m - A comprehensive build tool for KOTOR projects
 
 \033[1;33mQuick Start:\033[0m
-  pykotor init                           # Initialize a new project
-  pykotor unpack mymod.mod               # Extract module contents
-  pykotor convert                        # Convert JSON sources to GFF
-  pykotor compile                        # Compile NSS scripts
-  pykotor pack                           # Build final module
-  pykotor install                        # Install to game directory
+  {prog} init                           # Initialize a new project
+  {prog} unpack mymod.mod               # Extract module contents
+  {prog} convert                        # Convert JSON sources to GFF
+  {prog} compile                        # Compile NSS scripts
+  {prog} pack                           # Build final module
+  {prog} install                        # Install to game directory
 
 \033[1;33mCommon Workflows:\033[0m
-  pykotor unpack mymod.mod && pykotor convert && pykotor pack
-  pykotor diff path1 path2 --output-mode diff_only
-  pykotor extract --file chitin.key --filter "*.utc"
+  {prog} unpack mymod.mod && {prog} convert && {prog} pack
+  {prog} diff path1 path2 --output-mode diff_only
+  {prog} extract --file chitin.key --filter "*.utc"
 
 \033[1;32mGlobal Options:\033[0m
   --yes, --no, --default    Auto-answer prompts
@@ -186,7 +252,7 @@ def create_parser() -> ArgumentParser:  # noqa: PLR0915
 """
 
     parser = ArgumentParser(
-        prog="pykotor",
+        prog=prog,
         description=description,
         formatter_class=PyKotorHelpFormatter,
         add_help=False,
@@ -207,7 +273,7 @@ def create_parser() -> ArgumentParser:  # noqa: PLR0915
     subparsers = parser.add_subparsers(
         dest="command",
         title="\033[1;32mAvailable Commands\033[0m",
-        description="Choose a command to execute. Use 'pykotor <command> --help' for detailed help.",
+        description=f"Choose a command to execute. Use '{prog} <command> --help' for detailed help.",
         metavar="COMMAND",
         help="Command to execute"
     )
@@ -316,16 +382,16 @@ def create_parser() -> ArgumentParser:  # noqa: PLR0915
     extract_parser = subparsers.add_parser(
         "extract",
         help="Extract resources from Bioware archives",
-        description="""
+        description=f"""
 Extract files from Bioware archive formats including:
 • ERF files (.erf, .mod, .sav)
 • RIM files (.rim)
 • KEY/BIF archives (chitin.key)
 
 \033[1;36mExamples:\033[0m
-  pykotor extract --file mymodule.mod
-  pykotor extract --file chitin.key --filter "*.utc" --output extracted
-  pykotor extract --file module.rim --filter p_* --key-file custom.key
+  {prog} extract --file mymodule.mod
+  {prog} extract --file chitin.key --filter "*.utc" --output extracted
+  {prog} extract --file module.rim --filter p_* --key-file custom.key
 """
     )
     extract_parser.add_argument("--file", dest="file", required=True, help="Archive file to extract")
@@ -450,7 +516,7 @@ Extract files from Bioware archive formats including:
     diff_parser = subparsers.add_parser(
         "diff",
         help="Compare files, folders, or KOTOR installations",
-        description="""
+        description=f"""
 Compare two paths and show differences. Supports any combination of:
 • Individual files (GFF, 2DA, TLK, etc.)
 • Folders containing game assets
@@ -458,10 +524,10 @@ Compare two paths and show differences. Supports any combination of:
 • Bioware archives (.mod, .sav, .erf, .rim)
 
 \033[1;36mExamples:\033[0m
-  pykotor diff module1.mod module2.mod
-  pykotor diff /path/to/kotor1 /path/to/kotor2 --output-mode diff_only
-  pykotor diff file1.gff file2.gff --format side_by_side
-  pykotor diff --generate-ini installation1 installation2
+  {prog} diff module1.mod module2.mod
+  {prog} diff /path/to/kotor1 /path/to/kotor2 --output-mode diff_only
+  {prog} diff file1.gff file2.gff --format side_by_side
+  {prog} diff --generate-ini installation1 installation2
 """
     )
     diff_parser.add_argument("path1", help="First path (file, folder, installation, or archive)")

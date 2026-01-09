@@ -4,10 +4,18 @@ This module handles conversion of JSON source files to binary GFF format for pac
 
 References:
 ----------
-    vendor/KotOR.js/src/formats/gff/GFFObject.ts - TypeScript GFF implementation
-    vendor/xoreos-tools/src/aurora/gff3file.cpp - C++ GFF implementation  
-    vendor/Kotor.NET/Kotor.NET/GFF/ - C# GFF implementation
-    Libraries/PyKotor/src/pykotor/resource/formats/gff/ - PyKotor GFF implementation (used here)
+        Based on swkotor.exe GFF structure:
+        - CResGFF::CreateGFFFile @ 0x00411260 - Creates new GFF file with file_type and version
+        - CResGFF::WriteGFFFile @ 0x00413030 - Writes GFF data to file
+        - CResGFF::WriteGFFData @ 0x004113d0 - Writes GFF header and data sections
+        - GFFVersion string "V3.2" @ 0x0073e2c8 - Hardcoded GFF version identifier
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        Derivations and Other Implementations:
+        ----------
+        https://github.com/th3w1zard1/KotOR.js/tree/master/src/formats/gff/GFFObject.ts
+        https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/GFF/
+        Libraries/PyKotor/src/pykotor/resource/formats/gff/ - PyKotor GFF implementation (used here)
+
 """
 from __future__ import annotations
 

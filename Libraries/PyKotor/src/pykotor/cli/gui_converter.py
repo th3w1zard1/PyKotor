@@ -1,7 +1,7 @@
 """GUI converter logic shared between CLI and optional Tk GUI.
 
 The implementation mirrors the behaviors documented in ``wiki/GFF-GUI.md`` and
-the reference implementation in ``vendor/kotor-gui-editor``. GUIs are authored
+the reference implementation in `` GUIs are authored
 for a 640x480 base resolution and scaled to other resolutions by transforming
 every control that owns an ``EXTENT`` struct (including nested controls and
 embedded scrollbar/protoitem structs).

@@ -14,9 +14,9 @@ from pykotor.tools.archives import list_bif, list_erf, list_key, list_rim
 from pykotor.cli.archive_filter import matches_resource_name
 
 # vendor references:
-# vendor/xoreos-tools/src/unkeybif.cpp - KEY/BIF listing
-# vendor/xoreos-tools/src/unerf.cpp - ERF listing
-# vendor/xoreos-tools/src/unrim.cpp - RIM listing
+
+
+
 
 
 def cmd_list_archive(args: Namespace, logger: Logger) -> int:  # noqa: PLR0911

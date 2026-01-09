@@ -6,10 +6,14 @@ functionality for creatures, items, doors, placeables, and other game objects.
 
 References:
 ----------
-    vendor/reone/include/reone/game/object.h (Object base class)
-    vendor/reone/src/libs/game/object.cpp (Object implementation)
-    vendor/KotOR.js/src/engine/GameObject.ts (TypeScript game object)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries (Game object system from swkotor.exe, swkotor2.exe)
+
     Note: Game objects are the fundamental entities in KotOR modules
+
+Derivations and Other Implementations:
+----------
+    https://github.com/th3w1zard1/KotOR.js/tree/master/src/engine/GameObject.ts (TypeScript game object)
 """
 
 from __future__ import annotations
@@ -68,8 +72,9 @@ class GameObject(ABC):
 
     References:
     ----------
-        vendor/reone/include/reone/game/object.h (lines 42-305)
-        vendor/reone/src/libs/game/object.cpp (Object implementation)
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries (Game object base class from swkotor.exe, swkotor2.exe)
+
     """
 
     def __init__(self, object_type: ObjectType, state: GameObjectState | None = None) -> None:
