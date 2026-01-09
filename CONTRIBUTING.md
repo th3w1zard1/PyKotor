@@ -86,9 +86,8 @@ holopatcher --version
 kotordiff --version  # or kotor-diff --version
 
 # PyKotor CLI (included with pykotor package)
-pykotor --version
-# or
-pykotorcli --version
+pykotor --help
+pykotorcli --help
 ```
 
 ## Development Workflow

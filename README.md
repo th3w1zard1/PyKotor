@@ -96,9 +96,9 @@ uvx holocrontoolset
 uvx holopatcher --help
 ```
 
-**KotorCLI** - Command-line build tool:
+**PyKotor CLI** - Command-line build tool (included with pykotor):
 ```bash
-# Included with pykotor package
+# After installing pykotor package
 pykotor init mymod
 cd mymod
 pykotor pack
@@ -107,8 +107,9 @@ pykotor pack
 **KotorDiff** - Compare and generate patches:
 ```bash
 uvx kotordiff
-# or
-kotordiff  # if installed via pip/pipx
+# or if installed via pip/pipx
+kotordiff
+kotor-diff  # alternative name
 ```
 
 See individual tool documentation for detailed usage.
@@ -119,7 +120,7 @@ See individual tool documentation for detailed usage.
 |------|-------------|---------------|
 | **HolocronToolset** | Full-featured GUI editor for KotOR files | [README](https://github.com/OldRepublicDevs/PyKotor/tree/master/Tools/HolocronToolset#readme) |
 | **HoloPatcher** | Fast, cross-platform mod installer | [README](https://github.com/OldRepublicDevs/PyKotor/tree/master/Tools/HoloPatcher#readme) |
-| **KotorCLI** | Command-line build tool with version control | [README](https://github.com/OldRepublicDevs/PyKotor/tree/master/Tools/KotorCLI#readme) |
+| **PyKotor CLI** | Command-line build tool (part of pykotor package) | [Docs](https://github.com/OldRepublicDevs/PyKotor/tree/master/Libraries/PyKotor/docs) |
 | **KotorDiff** | File comparison and TSLPatcher data generator | [README](https://github.com/OldRepublicDevs/PyKotor/tree/master/Tools/KotorDiff#readme) |
 
 ## Documentation
