@@ -2192,8 +2192,11 @@ class _SaberHeader:
         self.offset_to_vertices: int = 0
         self.offset_to_texcoords: int = 0
         self.offset_to_normals: int = 0
-        self.unknown0: int = 0  # TODO: what is this?
-        self.unknown1: int = 0  # TODO: what is this?
+        # Reference: wiki/MDL-MDX-File-Format.md:472-473 - Lightsaber header structure
+        # Offset 344/352 (K1/K2): "Unknown 1" - Purpose unknown
+        self.unknown0: int = 0  # Unknown 1 (uint32 at binary offset 0xC relative to saber header, 0x158/0x160 absolute)
+        # Offset 348/356 (K1/K2): "Unknown 2" - Purpose unknown
+        self.unknown1: int = 0  # Unknown 2 (uint32 at binary offset 0x10 relative to saber header, 0x15C/0x164 absolute)
 
     def read(
         self,
@@ -2202,8 +2205,9 @@ class _SaberHeader:
         self.offset_to_vertices = reader.read_uint32()
         self.offset_to_texcoords = reader.read_uint32()
         self.offset_to_normals = reader.read_uint32()
-        self.unknown0 = reader.read_uint32()  # TODO: what is this?
-        self.unknown1 = reader.read_uint32()  # TODO: what is this?
+        # Reference: wiki/MDL-MDX-File-Format.md:472-473 - "Unknown 1" and "Unknown 2" fields
+        self.unknown0 = reader.read_uint32()  # Unknown 1 (Purpose unknown)
+        self.unknown1 = reader.read_uint32()  # Unknown 2 (Purpose unknown)
         return self
 
     def write(
@@ -2213,8 +2217,9 @@ class _SaberHeader:
         writer.write_uint32(self.offset_to_vertices)
         writer.write_uint32(self.offset_to_texcoords)
         writer.write_uint32(self.offset_to_normals)
-        writer.write_uint32(self.unknown0)  # TODO: what is this?
-        writer.write_uint32(self.unknown1)  # TODO: what is this?
+        # Reference: wiki/MDL-MDX-File-Format.md:472-473 - "Unknown 1" and "Unknown 2" fields
+        writer.write_uint32(self.unknown0)  # Unknown 1 (Purpose unknown)
+        writer.write_uint32(self.unknown1)  # Unknown 2 (Purpose unknown)
 
 
 class _LightHeader:
