@@ -2238,9 +2238,11 @@ class _SaberHeader:
 
 class _LightHeader:
     def __init__(self):
-        self.offset_to_unknown0: int = 0
-        self.unknown0_count: int = 0
-        self.unknown0_count2: int = 0
+        # Reference: wiki/MDL-MDX-File-Format.md:484 - Structure mismatch: wiki documents "Unknown/Padding" (4 floats, 16 bytes) at offset 0
+        # Code reads 3 uint32s (12 bytes): offset + 2 counts. Structure differs from wiki documentation.
+        self.offset_to_unknown0: int = 0  # Offset to unknown array (uint32, wiki documents float padding - structure mismatch)
+        self.unknown0_count: int = 0  # Count of unknown array entries (uint32, wiki documents float padding - structure mismatch)
+        self.unknown0_count2: int = 0  # Duplicate count of unknown array entries (uint32, wiki documents float padding - structure mismatch)
         self.offset_to_flare_sizes: int = 0
         self.flare_sizes_count: int = 0
         self.flare_sizes_count2: int = 0
@@ -2266,10 +2268,12 @@ class _LightHeader:
         self,
         reader: BinaryReader,
     ) -> _LightHeader:
-        self.offset_to_unknown0 = reader.read_uint32()
-        unknown0_count_raw = reader.read_uint32()  # TODO: what is this?
+        # Reference: wiki/MDL-MDX-File-Format.md:484 - Structure mismatch: wiki documents 4 floats (16 bytes) at offset 0
+        # Code reads 3 uint32s (12 bytes) - structure differs from wiki
+        self.offset_to_unknown0 = reader.read_uint32()  # Offset to unknown array (wiki documents float padding - mismatch)
+        unknown0_count_raw = reader.read_uint32()  # Count of unknown array entries (wiki documents float padding - mismatch)
         self.unknown0_count = min(unknown0_count_raw, 0x7FFFFFFF)
-        unknown0_count2_raw = reader.read_uint32()  # TODO: what is this?
+        unknown0_count2_raw = reader.read_uint32()  # Duplicate count of unknown array entries (wiki documents float padding - mismatch)
         self.unknown0_count2 = min(unknown0_count2_raw, 0x7FFFFFFF)
         self.offset_to_flare_sizes = reader.read_uint32()
         flare_sizes_count_raw = reader.read_uint32()
@@ -2305,10 +2309,12 @@ class _LightHeader:
         self,
         writer: BinaryWriter,
     ):
-        writer.write_uint32(self.offset_to_unknown0)  # TODO: what is this?
-        unknown0_count_clamped = min(self.unknown0_count, 0x7FFFFFFF)  # TODO: what is this?
+        # Reference: wiki/MDL-MDX-File-Format.md:484 - Structure mismatch: wiki documents 4 floats (16 bytes) at offset 0
+        # Code writes 3 uint32s (12 bytes) - structure differs from wiki
+        writer.write_uint32(self.offset_to_unknown0)  # Offset to unknown array (wiki documents float padding - mismatch)
+        unknown0_count_clamped = min(self.unknown0_count, 0x7FFFFFFF)  # Count of unknown array entries (wiki documents float padding - mismatch)
         writer.write_uint32(unknown0_count_clamped)
-        unknown0_count2_clamped = min(self.unknown0_count2, 0x7FFFFFFF)  # TODO: what is this?
+        unknown0_count2_clamped = min(self.unknown0_count2, 0x7FFFFFFF)  # Duplicate count (wiki documents float padding - mismatch)
         writer.write_uint32(unknown0_count2_clamped)
         writer.write_uint32(self.offset_to_flare_sizes)
         flare_sizes_count_clamped = min(self.flare_sizes_count, 0x7FFFFFFF)
