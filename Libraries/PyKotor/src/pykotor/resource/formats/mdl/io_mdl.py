@@ -2352,10 +2352,11 @@ class _EmitterHeader:
         self.twosided_texture: int = 0  # L
         self.loop: int = 0  # L
         self.render_order: int = 0  # S
-        self.frame_blending: int = 0  # C
-        self.depth_texture: str = ""  # Z[32]
-        self.unknown1: int = 0  # C (MDLOps writes 0)
-        self.flags: int = 0  # L (emitterflags)
+        self.frame_blending: int = 0  # C (uint8)
+        self.depth_texture: str = ""  # Z[32] (32-byte null-terminated string)
+        # Reference: MDLOps template "SCZ[32]CL" - C byte (padding byte, MDLOps writes 0)
+        self.unknown1: int = 0  # Padding byte (uint8, MDLOps template: C, always writes 0 for alignment)
+        self.flags: int = 0  # L (emitterflags, uint32)
 
     def read(
         self,
