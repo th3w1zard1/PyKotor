@@ -626,7 +626,7 @@ class _ModelHeader:
 
     def __init__(self):
         self.geometry: _GeometryHeader = _GeometryHeader()
-        # Reference: K1 swkotor.exe:0x004a1030 (InputBinary::Reset function parses Model structure), TSL swkotor2.exe: TODO: Find this address
+        # Reference: K1 swkotor.exe:0x004a1030, TSL swkotor2.exe:0x004ce550 (InputBinary::Reset function parses Model structure)
         # Binary file layout after geometry header (0x50 bytes):
         self.model_type: int = 0  # Model classification type (uint8 at binary offset 0x50)
         self.subclassification: int = 0  # Model subclassification value (uint8 at binary offset 0x51)
@@ -647,7 +647,7 @@ class _ModelHeader:
         self.anim_scale: float = 0.0
         self.supermodel: str = ""
         self.offset_to_super_root: int = 0  # Offset to supermodel root node (uint32)
-        # Reference: K1 swkotor.exe:0x004a1030 (InputBinary::Reset function accesses param_1 + 0xa8 for offset_to_super_root and param_1 + 0xac for mdx_data_buffer_offset), TSL swkotor2.exe: TODO: Find this address
+        # Reference: K1 swkotor.exe:0x004a1030, TSL swkotor2.exe:0x004ce550 (InputBinary::Reset function accesses param_1 + 0xa8 for offset_to_super_root and param_1 + 0xac for mdx_data_buffer_offset)
         # Used by Reset() function as offset into MDX data buffer: reads value at param_1 + 0xac, then accesses param_2 + value to copy MDX data
         # Line 27: iVar3 = *(int *)(param_1 + 0xac); reads the offset
         # Line 32: pbVar8 = param_2 + iVar3; uses it to locate data within MDX buffer
