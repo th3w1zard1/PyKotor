@@ -630,7 +630,7 @@ class _ModelHeader:
         # Binary file layout after geometry header (0x50 bytes):
         self.model_type: int = 0  # Model classification type (uint8 at binary offset 0x50)
         self.subclassification: int = 0  # Model subclassification value (uint8 at binary offset 0x51)
-        # Reference: K1 swkotor.exe:0x004a1030 (InputBinary::Reset function), TSL swkotor2.exe: TODO: Find this address
+        # Reference: K1 swkotor.exe:0x004a1030, TSL swkotor2.exe:0x004ce550 (InputBinary::Reset function)
         # Field at 0x52 is alignment padding byte - not directly accessed in Reset() parsing function
         # Used for 4-byte alignment between subclassification (uint8) and child_model_count (uint32 starting at 0x54)
         self.padding0: int = 0  # Alignment padding byte (uint8 at binary offset 0x52) - ensures proper alignment for subsequent uint32 fields
@@ -665,7 +665,7 @@ class _ModelHeader:
         self.geometry = _GeometryHeader().read(reader)
         self.model_type = reader.read_uint8()  # Model classification type (uint8 at binary offset 0x50)
         self.subclassification = reader.read_uint8()  # Model subclassification value (uint8 at binary offset 0x51)
-        # Reference: K1 swkotor.exe:0x004a1030 (InputBinary::Reset function), TSL swkotor2.exe: TODO: Find this address
+        # Reference: K1 swkotor.exe:0x004a1030, TSL swkotor2.exe:0x004ce550 (InputBinary::Reset function)
         # Alignment padding byte - not directly accessed in Reset() parsing function
         # Used for 4-byte alignment between subclassification (uint8) and child_model_count (uint32 starting at 0x54)
         self.padding0 = reader.read_uint8()  # Alignment padding byte (uint8 at binary offset 0x52) - ensures proper alignment for subsequent uint32 fields
