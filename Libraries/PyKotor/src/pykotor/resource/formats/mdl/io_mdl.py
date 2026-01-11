@@ -1668,10 +1668,15 @@ class _TrimeshHeader:
         self.offset_to_counters: int = 0
         self.counters_count: int = 0
         self.counters_count2: int = 0
-        self.unknown1: bytes = b"\xff\xff\xff\xff" + b"\xff\xff\xff\xff" + b"\x00\x00\x00\x00"  # TODO: what is this?
-        self.saber_unknowns: bytes = b"\x00" * 8  # TODO: what is this?
+        # Reference: wiki/MDL-MDX-File-Format.md:380 - "Unknown values" at offset 212 (0xD4)
+        # Typically `{-1, -1, 0}` as three int32 values (12 bytes total)
+        self.unknown1: bytes = b"\xff\xff\xff\xff" + b"\xff\xff\xff\xff" + b"\x00\x00\x00\x00"  # Unknown values (3 int32s, typically {-1, -1, 0})
+        # Reference: wiki/MDL-MDX-File-Format.md:381 - "Saber Unknown data" at offset 224 (0xE0)
+        # Data specific to lightsaber meshes (8 bytes)
+        self.saber_unknowns: bytes = b"\x00" * 8  # Saber Unknown data (8 bytes, lightsaber-specific)
+        # Reference: wiki/MDL-MDX-File-Format.md:382 - "Unknown" at offset 232 (0xE8)
         # Signed int32 in MDLOps template (single `l`).
-        self.unknown2: int = 0
+        self.unknown2: int = 0  # Unknown field (int32 at binary offset 0xE8, purpose unknown)
         self.uv_direction: Vector2 = Vector2.from_null()
         self.uv_jitter: float = 0.0
         self.uv_speed: float = 0.0
@@ -1778,9 +1783,12 @@ class _TrimeshHeader:
         if counters_count2_raw > 0x7FFFFFFF:
             counters_count2_raw = 0x7FFFFFFF
         self.counters_count2 = counters_count2_raw
-        self.unknown1 = reader.read_bytes(12)  # MDLOps `l[3]`
-        self.saber_unknowns = reader.read_bytes(8)  # MDLOps `C[8]`
-        self.unknown2 = reader.read_int32()
+        # Reference: wiki/MDL-MDX-File-Format.md:380 - "Unknown values" (3 int32s, typically {-1, -1, 0})
+        self.unknown1 = reader.read_bytes(12)  # Unknown values (3 int32s, MDLOps `l[3]`, typically {-1, -1, 0})
+        # Reference: wiki/MDL-MDX-File-Format.md:381 - "Saber Unknown data" (8 bytes, lightsaber-specific)
+        self.saber_unknowns = reader.read_bytes(8)  # Saber Unknown data (8 bytes, MDLOps `C[8]`, lightsaber-specific)
+        # Reference: wiki/MDL-MDX-File-Format.md:382 - "Unknown" field at offset 232 (0xE8)
+        self.unknown2 = reader.read_int32()  # Unknown field (int32 at binary offset 0xE8, purpose unknown)
         self.uv_direction = reader.read_vector2()
         self.uv_jitter = reader.read_single()
         self.uv_speed = reader.read_single()
@@ -1938,9 +1946,10 @@ class _TrimeshHeader:
         writer.write_uint32(counters_count_clamped)
         counters_count2_clamped = min(self.counters_count2, 0x7FFFFFFF)
         writer.write_uint32(counters_count2_clamped)
-        writer.write_bytes(self.unknown1)
-        writer.write_bytes(self.saber_unknowns)
-        writer.write_int32(self.unknown2)
+        # Reference: wiki/MDL-MDX-File-Format.md:380-382 - Unknown values, Saber Unknown data, Unknown field
+        writer.write_bytes(self.unknown1)  # Unknown values (3 int32s, typically {-1, -1, 0})
+        writer.write_bytes(self.saber_unknowns)  # Saber Unknown data (8 bytes, lightsaber-specific)
+        writer.write_int32(self.unknown2)  # Unknown field (int32 at offset 0xE8)
         writer.write_vector2(self.uv_direction)
         writer.write_single(self.uv_jitter)
         writer.write_single(self.uv_speed)
@@ -2089,7 +2098,10 @@ class _SkinmeshHeader:
         self.unknown0_count: int = 0  # Count of unknown array entries (uint32, documented as "Purpose unknown" in wiki)
         self.unknown0_count2: int = 0  # Duplicate count of unknown array entries (uint32)
         self.bones: tuple[int, ...] = tuple(-1 for _ in range(16))
-        self.unknown1: int = 0  # TODO: what is this?
+        # Reference: wiki/MDL-MDX-File-Format.md:456 - "Padding" at offset 428/436 (uint16)
+        # Note: Wiki documents uint16 padding, but code reads uint32. Structure may differ or wiki incomplete.
+        # After bones array (16 uint16s = 32 bytes ending at 428/436), this field follows.
+        self.unknown1: int = 0  # Padding/unknown field (uint32, wiki documents uint16 padding at 428/436 - structure mismatch)
 
         # NOTE: Some implementations store bonemap values as float32; we store them as ints.
         self.bonemap: list[int] = []
@@ -2126,7 +2138,8 @@ class _SkinmeshHeader:
         unknown0_count2_raw = reader.read_uint32()  # Duplicate count of unknown array entries
         self.unknown0_count2 = min(unknown0_count2_raw, 0x7FFFFFFF)
         self.bones = tuple(reader.read_uint16() for _ in range(16))
-        self.unknown1 = reader.read_uint32()  # TODO: what is this?
+        # Reference: wiki/MDL-MDX-File-Format.md:456 - Padding at offset 428/436 (wiki: uint16, code: uint32 - mismatch)
+        self.unknown1 = reader.read_uint32()  # Padding/unknown field (wiki documents uint16 padding, code reads uint32)
         return self
 
     def read_extra(
@@ -2184,7 +2197,8 @@ class _SkinmeshHeader:
         writer.write_uint32(unknown0_count2_clamped)
         for i in range(16):
             writer.write_uint16(self.bones[i])
-        writer.write_uint32(self.unknown1)  # TODO: what is this?
+        # Reference: wiki/MDL-MDX-File-Format.md:456 - Padding (wiki: uint16, code: uint32 - structure mismatch)
+        writer.write_uint32(self.unknown1)  # Padding/unknown field (wiki documents uint16, code writes uint32)
 
 
 class _SaberHeader:
