@@ -639,7 +639,7 @@ class _ModelHeader:
         self.offset_to_animations: int = 0  # Offset to animation data array (uint32)
         self.animation_count: int = 0  # Number of animations (uint32)
         self.animation_count2: int = 0  # Animation count duplicate/alternate (uint32)
-        # Reference: K1 swkotor.exe:0x004a1030 (Reset function accesses param_1 + 100 = 0x64), TSL swkotor2.exe: TODO: Find this address
+        # Reference: K1 swkotor.exe:0x004a1030, TSL swkotor2.exe:0x004ce550 (Reset function accesses param_1 + 100 = 0x64)
         self.parent_model_pointer: int = 0  # Pointer to parent model (context-dependent, uint32 at binary offset 0x64)
         self.bounding_box_min: Vector3 = Vector3.from_null()
         self.bounding_box_max: Vector3 = Vector3.from_null()
@@ -687,7 +687,7 @@ class _ModelHeader:
         self.anim_scale = reader.read_single()
         self.supermodel = reader.read_terminated_string("\0", 32)
         self.offset_to_super_root = reader.read_uint32()  # Offset to supermodel root node (uint32)
-        # Reference: K1 swkotor.exe:0x004a1030 (Reset function accesses param_1 + 0xa8), TSL swkotor2.exe: TODO: Find this address
+        # Reference: K1 swkotor.exe:0x004a1030, TSL swkotor2.exe:0x004ce550 (Reset function accesses param_1 + 0xa8)
         # Field name preserved from cchargin mdl_info.html documentation
         # Second field in the Names array header structure (at binary offset 0xac in file, 0x5C in model header)
         # Used by Reset() function as offset into MDX data buffer: reads value at param_1 + 0xac, then accesses param_2 + value to copy MDX data
