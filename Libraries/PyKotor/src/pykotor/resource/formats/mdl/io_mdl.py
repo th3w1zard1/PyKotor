@@ -17,7 +17,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * Sets CurrentModel to NULL
           * Gets IODispatcher singleton via IODispatcher::GetRef() @ (K1: 0x004a0580, TSL: (TODO: Find this address))
           * Calls IODispatcher::ReadSync() @ (K1: 0x004a15d0, TSL: (TODO: Find this address)) with param_1 and param_2
-          * ReadSync creates Input object and calls Input::Read() @ (K1: 0x004a1260, TSL: (TODO: Find this address))
+          * ReadSync creates Input object and calls Input::Read() @ (K1: 0x004a1260, TSL: 0x004ce780)
           * Input::Read() calls InputBinary::Read() which parses MDL/MDX binary format
           * Result is MaxTree* which is converted to Model* via MaxTree::AsModel() @ (K1: 0x0043e1c0, TSL: 0x0044ff90)
           * MaxTree::AsModel() checks if type == 2 (MODEL_TYPE) and returns cast or NULL
@@ -35,7 +35,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * __stricmp() @ (K1: 0x0070acaf, TSL: 0x0077e24f) (case-insensitive string comparison)
           * operator.delete() @ (K1: 0x0044aec0, TSL: (TODO: Find this address)) (memory deallocation)
           * IODispatcher::ReadSync() @ (K1: 0x004a15d0, TSL: (TODO: Find this address)) (file I/O dispatcher)
-            * Input::Read() @ (K1: 0x004a1260, TSL: (TODO: Find this address)) (parses MDL/MDX format)
+            * Input::Read() @ (K1: 0x004a1260, TSL: 0x004ce780) (parses MDL/MDX format)
               * InputBinary::Read() (binary parser)
               * AurResGetNextLine() @ (K1: 0x0044bfa0, TSL: (TODO: Find this address)) (line reading for ASCII MDL)
               * AurResGet() @ (K1: 0x0044c870, TSL: (TODO: Find this address)) (resource data access)
