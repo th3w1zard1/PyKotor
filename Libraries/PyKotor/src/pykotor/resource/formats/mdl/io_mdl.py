@@ -71,7 +71,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * Input::Read() handles actual MDL/MDX parsing
           * Returns
         * Callees:
-          * Input::Read() @ (K1: 0x004a1260, TSL: (TODO: Find this address)) (main parsing function)
+          * Input::Read() @ (K1: 0x004a1260, TSL: 0x004ce780) (main parsing function)
             * InputBinary::Read() (binary format parser)
             * AurResGetNextLine() @ (K1: 0x0044bfa0, TSL: (TODO: Find this address)) (line reading for ASCII MDL)
             * AurResGet() @ (K1: 0x0044c870, TSL: (TODO: Find this address)) (resource data access)
