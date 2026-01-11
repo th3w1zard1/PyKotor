@@ -2067,9 +2067,13 @@ class _SkinmeshHeader:
     SIZE: ClassVar[int] = 100
 
     def __init__(self):
-        self.unknown2: int = 0  # TODO: what is this?
-        self.unknown3: int = 0  # TODO: what is this?
-        self.unknown4: int = 0  # TODO: what is this?
+        # Reference: wiki/MDL-MDX-File-Format.md:443 - Skinmesh header structure
+        # Offset 332/340 (K1/K2): "Unknown Weights" - Purpose unknown (possibly compilation weights)
+        self.unknown_weights: int = 0  # Unknown Weights (int32 at binary offset 0x0 relative to skinmesh header, 0x14c/0x154 absolute)
+        # Offset 336/344: Second unknown int32 field (not documented in wiki, but present in binary layout)
+        self.unknown3: int = 0  # Unknown field (int32 at binary offset 0x4 relative to skinmesh header, 0x150/0x158 absolute)
+        # Offset 340/348: Third unknown int32 field (not documented in wiki, but present in binary layout)
+        self.unknown4: int = 0  # Unknown field (int32 at binary offset 0x8 relative to skinmesh header, 0x154/0x15c absolute)
         self.offset_to_mdx_weights: int = 0
         self.offset_to_mdx_bones: int = 0
         self.offset_to_bonemap: int = 0
@@ -2080,9 +2084,10 @@ class _SkinmeshHeader:
         self.offset_to_tbones: int = 0
         self.tbones_count: int = 0
         self.tbones_count2: int = 0
-        self.offset_to_unknown0: int = 0
-        self.unknown0_count: int = 0  # TODO: what is this?
-        self.unknown0_count2: int = 0  # TODO: what is this?
+        # Reference: wiki/MDL-MDX-File-Format.md:454 - "Unknown array" at offset 384/392
+        self.offset_to_unknown0: int = 0  # Offset to unknown array (uint32 at offset 0x34 relative to skinmesh header, 0x180/0x188 absolute)
+        self.unknown0_count: int = 0  # Count of unknown array entries (uint32, documented as "Purpose unknown" in wiki)
+        self.unknown0_count2: int = 0  # Duplicate count of unknown array entries (uint32)
         self.bones: tuple[int, ...] = tuple(-1 for _ in range(16))
         self.unknown1: int = 0  # TODO: what is this?
 
@@ -2095,9 +2100,10 @@ class _SkinmeshHeader:
         self,
         reader: BinaryReader,
     ) -> _SkinmeshHeader:
-        self.unknown2 = reader.read_int32()  # TODO: what is this?
-        self.unknown3 = reader.read_int32()  # TODO: what is this?
-        self.unknown4 = reader.read_int32()  # TODO: what is this?
+        # Reference: wiki/MDL-MDX-File-Format.md:443 - "Unknown Weights" field
+        self.unknown_weights = reader.read_int32()  # Unknown Weights (possibly compilation weights)
+        self.unknown3 = reader.read_int32()  # Unknown field (int32 at offset 0x4, not documented in wiki)
+        self.unknown4 = reader.read_int32()  # Unknown field (int32 at offset 0x8, not documented in wiki)
         self.offset_to_mdx_weights = reader.read_uint32()
         self.offset_to_mdx_bones = reader.read_uint32()
         self.offset_to_bonemap = reader.read_uint32()
@@ -2114,9 +2120,10 @@ class _SkinmeshHeader:
         tbones_count2_raw = reader.read_uint32()
         self.tbones_count2 = min(tbones_count2_raw, 0x7FFFFFFF)
         self.offset_to_unknown0 = reader.read_uint32()
-        unknown0_count_raw = reader.read_uint32()  # TODO: what is this?
+        # Reference: wiki/MDL-MDX-File-Format.md:454 - Unknown array count
+        unknown0_count_raw = reader.read_uint32()  # Count of unknown array entries (Purpose unknown)
         self.unknown0_count = min(unknown0_count_raw, 0x7FFFFFFF)
-        unknown0_count2_raw = reader.read_uint32()  # TODO: what is this?
+        unknown0_count2_raw = reader.read_uint32()  # Duplicate count of unknown array entries
         self.unknown0_count2 = min(unknown0_count2_raw, 0x7FFFFFFF)
         self.bones = tuple(reader.read_uint16() for _ in range(16))
         self.unknown1 = reader.read_uint32()  # TODO: what is this?
@@ -2151,9 +2158,9 @@ class _SkinmeshHeader:
         self,
         writer: BinaryWriter,
     ):
-        writer.write_int32(self.unknown2)  # TODO: what is this?
-        writer.write_int32(self.unknown3)  # TODO: what is this?
-        writer.write_int32(self.unknown4)  # TODO: what is this?
+        writer.write_int32(self.unknown_weights)  # Unknown Weights (possibly compilation weights)
+        writer.write_int32(self.unknown3)  # Unknown field (not documented in wiki)
+        writer.write_int32(self.unknown4)  # Unknown field (not documented in wiki)
         writer.write_uint32(self.offset_to_mdx_weights)
         writer.write_uint32(self.offset_to_mdx_bones)
         writer.write_uint32(self.offset_to_bonemap)
@@ -2170,9 +2177,10 @@ class _SkinmeshHeader:
         tbones_count2_clamped = min(self.tbones_count2, 0x7FFFFFFF)
         writer.write_uint32(tbones_count2_clamped)
         writer.write_uint32(self.offset_to_unknown0)
-        unknown0_count_clamped = min(self.unknown0_count, 0x7FFFFFFF)  # TODO: what is this?
+        # Reference: wiki/MDL-MDX-File-Format.md:454 - Unknown array count
+        unknown0_count_clamped = min(self.unknown0_count, 0x7FFFFFFF)  # Count of unknown array entries
         writer.write_uint32(unknown0_count_clamped)
-        unknown0_count2_clamped = min(self.unknown0_count2, 0x7FFFFFFF)  # TODO: what is this?
+        unknown0_count2_clamped = min(self.unknown0_count2, 0x7FFFFFFF)  # Duplicate count of unknown array entries
         writer.write_uint32(unknown0_count2_clamped)
         for i in range(16):
             writer.write_uint16(self.bones[i])
