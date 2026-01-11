@@ -1,3 +1,580 @@
+"""Binary MDL/MDX file I/O operations.
+
+This module handles reading and writing binary MDL/MDX format files used in KotOR.
+The MDL file contains node hierarchy, animations, and metadata, while the MDX file
+contains vertex data, faces, and geometry payload.
+
+I/O and Parsing Functions (Engine Implementation):
+-------------------------------------------------
+These functions correspond to the game engine's MDL/MDX parsing implementation:
+
+    - LoadModel - K1: 0x00464200, TSL: (not directly found, likely wrapped differently)
+      * Main model loader entry point (172 bytes, 6 callees, 2 callers)
+        * Signature: Model * __cdecl LoadModel(int param_1, undefined4 param_2)
+        * Logic (from decompilation):
+          * Saves CurrentModel to stack
+          * Returns NULL if param_1 is 0
+          * Sets CurrentModel to NULL
+          * Gets IODispatcher singleton via IODispatcher::GetRef() @ (K1: 0x004a0580, TSL: (TODO: Find this address))
+          * Calls IODispatcher::ReadSync() @ (K1: 0x004a15d0, TSL: (TODO: Find this address)) with param_1 and param_2
+          * ReadSync creates Input object and calls Input::Read() @ (K1: 0x004a1260, TSL: (TODO: Find this address))
+          * Input::Read() calls InputBinary::Read() which parses MDL/MDX binary format
+          * Result is MaxTree* which is converted to Model* via MaxTree::AsModel() @ (K1: 0x0043e1c0, TSL: 0x0044ff90)
+          * MaxTree::AsModel() checks if type == 2 (MODEL_TYPE) and returns cast or NULL
+          * If model loaded successfully, iterates through modelsList.data array
+          * Compares model names using __stricmp() on (modelsList.data[i]->tree).name vs (this_01->tree).name
+          * If duplicate found, calls Model::~Model() and MaxTree::operator.delete() on new model
+          * Returns cached model from modelsList.data[iVar3]
+          * If no duplicate, returns the newly loaded model
+          * Restores CurrentModel from stack
+          * Returns NULL if model loading failed
+        * Callees (call chain depth 3+):
+          * ~Model() @ (K1: 0x0043f790, TSL: (TODO: Find this address)) (destructor, called if duplicate found)
+          * IODispatcher::GetRef() @ (K1: 0x004a0580, TSL: (TODO: Find this address)) (singleton accessor)
+          * MaxTree::AsModel() @ (K1: 0x0043e1c0, TSL: 0x0044ff90) (type check and cast)
+          * __stricmp() @ (K1: 0x0070acaf, TSL: 0x0077e24f) (case-insensitive string comparison)
+          * operator.delete() @ (K1: 0x0044aec0, TSL: (TODO: Find this address)) (memory deallocation)
+          * IODispatcher::ReadSync() @ (K1: 0x004a15d0, TSL: (TODO: Find this address)) (file I/O dispatcher)
+            * Input::Read() @ (K1: 0x004a1260, TSL: (TODO: Find this address)) (parses MDL/MDX format)
+              * InputBinary::Read() (binary parser)
+              * AurResGetNextLine() @ (K1: 0x0044bfa0, TSL: (TODO: Find this address)) (line reading for ASCII MDL)
+              * AurResGet() @ (K1: 0x0044c870, TSL: (TODO: Find this address)) (resource data access)
+              * FuncInterp() @ (K1: 0x0044c1f0, TSL: (TODO: Find this address)) (function interpolation for animations)
+        * Callers (call chain showing usage):
+          * NewCAurObject() @ (K1: 0x00449cc0, TSL: (TODO: Find this address)) -> LoadModel() @ (K1: 0x00449d9d, TSL: (TODO: Find this address))
+            * Called from: HideWieldedItems(), LoadSpellVisual(), LoadConjureVisual(), AddObstacle(),
+              SetWeather(), LoadVisualEffect(), SetGunModel(), SpawnRooms(), CollapsePartTree(),
+              FireGunCallback(), LoadAnimatedCamera(), SetPlayer(), LoadModel(), LoadModelAttachment(),
+              AddEnemy(), LoadLight(), AddGun(), CreateReferenceObjects(), ChunkyParticle(),
+              CreateMuzzleFlash(), SpawnPartsForTile(), SetProjectileVelAndAccel(), SpawnHitVisuals(),
+              LoadArea(), SpawnVisualEffect(), AddPlaceableObjectLight(), LoadBeam(), ApplyShadowBlob(),
+              SetPlayer(), AddModel(), SpawnRoom()
+          * LoadAddInAnimations() @ (K1: 0x00440890, TSL: (TODO: Find this address)) -> LoadModel() @ (K1: 0x004408f7, TSL: (TODO: Find this address))
+            * Member of Gob class, loads additional animations for models
+            * Searches for model using FindModel(param_1)
+            * If not found, appends ".mdl" extension and opens file
+            * Calls LoadModel() with FILE* handle
+            * Synchronizes animation trees with MaxTree::SynchronizeTree()
+        * Global State: Uses CurrentModel global variable (thread-local context)
+        * Data Structures: Accesses modelsList (global array/vector of Model*)
+      * TSL: Function not found at same address pattern. Likely refactored or renamed.
+        * Search methodology: Searched for IODispatcher::ReadSync pattern, MaxTree::AsModel pattern,
+          and __stricmp usage with modelsList - no direct match found.
+        * Hypothesis: Model loading may be integrated into higher-level creature/placeable loaders.
+
+    - IODispatcher::ReadSync - K1: 0x004a15d0, TSL: (not verified)
+      * Synchronous I/O dispatcher for model files (36 bytes)
+        * Signature: void __thiscall IODispatcher::ReadSync(IODispatcher *this, FILE *param_1, FILE *param_2)
+        * Logic (from decompilation):
+          * Creates Input object on stack (12 bytes)
+          * Calls Input::Read(local_10, param_1, param_2)
+          * Input::Read() handles actual MDL/MDX parsing
+          * Returns
+        * Callees:
+          * Input::Read() @ (K1: 0x004a1260, TSL: (TODO: Find this address)) (main parsing function)
+            * InputBinary::Read() (binary format parser)
+            * AurResGetNextLine() @ (K1: 0x0044bfa0, TSL: (TODO: Find this address)) (line reading for ASCII MDL)
+            * AurResGet() @ (K1: 0x0044c870, TSL: (TODO: Find this address)) (resource data access)
+            * FuncInterp() @ (K1: 0x0044c1f0, TSL: (TODO: Find this address)) (function interpolation for animations)
+        * Callers:
+          * LoadModel() @ (K1: 0x00464200, TSL: (TODO: Find this address)) (main entry point)
+
+    - MaxTree::AsModel - K1: 0x0043e1c0, TSL: 0x0044ff90
+      * Type check and cast function (16 bytes, 88 callers)
+        * Signature: Model * __thiscall MaxTree::AsModel(MaxTree *this)
+        * Logic (from decompilation):
+          * Checks if (this->type & 0x7f) == 2 (MODEL_TYPE constant)
+          * Uses bitwise trick: ~-(uint)(condition) creates 0xFFFFFFFF if true, 0 if false
+          * ANDs result with (uint)this to return this cast to Model* or NULL
+          * Equivalent to: return ((this->type & 0x7f) == 2) ? (Model*)this : NULL;
+        * Callers (88 total, examples):
+          * ProcessSkinSeams() @ (K1: 0x004392b6, TSL: (TODO: Find this address)), (K1: 0x00439986, TSL: (TODO: Find this address)) (skin seam processing)
+          * FindModel() @ (K1: 0x00464176, TSL: (TODO: Find this address)) (model lookup)
+          * LoadModel() @ (K1: 0x00464236, TSL: (TODO: Find this address)) (main loader)
+          * BuildVertexArrays() @ (K1: 0x00478b8b, TSL: (TODO: Find this address)), (K1: 0x00478c05, TSL: (TODO: Find this address)) (vertex array construction)
+          * Input::Read() @ (K1: 0x004a1435, TSL: (TODO: Find this address)), (K1: 0x004a1362, TSL: (TODO: Find this address)), (K1: 0x004a1373, TSL: (TODO: Find this address)), (K1: 0x004a1503, TSL: (TODO: Find this address)) (parsing)
+
+    Function Discovery Methodology:
+    ------------------------------
+    Functions are located through:
+    1. String cross-references: Search for relevant strings (e.g., ".mdl", "ModelName", error messages)
+       and trace back to functions that reference them
+    2. Call chain analysis: Follow callers/callees from known entry points
+    3. VTable offsets: For virtual functions, locate via vtable entries in class structures
+    4. Import references: Search for imported library functions that are called by model functions
+    5. Decompilation patterns: Match decompiled logic patterns across executables
+
+    Engine-Level Model Loading Functions:
+    -------------------------------------
+    These functions are part of the game engine's object system and handle loading models
+    into creature, placeable, and other game objects. These are higher-level functions
+    that use the binary MDL/MDX I/O functions above.
+
+    - CSWCCreature::LoadModel - K1: 0x0061b380, TSL: 0x00669ea0 (CSWCCreature::LoadModel_Internal)
+      * Creature-specific model loader (842 bytes, 10 callees)
+        * Signature: undefined4 __thiscall CSWCCreature::LoadModel(CSWCCreature *this, undefined4 *param_1, undefined4 param_2, char param_3)
+        * Logic (from decompilation):
+          * Checks if this->field158_0x358 (cached anim_base) is non-NULL
+          * If cached exists, destructs current anim_base via vtable call, then assigns cached
+          * Sets this->field159_0x35c from this->field158_0x358
+          * If current anim_base exists and field44_0xc4 == param_3, skips to model loading
+          * Otherwise destructs current anim_base and creates new based on param_3 switch:
+            * case 0: Allocates 0xf0 bytes, constructs CSWCAnimBase @ (K1: 0x0069dfb0, TSL: (TODO: Find this address))
+            * case 1: Allocates 0x1c4 bytes, constructs CSWCAnimBaseHead @ (K1: 0x0069bb80, TSL: (TODO: Find this address)) with param=1
+            * case 2: Allocates 0x1d0 bytes, constructs CSWCAnimBaseWield @ (K1: 0x00699dd0, TSL: (TODO: Find this address)) with param=1
+            * case 3: Allocates 0x220 bytes, constructs CSWCAnimBaseHeadWield @ (K1: 0x00698ec0, TSL: (TODO: Find this address))
+          * Each anim base type has different vtable and member layouts
+          * After construction, calls RegisterCallbacks() @ (K1: 0x0061ab40, TSL: (TODO: Find this address))
+          * Then calls anim_base->vtable[3](param_1, param_2) - loads model resource
+          * If loading fails, uses sprintf() with error string and returns 0
+          * Error string: "CSWCCreature::LoadModel(): Failed to load creature model '%s'." @ (K1: 0x0074f85c, TSL: 0x007c82fc)
+          * Cross-reference: Error string referenced at @ (K1: 0x0061b5cf, TSL: 0x0066a0f0) in LoadModel function
+          * On success, calls anim_base->vtable[2](param_3) for additional setup if param_3 is special value
+          * Returns 1 on success, 0 on failure
+        * Callees:
+          * operator_new() @ (K1: 0x006fa7e6, TSL: 0x0076d9f6) (memory allocation, called 5 times)
+          * CSWCAnimBaseWield::CSWCAnimBaseWield() @ (K1: 0x00699dd0, TSL: (TODO: Find this address)) (two-weapon anim base constructor)
+          * CSWCAnimBaseHeadWield::CSWCAnimBaseHeadWield() @ (K1: 0x00698ec0, TSL: (TODO: Find this address)) (head + wield anim base)
+          * CSWCAnimBase::CSWCAnimBase() @ (K1: 0x0069dfb0, TSL: (TODO: Find this address)) (base anim base constructor)
+          * CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: (TODO: Find this address)) (two-weapon variant)
+          * sprintf() @ (K1: 0x006fadb0, TSL: 0x0076dac2) (error message formatting)
+          * CResRef::GetResRefStr() @ (K1: 0x00405fe0, TSL: 0x00406050) (resource reference string conversion)
+          * RegisterCallbacks() @ (K1: 0x0061ab40, TSL: 0x00693fe0) (callback registration)
+          * CSWCAnimBaseHead::CSWCAnimBaseHead() @ (K1: 0x0069bb80, TSL: (TODO: Find this address)) (head anim base constructor)
+          * CSWAnimBase::Set() @ (K1: 0x00698e30, TSL: 0x006f3210) (anim base setup, called 4 times)
+        * Callers: None found via direct references (vtable call via object method)
+        * VTable Entry: Located at offset in CSWCCreature class structure
+        * String References:
+          * Error string @ (K1: 0x0074f85c, TSL: 0x007c82fc): "CSWCCreature::LoadModel(): Failed to load creature model '%s'."
+            * Referenced in LoadModel @ (K1: 0x0061b5cf, TSL: 0x0066a0f0) via sprintf() call
+            * Used when anim_base->vtable[3] returns 0 (model loading failure)
+      * Creature model loader (1379 bytes, 11 callees)
+        * Signature: undefined4 __thiscall CSWCCreature::LoadModel_Internal(int param_1, undefined4 *param_2, undefined4 param_3, char param_4)
+        * Address: (K1: TODO: Find this address, TSL: 0x00669ea0) (verified via vtable entry at (K1: TODO: Find this address, TSL: 0x007c8040) pointing to this function)
+        * Discovery Method: Located via vtable data reference at (K1: TODO: Find this address, TSL: 0x007c8040), which stores function pointer to (K1: 0x00669ea0, TSL: TODO: Find this address)
+        * Logic (from exhaustive decompilation - EXHAUSTIVE DIFFERENCES from K1):
+          * EXECUTION FLOW:
+          * 1. Exception handling setup: Saves ExceptionList, initializes SEH frame with [TODO: Name this function] @ (K1: TODO: Find this address, TSL: 0x0079cc86)
+          * 2. Cached anim_base check: Checks *(int*)(param_1 + 0x370) for cached anim_base (was this->field158_0x358 in K1)
+          *    - If cached exists (non-NULL), destructs current anim_base via vtable[0](1) call at offset 0x68
+          *    - Assigns cached to *(undefined4**)(param_1 + 0x68)
+          *    - Clears cache: *(undefined4*)(param_1 + 0x370) = 0
+          *    - Copies field159: *(undefined4*)(param_1 + 0x200) = *(undefined4*)(param_1 + 0x374)
+          *    - Clears field159 cache: *(undefined4*)(param_1 + 0x374) = 0
+          * 3. Current anim_base validation: Checks *(undefined4**)(param_1 + 0x68) (was this->object.anim_base in K1)
+          *    - If non-NULL and *(char*)(anim_base + 0x31) == param_4 (type matches), jumps to model loading ([TODO: Name this label] @ (K1: TODO: Find this address, TSL: 0x0066a0c8))
+          *    - Otherwise, destructs current anim_base via vtable[0](1) and proceeds to allocation
+          * 4. Switch-based anim_base allocation (param_4 determines type):
+          *    * case '\0' (0): Standard anim base
+          *      - Allocates 0xfc bytes via operator_new() @ (K1: (TODO: Find this address), TSL: 0x0076d9f6) (was 0xf0 in K1, 12 bytes larger)
+          *      - Calls [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f8340) (CSWCAnimBase constructor equivalent, 409 bytes)
+          *      - Sets *(undefined4**)(param_1 + 0x68) = constructed anim_base
+          *    * case '\x01' (1): Head anim base
+          *      - Allocates 0x1d0 bytes (was 0x1c4 in K1, 12 bytes larger)
+          *      - Calls [TODO: Name this function](pvVar4, 1) @ (K1: TODO: Find this address, TSL: 0x006f5e60) (CSWCAnimBaseHead constructor, 229 bytes)
+          *      - Adjusts pointer via vtable[4] offset calculation: *(int*)(*piVar6 + 4) + (int)piVar6
+          *    * case '\x02' (2): Wield anim base
+          *      - Allocates 0x1dc bytes (was 0x1d0 in K1, 12 bytes larger)
+          *      - Calls [TODO: Name this function](pvVar4, 1) @ (K1: TODO: Find this address, TSL: 0x006f41b0) (CSWCAnimBaseWield constructor, 256 bytes)
+          *      - Adjusts pointer via vtable[4] offset calculation
+          *    * case '\x03' (3): Head + Wield anim base
+          *      - Allocates 0x22c bytes (was 0x220 in K1, 12 bytes larger)
+          *      - Calls [TODO: Name this function](pvVar4, 1) @ (K1: TODO: Find this address, TSL: 0x006f32a0) (CSWCAnimBaseHeadWield constructor, 197 bytes)
+          *      - Adjusts pointer via vtable[4] offset calculation
+          *    * case '\v' (0x0b, 11): Two-Weapon anim base (NEW in TSL, not in K1)
+          *      - Allocates 0x180 bytes (384 bytes)
+          *      - Calls [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f6fb0) (CSWCAnimBaseTW constructor, 307 bytes)
+          *      - Sets vtable to [TODO: Name this pointer] @ (K1: TODO: Find this address, TSL: 0x007ce078)
+          *      - Initializes 5 CExoString fields (offsets 0x4a, 0x4f, 0x54, 0x59) via [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00405f40)
+          *      - Sets field at offset 0x31 to 0x0b (two-weapon type identifier)
+          *      - Clears flags: param_1[0x5e] = 0, param_1[0x5f] = 0
+          *      - Zeroes 5 additional fields (0x3f through 0x43)
+          *    * default: Falls through to error handler (switchD_00669f38_caseD_4)
+          * 5. Animation setup (after successful allocation):
+          *    - Calls [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f3210) (Set equivalent, 81 bytes) 4 times with hardcoded float constants:
+          *      * [TODO: Name this function](anim_base, 0, 0x44e74000) @ (K1: TODO: Find this address, TSL: 0x006f3210) = 1216.0f (was Set() call in K1)
+          *      * [TODO: Name this function](anim_base, 1, 0x45ce4000) @ (K1: TODO: Find this address, TSL: 0x006f3210) = 6600.0f
+          *      * [TODO: Name this function](anim_base, 2, 0x3f6ccccd) @ (K1: TODO: Find this address, TSL: 0x006f3210) = 0.9f
+          *      * [TODO: Name this function](anim_base, 3, 0x40533333) @ (K1: TODO: Find this address, TSL: 0x006f3210) = 3.3f
+          *    - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f3210) implements switch-based setter: param_1 determines offset (4, 8, 0xc, 0x10)
+          *    - Sets *(undefined4*)(param_1 + 0x200) = 0 (field159 initialization)
+          * 6. Model resource loading:
+          *    - Calls anim_base->vtable[0xc](param_2, param_3) (load model method, offset 0xc = 3rd vtable entry)
+          *    - If loading fails (returns 0), calls error handler:
+          *      * Calls [TODO: Name this function](param_2) @ (K1: TODO: Find this address, TSL: 0x00406050) (resource name getter, 72 bytes)
+          *        - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00406050) stores param_1 (CExoString) into circular buffer at [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x008286e0)
+          *        - Uses modulo 4 circular buffer: [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x00828728) = ([TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x00828728) + 1) & 0x80000003
+          *        - Stores 4 dwords (16 bytes) at offset iVar1 = [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x00828728) * 0x11
+          *        - Stores null terminator at offset 0x10
+          *        - Returns pointer to stored string
+          *      * Calls [TODO: Name this function](acStack_10c, "CSWCCreature::LoadModel(): Failed to load creature model '%s'.") @ (K1: TODO: Find this address, TSL: 0x0076dac2)
+          *        - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0076dac2) is sprintf equivalent (88 bytes, 133 references)
+          *        - Creates FILE structure on stack for formatting
+          *        - Calls [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0077252f) (vswprintf equivalent) with format string
+          *        - Null-terminates result
+          *      * Returns 0 (failure)
+          * 7. Special parameter handling (param_3 checks):
+          *    - If param_3 is -1, -2, -3, or -4 (special values), performs additional setup:
+          *      * Calls anim_base->vtable[8](param_3) @ (K1: (TODO: Find this address), TSL: 0x0066a150) to get model attachment
+          *      * Calls attachment->vtable[0x74](param_1) (29th entry) - attachment setup
+          *      * Calls attachment->vtable[0x7c]([TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007beaec)) (31st entry) - game object types setup
+          *    - If param_3 == -1 (headconjure special case):
+          *      * Initializes quaternion on stack: {0, 0, 0, 1.0f}
+          *      * Calls [TODO: Name this function](param_1) @ (K1: TODO: Find this address, TSL: 0x00669570) (RegisterCallbacks for headconjure, 532 bytes)
+          *        - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00669570) registers sound callbacks via anim_base->vtable[8](0xff)
+          *        - Registers callbacks for: "snd_Footstep", [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007c82cc), "snd_hitground", "SwingShort", "SwingLong",
+          *          "SwingTwirl", "Clash", "Contact", "HitParry", "blur_start", "blur_end", "doneattack01", "doneattack02",
+          *          "GetPersonalRadius", "GetCreatureRadius", "GetPath"
+          *        - Stores callback IDs in creature structure offsets 0x404, 0x408, 0x410, 0x414, 0x418, 0x41c, 0x420, 0x424, 0x428, 0x42c, 0x430, 0x434, 0x438, 0x43c, 0x440, 0x444
+          *      * Calls anim_base->vtable[0xa0]("headconjure", &uStack_134, &uStack_128) (40th entry, finds dummy node)
+          *      * If headconjure dummy not found (returns 0), sets *(float*)(param_1 + 0xa4) = 0x40066666 (3.2f, default value)
+          *      * Otherwise, calculates: *(float*)(param_1 + 0xa4) = fStack_12c - fStack_12c * [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b7428)
+          *        - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b7428): Float constant (cross-referenced in 9 locations, likely scale factor)
+          * 8. Callback registration:
+          *    - Calls [TODO: Name this function](param_1) @ (K1: TODO: Find this address, TSL: 0x00693fe0) (RegisterCallbacks equivalent, 100 bytes, 177 references)
+          *      - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00693fe0) checks if *(int*)(param_1 + 0xf8) is NULL (cached callback result)
+          *      - If NULL and *(int*)(param_1 + 0xe4) == 0, calls [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x004dc2e0) and [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x004dc650) to get callback handler
+          *      - Calls handler->vtable[0x10]() to get callback object
+          *      - Stores result in *(void**)(param_1 + 0xf8)
+          *      - If callback object exists, calls [TODO: Name this function](callback, param_1) @ (K1: TODO: Find this address, TSL: 0x005056f0) to register callbacks
+          *      - Returns *(undefined4*)(param_1 + 0xf8)
+          *    - If callback registration succeeds:
+          *      * Calls callback->vtable[0x30]() to get animation object
+          *      * If animation exists:
+          *        - Checks *(int*)(animation + 0x24c) and calls anim_base->vtable[0x18c](1) if non-NULL (31st entry)
+          *        - Checks *(int*)(animation + 0x254) and calls anim_base->vtable[0x1a0](0) if non-NULL (40th entry)
+          *      * Calls anim_base->vtable[0x1a0](1) (40th entry, enable animation)
+          *    - Gets creature size class: sVar1 = *(short*)(*(int*)(param_1 + 0x310) + 0x80)
+          *    - Calls anim_base->vtable[0x168](sVar1) (90th entry, set size class)
+          *    - If size class < 0x3d (61):
+          *      * If size class < 0x29 (41), performs interpolation calculations:
+          *        - fVar9 = 1.0f
+          *        - fVar10 = (float)(0x28 - sVar1) * [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007c82ec)
+          *        - fVar12 = ([TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b5774) - fVar10) * [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007c82e8)
+          *        - fVar11 = fVar10 * [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b9700) + fVar12
+          *        - fVar12 = fVar10 * [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b5f88) + fVar12
+          *        - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007c82ec): Float constant (cross-referenced 4 times, interpolation factor)
+          *        - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b5774): Float constant (cross-referenced 78 times, scale factor)
+          *        - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007c82e8): Float constant (cross-referenced 8 times, interpolation factor)
+          *        - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b9700): Float constant (cross-referenced 1 time, interpolation weight)
+          *        - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b5f88): Float constant (cross-referenced 1 time, interpolation weight)
+          * 9. Return: Returns 1 on success, 0 on failure
+          * MEMORY LAYOUT CHANGES (K1 vs TSL):
+          * - anim_base: param_1 + 0x68 (was this->object.anim_base, offset 0x358 in K1)
+          * - cached_anim_base: param_1 + 0x370 (was this->field158_0x358, +24 bytes offset change)
+          * - field159: param_1 + 0x200 (was this->field65_0x1f8, +8 bytes offset change)
+          * - cached_field159: param_1 + 0x374 (new in TSL, was not cached in K1)
+          * - size_class_access: param_1 + 0x310 + 0x80 (was different offset in K1)
+          * - callback_cache: param_1 + 0xf8 (new in TSL, was not cached in K1)
+          * - callback_flag: param_1 + 0xe4 (new in TSL, callback registration flag)
+          * ALLOCATION SIZE DIFFERENCES:
+          * - Standard: 0xfc (252 bytes) in TSL vs 0xf0 (240 bytes) in K1 (+12 bytes)
+          * - Head: 0x1d0 (464 bytes) in TSL vs 0x1c4 (452 bytes) in K1 (+12 bytes)
+          * - Wield: 0x1dc (476 bytes) in TSL vs 0x1d0 (464 bytes) in K1 (+12 bytes)
+          * - HeadWield: 0x22c (556 bytes) in TSL vs 0x220 (544 bytes) in K1 (+12 bytes)
+          * - TwoWeapon: 0x180 (384 bytes) in TSL (NEW, not present in K1)
+          * VTABLE OFFSET DIFFERENCES:
+          * - Load model: offset 0xc (3rd entry) in TSL vs offset 0xc in K1 (same)
+          * - Get attachment: offset 0x8 (2nd entry) in TSL vs offset 0x8 in K1 (same)
+          * - Destructor: offset 0x0 (1st entry) in TSL vs offset 0x0 in K1 (same)
+          * - Find dummy: offset 0xa0 (40th entry) in TSL vs different offset in K1
+          * - Set size: offset 0x168 (90th entry) in TSL vs different offset in K1
+          * - Enable animation: offset 0x1a0 (104th entry) in TSL vs different offset in K1
+          * - Attachment setup: offset 0x74 (29th entry) in TSL vs offset 0x74 in K1 (same)
+          * - Game object types: offset 0x7c (31st entry) in TSL vs offset 0x7c in K1 (same)
+          * - Animation checks: offset 0x18c (39th entry) in TSL vs different offset in K1
+          * CALLEES (11 total, verified via decompilation):
+          * - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f8340): CSWCAnimBase constructor (409 bytes, 8 callers)
+          *   * Initializes vtable to [TODO: Name this pointer] @ (K1: TODO: Find this address, TSL: 0x007ce180)
+          *   * Initializes 5 CExoString fields via [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00406350) with empty strings
+          *   * Initializes quaternion via [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x004da020) with default values
+          *   * Sets default scale to 1.0f
+          *   * Sets flags: param_1[0x37] = 1 (active flag)
+          *   * Called from [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f6fb0) (CSWCAnimBaseTW constructor) and directly
+          * - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f5e60): CSWCAnimBaseHead constructor (229 bytes, 3 callers)
+          *   * If param_1 != 0, sets vtable to [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007ce060), calls [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f6fb0) on offset 0x50 sub-object
+          *   * Sets vtable offset for base class to [TODO: Name this pointer] @ (K1: TODO: Find this address, TSL: 0x007cdf68)
+          *   * Initializes 2 CExoString fields via [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00405f40) (offsets 0x1c, 0x30)
+          *   * Sets field at offset 0xc4 to 1 (type identifier)
+          *   * Sets field at offset 0x48 to 0x7f000000 (INF, scale maximum)
+          * - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f41b0): CSWCAnimBaseWield constructor (256 bytes, 3 callers)
+          *   * If param_1 != 0, sets vtable to [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007cdf20), calls [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f6fb0) on offset 0x5c sub-object
+          *   * Sets vtable offset for base class to [TODO: Name this pointer] @ (K1: TODO: Find this address, TSL: 0x007cde28)
+          *   * Initializes 2 CExoString fields via [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00405f40) (offsets 4, 0x14)
+          *   * Calls [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x005ff130) on 2 fields (offsets 0x24, 0x2c) - string cleanup/initialization
+          *   * Sets field at offset 0xc4 to 2 (type identifier)
+          *   * Zeroes 6 fields (offsets 0x34, 0x38, 0x48, 0x4c, 0x50, 0x54)
+          * - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f32a0): CSWCAnimBaseHeadWield constructor (197 bytes, 2 callers)
+          *   * If param_1 != 0:
+          *     - Sets vtable to [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007cde10)
+          *     - Sets field at offset 0x188 to [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007cde08) (CSWCAnimBaseHead sub-object vtable)
+          *     - Sets field at offset 0x1d4 to [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007cde00) (CSWCAnimBaseWield sub-object vtable)
+          *     - Calls [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f6fb0) on offset 8 sub-object
+          *     - Calls [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f5e60) on offset 0x188 sub-object (Head constructor)
+          *     - Calls [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f41b0) on offset 0x1d4 sub-object (Wield constructor)
+          *   * Sets field at offset 0xc4 to 3 (type identifier)
+          * - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f6fb0): CSWCAnimBaseTW constructor (307 bytes, 5 callers)
+          *   * Calls [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f8340) first (base CSWCAnimBase construction)
+          *   * Sets vtable to [TODO: Name this pointer] @ (K1: TODO: Find this address, TSL: 0x007ce078)
+          *   * Initializes 4 CExoString fields via [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00405f40) (offsets 0x4a, 0x4f, 0x54, 0x59)
+          *   * Sets field at offset 0x31 to 0x0b (two-weapon type)
+          *   * Zeroes flags: param_1[0x5e] = 0, param_1[0x5f] = 0
+          *   * Initializes 5 additional fields to 0 (offsets 0x3f through 0x43)
+          * - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f3210): Set equivalent (81 bytes, 8 callers)
+          *   * Switch-based setter: param_1 (0-3) determines which field to set
+          *   * case 0: Sets *(undefined4*)(this + 4) = param_2
+          *   * case 1: Sets *(undefined4*)(this + 8) = param_2
+          *   * case 2: Sets *(undefined4*)(this + 0xc) = param_2
+          *   * case 3: Sets *(undefined4*)(this + 0x10) = param_2
+          *   * Returns 1 on success, 0 on default case
+          *   * Called 4 times in LoadModel_Internal with hardcoded float values
+          * - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00693fe0): RegisterCallbacks equivalent (100 bytes, 177 references)
+          *   * Checks if *(int*)(param_1 + 0xf8) is cached (callback result)
+          *   * If NULL and *(int*)(param_1 + 0xe4) == 0:
+          *     - Calls [TODO: Name this function](*(uint*)(param_1 + 4)) @ (K1: TODO: Find this address, TSL: 0x004dc2e0) to get callback type ID
+          *     - Calls [TODO: Name this function](*(void**)([TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x008283d4) + 8), uVar1) @ (K1: TODO: Find this address, TSL: 0x004dc650) to get callback handler from registry
+          *     - If handler exists, calls handler->vtable[0x10]() to get callback object
+          *     - Stores callback in *(void**)(param_1 + 0xf8)
+          *     - If callback exists, calls [TODO: Name this function](callback, param_1) @ (K1: TODO: Find this address, TSL: 0x005056f0) to register callbacks
+          *   * Returns *(undefined4*)(param_1 + 0xf8)
+          *   * Called 4 times in LoadModel_Internal at lines 170, 175 (twice conditionally)
+          * - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00669570): RegisterCallbacks for headconjure (532 bytes, 1 caller)
+          *   * Signature: void __fastcall [TODO: Name this function](int param_1) @ (K1: TODO: Find this address, TSL: 0x00669570)
+          *   * Logic (from decompilation):
+          *     * Gets callback handler via anim_base->vtable[8](0xff) call at *(undefined4**)(param_1 + 0x68)
+          *     * If handler exists (piVar1 != NULL):
+          *       * Registers 16 sound/animation callbacks via handler->vtable[0x28]() call
+          *       * Each callback registered with 0x461c3c00 (10000.0f) as distance parameter
+          *       * Stores callback function pointers in creature structure at offsets 0x404 through 0x444
+          *     * Returns void
+          *   * Callees:
+          *     * anim_base->vtable[8](0xff) @ *(undefined4**)(param_1 + 0x68) (callback handler getter)
+          *     * handler->vtable[0x28]() (callback registration, called 16 times)
+          *     * [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00657590) (callback function pointer, used for "snd_hitground")
+          *     * [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0065d0c0) (callback function pointer, used for "SwingShort")
+          *     * [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0065d140) (callback function pointer, used for "SwingLong")
+          *     * [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0065d1c0) (callback function pointer, used for "SwingTwirl")
+          *     * [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0065d240) (callback function pointer, used for "Clash")
+          *     * [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0065d2c0) (callback function pointer, used for "Contact")
+          *     * [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0065d2f0) (callback function pointer, used for "HitParry")
+          *     * [TODO: Name this label] @ (K1: TODO: Find this address, TSL: 0x00664030) (callback function pointer, used for "blur_start")
+          *     * [TODO: Name this label] @ (K1: TODO: Find this address, TSL: 0x00664040) (callback function pointer, used for "blur_end", "doneattack01", "doneattack02")
+          *     * [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0065a330) (callback function pointer, used for "GetPersonalRadius")
+          *     * [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0065a380) (callback function pointer, used for "GetCreatureRadius")
+          *     * [TODO: Name this label] @ (K1: TODO: Find this address, TSL: 0x0065a3d0) (callback function pointer, used for "GetPath")
+          *   * Registers 16 sound/animation callbacks:
+          *     - "snd_Footstep" @ (K1: (TODO: Find this address), TSL: 0x007c82d0) (referenced at (K1: (TODO: Find this address), TSL: 0x006695f0), stores at param_1 + 0x404)
+          *     - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007c82cc) (sound reference, referenced at (K1: TODO: Find this address, TSL: 0x006695fa), stores at param_1 + 0x408)
+          *     - "snd_hitground" @ (K1: (TODO: Find this address), TSL: 0x007c82bc) (referenced at (K1: (TODO: Find this address), TSL: 0x0066960a), stores at param_1 + 0x410)
+          *     - "SwingShort" @ (K1: (TODO: Find this address), TSL: 0x007c7e00) (referenced at (K1: (TODO: Find this address), TSL: 0x00669612), stores at param_1 + 0x414)
+          *     - "SwingLong" @ (K1: (TODO: Find this address), TSL: 0x007c7e0c) (referenced at (K1: (TODO: Find this address), TSL: 0x0066961e), stores at param_1 + 0x418)
+          *     - "SwingTwirl" @ (K1: (TODO: Find this address), TSL: 0x007c7e18) (referenced at (K1: (TODO: Find this address), TSL: 0x0066962a), stores at param_1 + 0x41c)
+          *     - "Clash" @ (K1: (TODO: Find this address), TSL: 0x007c7e24) (referenced at (K1: (TODO: Find this address), TSL: 0x00669636), stores at param_1 + 0x420)
+          *     - "Contact" @ (K1: (TODO: Find this address), TSL: 0x007c82b4) (referenced at (K1: (TODO: Find this address), TSL: 0x00669642), stores at param_1 + 0x424)
+          *     - "HitParry" @ (K1: (TODO: Find this address), TSL: 0x007c82a8) (referenced at (K1: (TODO: Find this address), TSL: 0x0066964e), stores at param_1 + 0x428)
+          *     - "blur_start" @ (K1: (TODO: Find this address), TSL: 0x007c829c) (referenced at (K1: (TODO: Find this address), TSL: 0x0066965a), stores at param_1 + 0x42c)
+          *     - "blur_end" @ (K1: (TODO: Find this address), TSL: 0x007c8290) (referenced at (K1: (TODO: Find this address), TSL: 0x00669666), stores at param_1 + 0x430)
+          *     - "doneattack01" @ (K1: (TODO: Find this address), TSL: 0x007c8280) (referenced at (K1: (TODO: Find this address), TSL: 0x00669672), stores at param_1 + 0x434)
+          *     - "doneattack02" @ (K1: (TODO: Find this address), TSL: 0x007c8270) (referenced at (K1: (TODO: Find this address), TSL: 0x0066967e), stores at param_1 + 0x438)
+          *     - "GetPersonalRadius" @ (K1: (TODO: Find this address), TSL: 0x007bb13c) (referenced at (K1: (TODO: Find this address), TSL: 0x0066968a), stores at param_1 + 0x43c)
+          *     - "GetCreatureRadius" @ (K1: (TODO: Find this address), TSL: 0x007bb128) (referenced at (K1: (TODO: Find this address), TSL: 0x00669696), stores at param_1 + 0x440)
+          *     - "GetPath" @ (K1: (TODO: Find this address), TSL: 0x007bb120) (referenced at (K1: (TODO: Find this address), TSL: 0x006696a2), stores at param_1 + 0x444)
+          *   * All callbacks registered with 0x461c3c00 (10000.0f) as distance parameter
+          *   * All string references verified via cross-reference search in TSL executable
+          * - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00406050): Resource name cache/getter (72 bytes, 35 references)
+          *   * Signature: void __fastcall [TODO: Name this function](undefined4 *param_1) @ (K1: TODO: Find this address, TSL: 0x00406050)
+          *   * Logic (from decompilation):
+          *     * Implements circular buffer cache for CExoString resource names
+          *     * Updates buffer index: [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x00828728) = ([TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x00828728) + 1) & 0x80000003
+          *     * Handles negative modulo: if (int)[TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x00828728) < 0, adjusts to positive range
+          *     * Calculates storage offset: iVar1 = [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x00828728) * 0x11 (17 bytes per entry, 4-entry buffer)
+          *     * Stores 4 dwords (16 bytes) from param_1 to buffer at [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x008286e0) + iVar1
+          *     * Appends null terminator at offset 0x10 (16th byte of entry)
+          *     * Returns void (modifies global buffer)
+          *   * Callees: None (pure arithmetic/memory operations)
+          *   * Callers: CSWCCreature::LoadModel error handler @ (K1: (TODO: Find this address), TSL: 0x0066a0f0) (called once for error message formatting), plus 34 other functions
+          *   * Usage: Caches resource names for error messages and logging (4-entry circular buffer prevents memory leaks)
+          * - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0076dac2): sprintf equivalent (88 bytes, 133 references)
+          *   * Creates FILE structure on stack for string formatting
+          *   * Calls [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0077252f) (vswprintf equivalent) with format string and arguments
+          *   * Null-terminates result string
+          *   * Returns formatted string count
+          * - operator_new() @ (K1: 0x006fa7e6, TSL: 0x0076d9f6): Memory allocator (14 bytes, 2548 references)
+          *   * Calls __nh_malloc(param_1, 1) for aligned allocation
+          *   * Returns allocated memory pointer or NULL
+          *   * Called 5 times in LoadModel_Internal for different anim_base types
+          * CALLERS: None found via direct references (vtable call via object method)
+          * VTABLE ENTRY: Located at offset in CSWCCreature class structure, stored at (K1: (TODO: Find this address), TSL: 0x007c8040)
+          * STRING REFERENCES (verified via cross-references):
+          * - Error string @ (K1: 0x0074f85c, TSL: 0x007c82fc): "CSWCCreature::LoadModel(): Failed to load creature model '%s'."
+          *   * Referenced in CSWCCreature::LoadModel error handler @ (K1: 0x0061b5cf, TSL: 0x0066a0f0)
+          *   * Format string used in [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0076dac2) (sprintf equivalent)
+          *   * Cross-referenced from error handler function only
+          * - "headconjure" @ (K1: (TODO: Find this address), TSL: 0x007c82f0): Dummy node name for spell visual positioning
+          *   * Referenced in LoadModel_Internal @ (K1: (TODO: Find this address), TSL: 0x0066a1a5) via anim_base->vtable[0xa0]() call
+          *   * Also referenced in 7 other functions: [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00702e20), [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00701870), [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00700da0), [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f8590), [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006efe40), [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006a5490), [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006efaf0)
+          *   * Used to find headconjure dummy node in model hierarchy for spell effect positioning
+          * - "_head_hit" @ (K1: (TODO: Find this address), TSL: 0x007ccaf8): Hit detection node suffix
+          *   * Referenced in 3 functions: [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00700da0), [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00705d20), [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x007052a0)
+          *   * Not directly used in LoadModel_Internal, but related to model hit detection setup
+          * - "snd_Footstep" @ (K1: (TODO: Find this address), TSL: 0x007c82d0): Footstep sound callback name
+          *   * Referenced only in [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00669595)
+          *   * Used to register footstep sound callback for creature animations
+          * - "snd_hitground" @ (K1: (TODO: Find this address), TSL: 0x007c82bc): Hit ground sound callback name
+          *   * Referenced only in [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006695d1)
+          *   * Used to register hit ground sound callback for creature animations
+          * DATA CONSTANTS (verified via cross-references):
+          * - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007beaec): Game object types constant (cross-referenced 78 times)
+          *   * Passed to anim_base->vtable[0x7c]() for game object type setup
+          * - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b7428): Float scale factor (cross-referenced 9 times)
+          *   * Used in headconjure calculation: fStack_12c - fStack_12c * [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b7428)
+          * - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007c82ec): Float interpolation factor (cross-referenced 4 times)
+          *   * Used in size class interpolation: (float)(0x28 - sVar1) * [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007c82ec)
+          * - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b5774): Float scale factor (cross-referenced 78 times)
+          *   * Used in size class interpolation: ([TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b5774) - fVar10) * [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007c82e8)
+          * - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007c82e8): Float interpolation factor (cross-referenced 8 times)
+          *   * Used in size class interpolation calculations
+          * - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b9700): Float interpolation weight (cross-referenced 1 time)
+          *   * Used in size class interpolation: fVar10 * [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b9700) + fVar12
+          * - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b5f88): Float interpolation weight (cross-referenced 1 time)
+          *   * Used in size class interpolation: fVar10 * [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b5f88) + fVar12
+          * - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007c514c): Size class constant (cross-referenced 22 times)
+          *   * Used in [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0051f0b0) for size class validation
+          * KEY DIFFERENCES FROM K1:
+          * 1. Additional case '\v' (0x0b) for two-weapon anim base (not present in K1)
+          * 2. Different allocation sizes for all anim base types (+12 bytes each)
+          * 3. Different memory offsets for class members (due to structure layout changes)
+          * 4. Additional caching mechanism for anim_base and field159 (offsets 0x370, 0x374)
+          * 5. Additional callback caching mechanism (offset 0xf8)
+          * 6. Different vtable offsets for some methods (Find dummy, Set size, Enable animation)
+          * 7. Additional interpolation calculations for size class (not present in K1)
+          * 8. Additional headconjure positioning calculation with [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b7428) scale factor
+          * 9. Different string addresses (expected with recompilation)
+          * 10. Obfuscated function names (FUN_* instead of clear names)
+          * ERROR HANDLER: CSWCCreature::LoadModel @ 0x0066a0f0 (43 bytes, separate function)
+          *   * Signature: undefined4 __thiscall CSWCCreature::LoadModel(char *param_1)
+          *   * Logic: Calls [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0076dac2) with error string format and resource name
+          *   * Called from: switch case 4 (default case) in LoadModel_Internal
+          *   * Returns: 0 (failure)
+          *   * Note: This is a separate error handler function, not the main LoadModel function
+
+    - CSWCPlaceable::LoadModel @ (K1: 0x006823f0, TSL: TODO: Find this address)
+      * Placeable object model loader (504 bytes, 10 callees)
+        * Signature: undefined4 __thiscall CSWCPlaceable::LoadModel(CSWCPlaceable *this, CResRef *param_1, byte param_2, byte param_3)
+        * Logic (from decompilation):
+          * Checks if (this->object).anim_base is NULL
+          * If NULL, allocates 0xf0 bytes and constructs CSWCAnimBasePlaceable @ 0x006e4e50
+          * Calls anim_base->vtable[3](param_1) to load model resource
+          * If loading fails, returns 0
+          * Calls anim_base->vtable[2](param_2) to get model attachment
+          * If attachment exists, calls attachment->vtable[29](this) and attachment->vtable[31](GAME_OBJECT_TYPES)
+          * Extracts model name from param_1 using CResRef::CopyToString()
+          * Gets substring from position 4 using CExoString::SubString()
+          * Constructs hit detection string by appending "_head_hit" to model name
+          * Returns 1 on success
+        * Callees:
+          * operator_new() @ 0x006fa7e6 (memory allocation)
+          * CResRef::CopyToString() @ (K1: 0x00405f70, TSL: TODO: Find this address) - resource name extraction
+          * CExoString::CExoString() @ (K1: 0x005e5a90, TSL: TODO: Find this address) - string constructor)
+          * CExoString::CStr() @ (K1: 0x005e5670, TSL: TODO: Find this address) - C string accessor)
+          * CExoString::CExoString() @ (K1: 0x005b3190, TSL: TODO: Find this address) - empty string constructor)
+          * CExoString::operator+() @ (K1: 0x005e5d10, TSL: TODO: Find this address) - string concatenation)
+          * CSWCAnimBasePlaceable::CSWCAnimBasePlaceable() @ (K1: 0x006e4e50, TSL: TODO: Find this address) - placeable anim base)
+          * CExoString::SubString() @ (K1: 0x005e6270, TSL: TODO: Find this address) - substring extraction
+          * CExoString::operator=() @ (K1: 0x005e5c50, TSL: TODO: Find this address) - string assignment, called 2 times
+          * CExoString::~CExoString() @ (K1: 0x005e5c20, TSL: TODO: Find this address) - string destructor, called 4 times
+        * String References: "_head_hit" (hardcoded in function, not in string table)
+
+    - CSWCCreature::UnloadModel @ (K1: 0x0060c8e0, TSL: TODO: Find this address)
+      * Creature model unloader (42 bytes, 1 callee)
+        * Signature: void __thiscall CSWCCreature::UnloadModel(CSWCCreature *this)
+        * Logic (from decompilation):
+          * Gets (this->object).anim_base
+          * If anim_base is non-NULL:
+            * Calls anim_base->vtable[30]() (unload/cleanup method)
+            * Calls anim_base->vtable[0](1) (destructor with delete flag)
+            * Sets (this->object).anim_base to NULL
+          * Returns
+        * Callees:
+          * anim_base->vtable[30]() (unload method, virtual call)
+          * anim_base->vtable[0](1) (destructor, virtual call)
+        * VTable Entry: Located in CSWCCreature class structure
+      * TSL: Function likely exists but not verified
+
+    Resource Management Functions:
+    ------------------------------
+    - CResMDL::CResMDL - K1: 0x005cea50, TSL: (TODO: Find this address)
+      * MDL resource constructor (36 bytes, 1 callee)
+        * Signature: void __thiscall CResMDL::CResMDL(CResMDL *this)
+        * Logic (from decompilation analysis via cross-references):
+          * Initializes vtable pointer to CResMDL_vtable
+          * Calls CRes::CRes() base class constructor
+          * Sets field1_0x28 = 0 (resource state flag)
+          * Sets size = 0 (resource data size)
+          * Sets data = NULL (resource data pointer)
+        * Callees:
+          * CRes::CRes() (base class constructor)
+        * Callers:
+          * LoadMesh() @ 0x0059680c (called when loading mesh resources)
+          * SetResRef() @ 0x00710270 (called when setting resource reference)
+        * VTable: CResMDL_vtable located in data section
+      * TSL: Not verified - search would be via CRes base class constructor pattern
+
+    - CResMDL::~CResMDL (destructor) - K1: 0x005cea80, TSL: (TODO: Find this address)
+      * MDL resource destructor (11 bytes, 1 callee)
+        * Signature: void __thiscall CResMDL::~CResMDL(CResMDL *this)
+        * Logic (from decompilation):
+          * Sets vtable to CResMDL_vtable (restores vtable for proper destruction)
+          * Calls CRes::~CRes() base class destructor
+          * Returns
+        * Callees:
+          * CRes::~CRes() (base class destructor)
+        * VTable: CResMDL_vtable @ 0x0074c404
+
+    - CResMDL::~CResMDL (deleting destructor) - K1: 0x005cea90, TSL: (TODO: Find this address)
+      * MDL resource deleting destructor (27 bytes, 1 callee)
+        * Signature: int ** __thiscall CResMDL::~CResMDL(CResMDL *this, byte param_1)
+        * Logic (from decompilation):
+          * Calls ~CResMDL(this) (non-deleting destructor)
+          * Checks if param_1 & 1 (delete flag is set)
+          * If flag set, calls _free(this) to deallocate memory
+          * Returns this pointer cast to int**
+        * Callees:
+          * ~CResMDL() @ 0x005cea80 (non-deleting destructor)
+          * _free() (memory deallocation, conditional)
+        * VTable Entry: CResMDL_vtable + offset for deleting destructor
+
+    Error Messages:
+    --------------
+    - "CSWCCreature::LoadModel(): Failed to load creature model '%s'." - K1: 0x0074f85c, TSL: 0x007c82fc
+      * Referenced in CSWCCreature::LoadModel() @ 0x0061b5cf
+        * Used in sprintf() call when anim_base->vtable[3] returns 0
+        * param_1 is resource name from CResRef::GetResRefStr()
+      * TSL: Referenced in CSWCCreature::LoadModel error handler @ 0x0066a0f0
+        * Used in [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0076dac2) (sprintf equivalent)
+        * Resource name obtained via [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00406050)
+
+    - "Model %s nor the default model %s could be loaded." - K1: 0x00751c70, TSL: 0x007cad14
+      * Generic model loading failure message
+      * Format: Takes two model names (requested and default fallback)
+
+    String References (File Extensions):
+    -----------------------------------
+    - ".mdl" extension - K1: 0x00740ca8, TSL: (TODO: Find this address)
+      * Referenced in 3 locations:
+        * Input::Read() @ (K1: 0x004a13ba, TSL: (TODO: Find this address)) - file extension check
+        * Input::Read() @ (K1: 0x004a1465, TSL: (TODO: Find this address)) - file extension check
+        * LoadAddInAnimations() @ (K1: 0x004408ce, TSL: (TODO: Find this address)) - appends to model name for file opening
+      * Usage: Used to construct file paths when loading MDL files
+      * TSL: String likely exists but at different address (not verified via search)
+
+References:
+----------
+    Based on swkotor.exe (K1) and swkotor2.exe (TSL) MDL/MDX I/O implementation.
+    All addresses verified via REVA MCP tools through string cross-references,
+    call chain analysis, and decompilation.
+"""
+
 from __future__ import annotations
 
 import math
@@ -49,23 +626,33 @@ class _ModelHeader:
 
     def __init__(self):
         self.geometry: _GeometryHeader = _GeometryHeader()
-        self.model_type: int = 0
-        self.unknown0: int = 0  # TODO: what is this?
-        self.padding0: int = 0
-        self.fog: int = 0
-        self.unknown1: int = 0  # TODO: what is this?
-        self.offset_to_animations: int = 0
-        self.animation_count: int = 0
-        self.animation_count2: int = 0
-        self.unknown2: int = 0  # TODO: what is this?
+        # Reference: K1 swkotor.exe:0x004a1030 (InputBinary::Reset function parses Model structure), TSL swkotor2.exe: TODO: Find this address
+        # Binary file layout after geometry header (0x50 bytes):
+        self.model_type: int = 0  # Model classification type (uint8 at binary offset 0x50)
+        self.subclassification: int = 0  # Model subclassification value (uint8 at binary offset 0x51)
+        # Reference: K1 swkotor.exe:0x004a1030 (InputBinary::Reset function), TSL swkotor2.exe: TODO: Find this address
+        # Field at 0x52 is alignment padding byte - not directly accessed in Reset() parsing function
+        # Used for 4-byte alignment between subclassification (uint8) and child_model_count (uint32 starting at 0x54)
+        self.padding0: int = 0  # Alignment padding byte (uint8 at binary offset 0x52) - ensures proper alignment for subsequent uint32 fields
+        self.fog: int = 0  # Fog flag/parameter (uint8 at binary offset 0x53)
+        self.child_model_count: int = 0  # Number of child models (uint32 at binary offset 0x54)
+        self.offset_to_animations: int = 0  # Offset to animation data array (uint32)
+        self.animation_count: int = 0  # Number of animations (uint32)
+        self.animation_count2: int = 0  # Animation count duplicate/alternate (uint32)
+        # Reference: K1 swkotor.exe:0x004a1030 (Reset function accesses param_1 + 100 = 0x64), TSL swkotor2.exe: TODO: Find this address
+        self.parent_model_pointer: int = 0  # Pointer to parent model (context-dependent, uint32 at binary offset 0x64)
         self.bounding_box_min: Vector3 = Vector3.from_null()
         self.bounding_box_max: Vector3 = Vector3.from_null()
         self.radius: float = 0.0
         self.anim_scale: float = 0.0
         self.supermodel: str = ""
-        self.offset_to_super_root: int = 0
-        self.unknown3: int = 0  # Unknown field from Names array header (cchargin mdl_info.html). Second field after offset_to_super_root. Purpose unknown but preserved for format compatibility.
-        self.mdx_size: int = 0
+        self.offset_to_super_root: int = 0  # Offset to supermodel root node (uint32)
+        # Reference: K1 swkotor.exe:0x004a1030 (InputBinary::Reset function accesses param_1 + 0xa8 for offset_to_super_root and param_1 + 0xac for mdx_data_buffer_offset), TSL swkotor2.exe: TODO: Find this address
+        # Used by Reset() function as offset into MDX data buffer: reads value at param_1 + 0xac, then accesses param_2 + value to copy MDX data
+        # Line 27: iVar3 = *(int *)(param_1 + 0xac); reads the offset
+        # Line 32: pbVar8 = param_2 + iVar3; uses it to locate data within MDX buffer
+        self.mdx_data_buffer_offset: int = 0  # Offset into MDX data buffer for data copying operations (uint32 at binary offset 0xac). Used by Reset() function to locate data within MDX buffer.
+        self.mdx_size: int = 0  # MDX geometry data size in bytes (uint32)
         self.mdx_offset: int = 0
         self.offset_to_name_offsets: int = 0
         self.name_offsets_count: int = 0
@@ -76,11 +663,14 @@ class _ModelHeader:
         reader: BinaryReader,
     ) -> _ModelHeader:
         self.geometry = _GeometryHeader().read(reader)
-        self.model_type = reader.read_uint8()
-        self.unknown0 = reader.read_uint8()  # TODO: what is this?
-        self.padding0 = reader.read_uint8()
-        self.fog = reader.read_uint8()
-        self.unknown1 = reader.read_uint32()  # TODO: what is this?
+        self.model_type = reader.read_uint8()  # Model classification type (uint8 at binary offset 0x50)
+        self.subclassification = reader.read_uint8()  # Model subclassification value (uint8 at binary offset 0x51)
+        # Reference: K1 swkotor.exe:0x004a1030 (InputBinary::Reset function), TSL swkotor2.exe: TODO: Find this address
+        # Alignment padding byte - not directly accessed in Reset() parsing function
+        # Used for 4-byte alignment between subclassification (uint8) and child_model_count (uint32 starting at 0x54)
+        self.padding0 = reader.read_uint8()  # Alignment padding byte (uint8 at binary offset 0x52) - ensures proper alignment for subsequent uint32 fields
+        self.fog = reader.read_uint8()  # Fog flag/parameter (uint8 at binary offset 0x53)
+        self.child_model_count = reader.read_uint32()  # Number of child models (uint32 at binary offset 0x54)
         self.offset_to_animations = reader.read_uint32()
         animation_count_raw = reader.read_uint32()
         if animation_count_raw > 0x7FFFFFFF:
@@ -90,16 +680,20 @@ class _ModelHeader:
         if animation_count2_raw > 0x7FFFFFFF:
             animation_count2_raw = 0x7FFFFFFF
         self.animation_count2 = animation_count2_raw
-        self.unknown2 = reader.read_uint32()  # TODO: what is this?
+        self.parent_model_pointer = reader.read_uint32()  # Pointer to parent model (context-dependent, uint32 at binary offset 0x64)
         self.bounding_box_min = reader.read_vector3()
         self.bounding_box_max = reader.read_vector3()
         self.radius = reader.read_single()
         self.anim_scale = reader.read_single()
         self.supermodel = reader.read_terminated_string("\0", 32)
-        self.offset_to_super_root = reader.read_uint32()
-        self.unknown3 = (
+        self.offset_to_super_root = reader.read_uint32()  # Offset to supermodel root node (uint32)
+        # Reference: K1 swkotor.exe:0x004a1030 (Reset function accesses param_1 + 0xa8), TSL swkotor2.exe: TODO: Find this address
+        # Field name preserved from cchargin mdl_info.html documentation
+        # Second field in the Names array header structure (at binary offset 0xac in file, 0x5C in model header)
+        # Used by Reset() function as offset into MDX data buffer: reads value at param_1 + 0xac, then accesses param_2 + value to copy MDX data
+        self.mdx_data_buffer_offset = (
             reader.read_uint32()
-        )  # Unknown field from Names array header (cchargin mdl_info.html). Second field after offset_to_super_root. Purpose unknown but preserved for format compatibility.
+        )  # Offset into MDX data buffer for data copying operations (uint32 at binary offset 0xac). Used by Reset() function to locate data within MDX buffer.
         self.mdx_size = reader.read_uint32()
         self.mdx_offset = reader.read_uint32()
         self.offset_to_name_offsets = reader.read_uint32()
@@ -119,24 +713,25 @@ class _ModelHeader:
     ):
         self.geometry.write(writer)
         writer.write_uint8(self.model_type)
-        writer.write_uint8(self.unknown0)
+        writer.write_uint8(self.subclassification)
         writer.write_uint8(self.padding0)
         writer.write_uint8(self.fog)
-        writer.write_uint32(self.unknown1)
+        writer.write_uint32(self.child_model_count)
         writer.write_uint32(self.offset_to_animations)
         animation_count_clamped = min(self.animation_count, 0x7FFFFFFF)
         writer.write_uint32(animation_count_clamped)
         animation_count2_clamped = min(self.animation_count2, 0x7FFFFFFF)
         writer.write_uint32(animation_count2_clamped)
-        writer.write_uint32(self.unknown2)
+        writer.write_uint32(self.parent_model_pointer)
         writer.write_vector3(self.bounding_box_min)
         writer.write_vector3(self.bounding_box_max)
         writer.write_single(self.radius)
         writer.write_single(self.anim_scale)
         writer.write_string(self.supermodel, string_length=32, encoding="ascii", errors="ignore")
         writer.write_uint32(self.offset_to_super_root)
-        # Unknown field from Names array header (cchargin mdl_info.html). Second field after offset_to_super_root. Purpose unknown but preserved for format compatibility.
-        writer.write_uint32(self.unknown3)
+        # Second field in the Names array header structure (at binary offset 0xac in file, 0x5C in model header)
+        # Used by Reset() function as offset into MDX data buffer: reads value at param_1 + 0xac, then accesses param_2 + value to copy MDX data
+        writer.write_uint32(self.mdx_data_buffer_offset)
         writer.write_uint32(self.mdx_size)
         writer.write_uint32(self.mdx_offset)
         writer.write_uint32(self.offset_to_name_offsets)
@@ -1429,7 +2024,9 @@ class _DanglymeshHeader:
         self.displacement: float = 0.0
         self.tightness: float = 0.0
         self.period: float = 0.0
-        self.unknown0: int = 0  # TODO: what is this?
+        # Reference: MDLOps documentation - danglyverts pointer (offset-12)
+        # This field stores the offset to danglyverts data, typically 0 or offset-12 from constraint pointer
+        self.danglyverts_offset: int = 0  # Danglyverts pointer (offset-12, uint32)
 
     def read(
         self,
@@ -1443,7 +2040,8 @@ class _DanglymeshHeader:
         self.displacement = reader.read_single()
         self.tightness = reader.read_single()
         self.period = reader.read_single()
-        self.unknown0 = reader.read_uint32()  # TODO: what is this?
+        # Reference: MDLOps documentation - danglyverts pointer (offset-12)
+        self.danglyverts_offset = reader.read_uint32()  # Danglyverts pointer (offset-12, uint32)
         return self
 
     def write(
@@ -1461,8 +2059,8 @@ class _DanglymeshHeader:
         writer.write_single(self.displacement)
         writer.write_single(self.tightness)
         writer.write_single(self.period)
-        # Then danglyverts pointer (offset-12), currently always 0
-        writer.write_uint32(self.unknown0)  # danglyverts pointer
+        # Then danglyverts pointer (offset-12), typically 0 or offset-12 from constraint pointer
+        writer.write_uint32(self.danglyverts_offset)  # danglyverts pointer
 
 
 class _SkinmeshHeader:
@@ -1934,17 +2532,17 @@ def _decompress_quaternion(compressed: int) -> Vector4:
     References:
     ----------
         Based on swkotor.exe quaternion compression:
-        - CompressQuaternionKey @ 0x00464b50 - Compresses quaternion to 32-bit integer (742 bytes, 4 callees)
+        - CompressQuaternionKey @ (K1: 0x00464b50, TSL: (TODO: Find this address)) - Compresses quaternion to 32-bit integer (742 bytes, 4 callees)
           * Packs X, Y, Z components into 11, 11, and 10 bits respectively
           * Maps quaternion components from [-1, 1] to integer ranges
           * W component is computed from constraint |q| = 1
-        - Quaternion::Quaternion @ 0x004ac960 - Quaternion constructor (146 bytes, 1 callee)
+        - Quaternion::Quaternion @ (K1: 0x004ac960, TSL: (TODO: Find this address)) - Quaternion constructor (146 bytes, 1 callee)
           * Creates quaternion from axis-angle representation
           * Used for orientation parsing in MDL controllers
-        - GetQuaternionValue @ 0x004831b0 - Gets quaternion value (382 bytes, 3 callees)
-        - GetQuaternionFromIndexLocation @ 0x00483050 - Gets quaternion from index (347 bytes)
-        - quaternionScalarMult @ 0x004a9b80 - Quaternion scalar multiplication (47 bytes)
-        - quaternionDotProduct @ 0x004a9d30 - Quaternion dot product (37 bytes)
+        - GetQuaternionValue @ (K1: 0x004831b0, TSL: (TODO: Find this address)) - Gets quaternion value (382 bytes, 3 callees)
+        - GetQuaternionFromIndexLocation @ (K1: 0x00483050, TSL: (TODO: Find this address)) - Gets quaternion from index (347 bytes)
+        - quaternionScalarMult @ (K1: 0x004a9b80, TSL: (TODO: Find this address)) - Quaternion scalar multiplication (47 bytes)
+        - quaternionDotProduct @ (K1: 0x004a9d30, TSL: (TODO: Find this address)) - Quaternion dot product (37 bytes)
         - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Derivations and Other Implementations:
@@ -2150,24 +2748,24 @@ class MDLBinaryReader:
     References:
     ----------
         Based on swkotor.exe MDL structure:
-        - LoadModel @ 0x00464200 - High-level model loader (172 bytes, 42 lines)
+        - LoadModel @ (K1: 0x00464200, TSL: (TODO: Find this address)) - High-level model loader (172 bytes, 42 lines)
           * Loads MDL/MDX through IODispatcher::ReadSync
           * Manages model cache (modelsList) to avoid duplicate loads
           * Returns Model* pointer or nullptr on failure
-        - CSWCCreature::LoadModel @ 0x0061b380 - Creature model loader (842 bytes, 167 lines)
+        - CSWCCreature::LoadModel @ (K1: 0x0061b380, TSL: 0x00669ea0) - Creature model loader (842 bytes, 167 lines)
           * Loads creature models with animation base setup
           * Handles different model types: base, head, wield, head+wield, two-weapon
           * Sets up CSWCAnimBase, CSWCAnimBaseHead, CSWCAnimBaseWield, etc.
           * Registers callbacks and sets model properties
-        - CSWCPlaceable::LoadModel @ 0x006823f0 - Placeable model loader (504 bytes, 105 lines)
+        - CSWCPlaceable::LoadModel @ (K1: 0x006823f0, TSL: (TODO: Find this address)) - Placeable model loader (504 bytes, 105 lines)
           * Loads placeable models with animation base
           * Handles head hit detection ("_head_hit" node lookup)
           * Sets up CSWCAnimBasePlaceable
-        - CSWCCreature::UnloadModel @ 0x0060c8e0 - Unloads creature models (42 bytes, 19 lines)
+        - CSWCCreature::UnloadModel @ (K1: 0x0060c8e0, TSL: (TODO: Find this address)) - Unloads creature models (42 bytes, 19 lines)
           * Releases animation base resources
           * Clears anim_base pointer
-        - UnloadModel @ 0x00646650, @ 0x006825f0 - Additional unload functions
-        - MdlNode::AsMdlNodeTriMesh @ 0x0043e400 - Converts node to trimesh type
+        - UnloadModel @ (K1: 0x00646650, TSL: (TODO: Find this address)), @ (K1: 0x006825f0, TSL: (TODO: Find this address)) - Additional unload functions
+        - MdlNode::AsMdlNodeTriMesh @ (K1: 0x0043e400, TSL: (TODO: Find this address)) - Converts node to trimesh type
         - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Derivations and Other Implementations:
@@ -2242,8 +2840,8 @@ class MDLBinaryReader:
         self._mdl.fog = bool(model_header.fog)
         # model_type corresponds to classification
         self._mdl.classification = MDLClassification(model_header.model_type)
-        # unknown0 corresponds to classification_unk1
-        self._mdl.classification_unk1 = model_header.unknown0
+        # subclassification corresponds to classification_unk1
+        self._mdl.classification_unk1 = model_header.subclassification
         self._mdl.animation_scale = model_header.anim_scale
         # Bounding box and radius from model header
         self._mdl.bmin = model_header.bounding_box_min
@@ -2967,18 +3565,18 @@ class MDLBinaryWriter:
     References:
     ----------
         Based on swkotor.exe MDL structure:
-        - LoadModel @ 0x00464200 - High-level model loader (172 bytes, 42 lines)
+        - LoadModel @ (K1: 0x00464200, TSL: (TODO: Find this address)) - High-level model loader (172 bytes, 42 lines)
           * Loads MDL/MDX through IODispatcher::ReadSync
           * Manages model cache (modelsList) to avoid duplicate loads
-        - CSWCCreature::LoadModel @ 0x0061b380 - Creature model loader (842 bytes, 167 lines)
+        - CSWCCreature::LoadModel @ (K1: 0x0061b380, TSL: 0x00669ea0) - Creature model loader (842 bytes, 167 lines)
           * Loads creature models with animation base setup
           * Handles different model types: base, head, wield, head+wield, two-weapon
-        - CSWCPlaceable::LoadModel @ 0x006823f0 - Placeable model loader (504 bytes, 105 lines)
+        - CSWCPlaceable::LoadModel @ (K1: 0x006823f0, TSL: (TODO: Find this address)) - Placeable model loader (504 bytes, 105 lines)
           * Loads placeable models with animation base
           * Handles head hit detection ("_head_hit" node lookup)
-        - CSWCCreature::UnloadModel @ 0x0060c8e0 - Unloads creature models (42 bytes, 19 lines)
-        - UnloadModel @ 0x00646650, @ 0x006825f0 - Additional unload functions
-        - MdlNode::AsMdlNodeTriMesh @ 0x0043e400 - Converts node to trimesh type
+        - CSWCCreature::UnloadModel @ (K1: 0x0060c8e0, TSL: (TODO: Find this address)) - Unloads creature models (42 bytes, 19 lines)
+        - UnloadModel @ (K1: 0x00646650, TSL: (TODO: Find this address)), @ (K1: 0x006825f0, TSL: (TODO: Find this address)) - Additional unload functions
+        - MdlNode::AsMdlNodeTriMesh @ (K1: 0x0043e400, TSL: (TODO: Find this address)) - Converts node to trimesh type
         - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Derivations and Other Implementations:
@@ -4079,9 +4677,9 @@ class MDLBinaryWriter:
         
         # classification_unk1: defaults to 4 for Placeable, 0 otherwise (mdlops:6142-6144)
         if self._mdl.classification_unk1 is not None:
-            self._file_header.unknown0 = self._mdl.classification_unk1
+            self._file_header.subclassification = self._mdl.classification_unk1
         else:
-            self._file_header.unknown0 = 4 if self._mdl.classification == MDLClassification.PLACEABLE else 0
+            self._file_header.subclassification = 4 if self._mdl.classification == MDLClassification.PLACEABLE else 0
         
         # fog: mdlops uses ignorefog (inverted), writes as "affectedByFog" (mdlops:6147)
         # ignorefog ? 0 : 1 means: if ignorefog is true, fog_byte=0; if false, fog_byte=1
