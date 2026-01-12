@@ -15,8 +15,8 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * Saves CurrentModel to stack
           * Returns NULL if param_1 is 0
           * Sets CurrentModel to NULL
-          * Gets IODispatcher singleton via IODispatcher::GetRef() @ (K1: 0x004a0580, TSL: (TODO: Find this address))
-          * Calls IODispatcher::ReadSync() @ (K1: 0x004a15d0, TSL: (TODO: Find this address)) with param_1 and param_2
+          * Gets IODispatcher singleton via IODispatcher::GetRef() @ (K1: 0x004a0580, TSL: 0x004cda00)
+          * Calls IODispatcher::ReadSync() @ (K1: 0x004a15d0, TSL: 0x004cead0) with param_1 and param_2
           * ReadSync creates Input object and calls Input::Read() @ (K1: 0x004a1260, TSL: 0x004ce780)
           * Input::Read() calls InputBinary::Read() which parses MDL/MDX binary format
           * Result is MaxTree* which is converted to Model* via MaxTree::AsModel() @ (K1: 0x0043e1c0, TSL: 0x0044ff90)
@@ -29,19 +29,19 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * Restores CurrentModel from stack
           * Returns NULL if model loading failed
         * Callees (call chain depth 3+):
-          * ~Model() @ (K1: 0x0043f790, TSL: (TODO: Find this address)) (destructor, called if duplicate found)
-          * IODispatcher::GetRef() @ (K1: 0x004a0580, TSL: (TODO: Find this address)) (singleton accessor)
+          * ~Model() @ (K1: 0x0043f790, TSL: 0x004527d0) (destructor, called if duplicate found)
+          * IODispatcher::GetRef() @ (K1: 0x004a0580, TSL: 0x004cda00) (singleton accessor)
           * MaxTree::AsModel() @ (K1: 0x0043e1c0, TSL: 0x0044ff90) (type check and cast)
           * __stricmp() @ (K1: 0x0070acaf, TSL: 0x0077e24f) (case-insensitive string comparison)
-          * operator.delete() @ (K1: 0x0044aec0, TSL: (TODO: Find this address)) (memory deallocation)
-          * IODispatcher::ReadSync() @ (K1: 0x004a15d0, TSL: (TODO: Find this address)) (file I/O dispatcher)
+          * operator.delete() @ (K1: 0x0044aec0, TSL: 0x0045f520) (memory deallocation)
+          * IODispatcher::ReadSync() @ (K1: 0x004a15d0, TSL: 0x004cead0) (file I/O dispatcher)
             * Input::Read() @ (K1: 0x004a1260, TSL: 0x004ce780) (parses MDL/MDX format)
               * InputBinary::Read() (binary parser)
               * AurResGetNextLine() @ (K1: 0x0044bfa0, TSL: (TODO: Find this address)) (line reading for ASCII MDL)
-              * AurResGet() @ (K1: 0x0044c870, TSL: (TODO: Find this address)) (resource data access)
+              * AurResGet() @ (K1: 0x0044c740, TSL: 0x00460db0) (resource data access)
               * FuncInterp() @ (K1: 0x0044c1f0, TSL: (TODO: Find this address)) (function interpolation for animations)
         * Callers (call chain showing usage):
-          * NewCAurObject() @ (K1: 0x00449cc0, TSL: (TODO: Find this address)) -> LoadModel() @ (K1: 0x00449d9d, TSL: (TODO: Find this address))
+          * NewCAurObject() @ (K1: 0x00449cc0, TSL: 0x0045e2e0) -> LoadModel() @ (K1: 0x00449d9d, TSL: 0x0047a570)
             * Called from: HideWieldedItems(), LoadSpellVisual(), LoadConjureVisual(), AddObstacle(),
               SetWeather(), LoadVisualEffect(), SetGunModel(), SpawnRooms(), CollapsePartTree(),
               FireGunCallback(), LoadAnimatedCamera(), SetPlayer(), LoadModel(), LoadModelAttachment(),
@@ -49,7 +49,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
               CreateMuzzleFlash(), SpawnPartsForTile(), SetProjectileVelAndAccel(), SpawnHitVisuals(),
               LoadArea(), SpawnVisualEffect(), AddPlaceableObjectLight(), LoadBeam(), ApplyShadowBlob(),
               SetPlayer(), AddModel(), SpawnRoom()
-          * LoadAddInAnimations() @ (K1: 0x00440890, TSL: (TODO: Find this address)) -> LoadModel() @ (K1: 0x004408f7, TSL: (TODO: Find this address))
+          * LoadAddInAnimations() @ (K1: 0x00440890, TSL: 0x004538d0) -> LoadModel() @ (K1: 0x004408f7, TSL: 0x0047a570)
             * Member of Gob class, loads additional animations for models
             * Searches for model using FindModel(param_1)
             * If not found, appends ".mdl" extension and opens file
@@ -62,7 +62,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           and __stricmp usage with modelsList - no direct match found.
         * Hypothesis: Model loading may be integrated into higher-level creature/placeable loaders.
 
-    - IODispatcher::ReadSync - K1: 0x004a15d0, TSL: (not verified)
+    - IODispatcher::ReadSync - K1: 0x004a15d0, TSL: 0x004cead0
       * Synchronous I/O dispatcher for model files (36 bytes)
         * Signature: void __thiscall IODispatcher::ReadSync(IODispatcher *this, FILE *param_1, FILE *param_2)
         * Logic (from decompilation):
@@ -74,10 +74,10 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * Input::Read() @ (K1: 0x004a1260, TSL: 0x004ce780) (main parsing function)
             * InputBinary::Read() (binary format parser)
             * AurResGetNextLine() @ (K1: 0x0044bfa0, TSL: (TODO: Find this address)) (line reading for ASCII MDL)
-            * AurResGet() @ (K1: 0x0044c870, TSL: (TODO: Find this address)) (resource data access)
+            * AurResGet() @ (K1: 0x0044c740, TSL: 0x00460db0) (resource data access)
             * FuncInterp() @ (K1: 0x0044c1f0, TSL: (TODO: Find this address)) (function interpolation for animations)
         * Callers:
-          * LoadModel() @ (K1: 0x00464200, TSL: (TODO: Find this address)) (main entry point)
+          * LoadModel() @ (K1: 0x00464200, TSL: 0x0047a570) (main entry point)
 
     - MaxTree::AsModel - K1: 0x0043e1c0, TSL: 0x0044ff90
       * Type check and cast function (16 bytes, 88 callers)
@@ -88,9 +88,9 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * ANDs result with (uint)this to return this cast to Model* or NULL
           * Equivalent to: return ((this->type & 0x7f) == 2) ? (Model*)this : NULL;
         * Callers (88 total, examples):
-          * ProcessSkinSeams() @ (K1: 0x004392b6, TSL: (TODO: Find this address)), (K1: 0x00439986, TSL: (TODO: Find this address)) (skin seam processing)
-          * FindModel() @ (K1: 0x00464176, TSL: (TODO: Find this address)) (model lookup)
-          * LoadModel() @ (K1: 0x00464236, TSL: (TODO: Find this address)) (main loader)
+          * ProcessSkinSeams() @ (K1: 0x004392b6, TSL: 0x0044a920), (K1: 0x00439986, TSL: (TODO: Find this address)) (skin seam processing)
+          * FindModel() @ (K1: 0x00464176, TSL: 0x0047a480) (model lookup)
+          * LoadModel() @ (K1: 0x00464236, TSL: 0x0047a570) (main loader)
           * BuildVertexArrays() @ (K1: 0x00478b8b, TSL: (TODO: Find this address)), (K1: 0x00478c05, TSL: (TODO: Find this address)) (vertex array construction)
           * Input::Read() @ (K1: 0x004a1435, TSL: (TODO: Find this address)), (K1: 0x004a1362, TSL: (TODO: Find this address)), (K1: 0x004a1373, TSL: (TODO: Find this address)), (K1: 0x004a1503, TSL: (TODO: Find this address)) (parsing)
 
@@ -564,7 +564,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
       * Referenced in 3 locations:
         * Input::Read() @ (K1: 0x004a13ba, TSL: (TODO: Find this address)) - file extension check
         * Input::Read() @ (K1: 0x004a1465, TSL: (TODO: Find this address)) - file extension check
-        * LoadAddInAnimations() @ (K1: 0x004408ce, TSL: (TODO: Find this address)) - appends to model name for file opening
+        * LoadAddInAnimations() @ (K1: 0x004408ce, TSL: 0x004538d0) - appends to model name for file opening
       * Usage: Used to construct file paths when loading MDL files
       * TSL: String likely exists but at different address (not verified via search)
 
@@ -2782,7 +2782,7 @@ class MDLBinaryReader:
     References:
     ----------
         Based on swkotor.exe MDL structure:
-        - LoadModel @ (K1: 0x00464200, TSL: (TODO: Find this address)) - High-level model loader (172 bytes, 42 lines)
+        - LoadModel @ (K1: 0x00464200, TSL: 0x0047a570) - High-level model loader (172 bytes, 42 lines)
           * Loads MDL/MDX through IODispatcher::ReadSync
           * Manages model cache (modelsList) to avoid duplicate loads
           * Returns Model* pointer or nullptr on failure
@@ -3599,7 +3599,7 @@ class MDLBinaryWriter:
     References:
     ----------
         Based on swkotor.exe MDL structure:
-        - LoadModel @ (K1: 0x00464200, TSL: (TODO: Find this address)) - High-level model loader (172 bytes, 42 lines)
+        - LoadModel @ (K1: 0x00464200, TSL: 0x0047a570) - High-level model loader (172 bytes, 42 lines)
           * Loads MDL/MDX through IODispatcher::ReadSync
           * Manages model cache (modelsList) to avoid duplicate loads
         - CSWCCreature::LoadModel @ (K1: 0x0061b380, TSL: 0x00669ea0) - Creature model loader (842 bytes, 167 lines)
