@@ -562,8 +562,8 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
     -----------------------------------
     - ".mdl" extension - K1: 0x00740ca8, TSL: (TODO: Find this address)
       * Referenced in 3 locations:
-          * Input::Read() @ (K1: 0x004a13ba, TSL: 0x004ce8c0) - file extension check (call site within Input::Read)
-        * Input::Read() @ (K1: 0x004a1465, TSL: (TODO: Find this address)) - file extension check
+        * Input::Read() @ (K1: 0x004a13ba, TSL: 0x004ce8c0) - file extension check (call site within Input::Read)
+        * Input::Read() @ (K1: 0x004a1465, TSL: 0x004ce8c0) - file extension check (call site within Input::Read)
         * LoadAddInAnimations() @ (K1: 0x004408ce, TSL: 0x004538d0) - appends to model name for file opening
       * Usage: Used to construct file paths when loading MDL files
       * TSL: String likely exists but at different address (not verified via search)
