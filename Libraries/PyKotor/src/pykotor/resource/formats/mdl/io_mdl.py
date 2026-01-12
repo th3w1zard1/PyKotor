@@ -309,7 +309,8 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * - CSWCAnimBaseHead::CSWCAnimBaseHead() @ (K1: 0x0069bb80, TSL: 0x006f5e60): CSWCAnimBaseHead constructor (229 bytes, 3 callers)
           *   * If param_1 != 0, sets vtable to CSWCAnimBaseHead_vtable @ (K1: 0x00754e40, TSL: 0x007ce060), calls CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) on offset 0x50 sub-object
           *   * Sets vtable offset for base class to CSWCAnimBaseHead_base_vtable @ (K1: TODO: Find this address, TSL: 0x007cdf68) (NOTE: K1 uses CSWCAnimBaseHead_AnimBase_vtable at offset calculated from vtable)
-          *   * Initializes 2 CExoString fields via CExoString_InitEmpty() @ (K1: TODO: Find this address, TSL: 0x00405f40) (offsets 0x1c, 0x30)
+          *   * Initializes 2 CResRef fields (K1) / CExoString fields (TSL) via CResRef_InitEmpty() @ (K1: 0x00405ed0, TSL: 0x00405f40) (offsets 0x1c, 0x30)
+          *     - NOTE: In K1, uses CResRef::CResRef() constructor. In TSL, uses CExoString_InitEmpty().
           *   * Sets field at offset 0xc4 to 1 (type identifier)
           *   * Sets field at offset 0x48 to 0x7f000000 (INF, scale maximum)
           * - CSWCAnimBaseWield::CSWCAnimBaseWield() @ (K1: 0x00699dd0, TSL: 0x006f41b0): CSWCAnimBaseWield constructor (256 bytes, 3 callers)
