@@ -2799,15 +2799,15 @@ class MDLBinaryReader:
           * Releases animation base resources
           * Clears anim_base pointer
         - UnloadModel @ (K1: 0x00646650, TSL: (TODO: Find this address)), @ (K1: 0x006825f0, TSL: (TODO: Find this address)) - Additional unload functions
-        - MdlNode::AsMdlNodeTriMesh @ (K1: 0x0043e400, TSL: (TODO: Find this address)) - Converts node to trimesh type
+        - MdlNode::AsMdlNodeTriMesh @ (K1: 0x0043e400, TSL: 0x004501d0) - Converts node to trimesh type
         - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Derivations and Other Implementations:
         ----------
-        https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1649-1778 (Controller structure and bezier detection)
-        https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:5470-5596 (Tangent space calculation)
-        https://github.com/th3w1zard1/kotorblender/tree/master/format/mdl/reader.py:850-868 (Quaternion decompression)
-        https://github.com/th3w1zard1/KotOR.js/tree/master/src/loaders/MDLLoader.ts (Model loading architecture)
+        - https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1649-1778 (Controller structure and bezier detection)
+        - https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:5470-5596 (Tangent space calculation)
+        - https://github.com/th3w1zard1/kotorblender/tree/master/format/mdl/reader.py:850-868 (Quaternion decompression)
+        - https://github.com/th3w1zard1/KotOR.js/tree/master/src/loaders/MDLLoader.ts (Model loading architecture)
 
 
     """
@@ -3610,7 +3610,7 @@ class MDLBinaryWriter:
           * Handles head hit detection ("_head_hit" node lookup)
         - CSWCCreature::UnloadModel @ (K1: 0x0060c8e0, TSL: (TODO: Find this address)) - Unloads creature models (42 bytes, 19 lines)
         - UnloadModel @ (K1: 0x00646650, TSL: (TODO: Find this address)), @ (K1: 0x006825f0, TSL: (TODO: Find this address)) - Additional unload functions
-        - MdlNode::AsMdlNodeTriMesh @ (K1: 0x0043e400, TSL: (TODO: Find this address)) - Converts node to trimesh type
+        - MdlNode::AsMdlNodeTriMesh @ (K1: 0x0043e400, TSL: 0x004501d0) - Converts node to trimesh type
         - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Derivations and Other Implementations:
