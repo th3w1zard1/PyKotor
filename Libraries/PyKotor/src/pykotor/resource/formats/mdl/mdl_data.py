@@ -2212,7 +2212,7 @@ class MDLLight(ComparableMixin):
         Reference: https://github.com/th3w1zard1/kotorblender
     """
 
-    COMPARABLE_FIELDS = ("flare_radius", "light_priority", "ambient_only", "dynamic_type", "shadow", "flare", "fading_light", "multiplier")
+    COMPARABLE_FIELDS = ("flare_radius", "light_priority", "ambient_only", "dynamic_type", "affect_dynamic", "shadow", "flare", "fading_light", "multiplier")
     COMPARABLE_SEQUENCE_FIELDS = ("flare_sizes", "flare_positions", "flare_color_shifts", "flare_textures")
 
     def __init__(self):
@@ -2231,6 +2231,10 @@ class MDLLight(ComparableMixin):
         # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/light.py:44,78,105
         # Dynamic behavior: 0=static, 1=dynamic, 2=animated
         self.dynamic_type: MDLDynamicType = MDLDynamicType.STATIC
+
+        # Reference: vendor/reone/src/libs/graphics/format/mdlmdxreader.cpp:522,531
+        # 1 = light affects dynamic objects, 0 = only affects static objects
+        self.affect_dynamic: bool = False
 
         # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/light.py:38,63-66,75,102
         # 1 = casts shadows, 0 = no shadows

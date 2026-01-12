@@ -3122,6 +3122,7 @@ class MDLBinaryReader:
                 node.light = MDLLight()
                 node.light.ambient_only = bool(bin_node.light.ambient_only)
                 node.light.dynamic_type = MDLDynamicType(bin_node.light.dynamic_type)
+                node.light.affect_dynamic = bool(bin_node.light.affect_dynamic)
                 node.light.shadow = bool(bin_node.light.shadow)
                 node.light.flare = bool(bin_node.light.flare)
                 node.light.light_priority = bin_node.light.light_priority
@@ -3984,15 +3985,12 @@ class MDLBinaryWriter:
             # Copy basic light properties
             bin_node.light.ambient_only = 1 if light.ambient_only else 0
             bin_node.light.dynamic_type = int(light.dynamic_type)
+            bin_node.light.affect_dynamic = 1 if light.affect_dynamic else 0
             bin_node.light.shadow = 1 if light.shadow else 0
             bin_node.light.flare = 1 if light.flare else 0
             bin_node.light.light_priority = light.light_priority
             bin_node.light.fading_light = 1 if light.fading_light else 0
             bin_node.light.flare_radius = light.flare_radius
-            # TODO: affect_dynamic is stored in binary format (_LightHeader) but not in MDLLight class
-            # When reading, affect_dynamic is lost when converting _LightHeader to MDLLight (line ~3122-3129)
-            # To preserve: add affect_dynamic attribute to MDLLight class and copy in both directions
-            bin_node.light.affect_dynamic = 0  # Currently hardcoded - value from binary is not preserved
             # Flare data offsets and counts will be calculated elsewhere during writing
             # Initialize to 0 for now - they'll be set when flare data is written
             bin_node.light.offset_to_unknown0 = 0
