@@ -120,9 +120,9 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * If current anim_base exists and field44_0xc4 == param_3, skips to model loading
           * Otherwise destructs current anim_base and creates new based on param_3 switch:
             * case 0: Allocates 0xf0 bytes, constructs CSWCAnimBase @ (K1: 0x0069dfb0, TSL: 0x006f8340)
-            * case 1: Allocates 0x1c4 bytes, constructs CSWCAnimBaseHead @ (K1: 0x0069bb80, TSL: (TODO: Find this address)) with param=1
-            * case 2: Allocates 0x1d0 bytes, constructs CSWCAnimBaseWield @ (K1: 0x00699dd0, TSL: (TODO: Find this address)) with param=1
-            * case 3: Allocates 0x220 bytes, constructs CSWCAnimBaseHeadWield @ (K1: 0x00698ec0, TSL: (TODO: Find this address))
+            * case 1: Allocates 0x1c4 bytes, constructs CSWCAnimBaseHead @ (K1: 0x0069bb80, TSL: 0x006f5e60) with param=1
+            * case 2: Allocates 0x1d0 bytes, constructs CSWCAnimBaseWield @ (K1: 0x00699dd0, TSL: 0x006f41b0) with param=1
+            * case 3: Allocates 0x220 bytes, constructs CSWCAnimBaseHeadWield @ (K1: 0x00698ec0, TSL: 0x006f32a0)
           * Each anim base type has different vtable and member layouts
           * After construction, calls RegisterCallbacks() @ (K1: 0x0061ab40, TSL: 0x00693fe0)
           * Then calls anim_base->vtable[3](param_1, param_2) - loads model resource
@@ -133,14 +133,14 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * Returns 1 on success, 0 on failure
         * Callees:
           * operator_new() @ (K1: 0x006fa7e6, TSL: 0x0076d9f6) (memory allocation, called 5 times)
-          * CSWCAnimBaseWield::CSWCAnimBaseWield() @ (K1: 0x00699dd0, TSL: (TODO: Find this address)) (two-weapon anim base constructor)
-          * CSWCAnimBaseHeadWield::CSWCAnimBaseHeadWield() @ (K1: 0x00698ec0, TSL: (TODO: Find this address)) (head + wield anim base)
+          * CSWCAnimBaseWield::CSWCAnimBaseWield() @ (K1: 0x00699dd0, TSL: 0x006f41b0) (two-weapon anim base constructor)
+          * CSWCAnimBaseHeadWield::CSWCAnimBaseHeadWield() @ (K1: 0x00698ec0, TSL: 0x006f32a0) (head + wield anim base)
           * CSWCAnimBase::CSWCAnimBase() @ (K1: 0x0069dfb0, TSL: 0x006f8340) (base anim base constructor)
-          * CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: (TODO: Find this address)) (two-weapon variant)
+          * CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) (two-weapon variant)
           * sprintf() @ (K1: 0x006fadb0, TSL: 0x0076dac2) (error message formatting)
           * CResRef::CopyToString() @ (K1: 0x00405f70, TSL: 0x00406050) (resource reference string conversion - note: GetResRefStr in K1 calls CopyToString internally)
           * RegisterCallbacks() @ (K1: 0x0061ab40, TSL: 0x00693fe0) (callback registration)
-          * CSWCAnimBaseHead::CSWCAnimBaseHead() @ (K1: 0x0069bb80, TSL: (TODO: Find this address)) (head anim base constructor)
+          * CSWCAnimBaseHead::CSWCAnimBaseHead() @ (K1: 0x0069bb80, TSL: 0x006f5e60) (head anim base constructor)
           * CSWAnimBase::Set() @ (K1: 0x00698e30, TSL: 0x006f3210) (anim base setup, called 4 times)
         * Callers: None found via direct references (vtable call via object method)
         * VTable Entry: Located at offset in CSWCCreature class structure
