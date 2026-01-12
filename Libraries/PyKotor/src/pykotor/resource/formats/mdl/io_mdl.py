@@ -485,9 +485,10 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * - FloatConstant_0_01 @ (K1: Inline constant 0x3c23d70a, TSL: 0x007b5f88): Float interpolation weight (0.01f, cross-referenced 1 time)
           *   * Used in size class interpolation: fVar10 * FloatConstant_0_01 @ (K1: Inline constant 0x3c23d70a, TSL: 0x007b5f88) + fVar12
           *   * NOTE: In K1, this constant is used inline in code (0x3c23d70a = 0.01f). In TSL, it's stored as a data constant.
-          * - SizeClassConstant_5 @ (K1: TODO: Find this address, TSL: 0x007c514c): Size class constant (value: 5, cross-referenced 22 times)
-          *   * Used in SizeClassValidationFunction() @ (K1: TODO: Find this address, TSL: 0x0051f0b0) for size class validation
+          * - SizeClassConstant_5 @ (K1: N/A - not present in K1, TSL: 0x007c514c): Size class constant (value: 5, cross-referenced 22 times)
+          *   * Used in SizeClassValidationFunction() @ (K1: N/A - not present in K1, TSL: 0x0051f0b0) for size class validation
           *   * TSL: Validates creature size class, returns size class value based on creature properties
+          *   * NOTE: K1 does not have a separate size class validation function or constant. Size class handling in K1 is done inline in LoadModel without validation against a constant value.
           * KEY DIFFERENCES FROM K1:
           * 1. Additional case '\v' (0x0b) for two-weapon anim base (not present in K1)
           * 2. Different allocation sizes for all anim base types (+12 bytes each)
