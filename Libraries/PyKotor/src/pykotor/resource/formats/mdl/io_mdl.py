@@ -216,7 +216,8 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *      * Calls sprintf(acStack_10c, "CSWCCreature::LoadModel(): Failed to load creature model '%s'.") @ (K1: 0x006fadb0, TSL: 0x0076dac2)
           *        - sprintf() @ (K1: 0x006fadb0, TSL: 0x0076dac2) is sprintf equivalent (88 bytes, 133 references)
           *        - Creates FILE structure on stack for formatting
-          *        - Calls vswprintf_internal() @ (K1: TODO: Find this address, TSL: 0x0077252f) (vswprintf equivalent) with format string
+          *        - Calls vswprintf_internal() @ (K1: N/A - uses _vfprintf() instead, TSL: 0x0077252f) (vswprintf equivalent) with format string
+          *          NOTE: In K1, sprintf() uses _vfprintf() directly. TSL uses vswprintf_internal() for wide character string formatting.
           *        - Null-terminates result
           *      * Returns 0 (failure)
           * 7. Special parameter handling (param_3 checks):
@@ -308,14 +309,16 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *   * Called from CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) (CSWCAnimBaseTW constructor) and directly
           * - CSWCAnimBaseHead::CSWCAnimBaseHead() @ (K1: 0x0069bb80, TSL: 0x006f5e60): CSWCAnimBaseHead constructor (229 bytes, 3 callers)
           *   * If param_1 != 0, sets vtable to CSWCAnimBaseHead_vtable @ (K1: 0x00754e40, TSL: 0x007ce060), calls CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) on offset 0x50 sub-object
-          *   * Sets vtable offset for base class to CSWCAnimBaseHead_base_vtable @ (K1: TODO: Find this address, TSL: 0x007cdf68) (NOTE: K1 uses CSWCAnimBaseHead_AnimBase_vtable at offset calculated from vtable)
+          *   * Sets vtable offset for base class to CSWCAnimBaseHead_base_vtable @ (K1: N/A - calculated from CSWCAnimBaseHead_vtable offset, TSL: 0x007cdf68)
+          *     NOTE: In K1, the base class vtable offset is calculated from CSWCAnimBaseHead_vtable @ (K1: 0x00754e40) rather than stored as a separate constant. TSL uses a separate base class vtable pointer.
           *   * Initializes 2 CResRef fields (K1) / CExoString fields (TSL) via CResRef_InitEmpty() @ (K1: 0x00405ed0, TSL: 0x00405f40) (offsets 0x1c, 0x30)
           *     - NOTE: In K1, uses CResRef::CResRef() constructor. In TSL, uses CExoString_InitEmpty().
           *   * Sets field at offset 0xc4 to 1 (type identifier)
           *   * Sets field at offset 0x48 to 0x7f000000 (INF, scale maximum)
           * - CSWCAnimBaseWield::CSWCAnimBaseWield() @ (K1: 0x00699dd0, TSL: 0x006f41b0): CSWCAnimBaseWield constructor (256 bytes, 3 callers)
           *   * If param_1 != 0, sets vtable to CSWCAnimBaseWield_vtable @ (K1: 0x00754d00, TSL: 0x007cdf20), calls CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) on offset 0x5c sub-object
-          *   * Sets vtable offset for base class to CSWCAnimBaseWield_base_vtable @ (K1: TODO: Find this address, TSL: 0x007cde28) (NOTE: K1 uses CSWCAnimBaseWield_AnimBase_vtable at offset calculated from vtable)
+          *   * Sets vtable offset for base class to CSWCAnimBaseWield_base_vtable @ (K1: N/A - calculated from CSWCAnimBaseWield_vtable offset, TSL: 0x007cde28)
+          *     NOTE: In K1, the base class vtable offset is calculated from CSWCAnimBaseWield_vtable @ (K1: 0x00754d00) rather than stored as a separate constant. TSL uses a separate base class vtable pointer.
           *   * Initializes 2 CResRef fields (K1) / CExoString fields (TSL) via CResRef_InitEmpty() @ (K1: 0x00405ed0, TSL: 0x00405f40) (offsets 4, 0x14)
           *     - NOTE: In K1, uses CResRef::CResRef() constructor. In TSL, uses CExoString_InitEmpty().
           *   * Calls CExoString_InitEmpty() @ (K1: 0x00405ed0, TSL: 0x005ff130) on 2 fields (offsets 0x24, 0x2c) - string cleanup/initialization
@@ -423,7 +426,8 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * - sprintf() @ (K1: 0x006fadb0, TSL: 0x0076dac2): sprintf equivalent (K1: 88 bytes, TSL: 88 bytes, 133 references)
           *   * Creates FILE structure on stack for string formatting
           *   * K1: Calls _vfprintf() with format string and arguments
-          *   * TSL: Calls vswprintf_internal() @ (K1: TODO: Find this address - may not exist, TSL: 0x0077252f) (vswprintf equivalent) with format string and arguments
+          *   * TSL: Calls vswprintf_internal() @ (K1: N/A - uses _vfprintf() instead, TSL: 0x0077252f) (vswprintf equivalent) with format string and arguments
+          *     NOTE: In K1, sprintf() uses _vfprintf() directly. TSL uses vswprintf_internal() for wide character string formatting.
           *   * Null-terminates result string
           *   * Returns formatted string count
           * - operator_new() @ (K1: 0x006fa7e6, TSL: 0x0076d9f6): Memory allocator (14 bytes, 2548 references)
@@ -431,7 +435,8 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *   * Returns allocated memory pointer or NULL
           *   * Called 5 times in LoadModel_Internal for different anim_base types
           * CALLERS: None found via direct references (vtable call via object method)
-          * VTABLE ENTRY: Located at offset in CSWCCreature class structure, stored at (K1: (TODO: Find this address), TSL: 0x007c8040)
+          * VTABLE ENTRY: Located at offset in CSWCCreature class structure, stored at (K1: 0x0074f670, TSL: 0x007c8040)
+          *   * NOTE: This is the vtable entry for CSWCCreature::LoadModel_Internal, referenced in CSWCCreature::LoadModel at K1: 0x0061b3e2 (call site: anim_base->vtable[8](param_3))
           * STRING REFERENCES (verified via cross-references):
           * - Error string @ (K1: 0x0074f85c, TSL: 0x007c82fc): "CSWCCreature::LoadModel(): Failed to load creature model '%s'."
           *   * Referenced in CSWCCreature::LoadModel error handler @ (K1: 0x0061b5cf, TSL: 0x0066a0f0)
