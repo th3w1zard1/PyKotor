@@ -43,8 +43,8 @@ For file extension strings used in I/O operations, see io_mdl.py documentation.
     - Door loading equivalent @ (K1: 0x0058b23e, TSL: 0x006532aa), (K1: 0x0058b23e, TSL: 0x006532e4)
     - Area addition equivalent @ (K1: 0x00587276, TSL: 0x00589de0)
     - Placeable static equivalent @ (K1: 0x006072d0 (function), 0x0060739b/0x006073d5 (call sites), TSL: 0x006a1d20 (function), 0x006a1eb6/0x006a1eda (call sites))
-    - Placeable GFF loading @ (K1: TODO: Find this address, TSL: 0x006a1680 - LoadPlaceableFromGFF) (0x006a187f is a label within this function, not a separate function)
-    - Placeable properties loading @ (K1: TODO: Find this address, TSL: 0x00580ed0 - LoadPlaceablePropertiesFromGFF)
+    - Placeable GFF loading @ (K1: N/A - ModelName access is inline in AddPlaceableObjectStatic, TSL: 0x006a1680 - LoadPlaceableFromGFF) (0x006a187f is a label within this function, not a separate function)
+    - Placeable properties loading @ (K1: N/A - Properties loading is inline in CSWCPlaceable constructor/initialization, TSL: 0x00580ed0 - LoadPlaceablePropertiesFromGFF)
 
 - "ModelPart" @ (K1: 0x0074778c, TSL: 0x007bd42c)
   * GFF field for model part references in area files
