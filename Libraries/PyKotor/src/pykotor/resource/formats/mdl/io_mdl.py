@@ -292,7 +292,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *   * Sets flags: param_1[0x37] = 1 (active flag)
           *   * Called from [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f6fb0) (CSWCAnimBaseTW constructor) and directly
           * - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f5e60): CSWCAnimBaseHead constructor (229 bytes, 3 callers)
-          *   * If param_1 != 0, sets vtable to [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007ce060), calls [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f6fb0) on offset 0x50 sub-object
+          *   * If param_1 != 0, sets vtable to [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007ce060), calls CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) on offset 0x50 sub-object
           *   * Sets vtable offset for base class to [TODO: Name this pointer] @ (K1: TODO: Find this address, TSL: 0x007cdf68)
           *   * Initializes 2 CExoString fields via [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00405f40) (offsets 0x1c, 0x30)
           *   * Sets field at offset 0xc4 to 1 (type identifier)
