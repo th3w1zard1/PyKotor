@@ -202,7 +202,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *    - Calls anim_base->vtable[0xc](param_2, param_3) (load model method, offset 0xc = 3rd vtable entry)
           *    - If loading fails (returns 0), calls error handler:
           *      * Calls [TODO: Name this function](param_2) @ (K1: TODO: Find this address, TSL: 0x00406050) (resource name getter, 72 bytes)
-          *        - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00406050) stores param_1 (CExoString) into circular buffer at [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x008286e0)
+          *        - CResRef::CopyToString() @ (K1: 0x00405f70, TSL: 0x00406050) stores param_1 (CExoString) into circular buffer at [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x008286e0)
           *        - Uses modulo 4 circular buffer: [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x00828728) = ([TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x00828728) + 1) & 0x80000003
           *        - Stores 4 dwords (16 bytes) at offset iVar1 = [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x00828728) * 0x11
           *        - Stores null terminator at offset 0x10
