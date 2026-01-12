@@ -480,8 +480,9 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *   * Used in size class interpolation: fVar10 * [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b9700) + fVar12
           * - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b5f88): Float interpolation weight (cross-referenced 1 time)
           *   * Used in size class interpolation: fVar10 * [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b5f88) + fVar12
-          * - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007c514c): Size class constant (cross-referenced 22 times)
-          *   * Used in [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0051f0b0) for size class validation
+          * - SizeClassConstant_5 @ (K1: TODO: Find this address, TSL: 0x007c514c): Size class constant (value: 5, cross-referenced 22 times)
+          *   * Used in SizeClassValidationFunction() @ (K1: TODO: Find this address, TSL: 0x0051f0b0) for size class validation
+          *   * TSL: Validates creature size class, returns size class value based on creature properties
           * KEY DIFFERENCES FROM K1:
           * 1. Additional case '\v' (0x0b) for two-weapon anim base (not present in K1)
           * 2. Different allocation sizes for all anim base types (+12 bytes each)

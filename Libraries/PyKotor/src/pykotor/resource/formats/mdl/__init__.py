@@ -34,14 +34,14 @@ For file extension strings used in I/O operations, see io_mdl.py documentation.
 - "ModelName" @ (K1: 0x00749814, TSL: 0x007c1c8c)
   * GFF field name for storing/retrieving model resource references
   * K1: Referenced in 7 locations:
-    - LoadDoor() @ (K1: 0x0058b23e, TSL: TODO: Find this address) (GFF field access for door models)
-    - AddToArea() @ (K1: 0x00587276, TSL: TODO: Find this address) (area object model name)
+    - LoadDoor() @ (K1: 0x0058b23e, TSL: 0x006532aa, 0x006532e4) (GFF field access for door models)
+    - AddToArea() @ (K1: 0x00587276, TSL: 0x00589de0) (area object model name)
     - AddPlaceableObjectStatic() @ (K1: 0x0060739b, TSL: TODO: Find this address), (K1: 0x006073d5, TSL: TODO: Find this address) (placeable model names)
     - HandleServerToPlayerDoorUpdate_Add() @ (K1: 0x0064d12a, TSL: TODO: Find this address) (network door updates)
     - HandleServerToPlayerPlaceableUpdate_Add() @ (K1: 0x0064d685, TSL: TODO: Find this address), (K1: 0x0064d6b4, TSL: TODO: Find this address) (network placeable updates)
   * TSL: Referenced in 7 locations (equivalent functions):
-    - Door loading equivalent @ (K1: TODO: Find this address, TSL: 0x006532aa), (K1: TODO: Find this address, TSL: 0x006532e4)
-    - Area addition equivalent @ (K1: TODO: Find this address, TSL: 0x00589de0)
+    - Door loading equivalent @ (K1: 0x0058b23e, TSL: 0x006532aa), (K1: 0x0058b23e, TSL: 0x006532e4)
+    - Area addition equivalent @ (K1: 0x00587276, TSL: 0x00589de0)
     - Placeable static equivalent @ (K1: TODO: Find this address, TSL: 0x006a1eb6), (K1: TODO: Find this address, TSL: 0x006a1eda)
     - Creature loading equivalent @ (K1: TODO: Find this address, TSL: 0x006a187f)
     - Placeable related @ (K1: TODO: Find this address, TSL: 0x00582027)
@@ -91,50 +91,50 @@ Additional String References (verified in both K1 and TSL):
 - "Models" @ (K1: 0x0075298c, TSL: 0x007cb938)
   * Plural model identifier
 
-- "headconjure" @ (K1: TODO: Find this address, TSL: 0x007c82f0)
+- "headconjure" @ (K1: Inline string literal at 0x0061b676 (not in data segment), TSL: 0x007c82f0)
   * Dummy node name for spell visual positioning
-  * Referenced in LoadModel_Internal @ (K1: TODO: Find this address, TSL: 0x0066a1a5) via anim_base->vtable[0xa0]() call
+  * Referenced in LoadModel_Internal @ (K1: 0x0061b676 (inline string), TSL: 0x0066a1a5) via anim_base->vtable[0xa0]() call
   * Also referenced in 7 other functions for finding headconjure dummy node in model hierarchy
 
-- "_head_hit" @ (K1: TODO: Find this address, TSL: 0x007ccaf8)
+- "_head_hit" @ (K1: 0x00753918, TSL: 0x007ccaf8)
   * Hit detection node suffix
   * Referenced in 3 functions related to model hit detection setup
-  * Hardcoded in CSWCPlaceable::LoadModel @ (K1: 0x006823f0, TSL: 0x006d9721) (not in string table)
+  * Hardcoded in CSWCPlaceable::LoadModel @ (K1: 0x006823f0, TSL: 0x006d9721) (not in string table in K1, but exists as data in TSL)
 
-- "snd_Footstep" @ (K1: TODO: Find this address, TSL: 0x007c82d0)
+- "snd_Footstep" @ (K1: 0x0074f838, TSL: 0x007c82d0)
   * Footstep sound callback name
   * Used to register footstep sound callback for creature animations
-  * Referenced in RegisterCallbacks for headconjure @ (K1: TODO: Find this address, TSL: 0x00669570)
+  * Referenced in RegisterCallbacks for headconjure @ (K1: 0x0061ab40, TSL: 0x00669570)
 
-- "snd_hitground" @ (K1: TODO: Find this address, TSL: 0x007c82bc)
+- "snd_hitground" @ (K1: 0x0074f824, TSL: 0x007c82bc)
   * Hit ground sound callback name
   * Used to register hit ground sound callback for creature animations
-  * Referenced in RegisterCallbacks for headconjure @ (K1: TODO: Find this address, TSL: 0x00669570)
+  * Referenced in RegisterCallbacks for headconjure @ (K1: 0x0061ab40, TSL: 0x00669570)
 
 Supermodel System String References:
 -------------------------------------
 These strings are used for the supermodel system. The supermodel directory path and resource
 reference formats are present in TSL but may not exist in K1.
 
-- "SUPERMODELS" @ (K1: TODO: Find this address, TSL: 0x007c69b0)
+- "SUPERMODELS" @ (K1: N/A - TSL-specific feature, TSL: 0x007c69b0)
   * Supermodel system identifier
 
-- ".\\supermodels" @ (K1: TODO: Find this address, TSL: 0x007c69bc)
+- ".\\supermodels" @ (K1: N/A - TSL-specific feature, TSL: 0x007c69bc)
   * Supermodel directory path (relative)
 
-- "d:\\supermodels" @ (K1: TODO: Find this address, TSL: 0x007c69cc)
+- "d:\\supermodels" @ (K1: N/A - TSL-specific feature, TSL: 0x007c69cc)
   * Supermodel directory path (absolute, likely debug/hardcoded)
 
-- "SUPERMODELS:smseta" @ (K1: TODO: Find this address, TSL: 0x007c7380)
+- "SUPERMODELS:smseta" @ (K1: N/A - TSL-specific feature, TSL: 0x007c7380)
   * Supermodel resource reference format
 
-- "SUPERMODELS:smsetb" @ (K1: TODO: Find this address, TSL: 0x007c73a8)
+- "SUPERMODELS:smsetb" @ (K1: N/A - TSL-specific feature, TSL: 0x007c7394)
   * Supermodel resource reference variant
 
-- "SUPERMODELS:smsetc" @ (K1: TODO: Find this address, TSL: 0x007c73a8)
+- "SUPERMODELS:smsetc" @ (K1: N/A - TSL-specific feature, TSL: 0x007c73a8)
   * Supermodel resource reference variant
 
-- "ModelA" @ (K1: TODO: Find this address, TSL: 0x007bf4bc)
+- "ModelA" @ (K1: 0x00754a38, TSL: 0x007bf4bc)
   * Model variant identifier
 
 Error Messages:
@@ -143,9 +143,9 @@ Error Messages:
   * Referenced in CSWCCreature::LoadModel() @ (K1: 0x0061b5cf, TSL: 0x0066a0f0) (call site within LoadModel)
     - Used in sprintf() call when anim_base->vtable[3] returns 0
     - param_1 is resource name from CResRef::GetResRefStr()
-  * Referenced in CSWCCreature::LoadModel error handler @ (K1: TODO: Find this address, TSL: 0x0066a0f0)
-    - Used in sprintf equivalent @ (K1: TODO: Find this address, TSL: 0x0076dac2)
-    - Resource name obtained via resource name cache/getter @ (K1: TODO: Find this address, TSL: 0x00406050)
+  * Referenced in CSWCCreature::LoadModel error handler @ (K1: 0x0061b5cf, TSL: 0x0066a0f0)
+    - Used in sprintf equivalent @ (K1: 0x006fadb0, TSL: 0x0076dac2)
+    - Resource name obtained via resource name cache/getter @ (K1: 0x00405fe0, TSL: 0x00406050) - CResRef::CopyToString
 
 - "Model %s nor the default model %s could be loaded." @ (K1: 0x00751c70, TSL: 0x007cad14)
   * Generic model loading failure message
