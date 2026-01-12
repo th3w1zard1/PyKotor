@@ -186,7 +186,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *    * case '\v' (0x0b, 11): Two-Weapon anim base (NEW in TSL, not in K1)
           *      - Allocates 0x180 bytes (384 bytes)
           *      - Calls CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) (CSWCAnimBaseTW constructor, 307 bytes)
-          *      - Sets vtable to CSWCAnimBaseTW_vtable @ (K1: 0x00754e40, TSL: 0x007ce078)
+          *      - Sets vtable to CSWCAnimBaseTW_vtable @ (K1: 0x00754e58, TSL: 0x007ce078)
           *      - Initializes 5 CExoString fields (offsets 0x4a, 0x4f, 0x54, 0x59) via CExoString_InitEmpty() @ (K1: TODO: Find this address, TSL: 0x00405f40)
           *      - Sets field at offset 0x31 to 0x0b (two-weapon type identifier)
           *      - Clears flags: param_1[0x5e] = 0, param_1[0x5f] = 0
