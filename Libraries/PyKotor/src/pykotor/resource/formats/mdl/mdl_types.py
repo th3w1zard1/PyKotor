@@ -144,11 +144,11 @@ class MDLControllerType(IntEnum):
     References:
     - Based on swkotor.exe MDL controller structure:
       * Controller types are used to animate node properties (position, orientation, scale, alpha)
-      * "scale" string @ (K1: 0x00741f44, TSL: (TODO: Find this address)) - Scale controller identifier
-      * "scalekey" string @ (K1: 0x00741f38, TSL: (TODO: Find this address)) - Scale keyframe identifier
-      * "scalebezierkey" string @ (K1: 0x00741f28, TSL: (TODO: Find this address)) - Scale bezier keyframe identifier
-      * "ALPHA" string @ (K1: 0x0073dfc0, TSL: (TODO: Find this address)) - Alpha controller identifier
-      * "channelscale" string @ (K1: 0x00741d1c, TSL: (TODO: Find this address)) - Channel scale identifier
+      * "scale" string @ (K1: 0x00741f44, TSL: N/A - inline string literal) - Scale controller identifier
+      * "scalekey" string @ (K1: 0x00741f38, TSL: N/A - inline string literal) - Scale keyframe identifier
+      * "scalebezierkey" string @ (K1: 0x00741f28, TSL: N/A - inline string literal) - Scale bezier keyframe identifier
+      * "ALPHA" string @ (K1: 0x0073dfc0, TSL: N/A - inline string literal) - Alpha controller identifier
+      * "channelscale" string @ (K1: 0x00741d1c, TSL: N/A - inline string literal) - Channel scale identifier
       * LoadModel @ (K1: 0x00464200, TSL: 0x0047a570) - Loads MDL models with controllers
       * LoadModel2 @ (K1: 0x0061b380, TSL: 0x00669ea0) - Alternative model loading function
     - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
