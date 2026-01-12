@@ -241,10 +241,12 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * 8. Callback registration:
           *    - Calls RegisterCallbacks(param_1) @ (K1: 0x0061ab40, TSL: 0x00693fe0) (RegisterCallbacks equivalent, 100 bytes, 177 references)
           *      - RegisterCallbacks() @ (K1: 0x0061ab40, TSL: 0x00693fe0) checks if *(int*)(param_1 + 0xf8) is NULL (cached callback result)
-          *      - If NULL and *(int*)(param_1 + 0xe4) == 0, calls GetObjectTypeID() @ (K1: TODO: Find this address, TSL: 0x004dc2e0) and GetObjectByTypeID() @ (K1: TODO: Find this address, TSL: 0x004dc650) to get callback handler
+          *      - If NULL and *(int*)(param_1 + 0xe4) == 0, calls GetObjectTypeID() @ (K1: N/A - not used, TSL: 0x004dc2e0) and GetObjectByTypeID() @ (K1: N/A - not used, TSL: 0x004dc650) to get callback handler
+          *        NOTE: In K1, RegisterCallbacks() does not use GetObjectTypeID/GetObjectByTypeID. It directly calls anim_base->vtable[8](0xff) to get the callback handler.
           *      - Calls handler->vtable[0x10]() to get callback object
           *      - Stores result in *(void**)(param_1 + 0xf8)
-          *      - If callback object exists, calls SetCallbackTarget(callback, param_1) @ (K1: TODO: Find this address, TSL: 0x005056f0) to register callbacks
+          *      - If callback object exists, calls SetCallbackTarget(callback, param_1) @ (K1: N/A - not used, TSL: 0x005056f0) to register callbacks
+          *        NOTE: In K1, RegisterCallbacks() directly registers callbacks via handler->vtable[0x28]() without using SetCallbackTarget. TSL uses SetCallbackTarget() for callback registration.
           *      - Returns *(undefined4*)(param_1 + 0xf8)
           *    - If callback registration succeeds:
           *      * Calls callback->vtable[0x30]() to get animation object
@@ -308,14 +310,20 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *   * Called from CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) (CSWCAnimBaseTW constructor) and directly
           * - CSWCAnimBaseHead::CSWCAnimBaseHead() @ (K1: 0x0069bb80, TSL: 0x006f5e60): CSWCAnimBaseHead constructor (229 bytes, 3 callers)
           *   * If param_1 != 0, sets vtable to CSWCAnimBaseHead_vtable @ (K1: 0x00754e40, TSL: 0x007ce060), calls CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) on offset 0x50 sub-object
-          *   * Sets vtable offset for base class to CSWCAnimBaseHead_base_vtable @ (K1: TODO: Find this address, TSL: 0x007cdf68) (NOTE: K1 uses CSWCAnimBaseHead_AnimBase_vtable at offset calculated from vtable)
+          *   * Sets vtable offset for base class to CSWCAnimBaseHead_base_vtable @ (K1: Calculated dynamically from CSWCAnimBaseHead_vtable offset, TSL: 0x007cdf68)
+          *     NOTE: In K1, the base class vtable offset is calculated at line 20: `*(undefined ***)(this + *(int *)(*(int *)this + 4)) = &CSWCAnimBaseHead_AnimBase_vtable;`
+          *     The offset is calculated as `*(int *)(*(int *)this + 4)` (vtable offset) and the base vtable pointer is stored at that calculated offset.
+          *     TSL uses a separate base class vtable pointer constant at 0x007cdf68.
           *   * Initializes 2 CResRef fields (K1) / CExoString fields (TSL) via CResRef_InitEmpty() @ (K1: 0x00405ed0, TSL: 0x00405f40) (offsets 0x1c, 0x30)
           *     - NOTE: In K1, uses CResRef::CResRef() constructor. In TSL, uses CExoString_InitEmpty().
           *   * Sets field at offset 0xc4 to 1 (type identifier)
           *   * Sets field at offset 0x48 to 0x7f000000 (INF, scale maximum)
           * - CSWCAnimBaseWield::CSWCAnimBaseWield() @ (K1: 0x00699dd0, TSL: 0x006f41b0): CSWCAnimBaseWield constructor (256 bytes, 3 callers)
           *   * If param_1 != 0, sets vtable to CSWCAnimBaseWield_vtable @ (K1: 0x00754d00, TSL: 0x007cdf20), calls CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) on offset 0x5c sub-object
-          *   * Sets vtable offset for base class to CSWCAnimBaseWield_base_vtable @ (K1: TODO: Find this address, TSL: 0x007cde28) (NOTE: K1 uses CSWCAnimBaseWield_AnimBase_vtable at offset calculated from vtable)
+          *   * Sets vtable offset for base class to CSWCAnimBaseWield_base_vtable @ (K1: Calculated dynamically from CSWCAnimBaseWield_vtable offset, TSL: 0x007cde28)
+          *     NOTE: In K1, the base class vtable offset is calculated at line 20: `*(undefined ***)(this + *(int *)(*(int *)this + 4)) = &CSWCAnimBaseWield_AnimBase_vtable;`
+          *     The offset is calculated as `*(int *)(*(int *)this + 4)` (vtable offset) and the base vtable pointer is stored at that calculated offset.
+          *     TSL uses a separate base class vtable pointer constant at 0x007cde28.
           *   * Initializes 2 CResRef fields (K1) / CExoString fields (TSL) via CResRef_InitEmpty() @ (K1: 0x00405ed0, TSL: 0x00405f40) (offsets 4, 0x14)
           *     - NOTE: In K1, uses CResRef::CResRef() constructor. In TSL, uses CExoString_InitEmpty().
           *   * Calls CExoString_InitEmpty() @ (K1: 0x00405ed0, TSL: 0x005ff130) on 2 fields (offsets 0x24, 0x2c) - string cleanup/initialization
@@ -423,7 +431,8 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * - sprintf() @ (K1: 0x006fadb0, TSL: 0x0076dac2): sprintf equivalent (K1: 88 bytes, TSL: 88 bytes, 133 references)
           *   * Creates FILE structure on stack for string formatting
           *   * K1: Calls _vfprintf() with format string and arguments
-          *   * TSL: Calls vswprintf_internal() @ (K1: TODO: Find this address - may not exist, TSL: 0x0077252f) (vswprintf equivalent) with format string and arguments
+          *   * TSL: Calls vswprintf_internal() @ (K1: N/A - uses _vfprintf() instead, TSL: 0x0077252f) (vswprintf equivalent) with format string and arguments
+          *     NOTE: In K1, sprintf() uses _vfprintf() directly (standard library function). TSL uses vswprintf_internal() for wide character string formatting.
           *   * Null-terminates result string
           *   * Returns formatted string count
           * - operator_new() @ (K1: 0x006fa7e6, TSL: 0x0076d9f6): Memory allocator (14 bytes, 2548 references)
