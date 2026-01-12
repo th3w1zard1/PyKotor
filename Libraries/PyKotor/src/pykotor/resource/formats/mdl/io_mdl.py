@@ -8,7 +8,7 @@ I/O and Parsing Functions (Engine Implementation):
 -------------------------------------------------
 These functions correspond to the game engine's MDL/MDX parsing implementation:
 
-    - LoadModel - K1: 0x00464200, TSL: (not directly found, likely wrapped differently)
+    - LoadModel - K1: 0x00464200, TSL: (TODO: Find this address)
       * Main model loader entry point (172 bytes, 6 callees, 2 callers)
         * Signature: Model * __cdecl LoadModel(int param_1, undefined4 param_2)
         * Logic (from decompilation):
@@ -191,12 +191,12 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *      - Zeroes 5 additional fields (0x3f through 0x43)
           *    * default: Falls through to error handler (switchD_00669f38_caseD_4)
           * 5. Animation setup (after successful allocation):
-          *    - Calls [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f3210) (Set equivalent, 81 bytes) 4 times with hardcoded float constants:
-          *      * [TODO: Name this function](anim_base, 0, 0x44e74000) @ (K1: TODO: Find this address, TSL: 0x006f3210) = 1216.0f (was Set() call in K1)
-          *      * [TODO: Name this function](anim_base, 1, 0x45ce4000) @ (K1: TODO: Find this address, TSL: 0x006f3210) = 6600.0f
-          *      * [TODO: Name this function](anim_base, 2, 0x3f6ccccd) @ (K1: TODO: Find this address, TSL: 0x006f3210) = 0.9f
-          *      * [TODO: Name this function](anim_base, 3, 0x40533333) @ (K1: TODO: Find this address, TSL: 0x006f3210) = 3.3f
-          *    - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f3210) implements switch-based setter: param_1 determines offset (4, 8, 0xc, 0x10)
+          *    - Calls CSWAnimBase::Set() @ (K1: 0x00698e30, TSL: 0x006f3210) (Set equivalent, 81 bytes) 4 times with hardcoded float constants:
+          *      * CSWAnimBase::Set(anim_base, 0, 0x44e74000) @ (K1: 0x00698e30, TSL: 0x006f3210) = 1216.0f (was Set() call in K1)
+          *      * CSWAnimBase::Set(anim_base, 1, 0x45ce4000) @ (K1: 0x00698e30, TSL: 0x006f3210) = 6600.0f
+          *      * CSWAnimBase::Set(anim_base, 2, 0x3f6ccccd) @ (K1: 0x00698e30, TSL: 0x006f3210) = 0.9f
+          *      * CSWAnimBase::Set(anim_base, 3, 0x40533333) @ (K1: 0x00698e30, TSL: 0x006f3210) = 3.3f
+          *    - CSWAnimBase::Set() @ (K1: 0x00698e30, TSL: 0x006f3210) implements switch-based setter: param_1 determines offset (4, 8, 0xc, 0x10)
           *    - Sets *(undefined4*)(param_1 + 0x200) = 0 (field159 initialization)
           * 6. Model resource loading:
           *    - Calls anim_base->vtable[0xc](param_2, param_3) (load model method, offset 0xc = 3rd vtable entry)
@@ -231,8 +231,8 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *      * Otherwise, calculates: *(float*)(param_1 + 0xa4) = fStack_12c - fStack_12c * [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b7428)
           *        - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b7428): Float constant (cross-referenced in 9 locations, likely scale factor)
           * 8. Callback registration:
-          *    - Calls [TODO: Name this function](param_1) @ (K1: TODO: Find this address, TSL: 0x00693fe0) (RegisterCallbacks equivalent, 100 bytes, 177 references)
-          *      - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00693fe0) checks if *(int*)(param_1 + 0xf8) is NULL (cached callback result)
+          *    - Calls RegisterCallbacks(param_1) @ (K1: 0x0061ab40, TSL: 0x00693fe0) (RegisterCallbacks equivalent, 100 bytes, 177 references)
+          *      - RegisterCallbacks() @ (K1: 0x0061ab40, TSL: 0x00693fe0) checks if *(int*)(param_1 + 0xf8) is NULL (cached callback result)
           *      - If NULL and *(int*)(param_1 + 0xe4) == 0, calls [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x004dc2e0) and [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x004dc650) to get callback handler
           *      - Calls handler->vtable[0x10]() to get callback object
           *      - Stores result in *(void**)(param_1 + 0xf8)
@@ -320,7 +320,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *   * Sets field at offset 0x31 to 0x0b (two-weapon type)
           *   * Zeroes flags: param_1[0x5e] = 0, param_1[0x5f] = 0
           *   * Initializes 5 additional fields to 0 (offsets 0x3f through 0x43)
-          * - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f3210): Set equivalent (81 bytes, 8 callers)
+          * - CSWAnimBase::Set() @ (K1: 0x00698e30, TSL: 0x006f3210): Set equivalent (81 bytes, 8 callers)
           *   * Switch-based setter: param_1 (0-3) determines which field to set
           *   * case 0: Sets *(undefined4*)(this + 4) = param_2
           *   * case 1: Sets *(undefined4*)(this + 8) = param_2
@@ -328,7 +328,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *   * case 3: Sets *(undefined4*)(this + 0x10) = param_2
           *   * Returns 1 on success, 0 on default case
           *   * Called 4 times in LoadModel_Internal with hardcoded float values
-          * - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00693fe0): RegisterCallbacks equivalent (100 bytes, 177 references)
+          * - RegisterCallbacks() @ (K1: 0x0061ab40, TSL: 0x00693fe0): RegisterCallbacks equivalent (100 bytes, 177 references)
           *   * Checks if *(int*)(param_1 + 0xf8) is cached (callback result)
           *   * If NULL and *(int*)(param_1 + 0xe4) == 0:
           *     - Calls [TODO: Name this function](*(uint*)(param_1 + 4)) @ (K1: TODO: Find this address, TSL: 0x004dc2e0) to get callback type ID
