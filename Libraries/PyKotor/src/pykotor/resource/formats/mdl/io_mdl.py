@@ -216,8 +216,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *      * Calls sprintf(acStack_10c, "CSWCCreature::LoadModel(): Failed to load creature model '%s'.") @ (K1: 0x006fadb0, TSL: 0x0076dac2)
           *        - sprintf() @ (K1: 0x006fadb0, TSL: 0x0076dac2) is sprintf equivalent (88 bytes, 133 references)
           *        - Creates FILE structure on stack for formatting
-          *        - Calls vswprintf_internal() @ (K1: N/A - uses _vfprintf() instead, TSL: 0x0077252f) (vswprintf equivalent) with format string
-          *          NOTE: In K1, sprintf() uses _vfprintf() directly. TSL uses vswprintf_internal() for wide character string formatting.
+          *        - Calls vswprintf_internal() @ (K1: TODO: Find this address, TSL: 0x0077252f) (vswprintf equivalent) with format string
           *        - Null-terminates result
           *      * Returns 0 (failure)
           * 7. Special parameter handling (param_3 checks):
@@ -242,12 +241,10 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * 8. Callback registration:
           *    - Calls RegisterCallbacks(param_1) @ (K1: 0x0061ab40, TSL: 0x00693fe0) (RegisterCallbacks equivalent, 100 bytes, 177 references)
           *      - RegisterCallbacks() @ (K1: 0x0061ab40, TSL: 0x00693fe0) checks if *(int*)(param_1 + 0xf8) is NULL (cached callback result)
-          *      - If NULL and *(int*)(param_1 + 0xe4) == 0, calls GetObjectTypeID() @ (K1: N/A - not used, TSL: 0x004dc2e0) and GetObjectByTypeID() @ (K1: N/A - not used, TSL: 0x004dc650) to get callback handler
-          *        NOTE: In K1, RegisterCallbacks() does not use GetObjectTypeID/GetObjectByTypeID. It directly calls anim_base->vtable[8](0xff) to get the callback handler.
+          *      - If NULL and *(int*)(param_1 + 0xe4) == 0, calls GetObjectTypeID() @ (K1: TODO: Find this address, TSL: 0x004dc2e0) and GetObjectByTypeID() @ (K1: TODO: Find this address, TSL: 0x004dc650) to get callback handler
           *      - Calls handler->vtable[0x10]() to get callback object
           *      - Stores result in *(void**)(param_1 + 0xf8)
-          *      - If callback object exists, calls SetCallbackTarget(callback, param_1) @ (K1: N/A - not used, TSL: 0x005056f0) to register callbacks
-          *        NOTE: In K1, RegisterCallbacks() directly registers callbacks via handler->vtable[0x28]() without using SetCallbackTarget. TSL uses SetCallbackTarget() for callback registration.
+          *      - If callback object exists, calls SetCallbackTarget(callback, param_1) @ (K1: TODO: Find this address, TSL: 0x005056f0) to register callbacks
           *      - Returns *(undefined4*)(param_1 + 0xf8)
           *    - If callback registration succeeds:
           *      * Calls callback->vtable[0x30]() to get animation object
@@ -311,16 +308,14 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *   * Called from CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) (CSWCAnimBaseTW constructor) and directly
           * - CSWCAnimBaseHead::CSWCAnimBaseHead() @ (K1: 0x0069bb80, TSL: 0x006f5e60): CSWCAnimBaseHead constructor (229 bytes, 3 callers)
           *   * If param_1 != 0, sets vtable to CSWCAnimBaseHead_vtable @ (K1: 0x00754e40, TSL: 0x007ce060), calls CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) on offset 0x50 sub-object
-          *   * Sets vtable offset for base class to CSWCAnimBaseHead_base_vtable @ (K1: N/A - calculated from CSWCAnimBaseHead_vtable offset, TSL: 0x007cdf68)
-          *     NOTE: In K1, the base class vtable offset is calculated from CSWCAnimBaseHead_vtable @ (K1: 0x00754e40) rather than stored as a separate constant. TSL uses a separate base class vtable pointer.
+          *   * Sets vtable offset for base class to CSWCAnimBaseHead_base_vtable @ (K1: TODO: Find this address, TSL: 0x007cdf68) (NOTE: K1 uses CSWCAnimBaseHead_AnimBase_vtable at offset calculated from vtable)
           *   * Initializes 2 CResRef fields (K1) / CExoString fields (TSL) via CResRef_InitEmpty() @ (K1: 0x00405ed0, TSL: 0x00405f40) (offsets 0x1c, 0x30)
           *     - NOTE: In K1, uses CResRef::CResRef() constructor. In TSL, uses CExoString_InitEmpty().
           *   * Sets field at offset 0xc4 to 1 (type identifier)
           *   * Sets field at offset 0x48 to 0x7f000000 (INF, scale maximum)
           * - CSWCAnimBaseWield::CSWCAnimBaseWield() @ (K1: 0x00699dd0, TSL: 0x006f41b0): CSWCAnimBaseWield constructor (256 bytes, 3 callers)
           *   * If param_1 != 0, sets vtable to CSWCAnimBaseWield_vtable @ (K1: 0x00754d00, TSL: 0x007cdf20), calls CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) on offset 0x5c sub-object
-          *   * Sets vtable offset for base class to CSWCAnimBaseWield_base_vtable @ (K1: N/A - calculated from CSWCAnimBaseWield_vtable offset, TSL: 0x007cde28)
-          *     NOTE: In K1, the base class vtable offset is calculated from CSWCAnimBaseWield_vtable @ (K1: 0x00754d00) rather than stored as a separate constant. TSL uses a separate base class vtable pointer.
+          *   * Sets vtable offset for base class to CSWCAnimBaseWield_base_vtable @ (K1: TODO: Find this address, TSL: 0x007cde28) (NOTE: K1 uses CSWCAnimBaseWield_AnimBase_vtable at offset calculated from vtable)
           *   * Initializes 2 CResRef fields (K1) / CExoString fields (TSL) via CResRef_InitEmpty() @ (K1: 0x00405ed0, TSL: 0x00405f40) (offsets 4, 0x14)
           *     - NOTE: In K1, uses CResRef::CResRef() constructor. In TSL, uses CExoString_InitEmpty().
           *   * Calls CExoString_InitEmpty() @ (K1: 0x00405ed0, TSL: 0x005ff130) on 2 fields (offsets 0x24, 0x2c) - string cleanup/initialization
@@ -428,8 +423,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * - sprintf() @ (K1: 0x006fadb0, TSL: 0x0076dac2): sprintf equivalent (K1: 88 bytes, TSL: 88 bytes, 133 references)
           *   * Creates FILE structure on stack for string formatting
           *   * K1: Calls _vfprintf() with format string and arguments
-          *   * TSL: Calls vswprintf_internal() @ (K1: N/A - uses _vfprintf() instead, TSL: 0x0077252f) (vswprintf equivalent) with format string and arguments
-          *     NOTE: In K1, sprintf() uses _vfprintf() directly. TSL uses vswprintf_internal() for wide character string formatting.
+          *   * TSL: Calls vswprintf_internal() @ (K1: TODO: Find this address - may not exist, TSL: 0x0077252f) (vswprintf equivalent) with format string and arguments
           *   * Null-terminates result string
           *   * Returns formatted string count
           * - operator_new() @ (K1: 0x006fa7e6, TSL: 0x0076d9f6): Memory allocator (14 bytes, 2548 references)
@@ -437,8 +431,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *   * Returns allocated memory pointer or NULL
           *   * Called 5 times in LoadModel_Internal for different anim_base types
           * CALLERS: None found via direct references (vtable call via object method)
-          * VTABLE ENTRY: Located at offset in CSWCCreature class structure, stored at (K1: 0x0074f670, TSL: 0x007c8040)
-          *   * NOTE: This is the vtable entry for CSWCCreature::LoadModel_Internal, referenced in CSWCCreature::LoadModel at K1: 0x0061b3e2 (call site: anim_base->vtable[8](param_3))
+          * VTABLE ENTRY: Located at offset in CSWCCreature class structure, stored at (K1: (TODO: Find this address), TSL: 0x007c8040)
           * STRING REFERENCES (verified via cross-references):
           * - Error string @ (K1: 0x0074f85c, TSL: 0x007c82fc): "CSWCCreature::LoadModel(): Failed to load creature model '%s'."
           *   * Referenced in CSWCCreature::LoadModel error handler @ (K1: 0x0061b5cf, TSL: 0x0066a0f0)
@@ -463,21 +456,16 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *   * Passed to anim_base->vtable[0x7c]() for game object type setup
           * - FloatConstant_0_125 @ (K1: 0x0073f400, TSL: 0x007b7428): Float scale factor (0.125f, cross-referenced 9 times)
           *   * Used in headconjure calculation: fStack_12c - fStack_12c * FloatConstant_0_125 @ (K1: 0x0073f400, TSL: 0x007b7428)
-          * - FloatConstant_0_0125 @ (K1: Inline constant 0x3c888889, TSL: 0x007c82ec): Float interpolation factor (0.0125f, cross-referenced 4 times)
-          *   * Used in size class interpolation: (float)(0x28 - sVar1) * FloatConstant_0_0125 @ (K1: Inline constant 0x3c888889, TSL: 0x007c82ec)
-          *   * NOTE: In K1, this constant is used inline in code (0x3c888889 = 0.0125f). In TSL, it's stored as a data constant.
-          * - FloatConstant_1_0 @ (K1: Inline constant 0x3f800000, TSL: 0x007b5774): Float scale factor (1.0f, cross-referenced 78 times)
-          *   * Used in size class interpolation: (FloatConstant_1_0 @ (K1: Inline constant 0x3f800000, TSL: 0x007b5774) - fVar10) * FloatConstant_0_65 @ (K1: Inline constant 0x3d266666, TSL: 0x007c82e8)
-          *   * NOTE: In K1, this constant is used inline in code (0x3f800000 = 1.0f). In TSL, it's stored as a data constant.
-          * - FloatConstant_0_65 @ (K1: Inline constant 0x3d266666, TSL: 0x007c82e8): Float interpolation factor (0.65f, cross-referenced 8 times)
+          * - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007c82ec): Float interpolation factor (cross-referenced 4 times)
+          *   * Used in size class interpolation: (float)(0x28 - sVar1) * [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007c82ec)
+          * - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b5774): Float scale factor (cross-referenced 78 times)
+          *   * Used in size class interpolation: ([TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b5774) - fVar10) * [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007c82e8)
+          * - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007c82e8): Float interpolation factor (cross-referenced 8 times)
           *   * Used in size class interpolation calculations
-          *   * NOTE: In K1, this constant is used inline in code (0x3d266666 = 0.65f). In TSL, it's stored as a data constant.
-          * - FloatConstant_0_05 @ (K1: Inline constant 0x3d4ccccd, TSL: 0x007b9700): Float interpolation weight (0.05f, cross-referenced 1 time)
-          *   * Used in size class interpolation: fVar10 * FloatConstant_0_05 @ (K1: Inline constant 0x3d4ccccd, TSL: 0x007b9700) + fVar12
-          *   * NOTE: In K1, this constant is used inline in code (0x3d4ccccd = 0.05f). In TSL, it's stored as a data constant.
-          * - FloatConstant_0_01 @ (K1: Inline constant 0x3c23d70a, TSL: 0x007b5f88): Float interpolation weight (0.01f, cross-referenced 1 time)
-          *   * Used in size class interpolation: fVar10 * FloatConstant_0_01 @ (K1: Inline constant 0x3c23d70a, TSL: 0x007b5f88) + fVar12
-          *   * NOTE: In K1, this constant is used inline in code (0x3c23d70a = 0.01f). In TSL, it's stored as a data constant.
+          * - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b9700): Float interpolation weight (cross-referenced 1 time)
+          *   * Used in size class interpolation: fVar10 * [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b9700) + fVar12
+          * - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b5f88): Float interpolation weight (cross-referenced 1 time)
+          *   * Used in size class interpolation: fVar10 * [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b5f88) + fVar12
           * - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007c514c): Size class constant (cross-referenced 22 times)
           *   * Used in [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0051f0b0) for size class validation
           * KEY DIFFERENCES FROM K1:
@@ -519,7 +507,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * CExoString::CStr() @ (K1: 0x005e5670, TSL: TODO: Find this address) - C string accessor)
           * CExoString::CExoString() @ (K1: 0x005b3190, TSL: TODO: Find this address) - empty string constructor)
           * CExoString::operator+() @ (K1: 0x005e5d10, TSL: TODO: Find this address) - string concatenation)
-          * CSWCAnimBasePlaceable::CSWCAnimBasePlaceable() @ (K1: 0x006e4e50, TSL: 0x00755970) - placeable anim base)
+          * CSWCAnimBasePlaceable::CSWCAnimBasePlaceable() @ (K1: 0x006e4e50, TSL: TODO: Find this address) - placeable anim base)
           * CExoString::SubString() @ (K1: 0x005e6270, TSL: TODO: Find this address) - substring extraction
           * CExoString::operator=() @ (K1: 0x005e5c50, TSL: TODO: Find this address) - string assignment, called 2 times
           * CExoString::~CExoString() @ (K1: 0x005e5c20, TSL: TODO: Find this address) - string destructor, called 4 times
