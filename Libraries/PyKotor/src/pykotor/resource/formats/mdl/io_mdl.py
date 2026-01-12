@@ -351,8 +351,9 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *     - If callback exists, calls [TODO: Name this function](callback, param_1) @ (K1: TODO: Find this address, TSL: 0x005056f0) to register callbacks
           *   * Returns *(undefined4*)(param_1 + 0xf8)
           *   * Called 4 times in LoadModel_Internal at lines 170, 175 (twice conditionally)
-          * - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00669570): RegisterCallbacks for headconjure (532 bytes, 1 caller)
-          *   * Signature: void __fastcall [TODO: Name this function](int param_1) @ (K1: TODO: Find this address, TSL: 0x00669570)
+          * - RegisterCallbacks_Headconjure() @ (K1: 0x0061ab40, TSL: 0x00669570): RegisterCallbacks for headconjure (532 bytes, 1 caller)
+          *   * Signature: void __fastcall RegisterCallbacks_Headconjure(int param_1) @ (K1: 0x0061ab40, TSL: 0x00669570)
+          *   * NOTE: In K1, RegisterCallbacks_Headconjure is the same function as RegisterCallbacks (both at 0x0061ab40, 532 bytes). In TSL, they are separate functions.
           *   * Logic (from decompilation):
           *     * Gets callback handler via anim_base->vtable[8](0xff) call at *(undefined4**)(param_1 + 0x68)
           *     * If handler exists (piVar1 != NULL):
