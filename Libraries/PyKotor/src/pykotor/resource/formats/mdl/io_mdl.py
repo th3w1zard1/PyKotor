@@ -267,13 +267,13 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * - size_class_access: param_1 + 0x310 + 0x80 (was different offset in K1)
           * - callback_cache: param_1 + 0xf8 (new in TSL, was not cached in K1)
           * - callback_flag: param_1 + 0xe4 (new in TSL, callback registration flag)
-          * ALLOCATION SIZE DIFFERENCES:
+          * ALLOCATION SIZE COMPARISON:
           * - Standard: 0xfc (252 bytes) in TSL vs 0xf0 (240 bytes) in K1 (+12 bytes)
           * - Head: 0x1d0 (464 bytes) in TSL vs 0x1c4 (452 bytes) in K1 (+12 bytes)
           * - Wield: 0x1dc (476 bytes) in TSL vs 0x1d0 (464 bytes) in K1 (+12 bytes)
           * - HeadWield: 0x22c (556 bytes) in TSL vs 0x220 (544 bytes) in K1 (+12 bytes)
           * - TwoWeapon: 0x180 (384 bytes) in TSL (NEW, not present in K1)
-          * VTABLE OFFSET DIFFERENCES:
+          * VTABLE OFFSET COMPARISON:
           * - Load model: offset 0xc (3rd entry) in TSL vs offset 0xc in K1 (same)
           * - Get attachment: offset 0x8 (2nd entry) in TSL vs offset 0x8 in K1 (same)
           * - Destructor: offset 0x0 (1st entry) in TSL vs offset 0x0 in K1 (same)
