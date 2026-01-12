@@ -290,7 +290,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * - Animation checks: offset 0x18c (39th entry) in TSL vs different offset in K1
           * CALLEES (11 total, verified via decompilation):
           * - CSWCAnimBase::CSWCAnimBase() @ (K1: 0x0069dfb0, TSL: 0x006f8340): CSWCAnimBase constructor (409 bytes, 8 callers)
-          *   * Initializes vtable to CSWCAnimBase_vtable @ (K1: TODO: Find this address, TSL: 0x007ce180)
+          *   * Initializes vtable to CSWCAnimBase_vtable @ (K1: 0x00754f60, TSL: 0x007ce180)
           *   * Initializes 5 CExoString fields via CExoString_InitFromString() @ (K1: TODO: Find this address, TSL: 0x00406350) with empty strings
           *   * Initializes quaternion via Quaternion_Set() @ (K1: TODO: Find this address, TSL: 0x004da020) with default values
           *   * Sets default scale to 1.0f
@@ -305,8 +305,10 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * - CSWCAnimBaseWield::CSWCAnimBaseWield() @ (K1: 0x00699dd0, TSL: 0x006f41b0): CSWCAnimBaseWield constructor (256 bytes, 3 callers)
           *   * If param_1 != 0, sets vtable to CSWCAnimBaseWield_vtable @ (K1: 0x00754d00, TSL: 0x007cdf20), calls CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) on offset 0x5c sub-object
           *   * Sets vtable offset for base class to CSWCAnimBaseWield_base_vtable @ (K1: TODO: Find this address, TSL: 0x007cde28) (NOTE: K1 uses CSWCAnimBaseWield_AnimBase_vtable at offset calculated from vtable)
-          *   * Initializes 2 CExoString fields via CExoString_InitEmpty() @ (K1: TODO: Find this address, TSL: 0x00405f40) (offsets 4, 0x14)
-          *   * Calls CExoString_InitEmpty() @ (K1: TODO: Find this address, TSL: 0x005ff130) on 2 fields (offsets 0x24, 0x2c) - string cleanup/initialization
+          *   * Initializes 2 CResRef fields (K1) / CExoString fields (TSL) via CResRef_InitEmpty() @ (K1: 0x00405ed0, TSL: 0x00405f40) (offsets 4, 0x14)
+          *     - NOTE: In K1, uses CResRef::CResRef() constructor. In TSL, uses CExoString_InitEmpty().
+          *   * Calls CExoString_InitEmpty() @ (K1: 0x00405ed0, TSL: 0x005ff130) on 2 fields (offsets 0x24, 0x2c) - string cleanup/initialization
+          *     - NOTE: In K1, uses CResRef::CResRef() constructor. In TSL, uses CExoString_InitEmpty() (16 bytes, zeros 2 dwords).
           *   * Sets field at offset 0xc4 to 2 (type identifier)
           *   * Zeroes 6 fields (offsets 0x34, 0x38, 0x48, 0x4c, 0x50, 0x54)
           * - CSWCAnimBaseHeadWield::CSWCAnimBaseHeadWield() @ (K1: 0x00698ec0, TSL: 0x006f32a0): CSWCAnimBaseHeadWield constructor (197 bytes, 2 callers)
