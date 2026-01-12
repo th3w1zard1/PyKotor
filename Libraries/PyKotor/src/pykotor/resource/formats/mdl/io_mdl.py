@@ -92,7 +92,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * FindModel() @ (K1: 0x00464176, TSL: 0x0047a480) (model lookup)
           * LoadModel() @ (K1: 0x00464236, TSL: 0x0047a570) (main loader)
           * BuildVertexArrays() @ (K1: 0x00478b8b, TSL: (TODO: Find this address)), (K1: 0x00478c05, TSL: (TODO: Find this address)) (vertex array construction)
-          * Input::Read() @ (K1: 0x004a1435, TSL: (TODO: Find this address)), (K1: 0x004a1362, TSL: (TODO: Find this address)), (K1: 0x004a1373, TSL: (TODO: Find this address)), (K1: 0x004a1503, TSL: (TODO: Find this address)) (parsing)
+          * Input::Read() @ (K1: 0x004a1435, TSL: 0x004ce8c0), (K1: 0x004a1362, TSL: 0x004ce8c0), (K1: 0x004a1373, TSL: 0x004ce8c0), (K1: 0x004a1503, TSL: 0x004ce8c0) (parsing - call sites within Input::Read)
 
     Function Discovery Methodology:
     ------------------------------
