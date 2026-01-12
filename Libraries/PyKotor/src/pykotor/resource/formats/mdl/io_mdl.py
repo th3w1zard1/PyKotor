@@ -347,14 +347,17 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *   * case 3: Sets *(undefined4*)(this + 0x10) = param_2
           *   * Returns 1 on success, 0 on default case
           *   * Called 4 times in LoadModel_Internal with hardcoded float values
-          * - RegisterCallbacks() @ (K1: 0x0061ab40, TSL: 0x00693fe0): RegisterCallbacks equivalent (100 bytes, 177 references)
-          *   * Checks if *(int*)(param_1 + 0xf8) is cached (callback result)
-          *   * If NULL and *(int*)(param_1 + 0xe4) == 0:
-          *     - Calls [TODO: Name this function](*(uint*)(param_1 + 4)) @ (K1: TODO: Find this address, TSL: 0x004dc2e0) to get callback type ID
-          *     - Calls [TODO: Name this function](*(void**)([TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x008283d4) + 8), uVar1) @ (K1: TODO: Find this address, TSL: 0x004dc650) to get callback handler from registry
+          * - RegisterCallbacks() @ (K1: 0x0061ab40, TSL: 0x00693fe0): RegisterCallbacks equivalent (K1: 532 bytes, TSL: 100 bytes, 177 references)
+          *   * NOTE: In K1, RegisterCallbacks() is the same function as RegisterCallbacks_Headconjure() (both at 0x0061ab40, 532 bytes).
+          *   * In TSL, RegisterCallbacks() (0x00693fe0, 100 bytes) is a separate, simpler function that uses GetObjectTypeID/GetObjectByTypeID.
+          *   * K1 RegisterCallbacks() directly calls anim_base->vtable[8](0xff) to get callback handler, then registers 16 callbacks.
+          *   * TSL RegisterCallbacks() checks if *(int*)(param_1 + 0xf8) is cached (callback result)
+          *   * TSL: If NULL and *(int*)(param_1 + 0xe4) == 0:
+          *     - Calls GetObjectTypeID(*(uint*)(param_1 + 4)) @ (K1: N/A - not used, TSL: 0x004dc2e0) to get callback type ID
+          *     - Calls GetObjectByTypeID(*(void**)([TODO: Name this data] @ (K1: N/A, TSL: 0x008283d4) + 8), uVar1) @ (K1: N/A - not used, TSL: 0x004dc650) to get callback handler from registry
           *     - If handler exists, calls handler->vtable[0x10]() to get callback object
           *     - Stores callback in *(void**)(param_1 + 0xf8)
-          *     - If callback exists, calls [TODO: Name this function](callback, param_1) @ (K1: TODO: Find this address, TSL: 0x005056f0) to register callbacks
+          *     - If callback exists, calls SetCallbackTarget(callback, param_1) @ (K1: N/A - not used, TSL: 0x005056f0) to register callbacks
           *   * Returns *(undefined4*)(param_1 + 0xf8)
           *   * Called 4 times in LoadModel_Internal at lines 170, 175 (twice conditionally)
           * - RegisterCallbacks_Headconjure() @ (K1: 0x0061ab40, TSL: 0x00669570): RegisterCallbacks for headconjure (532 bytes, 1 caller)
