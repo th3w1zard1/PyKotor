@@ -220,26 +220,26 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *    - If param_3 is -1, -2, -3, or -4 (special values), performs additional setup:
           *      * Calls anim_base->vtable[8](param_3) @ (K1: TODO: Find this address, TSL: 0x0066a150) to get model attachment (call site within CSWCCreature::LoadModel_Internal)
           *      * Calls attachment->vtable[0x74](param_1) (29th entry) - attachment setup
-          *      * Calls attachment->vtable[0x7c]([TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007beaec)) (31st entry) - game object types setup
+          *      * Calls attachment->vtable[0x7c](GameObjectType_Constant_5 @ (K1: TODO: Find this address, TSL: 0x007beaec)) (31st entry) - game object types setup (value: 5)
           *    - If param_3 == -1 (headconjure special case):
           *      * Initializes quaternion on stack: {0, 0, 0, 1.0f}
-          *      * Calls [TODO: Name this function](param_1) @ (K1: TODO: Find this address, TSL: 0x00669570) (RegisterCallbacks for headconjure, 532 bytes)
-          *        - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00669570) registers sound callbacks via anim_base->vtable[8](0xff)
-          *        - Registers callbacks for: "snd_Footstep", [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007c82cc), "snd_hitground", "SwingShort", "SwingLong",
+          *      * Calls RegisterCallbacks_Headconjure(param_1) @ (K1: TODO: Find this address, TSL: 0x00669570) (RegisterCallbacks for headconjure, 532 bytes)
+          *        - RegisterCallbacks_Headconjure() @ (K1: TODO: Find this address, TSL: 0x00669570) registers sound callbacks via anim_base->vtable[8](0xff)
+          *        - Registers callbacks for: "snd_Footstep", "snd_Footstep" (second callback), "snd_hitground", "SwingShort", "SwingLong",
           *          "SwingTwirl", "Clash", "Contact", "HitParry", "blur_start", "blur_end", "doneattack01", "doneattack02",
           *          "GetPersonalRadius", "GetCreatureRadius", "GetPath"
           *        - Stores callback IDs in creature structure offsets 0x404, 0x408, 0x410, 0x414, 0x418, 0x41c, 0x420, 0x424, 0x428, 0x42c, 0x430, 0x434, 0x438, 0x43c, 0x440, 0x444
           *      * Calls anim_base->vtable[0xa0]("headconjure", &uStack_134, &uStack_128) (40th entry, finds dummy node)
           *      * If headconjure dummy not found (returns 0), sets *(float*)(param_1 + 0xa4) = 0x40066666 (3.2f, default value)
-          *      * Otherwise, calculates: *(float*)(param_1 + 0xa4) = fStack_12c - fStack_12c * [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b7428)
-          *        - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b7428): Float constant (cross-referenced in 9 locations, likely scale factor)
+          *      * Otherwise, calculates: *(float*)(param_1 + 0xa4) = fStack_12c - fStack_12c * FloatConstant_0_125 @ (K1: TODO: Find this address, TSL: 0x007b7428)
+          *        - FloatConstant_0_125 @ (K1: TODO: Find this address, TSL: 0x007b7428): Float constant 0.125f (cross-referenced in 9 locations, scale factor)
           * 8. Callback registration:
           *    - Calls RegisterCallbacks(param_1) @ (K1: 0x0061ab40, TSL: 0x00693fe0) (RegisterCallbacks equivalent, 100 bytes, 177 references)
           *      - RegisterCallbacks() @ (K1: 0x0061ab40, TSL: 0x00693fe0) checks if *(int*)(param_1 + 0xf8) is NULL (cached callback result)
-          *      - If NULL and *(int*)(param_1 + 0xe4) == 0, calls [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x004dc2e0) and [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x004dc650) to get callback handler
+          *      - If NULL and *(int*)(param_1 + 0xe4) == 0, calls GetObjectTypeID() @ (K1: TODO: Find this address, TSL: 0x004dc2e0) and GetObjectByTypeID() @ (K1: TODO: Find this address, TSL: 0x004dc650) to get callback handler
           *      - Calls handler->vtable[0x10]() to get callback object
           *      - Stores result in *(void**)(param_1 + 0xf8)
-          *      - If callback object exists, calls [TODO: Name this function](callback, param_1) @ (K1: TODO: Find this address, TSL: 0x005056f0) to register callbacks
+          *      - If callback object exists, calls SetCallbackTarget(callback, param_1) @ (K1: TODO: Find this address, TSL: 0x005056f0) to register callbacks
           *      - Returns *(undefined4*)(param_1 + 0xf8)
           *    - If callback registration succeeds:
           *      * Calls callback->vtable[0x30]() to get animation object
@@ -252,15 +252,15 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *    - If size class < 0x3d (61):
           *      * If size class < 0x29 (41), performs interpolation calculations:
           *        - fVar9 = 1.0f
-          *        - fVar10 = (float)(0x28 - sVar1) * [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007c82ec)
-          *        - fVar12 = ([TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b5774) - fVar10) * [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007c82e8)
-          *        - fVar11 = fVar10 * [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b9700) + fVar12
-          *        - fVar12 = fVar10 * [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b5f88) + fVar12
-          *        - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007c82ec): Float constant (cross-referenced 4 times, interpolation factor)
-          *        - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b5774): Float constant (cross-referenced 78 times, scale factor)
-          *        - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007c82e8): Float constant (cross-referenced 8 times, interpolation factor)
-          *        - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b9700): Float constant (cross-referenced 1 time, interpolation weight)
-          *        - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b5f88): Float constant (cross-referenced 1 time, interpolation weight)
+          *        - fVar10 = (float)(0x28 - sVar1) * FloatConstant_0_0125 @ (K1: TODO: Find this address, TSL: 0x007c82ec)
+          *        - fVar12 = (FloatConstant_1_0 @ (K1: TODO: Find this address, TSL: 0x007b5774) - fVar10) * FloatConstant_0_65 @ (K1: TODO: Find this address, TSL: 0x007c82e8)
+          *        - fVar11 = fVar10 * FloatConstant_0_05 @ (K1: TODO: Find this address, TSL: 0x007b9700) + fVar12
+          *        - fVar12 = fVar10 * FloatConstant_0_01 @ (K1: TODO: Find this address, TSL: 0x007b5f88) + fVar12
+          *        - FloatConstant_0_0125 @ (K1: TODO: Find this address, TSL: 0x007c82ec): Float constant 0.0125f (cross-referenced 4 times, interpolation factor)
+          *        - FloatConstant_1_0 @ (K1: TODO: Find this address, TSL: 0x007b5774): Float constant 1.0f (cross-referenced 78 times, scale factor)
+          *        - FloatConstant_0_65 @ (K1: TODO: Find this address, TSL: 0x007c82e8): Float constant 0.65f (cross-referenced 8 times, interpolation factor)
+          *        - FloatConstant_0_05 @ (K1: TODO: Find this address, TSL: 0x007b9700): Float constant 0.05f (cross-referenced 1 time, interpolation weight)
+          *        - FloatConstant_0_01 @ (K1: TODO: Find this address, TSL: 0x007b5f88): Float constant 0.01f (cross-referenced 1 time, interpolation weight)
           * 9. Return: Returns 1 on success, 0 on failure
           * MEMORY LAYOUT CHANGES (K1 vs TSL):
           * - anim_base: param_1 + 0x68 (was this->object.anim_base, offset 0x358 in K1)
