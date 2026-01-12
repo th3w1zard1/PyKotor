@@ -261,11 +261,16 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *        - fVar12 = (FloatConstant_1_0 @ (K1: Inline constant 0x3f800000, TSL: 0x007b5774) - fVar10) * FloatConstant_0_65 @ (K1: Inline constant 0x3d266666, TSL: 0x007c82e8)
           *        - fVar11 = fVar10 * FloatConstant_0_05 @ (K1: Inline constant 0x3d4ccccd, TSL: 0x007b9700) + fVar12
           *        - fVar12 = fVar10 * FloatConstant_0_01 @ (K1: Inline constant 0x3c23d70a, TSL: 0x007b5f88) + fVar12
-          *        - FloatConstant_0_0125 @ (K1: TODO: Find this address, TSL: 0x007c82ec): Float constant 0.0125f (cross-referenced 4 times, interpolation factor)
-          *        - FloatConstant_1_0 @ (K1: TODO: Find this address, TSL: 0x007b5774): Float constant 1.0f (cross-referenced 78 times, scale factor)
-          *        - FloatConstant_0_65 @ (K1: TODO: Find this address, TSL: 0x007c82e8): Float constant 0.65f (cross-referenced 8 times, interpolation factor)
-          *        - FloatConstant_0_05 @ (K1: TODO: Find this address, TSL: 0x007b9700): Float constant 0.05f (cross-referenced 1 time, interpolation weight)
-          *        - FloatConstant_0_01 @ (K1: TODO: Find this address, TSL: 0x007b5f88): Float constant 0.01f (cross-referenced 1 time, interpolation weight)
+          *        - FloatConstant_0_0125 @ (K1: Inline constant 0x3c888889, TSL: 0x007c82ec): Float constant 0.0125f (cross-referenced 4 times, interpolation factor)
+          *          NOTE: In K1, this constant is used inline in code (0x3c888889 = 0.0125f). In TSL, it's stored as a data constant.
+          *        - FloatConstant_1_0 @ (K1: Inline constant 0x3f800000, TSL: 0x007b5774): Float constant 1.0f (cross-referenced 78 times, scale factor)
+          *          NOTE: In K1, this constant is used inline in code (0x3f800000 = 1.0f). In TSL, it's stored as a data constant.
+          *        - FloatConstant_0_65 @ (K1: Inline constant 0x3d266666, TSL: 0x007c82e8): Float constant 0.65f (cross-referenced 8 times, interpolation factor)
+          *          NOTE: In K1, this constant is used inline in code (0x3d266666 = 0.65f). In TSL, it's stored as a data constant.
+          *        - FloatConstant_0_05 @ (K1: Inline constant 0x3d4ccccd, TSL: 0x007b9700): Float constant 0.05f (cross-referenced 1 time, interpolation weight)
+          *          NOTE: In K1, this constant is used inline in code (0x3d4ccccd = 0.05f). In TSL, it's stored as a data constant.
+          *        - FloatConstant_0_01 @ (K1: Inline constant 0x3c23d70a, TSL: 0x007b5f88): Float constant 0.01f (cross-referenced 1 time, interpolation weight)
+          *          NOTE: In K1, this constant is used inline in code (0x3c23d70a = 0.01f). In TSL, it's stored as a data constant.
           * 9. Return: Returns 1 on success, 0 on failure
           * MEMORY LAYOUT CHANGES (K1 vs TSL):
           * - anim_base: param_1 + 0x68 (was this->object.anim_base, offset 0x358 in K1)
