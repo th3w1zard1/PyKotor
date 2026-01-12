@@ -4,29 +4,6 @@ SSF (Sound Set File) files contain mappings from sound event types to string ref
 in the TLK file. Each SSF defines a set of 28 sound effects that creatures can play during
 various game events (battle cries, pain grunts, selection sounds, etc.). The StrRefs point
 to entries in dialog.tlk which contain the actual WAV file references.
-
-References:
-----------
-        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
-        Original BioWare engine binaries
-        SSF file format specification
-        Binary Format:
-        -------------
-        Header (12 bytes):
-        Offset | Size | Type   | Description
-        -------|------|--------|-------------
-        0x00   | 4    | char[] | File Type ("SSF ")
-        0x04   | 4    | char[] | File Version ("V1.1")
-        0x08   | 4    | uint32 | Offset to Sound Table (typically 12)
-        Sound Table (112 bytes = 28 entries * 4 bytes):
-        Offset | Size | Type   | Description
-        -------|------|--------|-------------
-        0x00   | 4    | int32  | StrRef for BATTLE_CRY_1
-        0x04   | 4    | int32  | StrRef for BATTLE_CRY_2
-        ...    | ...  | ...    | ...
-        0x6C   | 4    | int32  | StrRef for POISONED
-        Each entry is a StrRef (string reference) into dialog.tlk
-        Value -1 indicates no sound for that event type
 """
 
 from __future__ import annotations
@@ -48,9 +25,12 @@ class SSF(ComparableMixin):
     
     References:
     ----------
-        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
-        Original BioWare engine binaries
-        SSF file format specification
+        Engine Implementation:
+        - CResSSF::CResSSF() @ (K1: 0x006db650, TSL: TODO: Find this address) - Constructor for SSF resource
+        - CResSSF::~CResSSF() @ (K1: 0x006db670, TSL: TODO: Find this address) - Destructor for SSF resource
+        - CResSSF::~CResSSF() (alternate) @ (K1: 0x006db6b0, TSL: TODO: Find this address) - Alternate destructor path
+        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+        - SSF file format specification
 
 
         
