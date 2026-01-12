@@ -452,20 +452,25 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *   * Referenced only in [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006695d1)
           *   * Used to register hit ground sound callback for creature animations
           * DATA CONSTANTS (verified via cross-references):
-          * - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007beaec): Game object types constant (cross-referenced 78 times)
+          * - GameObjectType_Constant_5 @ (K1: 0x00746634, TSL: 0x007beaec): Game object types constant (value: 5, cross-referenced 78 times)
           *   * Passed to anim_base->vtable[0x7c]() for game object type setup
-          * - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b7428): Float scale factor (cross-referenced 9 times)
-          *   * Used in headconjure calculation: fStack_12c - fStack_12c * [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b7428)
-          * - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007c82ec): Float interpolation factor (cross-referenced 4 times)
-          *   * Used in size class interpolation: (float)(0x28 - sVar1) * [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007c82ec)
-          * - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b5774): Float scale factor (cross-referenced 78 times)
-          *   * Used in size class interpolation: ([TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b5774) - fVar10) * [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007c82e8)
-          * - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007c82e8): Float interpolation factor (cross-referenced 8 times)
+          * - FloatConstant_0_125 @ (K1: 0x0073f400, TSL: 0x007b7428): Float scale factor (0.125f, cross-referenced 9 times)
+          *   * Used in headconjure calculation: fStack_12c - fStack_12c * FloatConstant_0_125 @ (K1: 0x0073f400, TSL: 0x007b7428)
+          * - FloatConstant_0_0125 @ (K1: Inline constant 0x3c888889, TSL: 0x007c82ec): Float interpolation factor (0.0125f, cross-referenced 4 times)
+          *   * Used in size class interpolation: (float)(0x28 - sVar1) * FloatConstant_0_0125 @ (K1: Inline constant 0x3c888889, TSL: 0x007c82ec)
+          *   * NOTE: In K1, this constant is used inline in code (0x3c888889 = 0.0125f). In TSL, it's stored as a data constant.
+          * - FloatConstant_1_0 @ (K1: Inline constant 0x3f800000, TSL: 0x007b5774): Float scale factor (1.0f, cross-referenced 78 times)
+          *   * Used in size class interpolation: (FloatConstant_1_0 @ (K1: Inline constant 0x3f800000, TSL: 0x007b5774) - fVar10) * FloatConstant_0_65 @ (K1: Inline constant 0x3d266666, TSL: 0x007c82e8)
+          *   * NOTE: In K1, this constant is used inline in code (0x3f800000 = 1.0f). In TSL, it's stored as a data constant.
+          * - FloatConstant_0_65 @ (K1: Inline constant 0x3d266666, TSL: 0x007c82e8): Float interpolation factor (0.65f, cross-referenced 8 times)
           *   * Used in size class interpolation calculations
-          * - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b9700): Float interpolation weight (cross-referenced 1 time)
-          *   * Used in size class interpolation: fVar10 * [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b9700) + fVar12
-          * - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b5f88): Float interpolation weight (cross-referenced 1 time)
-          *   * Used in size class interpolation: fVar10 * [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b5f88) + fVar12
+          *   * NOTE: In K1, this constant is used inline in code (0x3d266666 = 0.65f). In TSL, it's stored as a data constant.
+          * - FloatConstant_0_05 @ (K1: Inline constant 0x3d4ccccd, TSL: 0x007b9700): Float interpolation weight (0.05f, cross-referenced 1 time)
+          *   * Used in size class interpolation: fVar10 * FloatConstant_0_05 @ (K1: Inline constant 0x3d4ccccd, TSL: 0x007b9700) + fVar12
+          *   * NOTE: In K1, this constant is used inline in code (0x3d4ccccd = 0.05f). In TSL, it's stored as a data constant.
+          * - FloatConstant_0_01 @ (K1: Inline constant 0x3c23d70a, TSL: 0x007b5f88): Float interpolation weight (0.01f, cross-referenced 1 time)
+          *   * Used in size class interpolation: fVar10 * FloatConstant_0_01 @ (K1: Inline constant 0x3c23d70a, TSL: 0x007b5f88) + fVar12
+          *   * NOTE: In K1, this constant is used inline in code (0x3c23d70a = 0.01f). In TSL, it's stored as a data constant.
           * - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007c514c): Size class constant (cross-referenced 22 times)
           *   * Used in [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0051f0b0) for size class validation
           * KEY DIFFERENCES FROM K1:
