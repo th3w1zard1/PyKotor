@@ -257,10 +257,10 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *    - If size class < 0x3d (61):
           *      * If size class < 0x29 (41), performs interpolation calculations:
           *        - fVar9 = 1.0f
-          *        - fVar10 = (float)(0x28 - sVar1) * FloatConstant_0_0125 @ (K1: TODO: Find this address, TSL: 0x007c82ec)
-          *        - fVar12 = (FloatConstant_1_0 @ (K1: TODO: Find this address, TSL: 0x007b5774) - fVar10) * FloatConstant_0_65 @ (K1: TODO: Find this address, TSL: 0x007c82e8)
-          *        - fVar11 = fVar10 * FloatConstant_0_05 @ (K1: TODO: Find this address, TSL: 0x007b9700) + fVar12
-          *        - fVar12 = fVar10 * FloatConstant_0_01 @ (K1: TODO: Find this address, TSL: 0x007b5f88) + fVar12
+          *        - fVar10 = (float)(0x28 - sVar1) * FloatConstant_0_0125 @ (K1: Inline constant 0x3c888889, TSL: 0x007c82ec)
+          *        - fVar12 = (FloatConstant_1_0 @ (K1: Inline constant 0x3f800000, TSL: 0x007b5774) - fVar10) * FloatConstant_0_65 @ (K1: Inline constant 0x3d266666, TSL: 0x007c82e8)
+          *        - fVar11 = fVar10 * FloatConstant_0_05 @ (K1: Inline constant 0x3d4ccccd, TSL: 0x007b9700) + fVar12
+          *        - fVar12 = fVar10 * FloatConstant_0_01 @ (K1: Inline constant 0x3c23d70a, TSL: 0x007b5f88) + fVar12
           *        - FloatConstant_0_0125 @ (K1: TODO: Find this address, TSL: 0x007c82ec): Float constant 0.0125f (cross-referenced 4 times, interpolation factor)
           *        - FloatConstant_1_0 @ (K1: TODO: Find this address, TSL: 0x007b5774): Float constant 1.0f (cross-referenced 78 times, scale factor)
           *        - FloatConstant_0_65 @ (K1: TODO: Find this address, TSL: 0x007c82e8): Float constant 0.65f (cross-referenced 8 times, interpolation factor)
@@ -364,18 +364,18 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *   * Callees:
           *     * anim_base->vtable[8](0xff) @ *(undefined4**)(param_1 + 0x68) (callback handler getter)
           *     * handler->vtable[0x28]() (callback registration, called 16 times)
-          *     * [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00657590) (callback function pointer, used for "snd_hitground")
-          *     * [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0065d0c0) (callback function pointer, used for "SwingShort")
-          *     * [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0065d140) (callback function pointer, used for "SwingLong")
-          *     * [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0065d1c0) (callback function pointer, used for "SwingTwirl")
-          *     * [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0065d240) (callback function pointer, used for "Clash")
-          *     * [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0065d2c0) (callback function pointer, used for "Contact")
-          *     * [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0065d2f0) (callback function pointer, used for "HitParry")
-          *     * [TODO: Name this label] @ (K1: TODO: Find this address, TSL: 0x00664030) (callback function pointer, used for "blur_start")
-          *     * [TODO: Name this label] @ (K1: TODO: Find this address, TSL: 0x00664040) (callback function pointer, used for "blur_end", "doneattack01", "doneattack02")
-          *     * [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0065a330) (callback function pointer, used for "GetPersonalRadius")
-          *     * [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0065a380) (callback function pointer, used for "GetCreatureRadius")
-          *     * [TODO: Name this label] @ (K1: TODO: Find this address, TSL: 0x0065a3d0) (callback function pointer, used for "GetPath")
+          *     * HitGroundEvent() @ (K1: 0x0060b400, TSL: 0x00657590) (callback function pointer, used for "snd_hitground")
+          *     * SwingShortEvent() @ (K1: 0x00610c90, TSL: 0x0065d0c0) (callback function pointer, used for "SwingShort")
+          *     * SwingLongEvent() @ (K1: 0x00610d10, TSL: 0x0065d140) (callback function pointer, used for "SwingLong")
+          *     * SwingTwirlEvent() @ (K1: 0x00610d90, TSL: 0x0065d1c0) (callback function pointer, used for "SwingTwirl")
+          *     * HitClashEvent() @ (K1: 0x00610e10, TSL: 0x0065d240) (callback function pointer, used for "Clash")
+          *     * HitContactEvent() @ (K1: 0x00610e90, TSL: 0x0065d2c0) (callback function pointer, used for "Contact")
+          *     * HitParryEvent() @ (K1: 0x00610ec0, TSL: 0x0065d2f0) (callback function pointer, used for "HitParry")
+          *     * Blur() @ (K1: 0x00449ab0, TSL: 0x00664030) (callback function pointer, used for "blur_start")
+          *     * Unblur() @ (K1: 0x00616a10, TSL: 0x00664040) (callback function pointer, used for "blur_end", "doneattack01", "doneattack02")
+          *     * GetPersonalRadius() @ (K1: 0x0060e120, TSL: 0x0065a330) (callback function pointer, used for "GetPersonalRadius")
+          *     * GetCreatureRadius() @ (K1: 0x0060e170, TSL: 0x0065a380) (callback function pointer, used for "GetCreatureRadius")
+          *     * GetPath() @ (K1: 0x0060e1c0, TSL: 0x0065a3d0) (callback function pointer, used for "GetPath")
           *   * Registers 16 sound/animation callbacks:
           *     - "snd_Footstep" @ (K1: (TODO: Find this address), TSL: 0x007c82d0) (referenced at (K1: (TODO: Find this address), TSL: 0x006695f0), stores at param_1 + 0x404)
           *     - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007c82cc) (sound reference, referenced at (K1: TODO: Find this address, TSL: 0x006695fa), stores at param_1 + 0x408)
