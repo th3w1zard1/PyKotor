@@ -187,7 +187,8 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *      - Allocates 0x180 bytes (384 bytes)
           *      - Calls CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) (CSWCAnimBaseTW constructor, 307 bytes)
           *      - Sets vtable to CSWCAnimBaseTW_vtable @ (K1: 0x00754e58, TSL: 0x007ce078)
-          *      - Initializes 5 CExoString fields (offsets 0x4a, 0x4f, 0x54, 0x59) via CExoString_InitEmpty() @ (K1: TODO: Find this address, TSL: 0x00405f40)
+          *      - Initializes 5 CResRef fields (K1) / CExoString fields (TSL) via CResRef_operator_assign_InitFromString() @ (K1: 0x00406290, TSL: 0x00405f40)
+          *        - NOTE: In K1, uses CResRef::operator=() to initialize from empty string. In TSL, uses CExoString_InitEmpty().
           *      - Sets field at offset 0x31 to 0x0b (two-weapon type identifier)
           *      - Clears flags: param_1[0x5e] = 0, param_1[0x5f] = 0
           *      - Zeroes 5 additional fields (0x3f through 0x43)
@@ -322,8 +323,9 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *   * Sets field at offset 0xc4 to 3 (type identifier)
           * - CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0): CSWCAnimBaseTW constructor (307 bytes, 5 callers)
           *   * Calls CSWCAnimBase::CSWCAnimBase() @ (K1: 0x0069dfb0, TSL: 0x006f8340) first (base CSWCAnimBase construction)
-          *   * Sets vtable to [TODO: Name this pointer] @ (K1: TODO: Find this address, TSL: 0x007ce078)
-          *   * Initializes 4 CExoString fields via [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00405f40) (offsets 0x4a, 0x4f, 0x54, 0x59)
+          *   * Sets vtable to CSWCAnimBaseTW_vtable @ (K1: 0x00754e58, TSL: 0x007ce078)
+          *   * Initializes 4 CResRef fields (K1) / CExoString fields (TSL) via CResRef_InitEmpty() @ (K1: 0x00405ed0, TSL: 0x00405f40) (offsets 0x4a, 0x4f, 0x54, 0x59)
+          *     - NOTE: In K1, uses CResRef::CResRef() constructor. In TSL, uses CExoString_InitEmpty().
           *   * Sets field at offset 0x31 to 0x0b (two-weapon type)
           *   * Zeroes flags: param_1[0x5e] = 0, param_1[0x5f] = 0
           *   * Initializes 5 additional fields to 0 (offsets 0x3f through 0x43)
