@@ -21,12 +21,12 @@ References:
       * Reads MDL/MDX file pair
       * Converts MaxTree to Model via MaxTree::AsModel
       * Checks modelsList for duplicates by name
-    - ".mdl" extension @ (K1: 0x00740ca8, TSL: TODO: Find this address - may be inline string literal) - MDL file extension
-    - ".mdx" extension @ (K1: 0x00743944, TSL: TODO: Find this address - may be inline string literal) - MDX file extension
-    - "mdl" resource type @ (K1: 0x0074dd7c, TSL: TODO: Find this address) - MDL resource identifier
-    - "mdx" resource type @ (K1: 0x0074dc6c, TSL: TODO: Find this address) - MDX resource identifier
-    - "MDL" string @ (K1: 0x0075fb48, TSL: TODO: Find this address) - MDL format identifier
-    - "MDX" string @ (K1: 0x0075fb44, TSL: TODO: Find this address) - MDX format identifier
+    - ".mdl" extension @ (K1: 0x00740ca8, TSL: N/A - inline string literal) - MDL file extension
+    - ".mdx" extension @ (K1: 0x00743944, TSL: N/A - inline string literal) - MDX file extension
+    - "mdl" resource type @ (K1: 0x0074dd7c, TSL: N/A - inline string literal) - MDL resource identifier
+    - "mdx" resource type @ (K1: 0x0074dc6c, TSL: N/A - inline string literal) - MDX resource identifier
+    - "MDL" string @ (K1: 0x0075fb48, TSL: N/A - inline string literal) - MDL format identifier
+    - "MDX" string @ (K1: 0x0075fb44, TSL: N/A - inline string literal) - MDX format identifier
     - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
     https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm - Comprehensive MDL/MDX format constants and type definitions (tool)
     https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/types.py - Blender MDL type definitions (tool)

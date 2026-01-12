@@ -2841,10 +2841,12 @@ class MDLBinaryReader:
           * Loads placeable models with animation base
           * Handles head hit detection ("_head_hit" node lookup)
           * Sets up CSWCAnimBasePlaceable
-        - CSWCCreature::UnloadModel @ (K1: 0x0060c8e0, TSL: (TODO: Find this address)) - Unloads creature models (42 bytes, 19 lines)
+        - CSWCCreature::UnloadModel @ (K1: 0x0060c8e0, TSL: N/A - likely inlined) - Unloads creature models (42 bytes, 19 lines)
           * Releases animation base resources
           * Clears anim_base pointer
-        - UnloadModel @ (K1: 0x00646650, TSL: (TODO: Find this address)), @ (K1: 0x006825f0, TSL: 0x006d9721) (call site within CSWCPlaceable::LoadModel) - Additional unload functions
+        - CSWCObject::UnloadModel @ (K1: 0x00646650, TSL: N/A - likely inlined) - Unloads object models (13 bytes, calls anim_base->vtable[0x74]())
+          * Different from CSWCCreature::UnloadModel (uses vtable offset 0x74 vs 0x78)
+        - UnloadModel call site @ (K1: 0x006825f0, TSL: 0x006d9721) (within CSWCPlaceable::LoadModel) - Additional unload function call
         - MdlNode::AsMdlNodeTriMesh @ (K1: 0x0043e400, TSL: 0x004501d0) - Converts node to trimesh type
         - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
