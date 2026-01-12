@@ -3657,8 +3657,8 @@ class MDLBinaryWriter:
         - CSWCPlaceable::LoadModel @ (K1: 0x006823f0, TSL: 0x006d9721) - Placeable model loader (504 bytes, 105 lines)
           * Loads placeable models with animation base
           * Handles head hit detection ("_head_hit" node lookup)
-        - CSWCCreature::UnloadModel @ (K1: 0x0060c8e0, TSL: (TODO: Find this address)) - Unloads creature models (42 bytes, 19 lines)
-        - UnloadModel @ (K1: 0x00646650, TSL: (TODO: Find this address)), @ (K1: 0x006825f0, TSL: 0x006d9721) (call site within CSWCPlaceable::LoadModel) - Additional unload functions
+        - CSWCCreature::UnloadModel @ (K1: 0x0060c8e0, TSL: N/A - likely inlined) - Unloads creature models (42 bytes, 19 lines)
+        - CSWCObject::UnloadModel @ (K1: 0x00646650, TSL: N/A - likely inlined), @ (K1: 0x006825f0, TSL: 0x006d9721) (call site within CSWCPlaceable::LoadModel) - Additional unload functions
         - MdlNode::AsMdlNodeTriMesh @ (K1: 0x0043e400, TSL: 0x004501d0) - Converts node to trimesh type
         - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
