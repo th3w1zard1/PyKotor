@@ -167,23 +167,23 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * 4. Switch-based anim_base allocation (param_4 determines type):
           *    * case '\0' (0): Standard anim base
           *      - Allocates 0xfc bytes via operator_new() @ (K1: (TODO: Find this address), TSL: 0x0076d9f6) (was 0xf0 in K1, 12 bytes larger)
-          *      - Calls [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f8340) (CSWCAnimBase constructor equivalent, 409 bytes)
+          *      - Calls CSWCAnimBase::CSWCAnimBase() @ (K1: 0x0069dfb0, TSL: 0x006f8340) (CSWCAnimBase constructor equivalent, 409 bytes)
           *      - Sets *(undefined4**)(param_1 + 0x68) = constructed anim_base
           *    * case '\x01' (1): Head anim base
           *      - Allocates 0x1d0 bytes (was 0x1c4 in K1, 12 bytes larger)
-          *      - Calls [TODO: Name this function](pvVar4, 1) @ (K1: TODO: Find this address, TSL: 0x006f5e60) (CSWCAnimBaseHead constructor, 229 bytes)
+          *      - Calls CSWCAnimBaseHead::CSWCAnimBaseHead(pvVar4, 1) @ (K1: 0x0069bb80, TSL: 0x006f5e60) (CSWCAnimBaseHead constructor, 229 bytes)
           *      - Adjusts pointer via vtable[4] offset calculation: *(int*)(*piVar6 + 4) + (int)piVar6
           *    * case '\x02' (2): Wield anim base
           *      - Allocates 0x1dc bytes (was 0x1d0 in K1, 12 bytes larger)
-          *      - Calls [TODO: Name this function](pvVar4, 1) @ (K1: TODO: Find this address, TSL: 0x006f41b0) (CSWCAnimBaseWield constructor, 256 bytes)
+          *      - Calls CSWCAnimBaseWield::CSWCAnimBaseWield(pvVar4, 1) @ (K1: 0x00699dd0, TSL: 0x006f41b0) (CSWCAnimBaseWield constructor, 256 bytes)
           *      - Adjusts pointer via vtable[4] offset calculation
           *    * case '\x03' (3): Head + Wield anim base
           *      - Allocates 0x22c bytes (was 0x220 in K1, 12 bytes larger)
-          *      - Calls [TODO: Name this function](pvVar4, 1) @ (K1: TODO: Find this address, TSL: 0x006f32a0) (CSWCAnimBaseHeadWield constructor, 197 bytes)
+          *      - Calls CSWCAnimBaseHeadWield::CSWCAnimBaseHeadWield(pvVar4, 1) @ (K1: 0x00698ec0, TSL: 0x006f32a0) (CSWCAnimBaseHeadWield constructor, 197 bytes)
           *      - Adjusts pointer via vtable[4] offset calculation
           *    * case '\v' (0x0b, 11): Two-Weapon anim base (NEW in TSL, not in K1)
           *      - Allocates 0x180 bytes (384 bytes)
-          *      - Calls [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f6fb0) (CSWCAnimBaseTW constructor, 307 bytes)
+          *      - Calls CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) (CSWCAnimBaseTW constructor, 307 bytes)
           *      - Sets vtable to [TODO: Name this pointer] @ (K1: TODO: Find this address, TSL: 0x007ce078)
           *      - Initializes 5 CExoString fields (offsets 0x4a, 0x4f, 0x54, 0x59) via [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00405f40)
           *      - Sets field at offset 0x31 to 0x0b (two-weapon type identifier)
@@ -284,37 +284,37 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * - Game object types: offset 0x7c (31st entry) in TSL vs offset 0x7c in K1 (same)
           * - Animation checks: offset 0x18c (39th entry) in TSL vs different offset in K1
           * CALLEES (11 total, verified via decompilation):
-          * - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f8340): CSWCAnimBase constructor (409 bytes, 8 callers)
+          * - CSWCAnimBase::CSWCAnimBase() @ (K1: 0x0069dfb0, TSL: 0x006f8340): CSWCAnimBase constructor (409 bytes, 8 callers)
           *   * Initializes vtable to [TODO: Name this pointer] @ (K1: TODO: Find this address, TSL: 0x007ce180)
           *   * Initializes 5 CExoString fields via [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00406350) with empty strings
           *   * Initializes quaternion via [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x004da020) with default values
           *   * Sets default scale to 1.0f
           *   * Sets flags: param_1[0x37] = 1 (active flag)
-          *   * Called from [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f6fb0) (CSWCAnimBaseTW constructor) and directly
-          * - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f5e60): CSWCAnimBaseHead constructor (229 bytes, 3 callers)
+          *   * Called from CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) (CSWCAnimBaseTW constructor) and directly
+          * - CSWCAnimBaseHead::CSWCAnimBaseHead() @ (K1: 0x0069bb80, TSL: 0x006f5e60): CSWCAnimBaseHead constructor (229 bytes, 3 callers)
           *   * If param_1 != 0, sets vtable to [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007ce060), calls CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) on offset 0x50 sub-object
           *   * Sets vtable offset for base class to [TODO: Name this pointer] @ (K1: TODO: Find this address, TSL: 0x007cdf68)
           *   * Initializes 2 CExoString fields via [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00405f40) (offsets 0x1c, 0x30)
           *   * Sets field at offset 0xc4 to 1 (type identifier)
           *   * Sets field at offset 0x48 to 0x7f000000 (INF, scale maximum)
-          * - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f41b0): CSWCAnimBaseWield constructor (256 bytes, 3 callers)
-          *   * If param_1 != 0, sets vtable to [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007cdf20), calls [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f6fb0) on offset 0x5c sub-object
+          * - CSWCAnimBaseWield::CSWCAnimBaseWield() @ (K1: 0x00699dd0, TSL: 0x006f41b0): CSWCAnimBaseWield constructor (256 bytes, 3 callers)
+          *   * If param_1 != 0, sets vtable to [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007cdf20), calls CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) on offset 0x5c sub-object
           *   * Sets vtable offset for base class to [TODO: Name this pointer] @ (K1: TODO: Find this address, TSL: 0x007cde28)
           *   * Initializes 2 CExoString fields via [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00405f40) (offsets 4, 0x14)
           *   * Calls [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x005ff130) on 2 fields (offsets 0x24, 0x2c) - string cleanup/initialization
           *   * Sets field at offset 0xc4 to 2 (type identifier)
           *   * Zeroes 6 fields (offsets 0x34, 0x38, 0x48, 0x4c, 0x50, 0x54)
-          * - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f32a0): CSWCAnimBaseHeadWield constructor (197 bytes, 2 callers)
+          * - CSWCAnimBaseHeadWield::CSWCAnimBaseHeadWield() @ (K1: 0x00698ec0, TSL: 0x006f32a0): CSWCAnimBaseHeadWield constructor (197 bytes, 2 callers)
           *   * If param_1 != 0:
           *     - Sets vtable to [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007cde10)
           *     - Sets field at offset 0x188 to [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007cde08) (CSWCAnimBaseHead sub-object vtable)
           *     - Sets field at offset 0x1d4 to [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007cde00) (CSWCAnimBaseWield sub-object vtable)
-          *     - Calls [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f6fb0) on offset 8 sub-object
-          *     - Calls [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f5e60) on offset 0x188 sub-object (Head constructor)
-          *     - Calls [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f41b0) on offset 0x1d4 sub-object (Wield constructor)
+          *     - Calls CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) on offset 8 sub-object
+          *     - Calls CSWCAnimBaseHead::CSWCAnimBaseHead() @ (K1: 0x0069bb80, TSL: 0x006f5e60) on offset 0x188 sub-object (Head constructor)
+          *     - Calls CSWCAnimBaseWield::CSWCAnimBaseWield() @ (K1: 0x00699dd0, TSL: 0x006f41b0) on offset 0x1d4 sub-object (Wield constructor)
           *   * Sets field at offset 0xc4 to 3 (type identifier)
-          * - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f6fb0): CSWCAnimBaseTW constructor (307 bytes, 5 callers)
-          *   * Calls [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f8340) first (base CSWCAnimBase construction)
+          * - CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0): CSWCAnimBaseTW constructor (307 bytes, 5 callers)
+          *   * Calls CSWCAnimBase::CSWCAnimBase() @ (K1: 0x0069dfb0, TSL: 0x006f8340) first (base CSWCAnimBase construction)
           *   * Sets vtable to [TODO: Name this pointer] @ (K1: TODO: Find this address, TSL: 0x007ce078)
           *   * Initializes 4 CExoString fields via [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00405f40) (offsets 0x4a, 0x4f, 0x54, 0x59)
           *   * Sets field at offset 0x31 to 0x0b (two-weapon type)
