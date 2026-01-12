@@ -311,9 +311,9 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *   * Zeroes 6 fields (offsets 0x34, 0x38, 0x48, 0x4c, 0x50, 0x54)
           * - CSWCAnimBaseHeadWield::CSWCAnimBaseHeadWield() @ (K1: 0x00698ec0, TSL: 0x006f32a0): CSWCAnimBaseHeadWield constructor (197 bytes, 2 callers)
           *   * If param_1 != 0:
-          *     - Sets vtable to CSWCAnimBaseHeadWield_vtable @ (K1: TODO: Find this address, TSL: 0x007cde10)
-          *     - Sets field at offset 0x188 to CSWCAnimBaseHeadWield_HeadSubObject_vtable @ (K1: TODO: Find this address, TSL: 0x007cde08) (CSWCAnimBaseHead sub-object vtable)
-          *     - Sets field at offset 0x1d4 to CSWCAnimBaseHeadWield_WieldSubObject_vtable @ (K1: TODO: Find this address, TSL: 0x007cde00) (CSWCAnimBaseWield sub-object vtable)
+          *     - Sets vtable to CSWCAnimBaseHeadWield_vtable @ (K1: 0x00754bf0, TSL: 0x007cde10)
+          *     - Sets field at offset 0x188 to CSWCAnimBaseHeadWield_HeadSubObject_vtable @ (K1: 0x00754be8, TSL: 0x007cde08) (CSWCAnimBaseHead sub-object vtable)
+          *     - Sets field at offset 0x1d4 to CSWCAnimBaseHeadWield_WieldSubObject_vtable @ (K1: 0x00754be0, TSL: 0x007cde00) (CSWCAnimBaseWield sub-object vtable)
           *     - Calls CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) on offset 8 sub-object
           *     - Calls CSWCAnimBaseHead::CSWCAnimBaseHead() @ (K1: 0x0069bb80, TSL: 0x006f5e60) on offset 0x188 sub-object (Head constructor)
           *     - Calls CSWCAnimBaseWield::CSWCAnimBaseWield() @ (K1: 0x00699dd0, TSL: 0x006f41b0) on offset 0x1d4 sub-object (Wield constructor)
