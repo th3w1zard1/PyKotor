@@ -124,7 +124,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
             * case 2: Allocates 0x1d0 bytes, constructs CSWCAnimBaseWield @ (K1: 0x00699dd0, TSL: (TODO: Find this address)) with param=1
             * case 3: Allocates 0x220 bytes, constructs CSWCAnimBaseHeadWield @ (K1: 0x00698ec0, TSL: (TODO: Find this address))
           * Each anim base type has different vtable and member layouts
-          * After construction, calls RegisterCallbacks() @ (K1: 0x0061ab40, TSL: (TODO: Find this address))
+          * After construction, calls RegisterCallbacks() @ (K1: 0x0061ab40, TSL: 0x00693fe0)
           * Then calls anim_base->vtable[3](param_1, param_2) - loads model resource
           * If loading fails, uses sprintf() with error string and returns 0
           * Error string: "CSWCCreature::LoadModel(): Failed to load creature model '%s'." @ (K1: 0x0074f85c, TSL: 0x007c82fc)
