@@ -151,11 +151,12 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
             * Used when anim_base->vtable[3] returns 0 (model loading failure)
       * Creature model loader (1379 bytes, 11 callees)
         * Signature: undefined4 __thiscall CSWCCreature::LoadModel_Internal(int param_1, undefined4 *param_2, undefined4 param_3, char param_4)
-        * Address: (K1: TODO: Find this address, TSL: 0x00669ea0) (verified via vtable entry at CSWCCreature_LoadModel_Internal_vtable_entry @ (K1: TODO: Find this address, TSL: 0x007c8040) pointing to this function)
-        * Discovery Method: Located via vtable data reference at CSWCCreature_LoadModel_Internal_vtable_entry @ (K1: TODO: Find this address, TSL: 0x007c8040), which stores function pointer to (K1: TODO: Find this address, TSL: 0x00669ea0)
+        * Address: (K1: 0x0061b380, TSL: 0x00669ea0) (verified via vtable entry at CSWCCreature_LoadModel_vtable_entry @ (K1: 0x0074f670, TSL: 0x007c8040) pointing to this function)
+        * Discovery Method: Located via vtable data reference at CSWCCreature_LoadModel_vtable_entry @ (K1: 0x0074f670, TSL: 0x007c8040), which stores function pointer to (K1: 0x0061b380, TSL: 0x00669ea0)
+        * NOTE: In K1, CSWCCreature::LoadModel at 0x0061b380 contains all logic inline (842 bytes). In TSL, the logic was split into CSWCCreature::LoadModel (wrapper at 0x0066a0f0) and CSWCCreature::LoadModel_Internal (implementation at 0x00669ea0, 1379 bytes).
         * Logic (from exhaustive decompilation - EXHAUSTIVE DIFFERENCES from K1):
           * EXECUTION FLOW:
-          * 1. Exception handling setup: Saves ExceptionList, initializes SEH frame with __CxxFrameHandler3 @ (K1: TODO: Find this address, TSL: 0x0079cc86)
+          * 1. Exception handling setup: Saves ExceptionList, initializes SEH frame with __CxxFrameHandler3 @ (K1: 0x00728076, TSL: 0x0079cc86)
           * 2. Cached anim_base check: Checks *(int*)(param_1 + 0x370) for cached anim_base (was this->field158_0x358 in K1)
           *    - If cached exists (non-NULL), destructs current anim_base via vtable[0](1) call at offset 0x68
           *    - Assigns cached to *(undefined4**)(param_1 + 0x68)
