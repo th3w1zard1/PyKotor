@@ -519,7 +519,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * CExoString::CStr() @ (K1: 0x005e5670, TSL: TODO: Find this address) - C string accessor)
           * CExoString::CExoString() @ (K1: 0x005b3190, TSL: TODO: Find this address) - empty string constructor)
           * CExoString::operator+() @ (K1: 0x005e5d10, TSL: TODO: Find this address) - string concatenation)
-          * CSWCAnimBasePlaceable::CSWCAnimBasePlaceable() @ (K1: 0x006e4e50, TSL: TODO: Find this address) - placeable anim base)
+          * CSWCAnimBasePlaceable::CSWCAnimBasePlaceable() @ (K1: 0x006e4e50, TSL: 0x00755970) - placeable anim base)
           * CExoString::SubString() @ (K1: 0x005e6270, TSL: TODO: Find this address) - substring extraction
           * CExoString::operator=() @ (K1: 0x005e5c50, TSL: TODO: Find this address) - string assignment, called 2 times
           * CExoString::~CExoString() @ (K1: 0x005e5c20, TSL: TODO: Find this address) - string destructor, called 4 times
