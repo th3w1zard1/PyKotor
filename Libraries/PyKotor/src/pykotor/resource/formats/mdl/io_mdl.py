@@ -2608,18 +2608,21 @@ def _decompress_quaternion(compressed: int) -> Vector4:
     References:
     ----------
         Based on swkotor.exe quaternion compression:
-        - CompressQuaternionKey @ (K1: 0x00464b50, TSL: (TODO: Find this address)) - Compresses quaternion to 32-bit integer (742 bytes, 4 callees)
+        - CompressQuaternionKey @ (K1: 0x00464b50, TSL: N/A - likely inlined or different implementation) - Compresses quaternion to 32-bit integer (742 bytes, 4 callees)
           * Packs X, Y, Z components into 11, 11, and 10 bits respectively
           * Maps quaternion components from [-1, 1] to integer ranges
           * W component is computed from constraint |q| = 1
-        - Quaternion::Quaternion @ (K1: 0x004ac960, TSL: (TODO: Find this address)) - Quaternion constructor (146 bytes, 1 callee)
+          * TSL: Decompression logic is present in GetQuaternionFromIndexLocation, compression may be inlined in MDL parsing
+        - Quaternion::Quaternion @ (K1: 0x004ac960, TSL: N/A - likely inlined or different implementation) - Quaternion constructor (146 bytes, 1 callee)
           * Creates quaternion from axis-angle representation
           * Used for orientation parsing in MDL controllers
+          * TSL: May be inlined or have different implementation pattern
         - GetQuaternionValue @ (K1: 0x004831b0, TSL: 0x004b3b90) - Gets quaternion value (382 bytes, 3 callees)
         - GetQuaternionFromIndexLocation @ (K1: 0x00483050, TSL: 0x004b3a30) - Gets quaternion from index (347 bytes)
+          * TSL: Also handles decompression of compressed quaternions (bit extraction: 0x7ff mask, >> 0xb, >> 0x16)
         - slerp @ (K1: 0x004a9e00, TSL: 0x004d8c80) - Spherical linear interpolation for quaternions
-        - quaternionScalarMult @ (K1: 0x004a9b80, TSL: (TODO: Find this address - may be inlined)) - Quaternion scalar multiplication (47 bytes)
-        - quaternionDotProduct @ (K1: 0x004a9d30, TSL: (TODO: Find this address - may be inlined in slerp)) - Quaternion dot product (37 bytes)
+        - quaternionScalarMult @ (K1: 0x004a9b80, TSL: N/A - likely inlined) - Quaternion scalar multiplication (47 bytes)
+        - quaternionDotProduct @ (K1: 0x004a9d30, TSL: N/A - likely inlined in slerp) - Quaternion dot product (37 bytes)
         - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Derivations and Other Implementations:
