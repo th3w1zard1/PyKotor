@@ -385,9 +385,9 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *   * Signature: void __fastcall [TODO: Name this function](undefined4 *param_1) @ (K1: TODO: Find this address, TSL: 0x00406050)
           *   * Logic (from decompilation):
           *     * Implements circular buffer cache for CExoString resource names
-          *     * Updates buffer index: [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x00828728) = ([TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x00828728) + 1) & 0x80000003
-          *     * Handles negative modulo: if (int)[TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x00828728) < 0, adjusts to positive range
-          *     * Calculates storage offset: iVar1 = [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x00828728) * 0x11 (17 bytes per entry, 4-entry buffer)
+          *     * Updates buffer index: CResRef_CopyToString_BufferIndex @ (K1: TODO: Find this address, TSL: 0x00828728) = (CResRef_CopyToString_BufferIndex @ (K1: TODO: Find this address, TSL: 0x00828728) + 1) & 0x80000003
+          *     * Handles negative modulo: if (int)CResRef_CopyToString_BufferIndex @ (K1: TODO: Find this address, TSL: 0x00828728) < 0, adjusts to positive range
+          *     * Calculates storage offset: iVar1 = CResRef_CopyToString_BufferIndex @ (K1: TODO: Find this address, TSL: 0x00828728) * 0x11 (17 bytes per entry, 4-entry buffer)
           *     * Stores 4 dwords (16 bytes) from param_1 to buffer at [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x008286e0) + iVar1
           *     * Appends null terminator at offset 0x10 (16th byte of entry)
           *     * Returns void (modifies global buffer)
