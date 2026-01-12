@@ -2798,7 +2798,7 @@ class MDLBinaryReader:
         - CSWCCreature::UnloadModel @ (K1: 0x0060c8e0, TSL: (TODO: Find this address)) - Unloads creature models (42 bytes, 19 lines)
           * Releases animation base resources
           * Clears anim_base pointer
-        - UnloadModel @ (K1: 0x00646650, TSL: (TODO: Find this address)), @ (K1: 0x006825f0, TSL: (TODO: Find this address)) - Additional unload functions
+        - UnloadModel @ (K1: 0x00646650, TSL: (TODO: Find this address)), @ (K1: 0x006825f0, TSL: 0x006d9721) (call site within CSWCPlaceable::LoadModel) - Additional unload functions
         - MdlNode::AsMdlNodeTriMesh @ (K1: 0x0043e400, TSL: 0x004501d0) - Converts node to trimesh type
         - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
@@ -3609,7 +3609,7 @@ class MDLBinaryWriter:
           * Loads placeable models with animation base
           * Handles head hit detection ("_head_hit" node lookup)
         - CSWCCreature::UnloadModel @ (K1: 0x0060c8e0, TSL: (TODO: Find this address)) - Unloads creature models (42 bytes, 19 lines)
-        - UnloadModel @ (K1: 0x00646650, TSL: (TODO: Find this address)), @ (K1: 0x006825f0, TSL: (TODO: Find this address)) - Additional unload functions
+        - UnloadModel @ (K1: 0x00646650, TSL: (TODO: Find this address)), @ (K1: 0x006825f0, TSL: 0x006d9721) (call site within CSWCPlaceable::LoadModel) - Additional unload functions
         - MdlNode::AsMdlNodeTriMesh @ (K1: 0x0043e400, TSL: 0x004501d0) - Converts node to trimesh type
         - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
