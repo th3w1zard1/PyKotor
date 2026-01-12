@@ -151,11 +151,11 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
             * Used when anim_base->vtable[3] returns 0 (model loading failure)
       * Creature model loader (1379 bytes, 11 callees)
         * Signature: undefined4 __thiscall CSWCCreature::LoadModel_Internal(int param_1, undefined4 *param_2, undefined4 param_3, char param_4)
-        * Address: (K1: TODO: Find this address, TSL: 0x00669ea0) (verified via vtable entry at (K1: TODO: Find this address, TSL: 0x007c8040) pointing to this function)
-        * Discovery Method: Located via vtable data reference at (K1: TODO: Find this address, TSL: 0x007c8040), which stores function pointer to (K1: TODO: Find this address, TSL: 0x00669ea0)
+        * Address: (K1: TODO: Find this address, TSL: 0x00669ea0) (verified via vtable entry at CSWCCreature_LoadModel_Internal_vtable_entry @ (K1: TODO: Find this address, TSL: 0x007c8040) pointing to this function)
+        * Discovery Method: Located via vtable data reference at CSWCCreature_LoadModel_Internal_vtable_entry @ (K1: TODO: Find this address, TSL: 0x007c8040), which stores function pointer to (K1: TODO: Find this address, TSL: 0x00669ea0)
         * Logic (from exhaustive decompilation - EXHAUSTIVE DIFFERENCES from K1):
           * EXECUTION FLOW:
-          * 1. Exception handling setup: Saves ExceptionList, initializes SEH frame with [TODO: Name this function] @ (K1: TODO: Find this address, TSL: 0x0079cc86)
+          * 1. Exception handling setup: Saves ExceptionList, initializes SEH frame with __CxxFrameHandler3 @ (K1: TODO: Find this address, TSL: 0x0079cc86)
           * 2. Cached anim_base check: Checks *(int*)(param_1 + 0x370) for cached anim_base (was this->field158_0x358 in K1)
           *    - If cached exists (non-NULL), destructs current anim_base via vtable[0](1) call at offset 0x68
           *    - Assigns cached to *(undefined4**)(param_1 + 0x68)
@@ -163,7 +163,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *    - Copies field159: *(undefined4*)(param_1 + 0x200) = *(undefined4*)(param_1 + 0x374)
           *    - Clears field159 cache: *(undefined4*)(param_1 + 0x374) = 0
           * 3. Current anim_base validation: Checks *(undefined4**)(param_1 + 0x68) (was this->object.anim_base in K1)
-          *    - If non-NULL and *(char*)(anim_base + 0x31) == param_4 (type matches), jumps to model loading ([TODO: Name this label] @ (K1: TODO: Find this address, TSL: 0x0066a0c8))
+          *    - If non-NULL and *(char*)(anim_base + 0x31) == param_4 (type matches), jumps to model loading (label within CSWCCreature::LoadModel_Internal @ (K1: TODO: Find this address, TSL: 0x0066a0c8))
           *    - Otherwise, destructs current anim_base via vtable[0](1) and proceeds to allocation
           * 4. Switch-based anim_base allocation (param_4 determines type):
           *    * case '\0' (0): Standard anim base
@@ -185,8 +185,8 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *    * case '\v' (0x0b, 11): Two-Weapon anim base (NEW in TSL, not in K1)
           *      - Allocates 0x180 bytes (384 bytes)
           *      - Calls CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) (CSWCAnimBaseTW constructor, 307 bytes)
-          *      - Sets vtable to [TODO: Name this pointer] @ (K1: TODO: Find this address, TSL: 0x007ce078)
-          *      - Initializes 5 CExoString fields (offsets 0x4a, 0x4f, 0x54, 0x59) via [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00405f40)
+          *      - Sets vtable to CSWCAnimBaseTW_vtable @ (K1: TODO: Find this address, TSL: 0x007ce078)
+          *      - Initializes 5 CExoString fields (offsets 0x4a, 0x4f, 0x54, 0x59) via CExoString_InitEmpty() @ (K1: TODO: Find this address, TSL: 0x00405f40)
           *      - Sets field at offset 0x31 to 0x0b (two-weapon type identifier)
           *      - Clears flags: param_1[0x5e] = 0, param_1[0x5f] = 0
           *      - Zeroes 5 additional fields (0x3f through 0x43)
@@ -210,15 +210,15 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *        - Stores 4 dwords (16 bytes) at offset iVar1 = BufferIndex * 0x11 (17 bytes per entry, 4-entry buffer)
           *        - Stores null terminator at offset 0x10
           *        - Returns pointer to stored string
-          *      * Calls [TODO: Name this function](acStack_10c, "CSWCCreature::LoadModel(): Failed to load creature model '%s'.") @ (K1: TODO: Find this address, TSL: 0x0076dac2)
-          *        - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0076dac2) is sprintf equivalent (88 bytes, 133 references)
+          *      * Calls sprintf(acStack_10c, "CSWCCreature::LoadModel(): Failed to load creature model '%s'.") @ (K1: 0x006fadb0, TSL: 0x0076dac2)
+          *        - sprintf() @ (K1: 0x006fadb0, TSL: 0x0076dac2) is sprintf equivalent (88 bytes, 133 references)
           *        - Creates FILE structure on stack for formatting
-          *        - Calls [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0077252f) (vswprintf equivalent) with format string
+          *        - Calls vswprintf_internal() @ (K1: TODO: Find this address, TSL: 0x0077252f) (vswprintf equivalent) with format string
           *        - Null-terminates result
           *      * Returns 0 (failure)
           * 7. Special parameter handling (param_3 checks):
           *    - If param_3 is -1, -2, -3, or -4 (special values), performs additional setup:
-          *      * Calls anim_base->vtable[8](param_3) @ (K1: (TODO: Find this address), TSL: 0x0066a150) to get model attachment
+          *      * Calls anim_base->vtable[8](param_3) @ (K1: TODO: Find this address, TSL: 0x0066a150) to get model attachment (call site within CSWCCreature::LoadModel_Internal)
           *      * Calls attachment->vtable[0x74](param_1) (29th entry) - attachment setup
           *      * Calls attachment->vtable[0x7c]([TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007beaec)) (31st entry) - game object types setup
           *    - If param_3 == -1 (headconjure special case):
