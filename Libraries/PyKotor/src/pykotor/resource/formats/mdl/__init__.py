@@ -36,15 +36,16 @@ For file extension strings used in I/O operations, see io_mdl.py documentation.
   * K1: Referenced in 7 locations:
     - LoadDoor() @ (K1: 0x0058b23e, TSL: 0x006532aa, 0x006532e4) (GFF field access for door models)
     - AddToArea() @ (K1: 0x00587276, TSL: 0x00589de0) (area object model name)
-    - AddPlaceableObjectStatic() @ (K1: 0x0060739b, TSL: TODO: Find this address), (K1: 0x006073d5, TSL: TODO: Find this address) (placeable model names)
+    - AddPlaceableObjectStatic() @ (K1: 0x0060739b, TSL: 0x006a1eb6), (K1: 0x006073d5, TSL: 0x006a1eda) (placeable model names - ModelName GFF field access call sites)
     - HandleServerToPlayerDoorUpdate_Add() @ (K1: 0x0064d12a, TSL: TODO: Find this address) (network door updates)
     - HandleServerToPlayerPlaceableUpdate_Add() @ (K1: 0x0064d685, TSL: TODO: Find this address), (K1: 0x0064d6b4, TSL: TODO: Find this address) (network placeable updates)
   * TSL: Referenced in 7 locations (equivalent functions):
     - Door loading equivalent @ (K1: 0x0058b23e, TSL: 0x006532aa), (K1: 0x0058b23e, TSL: 0x006532e4)
     - Area addition equivalent @ (K1: 0x00587276, TSL: 0x00589de0)
-    - Placeable static equivalent @ (K1: TODO: Find this address, TSL: 0x006a1eb6), (K1: TODO: Find this address, TSL: 0x006a1eda)
-    - Creature loading equivalent @ (K1: TODO: Find this address, TSL: 0x006a187f)
-    - Placeable related @ (K1: TODO: Find this address, TSL: 0x00582027)
+    - Placeable static equivalent @ (K1: 0x006072d0 (function), 0x0060739b/0x006073d5 (call sites), TSL: 0x006a1d20 (function), 0x006a1eb6/0x006a1eda (call sites))
+    - Creature loading equivalent @ (K1: TODO: Find this address, TSL: 0x006a187f - LoadCreatureModelFromGFF)
+    - Placeable GFF loading @ (K1: TODO: Find this address, TSL: 0x006a1680 - LoadPlaceableFromGFF)
+    - Placeable properties loading @ (K1: TODO: Find this address, TSL: 0x00580ed0 - LoadPlaceablePropertiesFromGFF)
 
 - "ModelPart" @ (K1: 0x0074778c, TSL: 0x007bd42c)
   * GFF field for model part references in area files
