@@ -8,7 +8,7 @@ I/O and Parsing Functions (Engine Implementation):
 -------------------------------------------------
 These functions correspond to the game engine's MDL/MDX parsing implementation:
 
-    - LoadModel - K1: 0x00464200, TSL: (TODO: Find this address)
+    - LoadModel - K1: 0x00464200, TSL: 0x0047a570
       * Main model loader entry point (172 bytes, 6 callees, 2 callers)
         * Signature: Model * __cdecl LoadModel(int param_1, undefined4 param_2)
         * Logic (from decompilation):
@@ -37,9 +37,9 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * IODispatcher::ReadSync() @ (K1: 0x004a15d0, TSL: 0x004cead0) (file I/O dispatcher)
             * Input::Read() @ (K1: 0x004a1260, TSL: 0x004ce780) (parses MDL/MDX format)
               * InputBinary::Read() (binary parser)
-              * AurResGetNextLine() @ (K1: 0x0044bfa0, TSL: (TODO: Find this address)) (line reading for ASCII MDL)
+              * AurResGetNextLine() @ (K1: 0x0044bfa0, TSL: (TODO: Find this address - ASCII MDL reading path may differ in TSL)) (line reading for ASCII MDL)
               * AurResGet() @ (K1: 0x0044c740, TSL: 0x00460db0) (resource data access)
-              * FuncInterp() @ (K1: 0x0044c1f0, TSL: (TODO: Find this address)) (function interpolation for animations)
+              * FuncInterp() @ (K1: 0x0044c1f0, TSL: (TODO: Find this address - ASCII MDL reading path may differ in TSL)) (function interpolation for animations)
         * Callers (call chain showing usage):
           * NewCAurObject() @ (K1: 0x00449cc0, TSL: 0x0045e2e0) -> LoadModel() @ (K1: 0x00449d9d, TSL: 0x0047a570)
             * Called from: HideWieldedItems(), LoadSpellVisual(), LoadConjureVisual(), AddObstacle(),
@@ -73,9 +73,9 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
         * Callees:
           * Input::Read() @ (K1: 0x004a1260, TSL: 0x004ce780) (main parsing function)
             * InputBinary::Read() (binary format parser)
-            * AurResGetNextLine() @ (K1: 0x0044bfa0, TSL: (TODO: Find this address)) (line reading for ASCII MDL)
+            * AurResGetNextLine() @ (K1: 0x0044bfa0, TSL: (TODO: Find this address - ASCII MDL reading path may differ in TSL)) (line reading for ASCII MDL)
             * AurResGet() @ (K1: 0x0044c740, TSL: 0x00460db0) (resource data access)
-            * FuncInterp() @ (K1: 0x0044c1f0, TSL: (TODO: Find this address)) (function interpolation for animations)
+            * FuncInterp() @ (K1: 0x0044c1f0, TSL: (TODO: Find this address - ASCII MDL reading path may differ in TSL)) (function interpolation for animations)
         * Callers:
           * LoadModel() @ (K1: 0x00464200, TSL: 0x0047a570) (main entry point)
 
@@ -91,7 +91,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * ProcessSkinSeams() @ (K1: 0x004392b6, TSL: 0x0044a920), (K1: 0x00439986, TSL: 0x0044a920) (skin seam processing - both addresses are call sites within ProcessSkinSeams)
           * FindModel() @ (K1: 0x00464176, TSL: 0x0047a480) (model lookup)
           * LoadModel() @ (K1: 0x00464236, TSL: 0x0047a570) (main loader)
-          * BuildVertexArrays() @ (K1: 0x00478b8b, TSL: (TODO: Find this address)), (K1: 0x00478c05, TSL: (TODO: Find this address)) (vertex array construction)
+          * BuildVertexArrays() @ (K1: 0x00478b50, TSL: 0x00495620) (vertex array construction - both addresses are call sites within BuildVertexArrays)
           * Input::Read() @ (K1: 0x004a1435, TSL: 0x004ce8c0), (K1: 0x004a1362, TSL: 0x004ce8c0), (K1: 0x004a1373, TSL: 0x004ce8c0), (K1: 0x004a1503, TSL: 0x004ce8c0) (parsing - call sites within Input::Read)
 
     Function Discovery Methodology:
@@ -166,7 +166,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *    - Otherwise, destructs current anim_base via vtable[0](1) and proceeds to allocation
           * 4. Switch-based anim_base allocation (param_4 determines type):
           *    * case '\0' (0): Standard anim base
-          *      - Allocates 0xfc bytes via operator_new() @ (K1: (TODO: Find this address), TSL: 0x0076d9f6) (was 0xf0 in K1, 12 bytes larger)
+          *      - Allocates 0xfc bytes via operator_new() @ (K1: 0x006fa7e6, TSL: 0x0076d9f6) (was 0xf0 in K1, 12 bytes larger)
           *      - Calls CSWCAnimBase::CSWCAnimBase() @ (K1: 0x0069dfb0, TSL: 0x006f8340) (CSWCAnimBase constructor equivalent, 409 bytes)
           *      - Sets *(undefined4**)(param_1 + 0x68) = constructed anim_base
           *    * case '\x01' (1): Head anim base
