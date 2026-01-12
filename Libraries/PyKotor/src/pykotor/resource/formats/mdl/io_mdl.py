@@ -320,9 +320,9 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *   * Sets field at offset 0x48 to 0x7f000000 (INF, scale maximum)
           * - CSWCAnimBaseWield::CSWCAnimBaseWield() @ (K1: 0x00699dd0, TSL: 0x006f41b0): CSWCAnimBaseWield constructor (256 bytes, 3 callers)
           *   * If param_1 != 0, sets vtable to CSWCAnimBaseWield_vtable @ (K1: 0x00754d00, TSL: 0x007cdf20), calls CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) on offset 0x5c sub-object
-          *   * Sets vtable offset for base class to CSWCAnimBaseWield_base_vtable @ (K1: Calculated dynamically from CSWCAnimBaseWield_vtable offset, TSL: 0x007cde28)
+          *   * Sets vtable offset for base class to CSWCAnimBaseWield_base_vtable @ (K1: CSWCAnimBaseWield_AnimBase_vtable @ 0x00754c08, TSL: 0x007cde28)
           *     NOTE: In K1, the base class vtable offset is calculated at line 20: `*(undefined ***)(this + *(int *)(*(int *)this + 4)) = &CSWCAnimBaseWield_AnimBase_vtable;`
-          *     The offset is calculated as `*(int *)(*(int *)this + 4)` (vtable offset) and the base vtable pointer is stored at that calculated offset.
+          *     The offset is calculated as `*(int *)(*(int *)this + 4)` (vtable offset) and the base vtable pointer (CSWCAnimBaseWield_AnimBase_vtable @ 0x00754c08) is stored at that calculated offset.
           *     TSL uses a separate base class vtable pointer constant at 0x007cde28.
           *   * Initializes 2 CResRef fields (K1) / CExoString fields (TSL) via CResRef_InitEmpty() @ (K1: 0x00405ed0, TSL: 0x00405f40) (offsets 4, 0x14)
           *     - NOTE: In K1, uses CResRef::CResRef() constructor. In TSL, uses CExoString_InitEmpty().
