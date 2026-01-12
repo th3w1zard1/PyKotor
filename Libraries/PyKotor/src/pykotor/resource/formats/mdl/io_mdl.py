@@ -119,7 +119,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * Sets this->field159_0x35c from this->field158_0x358
           * If current anim_base exists and field44_0xc4 == param_3, skips to model loading
           * Otherwise destructs current anim_base and creates new based on param_3 switch:
-            * case 0: Allocates 0xf0 bytes, constructs CSWCAnimBase @ (K1: 0x0069dfb0, TSL: (TODO: Find this address))
+            * case 0: Allocates 0xf0 bytes, constructs CSWCAnimBase @ (K1: 0x0069dfb0, TSL: 0x006f8340)
             * case 1: Allocates 0x1c4 bytes, constructs CSWCAnimBaseHead @ (K1: 0x0069bb80, TSL: (TODO: Find this address)) with param=1
             * case 2: Allocates 0x1d0 bytes, constructs CSWCAnimBaseWield @ (K1: 0x00699dd0, TSL: (TODO: Find this address)) with param=1
             * case 3: Allocates 0x220 bytes, constructs CSWCAnimBaseHeadWield @ (K1: 0x00698ec0, TSL: (TODO: Find this address))
@@ -135,10 +135,10 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * operator_new() @ (K1: 0x006fa7e6, TSL: 0x0076d9f6) (memory allocation, called 5 times)
           * CSWCAnimBaseWield::CSWCAnimBaseWield() @ (K1: 0x00699dd0, TSL: (TODO: Find this address)) (two-weapon anim base constructor)
           * CSWCAnimBaseHeadWield::CSWCAnimBaseHeadWield() @ (K1: 0x00698ec0, TSL: (TODO: Find this address)) (head + wield anim base)
-          * CSWCAnimBase::CSWCAnimBase() @ (K1: 0x0069dfb0, TSL: (TODO: Find this address)) (base anim base constructor)
+          * CSWCAnimBase::CSWCAnimBase() @ (K1: 0x0069dfb0, TSL: 0x006f8340) (base anim base constructor)
           * CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: (TODO: Find this address)) (two-weapon variant)
           * sprintf() @ (K1: 0x006fadb0, TSL: 0x0076dac2) (error message formatting)
-          * CResRef::GetResRefStr() @ (K1: 0x00405fe0, TSL: 0x00406050) (resource reference string conversion)
+          * CResRef::CopyToString() @ (K1: 0x00405f70, TSL: 0x00406050) (resource reference string conversion - note: GetResRefStr in K1 calls CopyToString internally)
           * RegisterCallbacks() @ (K1: 0x0061ab40, TSL: 0x00693fe0) (callback registration)
           * CSWCAnimBaseHead::CSWCAnimBaseHead() @ (K1: 0x0069bb80, TSL: (TODO: Find this address)) (head anim base constructor)
           * CSWAnimBase::Set() @ (K1: 0x00698e30, TSL: 0x006f3210) (anim base setup, called 4 times)
@@ -474,7 +474,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * Returns 1 on success
         * Callees:
           * operator_new() @ 0x006fa7e6 (memory allocation)
-          * CResRef::CopyToString() @ (K1: 0x00405f70, TSL: TODO: Find this address) - resource name extraction
+          * CResRef::CopyToString() @ (K1: 0x00405f70, TSL: 0x00406050) - resource name extraction
           * CExoString::CExoString() @ (K1: 0x005e5a90, TSL: TODO: Find this address) - string constructor)
           * CExoString::CStr() @ (K1: 0x005e5670, TSL: TODO: Find this address) - C string accessor)
           * CExoString::CExoString() @ (K1: 0x005b3190, TSL: TODO: Find this address) - empty string constructor)
@@ -551,8 +551,8 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
         * Used in sprintf() call when anim_base->vtable[3] returns 0
         * param_1 is resource name from CResRef::GetResRefStr()
       * TSL: Referenced in CSWCCreature::LoadModel error handler @ 0x0066a0f0
-        * Used in [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0076dac2) (sprintf equivalent)
-        * Resource name obtained via [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00406050)
+        * Used in sprintf() @ (K1: 0x006fadb0, TSL: 0x0076dac2) (sprintf equivalent/wrapper)
+        * Resource name obtained via CResRef::CopyToString() @ (K1: 0x00405f70, TSL: 0x00406050)
 
     - "Model %s nor the default model %s could be loaded." - K1: 0x00751c70, TSL: 0x007cad14
       * Generic model loading failure message
@@ -560,13 +560,13 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
 
     String References (File Extensions):
     -----------------------------------
-    - ".mdl" extension - K1: 0x00740ca8, TSL: (TODO: Find this address)
+    - ".mdl" extension - K1: 0x00740ca8, TSL: 0x007b8d28
       * Referenced in 3 locations:
         * Input::Read() @ (K1: 0x004a13ba, TSL: 0x004ce8c0) - file extension check (call site within Input::Read)
         * Input::Read() @ (K1: 0x004a1465, TSL: 0x004ce8c0) - file extension check (call site within Input::Read)
         * LoadAddInAnimations() @ (K1: 0x004408ce, TSL: 0x004538d0) - appends to model name for file opening
       * Usage: Used to construct file paths when loading MDL files
-      * TSL: String likely exists but at different address (not verified via search)
+      * Verified via REVA MCP: Found in TSL at 0x007b8d28, referenced in LoadAddInAnimations() decompilation
 
 References:
 ----------
