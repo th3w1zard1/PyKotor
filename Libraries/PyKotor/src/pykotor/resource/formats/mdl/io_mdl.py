@@ -219,7 +219,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *      * Returns 0 (failure)
           * 7. Special parameter handling (param_3 checks):
           *    - If param_3 is -1, -2, -3, or -4 (special values), performs additional setup:
-          *      * Calls anim_base->vtable[8](param_3) @ (K1: TODO: Find this address, TSL: 0x0066a150) to get model attachment (call site within CSWCCreature::LoadModel_Internal)
+          *      * Calls anim_base->vtable[8](param_3) @ (K1: 0x0061b436, TSL: 0x0066a150) to get model attachment (call site within CSWCCreature::LoadModel_Internal)
           *      * Calls attachment->vtable[0x74](param_1) (29th entry) - attachment setup
           *      * Calls attachment->vtable[0x7c](GameObjectType_Constant_5 @ (K1: 0x00746634, TSL: 0x007beaec)) (31st entry) - game object types setup (value: 5)
           *    - If param_3 == -1 (headconjure special case):
