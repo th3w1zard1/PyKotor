@@ -401,7 +401,7 @@ class MDLAsciiWriter(ResourceWriter):
         parent: MDLNode | None = None,
     ) -> None:
         """Write a node and its children.
-        
+
         Node type determination matches MDLOps exactly.
         MDLOps checks nodetype integer value directly ($nodetype == NODE_SKIN), not data presence.
         """
@@ -425,7 +425,7 @@ class MDLAsciiWriter(ResourceWriter):
             type_id |= 0x2  # LIGHT
         if node.reference is not None:
             type_id |= 0x10  # REFERENCE
-        
+
         # MDLOps checks against NODE_ constants: NODE_DUMMY=1, NODE_LIGHT=3, NODE_EMITTER=5,
         # NODE_REFERENCE=17, NODE_TRIMESH=33, NODE_SKIN=97, NODE_DANGLYMESH=289,
         # NODE_AABB=545, NODE_SABER=2081
@@ -784,7 +784,7 @@ class MDLAsciiWriter(ResourceWriter):
 
     def _write_walkmesh(self, indent: int, walkmesh: MDLWalkmesh) -> None:
         """Write walkmesh data.
-        
+
         AABB format matches MDLOps: 6 floats (bbox_min.xyz, bbox_max.xyz) + 1 int (face_index)
         """
         self.write_line(indent, "aabb " + str(len(walkmesh.aabbs)))
@@ -795,7 +795,7 @@ class MDLAsciiWriter(ResourceWriter):
             #
             self.write_line(
                 indent + 1,
-                f"      {aabb.bbox_min.x: .7g} {aabb.bbox_min.y: .7g} {aabb.bbox_min.z: .7g} {aabb.bbox_max.x: .7g} {aabb.bbox_max.y: .7g} {aabb.bbox_max.z: .7g} {aabb.face_index}"
+                f"      {aabb.bbox_min.x: .7g} {aabb.bbox_min.y: .7g} {aabb.bbox_min.z: .7g} {aabb.bbox_max.x: .7g} {aabb.bbox_max.y: .7g} {aabb.bbox_max.z: .7g} {aabb.face_index}",
             )
 
     def _write_controller(
@@ -1400,13 +1400,7 @@ class MDLAsciiReader(ResourceReader):
         # Parse mesh data before controllers.
         # Some keywords overlap (e.g. "radius" is a mesh header scalar but also a light controller name).
         # AABB nodes can have mesh data, so attempt parsing even if mesh doesn't exist yet (will be created on-demand)
-        if (
-            self._current_node.mesh is not None
-            or (
-                self._current_node.node_type == MDLNodeType.AABB
-                and self._current_node.aabb is not None
-            )
-        ):
+        if self._current_node.mesh is not None or (self._current_node.node_type == MDLNodeType.AABB and self._current_node.aabb is not None):
             if self._parse_mesh_data(line):
                 return
 
@@ -1551,14 +1545,14 @@ class MDLAsciiReader(ResourceReader):
         """
         if self._current_node is None:
             return False
-        
+
         # AABB nodes can have mesh data - create mesh on-demand if needed
         #
         if self._current_node.mesh is None and self._current_node.node_type == MDLNodeType.AABB:
             # Check if this line contains mesh data (verts/faces/tverts)
             if re.match(r"^\s*(verts|faces|tverts|tverts1|lightmaptverts)", line, re.IGNORECASE):
                 self._current_node.mesh = MDLMesh()
-        
+
         if self._current_node.mesh is None:
             return False
 
@@ -1779,11 +1773,11 @@ class MDLAsciiReader(ResourceReader):
         """
         if not self._current_node:
             return False
-        
+
         # AABB nodes can have mesh data - ensure mesh exists
         if self._current_node.mesh is None and self._current_node.node_type == MDLNodeType.AABB:
             self._current_node.mesh = MDLMesh()
-        
+
         if not self._current_node.mesh:
             return False
 
@@ -2638,17 +2632,17 @@ class MDLAsciiReader(ResourceReader):
             self._mdl.root.children = []
         else:
             self._mdl.root.children = []
-        
+
         for node in self._nodes:
             node.children = []
-        
+
         # Build name-to-node lookup for hierarchy resolution
         by_name = {n.name.lower(): n for n in self._nodes if n.name}
-        
+
         # Build parent-child relationships (matching MDLOps: )
         for node in self._nodes:
             parent_node: MDLNode | None = None
-            
+
             # First try to resolve by stored parent name (handles cases where parent wasn't parsed yet)
             parent_name: str | None = node.__dict__.get("_parent_name")
             if isinstance(parent_name, str) and parent_name in by_name:
@@ -2658,7 +2652,7 @@ class MDLAsciiReader(ResourceReader):
             elif node.parent_id >= 0 and node.parent_id < len(self._nodes):
                 # Fall back to index-based resolution
                 parent_node = self._nodes[node.parent_id]
-            
+
             if parent_node is not None:
                 # MDLOps adds child to parent's children array and increments childcount
                 #
@@ -2668,7 +2662,7 @@ class MDLAsciiReader(ResourceReader):
                 # This ensures all nodes are reachable from node 0 during recursive traversal
                 #
                 self._mdl.root.children.append(node)
-        
+
         # Cleanup temporary parent tracking
         for node in self._nodes:
             node.__dict__.pop("_parent_name", None)

@@ -1,0 +1,8 @@
+TASK_ID: functions_undefined_function_candidates_007
+ORIGINAL_TEXT: Compare K1/TSL candidates and document address differences (K1: 0/3521+, TSL: 0/count TBD+)
+SECTION: Functions > Undefined Function Candidates
+REQUIRED_INPUTS: 
+SUCCESS_CRITERIA: 
+FAILURE_MODES: 
+EVIDENCE_REQUIRED: 
+UPDATE_RULES: 

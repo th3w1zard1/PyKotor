@@ -1,0 +1,8 @@
+TASK_ID: data_types_custom_types_003
+ORIGINAL_TEXT: Match types between K1 and TSL (K1: 0/2653+, TSL: 0/count TBD+)
+SECTION: Data Types > Custom Types
+REQUIRED_INPUTS: 
+SUCCESS_CRITERIA: 
+FAILURE_MODES: 
+EVIDENCE_REQUIRED: 
+UPDATE_RULES: 

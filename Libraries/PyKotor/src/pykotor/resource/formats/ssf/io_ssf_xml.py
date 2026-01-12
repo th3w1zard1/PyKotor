@@ -30,10 +30,9 @@ class SSFXMLReader(ResourceReader):
     
     References:
     ----------
-        Engine Implementation:
-        - CResSSF::CResSSF() @ (K1: 0x006db650, TSL: TODO: Find this address) - Constructor for SSF resource
-        - CResSSF::~CResSSF() @ (K1: 0x006db670, TSL: TODO: Find this address) - Destructor for SSF resource
-        - CResSSF::~CResSSF() (alternate) @ (K1: 0x006db6b0, TSL: TODO: Find this address) - Alternate destructor path
+        Based on swkotor.exe SSF structure:
+        - CResSSF::CResSSF @ 0x006db650 - Constructor for SSF resource
+        - CResSSF::~CResSSF @ 0x006db670, @ 0x006db6b0 - Destructors for SSF resource
         - SSF file format: "SSF " type, "V1.1" version
         - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         

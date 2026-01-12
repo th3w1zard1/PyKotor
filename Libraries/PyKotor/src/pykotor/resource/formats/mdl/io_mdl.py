@@ -431,7 +431,8 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *   * Returns allocated memory pointer or NULL
           *   * Called 5 times in LoadModel_Internal for different anim_base types
           * CALLERS: None found via direct references (vtable call via object method)
-          * VTABLE ENTRY: Located at offset in CSWCCreature class structure, stored at (K1: (TODO: Find this address), TSL: 0x007c8040)
+          * VTABLE ENTRY: Located at offset in CSWCCreature class structure, stored at (K1: 0x0074f670, TSL: 0x007c8040)
+          *   * NOTE: In K1, the vtable entry at 0x0074f670 points to CSWCCreature::LoadModel @ 0x0061b380. This is the vtable entry for CSWCCreature::LoadModel_Internal, referenced in CSWCCreature::LoadModel at K1: 0x0061b3e2 (call site: anim_base->vtable[8](param_3))
           * STRING REFERENCES (verified via cross-references):
           * - Error string @ (K1: 0x0074f85c, TSL: 0x007c82fc): "CSWCCreature::LoadModel(): Failed to load creature model '%s'."
           *   * Referenced in CSWCCreature::LoadModel error handler @ (K1: 0x0061b5cf, TSL: 0x0066a0f0)
@@ -446,16 +447,18 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *   * Referenced in 3 functions: [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00700da0), [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00705d20), [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x007052a0)
           *   * Not directly used in LoadModel_Internal, but related to model hit detection setup
           * - "snd_Footstep" @ (K1: 0x0074f838, TSL: 0x007c82d0): Footstep sound callback name
-          *   * Referenced only in RegisterCallbacks_Headconjure() @ (K1: 0x0061ab40, TSL: 0x00669595)
+          *   * Referenced only in RegisterCallbacks() @ (K1: 0x0061ab40, TSL: 0x00669595)
           *   * Used to register footstep sound callback for creature animations
           * - "snd_hitground" @ (K1: 0x0074f824, TSL: 0x007c82bc): Hit ground sound callback name
-          *   * Referenced only in RegisterCallbacks_Headconjure() @ (K1: 0x0061ab40, TSL: 0x006695d1)
+          *   * Referenced only in RegisterCallbacks() @ (K1: 0x0061ab40, TSL: 0x006695d1)
           *   * Used to register hit ground sound callback for creature animations
           * DATA CONSTANTS (verified via cross-references):
           * - GameObjectType_Constant_5 @ (K1: 0x00746634, TSL: 0x007beaec): Game object types constant (value: 5, cross-referenced 78 times)
           *   * Passed to anim_base->vtable[0x7c]() for game object type setup
+          *   * Labeled as GAME_OBJECT_TYPES_00746634 in K1
           * - FloatConstant_0_125 @ (K1: 0x0073f400, TSL: 0x007b7428): Float scale factor (0.125f, cross-referenced 9 times)
           *   * Used in headconjure calculation: fStack_12c - fStack_12c * FloatConstant_0_125 @ (K1: 0x0073f400, TSL: 0x007b7428)
+          *   * Labeled as FLOAT_0073f400 in K1
           * - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007c82ec): Float interpolation factor (cross-referenced 4 times)
           *   * Used in size class interpolation: (float)(0x28 - sVar1) * [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007c82ec)
           * - [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b5774): Float scale factor (cross-referenced 78 times)

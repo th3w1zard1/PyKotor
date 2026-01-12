@@ -7,33 +7,20 @@ from pathlib import PurePath
 from typing import TYPE_CHECKING, Union
 
 from pykotor.extract.file import ResourceIdentifier
-from pykotor.resource.formats.bwm import bytes_bwm, read_bwm
-from pykotor.resource.formats.bwm.bwm_data import BWM
-from pykotor.resource.formats.erf import bytes_erf, read_erf
-from pykotor.resource.formats.erf.erf_data import ERF
-from pykotor.resource.formats.gff import GFFContent, bytes_gff, read_gff
-from pykotor.resource.formats.gff.gff_data import GFF
-from pykotor.resource.formats.lip import bytes_lip, read_lip
-from pykotor.resource.formats.lip.lip_data import LIP
-from pykotor.resource.formats.ltr import bytes_ltr, read_ltr
-from pykotor.resource.formats.ltr.ltr_data import LTR
-from pykotor.resource.formats.lyt import bytes_lyt, read_lyt
-from pykotor.resource.formats.lyt.lyt_data import LYT
+from pykotor.resource.formats.bwm import BWM, bytes_bwm, read_bwm
+from pykotor.resource.formats.erf import ERF, bytes_erf, read_erf
+from pykotor.resource.formats.gff import GFF, GFFContent, bytes_gff, read_gff
+from pykotor.resource.formats.lip import LIP, bytes_lip, read_lip
+from pykotor.resource.formats.ltr import LTR, bytes_ltr, read_ltr
+from pykotor.resource.formats.lyt import LYT, bytes_lyt, read_lyt
 from pykotor.resource.formats.mdl import MDL, bytes_mdl, read_mdl
-from pykotor.resource.formats.ncs import bytes_ncs, read_ncs
-from pykotor.resource.formats.ncs.ncs_data import NCS
-from pykotor.resource.formats.rim import bytes_rim, read_rim
-from pykotor.resource.formats.rim.rim_data import RIM
-from pykotor.resource.formats.ssf import bytes_ssf, read_ssf
-from pykotor.resource.formats.ssf.ssf_data import SSF
-from pykotor.resource.formats.tlk import bytes_tlk, read_tlk
-from pykotor.resource.formats.tlk.tlk_data import TLK
-from pykotor.resource.formats.tpc import bytes_tpc, read_tpc
-from pykotor.resource.formats.tpc.tpc_data import TPC
-from pykotor.resource.formats.twoda import bytes_2da, read_2da
-from pykotor.resource.formats.twoda.twoda_data import TwoDA
-from pykotor.resource.formats.vis import bytes_vis, read_vis
-from pykotor.resource.formats.vis.vis_data import VIS
+from pykotor.resource.formats.ncs import NCS, bytes_ncs, read_ncs
+from pykotor.resource.formats.rim import RIM, bytes_rim, read_rim
+from pykotor.resource.formats.ssf import SSF, bytes_ssf, read_ssf
+from pykotor.resource.formats.tlk import TLK, bytes_tlk, read_tlk
+from pykotor.resource.formats.tpc import TPC, bytes_tpc, read_tpc
+from pykotor.resource.formats.twoda import TwoDA, bytes_2da, read_2da
+from pykotor.resource.formats.vis import VIS, bytes_vis, read_vis
 from pykotor.resource.generics.are import ARE, dismantle_are
 from pykotor.resource.generics.dlg import DLG, dismantle_dlg
 from pykotor.resource.generics.git import GIT, dismantle_git
@@ -140,7 +127,7 @@ def read_unknown_resource(  # noqa: PLR0911
     with suppress(OSError, ValueError):
         return bytes_rim(read_rim(source))
     with suppress(OSError, ValueError):
-        return bytes_ncs(read_ncs(source))
+        return bytes(bytes_ncs(read_ncs(source)))
     with suppress(OSError, ValueError):
         return bytes_gff(read_gff(source))
     with suppress(OSError, ValueError):
@@ -226,7 +213,7 @@ def resource_to_bytes(  # noqa: PLR0912, C901, PLR0911
     if isinstance(resource, MDL):
         return bytes_mdl(resource)
     if isinstance(resource, NCS):
-        return bytes_ncs(resource)
+        return bytes(bytes_ncs(resource))
     if isinstance(resource, RIM):
         return bytes_rim(resource)
     if isinstance(resource, SSF):

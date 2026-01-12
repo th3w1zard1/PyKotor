@@ -1,0 +1,8 @@
+TASK_ID: data_types_enums_001
+ORIGINAL_TEXT: Identify all enums (K1: count TBD, TSL: count TBD)
+SECTION: Data Types > Enums
+REQUIRED_INPUTS: 
+SUCCESS_CRITERIA: 
+FAILURE_MODES: 
+EVIDENCE_REQUIRED: 
+UPDATE_RULES: 

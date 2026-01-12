@@ -7,9 +7,21 @@ lips during dialogue playback.
 
 References:
 ----------
-        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
-        Original BioWare engine binaries
-        Derivations and Other Implementations:
+    Based on swkotor.exe LIP structure:
+    - CLIP::LoadLip @ 0x0070c590 - Loads LIP file for lip sync animation
+      * Parses binary LIP format
+      * Reads header ("LIP V1.0" identifier)
+      * Reads sound length and entry count
+      * Reads keyframe entries (timestamp + shape)
+      * Builds animation timeline for lip sync
+    - "LIP " file type identifier - First 4 bytes of LIP files
+    - "V1.0" version identifier - Bytes 4-7 of LIP files
+    - Sound Length field at offset 0x08 (4 bytes, float)
+    - Entry Count field at offset 0x0C (4 bytes, uint32)
+    - Keyframe entries start at offset 0x10 (5 bytes each: 4-byte float timestamp + 1-byte uint8 shape)
+    - ".lip" extension - LIP file extension
+    - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+    Derivations and Other Implementations:
         ----------
         https://github.com/th3w1zard1/KotOR_IO/tree/master/KotOR_IO/File
         https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/LIPObject.ts:23-348

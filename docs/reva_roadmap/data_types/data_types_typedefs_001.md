@@ -1,0 +1,8 @@
+TASK_ID: data_types_typedefs_001
+ORIGINAL_TEXT: Identify all typedefs (K1: count TBD, TSL: count TBD)
+SECTION: Data Types > Typedefs
+REQUIRED_INPUTS: 
+SUCCESS_CRITERIA: 
+FAILURE_MODES: 
+EVIDENCE_REQUIRED: 
+UPDATE_RULES: 

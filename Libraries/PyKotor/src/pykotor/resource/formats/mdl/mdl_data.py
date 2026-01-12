@@ -1,8 +1,46 @@
+"""
+MDL (Model) data structures for KotOR.
+
+This module defines the in-memory representation of MDL/MDX model files used in KotOR.
+MDL files store 3D model geometry, animations, materials, and node hierarchies for
+characters, creatures, placeables, and area geometry.
+
+MDL Format Overview:
+-------------------
+MDL files contain hierarchical node structures with:
+- Geometry nodes (Trimesh, Skin, Danglymesh)
+- Animation nodes (controllers for position, orientation, scale)
+- Light nodes (point lights, spot lights, ambient)
+- Emitter nodes (particle effects)
+- Reference nodes (model references, placeables)
+- Camera nodes (viewpoint definitions)
+
+Each node can have:
+- Position, orientation (quaternion), scale
+- Controllers (keyframe animations)
+- Children nodes (hierarchical structure)
+- Node-specific data (geometry, lights, etc.)
+
+The module provides canonicalization functions for comparing MDL structures
+across different toolchains, handling floating-point precision differences
+and structural equivalency checks.
+
+References:
+----------
+    Based on swkotor.exe (K1) and swkotor2.exe (TSL) MDL structure. All addresses verified
+    via REVA MCP tools through string cross-references, call chain analysis, and decompilation.
+
+    For general MDL format information, see __init__.py.
+    For low-level reverse engineering details about engine-level model loading
+    functions, resource management, binary I/O operations, and error messages,
+    see io_mdl.py documentation.
+"""
+
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
 
+from dataclasses import dataclass
 from enum import IntFlag
 from typing import TYPE_CHECKING, Any
 
@@ -1293,25 +1331,31 @@ def _mdl_deep_hash(
 class MDL(ComparableMixin):
     """Represents a MDL/MDX file.
 
+    MDL files store hierarchical node structures with geometry, animations, lights, emitters,
+    and references. Each node can have position, orientation (quaternion), scale, controllers
+    (keyframe animations), and children nodes forming a tree structure.
+
     Attributes:
     ----------
-        root: The root node of the model.
-        anims: The animations stored in the model.
-        name: The model name.
-        fog: If fog affects the model.
-        supermodel: Name of another model resource to import extra data from.
+        root: The root node of the model hierarchy.
+        anims: The animations stored in the model (keyframe sequences).
+        name: The model name identifier.
+        fog: If fog affects the model rendering.
+        supermodel: Name of another model resource to import extra data from (TSL feature).
+
+    Format Notes:
+    ------------
+        - MDL/MDX are binary formats with separate geometry (.mdx) and structure (.mdl) files
+        - MDL contains node hierarchy, animations, and metadata
+        - MDX contains vertex data, faces, and geometry payload
+        - ASCII format (MDL_ASCII) is MDLOps-compatible text representation
 
     References:
     ----------
-        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
-        Original BioWare engine binaries
+        Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         Derivations and Other Implementations:
-        ----------
-        https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/
-        https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/OdysseyModel.ts
-
-
-        Note: MDL/MDX are binary formats with separate geometry (.mdx) and structure (.mdl) files
+        - https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/
+        - https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/OdysseyModel.ts
     """
 
     BINARY_TYPE = ResourceType.MDL
@@ -1688,13 +1732,11 @@ class MDL(ComparableMixin):
             This is essential for multi-part character models where body parts
             reference bones in the full skeleton hierarchy (reone:704-722).
         """
-        
+
         nodes = self.all_nodes()
         for node in nodes:
-            
             # Only process skin mesh nodes
             if node.mesh and isinstance(node.mesh, MDLSkin):
-                
                 # Prepare bone lookups for this skin mesh
                 node.mesh.prepare_bone_lookups(nodes)
 
@@ -1738,28 +1780,22 @@ class MDLAnimation(ComparableMixin):
     COMPARABLE_SEQUENCE_FIELDS = ("events",)
 
     def __init__(self):
-        
         # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:660
         self.name: str = ""
 
-        
         # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:4069 - animroot
         self.root_model: str = ""
 
-        
         # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:662
         self.anim_length: float = 0.0
 
-        
         # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:663
         self.transition_length: float = 0.0
 
-        
         # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:4078-4081
         # Animation events (footsteps, attack hits, sounds, etc.)
         self.events: list[MDLEvent] = []
 
-        
         # Animation node hierarchy with controller keyframes
         self.root: MDLNode = MDLNode()
 
@@ -1865,12 +1901,10 @@ class MDLEvent(ComparableMixin):
     COMPARABLE_FIELDS = ("activation_time", "name")
 
     def __init__(self):
-        
         # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:694
         # Time in seconds when event fires (0.0 to animation length)
         self.activation_time: float = 0.0
 
-        
         # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:695
         # Event name used by game code to trigger actions
         self.name: str = ""
@@ -1978,71 +2012,52 @@ class MDLNode(ComparableMixin):
         ----
             self: The MDLNode object being initialized
         """
-        
-        
+
         # https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/OdysseyModelNode.ts:37
         # Child nodes inherit transforms and participate in rendering hierarchy
         self.children: list[MDLNode] = []
 
-        
-        
         # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:498-526
         # Animation keyframe data for position, orientation, scale, color, etc.
         self.controllers: list[MDLController] = []
 
-        
-        
         # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:416
         # ASCII string identifier (max 32 chars in binary format)
         self.name: str = ""
 
-        
-        
         # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:413
         # Unique node number (uint16) for quick lookups and bone references
         self.node_id: int = -1
 
-        
-        
         # https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/OdysseyModelNode.ts:42
         # Local position (x,y,z) relative to parent node
         self.position: Vector3 = Vector3.from_null()
 
-        
-        
         # https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/OdysseyModelNode.ts:43
         # Local rotation as quaternion (x,y,z,w) for smooth animation interpolation
         self.orientation: Vector4 = Vector4(0, 0, 0, 1)
 
-        
         # Light source with flares, shadows, dynamic properties (node type & 0x02)
         self.light: MDLLight | None = None
 
-        
         # Particle emitter for effects like smoke, sparks, fire (node type & 0x04)
         self.emitter: MDLEmitter | None = None
 
-        
         # Reference to external model for equipment/attachments (node type & 0x10)
         self.reference: MDLReference | None = None
 
-        
         # Triangle mesh geometry with materials (node type & 0x20)
         self.mesh: MDLMesh | None = None
 
-        
         # Skinned mesh with bone weights for character animation (node type & 0x40)
         self.skin: MDLSkin | None = None
 
-        
         # Cloth/hair physics mesh with constraints (node type & 0x100)
         self.dangly: MDLDangly | None = None
 
-        
         # Walkmesh AABB tree for collision/pathfinding (node type & 0x200)
         self.aabb: MDLWalkmesh | None = None
 
-        
         # Lightsaber blade mesh with special rendering (node type & 0x800)
         self.saber: MDLSaber | None = None
 
@@ -2226,7 +2241,7 @@ class MDLLight(ComparableMixin):
         self.flare: bool = False
 
         # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/light.py:46,77,104
-        
+
         # 1 = fades in/out at 2.0 units/sec, 0 = instant toggle
         self.fading_light: bool = False
 
@@ -2250,7 +2265,6 @@ class MDLLight(ComparableMixin):
         #
         self._color: Vector3 = Vector3(1.0, 1.0, 1.0)
 
-        
         # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/light.py:40,72,99
         # Intensity multiplier (controller type 140)
         self.multiplier: float = 1.0
@@ -2464,7 +2478,7 @@ class MDLEmitter(ComparableMixin):
         self.spawn_type: int = 0
 
         # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/emitter.py:121,234-242
-        
+
         # Update mode: "Fountain", "Single", "Explosion", "Lightning"
         self.update: str = ""
 
@@ -2489,7 +2503,7 @@ class MDLEmitter(ComparableMixin):
         self.two_sided_texture: int = 0
 
         # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/emitter.py:127
-        
+
         # 1 = loop emission, 0 = emit once
         self.loop: int = 0
 
@@ -2573,12 +2587,12 @@ class MDLReference(ComparableMixin):
 
     def __init__(self):
         # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/reference.py:30
-        
+
         # External model resource name to attach at this node
         self.model: str = ""
 
         # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/modelnode/reference.py:31
-        
+
         # True = can swap models dynamically, False = permanent attachment
         self.reattachable: bool = False
 
@@ -2652,7 +2666,7 @@ class MDLMesh(ComparableMixin):
 
     def __init__(self):
         # Basic geometry
-        
+
         # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1650-1700
         self.faces: list[MDLFace] = []
 
@@ -2663,7 +2677,7 @@ class MDLMesh(ComparableMixin):
         self.transparency_hint: int = 0
 
         # Textures
-        
+
         # texture_1 is diffuse map, texture_2 is lightmap
         self.texture_1: str = ""
         self.texture_2: str = ""
@@ -2672,7 +2686,7 @@ class MDLMesh(ComparableMixin):
         self.saber_unknowns: tuple[int, int, int, int, int, int, int, int] = (3, 0, 0, 0, 0, 0, 0, 0)
 
         # UV Animation for scrolling textures (water, lava, holograms, forcefields)
-        
+
         # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:3204-3210
         # When animate_uv is true, texture coordinates scroll in uv_direction at runtime
         self.animate_uv: bool = False
@@ -2686,7 +2700,7 @@ class MDLMesh(ComparableMixin):
         self.area: float = 0.0
 
         # UV Animation direction and jitter parameters
-        
+
         # Direction vector for texture scrolling (units per second)
         # Used for animated water, lava flows, hologram scan lines, etc.
         self.uv_direction_x: float = 0.0
@@ -2698,7 +2712,7 @@ class MDLMesh(ComparableMixin):
         self.uv_jitter_speed: float = 0.0
 
         # Rendering flags
-        
+
         # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:439-444
         self.has_lightmap: bool = False  # Has pre-baked lighting (texture_2)
         self.rotate_texture: bool = False  # Rotate texture 90 degrees
@@ -2706,7 +2720,7 @@ class MDLMesh(ComparableMixin):
         self.shadow: bool = False  # Cast shadows
         self.beaming: bool = False  # Special hologram effect
         self.render: bool = True  # Should be rendered
-        
+
         # Tangent space for bump/normal mapping
         # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:256 (MDX_TANGENT_SPACE = 0x00000080)
         # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:3204-3205 (tangentspace property)
@@ -2714,7 +2728,7 @@ class MDLMesh(ComparableMixin):
         self.tangent_space: bool = False
 
         # Vertex data arrays
-        
+
         # All vertex arrays must have same length (1:1 correspondence)
         self.vertex_positions: list[Vector3] = []
 
@@ -2751,7 +2765,7 @@ class MDLMesh(ComparableMixin):
         # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:2238-2243, 4187-4188
         # Preserved for roundtrip compatibility with MDLOps
         self.inverted_counters: list[int] = []
-        
+
         # Indices arrays - preserved for roundtrip compatibility with MDLOps
         # These arrays are typically empty but must be preserved if present in original binary
         self.indices_counts: list[int] = []
@@ -2844,17 +2858,14 @@ class MDLSkin(MDLMesh):
         # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1768 - Bone translation positions (bind pose)
         self.tbones: list[Vector3] = []
 
-        
         # Maps local bone index to global skeleton bone number
         # Critical for multi-part models where each part references the full skeleton
         self.bonemap: list[int] = []
 
-        
         # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:478-485
         # Per-vertex skinning data: up to 4 bone influences per vertex
         self.vertex_bones: list[MDLBoneVertex] = []
 
-        
         # Prepared lookup tables for bone serial numbers and node numbers
         # These are computed from bonemap during skin mesh preparation
         self.bone_serial: list[int] = []  # Maps bone index to serial number in model
@@ -2885,7 +2896,7 @@ class MDLSkin(MDLMesh):
             The bonemap contains local-to-global bone index mappings (reone:709-710).
             Invalid bone indices (0xFFFF) are skipped (reone:715-717).
         """
-        
+
         # Build a lookup of node_id -> serial index to correctly map global bone IDs.
         node_index_by_id: dict[int, int] = {}
         for serial_index, node in enumerate(nodes):
@@ -2998,12 +3009,10 @@ class MDLDangly(MDLMesh):
         self.tightness: float = 0.0
         self.period: float = 0.0
 
-        
         # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1835-1850
         # Constraints define how vertices can move (springs, limits, etc.)
         self.constraints: list[MDLConstraint] = []
 
-        
         # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:491-493
         # Current positions updated by physics simulation
         self.verts: list[Vector3] = []
@@ -3043,6 +3052,7 @@ class MDLAABBNode:
         right_child_offset: Offset to right child node (0 if no right child)
         unknown: Unknown int32 value (typically 0)
     """
+
     bbox_min: Vector3
     bbox_max: Vector3
     face_index: int
@@ -3092,7 +3102,6 @@ class MDLWalkmesh(ComparableMixin):
     COMPARABLE_SEQUENCE_FIELDS = ("aabbs",)
 
     def __init__(self):
-        
         # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:499-520
         # Hierarchical AABB tree for efficient collision detection
         # Each node contains bounding box and either face index (leaf) or child pointers (branch)
@@ -3165,11 +3174,11 @@ class MDLSaber(ComparableMixin):
         self.saber_type: int = 0
 
         # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1947 - Blade color
-        
+
         self.saber_color: int = 0
 
         # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1948 - Blade length in meters
-        
+
         self.saber_length: float = 0.0
 
         # https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:1949 - Blade width/thickness
@@ -3235,12 +3244,10 @@ class MDLBoneVertex(ComparableMixin):
     COMPARABLE_FIELDS = ("vertex_weights", "vertex_indices")
 
     def __init__(self):
-        
         # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:481-483
         # Normalized blend weights (must sum to 1.0)
         self.vertex_weights: tuple[float, float, float, float] = (0.0, 0.0, 0.0, 0.0)
 
-        
         # https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:478-480
         # Bone indices into skin's bonemap (-1.0 = unused)
         self.vertex_indices: tuple[float, float, float, float] = (-1.0, -1.0, -1.0, -1.0)

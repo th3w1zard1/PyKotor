@@ -7,9 +7,21 @@ individual room models (MDL files) and where interactive elements like doors are
 
 References:
 ----------
-        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
-        Original BioWare engine binaries
-        Derivations and Other Implementations:
+    Based on swkotor.exe LYT structure:
+    - CLYT::LoadLayout @ 0x005de900 - Loads LYT file for area layout
+      * Parses ASCII LYT format
+      * Loads room models, door hooks, tracks, obstacles
+      * Builds spatial structure for area rendering
+    - UnloadLayout @ 0x005de450 - Unloads LYT layout data
+    - "beginlayout" keyword - Start of LYT file
+    - "donelayout" keyword - End of LYT file
+    - "roomcount" keyword - Number of room entries
+    - "doorhookcount" keyword - Number of door hook entries
+    - "trackcount" keyword - Number of track entries
+    - "obstaclecount" keyword - Number of obstacle entries
+    - ".lyt" extension - LYT file extension
+    - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+    Derivations and Other Implementations:
         ----------
         https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/LYTObject.ts:18-100
         ASCII Format:

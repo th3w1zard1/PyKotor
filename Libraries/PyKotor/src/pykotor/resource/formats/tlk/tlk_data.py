@@ -6,27 +6,35 @@ to localized text and associated voice-over audio files.
 
 References:
 ----------
-        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
-        Original BioWare engine binaries
-        TLK file format specification
-        Binary Format:
-        -------------
-        Header (20 bytes):
-        - 4 bytes: File Type ("TLK ")
-        - 4 bytes: File Version ("V3.0" for KotOR, "V4.0" for Jade Empire)
-        - 4 bytes: Language ID (int32)
-        - 4 bytes: String Count (int32)
-        - 4 bytes: String Entries Offset (int32)
-        String Data Table (40 bytes per entry):
-        - 4 bytes: Flags (bit 0=text present, bit 1=sound present, bit 2=sound length present)
-        - 16 bytes: Sound ResRef (null-terminated ASCII, max 16 chars)
-        - 4 bytes: Volume Variance (unused in KotOR)
-        - 4 bytes: Pitch Variance (unused in KotOR)
-        - 4 bytes: Offset to String (from String Entries Offset)
-        - 4 bytes: String Size (length in bytes)
-        - 4 bytes: Sound Length (float, seconds)
-        String Entries:
-        - Variable length null-terminated strings
+    Based on swkotor.exe TLK structure:
+    - CResTLK::CResTLK - TLK resource constructor
+    - LoadTLK - Loads TLK file from resource
+    - GetString - Gets string by StrRef index
+    - "TLK " file type identifier - First 4 bytes of TLK files
+    - "V3.0" version identifier - Bytes 4-7 of KotOR TLK files
+    - "V4.0" version identifier - Bytes 4-7 of Jade Empire TLK files
+    - "dialog.tlk" - Default TLK filename loaded by game
+    - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+    TLK file format specification
+
+Binary Format:
+-------------
+    Header (20 bytes):
+    - 4 bytes: File Type ("TLK ")
+    - 4 bytes: File Version ("V3.0" for KotOR, "V4.0" for Jade Empire)
+    - 4 bytes: Language ID (int32)
+    - 4 bytes: String Count (int32)
+    - 4 bytes: String Entries Offset (int32)
+    String Data Table (40 bytes per entry):
+    - 4 bytes: Flags (bit 0=text present, bit 1=sound present, bit 2=sound length present)
+    - 16 bytes: Sound ResRef (null-terminated ASCII, max 16 chars)
+    - 4 bytes: Volume Variance (unused in KotOR)
+    - 4 bytes: Pitch Variance (unused in KotOR)
+    - 4 bytes: Offset to String (from String Entries Offset)
+    - 4 bytes: String Size (length in bytes)
+    - 4 bytes: Sound Length (float, seconds)
+    String Entries:
+    - Variable length null-terminated strings
 """
 
 from __future__ import annotations
@@ -51,9 +59,20 @@ class TLK(ComparableMixin):
     
     References:
     ----------
-        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
-        Original BioWare engine binaries
-        TLK file format specification
+    Based on swkotor.exe TLK structure:
+    - CResTLK::CResTLK - TLK resource constructor
+    - LoadTLK - Loads TLK file from resource manager
+    - GetString - Gets localized string by StrRef index
+    - "TLK " file type identifier - First 4 bytes of TLK files
+    - "V3.0" version identifier - Bytes 4-7 of KotOR TLK files (offset 0x04)
+    - "V4.0" version identifier - Bytes 4-7 of Jade Empire TLK files
+    - Language ID field at offset 0x08 (4 bytes, int32)
+    - String Count field at offset 0x0C (4 bytes, int32)
+    - String Entries Offset at offset 0x10 (4 bytes, int32)
+    - String Data Table starts at offset 0x14 (40 bytes per entry)
+    - "dialog.tlk" - Default TLK filename loaded by game at startup
+    - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+    TLK file format specification
 
 
         

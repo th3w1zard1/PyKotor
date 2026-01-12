@@ -1,53 +1,44 @@
-"""Binary SSF (Sound Set File) I/O operations.
-
-This module handles reading and writing binary SSF format files used in KotOR.
-SSF files contain mappings from sound event types to string references (StrRefs)
+"""
+SSF (Sound Set File) files contain mappings from sound event types to string references (StrRefs)
 in the TLK file. Each SSF defines a set of 28 sound effects that creatures can play during
 various game events (battle cries, pain grunts, selection sounds, etc.). The StrRefs point
 to entries in dialog.tlk which contain the actual WAV file references.
 
-I/O and Parsing Functions (Engine Implementation):
--------------------------------------------------
-These functions correspond to the game engine's SSF parsing implementation:
-
-    - CResSSF::CResSSF - K1: 0x006db650, TSL: (TODO: Find this address)
-      * Constructor for SSF resource
-      * Initializes SSF resource structure
-      * Sets up vtable and resource flags
-      
-    - CResSSF::~CResSSF - K1: 0x006db670, TSL: (TODO: Find this address)
-      * Destructor for SSF resource
-      * Cleans up allocated memory
-      
-    - CResSSF::~CResSSF (alternate) - K1: 0x006db6b0, TSL: (TODO: Find this address)
-      * Alternate destructor path for SSF resource
-      
-    String References:
-    -----------------
-    - "SSF " @ (K1: TODO: Find this address, TSL: TODO: Find this address) - File type identifier (first 4 bytes)
-    - "V1.1" @ (K1: TODO: Find this address, TSL: TODO: Find this address) - File version identifier (bytes 4-7)
-    - ".ssf" @ (K1: TODO: Find this address, TSL: TODO: Find this address) - SSF file extension
-    
-    Binary Format:
-    -------------
-    Header (12 bytes):
-    Offset | Size | Type   | Description
-    -------|------|--------|-------------
-    0x00   | 4    | char[] | File Type ("SSF ")
-    0x04   | 4    | char[] | File Version ("V1.1")
-    0x08   | 4    | uint32 | Offset to Sound Table (typically 12)
-    
-    Sound Table (112 bytes = 28 entries * 4 bytes):
-    Offset | Size | Type   | Description
-    -------|------|--------|-------------
-    0x00   | 4    | int32  | StrRef for BATTLE_CRY_1
-    0x04   | 4    | int32  | StrRef for BATTLE_CRY_2
-    ...    | ...  | ...    | ...
-    0x6C   | 4    | int32  | StrRef for POISONED
-    
-    Each entry is a StrRef (string reference) into dialog.tlk
-    Value -1 indicates no sound for that event type
-    Index corresponds to SSFSound enum value (0-27)
+References:
+----------
+    Based on swkotor.exe SSF structure:
+    - LoadSSF - Loads SSF file for creature sound sets
+      * Parses binary SSF format with "SSF V1.1" header
+      * Reads offset to sound table (typically 12)
+      * Reads 28 StrRef entries (4 bytes each, int32)
+      * Maps sound event types to TLK string references
+    - "SSF " file type identifier - First 4 bytes of SSF files
+    - "V1.1" version identifier - Bytes 4-7 of SSF files
+    - Offset to Sound Table field at offset 0x08 (4 bytes, uint32, typically 12)
+    - Sound Table starts at offset 0x0C (112 bytes: 28 entries * 4 bytes)
+      * Each entry is a StrRef (int32) into dialog.tlk
+      * Value -1 indicates no sound for that event type
+      * Index corresponds to SSFSound enum value (0-27)
+    - ".ssf" extension - SSF file extension
+    - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+    SSF file format specification
+        Binary Format:
+        -------------
+        Header (12 bytes):
+        Offset | Size | Type   | Description
+        -------|------|--------|-------------
+        0x00   | 4    | char[] | File Type ("SSF ")
+        0x04   | 4    | char[] | File Version ("V1.1")
+        0x08   | 4    | uint32 | Offset to Sound Table (typically 12)
+        Sound Table (112 bytes = 28 entries * 4 bytes):
+        Offset | Size | Type   | Description
+        -------|------|--------|-------------
+        0x00   | 4    | int32  | StrRef for BATTLE_CRY_1
+        0x04   | 4    | int32  | StrRef for BATTLE_CRY_2
+        ...    | ...  | ...    | ...
+        0x6C   | 4    | int32  | StrRef for POISONED
+        Each entry is a StrRef (string reference) into dialog.tlk
+        Value -1 indicates no sound for that event type
 """
 
 from __future__ import annotations
@@ -69,10 +60,9 @@ class SSFBinaryReader(ResourceReader):
     
     References:
     ----------
-        Engine Implementation:
-        - CResSSF::CResSSF() @ (K1: 0x006db650, TSL: TODO: Find this address) - Constructor for SSF resource
-        - CResSSF::~CResSSF() @ (K1: 0x006db670, TSL: TODO: Find this address) - Destructor for SSF resource
-        - CResSSF::~CResSSF() (alternate) @ (K1: 0x006db6b0, TSL: TODO: Find this address) - Alternate destructor path
+        Based on swkotor.exe SSF structure:
+        - CResSSF::CResSSF @ 0x006db650 - Constructor for SSF resource
+        - CResSSF::~CResSSF @ 0x006db670, @ 0x006db6b0 - Destructors for SSF resource
         - SSF file format: "SSF " type, "V1.1" version
         - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         

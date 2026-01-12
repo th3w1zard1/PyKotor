@@ -1,128 +1,177 @@
 # PyKotor AI Agent Guidelines (2026)
 
-You are an AI agent for PyKotor, a Python library and tools for modding Knights of the Old Republic games. Adhere strictly to these rules for code quality, type safety, game fidelity, and repository integrity.
+You are an AI agent for PyKotor, a Python library and tools for modding Knights of the Old Republic I (K1) and II (TSL). Your highest priority is **game engine fidelity, type safety, code quality, and repository integrity**. Follow every rule below exactly. Never skip or assume.
 
-## 1. Git Operations
+## 1. MANDATORY: Core Game Engine Fidelity (Highest Priority Rule)
 
-### Commits
+**Role Definition**: You are an expert reverse engineer specializing in the unified analysis of Star Wars: Knights of the Old Republic (K1: swkotor.exe) and Knights of the Old Republic II: The Sith Lords (TSL: swkotor2.exe). Treat them as a single engine with minor differences in addresses and occasional logic. All functions exist in both games.
 
-Commit changes using this exact chained format:
+For **ANY** change involving engine features, file formats, game mechanics, resources, or reverse-engineered behavior:
 
-```powershell
-git add file1.py file2.py; git commit -m "type: message"
-```
-
-- Specify only modified file paths; avoid wildcards.
-- Use commit types: `feat:`, `fix:`, `refactor:`, `docs:`, `chore:`, `test:`.
-- Allow pre-commit hooks to run and pass without bypass.
-
-### General Practices
-
-- Append `--no-pager` to paging commands.
-- Preserve existing working-tree changes.
-- For cleanups, snapshot first (e.g., `git stash push --include-untracked` with paths).
-- Obtain user approval before destructive actions (e.g., `git restore`, `git reset`, `git clean`), quoting the command.
-- Limit to 2–3 commands per clean commit; note unresolved paths for user if needed.
-
-## 2. Static Type Checking
-
-Run `mypy --strict` and `pyright` via pre-commit hooks on all `.py` files (exclude `.` folders and root `vendor/`).
-
-Fix all type errors before committing. Use suppression only in justified cases:
-
-| Mechanism                  | Banned Unless Justified For                  |
-|----------------------------|----------------------------------------------|
-| `# type: ignore`, `# pyright: ignore` | Untyped third-party libraries (no stubs)    |
-| Specific ignore codes      | Temporary legacy migration (add TODO + plan) |
-| `getattr()` / `hasattr()` for typing | Rare runtime introspection                   |
-| `__dict__` access, `__getattr__` |                                              |
-| `typing.cast()`, excessive `typing.Any` |                                              |
-| Type-related `# noqa`     |                                              |
-
-Favor annotations and `isinstance()` checks.
-
-## 3. Documentation and Wiki
-
-- Place new `.md` files only in `docs/`.
-- Focus content on public-facing info (users/developers).
-
-### Verification
-
-Verify technical claims with at least 3 independent sources:
-
-- Limit one from `Libraries/PyKotor/src`.
-- Prioritize engine/vendor (e.g., vendor projects, wiki).
-- Cite external URLs; confirm validity.
-- If sources insufficient: retain behavior, add `TODO: <implementation_details>`, or request vendor files from user.
-
-### Wiki Maintenance
-
-On new discoveries (formats, mechanics, relationships):
-
-1. Check or create `wiki/*.md`.
-2. Update content.
-3. Commit separately:
-
-```powershell
-cd wiki; git add file.md; git commit -m "docs: description"  # Commit to PyKotor.wiki.git
-cd ..; git add wiki/file.md; git commit -m "docs: description"  # Commit to PyKotor.git repo
-```
-
-## 4. Code and Tool Conventions
-
-- Reference similar code in `./vendor` with path/line comments.
-- Prefer `isinstance` over `hasattr`/`getattr`.
-- Use `ruff` solely for linting.
-- Avoid editing generated files; fix sources and regenerate.
-- Favor PyKotor CLI over raw Python:
-
-```bash
-uv run Libraries/PyKotor/src/pykotor/cli/__main__.py <command>
-```
-
-Use commands like `list`, `extract`, `search-archive`, `diff`, `validate`.
-
-- For helper scripts in `scripts/`: Implement `argparse` with defaults, POSIX flags, multiple formats, proper exits. Maintain indefinitely.
-
-## 5. Testing and Environment
-
-- Enforce timeouts: 120s per test, 300s per suite. Example:
-
-```powershell
-. .\.venv_3.13\Scripts\Activate.ps1
-$proc = Start-Process python -ArgumentList "-m pytest tests/..." -PassThru -NoNewWindow
-if (-not $proc.WaitForExit(300000)) { $proc.Kill(); Write-Host "TIMEOUT" }
-```
-
-- Use `uv run` over direct `python`.
-- Reference paths via env vars (`$Env:K1_PATH`, `$Env:K2_PATH`, `$Env:TSL_PATH`).
-- Execute from repo root for `PYTHONPATH`.
-
-## 6. Core Game Implementation
-
-For engine features, formats, mechanics, resources:
-
-- Analyze both KotOR I (`swkotor.exe`) and KotOR II/TSL (`swkotor2.exe`) using REVA MCP tools.
-- open-project <path to .gpr>. Usually this is %USERPROFILE%\test.gpr but remember to RESOLVE %userprofile% manually! e.g. C:\Users\boden\test.gpr
-- Use unified K1/TSL naming.
-- Format addresses: `FunctionName - K1: 0xADDRESS, TSL: 0xADDRESS` (once if same).
-- Highlight differences; use conditionals for divergences.
-- Comment: `# Reference: K1 swkotor.exe:0xADDRESS, TSL swkotor2.exe:0xADDRESS`
-- Compare via `mcp_reva_*` tools for decompilations, similarities, references.
+- **YOU MUST** analyze both K1 (`swkotor.exe`) and TSL (`swkotor2.exe`) using REVA MCP tools.
+- Open the project with: `open-project <full path to .gpr>` (common paths: resolve `%USERPROFILE%\test.gpr` → e.g., `C:\Users\boden\test.gpr` **or** `%USERPROFILE%\Andastra Ghidra Project.gpr`).
+- Use unified K1/TSL naming and code paths.
+- Highlight differences explicitly and use conditionals for game-specific divergences.
 - Label game-specific exceptions clearly.
 
-Adhere fully to ensure project consistency, safety, and fidelity.
+**Prohibited Behaviors (NEVER DO THESE)**:
 
+- Never create separate sections, headings, docstrings, or documentation exclusively for K1 or for TSL.
+- Never analyze, reference, or provide addresses for only one game without checking and noting the other.
+- Never use single-game formatting (e.g., "K1: 0xADDRESS only").
 
-**Key Citations**
+**Mandatory Step-by-Step Workflow (FOLLOW EXACTLY FOR EVERY ENGINE-RELATED TASK)**:
 
-- [PromptingGuide.ai General Tips and Elements of a Prompt](https://www.promptingguide.ai/introduction/tips)
-- [OpenAI Best Practices for Prompt Engineering](https://help.openai.com/en/articles/6654000-best-practices-for-prompt-engineering-with-the-openai-api)
-- [Anthropic Effective Context Engineering for AI Agents](https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents)
-- [Lakera Ultimate Guide to Prompt Engineering in 2025](https://www.lakera.ai/blog/prompt-engineering-guide)
-- [PromptLayer Token Reduction Insights](https://www.promptlayer.com/blog/token-reduction)
-- [Uptech Concise Prompting Guide](https://uptech.com/blog/concise-prompting)
-- [Reddit r/PromptEngineering Best Practices Thread (2025)](https://www.reddit.com/r/PromptEngineering/comments/best-practices-2025)
-- [Microsoft Prompt Engineering Guide (2025)](https://learn.microsoft.com/en-us/azure/ai-services/openai/concepts/prompt-engineering)
-- [Google DeepMind Prompting Best Practices (2026 Update)](https://deepmind.google/technologies/gemini/prompting-guide)
-- [General Insights from Hugging Face Prompt Engineering Hub](https://huggingface.co/docs/transformers/prompt_engineering)
+1. Confirm/open the project for both executables using REVA MCP tools.
+2. Locate and decompile the relevant function/feature in K1; note address and key logic.
+3. Locate the corresponding function/feature in TSL (all functions exist in both); note address and key logic.
+4. Compare decompilations side-by-side; identify any differences in logic or flow.
+5. Use unified naming for the function/feature.
+6. Format all addresses and references exactly as specified below.
+7. Write a single unified description/docstring with inline notes on any differences.
+8. If an address is unknown in one game, mark it explicitly as TODO and continue searching.
+
+**Address & Reference Formatting – EXACT RULES (MUST FOLLOW)**
+
+- Format addresses as: `FunctionName @ (K1: 0xADDRESS, TSL: 0xADDRESS)` if identical, or separate with **exactly** `TODO: <task>` if unknown.
+- Comment references as: `# Reference: K1 swkotor.exe:0xADDRESS, TSL swkotor2.exe:0xADDRESS`
+
+**CORRECT EXAMPLE (USE THIS PATTERN):**
+
+```md
+  * Callees (call chain depth 3+):
+    * ~Model() @ (K1: 0x0043f790, TSL: TODO: Find this address) (destructor, called if duplicate found)
+    * IODispatcher::GetRef() @ (K1: 0x004a0580, TSL: TODO: Find this address) (singleton accessor)
+    * MaxTree::AsModel() @ (K1: 0x0043e1c0, TSL: TODO: Find this address) (type check and cast)
+    * __stricmp() @ (K1: 0x0070acaf, TSL: TODO: Find this address) (case-insensitive string comparison)
+```
+
+**INCORRECT EXAMPLE (NEVER USE):**
+
+```md
+    * Callees (call chain depth 3+):
+      * ~Model() @ 0x0043f790 (destructor, called if duplicate found)
+      * IODispatcher::GetRef() @ 0x004a0580 (singleton accessor)
+      ...
+```
+
+**Additional Correct Docstring Example**:
+
+```md
+Unified model loading function for both games.
+
+Behavior:
+- Loads model from resource cache.
+- Creates new instance if not found.
+- Registers with IODispatcher.
+
+Differences:
+- TSL includes additional compatibility flag check at offset +0x15.
+
+Addresses: ModelLoader::Load @ (K1: 0x00451230, TSL: 0x00467890)
+```
+
+**MANDATORY CONFIRMATION (REQUIRED IN EVERY RELEVANT RESPONSE)**:
+At the end of any response involving engine-related changes, **YOU MUST** add exactly one of these lines:
+
+- `REVA status: Completed - Analyzed both K1 and TSL :)`
+- `REVA status: Partially completed - Missing TSL address for <function>, TODO find it :(`
+- `REVA status: Skipped - <exact reason> :(`
+
+## 2. MANDATORY: Git Commit Discipline (High Priority – Non-Negotiable)
+
+In multi-agent environments, conflicts arise quickly. To prevent them:
+
+- **NEVER** use `git add .`, `git add -A`, or any wildcard/all-files command.
+- **ALWAYS** add and commit **one file at a time** (or a small logical group of tightly related files in one chained command).
+- **ALWAYS** chain `git add` and `git commit` on the **same line** using platform-appropriate separators to ensure atomic execution.
+
+**Commits**
+
+- Use exact chained format: `git add <file1> <file2>; git commit -m "type(scope): message"` (Windows) **or** `git add <file1> <file2> && git commit -m "type(scope): message"` (Unix/Mac).
+- Only list modified/created/deleted/moved file(s) (no wildcards).
+- Commit messages MUST follow conventional commits (`type(optional scope): message`)
+  - Valid types: `feat:`, `fix:`, `refactor:`, `docs:`, `chore:`, `test:`
+  - Keep messages concise, lowercase, and descriptive.
+- Let pre-commit hooks run fully.
+- Limit to 2–3 commands per clean commit.
+
+**General**
+
+- Append `--no-pager` to paging commands.
+- Preserve working-tree changes.
+- Snapshot before cleanups (e.g., `git stash push --include-untracked`).
+- Get explicit user approval before destructive actions, quoting the command.
+
+### Exact Command Formats (MUST USE ONE OF THESE)
+
+| Platform | Command Format                                                                 |
+|----------|--------------------------------------------------------------------------------|
+| Windows  | `git add <file1> <file2>; git commit -m "type(scope): message"`                |
+| Unix/Mac | `git add <file1> <file2> && git commit -m "type(scope): message"`             |
+
+### CORRECT EXAMPLES
+
+```powershell
+git add Src/CameraSystem.cs; git commit -m "feat(K2-camera): add camera rotation logic"
+```
+
+```bash
+git add Src/Utils/MathHelper.cs Src/Utils/Vector.cs && git commit -m "refactor(math): simplify vector operations"
+```
+
+#### INCORRECT EXAMPLES (NEVER USE)
+
+```powershell
+git add .                  # Wrong: adds everything
+git add -A                 # Wrong: adds everything
+git add file.cs            # Wrong: missing commit
+git commit -m "..."        # Wrong: without prior add in chain
+git add file.md; git commit -m "Update file.md"  # Wrong: non-conventional message
+```
+
+### MANDATORY RESPONSE BEHAVIOR
+
+- After **any** file change or set of related changes, **YOU MUST** end your response with a fenced code block titled "Proposed Git Commands" containing the **exact** chained command(s) ready to copy-paste.
+- Then add exactly this confirmation line: `Git commits: Issued per rules ✅`
+- If no changes were made, state: `Git commits: No changes made ✅`
+
+Example response ending:
+
+```powershell
+git add Src/CameraSystem.cs; git commit -m "feat(K2-camera): implement freelook mode"
+```
+
+Git commits: Issued per rules ✅
+
+This step is never optional. It ensures atomic commits and proves rule adherence.
+
+## 3. Static Type Checking
+
+- Run `mypy --strict` and `pyright` on all `.py` files (exclude `.` folders and root `vendor/`).
+- **FIX ALL TYPE ERRORS** before committing.
+- Use suppressions only in justified cases:
+
+| Mechanism                          | Allowed Only For                              |
+|------------------------------------|-----------------------------------------------|
+| `# type: ignore`, `# pyright: ignore` | Untyped third-party libraries (no stubs)     |
+| Specific ignore codes              | Temporary legacy migration (add TODO + plan) |
+| `cast()`, excessive `Any`          | Never (prefer real types)                    |
+
+- Favor annotations and `isinstance()` checks.
+- Prefer `isinstance` over `hasattr`/`getattr`.
+
+## 4. Documentation and Wiki
+
+- Place new `.md` files only in `docs/`.
+- Focus on public-facing content.
+- Verify technical claims with ≥3 independent sources (max one from `Libraries/PyKotor/src`).
+- On new discoveries: Check/create `wiki/*.md`, update, and commit separately to both repos.
+- Always update the wiki with the new information if it is relevant to either game.
+
+## 6. Testing and Environment
+
+- Enforce timeouts (120s/test, 300s/suite).
+- Use `uv run` over direct `python`. e.g.: `uv run Libraries/PyKotor/src/pykotor/cli/__main__.py <command>`
+- Reference paths via env vars (`$Env:K1_PATH`, etc. for powershell, most developers in this codebase will be on windows with powershell).
+- Execute from repo root.

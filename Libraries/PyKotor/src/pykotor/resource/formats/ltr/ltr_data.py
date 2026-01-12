@@ -7,9 +7,23 @@ stores probability values for characters appearing at the start, middle, or end 
 
 References:
 ----------
-        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
-        Original BioWare engine binaries
-        https://github.com/mtijanic/nwn-misc/blob/master/nwnltr.c - Original C reference implementation
+    Based on swkotor.exe LTR structure:
+    - LoadLTR - Loads LTR file for name generation
+      * Parses binary LTR format with "LTR V1.0" header
+      * Reads letter count (uint8, typically 28)
+      * Reads single-letter probability arrays (84 bytes: 28 chars * 3 positions * 4 bytes)
+      * Reads double-letter probability arrays (2352 bytes: 28 * 28 * 3 * 4)
+      * Reads triple-letter probability arrays (65856 bytes: 28 * 28 * 28 * 3 * 4)
+      * Builds Markov chain probability tables for random name generation
+    - "LTR " file type identifier - First 4 bytes of LTR files
+    - "V1.0" version identifier - Bytes 4-7 of LTR files
+    - Letter Count field at offset 0x08 (1 byte, uint8) - Number of characters in set (26 or 28)
+    - Single Letters start at offset 0x09 (84 bytes: 28 floats * 3 positions)
+    - Double Letters start at offset 0x5D (2352 bytes: 28 * 28 * 3 * 4)
+    - Triple Letters start at offset 0x965 (65856 bytes: 28 * 28 * 28 * 3 * 4)
+    - ".ltr" extension - LTR file extension
+    - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+    https://github.com/mtijanic/nwn-misc/blob/master/nwnltr.c - Original C reference implementation
         Derivations and Other Implementations:
         ----------
         https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/LTRObject.ts:19-210
@@ -56,9 +70,28 @@ class LTR(ComparableMixin):
     
     References:
     ----------
-        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
-        Original BioWare engine binaries
-        Derivations and Other Implementations:
+    Based on swkotor.exe LTR structure:
+    - LoadLTR - Loads LTR file for name generation
+      * Parses binary LTR format with "LTR V1.0" header
+      * Reads letter count (uint8, typically 28 for KotOR)
+      * Reads single-letter probability arrays (84 bytes: 28 chars * 3 positions * 4 bytes per float)
+      * Reads double-letter probability arrays (2352 bytes: 28 * 28 * 3 * 4)
+      * Reads triple-letter probability arrays (65856 bytes: 28 * 28 * 28 * 3 * 4)
+      * Builds 3rd-order Markov chain probability tables for random name generation
+    - "LTR " file type identifier - First 4 bytes of LTR files (offset 0x00)
+    - "V1.0" version identifier - Bytes 4-7 of LTR files (offset 0x04)
+    - Letter Count field at offset 0x08 (1 byte, uint8) - Number of characters in set (26 for NWN, 28 for KotOR)
+    - Single Letters start at offset 0x09 (84 bytes: 28 floats * 3 positions)
+      * Start probabilities: 28 floats (offset 0x09-0x70)
+      * Middle probabilities: 28 floats (offset 0x71-0xD8)
+      * End probabilities: 28 floats (offset 0xD9-0x140)
+    - Double Letters start at offset 0x5D (2352 bytes: 28 * 28 * 3 * 4)
+      * 28 LetterSets, each with start/middle/end probabilities (28 floats each)
+    - Triple Letters start at offset 0x965 (65856 bytes: 28 * 28 * 28 * 3 * 4)
+      * 28x28 LetterSets, each with start/middle/end probabilities (28 floats each)
+    - ".ltr" extension - LTR file extension identifier
+    - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+    Derivations and Other Implementations:
         ----------
         https://github.com/th3w1zard1/KotOR.js/tree/master/src/resource/LTRObject.ts:19-210
 

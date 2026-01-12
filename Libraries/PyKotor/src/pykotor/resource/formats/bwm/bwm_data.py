@@ -14,9 +14,30 @@ This module contains a high-level, in-memory representation of that data:
 
 References:
 ----------
-        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
-        Original BioWare engine binaries
-        Derivations and Other Implementations:
+    Based on swkotor.exe BWM structure:
+    - LoadWalkMesh @ 0x00579520 - CSWSRoom::LoadWalkMesh (62 bytes, 2 callees)
+      * Loads walkmesh for a room via CSWCollisionMesh::LoadMesh
+      * Sets resref from room resref
+      * Signature: undefined4 __thiscall CSWSRoom::LoadWalkMesh(CSWSRoom *this, int param_1)
+    - LoadMesh @ 0x00596670 - CSWCollisionMesh::LoadMesh (536 bytes, 3 callees)
+      * Main walkmesh loading function
+      * Checks for binary walkmesh (BWM) first, falls back to text walkmesh (MDL)
+      * Creates CResBWM or CResMDL resource objects
+      * Calls CRes::Demand to load the resource
+      * Signature: undefined4 __thiscall CSWCollisionMesh::LoadMesh(CSWCollisionMesh *this, int param_1)
+    - LoadMeshText @ 0x00582d70 - CSWRoomSurfaceMesh::LoadMeshText (3882 bytes, 1 callee)
+      * Loads text-based walkmesh format (ASCII MDL format)
+      * Parses walkmesh geometry from text data
+      * Signature: undefined4 __thiscall CSWRoomSurfaceMesh::LoadMeshText(CSWRoomSurfaceMesh *this, byte *param_1, ulong param_2)
+    - CResBWM::CResBWM @ 0x005ceab0 - BWM resource constructor (25 bytes, 1 callee)
+    - CResBWM::~CResBWM @ 0x005cead0 - BWM resource destructor (11 bytes, 1 callee)
+    - CResBWM::~CResBWM @ 0x005ceb50 - BWM resource destructor variant (27 bytes, 2 callees)
+    - GetResourceForBinaryWalkMesh @ 0x005ce8b0 - Gets resource reference for binary walkmesh (174 bytes, 6 callees)
+    - "BWM V1.0" string @ 0x0074a098 - BWM file version identifier
+    - "bwm" extension string @ 0x0074dc88 - BWM file extension
+    - "ERROR: opening a Binary walkmesh file for writeing that already exists (File: %s)" @ 0x0074a0a8 - Error message
+    - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+    Derivations and Other Implementations:
         ----------
         https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/OdysseyWalkMesh.ts:24-981
         https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/WalkmeshEdge.ts:15-110
@@ -96,11 +117,18 @@ class BWMType(IntEnum):
 
     References:
     ----------
-        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
-        Original BioWare engine binaries
-        Derivations and Other Implementations:
-        ----------
-        https://github.com/th3w1zard1/KotOR.js/tree/master/src/enums/odyssey/OdysseyWalkMeshType.ts:11-14
+    Based on swkotor.exe BWM structure:
+    - LoadWalkMesh @ 0x00579520 - CSWSRoom::LoadWalkMesh loads walkmesh for rooms
+    - LoadMesh @ 0x00596670 - CSWCollisionMesh::LoadMesh handles BWM/MDL loading
+    - CResBWM::CResBWM @ 0x005ceab0 - BWM resource constructor
+    - "BWM V1.0" string @ 0x0074a098 - BWM file version identifier
+    - Walkmesh type field at offset 0x08 in BWM header (4 bytes, uint32)
+      * 0 = PlaceableOrDoor (PWK/DWK format)
+      * 1 = AreaModel (WOK format with AABB trees)
+    - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+    Derivations and Other Implementations:
+    ----------
+    https://github.com/th3w1zard1/KotOR.js/tree/master/src/enums/odyssey/OdysseyWalkMeshType.ts:11-14
 
 
 
@@ -130,12 +158,28 @@ class BWM(ComparableMixin):
 
     References:
     ----------
-        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
-        Original BioWare engine binaries
-        Derivations and Other Implementations:
-        ----------
-        https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/OdysseyWalkMesh.ts:24-981
-        https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/walkmesh.py:25-60
+    Based on swkotor.exe BWM structure:
+    - LoadWalkMesh @ 0x00579520 - CSWSRoom::LoadWalkMesh (62 bytes, 2 callees)
+      * Loads walkmesh for a room via CSWCollisionMesh::LoadMesh
+      * Sets resref from room resref before loading
+    - LoadMesh @ 0x00596670 - CSWCollisionMesh::LoadMesh (536 bytes, 3 callees)
+      * Main walkmesh loading function
+      * Checks for binary walkmesh (BWM) first via GetResourceForBinaryWalkMesh
+      * Falls back to text walkmesh (MDL) if BWM not found
+      * Creates CResBWM or CResMDL resource objects via CExoResMan::GetResObject
+      * Calls CRes::Demand to load the resource data
+    - LoadMeshText @ 0x00582d70 - CSWRoomSurfaceMesh::LoadMeshText (3882 bytes)
+      * Loads text-based walkmesh format (ASCII MDL format)
+      * Parses walkmesh geometry, faces, vertices from text data
+    - CResBWM::CResBWM @ 0x005ceab0 - BWM resource constructor (25 bytes, 1 callee)
+    - GetResourceForBinaryWalkMesh @ 0x005ce8b0 - Gets resource reference for binary walkmesh (174 bytes, 6 callees)
+    - "BWM V1.0" string @ 0x0074a098 - BWM file version identifier (first 8 bytes of BWM files)
+    - "bwm" extension string @ 0x0074dc88 - BWM file extension
+    - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+    Derivations and Other Implementations:
+    ----------
+    https://github.com/th3w1zard1/KotOR.js/tree/master/src/odyssey/OdysseyWalkMesh.ts:24-981
+    https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/scene/walkmesh.py:25-60
 
 
 

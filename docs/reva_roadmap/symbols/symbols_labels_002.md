@@ -1,0 +1,8 @@
+TASK_ID: symbols_labels_002
+ORIGINAL_TEXT: Make label names meaningful (K1: 0/count TBD, TSL: 0/count TBD)
+SECTION: Symbols > Labels
+REQUIRED_INPUTS: 
+SUCCESS_CRITERIA: 
+FAILURE_MODES: 
+EVIDENCE_REQUIRED: 
+UPDATE_RULES: 

@@ -1,0 +1,8 @@
+TASK_ID: data_types_arrays_001
+ORIGINAL_TEXT: Document all array types (K1: count TBD, TSL: count TBD)
+SECTION: Data Types > Arrays
+REQUIRED_INPUTS: 
+SUCCESS_CRITERIA: 
+FAILURE_MODES: 
+EVIDENCE_REQUIRED: 
+UPDATE_RULES: 

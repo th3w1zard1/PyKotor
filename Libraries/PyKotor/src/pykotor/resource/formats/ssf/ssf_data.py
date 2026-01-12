@@ -25,12 +25,9 @@ class SSF(ComparableMixin):
     
     References:
     ----------
-        Engine Implementation:
-        - CResSSF::CResSSF() @ (K1: 0x006db650, TSL: TODO: Find this address) - Constructor for SSF resource
-        - CResSSF::~CResSSF() @ (K1: 0x006db670, TSL: TODO: Find this address) - Destructor for SSF resource
-        - CResSSF::~CResSSF() (alternate) @ (K1: 0x006db6b0, TSL: TODO: Find this address) - Alternate destructor path
-        - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
-        - SSF file format specification
+        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
+        Original BioWare engine binaries
+        SSF file format specification
 
 
         

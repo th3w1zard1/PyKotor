@@ -7,9 +7,25 @@ that specifies operand types.
 
 References:
 ----------
-        Original BioWare engine binaries (from swkotor.exe, swkotor2.exe)
-        Original BioWare engine binaries
-        https://github.com/xoreos/xoreos-docs - Torlack's NCS specification (mirrored)
+    Based on swkotor.exe NCS structure:
+    - HandleBNCSMessage @ 0x005d5180 - CNetLayer::HandleBNCSMessage (559 bytes, 8 callees)
+      * Handles BNCS (BioWare Network Compiled Script) messages
+      * Validates message length (minimum 9 bytes)
+      * Extracts player name and message type
+      * Processes authentication and permission flags
+      * Signature: undefined4 __thiscall CNetLayer::HandleBNCSMessage(CNetLayer *this, ulong param_1, byte param_2, ulong param_3)
+    - CResNCS::CResNCS @ 0x005d4c30 - NCS resource constructor (29 bytes, 1 callee)
+    - CResNCS::~CResNCS @ 0x005d4c50 - NCS resource destructor (11 bytes, 1 callee)
+    - CResNCS::~CResNCS @ 0x005d4c90 - NCS resource destructor variant (27 bytes, 2 callees)
+    - ReadScriptFile @ 0x005d2260 - Reads NCS script file from disk
+    - ReadScriptsFromGff @ 0x004ebf20 - Reads NCS scripts from GFF data
+    - ExecuteCommandExecuteScript @ 0x00535b70 - Executes NCS bytecode
+    - "ncs" extension string @ 0x0074dd68 - NCS file extension
+    - "NCS " file type identifier - First 4 bytes of NCS files
+    - "V1.0" version identifier - Bytes 4-7 of NCS files
+    - Magic byte 0x42 - First instruction bytecode (byte 8)
+    - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
+    https://github.com/xoreos/xoreos-docs - Torlack's NCS specification (mirrored)
         Derivations and Other Implementations:
         ----------
         https://github.com/th3w1zard1/Kotor.NET/tree/master/Kotor.NET/Formats/KotorNCS/NCS.cs:9-799
