@@ -445,11 +445,11 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * - "_head_hit" @ (K1: 0x00753918, TSL: 0x007ccaf8): Hit detection node suffix
           *   * Referenced in 3 functions: [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00700da0), [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00705d20), [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x007052a0)
           *   * Not directly used in LoadModel_Internal, but related to model hit detection setup
-          * - "snd_Footstep" @ (K1: (TODO: Find this address), TSL: 0x007c82d0): Footstep sound callback name
-          *   * Referenced only in [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00669595)
+          * - "snd_Footstep" @ (K1: 0x0074f838, TSL: 0x007c82d0): Footstep sound callback name
+          *   * Referenced only in RegisterCallbacks_Headconjure() @ (K1: 0x0061ab40, TSL: 0x00669595)
           *   * Used to register footstep sound callback for creature animations
-          * - "snd_hitground" @ (K1: (TODO: Find this address), TSL: 0x007c82bc): Hit ground sound callback name
-          *   * Referenced only in [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006695d1)
+          * - "snd_hitground" @ (K1: 0x0074f824, TSL: 0x007c82bc): Hit ground sound callback name
+          *   * Referenced only in RegisterCallbacks_Headconjure() @ (K1: 0x0061ab40, TSL: 0x006695d1)
           *   * Used to register hit ground sound callback for creature animations
           * DATA CONSTANTS (verified via cross-references):
           * - GameObjectType_Constant_5 @ (K1: 0x00746634, TSL: 0x007beaec): Game object types constant (value: 5, cross-referenced 78 times)
