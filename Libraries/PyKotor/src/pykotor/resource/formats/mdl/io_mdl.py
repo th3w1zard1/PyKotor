@@ -2791,7 +2791,7 @@ class MDLBinaryReader:
           * Handles different model types: base, head, wield, head+wield, two-weapon
           * Sets up CSWCAnimBase, CSWCAnimBaseHead, CSWCAnimBaseWield, etc.
           * Registers callbacks and sets model properties
-        - CSWCPlaceable::LoadModel @ (K1: 0x006823f0, TSL: (TODO: Find this address)) - Placeable model loader (504 bytes, 105 lines)
+        - CSWCPlaceable::LoadModel @ (K1: 0x006823f0, TSL: 0x006d9721) - Placeable model loader (504 bytes, 105 lines)
           * Loads placeable models with animation base
           * Handles head hit detection ("_head_hit" node lookup)
           * Sets up CSWCAnimBasePlaceable
