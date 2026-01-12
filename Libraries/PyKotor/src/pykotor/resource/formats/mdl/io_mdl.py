@@ -37,9 +37,9 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * IODispatcher::ReadSync() @ (K1: 0x004a15d0, TSL: 0x004cead0) (file I/O dispatcher)
             * Input::Read() @ (K1: 0x004a1260, TSL: 0x004ce780) (parses MDL/MDX format)
               * InputBinary::Read() (binary parser)
-              * AurResGetNextLine() @ (K1: 0x0044bfa0, TSL: (TODO: Find this address - ASCII MDL reading path may differ in TSL)) (line reading for ASCII MDL)
+              * AurResGetNextLine() @ (K1: 0x0044bfa0, TSL: N/A - ASCII MDL format not supported in TSL) (line reading for ASCII MDL)
               * AurResGet() @ (K1: 0x0044c740, TSL: 0x00460db0) (resource data access)
-              * FuncInterp() @ (K1: 0x0044c1f0, TSL: (TODO: Find this address - ASCII MDL reading path may differ in TSL)) (function interpolation for animations)
+              * FuncInterp() @ (K1: 0x0044c1f0, TSL: N/A - ASCII MDL format not supported in TSL) (function interpolation for animations)
         * Callers (call chain showing usage):
           * NewCAurObject() @ (K1: 0x00449cc0, TSL: 0x0045e2e0) -> LoadModel() @ (K1: 0x00449d9d, TSL: 0x0047a570)
             * Called from: HideWieldedItems(), LoadSpellVisual(), LoadConjureVisual(), AddObstacle(),
@@ -73,9 +73,9 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
         * Callees:
           * Input::Read() @ (K1: 0x004a1260, TSL: 0x004ce780) (main parsing function)
             * InputBinary::Read() (binary format parser)
-            * AurResGetNextLine() @ (K1: 0x0044bfa0, TSL: (TODO: Find this address - ASCII MDL reading path may differ in TSL)) (line reading for ASCII MDL)
+            * AurResGetNextLine() @ (K1: 0x0044bfa0, TSL: N/A - ASCII MDL format not supported in TSL) (line reading for ASCII MDL)
             * AurResGet() @ (K1: 0x0044c740, TSL: 0x00460db0) (resource data access)
-            * FuncInterp() @ (K1: 0x0044c1f0, TSL: (TODO: Find this address - ASCII MDL reading path may differ in TSL)) (function interpolation for animations)
+            * FuncInterp() @ (K1: 0x0044c1f0, TSL: N/A - ASCII MDL format not supported in TSL) (function interpolation for animations)
         * Callers:
           * LoadModel() @ (K1: 0x00464200, TSL: 0x0047a570) (main entry point)
 
@@ -363,7 +363,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *   * TSL RegisterCallbacks() checks if *(int*)(param_1 + 0xf8) is cached (callback result)
           *   * TSL: If NULL and *(int*)(param_1 + 0xe4) == 0:
           *     - Calls GetObjectTypeID(*(uint*)(param_1 + 4)) @ (K1: N/A - not used, TSL: 0x004dc2e0) to get callback type ID
-          *     - Calls GetObjectByTypeID(*(void**)([TODO: Name this data] @ (K1: N/A, TSL: 0x008283d4) + 8), uVar1) @ (K1: N/A - not used, TSL: 0x004dc650) to get callback handler from registry
+          *     - Calls GetObjectByTypeID(*(void**)(CallbackRegistry @ (K1: N/A, TSL: 0x008283d4) + 8), uVar1) @ (K1: N/A - not used, TSL: 0x004dc650) to get callback handler from registry
           *     - If handler exists, calls handler->vtable[0x10]() to get callback object
           *     - Stores callback in *(void**)(param_1 + 0xf8)
           *     - If callback exists, calls SetCallbackTarget(callback, param_1) @ (K1: N/A - not used, TSL: 0x005056f0) to register callbacks
@@ -464,6 +464,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *   * Used to register hit ground sound callback for creature animations
           * DATA CONSTANTS (verified via cross-references):
           * - GameObjectType_Constant_5 @ (K1: 0x00746634, TSL: 0x007beaec): Game object types constant (value: 5, cross-referenced 78 times)
+          *   * Verified in both executables via cross-reference search
           *   * Passed to anim_base->vtable[0x7c]() for game object type setup
           *   * Labeled as GAME_OBJECT_TYPES_00746634 in K1
           * - FloatConstant_0_125 @ (K1: 0x0073f400, TSL: 0x007b7428): Float scale factor (0.125f, cross-referenced 9 times)
@@ -489,12 +490,12 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * 5. Additional callback caching mechanism (offset 0xf8)
           * 6. Different vtable offsets for some methods (Find dummy, Set size, Enable animation)
           * 7. Additional interpolation calculations for size class (not present in K1)
-          * 8. Additional headconjure positioning calculation with [TODO: Name this data] @ (K1: TODO: Find this address, TSL: 0x007b7428) scale factor
+          * 8. Additional headconjure positioning calculation with FloatConstant_0_125 @ (K1: 0x0073f400, TSL: 0x007b7428) scale factor
           * 9. Different string addresses (expected with recompilation)
           * 10. Obfuscated function names (FUN_* instead of clear names)
           * ERROR HANDLER: CSWCCreature::LoadModel @ 0x0066a0f0 (43 bytes, separate function)
           *   * Signature: undefined4 __thiscall CSWCCreature::LoadModel(char *param_1)
-          *   * Logic: Calls [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0076dac2) with error string format and resource name
+          *   * Logic: Calls sprintf equivalent @ (K1: 0x006fadb0, TSL: 0x0076dac2) with error string format and resource name
           *   * Called from: switch case 4 (default case) in LoadModel_Internal
           *   * Returns: 0 (failure)
           *   * Note: This is a separate error handler function, not the main LoadModel function
@@ -516,14 +517,14 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
         * Callees:
           * operator_new() @ 0x006fa7e6 (memory allocation)
           * CResRef::CopyToString() @ (K1: 0x00405f70, TSL: 0x00406050) - resource name extraction
-          * CExoString::CExoString() @ (K1: 0x005e5a90, TSL: TODO: Find this address) - string constructor)
-          * CExoString::CStr() @ (K1: 0x005e5670, TSL: TODO: Find this address) - C string accessor)
-          * CExoString::CExoString() @ (K1: 0x005b3190, TSL: TODO: Find this address) - empty string constructor)
-          * CExoString::operator+() @ (K1: 0x005e5d10, TSL: TODO: Find this address) - string concatenation)
-          * CSWCAnimBasePlaceable::CSWCAnimBasePlaceable() @ (K1: 0x006e4e50, TSL: TODO: Find this address) - placeable anim base)
-          * CExoString::SubString() @ (K1: 0x005e6270, TSL: TODO: Find this address) - substring extraction
-          * CExoString::operator=() @ (K1: 0x005e5c50, TSL: TODO: Find this address) - string assignment, called 2 times
-          * CExoString::~CExoString() @ (K1: 0x005e5c20, TSL: TODO: Find this address) - string destructor, called 4 times
+          * CExoString::CExoString() @ (K1: 0x005e5a90, TSL: 0x00630a90) - string constructor)
+          * CExoString::CStr() @ (K1: 0x005e5670, TSL: 0x006306b0) - C string accessor)
+          * CExoString::CExoString() @ (K1: 0x005b3190, TSL: 0x005ff130) - empty string constructor)
+          * CExoString::operator+() @ (K1: 0x005e5d10, TSL: 0x00630dd0) - string concatenation)
+          * CSWCAnimBasePlaceable::CSWCAnimBasePlaceable() @ (K1: 0x006e4e50, TSL: 0x00755970) - placeable anim base)
+          * CExoString::SubString() @ (K1: 0x005e6270, TSL: 0x00631330) - substring extraction
+          * CExoString::operator=() @ (K1: 0x005e5c50, TSL: 0x00630c50) - string assignment, called 2 times
+          * CExoString::~CExoString() @ (K1: 0x005e5c20, TSL: 0x00630c20) - string destructor, called 4 times
         * String References: "_head_hit" (hardcoded in function, not in string table)
 
     - CSWCCreature::UnloadModel @ (K1: 0x0060c8e0, TSL: TODO: Find this address)
@@ -561,7 +562,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
         * VTable: CResMDL_vtable located in data section
       * TSL: Not verified - search would be via CRes base class constructor pattern
 
-    - CResMDL::~CResMDL (destructor) - K1: 0x005cea80, TSL: (TODO: Find this address)
+    - CResMDL::~CResMDL (destructor) - K1: 0x005cea80, TSL: 0x00435200
       * MDL resource destructor (11 bytes, 1 callee)
         * Signature: void __thiscall CResMDL::~CResMDL(CResMDL *this)
         * Logic (from decompilation):
@@ -572,7 +573,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * CRes::~CRes() (base class destructor)
         * VTable: CResMDL_vtable @ 0x0074c404
 
-    - CResMDL::~CResMDL (deleting destructor) - K1: 0x005cea90, TSL: (TODO: Find this address)
+    - CResMDL::~CResMDL (deleting destructor) - K1: 0x005cea90, TSL: 0x00447740
       * MDL resource deleting destructor (27 bytes, 1 callee)
         * Signature: int ** __thiscall CResMDL::~CResMDL(CResMDL *this, byte param_1)
         * Logic (from decompilation):
@@ -2614,10 +2615,11 @@ def _decompress_quaternion(compressed: int) -> Vector4:
         - Quaternion::Quaternion @ (K1: 0x004ac960, TSL: (TODO: Find this address)) - Quaternion constructor (146 bytes, 1 callee)
           * Creates quaternion from axis-angle representation
           * Used for orientation parsing in MDL controllers
-        - GetQuaternionValue @ (K1: 0x004831b0, TSL: (TODO: Find this address)) - Gets quaternion value (382 bytes, 3 callees)
-        - GetQuaternionFromIndexLocation @ (K1: 0x00483050, TSL: (TODO: Find this address)) - Gets quaternion from index (347 bytes)
-        - quaternionScalarMult @ (K1: 0x004a9b80, TSL: (TODO: Find this address)) - Quaternion scalar multiplication (47 bytes)
-        - quaternionDotProduct @ (K1: 0x004a9d30, TSL: (TODO: Find this address)) - Quaternion dot product (37 bytes)
+        - GetQuaternionValue @ (K1: 0x004831b0, TSL: 0x004b3b90) - Gets quaternion value (382 bytes, 3 callees)
+        - GetQuaternionFromIndexLocation @ (K1: 0x00483050, TSL: 0x004b3a30) - Gets quaternion from index (347 bytes)
+        - slerp @ (K1: 0x004a9e00, TSL: 0x004d8c80) - Spherical linear interpolation for quaternions
+        - quaternionScalarMult @ (K1: 0x004a9b80, TSL: (TODO: Find this address - may be inlined)) - Quaternion scalar multiplication (47 bytes)
+        - quaternionDotProduct @ (K1: 0x004a9d30, TSL: (TODO: Find this address - may be inlined in slerp)) - Quaternion dot product (37 bytes)
         - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
         
         Derivations and Other Implementations:
@@ -3646,7 +3648,7 @@ class MDLBinaryWriter:
         - CSWCCreature::LoadModel @ (K1: 0x0061b380, TSL: 0x00669ea0) - Creature model loader (842 bytes, 167 lines)
           * Loads creature models with animation base setup
           * Handles different model types: base, head, wield, head+wield, two-weapon
-        - CSWCPlaceable::LoadModel @ (K1: 0x006823f0, TSL: (TODO: Find this address)) - Placeable model loader (504 bytes, 105 lines)
+        - CSWCPlaceable::LoadModel @ (K1: 0x006823f0, TSL: 0x006d9721) - Placeable model loader (504 bytes, 105 lines)
           * Loads placeable models with animation base
           * Handles head hit detection ("_head_hit" node lookup)
         - CSWCCreature::UnloadModel @ (K1: 0x0060c8e0, TSL: (TODO: Find this address)) - Unloads creature models (42 bytes, 19 lines)
