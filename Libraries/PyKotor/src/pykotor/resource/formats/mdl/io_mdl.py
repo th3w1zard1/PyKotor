@@ -292,8 +292,10 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * CALLEES (11 total, verified via decompilation):
           * - CSWCAnimBase::CSWCAnimBase() @ (K1: 0x0069dfb0, TSL: 0x006f8340): CSWCAnimBase constructor (409 bytes, 8 callers)
           *   * Initializes vtable to CSWCAnimBase_vtable @ (K1: 0x00754f60, TSL: 0x007ce180)
-          *   * Initializes 5 CExoString fields via CExoString_InitFromString() @ (K1: TODO: Find this address, TSL: 0x00406350) with empty strings
-          *   * Initializes quaternion via Quaternion_Set() @ (K1: TODO: Find this address, TSL: 0x004da020) with default values
+          *   * Initializes 5 CResRef fields (K1) / CExoString fields (TSL) via CResRef_operator_assign_InitFromString() @ (K1: 0x00406290, TSL: 0x00406350) with empty strings
+          *     - NOTE: In K1, uses CResRef::operator=() to initialize from empty string. In TSL, uses CExoString_InitFromString().
+          *   * Initializes quaternion via Quaternion_InitDefault() @ (K1: 0x004ac960, TSL: 0x004da020) with default values
+          *     - NOTE: In K1, uses Quaternion::Quaternion() constructor with unitVectorZ and 0.0 angle. In TSL, uses Quaternion_Set() function.
           *   * Sets default scale to 1.0f
           *   * Sets flags: param_1[0x37] = 1 (active flag)
           *   * Called from CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) (CSWCAnimBaseTW constructor) and directly
