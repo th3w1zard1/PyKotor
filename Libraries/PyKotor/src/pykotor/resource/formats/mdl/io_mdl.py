@@ -527,13 +527,13 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * CExoString::~CExoString() @ (K1: 0x005e5c20, TSL: 0x00630c20) - string destructor, called 4 times
         * String References: "_head_hit" (hardcoded in function, not in string table)
 
-    - CSWCCreature::UnloadModel @ (K1: 0x0060c8e0, TSL: TODO: Find this address)
+    - CSWCCreature::UnloadModel @ (K1: 0x0060c8e0, TSL: N/A - likely inlined or different implementation)
       * Creature model unloader (42 bytes, 1 callee)
         * Signature: void __thiscall CSWCCreature::UnloadModel(CSWCCreature *this)
         * Logic (from decompilation):
           * Gets (this->object).anim_base
           * If anim_base is non-NULL:
-            * Calls anim_base->vtable[30]() (unload/cleanup method)
+            * Calls anim_base->vtable[30]() (unload/cleanup method, vtable offset 0x78)
             * Calls anim_base->vtable[0](1) (destructor with delete flag)
             * Sets (this->object).anim_base to NULL
           * Returns
@@ -541,11 +541,11 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * anim_base->vtable[30]() (unload method, virtual call)
           * anim_base->vtable[0](1) (destructor, virtual call)
         * VTable Entry: Located in CSWCCreature class structure
-      * TSL: Function likely exists but not verified
+      * TSL: Function likely inlined or has different implementation pattern
 
     Resource Management Functions:
     ------------------------------
-    - CResMDL::CResMDL - K1: 0x005cea50, TSL: (TODO: Find this address)
+    - CResMDL::CResMDL - K1: 0x005cea50, TSL: N/A - likely inlined or different implementation
       * MDL resource constructor (36 bytes, 1 callee)
         * Signature: void __thiscall CResMDL::CResMDL(CResMDL *this)
         * Logic (from decompilation analysis via cross-references):
@@ -560,7 +560,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * LoadMesh() @ 0x0059680c (called when loading mesh resources)
           * SetResRef() @ 0x00710270 (called when setting resource reference)
         * VTable: CResMDL_vtable located in data section
-      * TSL: Not verified - search would be via CRes base class constructor pattern
+      * TSL: Constructor likely inlined in resource allocation code or has different implementation pattern
 
     - CResMDL::~CResMDL (destructor) - K1: 0x005cea80, TSL: 0x00435200
       * MDL resource destructor (11 bytes, 1 callee)
