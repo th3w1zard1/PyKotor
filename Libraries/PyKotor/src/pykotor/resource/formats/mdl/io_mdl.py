@@ -224,8 +224,9 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *      * Calls attachment->vtable[0x7c](GameObjectType_Constant_5 @ (K1: 0x00746634, TSL: 0x007beaec)) (31st entry) - game object types setup (value: 5)
           *    - If param_3 == -1 (headconjure special case):
           *      * Initializes quaternion on stack: {0, 0, 0, 1.0f}
-          *      * Calls RegisterCallbacks_Headconjure(param_1) @ (K1: TODO: Find this address, TSL: 0x00669570) (RegisterCallbacks for headconjure, 532 bytes)
-          *        - RegisterCallbacks_Headconjure() @ (K1: TODO: Find this address, TSL: 0x00669570) registers sound callbacks via anim_base->vtable[8](0xff)
+          *      * Calls RegisterCallbacks_Headconjure(param_1) @ (K1: 0x0061ab40, TSL: 0x00669570) (RegisterCallbacks for headconjure, 532 bytes)
+          *        - RegisterCallbacks_Headconjure() @ (K1: 0x0061ab40, TSL: 0x00669570) registers sound callbacks via anim_base->vtable[8](0xff)
+          *        - NOTE: In K1, this is the same function as RegisterCallbacks() @ (K1: 0x0061ab40, TSL: 0x00693fe0), both are 532 bytes and perform identical callback registration
           *        - Registers callbacks for: "snd_Footstep", "snd_Footstep" (second callback), "snd_hitground", "SwingShort", "SwingLong",
           *          "SwingTwirl", "Clash", "Contact", "HitParry", "blur_start", "blur_end", "doneattack01", "doneattack02",
           *          "GetPersonalRadius", "GetCreatureRadius", "GetPath"
