@@ -455,8 +455,8 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *     NOTE: All TSL functions have been renamed in REVA/Ghidra with descriptive names based on their functionality. K1 equivalents not yet identified. All TSL functions documented in REVA/Ghidra with comprehensive comments.
           *   * Used to find headconjure dummy node in model hierarchy for spell effect positioning
           * - "_head_hit" @ (K1: 0x00753918, TSL: 0x007ccaf8): Hit detection node suffix
-          *   * Referenced in 3 functions: [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00700da0), [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00705d20), [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x007052a0)
-          *     NOTE: All TSL functions documented in REVA/Ghidra with comments. K1 equivalents not yet identified (may be TSL-specific utility functions or organized differently in K1).
+          *   * Referenced in 3 functions: SetupHeadHitDetection() @ (K1: TODO: Find this address, TSL: 0x00700da0), SetupGroundAndImpactCallbacks() @ (K1: TODO: Find this address, TSL: 0x00705d20), SetupHitDetectionCallbacks() @ (K1: TODO: Find this address, TSL: 0x007052a0)
+          *     NOTE: All TSL functions have been renamed in REVA/Ghidra with descriptive names. K1 equivalents not yet identified (may be TSL-specific utility functions or organized differently in K1). All functions documented in REVA/Ghidra with comprehensive comments.
           *   * Not directly used in LoadModel_Internal, but related to model hit detection setup
           * - "snd_Footstep" @ (K1: 0x0074f838, TSL: 0x007c82d0): Footstep sound callback name
           *   * Referenced only in RegisterCallbacks() @ (K1: 0x0061ab40, TSL: 0x00669595)
