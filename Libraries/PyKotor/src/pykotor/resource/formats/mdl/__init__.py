@@ -99,7 +99,7 @@ Additional String References (verified in both K1 and TSL):
 - "_head_hit" @ (K1: TODO: Find this address, TSL: 0x007ccaf8)
   * Hit detection node suffix
   * Referenced in 3 functions related to model hit detection setup
-  * Hardcoded in CSWCPlaceable::LoadModel @ (K1: 0x006823f0, TSL: TODO: Find this address) (not in string table)
+  * Hardcoded in CSWCPlaceable::LoadModel @ (K1: 0x006823f0, TSL: 0x006d9721) (not in string table)
 
 - "snd_Footstep" @ (K1: TODO: Find this address, TSL: 0x007c82d0)
   * Footstep sound callback name
