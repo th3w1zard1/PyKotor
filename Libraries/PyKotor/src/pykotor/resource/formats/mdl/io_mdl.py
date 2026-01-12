@@ -164,7 +164,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *    - Copies field159: *(undefined4*)(param_1 + 0x200) = *(undefined4*)(param_1 + 0x374)
           *    - Clears field159 cache: *(undefined4*)(param_1 + 0x374) = 0
           * 3. Current anim_base validation: Checks *(undefined4**)(param_1 + 0x68) (was this->object.anim_base in K1)
-          *    - If non-NULL and *(char*)(anim_base + 0x31) == param_4 (type matches), jumps to model loading (label within CSWCCreature::LoadModel_Internal @ (K1: TODO: Find this address, TSL: 0x0066a0c8))
+          *    - If non-NULL and *(char*)(anim_base + 0x31) == param_4 (type matches), jumps to model loading (label within CSWCCreature::LoadModel_Internal @ (K1: 0x0061b5a7, TSL: 0x0066a0c8))
           *    - Otherwise, destructs current anim_base via vtable[0](1) and proceeds to allocation
           * 4. Switch-based anim_base allocation (param_4 determines type):
           *    * case '\0' (0): Standard anim base
