@@ -404,24 +404,26 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *     - "GetPath" @ (K1: 0x00742f14, TSL: 0x007bb120) (referenced at (K1: 0x0061ad34, TSL: 0x006696a2), stores at param_1 + 0x42c)
           *   * All callbacks registered with 0x461c3c00 (10000.0f) as distance parameter
           *   * All string references verified via cross-reference search in TSL executable
-          * - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00406050): Resource name cache/getter (72 bytes, 35 references)
-          *   * Signature: void __fastcall [TODO: Name this function](undefined4 *param_1) @ (K1: TODO: Find this address, TSL: 0x00406050)
+          * - CResRef_CopyToString() / CResRef_GetResRefStr() @ (K1: 0x00405fe0, TSL: 0x00406050): Resource name cache/getter (K1: different implementation, TSL: 72 bytes, 35 references)
+          *   * Signature: K1: char* __thiscall CResRef::GetResRefStr(CResRef *this), TSL: void __fastcall CResRef_CopyToString(undefined4 *param_1)
           *   * Logic (from decompilation):
           *     * Implements circular buffer cache for CExoString resource names
           *     * K1: Uses CResRef::GetResRefStr() @ (K1: 0x00405fe0) with CResRef_GetResRefStr_Buffer @ (K1: 0x007a3d00) and CResRef_GetResRefStr_BufferIndex @ (K1: 0x007a3d48)
+          *       - Returns char* pointer to cached string in buffer
           *     * TSL: Uses CResRef_CopyToString() with CResRef_CopyToString_Buffer @ (TSL: 0x008286e0) and CResRef_CopyToString_BufferIndex @ (TSL: 0x00828728)
-          *     * Updates buffer index: BufferIndex = (BufferIndex + 1) & 0x80000003
-          *     * Handles negative modulo: if (int)BufferIndex < 0, adjusts to positive range
-          *     * Calculates storage offset: iVar1 = BufferIndex * 0x11 (17 bytes per entry, 4-entry buffer)
-          *     * Stores 4 dwords (16 bytes) from param_1 to buffer at Buffer + iVar1
-          *     * Appends null terminator at offset 0x10 (16th byte of entry)
-          *     * Returns void (modifies global buffer)
+          *       - Updates buffer index: BufferIndex = (BufferIndex + 1) & 0x80000003
+          *       - Handles negative modulo: if (int)BufferIndex < 0, adjusts to positive range
+          *       - Calculates storage offset: iVar1 = BufferIndex * 0x11 (17 bytes per entry, 4-entry buffer)
+          *       - Stores 4 dwords (16 bytes) from param_1 to buffer at Buffer + iVar1
+          *       - Appends null terminator at offset 0x10 (16th byte of entry)
+          *       - Returns void (modifies global buffer)
           *   * Callees: None (pure arithmetic/memory operations)
-          *   * Callers: CSWCCreature::LoadModel error handler @ (K1: (TODO: Find this address), TSL: 0x0066a0f0) (called once for error message formatting), plus 34 other functions
+          *   * Callers: CSWCCreature::LoadModel error handler @ (K1: 0x0061b5cf, TSL: 0x0066a0f0) (called once for error message formatting), plus 34 other functions
           *   * Usage: Caches resource names for error messages and logging (4-entry circular buffer prevents memory leaks)
-          * - [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0076dac2): sprintf equivalent (88 bytes, 133 references)
+          * - sprintf() @ (K1: 0x006fadb0, TSL: 0x0076dac2): sprintf equivalent (K1: 88 bytes, TSL: 88 bytes, 133 references)
           *   * Creates FILE structure on stack for string formatting
-          *   * Calls [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0077252f) (vswprintf equivalent) with format string and arguments
+          *   * K1: Calls _vfprintf() with format string and arguments
+          *   * TSL: Calls vswprintf_internal() @ (K1: TODO: Find this address - may not exist, TSL: 0x0077252f) (vswprintf equivalent) with format string and arguments
           *   * Null-terminates result string
           *   * Returns formatted string count
           * - operator_new() @ (K1: 0x006fa7e6, TSL: 0x0076d9f6): Memory allocator (14 bytes, 2548 references)
@@ -433,13 +435,14 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * STRING REFERENCES (verified via cross-references):
           * - Error string @ (K1: 0x0074f85c, TSL: 0x007c82fc): "CSWCCreature::LoadModel(): Failed to load creature model '%s'."
           *   * Referenced in CSWCCreature::LoadModel error handler @ (K1: 0x0061b5cf, TSL: 0x0066a0f0)
-          *   * Format string used in [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x0076dac2) (sprintf equivalent)
+          *   * Format string used in sprintf() @ (K1: 0x006fadb0, TSL: 0x0076dac2) (sprintf equivalent)
           *   * Cross-referenced from error handler function only
-          * - "headconjure" @ (K1: (TODO: Find this address), TSL: 0x007c82f0): Dummy node name for spell visual positioning
-          *   * Referenced in LoadModel_Internal @ (K1: (TODO: Find this address), TSL: 0x0066a1a5) via anim_base->vtable[0xa0]() call
+          * - "headconjure" @ (K1: TODO: Find this address - may be inline string, TSL: 0x007c82f0): Dummy node name for spell visual positioning
+          *   * Referenced in LoadModel_Internal @ (K1: 0x0061b676, TSL: 0x0066a1a5) via anim_base->vtable[0xa0]() call
+          *   * NOTE: In K1, the string "headconjure" is passed directly as a string literal at line 148 of CSWCCreature::LoadModel (0x0061b676). The string may be stored inline in the code segment rather than as a data constant.
           *   * Also referenced in 7 other functions: [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00702e20), [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00701870), [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00700da0), [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f8590), [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006efe40), [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006a5490), [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006efaf0)
           *   * Used to find headconjure dummy node in model hierarchy for spell effect positioning
-          * - "_head_hit" @ (K1: (TODO: Find this address), TSL: 0x007ccaf8): Hit detection node suffix
+          * - "_head_hit" @ (K1: 0x00753918, TSL: 0x007ccaf8): Hit detection node suffix
           *   * Referenced in 3 functions: [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00700da0), [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00705d20), [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x007052a0)
           *   * Not directly used in LoadModel_Internal, but related to model hit detection setup
           * - "snd_Footstep" @ (K1: (TODO: Find this address), TSL: 0x007c82d0): Footstep sound callback name
