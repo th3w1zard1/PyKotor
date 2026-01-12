@@ -164,7 +164,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *    - Copies field159: *(undefined4*)(param_1 + 0x200) = *(undefined4*)(param_1 + 0x374)
           *    - Clears field159 cache: *(undefined4*)(param_1 + 0x374) = 0
           * 3. Current anim_base validation: Checks *(undefined4**)(param_1 + 0x68) (was this->object.anim_base in K1)
-          *    - If non-NULL and *(char*)(anim_base + 0x31) == param_4 (type matches), jumps to model loading (label within CSWCCreature::LoadModel_Internal @ (K1: 0x0061b5a7, TSL: 0x0066a0c8))
+          *    - If non-NULL and *(char*)(anim_base + 0x31) == param_4 (type matches), jumps to model loading (label within CSWCCreature::LoadModel_Internal @ (K1: TODO: Find this address, TSL: 0x0066a0c8))
           *    - Otherwise, destructs current anim_base via vtable[0](1) and proceeds to allocation
           * 4. Switch-based anim_base allocation (param_4 determines type):
           *    * case '\0' (0): Standard anim base
@@ -219,14 +219,14 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *      * Returns 0 (failure)
           * 7. Special parameter handling (param_3 checks):
           *    - If param_3 is -1, -2, -3, or -4 (special values), performs additional setup:
-          *      * Calls anim_base->vtable[8](param_3) @ (K1: 0x0061b436, TSL: 0x0066a150) to get model attachment (call site within CSWCCreature::LoadModel_Internal)
+          *      * Calls anim_base->vtable[8](param_3) @ (K1: TODO: Find this address, TSL: 0x0066a150) to get model attachment (call site within CSWCCreature::LoadModel_Internal)
           *      * Calls attachment->vtable[0x74](param_1) (29th entry) - attachment setup
           *      * Calls attachment->vtable[0x7c](GameObjectType_Constant_5 @ (K1: 0x00746634, TSL: 0x007beaec)) (31st entry) - game object types setup (value: 5)
           *    - If param_3 == -1 (headconjure special case):
           *      * Initializes quaternion on stack: {0, 0, 0, 1.0f}
           *      * Calls RegisterCallbacks_Headconjure(param_1) @ (K1: 0x0061ab40, TSL: 0x00669570) (RegisterCallbacks for headconjure, 532 bytes)
           *        - RegisterCallbacks_Headconjure() @ (K1: 0x0061ab40, TSL: 0x00669570) registers sound callbacks via anim_base->vtable[8](0xff)
-          *        - NOTE: In K1, this is the same function as RegisterCallbacks() @ (K1: 0x0061ab40, TSL: 0x00693fe0), both are 532 bytes and perform identical callback registration
+          *        - NOTE: In K1, RegisterCallbacks_Headconjure is the same function as RegisterCallbacks (both at 0x0061ab40, 532 bytes). In TSL, they are separate functions.
           *        - Registers callbacks for: "snd_Footstep", "snd_Footstep" (second callback), "snd_hitground", "SwingShort", "SwingLong",
           *          "SwingTwirl", "Clash", "Contact", "HitParry", "blur_start", "blur_end", "doneattack01", "doneattack02",
           *          "GetPersonalRadius", "GetCreatureRadius", "GetPath"
