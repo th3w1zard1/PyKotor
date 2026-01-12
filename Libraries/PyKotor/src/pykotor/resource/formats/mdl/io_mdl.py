@@ -437,9 +437,9 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *   * Referenced in CSWCCreature::LoadModel error handler @ (K1: 0x0061b5cf, TSL: 0x0066a0f0)
           *   * Format string used in sprintf() @ (K1: 0x006fadb0, TSL: 0x0076dac2) (sprintf equivalent)
           *   * Cross-referenced from error handler function only
-          * - "headconjure" @ (K1: TODO: Find this address - may be inline string, TSL: 0x007c82f0): Dummy node name for spell visual positioning
+          * - "headconjure" @ (K1: Inline string literal at 0x0061b676, TSL: 0x007c82f0): Dummy node name for spell visual positioning
           *   * Referenced in LoadModel_Internal @ (K1: 0x0061b676, TSL: 0x0066a1a5) via anim_base->vtable[0xa0]() call
-          *   * NOTE: In K1, the string "headconjure" is passed directly as a string literal at line 148 of CSWCCreature::LoadModel (0x0061b676). The string may be stored inline in the code segment rather than as a data constant.
+          *   * NOTE: In K1, the string "headconjure" is passed directly as a string literal at line 148 of CSWCCreature::LoadModel (0x0061b676). The string is stored inline in the code segment rather than as a data constant. Related strings found: "Bheadconjure" @ 0x0074f84f (used elsewhere).
           *   * Also referenced in 7 other functions: [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00702e20), [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00701870), [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00700da0), [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006f8590), [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006efe40), [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006a5490), [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x006efaf0)
           *   * Used to find headconjure dummy node in model hierarchy for spell effect positioning
           * - "_head_hit" @ (K1: 0x00753918, TSL: 0x007ccaf8): Hit detection node suffix
