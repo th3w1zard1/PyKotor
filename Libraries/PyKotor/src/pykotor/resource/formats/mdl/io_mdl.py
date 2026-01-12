@@ -186,7 +186,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *    * case '\v' (0x0b, 11): Two-Weapon anim base (NEW in TSL, not in K1)
           *      - Allocates 0x180 bytes (384 bytes)
           *      - Calls CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) (CSWCAnimBaseTW constructor, 307 bytes)
-          *      - Sets vtable to CSWCAnimBaseTW_vtable @ (K1: TODO: Find this address, TSL: 0x007ce078)
+          *      - Sets vtable to CSWCAnimBaseTW_vtable @ (K1: 0x00754e40, TSL: 0x007ce078)
           *      - Initializes 5 CExoString fields (offsets 0x4a, 0x4f, 0x54, 0x59) via CExoString_InitEmpty() @ (K1: TODO: Find this address, TSL: 0x00405f40)
           *      - Sets field at offset 0x31 to 0x0b (two-weapon type identifier)
           *      - Clears flags: param_1[0x5e] = 0, param_1[0x5f] = 0
@@ -297,14 +297,14 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *   * Sets flags: param_1[0x37] = 1 (active flag)
           *   * Called from CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) (CSWCAnimBaseTW constructor) and directly
           * - CSWCAnimBaseHead::CSWCAnimBaseHead() @ (K1: 0x0069bb80, TSL: 0x006f5e60): CSWCAnimBaseHead constructor (229 bytes, 3 callers)
-          *   * If param_1 != 0, sets vtable to CSWCAnimBaseHead_vtable @ (K1: TODO: Find this address, TSL: 0x007ce060), calls CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) on offset 0x50 sub-object
-          *   * Sets vtable offset for base class to CSWCAnimBaseHead_base_vtable @ (K1: TODO: Find this address, TSL: 0x007cdf68)
+          *   * If param_1 != 0, sets vtable to CSWCAnimBaseHead_vtable @ (K1: 0x00754e40, TSL: 0x007ce060), calls CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) on offset 0x50 sub-object
+          *   * Sets vtable offset for base class to CSWCAnimBaseHead_base_vtable @ (K1: TODO: Find this address, TSL: 0x007cdf68) (NOTE: K1 uses CSWCAnimBaseHead_AnimBase_vtable at offset calculated from vtable)
           *   * Initializes 2 CExoString fields via CExoString_InitEmpty() @ (K1: TODO: Find this address, TSL: 0x00405f40) (offsets 0x1c, 0x30)
           *   * Sets field at offset 0xc4 to 1 (type identifier)
           *   * Sets field at offset 0x48 to 0x7f000000 (INF, scale maximum)
           * - CSWCAnimBaseWield::CSWCAnimBaseWield() @ (K1: 0x00699dd0, TSL: 0x006f41b0): CSWCAnimBaseWield constructor (256 bytes, 3 callers)
-          *   * If param_1 != 0, sets vtable to CSWCAnimBaseWield_vtable @ (K1: TODO: Find this address, TSL: 0x007cdf20), calls CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) on offset 0x5c sub-object
-          *   * Sets vtable offset for base class to CSWCAnimBaseWield_base_vtable @ (K1: TODO: Find this address, TSL: 0x007cde28)
+          *   * If param_1 != 0, sets vtable to CSWCAnimBaseWield_vtable @ (K1: 0x00754d00, TSL: 0x007cdf20), calls CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) on offset 0x5c sub-object
+          *   * Sets vtable offset for base class to CSWCAnimBaseWield_base_vtable @ (K1: TODO: Find this address, TSL: 0x007cde28) (NOTE: K1 uses CSWCAnimBaseWield_AnimBase_vtable at offset calculated from vtable)
           *   * Initializes 2 CExoString fields via CExoString_InitEmpty() @ (K1: TODO: Find this address, TSL: 0x00405f40) (offsets 4, 0x14)
           *   * Calls CExoString_InitEmpty() @ (K1: TODO: Find this address, TSL: 0x005ff130) on 2 fields (offsets 0x24, 0x2c) - string cleanup/initialization
           *   * Sets field at offset 0xc4 to 2 (type identifier)
