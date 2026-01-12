@@ -451,11 +451,18 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * - "headconjure" @ (K1: Inline string literal at 0x0061b676, TSL: 0x007c82f0): Dummy node name for spell visual positioning
           *   * Referenced in LoadModel_Internal @ (K1: 0x0061b676, TSL: 0x0066a1a5) via anim_base->vtable[0xa0]() call
           *   * NOTE: In K1, the string "headconjure" is passed directly as a string literal at line 148 of CSWCCreature::LoadModel (0x0061b676). The string is stored inline in the code segment rather than as a data constant. Related strings found: "Bheadconjure" @ 0x0074f84f (used elsewhere).
-          *   * Also referenced in 7 other functions: FindDummyNode() @ (K1: TODO: Find this address, TSL: 0x00702e20), FUN_00701870() @ (K1: TODO: Find this address, TSL: 0x00701870), FUN_00700da0() @ (K1: TODO: Find this address, TSL: 0x00700da0), FUN_006f8590() @ (K1: TODO: Find this address, TSL: 0x006f8590), FUN_006efe40() @ (K1: TODO: Find this address, TSL: 0x006efe40), FUN_006a5490() @ (K1: TODO: Find this address, TSL: 0x006a5490), FUN_006efaf0() @ (K1: TODO: Find this address, TSL: 0x006efaf0)
-          *     NOTE: FindDummyNode (TSL: 0x00702e20) was renamed in REVA/Ghidra. Other functions remain unnamed (FUN_*) as K1 equivalents not yet identified. All TSL functions documented in REVA/Ghidra with comments.
+          *   * Also referenced in 7 other functions:
+          *     * FindDummyNode() @ (K1: TODO: Find this address, TSL: 0x00702e20) - Finds dummy nodes (headconjure, handconjure, impact) in model hierarchy
+          *     * CSWCPlaceable::InitializeImpactNodes() @ (K1: TODO: Find this address, TSL: 0x00701870) - Initializes impact nodes (Imp_HeadCon_Node, Imp_Impact_Node, Imp_Root_*_Node) for placeable objects, handles LowQuality/LowViolence variants
+          *     * CSWCAnimBase::SetupHitDetectionNode() @ (K1: TODO: Find this address, TSL: 0x00700da0) - Sets up hit detection nodes using "_head_hit" or "hhit" suffixes, constructs hit node names from creature data
+          *     * CSWCAnimBase::ValidateSpellEffectDummies() @ (K1: TODO: Find this address, TSL: 0x006f8590) - Validates handconjure and headconjure dummy node orientations, checks for correct spell effect positioning
+          *     * CSWCAnimBase::SetupSpellCastVisuals() @ (K1: TODO: Find this address, TSL: 0x006efe40) - Sets up spell casting visual effects (castvisual, castgroundvisual) for headconjure, handconjure, and ground effects
+          *     * CSWCCreature::InitializeSpellEffects() @ (K1: TODO: Find this address, TSL: 0x006a5490) - Initializes spell effect positioning and visual effects, handles handconjure, headconjure, rhand, and root nodes
+          *     * CSWCAnimBase::SetupConjureVisuals() @ (K1: TODO: Find this address, TSL: 0x006efaf0) - Sets up conjure visual effects (conjurevisual) for headconjure and handconjure nodes
+          *     NOTE: All TSL functions renamed in REVA/Ghidra with descriptive names based on their logic. K1 equivalents not yet identified (may be TSL-specific utility functions or organized differently in K1).
           *   * Used to find headconjure dummy node in model hierarchy for spell effect positioning
           * - "_head_hit" @ (K1: 0x00753918, TSL: 0x007ccaf8): Hit detection node suffix
-          *   * Referenced in 3 functions: FUN_00700da0() @ (K1: TODO: Find this address, TSL: 0x00700da0), FUN_00705d20() @ (K1: TODO: Find this address, TSL: 0x00705d20), FUN_007052a0() @ (K1: TODO: Find this address, TSL: 0x007052a0)
+          *   * Referenced in 3 functions: [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00700da0), [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x00705d20), [TODO: Name this function]() @ (K1: TODO: Find this address, TSL: 0x007052a0)
           *     NOTE: All TSL functions documented in REVA/Ghidra with comments. K1 equivalents not yet identified (may be TSL-specific utility functions or organized differently in K1).
           *   * Not directly used in LoadModel_Internal, but related to model hit detection setup
           * - "snd_Footstep" @ (K1: 0x0074f838, TSL: 0x007c82d0): Footstep sound callback name
