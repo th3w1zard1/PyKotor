@@ -143,7 +143,7 @@ Error Messages:
   * Referenced in CSWCCreature::LoadModel() @ (K1: 0x0061b5cf, TSL: 0x0066a0f0) (call site within LoadModel)
     - Used in sprintf() call when anim_base->vtable[3] returns 0
     - param_1 is resource name from CResRef::GetResRefStr()
-  * Referenced in CSWCCreature::LoadModel error handler @ (K1: 0x0061b5cf, TSL: 0x0066a0f0)
+  * Referenced in CSWCCreature::LoadModel error handler (inline code) @ (K1: 0x0061b5cf within 0x0061b380, TSL: 0x0066a0f0)
     - Used in sprintf equivalent @ (K1: 0x006fadb0, TSL: 0x0076dac2)
     - Resource name obtained via resource name cache/getter @ (K1: 0x00405fe0, TSL: 0x00406050) - CResRef::CopyToString
 

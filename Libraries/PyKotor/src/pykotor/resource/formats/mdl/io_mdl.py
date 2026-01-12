@@ -147,7 +147,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
         * VTable Entry: Located at offset in CSWCCreature class structure
         * String References:
           * Error string @ (K1: 0x0074f85c, TSL: 0x007c82fc): "CSWCCreature::LoadModel(): Failed to load creature model '%s'."
-            * Referenced in LoadModel @ (K1: 0x0061b5cf, TSL: 0x0066a0f0) via sprintf() call
+            * Referenced in LoadModel error handler (inline code) @ (K1: 0x0061b5cf within CSWCCreature::LoadModel @ 0x0061b380, TSL: 0x0066a0f0) via sprintf() call
             * Used when anim_base->vtable[3] returns 0 (model loading failure)
       * Creature model loader (1379 bytes, 11 callees)
         * Signature: undefined4 __thiscall CSWCCreature::LoadModel_Internal(int param_1, undefined4 *param_2, undefined4 param_3, char param_4)
