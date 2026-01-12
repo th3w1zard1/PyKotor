@@ -458,7 +458,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *   * Returns: 0 (failure)
           *   * Note: This is a separate error handler function, not the main LoadModel function
 
-    - CSWCPlaceable::LoadModel @ (K1: 0x006823f0, TSL: TODO: Find this address)
+    - CSWCPlaceable::LoadModel @ (K1: 0x006823f0, TSL: 0x006d9721)
       * Placeable object model loader (504 bytes, 10 callees)
         * Signature: undefined4 __thiscall CSWCPlaceable::LoadModel(CSWCPlaceable *this, CResRef *param_1, byte param_2, byte param_3)
         * Logic (from decompilation):
