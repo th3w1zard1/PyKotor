@@ -151,7 +151,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
       * Creature model loader (1379 bytes, 11 callees)
         * Signature: undefined4 __thiscall CSWCCreature::LoadModel_Internal(int param_1, undefined4 *param_2, undefined4 param_3, char param_4)
         * Address: (K1: TODO: Find this address, TSL: 0x00669ea0) (verified via vtable entry at (K1: TODO: Find this address, TSL: 0x007c8040) pointing to this function)
-        * Discovery Method: Located via vtable data reference at (K1: TODO: Find this address, TSL: 0x007c8040), which stores function pointer to (K1: 0x00669ea0, TSL: TODO: Find this address)
+        * Discovery Method: Located via vtable data reference at (K1: TODO: Find this address, TSL: 0x007c8040), which stores function pointer to (K1: TODO: Find this address, TSL: 0x00669ea0)
         * Logic (from exhaustive decompilation - EXHAUSTIVE DIFFERENCES from K1):
           * EXECUTION FLOW:
           * 1. Exception handling setup: Saves ExceptionList, initializes SEH frame with [TODO: Name this function] @ (K1: TODO: Find this address, TSL: 0x0079cc86)
