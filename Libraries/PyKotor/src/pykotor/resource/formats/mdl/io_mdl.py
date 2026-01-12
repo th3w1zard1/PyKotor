@@ -138,7 +138,8 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * CSWCAnimBase::CSWCAnimBase() @ (K1: 0x0069dfb0, TSL: 0x006f8340) (base anim base constructor)
           * CSWCAnimBaseTW::CSWCAnimBaseTW() @ (K1: 0x0069cbd0, TSL: 0x006f6fb0) (two-weapon variant)
           * sprintf() @ (K1: 0x006fadb0, TSL: 0x0076dac2) (error message formatting)
-          * CResRef::CopyToString() @ (K1: 0x00405f70, TSL: 0x00406050) (resource reference string conversion - note: GetResRefStr in K1 calls CopyToString internally)
+          * CResRef::CopyToString() @ (K1: 0x00405f70, TSL: 0x00406050) (resource reference string conversion)
+          * CResRef::GetResRefStr() @ (K1: 0x00405fe0, TSL: N/A) (K1 equivalent - uses circular buffer like TSL's CopyToString)
           * RegisterCallbacks() @ (K1: 0x0061ab40, TSL: 0x00693fe0) (callback registration)
           * CSWCAnimBaseHead::CSWCAnimBaseHead() @ (K1: 0x0069bb80, TSL: 0x006f5e60) (head anim base constructor)
           * CSWAnimBase::Set() @ (K1: 0x00698e30, TSL: 0x006f3210) (anim base setup, called 4 times)
@@ -202,9 +203,11 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *    - Calls anim_base->vtable[0xc](param_2, param_3) (load model method, offset 0xc = 3rd vtable entry)
           *    - If loading fails (returns 0), calls error handler:
           *      * Calls CResRef::CopyToString(param_2) @ (K1: 0x00405f70, TSL: 0x00406050) (resource name getter, 72 bytes)
-          *        - CResRef::CopyToString() @ (K1: 0x00405f70, TSL: 0x00406050) stores param_1 (CResRef internal data, 4 dwords) into circular buffer at CResRef_CopyToString_Buffer @ (K1: TODO: Find this address, TSL: 0x008286e0)
-          *        - Uses modulo 4 circular buffer: CResRef_CopyToString_BufferIndex @ (K1: TODO: Find this address, TSL: 0x00828728) = (CResRef_CopyToString_BufferIndex @ (K1: TODO: Find this address, TSL: 0x00828728) + 1) & 0x80000003
-          *        - Stores 4 dwords (16 bytes) at offset iVar1 = CResRef_CopyToString_BufferIndex @ (K1: TODO: Find this address, TSL: 0x00828728) * 0x11
+          *        - CResRef::CopyToString() @ (K1: 0x00405f70, TSL: 0x00406050) stores param_1 (CResRef internal data, 4 dwords) into circular buffer
+          *        - K1: CResRef::GetResRefStr() @ (K1: 0x00405fe0) uses CResRef_GetResRefStr_Buffer @ (K1: 0x007a3d00, TSL: N/A) and CResRef_GetResRefStr_BufferIndex @ (K1: 0x007a3d48, TSL: N/A)
+          *        - TSL: CResRef_CopyToString() uses CResRef_CopyToString_Buffer @ (K1: N/A, TSL: 0x008286e0) and CResRef_CopyToString_BufferIndex @ (K1: N/A, TSL: 0x00828728)
+          *        - Uses modulo 4 circular buffer: BufferIndex = (BufferIndex + 1) & 0x80000003
+          *        - Stores 4 dwords (16 bytes) at offset iVar1 = BufferIndex * 0x11 (17 bytes per entry, 4-entry buffer)
           *        - Stores null terminator at offset 0x10
           *        - Returns pointer to stored string
           *      * Calls [TODO: Name this function](acStack_10c, "CSWCCreature::LoadModel(): Failed to load creature model '%s'.") @ (K1: TODO: Find this address, TSL: 0x0076dac2)
@@ -385,10 +388,12 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *   * Signature: void __fastcall [TODO: Name this function](undefined4 *param_1) @ (K1: TODO: Find this address, TSL: 0x00406050)
           *   * Logic (from decompilation):
           *     * Implements circular buffer cache for CExoString resource names
-          *     * Updates buffer index: CResRef_CopyToString_BufferIndex @ (K1: TODO: Find this address, TSL: 0x00828728) = (CResRef_CopyToString_BufferIndex @ (K1: TODO: Find this address, TSL: 0x00828728) + 1) & 0x80000003
-          *     * Handles negative modulo: if (int)CResRef_CopyToString_BufferIndex @ (K1: TODO: Find this address, TSL: 0x00828728) < 0, adjusts to positive range
-          *     * Calculates storage offset: iVar1 = CResRef_CopyToString_BufferIndex @ (K1: TODO: Find this address, TSL: 0x00828728) * 0x11 (17 bytes per entry, 4-entry buffer)
-          *     * Stores 4 dwords (16 bytes) from param_1 to buffer at CResRef_CopyToString_Buffer @ (K1: TODO: Find this address, TSL: 0x008286e0) + iVar1
+          *     * K1: Uses CResRef::GetResRefStr() @ (K1: 0x00405fe0) with CResRef_GetResRefStr_Buffer @ (K1: 0x007a3d00) and CResRef_GetResRefStr_BufferIndex @ (K1: 0x007a3d48)
+          *     * TSL: Uses CResRef_CopyToString() with CResRef_CopyToString_Buffer @ (TSL: 0x008286e0) and CResRef_CopyToString_BufferIndex @ (TSL: 0x00828728)
+          *     * Updates buffer index: BufferIndex = (BufferIndex + 1) & 0x80000003
+          *     * Handles negative modulo: if (int)BufferIndex < 0, adjusts to positive range
+          *     * Calculates storage offset: iVar1 = BufferIndex * 0x11 (17 bytes per entry, 4-entry buffer)
+          *     * Stores 4 dwords (16 bytes) from param_1 to buffer at Buffer + iVar1
           *     * Appends null terminator at offset 0x10 (16th byte of entry)
           *     * Returns void (modifies global buffer)
           *   * Callees: None (pure arithmetic/memory operations)
