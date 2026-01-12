@@ -88,7 +88,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * ANDs result with (uint)this to return this cast to Model* or NULL
           * Equivalent to: return ((this->type & 0x7f) == 2) ? (Model*)this : NULL;
         * Callers (88 total, examples):
-          * ProcessSkinSeams() @ (K1: 0x004392b6, TSL: 0x0044a920), (K1: 0x00439986, TSL: (TODO: Find this address)) (skin seam processing)
+          * ProcessSkinSeams() @ (K1: 0x004392b6, TSL: 0x0044a920), (K1: 0x00439986, TSL: 0x0044a920) (skin seam processing - both addresses are call sites within ProcessSkinSeams)
           * FindModel() @ (K1: 0x00464176, TSL: 0x0047a480) (model lookup)
           * LoadModel() @ (K1: 0x00464236, TSL: 0x0047a570) (main loader)
           * BuildVertexArrays() @ (K1: 0x00478b8b, TSL: (TODO: Find this address)), (K1: 0x00478c05, TSL: (TODO: Find this address)) (vertex array construction)
