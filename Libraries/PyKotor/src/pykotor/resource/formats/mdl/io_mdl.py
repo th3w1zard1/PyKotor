@@ -216,7 +216,8 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *      * Calls sprintf(acStack_10c, "CSWCCreature::LoadModel(): Failed to load creature model '%s'.") @ (K1: 0x006fadb0, TSL: 0x0076dac2)
           *        - sprintf() @ (K1: 0x006fadb0, TSL: 0x0076dac2) is sprintf equivalent (88 bytes, 133 references)
           *        - Creates FILE structure on stack for formatting
-          *        - Calls vswprintf_internal() @ (K1: TODO: Find this address, TSL: 0x0077252f) (vswprintf equivalent) with format string
+          *        - Calls _vfprintf() @ (K1: N/A - standard library function, TSL: vswprintf_internal() @ 0x0077252f) (vswprintf equivalent) with format string
+          *          NOTE: In K1, sprintf() uses _vfprintf() directly (standard library). TSL uses vswprintf_internal() for wide character string formatting.
           *        - Null-terminates result
           *      * Returns 0 (failure)
           * 7. Special parameter handling (param_3 checks):
