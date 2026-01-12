@@ -221,7 +221,7 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *    - If param_3 is -1, -2, -3, or -4 (special values), performs additional setup:
           *      * Calls anim_base->vtable[8](param_3) @ (K1: TODO: Find this address, TSL: 0x0066a150) to get model attachment (call site within CSWCCreature::LoadModel_Internal)
           *      * Calls attachment->vtable[0x74](param_1) (29th entry) - attachment setup
-          *      * Calls attachment->vtable[0x7c](GameObjectType_Constant_5 @ (K1: TODO: Find this address, TSL: 0x007beaec)) (31st entry) - game object types setup (value: 5)
+          *      * Calls attachment->vtable[0x7c](GameObjectType_Constant_5 @ (K1: 0x00746634, TSL: 0x007beaec)) (31st entry) - game object types setup (value: 5)
           *    - If param_3 == -1 (headconjure special case):
           *      * Initializes quaternion on stack: {0, 0, 0, 1.0f}
           *      * Calls RegisterCallbacks_Headconjure(param_1) @ (K1: TODO: Find this address, TSL: 0x00669570) (RegisterCallbacks for headconjure, 532 bytes)
@@ -232,8 +232,8 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           *        - Stores callback IDs in creature structure offsets 0x404, 0x408, 0x410, 0x414, 0x418, 0x41c, 0x420, 0x424, 0x428, 0x42c, 0x430, 0x434, 0x438, 0x43c, 0x440, 0x444
           *      * Calls anim_base->vtable[0xa0]("headconjure", &uStack_134, &uStack_128) (40th entry, finds dummy node)
           *      * If headconjure dummy not found (returns 0), sets *(float*)(param_1 + 0xa4) = 0x40066666 (3.2f, default value)
-          *      * Otherwise, calculates: *(float*)(param_1 + 0xa4) = fStack_12c - fStack_12c * FloatConstant_0_125 @ (K1: TODO: Find this address, TSL: 0x007b7428)
-          *        - FloatConstant_0_125 @ (K1: TODO: Find this address, TSL: 0x007b7428): Float constant 0.125f (cross-referenced in 9 locations, scale factor)
+          *      * Otherwise, calculates: *(float*)(param_1 + 0xa4) = fStack_12c - fStack_12c * FloatConstant_0_125 @ (K1: 0x0073f400, TSL: 0x007b7428)
+          *        - FloatConstant_0_125 @ (K1: 0x0073f400, TSL: 0x007b7428): Float constant 0.125f (cross-referenced in 9 locations, scale factor)
           * 8. Callback registration:
           *    - Calls RegisterCallbacks(param_1) @ (K1: 0x0061ab40, TSL: 0x00693fe0) (RegisterCallbacks equivalent, 100 bytes, 177 references)
           *      - RegisterCallbacks() @ (K1: 0x0061ab40, TSL: 0x00693fe0) checks if *(int*)(param_1 + 0xf8) is NULL (cached callback result)
