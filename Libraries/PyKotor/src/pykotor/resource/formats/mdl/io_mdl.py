@@ -242,10 +242,12 @@ These functions correspond to the game engine's MDL/MDX parsing implementation:
           * 8. Callback registration:
           *    - Calls RegisterCallbacks(param_1) @ (K1: 0x0061ab40, TSL: 0x00693fe0) (RegisterCallbacks equivalent, 100 bytes, 177 references)
           *      - RegisterCallbacks() @ (K1: 0x0061ab40, TSL: 0x00693fe0) checks if *(int*)(param_1 + 0xf8) is NULL (cached callback result)
-          *      - If NULL and *(int*)(param_1 + 0xe4) == 0, calls GetObjectTypeID() @ (K1: TODO: Find this address, TSL: 0x004dc2e0) and GetObjectByTypeID() @ (K1: TODO: Find this address, TSL: 0x004dc650) to get callback handler
+          *      - If NULL and *(int*)(param_1 + 0xe4) == 0, calls GetObjectTypeID() @ (K1: N/A - not used, TSL: 0x004dc2e0) and GetObjectByTypeID() @ (K1: N/A - not used, TSL: 0x004dc650) to get callback handler
+          *        NOTE: In K1, RegisterCallbacks() does not use GetObjectTypeID/GetObjectByTypeID. It directly calls anim_base->vtable[8](0xff) to get the callback handler.
           *      - Calls handler->vtable[0x10]() to get callback object
           *      - Stores result in *(void**)(param_1 + 0xf8)
-          *      - If callback object exists, calls SetCallbackTarget(callback, param_1) @ (K1: TODO: Find this address, TSL: 0x005056f0) to register callbacks
+          *      - If callback object exists, calls SetCallbackTarget(callback, param_1) @ (K1: N/A - not used, TSL: 0x005056f0) to register callbacks
+          *        NOTE: In K1, RegisterCallbacks() directly registers callbacks via handler->vtable[0x28]() without using SetCallbackTarget. TSL uses SetCallbackTarget() for callback registration.
           *      - Returns *(undefined4*)(param_1 + 0xf8)
           *    - If callback registration succeeds:
           *      * Calls callback->vtable[0x30]() to get animation object
