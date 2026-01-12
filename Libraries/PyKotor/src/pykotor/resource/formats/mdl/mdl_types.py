@@ -16,17 +16,17 @@ Architecture:
 
 References:
     Based on swkotor.exe MDL/MDX structure:
-    - LoadModel @ (K1: 0x00464200, TSL: (TODO: Find this address)) - Loads MDL model via IODispatcher::ReadSync
+    - LoadModel @ (K1: 0x00464200, TSL: 0x0047a570) - Loads MDL model via IODispatcher::ReadSync
+    - LoadModel2 @ (K1: 0x0061b380, TSL: 0x00669ea0) - Alternative model loading function
       * Reads MDL/MDX file pair
       * Converts MaxTree to Model via MaxTree::AsModel
       * Checks modelsList for duplicates by name
-    - LoadModel @ (K1: 0x0061b380, TSL: 0x00669ea0) - Alternative model loading function
-    - ".mdl" extension @ (K1: 0x00740ca8, TSL: (TODO: Find this address)) - MDL file extension
-    - ".mdx" extension @ (K1: 0x00743944, TSL: (TODO: Find this address)) - MDX file extension
-    - "mdl" resource type @ (K1: 0x0074dd7c, TSL: (TODO: Find this address)) - MDL resource identifier
-    - "mdx" resource type @ (K1: 0x0074dc6c, TSL: (TODO: Find this address)) - MDX resource identifier
-    - "MDL" string @ (K1: 0x0075fb48, TSL: (TODO: Find this address)) - MDL format identifier
-    - "MDX" string @ (K1: 0x0075fb44, TSL: (TODO: Find this address)) - MDX format identifier
+    - ".mdl" extension @ (K1: 0x00740ca8, TSL: TODO: Find this address - may be inline string literal) - MDL file extension
+    - ".mdx" extension @ (K1: 0x00743944, TSL: TODO: Find this address - may be inline string literal) - MDX file extension
+    - "mdl" resource type @ (K1: 0x0074dd7c, TSL: TODO: Find this address) - MDL resource identifier
+    - "mdx" resource type @ (K1: 0x0074dc6c, TSL: TODO: Find this address) - MDX resource identifier
+    - "MDL" string @ (K1: 0x0075fb48, TSL: TODO: Find this address) - MDL format identifier
+    - "MDX" string @ (K1: 0x0075fb44, TSL: TODO: Find this address) - MDX format identifier
     - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
     https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm - Comprehensive MDL/MDX format constants and type definitions (tool)
     https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/types.py - Blender MDL type definitions (tool)
@@ -86,16 +86,17 @@ class MDLNodeFlags(IntFlag):
 
     References:
     - Based on swkotor.exe MDL node structure:
-      * MdlNode::AsMdlNodeTriMesh @ (K1: 0x0043e400, TSL: (TODO: Find this address)) - Casts node to tri-mesh (checks flags 0x21 = HEADER + MESH)
-      * MdlNode::AsMdlNodeSkin @ (K1: 0x0043e3f0, TSL: (TODO: Find this address)) - Casts node to skin mesh
-      * MdlNode::AsMdlNodeDanglyMesh @ (K1: 0x0043e380, TSL: (TODO: Find this address)) - Casts node to dangly mesh
-      * MdlNode::AsMdlNodeLightsaber @ (K1: 0x0043e3a0, TSL: (TODO: Find this address)) - Casts node to lightsaber mesh
-      * MdlNode::AsMdlNodeAABB @ (K1: 0x0043e340, TSL: (TODO: Find this address)) - Casts node to AABB mesh
-      * MdlNode::AsMdlNodeEmitter @ (K1: 0x0043e3c0, TSL: (TODO: Find this address)) - Casts node to emitter
-      * MdlNode::AsMdlNodeLight @ (K1: 0x0043e3d0, TSL: (TODO: Find this address)) - Casts node to light
-      * MdlNode::AsMdlNodeReference @ (K1: 0x0043e3e0, TSL: (TODO: Find this address)) - Casts node to reference
-      * PartTriMesh::PartTriMesh @ (K1: 0x00445840, TSL: (TODO: Find this address)) - Creates tri-mesh part from MDL node
-      * LoadModel @ (K1: 0x00464200, TSL: (TODO: Find this address)), @ (K1: 0x0061b380, TSL: 0x00669ea0) - Loads MDL model files
+      * MdlNode::AsMdlNodeTriMesh @ (K1: 0x0043e400, TSL: 0x004501d0) - Casts node to tri-mesh (checks flags 0x21 = HEADER + MESH)
+      * MdlNode::AsMdlNodeSkin @ (K1: 0x0043e3f0, TSL: 0x004501c0) - Casts node to skin mesh (checks flags 0x61 = HEADER + MESH + SKIN)
+      * MdlNode::AsMdlNodeDanglyMesh @ (K1: 0x0043e380, TSL: 0x00450150) - Casts node to dangly mesh (checks flags 0x121 = HEADER + MESH + DANGLY)
+      * MdlNode::AsMdlNodeLightsaber @ (K1: 0x0043e3a0, TSL: 0x00450170) - Casts node to lightsaber mesh (checks flags 0x821 = HEADER + MESH + SABER)
+      * MdlNode::AsMdlNodeAABB @ (K1: 0x0043e340, TSL: 0x00450110) - Casts node to AABB mesh (checks flags 0x221 = HEADER + MESH + AABB)
+      * MdlNode::AsMdlNodeEmitter @ (K1: 0x0043e3c0, TSL: 0x00450190) - Casts node to emitter (checks flags 5 = HEADER + EMITTER)
+      * MdlNode::AsMdlNodeLight @ (K1: 0x0043e3d0, TSL: 0x004501a0) - Casts node to light (checks flags 3 = HEADER + LIGHT)
+      * MdlNode::AsMdlNodeReference @ (K1: 0x0043e3e0, TSL: 0x004501b0) - Casts node to reference (checks flags 0x11 = HEADER + REFERENCE)
+      * PartTriMesh::PartTriMesh @ (K1: 0x00445840, TSL: 0x00459be0) - Creates tri-mesh part from MDL node
+      * LoadModel @ (K1: 0x00464200, TSL: 0x0047a570) - Loads MDL model via IODispatcher::ReadSync
+      * LoadModel2 @ (K1: 0x0061b380, TSL: 0x00669ea0) - Alternative model loading function
     - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
     - https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:301-311 (Node type quick reference - tool)
     - https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/types.py:93-101 (Node flags - tool)
@@ -148,7 +149,8 @@ class MDLControllerType(IntEnum):
       * "scalebezierkey" string @ (K1: 0x00741f28, TSL: (TODO: Find this address)) - Scale bezier keyframe identifier
       * "ALPHA" string @ (K1: 0x0073dfc0, TSL: (TODO: Find this address)) - Alpha controller identifier
       * "channelscale" string @ (K1: 0x00741d1c, TSL: (TODO: Find this address)) - Channel scale identifier
-      * LoadModel @ (K1: 0x00464200, TSL: (TODO: Find this address)), @ (K1: 0x0061b380, TSL: 0x00669ea0) - Loads MDL models with controllers
+      * LoadModel @ (K1: 0x00464200, TSL: 0x0047a570) - Loads MDL models with controllers
+      * LoadModel2 @ (K1: 0x0061b380, TSL: 0x00669ea0) - Alternative model loading function
     - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
     - https://github.com/th3w1zard1/mdlops/tree/master/MDLOpsM.pm:325-405 (Comprehensive controller mapping - tool)
     - https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/types.py:140-197 (Controller constants - tool)
@@ -315,9 +317,10 @@ class MDLTrimeshFlags(IntFlag):
     
     References:
     - Based on swkotor.exe MDL trimesh structure:
-      * PartTriMesh::PartTriMesh @ (K1: 0x00445840, TSL: (TODO: Find this address)) - Creates tri-mesh part from MDL node
-      * MdlNode::AsMdlNodeTriMesh @ (K1: 0x0043e400, TSL: (TODO: Find this address)) - Casts node to tri-mesh (checks flags 0x21)
-      * LoadModel @ (K1: 0x00464200, TSL: (TODO: Find this address)), @ (K1: 0x0061b380, TSL: 0x00669ea0) - Loads MDL models with trimesh flags
+      * PartTriMesh::PartTriMesh @ (K1: 0x00445840, TSL: 0x00459be0) - Creates tri-mesh part from MDL node
+      * MdlNode::AsMdlNodeTriMesh @ (K1: 0x0043e400, TSL: 0x004501d0) - Casts node to tri-mesh (checks flags 0x21)
+      * LoadModel @ (K1: 0x00464200, TSL: 0x0047a570) - Loads MDL models with trimesh flags
+      * LoadModel2 @ (K1: 0x0061b380, TSL: 0x00669ea0) - Alternative model loading function
     - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
     """
 
@@ -336,8 +339,9 @@ class MDLLightFlags(IntFlag):
     
     References:
     - Based on swkotor.exe MDL light structure:
-      * MdlNode::AsMdlNodeLight @ (K1: 0x0043e3d0, TSL: (TODO: Find this address)) - Casts node to light
-      * LoadModel @ (K1: 0x00464200, TSL: (TODO: Find this address)), @ (K1: 0x0061b380, TSL: 0x00669ea0) - Loads MDL models with light flags
+      * MdlNode::AsMdlNodeLight @ (K1: 0x0043e3d0, TSL: 0x004501a0) - Casts node to light
+      * LoadModel @ (K1: 0x00464200, TSL: 0x0047a570) - Loads MDL models with light flags
+      * LoadModel2 @ (K1: 0x0061b380, TSL: 0x00669ea0) - Alternative model loading function
     - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
     """
 
@@ -356,8 +360,9 @@ class MDLEmitterFlags(IntFlag):
 
     References:
     - Based on swkotor.exe MDL emitter structure:
-      * MdlNode::AsMdlNodeEmitter @ (K1: 0x0043e3c0, TSL: (TODO: Find this address)) - Casts node to emitter
-      * LoadModel @ (K1: 0x00464200, TSL: (TODO: Find this address)), @ (K1: 0x0061b380, TSL: 0x00669ea0) - Loads MDL models with emitter flags
+      * MdlNode::AsMdlNodeEmitter @ (K1: 0x0043e3c0, TSL: 0x00450190) - Casts node to emitter
+      * LoadModel @ (K1: 0x00464200, TSL: 0x0047a570) - Loads MDL models with emitter flags
+      * LoadModel2 @ (K1: 0x0061b380, TSL: 0x00669ea0) - Alternative model loading function
     - Original BioWare engine binaries (swkotor.exe, swkotor2.exe)
     - https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/types.py:115-127 (Comprehensive list - tool)
     - https://github.com/th3w1zard1/kotorblender/tree/master/io_scene_kotor/format/mdl/reader.py:295-306 (Flag parsing - tool)
