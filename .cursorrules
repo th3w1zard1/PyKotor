@@ -9,7 +9,7 @@ You are an AI agent for PyKotor, a Python library and tools for modding Knights 
 For **ANY** change involving engine features, file formats, game mechanics, resources, or reverse-engineered behavior:
 
 - **YOU MUST** analyze both K1 (`swkotor.exe`) and TSL (`swkotor2.exe`) using REVA MCP tools.
-- Open the project with: `open-project <full path to .gpr>` (common paths: resolve `%USERPROFILE%\test.gpr` → e.g., `C:\Users\boden\test.gpr` **or** `%USERPROFILE%\Andastra Ghidra Project.gpr`).
+- Open the project with: `open-project <full path to .gpr>` (common paths: resolve `%USERPROFILE%\Odyssey.gpr` → e.g., `%USERPROFILE%\Odyssey.gpr`).
 - Use unified K1/TSL naming and code paths.
 - Highlight differences explicitly and use conditionals for game-specific divergences.
 - Label game-specific exceptions clearly.
