@@ -1,4 +1,6 @@
 name: Validate Commits
+permissions:
+  contents: read
 
 on:
   push:
