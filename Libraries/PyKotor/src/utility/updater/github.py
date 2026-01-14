@@ -8,6 +8,7 @@ import pathlib
 import re
 import sys
 import typing
+from urllib.parse import urlparse
 
 from abc import ABC
 from contextlib import suppress
@@ -841,12 +842,19 @@ def extract_owner_repo_from_main_url(url: str) -> tuple[str, str]:
     return match[1], match[2]
 
 def extract_owner_repo(url: str) -> tuple[str, str]:
-    if "api.github.com/repos" in url:
-        return extract_owner_repo_from_api_url(url)
-    if "raw.githubusercontent.com" in url:
-        return extract_owner_repo_from_raw_url(url)
-    if "github.com" in url:
-        return extract_owner_repo_from_main_url(url)
+    parsed = urlparse(url)
+    host = parsed.netloc
+    path = parsed.path or ""
+
+    # Normalize back to a canonical URL for the existing regex helpers.
+    normalized_url = f"https://{host}{path}"
+
+    if host == "api.github.com" and path.startswith("/repos/"):
+        return extract_owner_repo_from_api_url(normalized_url)
+    if host == "raw.githubusercontent.com":
+        return extract_owner_repo_from_raw_url(normalized_url)
+    if host == "github.com":
+        return extract_owner_repo_from_main_url(normalized_url)
     raise ValueError(f"Invalid GitHub URL format: {url}")
 
 if __name__ == "__main__":
