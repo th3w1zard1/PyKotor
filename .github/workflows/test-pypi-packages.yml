@@ -31,6 +31,9 @@ on:
     workflows: ["Publish to PyPI"]
     types: [completed]
 
+permissions:
+  contents: read
+
 concurrency:
   group: test-pypi-${{ github.ref }}
   cancel-in-progress: true
