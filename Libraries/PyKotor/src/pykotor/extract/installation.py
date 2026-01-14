@@ -1220,7 +1220,7 @@ class Installation:
         #
         # NOTE: This path is hit frequently for optional resources (e.g. editors probing for
         # related assets like LYT/minimap textures). It must not throw.
-        RobustLogger().warning(f"Could not find '{resname}' with restypes {restypes} during resource lookup!")
+        RobustLogger().warning("Resource lookup failed for requested name/type combination.")
         return None
 
     def resources(
